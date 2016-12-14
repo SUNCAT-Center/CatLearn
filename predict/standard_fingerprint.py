@@ -1,4 +1,4 @@
-""" Standard fingerprint function for machine learning genetic algorithm. """
+""" Standard fingerprint functions. """
 import numpy as np
 
 no_asap = False

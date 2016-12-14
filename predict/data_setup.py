@@ -1,4 +1,4 @@
-""" Data generation functions for the machine learning genetic algorithm. """
+""" Data generation functions. """
 import numpy as np
 from random import shuffle
 from collections import defaultdict

@@ -1,13 +1,12 @@
-""" Predictive functions for the machine learning genetic algorithm. """
+""" Predictive KRR functions. """
 import numpy as np
 from math import exp
 from collections import defaultdict
 
 
 class FitnessPrediction(object):
-    """ Kernel ridge regression functions for the machine learning genetic
-        algorithm. This can be used to predict the fitness of a candidate
-        within the GA run.
+    """ Kernel ridge regression functions for the machine learning. This can be
+        used to predict the fitness of an atoms object.
 
         ktype: string
             The kernel type, several have been pre-defined. Default is the

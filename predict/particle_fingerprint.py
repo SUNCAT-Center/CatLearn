@@ -1,4 +1,4 @@
-""" Particle fingerprint functions for machine learning genetic algorithm. """
+""" Particle fingerprint functions. """
 import numpy as np
 from itertools import product
 
