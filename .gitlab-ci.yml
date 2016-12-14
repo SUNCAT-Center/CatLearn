@@ -15,9 +15,6 @@ python_2_7_tests:
     - python data_setup-test.py
     - python predict-test.py
     - python fingerprint-test.py
-    - python basin-test.py
-    - python start_ga.py
-    - python ga-test.py
 
 python_3_tests:
   script:
@@ -36,6 +33,3 @@ python_3_tests:
     - python3 data_setup-test.py
     - python3 predict-test.py
     - python3 fingerprint-test.py
-    - python3 basin-test.py
-    - python3 start_ga.py
-    - python3 ga-test.py
