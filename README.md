@@ -1,11 +1,22 @@
 AtoML
 ==================================
 
-Utilities for building and testing atomic machine learning models.
+Utilities for building and testing Atomic Machine Learning (AtoML) models.
+Kernel Ridge Regression (KRR) machine learning routines are implemented. These
+will take a numpy array of training and test fingerprint vectors along with a
+vector of target values.
+
+In general, any data prepared in this fashion can be fed to the KRR routines,
+a number of additional routines have been added that interface with ASE. This
+integration allows for the manipulation of atoms objects through KRR
+predictions, as well as dynamic generation of fingerprint descriptors through
+use of the many ASE functions.
 
 Requirements
 ------------
 
+*   [Python](https://www.python.org) 2.6, 2.7, 3.4, 3.5
+*   [Numpy](https://docs.scipy.org/doc/numpy/reference/)
 *   [ASE](https://wiki.fysik.dtu.dk/ase/) (Atomic Simulation Environment)
 
 Installation
