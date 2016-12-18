@@ -4,9 +4,6 @@ python_2_7_tests:
     - apt-get install -qy python-numpy python-scipy
     - git clone https://gitlab.com/ase/ase.git
     - pwd
-    - echo $HOME
-    - echo $PWD
-    - echo $PYTHONPATH
     - export PYTHONPATH=$PWD/ase:$PYTHONPATH
     - export PATH=$PWD/ase/tools:$PATH
     - export PYTHONPATH=$PWD/:$PYTHONPATH
@@ -22,9 +19,6 @@ python_3_tests:
     - apt-get install -qy python3-numpy python3-scipy
     - git clone https://gitlab.com/ase/ase.git
     - pwd
-    - echo $HOME
-    - echo $PWD
-    - echo $PYTHONPATH
     - export PYTHONPATH=$PWD/ase:$PYTHONPATH
     - export PATH=$PWD/ase/tools:$PATH
     - export PYTHONPATH=$PWD/:$PYTHONPATH
