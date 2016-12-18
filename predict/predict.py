@@ -101,9 +101,10 @@ class FitnessPrediction(object):
                 get error.
         """
         data = defaultdict(list)
+        ktb = np.asarray([[self.kernel(fp1=fp1, fp2=fp2) for fp1 in train_fp]
+                          for fp2 in test_fp])
         # Do prediction.
-        for tfp in test_fp:
-            kt = [self.kernel(fp1=fp1, fp2=tfp) for fp1 in train_fp]
+        for kt in ktb:
             ktcinv = np.dot(kt, cinv)
             target_values = target
             train_mean = np.mean(target_values)
