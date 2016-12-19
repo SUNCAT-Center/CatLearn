@@ -1,5 +1,4 @@
-AtoML
-==================================
+# AtoML
 
 Utilities for building and testing Atomic Machine Learning (AtoML) models.
 Kernel Ridge Regression (KRR) machine learning routines are implemented. These
@@ -12,28 +11,25 @@ integration allows for the manipulation of atoms objects through KRR
 predictions, as well as dynamic generation of fingerprint descriptors through
 use of the many ASE functions.
 
-Requirements
-------------
+## Requirements
 
 *   [Python](https://www.python.org) 2.6, 2.7, 3.4, 3.5
 *   [Numpy](https://docs.scipy.org/doc/numpy/reference/)
 *   [ASE](https://wiki.fysik.dtu.dk/ase/) (Atomic Simulation Environment)
 
-Installation
-------------
+## Installation
 
-Put the `<install_dir>/` into your $PYTHONPATH environment variable
+Put the `<install_dir>/` into your `$PYTHONPATH` environment variable.
 
-Atomic Simulation Environment
------------------------------
+#### Atomic Simulation Environment
 
 ASE is a set of tools and Python modules for setting up, manipulating,
 running, visualizing and analyzing atomistic simulations. Installation
 instructions and tutorials can be found on their webpage
 <https://wiki.fysik.dtu.dk/ase/>.
 
-ASAP - As Soon As Possible
---------------------------
+#### ASAP - As Soon As Possible
+
 If a large amount of testing is likely to be performed it is recommended that
 ASAP is installed to replace the empirical potentials distributed with ASE. The
 ASAP potentials are significantly more computationally efficient.
