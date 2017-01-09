@@ -1,4 +1,6 @@
 # AtoML
+![Build Status](https://gitlab.com/atoML/AtoML/badges/master/build.svg)
+---
 
 Utilities for building and testing Atomic Machine Learning (AtoML) models.
 Kernel Ridge Regression (KRR) machine learning routines are implemented. These
