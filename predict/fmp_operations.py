@@ -5,11 +5,6 @@ Created on Tue Jan  3 12:01:30 2017
 @author: mhangaard
 """
 
-from ase_mlga.predict.data_setup import data_split#, remove_outliers
-from ase_mlga.predict.fingerprint_setup import normalize, get_single_fpv, get_combined_fpv
-from adsorbate_fingerprint import AdsorbateFingerprintGenerator
-#from adsorbate_fingerprint_mhh import AdsorbateFingerprintGenerator
-from ase_mlga.predict.predict import FitnessPrediction, ParetoPrediction
 import numpy as np
 
 

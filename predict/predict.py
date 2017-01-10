@@ -70,9 +70,10 @@ class FitnessPrediction(object):
         covinv = np.linalg.inv(cov)
 
         return covinv
-
-    def get_predictions(self, train_fp, test_fp, cinv, target, known=False,
-                        test=None, key=None):
+    
+    def get_predictions(self, train_fp, test_fp, cinv, target, 
+            get_validation_error=False, get_training_error=False,
+            test=None, key=None):
         """ Returns a list of predictions for a test dataset.
 
             train_fp: list
@@ -114,14 +115,30 @@ class FitnessPrediction(object):
             # Build the list of predictions.
             data['prediction'].append(predicted)
 
-        if known:
-            # Calculate the error associated with the predictions.
-            data['rmse'] = self.get_error(p=data['prediction'], k=test,
-                                          key=key)
+        if get_validation_error:
+            # Calculate the validation error.
+            data['validation_rmse'] = self.get_rmse(p=data['prediction'], 
+                k=test) 
+
+        if get_training_error:
+            # Calculate the predictions on the training set.
+            data_training = defaultdict(list)
+            for tfp in train_fp:
+                kt = [self.kernel(fp1=fp1, fp2=tfp) for fp1 in train_fp]
+                ktcinv = np.dot(kt, cinv)
+                target_values = target
+                train_mean = np.mean(target_values)
+                target_values -= train_mean
+                predicted = np.dot(ktcinv, target_values) + train_mean
+                
+                # Build the list of predictions.
+                data_training['prediction'].append(predicted)        
+            data['training_rmse'] = self.get_rmse(
+                p=data_training['prediction'], k=target)
 
         return data
 
-    def get_error(self, p, k, key):
+    def get_rmse(self, p, k):
         """ Returns the root mean squared error for predicted data relative to
             the actual fitnesses (Cost Function).
 
@@ -138,6 +155,6 @@ class FitnessPrediction(object):
         assert len(p) == len(k)
         sumd = 0
         for i, j in zip(p, k):
-            sumd += (i - j.info['key_value_pairs'][key]) ** 2
+            sumd += (i - j) ** 2
 
         return (sumd / len(p)) ** 0.5

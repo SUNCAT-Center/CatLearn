@@ -8,10 +8,8 @@ Created on Tue Dec  6 14:09:29 2016
 
 """
 
-from sys import argv
 import numpy as np
 from ase import db
-from ase.geometry import get_layers
 from db2thermo import db2mol, db2surf, mol2ref, get_refs, get_formation_energies
 from mendeleev import element
 
