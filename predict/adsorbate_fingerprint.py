@@ -228,8 +228,18 @@ class AdsorbateFingerprintGenerator(object):
             en_pauling += float(element(Z0).en_pauling)
         result = [electron_affinity, electron_affinity/len(add_atoms), en_allen, en_allen/len(add_atoms), en_pauling, en_pauling/len(add_atoms)]
         return result
-
-
+    
+    def feature_labels(key):
+        L_F = {
+            'elemental_dft_properties':['rho_vol', 'rho_A', 'B_eos'],
+            'primary_addatom': ['Z','period','group_id','electron_affinity','dipole_polarizability','en_allen','en_pauling','atomic_radius','vdw_radius'],
+            'primary_surfatom': ['Z','period','group_id','electron_affinity','dipole_polarizability','heat_of_formation','thermal_conductivity','specific_heat','en_allen','en_pauling','atomic_radius','vdw_radius'],
+            'Z_add': ['num_C', 'num_H'],
+            'primary_adds_nn': ['num_C', 'num_H'],
+            'primary_surf_nn': ['num_nn'],
+            'adds_sum': ['sum_electron_affinity', 'average_electron_affinity', 'sum_en_allen', 'average_en_allen', 'sum_en_pauling', 'average_en_pauling'],
+            }
+        return L_F[key]
 
 
 
