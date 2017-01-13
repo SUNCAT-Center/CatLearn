@@ -19,19 +19,20 @@ class AdsorbateFingerprintGenerator(object):
         self.bulks = bulks
         self.slabs = slabs
         abinitio_energies, frequency_dict, contribs, dbids = db2mol(mols, ['vacuum=8','PW=500'])
-        surf_energies, surf_frequencies, surf_contribs, surf_dbids = db2surf(slabs, ['layers=5','facet=1x1x1','kpts=4x6','PW=500','PSP=gbrv1.5pbe'])
+        surf_energies, surf_frequencies, surf_contribs, surf_dbids = db2surf(slabs, ['Al=0','layers=5','facet=1x1x1','kpts=4x6','PW=500','PSP=gbrv1.5pbe'])
         abinitio_energies.update(surf_energies)
         frequency_dict.update(surf_frequencies)
         contribs.update(surf_contribs)
         dbids.update(surf_dbids)
-        surf_energies211, surf_frequencies211, surf_contribs211, surf_dbids211 = db2surf(slabs, ['Rh=0','Pt=0','layers=4','facet=2x1x1','kpts=4x4','PW=500','PSP=gbrv1.5pbe'])
-        abinitio_energies.update(surf_energies211)
-        frequency_dict.update(surf_frequencies211)
-        contribs.update(surf_contribs211)
-        dbids.update(surf_dbids211)
+        #surf_energies211, surf_frequencies211, surf_contribs211, surf_dbids211 = db2surf(slabs, ['Al=0','Rh=0','Pt=0','layers=4','facet=2x1x1','kpts=4x4','PW=500','PSP=gbrv1.5pbe'])
+        #abinitio_energies.update(surf_energies211)
+        #frequency_dict.update(surf_frequencies211)
+        #contribs.update(surf_contribs211)
+        #dbids.update(surf_dbids211)
         self.mol_dict = mol2ref(abinitio_energies)
         ref_dict = get_refs(abinitio_energies, self.mol_dict)
-        self.rho, self.Z, self.eos_B, self.d_atoms = self.get_bulk()
+        self.rho, self.Z, self.eos_B, self.dbcenter, self.dbfilling, self.d_atoms = self.get_bulk() 
+        #self.rho, self.Z, self.eos_B, self.d_atoms = self.get_bulk()
         self.Ef = get_formation_energies(abinitio_energies, ref_dict)
         stable_adds_ids = []
         for key in abinitio_energies:
@@ -72,13 +73,19 @@ class AdsorbateFingerprintGenerator(object):
         rho = {}
         eos_B = {}
         d_atoms = {}
+        dbcenter = {}
+        dbfilling = {}
         for d in s:
-            Z[str(d.name)] = int(d.numbers[0])
-            rho[str(d.name)] = len(d.numbers) / float(d.volume)            
-            eos_B[str(d.name)] = float(d.eos_B)
+            name = str(d.name)
+            Z[name] = int(d.numbers[0])
+            rho[name] = len(d.numbers) / float(d.volume)            
+            eos_B[name] = float(d.eos_B)
             atoms = c.get_atoms(int(d.id))
-            d_atoms[str(d.name)] = (atoms.get_distances(0, range(1,len(atoms)), mic=True)).min()
-        return rho, Z, eos_B, d_atoms
+            d_atoms[name] = (atoms.get_distances(0, range(1,len(atoms)), mic=True)).min()
+            if 'dbcenter' in d.key_value_pairs:
+                dbcenter[name] = float(d.dbcenter)
+                dbfilling[name] = float(d.dbfilling)
+        return rho, Z, eos_B, dbcenter, dbfilling, d_atoms
         
     def db2atoms_fps(self):#, adds_dict):
         c = db.connect(self.slabs)
@@ -99,7 +106,7 @@ class AdsorbateFingerprintGenerator(object):
         
     def elemental_dft_properties(self, atoms):#, adds_dict):
         #series = atoms.info['key_value_pairs']['series']
-        name = atoms.info['key_value_pairs']['name']
+        name = atoms.info['key_value_pairs']['term']
         #phase = atoms.info['key_value_pairs']['phase']
         #facet = atoms.info['key_value_pairs']['facet']
         #key = series+'_'+name+'_'+phase+'_'+facet
@@ -107,7 +114,9 @@ class AdsorbateFingerprintGenerator(object):
         return [
             float(self.rho[name]), 
             len(atoms.numbers) / A, 
-            float(self.eos_B[name])
+            float(self.eos_B[name]),
+            #float(self.dbcenter[name]),
+            #float(self.dbfilling[name])
             ]
         
     def primary_addatom(self, atoms):
@@ -124,16 +133,18 @@ class AdsorbateFingerprintGenerator(object):
         L = np.array(liste)
         i = np.argmin(L[:,1])
         Z0 = atoms.numbers[int(L[i,0])]
+        mendeleev = element(Z0)
         result = [
              Z0,
-             int(element(Z0).period), 
-             float(element(Z0).group_id), 
-             float(element(Z0).electron_affinity), 
-             float(element(Z0).dipole_polarizability),
-             float(element(Z0).en_allen),
-             float(element(Z0).en_pauling),
-             float(element(Z0).atomic_radius),
-             float(element(Z0).vdw_radius),
+             int(mendeleev.period), 
+             float(mendeleev.group_id), 
+             float(mendeleev.electron_affinity), 
+             float(mendeleev.dipole_polarizability),
+             float(mendeleev.en_allen),
+             float(mendeleev.en_pauling),
+             float(mendeleev.atomic_radius),
+             float(mendeleev.vdw_radius),
+             float(mendeleev.ionenergies[1])
              ]
         return result
     
@@ -152,18 +163,20 @@ class AdsorbateFingerprintGenerator(object):
         L = np.array(liste)
         i = np.argmin(L[:,1])
         Z0 = atoms.numbers[int(L[i,0])]
+        mendeleev = element(Z0)
         return [Z0, 
-                int(element(Z0).period), 
-                float(element(Z0).group_id), 
-                float(element(Z0).electron_affinity), 
-                float(element(Z0).dipole_polarizability),
-                float(element(Z0).heat_of_formation),
-                float(element(Z0).thermal_conductivity),
-                float(element(Z0).specific_heat),
-                float(element(Z0).en_allen),
-                float(element(Z0).en_pauling),
-                float(element(Z0).atomic_radius),
-                float(element(Z0).vdw_radius),
+                int(mendeleev.period), 
+                float(mendeleev.group_id), 
+                float(mendeleev.electron_affinity), 
+                float(mendeleev.dipole_polarizability),
+                float(mendeleev.heat_of_formation),
+                float(mendeleev.thermal_conductivity),
+                float(mendeleev.specific_heat),
+                float(mendeleev.en_allen),
+                float(mendeleev.en_pauling),
+                float(mendeleev.atomic_radius),
+                float(mendeleev.vdw_radius),
+                float(mendeleev.ionenergies[1]),
                 ]
     
     def Z_add(self, atoms):
@@ -190,8 +203,13 @@ class AdsorbateFingerprintGenerator(object):
         L = np.array(liste)
         i = np.argmin(L[:,1])
         primary_add = int(L[i,0])
-        nH1 = len([a.index for a in atoms if a.symbol == 'H' and atoms.get_distance(primary_add,a.index, mic=True) < 1.3 and a.index != primary_add])
-        nC1 = len([a.index for a in atoms if a.symbol == 'C' and atoms.get_distance(primary_add,a.index, mic=True) < 1.3 and a.index != primary_add])
+        nH1 = len([a.index for a in atoms if a.symbol == 'H' and 
+            atoms.get_distance(primary_add,a.index, mic=True) < 1.3 and
+            a.index != primary_add])
+        nC1 = len([a.index for a in atoms if a.symbol == 'C' and 
+            atoms.get_distance(primary_add,a.index, mic=True) < 1.3 and
+            a.index != primary_add])
+        
         return [nC1, nH1]#, nN, nH]
     
     def primary_surf_nn(self, atoms):
@@ -208,10 +226,23 @@ class AdsorbateFingerprintGenerator(object):
         L = np.array(liste)
         i = np.argmin(L[:,1])
         primary_surf = int(L[i,0])
-        name = atoms.get_chemical_symbols()[primary_surf]
-        r_bond = np.sqrt((2*self.d_atoms[name])**2)*0.9
-        n = len(np.where( atoms.get_distances(primary_surf, metal_atoms, mic=True) < r_bond))
-        return [n]#, nO, nN]
+        symbols = atoms.get_chemical_symbols()
+        name = symbols[primary_surf]
+        r_bond = self.d_atoms[name]*1.15
+        ai = np.where( atoms.get_distances(primary_surf, metal_atoms, 
+                                              mic=True) < r_bond)
+        dbcenter = [self.dbcenter[name]]
+        dbfilling = [self.dbfilling[name]]
+        for q in ai[0]:
+            sym = symbols[metal_atoms[q]]
+            if sym in self.dbcenter:
+                dbcenter.append(self.dbcenter[sym])
+                dbfilling.append(self.dbfilling[sym])
+        av_dbcenter = np.average(dbcenter)
+        av_dbfilling = np.average(dbfilling)
+        n = len(ai)
+        
+        return [n, av_dbcenter, av_dbfilling]
     
     def adds_sum(self, atoms):
         """ Function that takes an atoms objects and returns a fingerprint
@@ -226,21 +257,40 @@ class AdsorbateFingerprintGenerator(object):
             electron_affinity += float(element(Z0).electron_affinity)
             en_allen += float(element(Z0).en_allen)
             en_pauling += float(element(Z0).en_pauling)
-        result = [electron_affinity, electron_affinity/len(add_atoms), en_allen, en_allen/len(add_atoms), en_pauling, en_pauling/len(add_atoms)]
+        result = [electron_affinity, electron_affinity/len(add_atoms), 
+            en_allen, en_allen/len(add_atoms), en_pauling, 
+            en_pauling/len(add_atoms)]
         return result
-    
-    def feature_labels(key):
-        L_F = {
-            'elemental_dft_properties':['rho_vol', 'rho_A', 'B_eos'],
-            'primary_addatom': ['Z','period','group_id','electron_affinity','dipole_polarizability','en_allen','en_pauling','atomic_radius','vdw_radius'],
-            'primary_surfatom': ['Z','period','group_id','electron_affinity','dipole_polarizability','heat_of_formation','thermal_conductivity','specific_heat','en_allen','en_pauling','atomic_radius','vdw_radius'],
-            'Z_add': ['num_C', 'num_H'],
-            'primary_adds_nn': ['num_C', 'num_H'],
-            'primary_surf_nn': ['num_nn'],
-            'adds_sum': ['sum_electron_affinity', 'average_electron_affinity', 'sum_en_allen', 'average_en_allen', 'sum_en_pauling', 'average_en_pauling'],
-            }
-        return L_F[key]
 
+    def get_Ef(self, atoms):
+        return [float(atoms.info['key_value_pairs']['Ef'])]
+    
+    def feature_labels(self, keys):
+        D_F = {
+            'elemental_dft_properties':['rho_vol', 'rho_A', 'B_eos'],
+            'primary_addatom': ['Z','period','group_id','electron_affinity',
+                'dipole_polarizability','en_allen', 'en_pauling',
+                'atomic_radius','vdw_radius','ion_e'],
+            'primary_surfatom': ['Z','period','group_id','electron_affinity',
+                 'dipole_polarizability','heat_of_formation',
+                 'thermal_conductivity','specific_heat','en_allen',
+                 'en_pauling','atomic_radius','vdw_radius','ion_e'],
+            'Z_add': ['total_num_C', 'total_num_H'],
+            'primary_adds_nn': ['nn_num_C', 'nn_num_H'],
+            'primary_surf_nn': ['num_nn','av_dbcenter', 'av_dbfilling'],
+            'adds_sum': ['sum_electron_affinity', 'average_electron_affinity',
+                 'sum_en_allen', 'average_en_allen', 
+                 'sum_en_pauling', 'average_en_pauling'],
+            'get_Ef': ['Ef']
+            }
+        if len(keys) == 1:
+            L_F = D_F[keys]
+        else:
+            L_F = []
+            for key in reversed(keys):
+                L_F += D_F[key]
+        return L_F
+        
 
 
 

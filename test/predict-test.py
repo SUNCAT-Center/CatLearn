@@ -36,9 +36,9 @@ pred = krr.get_predictions(train_fp=nfp['train'],
                            test_fp=nfp['test'],
                            cinv=cvm,
                            target=trainset['target'],
-                           known=True,
-                           test=testset['candidates'],
-                           key='raw_score')
+                           get_validation_error=True, 
+                           get_training_error=True,
+                           test=testset['target'])
 assert len(pred['prediction']) == 10
 print('linear prediction:', pred['rmse'])
 
@@ -52,9 +52,9 @@ pred = krr.get_predictions(train_fp=nfp['train'],
                            test_fp=nfp['test'],
                            cinv=cvm,
                            target=trainset['target'],
-                           known=True,
-                           test=testset['candidates'],
-                           key='raw_score')
+                           get_validation_error=True, 
+                           get_training_error=True,
+                           test=testset['target'])
 assert len(pred['prediction']) == 10
 print('polynomial prediction:', pred['rmse'])
 
@@ -68,9 +68,9 @@ pred = krr.get_predictions(train_fp=nfp['train'],
                            test_fp=nfp['test'],
                            cinv=cvm,
                            target=trainset['target'],
-                           known=True,
-                           test=testset['candidates'],
-                           key='raw_score')
+                           get_validation_error=True, 
+                           get_training_error=True,
+                           test=testset['target'])
 assert len(pred['prediction']) == 10
 print('gaussian prediction:', pred['rmse'])
 
@@ -84,8 +84,8 @@ pred = krr.get_predictions(train_fp=nfp['train'],
                            test_fp=nfp['test'],
                            cinv=cvm,
                            target=trainset['target'],
-                           known=True,
-                           test=testset['candidates'],
-                           key='raw_score')
+                           get_validation_error=True, 
+                           get_training_error=True,
+                           test=testset['target'])
 assert len(pred['prediction']) == 10
 print('laplacian prediction:', pred['rmse'])

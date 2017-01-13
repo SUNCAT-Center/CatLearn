@@ -86,6 +86,31 @@ def data_split(candidates, nsplit, key):
 
     return dataset
 
+def fpmatrix_split(fpmatrix, nsplit):
+    """ Routine to split list of candidates into sublists. This can be
+        useful for bootstrapping, LOOCV, etc.
+
+        nsplit: int
+            The number of bins that data should be devided into.
+    """
+    dataset = []
+    np.random.shuffle(fpmatrix)
+    # Calculate the number of items per split.
+    n = len(fpmatrix) / nsplit
+    # Get any remainders.
+    r = len(fpmatrix) % nsplit
+    # Define the start and finish of first split.
+    s1 = 0
+    s2 = n + min(1, r)
+    for _ in range(nsplit):
+        dataset.append(fpmatrix[int(s1):int(s2),:])
+        # Get any new remainder.
+        r = max(0, r-1)
+        # Define next split.
+        s1 = s2
+        s2 = s2 + n + min(1, r)
+
+    return dataset
 
 def remove_outliers(candidates, key, con=1.4826, dev=3.):
     """ Preprocessing routine to remove outliers in the data based on the

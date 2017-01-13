@@ -73,7 +73,7 @@ class FitnessPrediction(object):
     
     def get_predictions(self, train_fp, test_fp, cinv, target, 
             get_validation_error=False, get_training_error=False,
-            test=None, key=None):
+            test=None):
         """ Returns a list of predictions for a test dataset.
 
             train_fp: list
@@ -111,10 +111,10 @@ class FitnessPrediction(object):
             train_mean = np.mean(target_values)
             target_values -= train_mean
             predicted = np.dot(ktcinv, target_values) + train_mean
-
+            
             # Build the list of predictions.
             data['prediction'].append(predicted)
-
+        
         if get_validation_error:
             # Calculate the validation error.
             data['validation_rmse'] = self.get_rmse(p=data['prediction'], 
