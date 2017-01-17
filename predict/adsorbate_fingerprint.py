@@ -294,31 +294,7 @@ class AdsorbateFingerprintGenerator(object):
         else:
             return [float(atoms.info['key_value_pairs']['Ef'])]
     
-    def feature_labels(self, keys):
-        D_F = {
-            'elemental_dft_properties':['rho_vol', 'rho_A', 'B_eos'],
-            'primary_addatom': ['Z','period','group_id','electron_affinity',
-                'dipole_polarizability','en_allen', 'en_pauling',
-                'atomic_radius','vdw_radius','ion_e'],
-            'primary_surfatom': ['Z','period','group_id','electron_affinity',
-                 'dipole_polarizability','heat_of_formation',
-                 'thermal_conductivity','specific_heat','en_allen',
-                 'en_pauling','atomic_radius','vdw_radius','ion_e'],
-            'Z_add': ['total_num_C', 'total_num_H'],
-            'primary_adds_nn': ['nn_num_C', 'nn_num_H'],
-            'primary_surf_nn': ['num_nn','av_dbcenter', 'av_dbfilling'],
-            'adds_sum': ['sum_electron_affinity', 'average_electron_affinity',
-                 'sum_en_allen', 'average_en_allen', 
-                 'sum_en_pauling', 'average_en_pauling'],
-            'get_Ef': ['Ef']
-            }
-        if len(keys) == 1:
-            L_F = D_F[keys]
-        else:
-            L_F = []
-            for key in reversed(keys):
-                L_F += D_F[key]
-        return L_F
+
         
 
 
