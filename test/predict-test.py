@@ -16,7 +16,7 @@ db = DataConnection('gadb.db')
 all_cand = db.get_all_relaxed_candidates(use_extinct=False)
 
 # Setup the test and training datasets.
-testset = get_unique(candidates=all_cand, testsize=10)
+testset = get_unique(candidates=all_cand, testsize=10, key='raw_score')
 trainset = get_train(candidates=all_cand, trainsize=50,
                      taken_cand=testset['taken'], key='raw_score')
 
@@ -35,12 +35,12 @@ assert np.shape(cvm) == (50, 50)
 pred = krr.get_predictions(train_fp=nfp['train'],
                            test_fp=nfp['test'],
                            cinv=cvm,
-                           target=trainset['target'],
-                           get_validation_error=True, 
-                           get_training_error=True,
-                           test=testset['target'])
+                           train_target=trainset['target'],
+                           test_target=testset['target'],
+                           get_validation_error=True,
+                           get_training_error=True)
 assert len(pred['prediction']) == 10
-print('linear prediction:', pred['rmse'])
+print('linear prediction:', pred['validation_rmse']['average'])
 
 # Set up the prediction routine.
 krr = FitnessPrediction(ktype='polynomial',
@@ -51,12 +51,12 @@ assert np.shape(cvm) == (50, 50)
 pred = krr.get_predictions(train_fp=nfp['train'],
                            test_fp=nfp['test'],
                            cinv=cvm,
-                           target=trainset['target'],
-                           get_validation_error=True, 
-                           get_training_error=True,
-                           test=testset['target'])
+                           train_target=trainset['target'],
+                           test_target=testset['target'],
+                           get_validation_error=True,
+                           get_training_error=True)
 assert len(pred['prediction']) == 10
-print('polynomial prediction:', pred['rmse'])
+print('polynomial prediction:', pred['validation_rmse']['average'])
 
 # Set up the prediction routine.
 krr = FitnessPrediction(ktype='gaussian',
@@ -67,12 +67,19 @@ assert np.shape(cvm) == (50, 50)
 pred = krr.get_predictions(train_fp=nfp['train'],
                            test_fp=nfp['test'],
                            cinv=cvm,
-                           target=trainset['target'],
-                           get_validation_error=True, 
+                           train_target=trainset['target'],
+                           test_target=testset['target'],
+                           get_validation_error=True,
                            get_training_error=True,
-                           test=testset['target'])
+                           uncertainty=True,
+                           basis=[1., 1., 1., 1.])
 assert len(pred['prediction']) == 10
-print('gaussian prediction:', pred['rmse'])
+print('gaussian prediction:', pred['validation_rmse']['average'])
+for i, j, k, l in zip(pred['prediction'],
+                      pred['uncertainty']['uncertainty'],
+                      pred['uncertainty']['gX'],
+                      pred['validation_rmse']['all']):
+    print(i, j, k, l)
 
 # Set up the prediction routine.
 krr = FitnessPrediction(ktype='laplacian',
@@ -83,9 +90,9 @@ assert np.shape(cvm) == (50, 50)
 pred = krr.get_predictions(train_fp=nfp['train'],
                            test_fp=nfp['test'],
                            cinv=cvm,
-                           target=trainset['target'],
-                           get_validation_error=True, 
-                           get_training_error=True,
-                           test=testset['target'])
+                           train_target=trainset['target'],
+                           test_target=testset['target'],
+                           get_validation_error=True,
+                           get_training_error=True)
 assert len(pred['prediction']) == 10
-print('laplacian prediction:', pred['rmse'])
+print('laplacian prediction:', pred['validation_rmse']['average'])
