@@ -129,19 +129,21 @@ def normalize(train, test=None):
 
     return norm
     
-def get_combined_feature_labels(atoms, labels):
-    """ Function to sequentially combine fingerprint vectors and return them
-        for a list of atoms objects.
+def get_combined_descriptors(fpv_list):
+    """ Function to sequentially combine feature label vectors and return them
+        for a list of atoms objects. Analogous to get_combined_fpv
+         
+        Input:  atoms object
+                functions that return fingerprints
+        
+        Output:  list
     """
     # Check that there are at least two fingerprint descriptors to combine.
     msg = "This functions combines various fingerprint"
     msg += " vectors, there must be at least two to combine"
-    assert len(labels) >= 2, msg
-    fpv_list = labels[::-1]
+    assert len(fpv_list) >= 2, msg
+    labels = fpv_list[::-1]
     L_F = []
-    for j in range(len(fpv_list)):
-        fpv = (fpv_list[j](atoms))
-        for i in range(len(fpv)):
-            fpl = (str(fpv_list[j])).split(' of')[0].replace('<bound method ','')+'_'+str(i)
-            L_F.append(fpl)
-    return np.array(L_F)
+    for j in range(len(labels)):
+        L_F.append( labels[j]() )
+    return np.hstack(L_F)
