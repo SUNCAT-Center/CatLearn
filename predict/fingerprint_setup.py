@@ -47,6 +47,24 @@ def get_combined_fpv(candidates, fpv_name, use_prior=True):
         c = candidates
         return np.array([get_fpv(c, fpv_name, use_prior, single=False)])
 
+def get_combined_descriptors(fpv_list):
+    """ Function to sequentially combine feature label vectors and return them
+        for a list of atoms objects. Analogous to get_combined_fpv
+         
+        Input:  atoms object
+                functions that return fingerprints
+        
+        Output:  list
+    """
+    # Check that there are at least two fingerprint descriptors to combine.
+    msg = "This functions combines various fingerprint"
+    msg += " vectors, there must be at least two to combine"
+    assert len(fpv_list) >= 2, msg
+    labels = fpv_list[::-1]
+    L_F = []
+    for j in range(len(labels)):
+        L_F.append( labels[j]() )
+    return np.hstack(L_F)
 
 def get_fpv(c, fpv_name, use_prior, single=True):
     """ Get the fingerprint vector as an array from a single Atoms object.
@@ -166,3 +184,4 @@ def sure_independence_screening(target, train_fpv, size=None):
         select['rejected'] = sort_list[1][size:]
 
     return select
+
