@@ -1,4 +1,6 @@
 """ Script to test the data_setup functions. """
+from __future__ import print_function
+
 from ase.ga.data import DataConnection
 from predict.data_setup import (get_unique, get_train, remove_outliers,
                                 data_split)
@@ -17,7 +19,7 @@ for i in data_split['split_cand']:
 assert sl == len(all_cand)
 
 # Setup the test and training datasets.
-testset = get_unique(candidates=all_cand, testsize=10)
+testset = get_unique(candidates=all_cand, testsize=10, key='raw_score')
 assert len(testset['candidates']) == 10
 assert len(testset['taken']) == 10
 
