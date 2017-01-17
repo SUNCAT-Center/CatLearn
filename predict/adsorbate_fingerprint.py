@@ -104,166 +104,195 @@ class AdsorbateFingerprintGenerator(object):
             trajs.append(atoms)
         return trajs
         
-    def elemental_dft_properties(self, atoms):#, adds_dict):
-        #series = atoms.info['key_value_pairs']['series']
-        name = atoms.info['key_value_pairs']['term']
-        #phase = atoms.info['key_value_pairs']['phase']
-        #facet = atoms.info['key_value_pairs']['facet']
-        #key = series+'_'+name+'_'+phase+'_'+facet
-        A = float(atoms.cell[0,0]) * float(atoms.cell[1,1])
-        return [
-            float(self.rho[name]), 
-            len(atoms.numbers) / A, 
-            float(self.eos_B[name]),
-            #float(self.dbcenter[name]),
-            #float(self.dbfilling[name])
-            ]
+    def elemental_dft_properties(self, atoms=None):#, adds_dict):
+        if atoms==None:
+            return ['rho_vol', 'rho_A', 'B_eos']
+        else:
+            #series = atoms.info['key_value_pairs']['series']
+            name = atoms.info['key_value_pairs']['term']
+            #phase = atoms.info['key_value_pairs']['phase']
+            #facet = atoms.info['key_value_pairs']['facet']
+            #key = series+'_'+name+'_'+phase+'_'+facet
+            A = float(atoms.cell[0,0]) * float(atoms.cell[1,1])
+            return [
+                float(self.rho[name]), 
+                len(atoms.numbers) / A, 
+                float(self.eos_B[name]),
+                #float(self.dbcenter[name]),
+                #float(self.dbfilling[name])
+                ]
         
-    def primary_addatom(self, atoms):
+    def primary_addatom(self, atoms=None):
         """ Function that takes an atoms objects and returns a fingerprint
             vector containing properties of the closest add atom to a surface metal atom.
         """
-        metal_atoms = [a.index for a in atoms if a.symbol not in ['H','C','O','N']]
-        add_atoms = [a.index for a in atoms if a.symbol in ['H','C','O','N']]
-        liste = []
-        for m in metal_atoms:
-            for a in add_atoms:
-                d = atoms.get_distance(m, a, mic=True, vector=False)
-                liste.append([a,d])
-        L = np.array(liste)
-        i = np.argmin(L[:,1])
-        Z0 = atoms.numbers[int(L[i,0])]
-        mendeleev = element(Z0)
-        result = [
-             Z0,
-             int(mendeleev.period), 
-             float(mendeleev.group_id), 
-             float(mendeleev.electron_affinity), 
-             float(mendeleev.dipole_polarizability),
-             float(mendeleev.en_allen),
-             float(mendeleev.en_pauling),
-             float(mendeleev.atomic_radius),
-             float(mendeleev.vdw_radius),
-             float(mendeleev.ionenergies[1])
-             ]
-        return result
+        if atoms==None:
+            return ['Z','period','group_id','electron_affinity',
+                'dipole_polarizability','en_allen', 'en_pauling',
+                'atomic_radius','vdw_radius','ion_e']
+        else:
+            metal_atoms = [a.index for a in atoms if a.symbol not in ['H','C','O','N']]
+            add_atoms = [a.index for a in atoms if a.symbol in ['H','C','O','N']]
+            liste = []
+            for m in metal_atoms:
+                for a in add_atoms:
+                    d = atoms.get_distance(m, a, mic=True, vector=False)
+                    liste.append([a,d])
+            L = np.array(liste)
+            i = np.argmin(L[:,1])
+            Z0 = atoms.numbers[int(L[i,0])]
+            mendeleev = element(Z0)
+            result = [
+                 Z0,
+                 int(mendeleev.period), 
+                 float(mendeleev.group_id), 
+                 float(mendeleev.electron_affinity), 
+                 float(mendeleev.dipole_polarizability),
+                 float(mendeleev.en_allen),
+                 float(mendeleev.en_pauling),
+                 float(mendeleev.atomic_radius),
+                 float(mendeleev.vdw_radius),
+                 float(mendeleev.ionenergies[1])
+                 ]
+            return result
     
-    def primary_surfatom(self, atoms):
+    def primary_surfatom(self, atoms=None):
         """ Function that takes an atoms objects and returns a fingerprint
             vector with properties of the surface metal atom closest to an add atom.
         """
-        metal_atoms = [a.index for a in atoms if a.symbol not in ['H','C','O','N']]
-        add_atoms = [a.index for a in atoms if a.symbol in ['H','C','O','N']]
-        #layer, z_layer = get_layers(atoms[metal_atoms], (0,0,1), tol=1.0)
-        liste = []
-        for m in metal_atoms:
-            for a in add_atoms:
-                d = atoms.get_distance(m, a, mic=True, vector=False)
-                liste.append([m,d])
-        L = np.array(liste)
-        i = np.argmin(L[:,1])
-        Z0 = atoms.numbers[int(L[i,0])]
-        mendeleev = element(Z0)
-        return [Z0, 
-                int(mendeleev.period), 
-                float(mendeleev.group_id), 
-                float(mendeleev.electron_affinity), 
-                float(mendeleev.dipole_polarizability),
-                float(mendeleev.heat_of_formation),
-                float(mendeleev.thermal_conductivity),
-                float(mendeleev.specific_heat),
-                float(mendeleev.en_allen),
-                float(mendeleev.en_pauling),
-                float(mendeleev.atomic_radius),
-                float(mendeleev.vdw_radius),
-                float(mendeleev.ionenergies[1]),
-                ]
+        if atoms==None:
+            return ['Z','period','group_id','electron_affinity',
+                 'dipole_polarizability','heat_of_formation',
+                 'thermal_conductivity','specific_heat','en_allen',
+                 'en_pauling','atomic_radius','vdw_radius','ion_e']
+        else:
+            metal_atoms = [a.index for a in atoms if a.symbol not in ['H','C','O','N']]
+            add_atoms = [a.index for a in atoms if a.symbol in ['H','C','O','N']]
+            #layer, z_layer = get_layers(atoms[metal_atoms], (0,0,1), tol=1.0)
+            liste = []
+            for m in metal_atoms:
+                for a in add_atoms:
+                    d = atoms.get_distance(m, a, mic=True, vector=False)
+                    liste.append([m,d])
+            L = np.array(liste)
+            i = np.argmin(L[:,1])
+            Z0 = atoms.numbers[int(L[i,0])]
+            mendeleev = element(Z0)
+            return [Z0, 
+                    int(mendeleev.period), 
+                    float(mendeleev.group_id), 
+                    float(mendeleev.electron_affinity), 
+                    float(mendeleev.dipole_polarizability),
+                    float(mendeleev.heat_of_formation),
+                    float(mendeleev.thermal_conductivity),
+                    float(mendeleev.specific_heat),
+                    float(mendeleev.en_allen),
+                    float(mendeleev.en_pauling),
+                    float(mendeleev.atomic_radius),
+                    float(mendeleev.vdw_radius),
+                    float(mendeleev.ionenergies[1]),
+                    ]
     
-    def Z_add(self, atoms):
+    def Z_add(self, atoms=None):
         """ Function that takes an atoms objects and returns a fingerprint
             vector containing the count of C, O, H and N atoms in the adsorbate.
         """
-        nC = len([a.index for a in atoms if a.symbol == 'C'])
-        #nO = len([a.index for a in atoms if a.symbol == 'O'])
-        #nN = len([a.index for a in atoms if a.symbol == 'N'])
-        nH = len([a.index for a in atoms if a.symbol == 'H'])
-        return [nC, nH]#, nN, nO]
+        if atoms==None:
+            return ['total_num_C', 'total_num_H']
+        else:
+            nC = len([a.index for a in atoms if a.symbol == 'C'])
+            #nO = len([a.index for a in atoms if a.symbol == 'O'])
+            #nN = len([a.index for a in atoms if a.symbol == 'N'])
+            nH = len([a.index for a in atoms if a.symbol == 'H'])
+            return [nC, nH]#, nN, nO]
         
-    def primary_adds_nn(self, atoms):
+    def primary_adds_nn(self, atoms=None):
         """ Function that takes an atoms objects and returns a fingerprint
             vector containing the count of C, O, H and N atoms in the adsorbate first group.
         """
-        metal_atoms = [a.index for a in atoms if a.symbol not in ['H','C','O','N']]
-        add_atoms = [a.index for a in atoms if a.symbol in ['H','C','O','N']]
-        liste = []
-        for m in metal_atoms:
-            for a in add_atoms:
-                d = atoms.get_distance(m, a, mic=True, vector=False)
-                liste.append([a,d])
-        L = np.array(liste)
-        i = np.argmin(L[:,1])
-        primary_add = int(L[i,0])
-        nH1 = len([a.index for a in atoms if a.symbol == 'H' and 
-            atoms.get_distance(primary_add,a.index, mic=True) < 1.3 and
-            a.index != primary_add])
-        nC1 = len([a.index for a in atoms if a.symbol == 'C' and 
-            atoms.get_distance(primary_add,a.index, mic=True) < 1.3 and
-            a.index != primary_add])
-        
-        return [nC1, nH1]#, nN, nH]
+        if atoms==None:
+            return ['nn_num_C', 'nn_num_H']
+        else:
+            metal_atoms = [a.index for a in atoms if a.symbol not in ['H','C','O','N']]
+            add_atoms = [a.index for a in atoms if a.symbol in ['H','C','O','N']]
+            liste = []
+            for m in metal_atoms:
+                for a in add_atoms:
+                    d = atoms.get_distance(m, a, mic=True, vector=False)
+                    liste.append([a,d])
+            L = np.array(liste)
+            i = np.argmin(L[:,1])
+            primary_add = int(L[i,0])
+            nH1 = len([a.index for a in atoms if a.symbol == 'H' and 
+                atoms.get_distance(primary_add,a.index, mic=True) < 1.3 and
+                a.index != primary_add])
+            nC1 = len([a.index for a in atoms if a.symbol == 'C' and 
+                atoms.get_distance(primary_add,a.index, mic=True) < 1.3 and
+                a.index != primary_add])
+            return [nC1, nH1]#, nN, nH]
     
-    def primary_surf_nn(self, atoms):
+    def primary_surf_nn(self, atoms=None):
         """ Function that takes an atoms objects and returns a fingerprint
             vector containing the count of nearest neighbors.
         """
-        metal_atoms = [a.index for a in atoms if a.symbol not in ['H','C','O','N']]
-        add_atoms = [a.index for a in atoms if a.symbol in ['H','C','O','N']]
-        liste = []
-        for m in metal_atoms:
-            for a in add_atoms:
-                d = atoms.get_distance(m, a, mic=True, vector=False)
-                liste.append([m,d])
-        L = np.array(liste)
-        i = np.argmin(L[:,1])
-        primary_surf = int(L[i,0])
-        symbols = atoms.get_chemical_symbols()
-        name = symbols[primary_surf]
-        r_bond = self.d_atoms[name]*1.15
-        ai = np.where( atoms.get_distances(primary_surf, metal_atoms, 
-                                              mic=True) < r_bond)
-        dbcenter = [self.dbcenter[name]]
-        dbfilling = [self.dbfilling[name]]
-        for q in ai[0]:
-            sym = symbols[metal_atoms[q]]
-            if sym in self.dbcenter:
-                dbcenter.append(self.dbcenter[sym])
-                dbfilling.append(self.dbfilling[sym])
-        av_dbcenter = np.average(dbcenter)
-        av_dbfilling = np.average(dbfilling)
-        n = len(ai)
-        
-        return [n, av_dbcenter, av_dbfilling]
+        if atoms==None:
+            return ['num_nn','av_dbcenter', 'av_dbfilling']
+        else:
+            metal_atoms = [a.index for a in atoms if a.symbol not in ['H','C','O','N']]
+            add_atoms = [a.index for a in atoms if a.symbol in ['H','C','O','N']]
+            liste = []
+            for m in metal_atoms:
+                for a in add_atoms:
+                    d = atoms.get_distance(m, a, mic=True, vector=False)
+                    liste.append([m,d])
+            L = np.array(liste)
+            i = np.argmin(L[:,1])
+            primary_surf = int(L[i,0])
+            symbols = atoms.get_chemical_symbols()
+            name = symbols[primary_surf]
+            r_bond = self.d_atoms[name]*1.15
+            ai = np.where( atoms.get_distances(primary_surf, metal_atoms, 
+                                                  mic=True) < r_bond)
+            dbcenter = [self.dbcenter[name]]
+            dbfilling = [self.dbfilling[name]]
+            for q in ai[0]:
+                sym = symbols[metal_atoms[q]]
+                if sym in self.dbcenter:
+                    dbcenter.append(self.dbcenter[sym])
+                    dbfilling.append(self.dbfilling[sym])
+            av_dbcenter = np.average(dbcenter)
+            av_dbfilling = np.average(dbfilling)
+            n = len(ai)
+            return [n, av_dbcenter, av_dbfilling]
     
-    def adds_sum(self, atoms):
+    def adds_sum(self, atoms=None):
         """ Function that takes an atoms objects and returns a fingerprint
             vector containing sums of the atomic properties of the adsorbate.
         """
-        add_atoms = [a.index for a in atoms if a.symbol in ['H','C','O','N']]
-        electron_affinity = 0
-        en_allen = 0
-        en_pauling = 0
-        for a in add_atoms:
-            Z0 = atoms.numbers[a]
-            electron_affinity += float(element(Z0).electron_affinity)
-            en_allen += float(element(Z0).en_allen)
-            en_pauling += float(element(Z0).en_pauling)
-        result = [electron_affinity, electron_affinity/len(add_atoms), 
-            en_allen, en_allen/len(add_atoms), en_pauling, 
-            en_pauling/len(add_atoms)]
-        return result
+        if atoms==None:
+            return ['sum_electron_affinity', 'average_electron_affinity',
+                 'sum_en_allen', 'average_en_allen', 
+                 'sum_en_pauling', 'average_en_pauling']
+        else:
+            add_atoms = [a.index for a in atoms if a.symbol in ['H','C','O','N']]
+            electron_affinity = 0
+            en_allen = 0
+            en_pauling = 0
+            for a in add_atoms:
+                Z0 = atoms.numbers[a]
+                electron_affinity += float(element(Z0).electron_affinity)
+                en_allen += float(element(Z0).en_allen)
+                en_pauling += float(element(Z0).en_pauling)
+            result = [electron_affinity, electron_affinity/len(add_atoms), 
+                en_allen, en_allen/len(add_atoms), en_pauling, 
+                en_pauling/len(add_atoms)]
+            return result
 
-    def get_Ef(self, atoms):
-        return [float(atoms.info['key_value_pairs']['Ef'])]
+    def get_Ef(self, atoms=None):
+        if atoms==None:
+            return ['Ef']
+        else:
+            return [float(atoms.info['key_value_pairs']['Ef'])]
     
     def feature_labels(self, keys):
         D_F = {
