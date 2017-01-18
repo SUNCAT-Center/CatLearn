@@ -12,35 +12,37 @@ import numpy as np
 from ase import db
 from db2thermo import db2mol, db2surf, mol2ref, get_refs, get_formation_energies
 from mendeleev import element
+from random import random
 
 class AdsorbateFingerprintGenerator(object):
-    def __init__(self, mols='mol.db', bulks='ref_bulks.db', slabs='metals.db'):
+    def __init__(self, mols='mol.db', bulks='ref_bulks.db', slabs=None):
         self.mols = mols
         self.bulks = bulks
-        self.slabs = slabs
-        abinitio_energies, frequency_dict, contribs, dbids = db2mol(mols, ['vacuum=8','PW=500'])
-        surf_energies, surf_frequencies, surf_contribs, surf_dbids = db2surf(slabs, ['Al=0','C=0','layers=5','facet=1x1x1','kpts=4x6','PW=500','PSP=gbrv1.5pbe'])
-        abinitio_energies.update(surf_energies)
-        frequency_dict.update(surf_frequencies)
-        contribs.update(surf_contribs)
-        dbids.update(surf_dbids)
-        #surf_energies211, surf_frequencies211, surf_contribs211, surf_dbids211 = db2surf(slabs, ['Al=0','Rh=0','Pt=0','layers=4','facet=2x1x1','kpts=4x4','PW=500','PSP=gbrv1.5pbe'])
-        #abinitio_energies.update(surf_energies211)
-        #frequency_dict.update(surf_frequencies211)
-        #contribs.update(surf_contribs211)
-        #dbids.update(surf_dbids211)
-        self.mol_dict = mol2ref(abinitio_energies)
-        ref_dict = get_refs(abinitio_energies, self.mol_dict)
         self.rho, self.Z, self.eos_B, self.dbcenter, self.dbfilling, self.d_atoms = self.get_bulk() 
-        #self.rho, self.Z, self.eos_B, self.d_atoms = self.get_bulk()
-        self.Ef = get_formation_energies(abinitio_energies, ref_dict)
-        stable_adds_ids = []
-        for key in abinitio_energies:
-            if 'slab' not in key and 'gas' not in key:
-                stable_adds_ids.append(dbids[key])
-        self.stable_adds_ids = stable_adds_ids
+        self.slabs = slabs
+        if slabs != None:
+            abinitio_energies, frequency_dict, contribs, dbids = db2mol(mols, ['vacuum=8','PW=500'])
+            surf_energies, surf_frequencies, surf_contribs, surf_dbids = db2surf(slabs, ['Al=0','C=0','layers=5','facet=1x1x1','kpts=4x6','PW=500','PSP=gbrv1.5pbe'])
+            abinitio_energies.update(surf_energies)
+            frequency_dict.update(surf_frequencies)
+            contribs.update(surf_contribs)
+            dbids.update(surf_dbids)
+            #surf_energies211, surf_frequencies211, surf_contribs211, surf_dbids211 = db2surf(slabs, ['Al=0','Rh=0','Pt=0','layers=4','facet=2x1x1','kpts=4x4','PW=500','PSP=gbrv1.5pbe'])
+            #abinitio_energies.update(surf_energies211)
+            #frequency_dict.update(surf_frequencies211)
+            #contribs.update(surf_contribs211)
+            #dbids.update(surf_dbids211)
+            self.mol_dict = mol2ref(abinitio_energies)
+            ref_dict = get_refs(abinitio_energies, self.mol_dict)
+            #self.rho, self.Z, self.eos_B, self.d_atoms = self.get_bulk()
+            self.Ef = get_formation_energies(abinitio_energies, ref_dict)
+            stable_adds_ids = []
+            for key in abinitio_energies:
+                if 'slab' not in key and 'gas' not in key:
+                    stable_adds_ids.append(dbids[key])
+            self.stable_adds_ids = stable_adds_ids
     
-    def db2atoms_info(self, fname='test_set.db', selection=['series!=slab','layers=5','facet=1x1x1','kpts=4x6']): #selection=[]):
+    def db2atoms_info(self, fname='test_set.db', selection=['series!=slab','C=0','layers=5','facet=1x1x1','kpts=4x6']): #selection=[]):
         c = db.connect(fname)
         s = c.select(selection)
         traj = []
@@ -322,12 +324,18 @@ class AdsorbateFingerprintGenerator(object):
                 en_pauling/len(add_atoms)]
             return result
     
+    def randomfpv(self, atoms=None):
+        if atoms==None:
+            return ['random']
+        else:
+            return [random()]
+    
     def get_Ef(self, atoms=None):
         if atoms==None:
             return ['Ef']
         else:
-            return [float(atoms.info['key_value_pairs']['Ef'])]
-    
+            Ef = float(atoms.info['key_value_pairs']['Ef'])
+            return [Ef]
 
         
 
