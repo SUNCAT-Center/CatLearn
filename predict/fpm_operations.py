@@ -41,7 +41,7 @@ class fpm_operations():
             useful for bootstrapping, LOOCV, etc.
             Input:
                 nsplit: int
-                The number of bins that data should be devided into.
+                The number of bins that data should be divided into.
             Output:
                 list
         """
