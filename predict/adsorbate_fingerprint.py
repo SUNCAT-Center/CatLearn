@@ -218,8 +218,9 @@ class AdsorbateFingerprintGenerator(object):
         if atoms==None:
             return ['nn_num_C', 'nn_num_H', 'nn_num_M']
         else:
-            metal_atoms = [a.index for a in atoms if a.symbol not in ['H','C','O','N']]
-            add_atoms = [a.index for a in atoms if a.symbol in ['H','C','O','N']]
+            addsyms = ['H','C','O','N']
+            metal_atoms = [a.index for a in atoms if a.symbol not in addsyms]
+            add_atoms = [a.index for a in atoms if a.symbol in addsyms]
             liste = []
             for m in metal_atoms:
                 for a in add_atoms:
@@ -234,7 +235,7 @@ class AdsorbateFingerprintGenerator(object):
             nC1 = len([a.index for a in atoms if a.symbol == 'C' and 
                 atoms.get_distance(primary_add,a.index, mic=True) < 1.3 and
                 a.index != primary_add])
-            nM = len([a.index for a in atoms if a.symbol in metal_atoms and 
+            nM = len([a.index for a in atoms if a.symbol not in addsyms and 
                 atoms.get_distance(primary_add,a.index, mic=True) < 2.35])
             return [nC1, nH1, nM]#, nN, nH]
     
