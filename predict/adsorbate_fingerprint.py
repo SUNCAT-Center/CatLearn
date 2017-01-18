@@ -19,7 +19,7 @@ class AdsorbateFingerprintGenerator(object):
         self.bulks = bulks
         self.slabs = slabs
         abinitio_energies, frequency_dict, contribs, dbids = db2mol(mols, ['vacuum=8','PW=500'])
-        surf_energies, surf_frequencies, surf_contribs, surf_dbids = db2surf(slabs, ['Al=0','layers=5','facet=1x1x1','kpts=4x6','PW=500','PSP=gbrv1.5pbe'])
+        surf_energies, surf_frequencies, surf_contribs, surf_dbids = db2surf(slabs, ['Al=0','C=0','layers=5','facet=1x1x1','kpts=4x6','PW=500','PSP=gbrv1.5pbe'])
         abinitio_energies.update(surf_energies)
         frequency_dict.update(surf_frequencies)
         contribs.update(surf_contribs)
@@ -89,7 +89,7 @@ class AdsorbateFingerprintGenerator(object):
         
     def db2atoms_fps(self):#, adds_dict):
         c = db.connect(self.slabs)
-        s = c.select(['series!=slab','layers=5','facet=1x1x1','kpts=4x6','PW=500','PSP=gbrv1.5pbe'])
+        s = c.select(['series!=slab','C=0','layers=5','facet=1x1x1','kpts=4x6','PW=500','PSP=gbrv1.5pbe'])
         trajs = []
         for d in s:
             dbid = int(d.id)
@@ -128,7 +128,8 @@ class AdsorbateFingerprintGenerator(object):
         """
         if atoms==None:
             return ['Z','period','group_id','electron_affinity',
-                'dipole_polarizability','en_allen', 'en_pauling',
+                'dipole_polarizability',#'en_allen', 
+                'en_pauling',
                 'atomic_radius','vdw_radius','ion_e']
         else:
             metal_atoms = [a.index for a in atoms if a.symbol not in ['H','C','O','N']]
@@ -148,7 +149,7 @@ class AdsorbateFingerprintGenerator(object):
                  float(mendeleev.group_id), 
                  float(mendeleev.electron_affinity), 
                  float(mendeleev.dipole_polarizability),
-                 float(mendeleev.en_allen),
+                 #float(mendeleev.en_allen),
                  float(mendeleev.en_pauling),
                  float(mendeleev.atomic_radius),
                  float(mendeleev.vdw_radius),
@@ -161,10 +162,12 @@ class AdsorbateFingerprintGenerator(object):
             vector with properties of the surface metal atom closest to an add atom.
         """
         if atoms==None:
-            return ['Z','period','group_id','electron_affinity',
-                 'dipole_polarizability','heat_of_formation',
-                 'thermal_conductivity','specific_heat','en_allen',
-                 'en_pauling','atomic_radius','vdw_radius','ion_e']
+            return ['Z','period_surf1','group_id_surf1',
+                 #'electron_affinity',
+                 'dipole_polarizability_surf1','heat_of_formationsurf1',
+                 #'thermal_conductivity',
+                 'specific_heat_surf1',#'en_allen',
+                 'en_pauling_surf1','atomic_radius_surf1','vdw_radius_surf1','ion_e_surf1']
         else:
             metal_atoms = [a.index for a in atoms if a.symbol not in ['H','C','O','N']]
             add_atoms = [a.index for a in atoms if a.symbol in ['H','C','O','N']]
@@ -181,12 +184,12 @@ class AdsorbateFingerprintGenerator(object):
             return [Z0, 
                     int(mendeleev.period), 
                     float(mendeleev.group_id), 
-                    float(mendeleev.electron_affinity), 
+                    #float(mendeleev.electron_affinity), 
                     float(mendeleev.dipole_polarizability),
                     float(mendeleev.heat_of_formation),
-                    float(mendeleev.thermal_conductivity),
+                    #float(mendeleev.thermal_conductivity),
                     float(mendeleev.specific_heat),
-                    float(mendeleev.en_allen),
+                    #float(mendeleev.en_allen),
                     float(mendeleev.en_pauling),
                     float(mendeleev.atomic_radius),
                     float(mendeleev.vdw_radius),
@@ -211,7 +214,7 @@ class AdsorbateFingerprintGenerator(object):
             vector containing the count of C, O, H and N atoms in the adsorbate first group.
         """
         if atoms==None:
-            return ['nn_num_C', 'nn_num_H']
+            return ['nn_num_C', 'nn_num_H', 'nn_num_M']
         else:
             metal_atoms = [a.index for a in atoms if a.symbol not in ['H','C','O','N']]
             add_atoms = [a.index for a in atoms if a.symbol in ['H','C','O','N']]
@@ -229,7 +232,38 @@ class AdsorbateFingerprintGenerator(object):
             nC1 = len([a.index for a in atoms if a.symbol == 'C' and 
                 atoms.get_distance(primary_add,a.index, mic=True) < 1.3 and
                 a.index != primary_add])
-            return [nC1, nH1]#, nN, nH]
+            nM = len([a.index for a in atoms if a.symbol in metal_atoms and 
+                atoms.get_distance(primary_add,a.index, mic=True) < 2.35])
+            return [nC1, nH1, nM]#, nN, nH]
+    
+    def secondary_adds_nn(self, atoms=None):
+        """ Function that takes an atoms objects and returns a fingerprint
+            vector containing the count of C, O, H and N atoms in the adsorbate first group.
+            This function is relevant for adsorbates that bind through 2 atoms.
+            Example: CH2CH2 on Pt111 binds through 2 C atoms 
+        """
+        if atoms==None:
+            return ['num_C_add2nn', 'num_H_add2nn', 'num_M_add2nn']
+        else:
+            metal_atoms = [a.index for a in atoms if a.symbol not in ['H','C','O','N']]
+            add_atoms = [a.index for a in atoms if a.symbol in ['H','C','O','N']]
+            liste = []
+            for m in metal_atoms:
+                for a in add_atoms:
+                    d = atoms.get_distance(m, a, mic=True, vector=False)
+                    liste.append([a,d])
+            L = np.array(liste)
+            i = np.argsort(L[:,1])[1]
+            secondary_add = int(L[i,0])
+            nH1 = len([a.index for a in atoms if a.symbol == 'H' and 
+                atoms.get_distance(secondary_add,a.index, mic=True) < 1.3 and
+                a.index != secondary_add])
+            nC1 = len([a.index for a in atoms if a.symbol == 'C' and 
+                atoms.get_distance(secondary_add,a.index, mic=True) < 1.3 and
+                a.index != secondary_add])
+            nM = len([a.index for a in atoms if a.symbol in metal_atoms and 
+                atoms.get_distance(secondary_add,a.index, mic=True) < 2.35])
+            return [nC1, nH1, nM]#, nN, nH]    
     
     def primary_surf_nn(self, atoms=None):
         """ Function that takes an atoms objects and returns a fingerprint
@@ -287,7 +321,7 @@ class AdsorbateFingerprintGenerator(object):
                 en_allen, en_allen/len(add_atoms), en_pauling, 
                 en_pauling/len(add_atoms)]
             return result
-
+    
     def get_Ef(self, atoms=None):
         if atoms==None:
             return ['Ef']
