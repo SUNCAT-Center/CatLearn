@@ -11,17 +11,17 @@ import numpy as np
 class fpm_operations():
     def __init__(self, X):
         self.X = X
-    
-    def append_features(A, new_features):
-        shapeX = np.shape(A)
-        shapeX2 = np.shape(new_features)
-        assert shapeX[0] == shapeX2[0]
-        new_fpm = np.zeros([shapeX[0],shapeX[1]+shapeX2[1]])
-        new_fpm[:,:shapeX[1]] = A
-        new_fpm[:,shapeX[1]:] = new_features
-        return new_fpm
-    
-    def get_order_2(A):
+   
+    def get_order_2(self):
+        A = self.X
+        """Get all combinations x_ij = x_i * x_j, where x_i,j are features.
+        The sorting order in dimension 0 is preserved.
+        Input)
+            A: nxm matrix, where n sis the number of training examples and 
+            m is the number of features.
+        Output)
+            n x m**2 matrix
+        """
         shapeA = np.shape(A)
         nfi = 0
         new_features = np.zeros([shapeA[0],shapeA[1]**2])
@@ -32,9 +32,54 @@ class fpm_operations():
                 nfi += 1
         return new_features
     
-    def append_o2(self):
-        new_features = self.get_order_2(self.X)
-        self.append_features(self.X, new_features)
+    def get_order_2ab(self, a, b):
+        A = self.X
+        """Get all combinations x_ij = x_i*a * x_j*b, where x_i,j are features.
+        The sorting order in dimension 0 is preserved.
+        Input)
+            A: nxm matrix, where n is the number of training examples and 
+            m is the number of features.
+            
+            a: float
+            
+            b: float
+        Output)
+            n x m**2 matrix
+        """
+        shapeA = np.shape(A)
+        nfi = 0
+        new_features = np.zeros([shapeA[0],shapeA[1]**2])
+        for f1 in range(shapeA[1]):
+            for f2 in range(shapeA[1]):
+                new_feature = A[:,f1]**a * A[:,f2]**b
+                new_features[:,nfi] = new_feature
+                nfi += 1
+        return new_features    
+    
+    def get_ablog(self,a,b):
+        A = self.X
+        """Get all combinations x_ij = a*log(x_i) + b*log(x_j), 
+        where x_i,j are features.
+        The sorting order in dimension 0 is preserved.
+        Input)
+            A: nxm matrix, where n is the number of training examples and 
+            m is the number of features.
+            
+            a: float
+            
+            b: float
+        Output)
+            n x m**2 matrix
+        """
+        shapeA = np.shape(A)
+        nfi = 0
+        new_features = np.zeros([shapeA[0],shapeA[1]**2])
+        for f1 in range(shapeA[1]):
+            for f2 in range(shapeA[1]):
+                new_feature = a*np.log(A[:,f1]) + b*np.log(A[:,f2])
+                new_features[:,nfi] = new_feature
+                nfi += 1
+        return new_features        
     
     def fpmatrix_split(self, nsplit):
         """ Routine to split list of candidates into sublists. This can be
