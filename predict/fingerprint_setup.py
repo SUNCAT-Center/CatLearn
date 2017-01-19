@@ -176,7 +176,6 @@ def sure_independence_screening(target, train_fpv, size=None):
     sort_list = [list(i) for i in zip(*sorted(zip(abs(omega), order),
                                               key=lambda x: x[0],
                                               reverse=True))]
-
     select['sorted'] = sort_list[1]
     select['correlation'] = sort_list[0]
     if size is not None:
