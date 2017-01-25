@@ -10,19 +10,21 @@ Created on Tue Dec  6 14:09:29 2016
 
 import numpy as np
 from ase import db
-from db2thermo import db2mol, db2surf, mol2ref, get_refs, get_formation_energies
+from ase.atoms import string2symbols
+from db2thermo import db2mol, db2surf, mol2ref, get_refs #get_formation_energies
 from mendeleev import element
 from random import random
 
 class AdsorbateFingerprintGenerator(object):
-    def __init__(self, mols='mol.db', bulks='ref_bulks.db', slabs=None):
+    def __init__(self, mols='mol.db', bulks='ref_bulks.db', slabs=None, parameters={'vacuum':8, 'PW':500, 'kpts':'4x6', 'PSP':'gbrv1.5pbe'}):
         self.mols = mols
         self.bulks = bulks
         self.rho, self.Z, self.eos_B, self.dbcenter, self.dbfilling, self.d_atoms = self.get_bulk() 
         self.slabs = slabs
+        abinitio_energies, frequency_dict, contribs, dbids = db2mol(mols, ['vacuum='+str(parameters['vacuum']),'PW='+str(parameters['PW'])])
+        self.mol_dict = mol2ref(abinitio_energies)
         if slabs != None:
-            abinitio_energies, frequency_dict, contribs, dbids = db2mol(mols, ['vacuum=8','PW=500'])
-            surf_energies, surf_frequencies, surf_contribs, surf_dbids = db2surf(slabs, ['Al=0','C=0','layers=5','facet=1x1x1','kpts=4x6','PW=500','PSP=gbrv1.5pbe'])
+            surf_energies, surf_frequencies, surf_contribs, surf_dbids = db2surf(slabs, ['series=slab','kpts='+str(parameters['kpts']),'PW='+str(parameters['PW']),'PSP='+str(parameters['PSP'])])
             abinitio_energies.update(surf_energies)
             frequency_dict.update(surf_frequencies)
             contribs.update(surf_contribs)
@@ -32,21 +34,21 @@ class AdsorbateFingerprintGenerator(object):
             #frequency_dict.update(surf_frequencies211)
             #contribs.update(surf_contribs211)
             #dbids.update(surf_dbids211)
-            self.mol_dict = mol2ref(abinitio_energies)
-            ref_dict = get_refs(abinitio_energies, self.mol_dict)
+            self.ref_dict = get_refs(abinitio_energies, self.mol_dict)
+        self.abinitio_energies = abinitio_energies
             #self.rho, self.Z, self.eos_B, self.d_atoms = self.get_bulk()
-            self.Ef = get_formation_energies(abinitio_energies, ref_dict)
-            stable_adds_ids = []
-            for key in abinitio_energies:
-                if 'slab' not in key and 'gas' not in key:
-                    stable_adds_ids.append(dbids[key])
-            self.stable_adds_ids = stable_adds_ids
+            #self.Ef = get_formation_energies(abinitio_energies, ref_dict)
+            #stable_adds_ids = []
+            #for key in abinitio_energies:
+            #    if 'slab' not in key and 'gas' not in key:
+            #        stable_adds_ids.append(dbids[key])
+            #self.stable_adds_ids = stable_adds_ids
     
-    def db2atoms_info(self, fname='test_set.db', selection=['series!=slab','C=0','layers=5','facet=1x1x1','kpts=4x6']): #selection=[]):
+    def db2atoms_info(self, fname='test_set.db', selection=['series=!=slab','layers=5','facet=1x1x1','kpts=4x6']): #selection=[]):
         c = db.connect(fname)
         s = c.select(selection)
         traj = []
-        for d in s:    
+        for d in s:
             dbid = int(d.id)
             d = c.get(dbid)
             atoms = c.get_atoms(dbid)
@@ -65,6 +67,18 @@ class AdsorbateFingerprintGenerator(object):
             atoms = c.get_atoms(dbid)
             atoms.info['key_value_pairs'] = d.key_value_pairs
             atoms.info['key_value_pairs']['Ef'] = self.Ef[thermo_key]
+            traj.append(atoms)
+        return traj
+
+    def db2adds_info(self, fname='metals.db', selection=['series=!slab','layers=5','facet=1x1x1','kpts=4x6']): #selection=[]):
+        c = db.connect(fname)
+        s = c.select(selection)
+        traj = []
+        for d in s:    
+            dbid = int(d.id)
+            d = c.get(dbid)
+            atoms = c.get_atoms(dbid)
+            atoms.info['key_value_pairs'] = d.key_value_pairs
             traj.append(atoms)
         return traj
     
@@ -129,10 +143,10 @@ class AdsorbateFingerprintGenerator(object):
             vector containing properties of the closest add atom to a surface metal atom.
         """
         if atoms==None:
-            return ['Z','period','group_id','electron_affinity',
-                'dipole_polarizability',#'en_allen', 
-                'en_pauling',
-                'atomic_radius','vdw_radius','ion_e']
+            return ['Z_add1','period_add1','group_id_add1','electron_affinity_add1',
+                'dipole_polarizability_add1',#'en_allen', 
+                'en_pauling_add1',
+                'atomic_radius_add1','vdw_radius_add1','ion_e_add1']
         else:
             metal_atoms = [a.index for a in atoms if a.symbol not in ['H','C','O','N']]
             add_atoms = [a.index for a in atoms if a.symbol in ['H','C','O','N']]
@@ -273,7 +287,7 @@ class AdsorbateFingerprintGenerator(object):
             vector containing the count of nearest neighbors.
         """
         if atoms==None:
-            return ['num_nn','av_dbcenter', 'av_dbfilling']
+            return ['num_nn','nn_num_identical','av_dbcenter', 'av_dbfilling']
         else:
             metal_atoms = [a.index for a in atoms if a.symbol not in ['H','C','O','N']]
             add_atoms = [a.index for a in atoms if a.symbol in ['H','C','O','N']]
@@ -292,15 +306,19 @@ class AdsorbateFingerprintGenerator(object):
                                                   mic=True) < r_bond)
             dbcenter = [self.dbcenter[name]]
             dbfilling = [self.dbfilling[name]]
+            q_self = []            
             for q in ai[0]:
                 sym = symbols[metal_atoms[q]]
                 if sym in self.dbcenter:
                     dbcenter.append(self.dbcenter[sym])
                     dbfilling.append(self.dbfilling[sym])
+                if sym == name:
+                    q_self.append(q)
             av_dbcenter = np.average(dbcenter)
             av_dbfilling = np.average(dbfilling)
             n = len(ai)
-            return [n, av_dbcenter, av_dbfilling]
+            n_self = len(q_self)
+            return [n, n_self, av_dbcenter, av_dbfilling]
     
     def adds_sum(self, atoms=None):
         """ Function that takes an atoms objects and returns a fingerprint
@@ -308,7 +326,7 @@ class AdsorbateFingerprintGenerator(object):
         """
         if atoms==None:
             return ['sum_electron_affinity', 'average_electron_affinity',
-                 'sum_en_allen', 'average_en_allen', 
+                 #'sum_en_allen', 'average_en_allen', 
                  'sum_en_pauling', 'average_en_pauling']
         else:
             add_atoms = [a.index for a in atoms if a.symbol in ['H','C','O','N']]
@@ -321,8 +339,8 @@ class AdsorbateFingerprintGenerator(object):
                 en_allen += float(element(Z0).en_allen)
                 en_pauling += float(element(Z0).en_pauling)
             result = [electron_affinity, electron_affinity/len(add_atoms), 
-                en_allen, en_allen/len(add_atoms), en_pauling, 
-                en_pauling/len(add_atoms)]
+                #en_allen, en_allen/len(add_atoms),
+                en_pauling, en_pauling/len(add_atoms)]
             return result
     
     def randomfpv(self, atoms=None):
@@ -335,10 +353,16 @@ class AdsorbateFingerprintGenerator(object):
         if atoms==None:
             return ['Ef']
         else:
-            Ef = float(atoms.info['key_value_pairs']['Ef'])
+            name = str(atoms.info['key_value_pairs']['name'])
+            series = str(atoms.info['key_value_pairs']['series'])
+            composition = string2symbols(series)
+            #Ef = float(atoms.info['key_value_pairs']['Ef'])
+            thermo_key = 'slab_'+name+'_'+str(atoms.info['key_value_pairs']['phase'])+'_'+str(atoms.info['key_value_pairs']['facet'])
+            Ef = float(atoms.info['key_value_pairs']['enrgy']) - self.abinitio_energies[thermo_key]
+            for a in composition:
+                Ef -= self.ref_dict[a]
             return [Ef]
-
-        
+ 
 
 
 
