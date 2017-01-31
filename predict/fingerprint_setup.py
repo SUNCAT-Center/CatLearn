@@ -87,6 +87,16 @@ def get_fpv(c, fpv_name, use_prior, single=True):
         c.info['data']['fpv'] = concatenate_fpv(c, fpv_name)
     return c.info['data']['fpv']
 
+            
+def get_keyvaluepair(c=[], fpv_name='None', single=True):
+    if len(c) == 0:
+        return ['kvp_'+fpv_name]
+    else:
+        out = []
+        for atoms in c:
+            field_value = float(atoms['key_value_pairs'][fpv_name])
+            out.append(field_value)        
+        return out
 
 def concatenate_fpv(c, fpv_name):
     """ Simple function to join multiple fingerprint vectors. """
