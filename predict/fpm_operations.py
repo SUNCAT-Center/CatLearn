@@ -7,30 +7,48 @@ Created on Tue Jan  3 12:01:30 2017
 
 import numpy as np
 
+def triangular(n):
+    return sum(range(n+1))
 
 class fpm_operations():
-    def __init__(self, X):
+    def __init__(self, X=None, x=None):
         self.X = X
+        self.x = x
    
     def get_order_2(self):
         A = self.X
         """Get all combinations x_ij = x_i * x_j, where x_i,j are features.
         The sorting order in dimension 0 is preserved.
         Input)
-            A: nxm matrix, where n sis the number of training examples and 
+            A: nxm matrix, where n is the number of training examples and 
             m is the number of features.
         Output)
             n x m**2 matrix
         """
         shapeA = np.shape(A)
         nfi = 0
-        new_features = np.zeros([shapeA[0],shapeA[1]**2])
+        new_features = np.zeros([shapeA[0],triangular(shapeA[1])])
         for f1 in range(shapeA[1]):
-            for f2 in range(shapeA[1]):
+            for f2 in range(f1,shapeA[1]):
                 new_feature = A[:,f1]*A[:,f2]
                 new_features[:,nfi] = new_feature
                 nfi += 1
         return new_features
+    
+    def get_labels_order_2(self):
+        """Get all combinations ij, where i,j are feature labels.
+        Input)
+            x: length m vector, where m is the number of features.
+        Output)
+            m**2 vector
+        """
+        L = len(self.x)
+        #assert L == np.shape(self.X)[1]
+        new_features = []
+        for f1 in range(L):
+            for f2 in range(f1,L):
+                new_features.append(self.x[f1]+'_x_'+self.x[f2])
+        return np.array(new_features)
     
     def get_order_2ab(self, a, b):
         A = self.X
@@ -48,13 +66,13 @@ class fpm_operations():
         """
         shapeA = np.shape(A)
         nfi = 0
-        new_features = np.zeros([shapeA[0],shapeA[1]**2])
+        new_features = np.zeros([shapeA[0],triangular(shapeA[1])])
         for f1 in range(shapeA[1]):
-            for f2 in range(shapeA[1]):
+            for f2 in range(f1,shapeA[1]):
                 new_feature = A[:,f1]**a * A[:,f2]**b
                 new_features[:,nfi] = new_feature
                 nfi += 1
-        return new_features    
+        return new_features
     
     def get_ablog(self,a,b):
         A = self.X
@@ -73,9 +91,9 @@ class fpm_operations():
         """
         shapeA = np.shape(A)
         nfi = 0
-        new_features = np.zeros([shapeA[0],shapeA[1]**2])
+        new_features = np.zeros([shapeA[0],triangular(shapeA[1])])
         for f1 in range(shapeA[1]):
-            for f2 in range(shapeA[1]):
+            for f2 in range(f1,shapeA[1]):
                 new_feature = a*np.log(A[:,f1]) + b*np.log(A[:,f2])
                 new_features[:,nfi] = new_feature
                 nfi += 1
