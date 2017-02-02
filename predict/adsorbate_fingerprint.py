@@ -10,20 +10,22 @@ Created on Tue Dec  6 14:09:29 2016
 
 import warnings
 import numpy as np
-from ase import db
+import ase.db
 from ase.atoms import string2symbols
 from db2thermo import db2mol, db2surf, mol2ref, get_refs #get_formation_energies
 from mendeleev import element
 from random import random
 
 class AdsorbateFingerprintGenerator(object):
-    def __init__(self, mols='mol.db', bulks='ref_bulks.db', slabs=None, parameters={'vacuum':8,'layers':5,'PW':500,'kpts':'4x6','PSP':'gbrv1.5pbe'}):
-        self.mols = mols
-        self.bulks = bulks
-        self.rho, self.Z, self.eos_B, self.dbcenter, self.dbfilling, self.d_atoms = self.get_bulk() 
-        self.slabs = slabs
-        abinitio_energies, frequency_dict, contribs, dbids = db2mol(mols, ['vacuum='+str(parameters['vacuum']),'PW='+str(parameters['PW'])])
+    def __init__(self, moldb='mol.db', bulkdb=None, slabs=None):
+        self.mols = moldb
+        parameters={'vacuum':8,'layers':5,'PW':500,'kpts':'4x6','PSP':'gbrv1.5pbe'}
+        if bulkdb != None:
+            self.bulks = bulkdb
+            self.rho, self.Z, self.eos_B, self.dbcenter, self.dbfilling, self.d_atoms = self.get_bulk()
+        abinitio_energies, frequency_dict, contribs, dbids = db2mol(moldb, ['vacuum='+str(parameters['vacuum']),'PW='+str(parameters['PW'])])
         self.mol_dict = mol2ref(abinitio_energies)
+        self.slabs = slabs
         if slabs != None:
             surf_energies, surf_frequencies, surf_contribs, surf_dbids = db2surf(slabs, ['series=slab','layers='+str(parameters['layers']),'kpts='+str(parameters['kpts']),'PW='+str(parameters['PW']),'PSP='+str(parameters['PSP'])])
             abinitio_energies.update(surf_energies)
@@ -46,7 +48,7 @@ class AdsorbateFingerprintGenerator(object):
             #self.stable_adds_ids = stable_adds_ids
     
     def db2atoms_info(self, fname='test_set.db', selection=['series!=slab','layers=5','facet=1x1x1','kpts=4x6']): #selection=[]):
-        c = db.connect(fname)
+        c = ase.db.connect(fname)
         s = c.select(selection)
         traj = []
         for d in s:
@@ -58,7 +60,7 @@ class AdsorbateFingerprintGenerator(object):
         return traj
     
     def db2surf_info(self): #selection=[]):
-        c = db.connect(self.slabs)
+        c = ase.db.connect(self.slabs)
         traj = []
         for dbid in self.stable_adds_ids:    
             #dbid = int(d.id)
@@ -72,7 +74,7 @@ class AdsorbateFingerprintGenerator(object):
         return traj
 
     def db2adds_info(self, fname='metals.db', selection=['series!=slab','layers=5','facet=1x1x1','kpts=4x6']): #selection=[]):
-        c = db.connect(fname)
+        c = ase.db.connect(fname)
         s = c.select(selection)
         traj = []
         for d in s:    
@@ -84,7 +86,7 @@ class AdsorbateFingerprintGenerator(object):
         return traj
     
     def get_bulk(self):
-        c = db.connect(self.bulks)
+        c = ase.db.connect(self.bulks)
         s = c.select('C=0')
         Z = {}
         rho = {}
@@ -105,7 +107,7 @@ class AdsorbateFingerprintGenerator(object):
         return rho, Z, eos_B, dbcenter, dbfilling, d_atoms
         
     def db2atoms_fps(self):#, adds_dict):
-        c = db.connect(self.slabs)
+        c = ase.db.connect(self.slabs)
         s = c.select(['series!=slab','C=0','layers=5','facet=1x1x1','kpts=4x6','PW=500','PSP=gbrv1.5pbe'])
         trajs = []
         for d in s:
@@ -218,13 +220,13 @@ class AdsorbateFingerprintGenerator(object):
             vector containing the count of C, O, H and N atoms in the adsorbate.
         """
         if atoms==None:
-            return ['total_num_C', 'total_num_H']
+            return ['total_num_C', 'total_num_O', 'total_num_N', 'total_num_H']
         else:
             nC = len([a.index for a in atoms if a.symbol == 'C'])
-            #nO = len([a.index for a in atoms if a.symbol == 'O'])
-            #nN = len([a.index for a in atoms if a.symbol == 'N'])
+            nO = len([a.index for a in atoms if a.symbol == 'O'])
+            nN = len([a.index for a in atoms if a.symbol == 'N'])
             nH = len([a.index for a in atoms if a.symbol == 'H'])
-            return [nC, nH]#, nN, nO]
+            return [nC, nH, nN, nO]
         
     def primary_adds_nn(self, atoms=None):
         """ Function that takes an atoms objects and returns a fingerprint
