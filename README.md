@@ -1,6 +1,5 @@
 # AtoML
 ![Build Status](https://gitlab.com/atoML/AtoML/badges/master/build.svg)
----
 
 Utilities for building and testing Atomic Machine Learning (AtoML) models.
 Kernel Ridge Regression (KRR) machine learning routines are implemented. These
@@ -23,17 +22,23 @@ use of the many ASE functions.
 
 Put the `<install_dir>/` into your `$PYTHONPATH` environment variable.
 
-#### Atomic Simulation Environment
+##### Atomic Simulation Environment
 
 ASE is a set of tools and Python modules for setting up, manipulating,
 running, visualizing and analyzing atomistic simulations. Installation
 instructions and tutorials can be found on their webpage
 <https://wiki.fysik.dtu.dk/ase/>.
 
-#### ASAP - As Soon As Possible
+##### ASAP - As Soon As Possible
 
 If a large amount of testing is likely to be performed it is recommended that
 ASAP is installed to replace the empirical potentials distributed with ASE. The
 ASAP potentials are significantly more computationally efficient.
 Installation instructions and tutorials can be found on their webpage
 <https://wiki.fysik.dtu.dk/asap>.
+
+##### Visualization
+
+Data visualization in the example scripts is performed with the
+[Pandas](http://pandas.pydata.org) and [Seaborn](http://seaborn.pydata.org)
+Python packages.

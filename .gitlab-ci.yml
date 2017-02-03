@@ -1,7 +1,7 @@
 python_2_7_tests:
   script:
     - apt-get update -qy
-    - apt-get install -qy python-numpy python-scipy
+    - apt-get install -qy python-pip python-numpy python-scipy
     - git clone https://gitlab.com/ase/ase.git
     - pwd
     - export PYTHONPATH=$PWD/ase:$PYTHONPATH
@@ -12,11 +12,12 @@ python_2_7_tests:
     - python data_setup-test.py
     - python predict-test.py
     - python fingerprint-test.py
+    - python database-test.py
 
 python_3_tests:
   script:
     - apt-get update -qy
-    - apt-get install -qy python3-numpy python3-scipy
+    - apt-get install -qy python3-pip python3-numpy python3-scipy
     - git clone https://gitlab.com/ase/ase.git
     - pwd
     - export PYTHONPATH=$PWD/ase:$PYTHONPATH
@@ -27,3 +28,4 @@ python_3_tests:
     - python3 data_setup-test.py
     - python3 predict-test.py
     - python3 fingerprint-test.py
+    - python3 database-test.py
