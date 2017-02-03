@@ -1,9 +1,65 @@
 """ Functions to setup fingerprint vectors. """
 import numpy as np
 from collections import defaultdict
-
 from .data_setup import target_standardize
+import ase.db
 
+def db_sel2fp(calctype, fname, selection, moldb=None, bulkdb=None, slabref=None):
+    """ Function to return an array of fingerprints from ase.db files and selection.
+    Inputs:
+        calctype: str
+        fname: str
+        selection: list
+        moldb: str
+        bulkdb: str
+        DFT_parameters: dict
+    """
+    keys = {}
+    c = ase.db.connect(fname)
+    s = c.select(selection)
+    for d in s:
+        keys.update(d.key_value_pairs)
+    k = list(keys)
+    print(k)
+    fpv = []
+    if calctype == 'adsorption':
+        assert moldb != None
+        from adsorbate_fingerprint import AdsorbateFingerprintGenerator
+        if 'enrgy' in k:
+            if slabref == None:
+                slabs = fname
+            fpv_gen = AdsorbateFingerprintGenerator(moldb=moldb, bulkdb=bulkdb, slabs=slabs)
+            cand = fpv_gen.db2adds_info(fname=fname, selection=selection)
+            fpv += [fpv_gen.get_Ef]
+        else:
+            fpv_gen = AdsorbateFingerprintGenerator(moldb=moldb, bulkdb=bulkdb)
+            cand = fpv_gen.db2adds_info(fname=fname, selection=selection)
+        fpv += [fpv_gen.Z_add]
+        try:
+            from mendeleev import element
+            fpv += [fpv_gen.primary_addatom, 
+                        fpv_gen.primary_adds_nn,
+                        fpv_gen.adds_sum,
+                        fpv_gen.primary_surfatom]
+            if bulkdb != None:
+                fpv += [fpv_gen.primary_surf_nn]
+        except ImportError:
+            print('Mendeleev not imported. Certain fingerprints excluded.')
+        if bulkdb != None:
+            fpv += [fpv_gen.elemental_dft_properties]
+        cfpv = get_combined_fpv(cand, fpv)
+    elif calctype == 'nanoparticle':
+        from particle_fingerprint import ParticleFingerprintGenerator
+        fpv_gen = ParticleFingerprintGenerator()
+        fpv += [fpv_gen.atom_numbers,
+                fpv_gen.bond_count_fpv,
+                fpv_gen.connections_fpv,
+                fpv_gen.distribution_fpv,
+                fpv_gen.nearestneighbour_fpv,
+                fpv_gen.rdf_fpv]
+        cfpv = get_combined_fpv(cand, fpv)
+    fpv_labels = get_combined_descriptors(fpv)
+    return cfpv, fpv_labels
 
 def get_single_fpv(candidates, fpv_name, use_prior=True):
     """ Function to return the array of fingerprint vectors from a list of
@@ -87,6 +143,16 @@ def get_fpv(c, fpv_name, use_prior, single=True):
         c.info['data']['fpv'] = concatenate_fpv(c, fpv_name)
     return c.info['data']['fpv']
 
+            
+def get_keyvaluepair(c=[], fpv_name='None', single=True):
+    if len(c) == 0:
+        return ['kvp_'+fpv_name]
+    else:
+        out = []
+        for atoms in c:
+            field_value = float(atoms['key_value_pairs'][fpv_name])
+            out.append(field_value)        
+        return out
 
 def concatenate_fpv(c, fpv_name):
     """ Simple function to join multiple fingerprint vectors. """
@@ -176,7 +242,6 @@ def sure_independence_screening(target, train_fpv, size=None):
     sort_list = [list(i) for i in zip(*sorted(zip(abs(omega), order),
                                               key=lambda x: x[0],
                                               reverse=True))]
-
     select['sorted'] = sort_list[1]
     select['correlation'] = sort_list[0]
     if size is not None:
@@ -184,4 +249,3 @@ def sure_independence_screening(target, train_fpv, size=None):
         select['rejected'] = sort_list[1][size:]
 
     return select
-
