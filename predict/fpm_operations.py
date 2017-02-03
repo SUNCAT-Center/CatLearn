@@ -6,9 +6,36 @@ Created on Tue Jan  3 12:01:30 2017
 """
 
 import numpy as np
+from fingerprint_setup import sure_independence_screening
 
 def triangular(n):
     return sum(range(n+1))
+
+def do_sis(X,y,l=None,size=None,increment=1):
+    """ function to narrow down a list of descriptors based on sure
+    independence screening.
+    Input:
+        X: n x m matrix
+        y: length n vector
+        l: length m list of strings (optional)
+        size: integer (optional)
+        increment: integeer (optional)
+        
+    Output:
+        X: n x size matrix
+        l: length size list of strings
+    """
+    shape = np.shape(X)
+    assert shape[1] == len(l)
+    if size == None:
+        size = shape[0]
+    while shape[1] > size:
+        shape = np.shape(X)
+        select = sure_independence_screening(y, X, size=shape[1]-increment)
+        X = X[:,select['accepted']]
+        if l != None:
+            l = l[select['accepted']]
+    return X, l
 
 class fpm_operations():
     def __init__(self, X=None, x=None):
@@ -23,7 +50,7 @@ class fpm_operations():
             A: nxm matrix, where n is the number of training examples and 
             m is the number of features.
         Output)
-            n x m**2 matrix
+            n x triangular(m) matrix
         """
         shapeA = np.shape(A)
         nfi = 0
@@ -40,7 +67,7 @@ class fpm_operations():
         Input)
             x: length m vector, where m is the number of features.
         Output)
-            m**2 vector
+            traingular(m) vector
         """
         L = len(self.x)
         #assert L == np.shape(self.X)[1]
@@ -62,7 +89,7 @@ class fpm_operations():
             
             b: float
         Output)
-            n x m**2 matrix
+            n x triangular(m) matrix
         """
         shapeA = np.shape(A)
         nfi = 0
@@ -87,7 +114,7 @@ class fpm_operations():
             
             b: float
         Output)
-            n x m**2 matrix
+            n x triangular(m) matrix
         """
         shapeA = np.shape(A)
         nfi = 0
@@ -125,3 +152,4 @@ class fpm_operations():
             s1 = s2
             s2 = s2 + n + min(1, r)
         return dataset
+    

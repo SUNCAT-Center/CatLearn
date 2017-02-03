@@ -4,7 +4,7 @@ from collections import defaultdict
 from .data_setup import target_standardize
 import ase.db
 
-def db_sel2fp(calctype, fname, selection, moldb=None, bulkdb=None):
+def db_sel2fp(calctype, fname, selection, moldb=None, bulkdb=None, slabref=None):
     """ Function to return an array of fingerprints from ase.db files and selection.
     Inputs:
         calctype: str
@@ -23,9 +23,12 @@ def db_sel2fp(calctype, fname, selection, moldb=None, bulkdb=None):
     print(k)
     fpv = []
     if calctype == 'adsorption':
+        assert moldb != None
         from adsorbate_fingerprint import AdsorbateFingerprintGenerator
         if 'enrgy' in k:
-            fpv_gen = AdsorbateFingerprintGenerator(moldb=moldb, bulkdb=bulkdb, slabs=fname)
+            if slabref == None:
+                slabs = fname
+            fpv_gen = AdsorbateFingerprintGenerator(moldb=moldb, bulkdb=bulkdb, slabs=slabs)
             cand = fpv_gen.db2adds_info(fname=fname, selection=selection)
             fpv += [fpv_gen.get_Ef]
         else:
@@ -246,4 +249,3 @@ def sure_independence_screening(target, train_fpv, size=None):
         select['rejected'] = sort_list[1][size:]
 
     return select
-
