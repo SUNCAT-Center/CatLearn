@@ -1,7 +1,9 @@
 """ Functions to setup fingerprint vectors. """
 import numpy as np
 from collections import defaultdict
+
 import ase.db
+from .data_setup import target_standardize
 
 
 def db_sel2fp(calctype, fname, selection, moldb=None, bulkdb=None,
@@ -206,3 +208,29 @@ def normalize(train, test=None):
     norm['dif'] = dif
 
     return norm
+
+
+def sure_independence_screening(target, train_fpv, size=None):
+    """ Feature selection based on SIS discussed in Fan, J., Lv, J., J. R.
+        Stat. Soc.: Series B, 2008, 70, 849.
+    """
+    select = defaultdict(list)
+    std_x = standardize(train=train_fpv)
+    std_t = target_standardize(target)
+
+    p = np.shape(std_x['train'])[1]
+    # NOTE: Magnitude is not scaled between -1 and 1
+    omega = np.transpose(std_x['train']).dot(std_t['target']) / p
+
+    order = list(range(np.shape(std_x['train'])[1]))
+    sort_list = [list(i) for i in zip(*sorted(zip(abs(omega), order),
+                                              key=lambda x: x[0],
+                                              reverse=True))]
+
+    select['sorted'] = sort_list[1]
+    select['correlation'] = sort_list[0]
+    if size is not None:
+        select['accepted'] = sort_list[1][:size]
+        select['rejected'] = sort_list[1][size:]
+
+    return select
