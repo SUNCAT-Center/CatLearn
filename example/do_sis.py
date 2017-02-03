@@ -9,7 +9,7 @@ Created on Fri Nov 18 14:30:20 2016
 """
 
 import numpy as np
-from predict.fingerprint_setup import sure_independence_screening
+from atoml.fingerprint_setup import sure_independence_screening
 #from predict.fpm_operations import fpm_operations
 
 fpm_raw = np.genfromtxt('fpm.txt')

@@ -3,6 +3,8 @@ import numpy as np
 from math import exp
 from collections import defaultdict
 
+from .data_setup import target_standardize
+
 
 class FitnessPrediction(object):
     """ Kernel ridge regression functions for the machine learning. This can be
@@ -74,9 +76,10 @@ class FitnessPrediction(object):
 
         return covinv
 
-    def get_predictions(self, train_fp, test_fp, cinv, train_target,
-                        test_target=None, uncertainty=False, basis=None,
-                        get_validation_error=False, get_training_error=False):
+    def get_predictions(self, train_fp, test_fp, train_target, cinv=None,
+                        test_target=None, uncertainty=False,
+                        get_validation_error=False, get_training_error=False,
+                        standardize_target=True):
         """ Returns a list of predictions for a test dataset.
 
             train_fp: list
@@ -85,12 +88,13 @@ class FitnessPrediction(object):
             test_fp: list
                 A list of the testing fingerprint vectors.
 
-            cinv: matrix
-                Covariance matrix for training dataset.
-
             train_target: list
                 A list of the the training targets used to generate the
                 predictions.
+
+            cinv: matrix
+                Covariance matrix for training dataset. Can be calculated on-
+                the-fly or defined to utilize a model numerous times.
 
             test_target: list
                 A list of the the test targets used to generate the
@@ -100,10 +104,6 @@ class FitnessPrediction(object):
                 Return data on the predicted uncertainty if True. Default is
                 False.
 
-            basis: list
-                set of basis functions to assess the reliability of the
-                uncertainty predictions.
-
             get_validation_error: boolean
                 Return the error associated with the prediction on the test set
                 of data if True. Default is False.
@@ -112,10 +112,19 @@ class FitnessPrediction(object):
                 Return the error associated with the prediction on the training
                 set of data if True. Default is False.
         """
+        self.standardize_target = standardize_target
         if type(self.kwidth) is float:
             self.kwidth = np.zeros(len(train_fp[0]),) + self.kwidth
+        if standardize_target:
+            self.standardize_data = target_standardize(train_target)
+            train_target = self.standardize_data['target']
 
         data = defaultdict(list)
+        # Get the Gram matrix on-the-fly if none is suppiled.
+        if cinv is None:
+            cinv = self.get_covariance(train_fp)
+
+        # Calculate the covarience between the test and training datasets.
         ktb = np.asarray([[self.kernel(fp1=fp1, fp2=fp2) for fp1 in train_fp]
                           for fp2 in test_fp])
 
@@ -123,30 +132,29 @@ class FitnessPrediction(object):
         data['prediction'] = self.do_prediction(ktb=ktb, cinv=cinv,
                                                 target=train_target)
 
+        # Calculate error associated with predictions on the test data.
+        if get_validation_error:
+            data['validation_rmse'] = self.get_error(
+                prediction=data['prediction'], actual=test_target)
+
         # Calculate error associated with predictions on the training data.
         if get_training_error:
+            # Calculate the covarience between the training dataset.
             kt_train = np.asarray([[self.kernel(fp1=fp1, fp2=fp2) for fp1 in
                                     train_fp] for fp2 in train_fp])
+
+            # Calculate predictions for the training data.
             data['train_prediction'] = self.do_prediction(ktb=kt_train,
                                                           cinv=cinv,
                                                           target=train_target)
+
+            # Calculated the error for the prediction on the training data.
             data['training_rmse'] = self.get_error(
                 prediction=data['train_prediction'], actual=train_target)
 
         # Calculate uncertainty associated with prediction on test data.
         if uncertainty:
-            data['uncertainty'] = self.get_uncertainty(train_fp=train_fp,
-                                                       test_fp=test_fp,
-                                                       ktb=ktb,
-                                                       cinv=cinv,
-                                                       target=train_target,
-                                                       basis=basis,
-                                                       pred=data['prediction'])
-
-        # Calculate error associated with predictions on the test data.
-        if get_validation_error:
-            data['validation_rmse'] = self.get_error(
-                prediction=data['prediction'], actual=test_target)
+            data['uncertainty'] = self.get_uncertainty(cinv=cinv, ktb=ktb)
 
         return data
 
@@ -158,50 +166,20 @@ class FitnessPrediction(object):
             target_values = target
             train_mean = np.mean(target_values)
             target_values -= train_mean
-            pred.append(np.dot(ktcinv, target_values) + train_mean)
+            p = np.dot(ktcinv, target_values) + train_mean
+            if self.standardize_target:
+                pred.append((p * self.standardize_data['std']) +
+                            self.standardize_data['mean'])
+            else:
+                pred.append(p)
 
         return pred
 
-    def get_uncertainty(self, train_fp, test_fp, cinv, target, basis,
-                        pred, ktb):
-        """ Function to get the predicted uncertainty. Includes assessment with
-            explicit basis functions defined above.
-        """
-        ud = defaultdict(list)
-        if type(self.kwidth) is float:
-            self.kwidth = np.zeros(len(train_fp[0]),) + self.kwidth
-        ktest = np.asarray([[self.kernel(fp1=fp1, fp2=fp2)
-                             for fp1 in test_fp] for fp2 in test_fp])
-
-        # Form H and H* matrix, multiplying X by basis.
-        mtrain = [i * basis for i in train_fp]
-        mtest = [i * basis for i in test_fp]
-
-        # Calculate R.
-        r = mtest - np.dot(ktb, np.dot(cinv, mtrain))
-
-        # Calculate beta.
-        target_values = target
-        train_mean = np.mean(target_values)
-        target_values -= train_mean
-        b = np.linalg.inv(np.dot(np.dot(cinv, mtrain), np.transpose(mtrain)))
-        b = np.dot(target_values, np.dot(b, np.dot(cinv, mtrain)))
-
-        fc = ktest - np.dot(np.dot(ktb, cinv), np.transpose(ktb))
-        gca = np.dot(np.transpose(mtrain), np.dot(cinv, mtrain))
-        ud['g_cov'] = fc + np.dot(r, np.dot(np.linalg.inv(gca),
-                                            np.transpose(r)))
-
-        # Do prediction.
-        ud['gX'] = self.do_prediction(ktb=ktb, cinv=cinv,
-                                      target=target) + np.dot(r, b)
-
+    def get_uncertainty(self, cinv, ktb):
+        """ Function to get the predicted uncertainty."""
         # Predict the uncertainty.
-        ud['uncertainty'] = [(1 - np.dot(np.dot(kt, cinv),
-                                         np.transpose(kt))) ** 0.5
-                             for kt in ktb]
-
-        return ud
+        return [(1 - np.dot(np.dot(kt, cinv), np.transpose(kt))) ** 0.5 for kt
+                in ktb]
 
     def get_error(self, prediction, actual):
         """ Returns the root mean squared error for predicted data relative to
@@ -218,7 +196,7 @@ class FitnessPrediction(object):
         sumd = 0
         for i, j in zip(prediction, actual):
             e = (i - j) ** 2
-            error['all'].append(e)
+            error['all'].append(e ** 0.5)
             sumd += e
 
         error['average'] = (sumd / len(prediction)) ** 0.5

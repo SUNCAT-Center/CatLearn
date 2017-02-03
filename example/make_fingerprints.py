@@ -8,8 +8,8 @@ Created on Fri Nov 18 14:30:20 2016
 
 """
 
-from predict.fingerprint_setup import get_single_fpv, get_combined_fpv, get_combined_descriptors
-from predict.adsorbate_fingerprint import AdsorbateFingerprintGenerator
+from atoml.fingerprint_setup import get_single_fpv, get_combined_fpv, get_combined_descriptors
+from atoml.adsorbate_fingerprint import AdsorbateFingerprintGenerator
 import numpy as np
 
 fpv_train = AdsorbateFingerprintGenerator(mols='mol.db', bulks='ref_bulks_k24.db', slabs='example.db')
@@ -71,4 +71,3 @@ print(np.shape(y))
 fpm = np.hstack([cfpv,np.vstack(y)])
 print(np.shape(fpm))
 np.savetxt('fpm.txt', fpm) #, header=' '.join(L_F
-

@@ -2,8 +2,7 @@
 from __future__ import print_function
 
 from ase.ga.data import DataConnection
-from predict.data_setup import (get_unique, get_train, remove_outliers,
-                                data_split)
+from atoml.data_setup import get_unique, get_train, remove_outliers, data_split
 
 db = DataConnection('gadb.db')
 
