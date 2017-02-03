@@ -5,7 +5,7 @@ import numpy as np
 
 from ase.ga.data import DataConnection
 from predict.data_setup import get_unique, get_train
-from predict.fingerprint_setup import normalize, get_single_fpv
+from predict.fingerprint_setup import normalize, return_fpv
 from predict.particle_fingerprint import ParticleFingerprintGenerator
 from predict.predict import FitnessPrediction
 
@@ -24,8 +24,8 @@ trainset = get_train(candidates=all_cand, trainsize=50,
 fpv = ParticleFingerprintGenerator(get_nl=False, max_bonds=13)
 
 # Get the list of fingerprint vectors and normalize them.
-test_fp = get_single_fpv(testset['candidates'], fpv.nearestneighbour_fpv)
-train_fp = get_single_fpv(trainset['candidates'], fpv.nearestneighbour_fpv)
+test_fp = return_fpv(testset['candidates'], [fpv.nearestneighbour_fpv])
+train_fp = return_fpv(trainset['candidates'], [fpv.nearestneighbour_fpv])
 nfp = normalize(train=train_fp, test=test_fp)
 
 # Set up the prediction routine.
@@ -71,15 +71,13 @@ pred = krr.get_predictions(train_fp=nfp['train'],
                            test_target=testset['target'],
                            get_validation_error=True,
                            get_training_error=True,
-                           uncertainty=True,
-                           basis=[1., 1., 1., 1.])
+                           uncertainty=True)
 assert len(pred['prediction']) == 10
 print('gaussian prediction:', pred['validation_rmse']['average'])
-for i, j, k, l in zip(pred['prediction'],
-                      pred['uncertainty']['uncertainty'],
-                      pred['uncertainty']['gX'],
-                      pred['validation_rmse']['all']):
-    print(i, j, k, l)
+for i, j, k, in zip(pred['prediction'],
+                    pred['uncertainty'],
+                    pred['validation_rmse']['all']):
+    print(i, j, k)
 
 # Set up the prediction routine.
 krr = FitnessPrediction(ktype='laplacian',

@@ -77,7 +77,7 @@ class FitnessPrediction(object):
         return covinv
 
     def get_predictions(self, train_fp, test_fp, train_target, cinv=None,
-                        test_target=None, uncertainty=False, basis=None,
+                        test_target=None, uncertainty=False,
                         get_validation_error=False, get_training_error=False,
                         standardize_target=True):
         """ Returns a list of predictions for a test dataset.
@@ -103,11 +103,6 @@ class FitnessPrediction(object):
             uncertainty: boolean
                 Return data on the predicted uncertainty if True. Default is
                 False.
-
-            basis: function
-                Basis functions to assess the reliability of the uncertainty
-                predictions. Must be a callable function that takes a list of
-                descriptors and returns another list.
 
             get_validation_error: boolean
                 Return the error associated with the prediction on the test set
