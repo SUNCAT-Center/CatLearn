@@ -4,9 +4,9 @@ from os import remove
 from random import random
 
 from ase.ga.data import DataConnection
-from predict.fingerprint_setup import return_fpv
-from predict.particle_fingerprint import ParticleFingerprintGenerator
-from predict.database_functions import DescriptorDatabase
+from atoml.fingerprint_setup import return_fpv
+from atoml.particle_fingerprint import ParticleFingerprintGenerator
+from atoml.database_functions import DescriptorDatabase
 
 # Define variables for database to store system descriptors.
 db_name = 'fpv_store.sqlite'

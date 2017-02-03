@@ -9,8 +9,8 @@ Created on Fri Nov 18 14:30:20 2016
 """
 
 from sys import argv
-from predict.fingerprint_setup import get_combined_descriptors
-from predict.adsorbate_fingerprint import AdsorbateFingerprintGenerator
+from atoml.fingerprint_setup import get_combined_descriptors
+from atoml.adsorbate_fingerprint import AdsorbateFingerprintGenerator
 import numpy as np
 
 slabs = 'metals.db'
@@ -36,7 +36,7 @@ fpv_labels = [
 #print(np.shape(cfpv))
 
 L_F = get_combined_descriptors(fpv_labels)
-print(L_F, len(L_F))      
+print(L_F, len(L_F))
 
 
 try:

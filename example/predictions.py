@@ -9,9 +9,9 @@ Created on Fri Nov 18 14:30:20 2016
 """
 from sys import argv
 import numpy as np
-from predict.fingerprint_setup import normalize
+from atoml.fingerprint_setup import normalize
 #from adsorbate_fingerprint_mhh import AdsorbateFingerprintGenerator
-from predict.predict import FitnessPrediction
+from atoml.predict import FitnessPrediction
 
 fpm_raw = np.genfromtxt('fpm.txt')
 fpm_train0 = fpm_raw[:,:-1]

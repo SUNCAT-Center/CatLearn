@@ -4,10 +4,10 @@ from __future__ import print_function
 import numpy as np
 
 from ase.ga.data import DataConnection
-from predict.data_setup import get_unique, get_train
-from predict.fingerprint_setup import normalize, return_fpv
-from predict.particle_fingerprint import ParticleFingerprintGenerator
-from predict.predict import FitnessPrediction
+from atoml.data_setup import get_unique, get_train
+from atoml.fingerprint_setup import normalize, return_fpv
+from atoml.particle_fingerprint import ParticleFingerprintGenerator
+from atoml.predict import FitnessPrediction
 
 
 db = DataConnection('gadb.db')

@@ -4,10 +4,10 @@ from __future__ import print_function
 import time
 
 from ase.ga.data import DataConnection
-from predict.data_setup import get_train, get_unique
-from predict.fingerprint_setup import normalize, standardize, return_fpv
-from predict.particle_fingerprint import ParticleFingerprintGenerator
-from predict.standard_fingerprint import StandardFingerprintGenerator
+from atoml.data_setup import get_train, get_unique
+from atoml.fingerprint_setup import normalize, standardize, return_fpv
+from atoml.particle_fingerprint import ParticleFingerprintGenerator
+from atoml.standard_fingerprint import StandardFingerprintGenerator
 
 db = DataConnection('gadb.db')
 
