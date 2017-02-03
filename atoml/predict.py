@@ -77,7 +77,7 @@ class FitnessPrediction(object):
         return covinv
 
     def get_predictions(self, train_fp, test_fp, train_target, cinv=None,
-                        test_target=None, uncertainty=False,
+                        test_target=None, uncertainty=False, basis=None,
                         get_validation_error=False, get_training_error=False,
                         standardize_target=True):
         """ Returns a list of predictions for a test dataset.
@@ -103,6 +103,11 @@ class FitnessPrediction(object):
             uncertainty: boolean
                 Return data on the predicted uncertainty if True. Default is
                 False.
+
+            basis: function
+                Basis functions to assess the reliability of the uncertainty
+                predictions. Must be a callable function that takes a list of
+                descriptors and returns another list.
 
             get_validation_error: boolean
                 Return the error associated with the prediction on the test set
@@ -156,6 +161,15 @@ class FitnessPrediction(object):
         if uncertainty:
             data['uncertainty'] = self.get_uncertainty(cinv=cinv, ktb=ktb)
 
+        if basis is not None:
+            data['basis_analysis'] = self.fixed_basis(train_fp=train_fp,
+                                                      test_fp=test_fp,
+                                                      ktb=ktb,
+                                                      cinv=cinv,
+                                                      target=train_target,
+                                                      basis=basis,
+                                                      pred=data['prediction'])
+
         return data
 
     def do_prediction(self, ktb, cinv, target):
@@ -180,6 +194,33 @@ class FitnessPrediction(object):
         # Predict the uncertainty.
         return [(1 - np.dot(np.dot(kt, cinv), np.transpose(kt))) ** 0.5 for kt
                 in ktb]
+
+    def fixed_basis(self, test_fp, train_fp, basis, ktb, cinv, target):
+        ud = defaultdict(list)
+        # Calculate the K(X*,X*) covarience matrix.
+        ktest = np.asarray([[self.kernel(fp1=fp1, fp2=fp2)
+                             for fp1 in test_fp] for fp2 in test_fp])
+
+        # Form H and H* matrix, multiplying X by basis.
+        train_matrix = [basis(i) for i in train_fp]
+        test_matrix = [basis(i) for i in test_fp]
+
+        # Calculate R.
+        r = test_matrix - np.dot(ktb, np.dot(cinv, train_matrix))
+
+        # Calculate beta.
+        bp = np.linalg.inv(np.dot(np.dot(cinv, train_matrix),
+                                  np.transpose(train_matrix)))
+        b = np.dot(target, np.dot(bp, np.dot(cinv, train_matrix)))
+
+        covf = ktest - np.dot(np.dot(ktb, cinv), np.transpose(ktb))
+        gca = np.dot(np.transpose(train_matrix), np.dot(cinv, train_matrix))
+        ud['g_cov'] = covf + np.dot(np.dot(r, np.linalg.inv(gca)),
+                                    np.transpose(r))
+
+        # Do prediction.
+        ud['gX'] = np.dot(b, np.transpose(r)) + self.do_prediction(ktb, cinv,
+                                                                   target)
 
     def get_error(self, prediction, actual):
         """ Returns the root mean squared error for predicted data relative to
