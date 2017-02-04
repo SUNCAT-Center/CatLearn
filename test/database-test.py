@@ -1,3 +1,4 @@
+""" Script to test the database functions. """
 from __future__ import print_function
 
 from os import remove
@@ -46,10 +47,10 @@ cand_data = dd.query_db(unique_id='7a216711c2eae02decc04da588c9e592')
 print(cand_data)
 
 all_id = dd.query_db(names=['uuid'])
-dd.create_column(new_column=['test'])
+dd.create_column(new_column=['random'])
 for i in all_id:
     dd.update_descriptor(descriptor='test', new_data=random(), unique_id=i[0])
-print(dd.query_db(names=['test']))
+print(dd.query_db(names=['random']))
 
 print(dd.get_column_names())
 
