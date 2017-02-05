@@ -7,24 +7,25 @@ Created on Fri Nov 18 14:30:20 2016
 
 
 """
+from __future__ import print_function
 
 import numpy as np
 from atoml.fingerprint_setup import sure_independence_screening
-#from predict.fpm_operations import fpm_operations
+# from predict.fpm_operations import fpm_operations
 
 fpm_raw = np.genfromtxt('fpm.txt')
 
 shape = np.shape(fpm_raw)
 print(shape)
 
-energy = fpm_raw[:,-1]
+energy = fpm_raw[:, -1]
 
-fpm_ml0 = fpm_raw[:,:-1]
+fpm_ml0 = fpm_raw[:, :-1]
 
-#Operations to generate new descriptors
-#ops = fpm_operations(fpm_ml0)
-#order2 = ops.get_order_2()
-#fpm_ml = np.hstack([fpm_ml0,order2])
+# Operations to generate new descriptors
+# ops = fpm_operations(fpm_ml0)
+# order2 = ops.get_order_2()
+# fpm_ml = np.hstack([fpm_ml0,order2])
 
 select = sure_independence_screening(energy, fpm_ml0)
 print(select['sorted'])

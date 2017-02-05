@@ -7,38 +7,39 @@ Created on Fri Nov 18 14:30:20 2016
 
 
 """
+from __future__ import print_function
 
 import numpy as np
 from atoml.fingerprint_setup import normalize
-#from adsorbate_fingerprint_mhh import AdsorbateFingerprintGenerator
+# from adsorbate_fingerprint_mhh import AdsorbateFingerprintGenerator
 from atoml.predict import FitnessPrediction
 
 nsplit = 2
 
-#split_cand = []
+# split_cand = []
 split_fpv = []
 split_energy = []
 for i in range(nsplit):
     fpm = np.genfromtxt('fpm_'+str(i)+'.txt')
-    split_fpv.append(fpm[:,:-1])
-    split_energy.append(fpm[:,-1])
+    split_fpv.append(fpm[:, :-1])
+    split_energy.append(fpm[:, -1])
 
-#indexes = [13,0]
-indexes = [14,2,1, 9]
-#indexes = [15, 2, 1, 9, 11]
-#indexes = [1,2,7,12,22,25,26,27,28] #range(39)
-#indexes.remove(38)
-#indexes.remove(9)
-#indexes.remove(18)
-#indexes.remove(10)
-#indexes.remove(7)
+# indexes = [13,0]
+indexes = [14, 2, 1, 9]
+# indexes = [15, 2, 1, 9, 11]
+# indexes = [1,2,7,12,22,25,26,27,28] #range(39)
+# indexes.remove(38)
+# indexes.remove(9)
+# indexes.remove(18)
+# indexes.remove(10)
+# indexes.remove(7)
 
 
-#subset of the fingerprint vector
+# subset of the fingerprint vector
 for i in range(nsplit):
     fpm = split_fpv[i]
     shape = np.shape(fpm)
-    reduced_fpv = split_fpv[i][:,indexes]
+    reduced_fpv = split_fpv[i][:, indexes]
     split_fpv[i] = reduced_fpv
 
 # Set up the prediction routine.
