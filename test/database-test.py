@@ -49,7 +49,8 @@ print(cand_data)
 all_id = dd.query_db(names=['uuid'])
 dd.create_column(new_column=['random'])
 for i in all_id:
-    dd.update_descriptor(descriptor='test', new_data=random(), unique_id=i[0])
+    dd.update_descriptor(descriptor='random', new_data=random(),
+                         unique_id=i[0])
 print(dd.query_db(names=['random']))
 
 print(dd.get_column_names())
