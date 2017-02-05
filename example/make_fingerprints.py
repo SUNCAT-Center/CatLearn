@@ -9,8 +9,7 @@ Created on Fri Nov 18 14:30:20 2016
 """
 from __future__ import print_function
 
-from atoml.fingerprint_setup import (get_single_fpv, get_combined_fpv,
-                                     get_combined_descriptors)
+from atoml.fingerprint_setup import return_fpv, get_combined_descriptors
 from atoml.adsorbate_fingerprint import AdsorbateFingerprintGenerator
 import numpy as np
 
@@ -76,8 +75,8 @@ print('Getting fingerprint vectors')
 # print(np.shape(new_fpm))
 # np.savetxt('fpm_predict.txt', new_fpm) #, header=' '.join(L_F))
 
-cfpv = get_combined_fpv(train_cand, train_fpv)
-y = get_single_fpv(train_cand, fpv_train.get_Ef, use_prior=False)
+cfpv = return_fpv(train_cand, train_fpv)
+y = return_fpv(train_cand, fpv_train.get_Ef, use_prior=False)
 print(np.shape(y))
 fpm = np.hstack([cfpv, np.vstack(y)])
 print(np.shape(fpm))
