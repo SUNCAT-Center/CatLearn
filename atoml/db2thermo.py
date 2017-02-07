@@ -67,3 +67,31 @@ def get_refs(energy_dict,energy_mols): #adapted from CATMAP wiki
             name = cat+'_'+pha+'_'+fac
             ref_dict[name] = Eref
     return ref_dict
+    
+def db2dict(fname, selection=[]):
+    csurf = ase.db.connect(fname)
+    ssurf = csurf.select(selection)
+    abinitio_energies = {}
+    dbids = {}
+    for d in ssurf:                 #get slabs and adsorbates from .db
+        abinitio_energy = float(d.enrgy)
+        if 'mol' in d:              #is row a molecule?
+            mol = str(d.mol)
+            if mol+'_gas' not in abinitio_energies:
+                abinitio_energies[mol+'_gas'] = abinitio_energy
+                dbids[mol+'_gas'] = int(d.id)
+            elif abinitio_energies[mol+'_gas'] > abinitio_energy:
+                abinitio_energies[mol+'_gas'] = abinitio_energy
+                dbids[mol+'_gas'] = int(d.id)
+        elif 'add' in d:
+            cat = str(d.name)+'_'+str(d.phase)
+            site_name = str(d.surf_lattice)
+            #composition=str(d.formula)
+            series = str(d.series)
+            if series+'_'+cat+'_'+site_name not in abinitio_energies:
+                abinitio_energies[series+'_'+cat+'_'+site_name] = abinitio_energy
+                dbids[series+'_'+cat+'_'+site_name] = int(d.id)
+            elif abinitio_energies[series+'_'+cat+'_'+site_name] > abinitio_energy:
+                abinitio_energies[series+'_'+cat+'_'+site_name] = abinitio_energy
+                dbids[series+'_'+cat+'_'+site_name] = int(d.id)
+    return abinitio_energies, dbids
