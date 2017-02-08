@@ -4,6 +4,14 @@ from collections import defaultdict
 
 import ase.db
 from .data_setup import target_standardize
+from .particle_fingerprint import ParticleFingerprintGenerator
+from .adsorbate_fingerprint import AdsorbateFingerprintGenerator
+
+no_mendeleev = False
+try:
+    from mendeleev import element
+except ImportError:
+    no_mendeleev = True
 
 
 def db_sel2fp(calctype, fname, selection, moldb=None, bulkdb=None,
@@ -29,7 +37,6 @@ def db_sel2fp(calctype, fname, selection, moldb=None, bulkdb=None,
     fpv = []
     if calctype == 'adsorption':
         assert moldb is not None
-        from adsorbate_fingerprint import AdsorbateFingerprintGenerator
         if 'enrgy' in k:
             if slabref is None:
                 slabs = fname
@@ -41,21 +48,19 @@ def db_sel2fp(calctype, fname, selection, moldb=None, bulkdb=None,
             fpv_gen = AdsorbateFingerprintGenerator(moldb=moldb, bulkdb=bulkdb)
             cand = fpv_gen.db2adds_info(fname=fname, selection=selection)
         fpv += [fpv_gen.Z_add]
-        try:
-            from mendeleev import element
+        if not no_mendeleev:
             fpv += [fpv_gen.primary_addatom,
                     fpv_gen.primary_adds_nn,
                     fpv_gen.adds_sum,
                     fpv_gen.primary_surfatom]
             if bulkdb is not None:
                 fpv += [fpv_gen.primary_surf_nn]
-        except ImportError:
+        else:
             print('Mendeleev not imported. Certain fingerprints excluded.')
         if bulkdb is not None:
             fpv += [fpv_gen.elemental_dft_properties]
         cfpv = return_fpv(cand, fpv)
     elif calctype == 'nanoparticle':
-        from particle_fingerprint import ParticleFingerprintGenerator
         fpv_gen = ParticleFingerprintGenerator()
         fpv += [fpv_gen.atom_numbers,
                 fpv_gen.bond_count_fpv,
@@ -103,7 +108,7 @@ def return_fpv(candidates, fpv_name, use_prior=True):
     """ Function to sequentially combine fingerprint vectors and return them
         for a list of atoms objects.
     """
-    #Put fpv_name in a list, if it is not already.
+    # Put fpv_name in a list, if it is not already.
     if not isinstance(fpv_name, list):
         fpv_name = [fpv_name]
     # Check to see if we are dealing with a list of candidates or a single
