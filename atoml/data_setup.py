@@ -59,15 +59,21 @@ def get_train(candidates, key, trainsize=None, taken_cand=None):
     return dataset
 
 
-def data_split(candidates, nsplit, key):
+def data_split(candidates, nsplit, key, replacement=False):
     """ Routine to split list of candidates into sublists. This can be
         useful for bootstrapping, LOOCV, etc.
 
         nsplit: int
             The number of bins that data should be devided into.
+
+        replacement: boolean
+            Set to true if samples are to be generated with replacement e.g.
+            the same candidates can be in samles multiple times. Default is
+            False.
     """
     dataset = defaultdict(list)
-    shuffle(candidates)
+    index = range(len(candidates))
+    shuffle(index)
     # Calculate the number of items per split.
     n = len(candidates) / nsplit
     # Get any remainders.
@@ -76,9 +82,12 @@ def data_split(candidates, nsplit, key):
     s1 = 0
     s2 = n + min(1, r)
     for _ in range(nsplit):
-        dataset['split_cand'].append(candidates[int(s1):int(s2)])
-        dataset['target'].append([c.info['key_value_pairs'][key]
-                                 for c in candidates[int(s1):int(s2)]])
+        if replacement:
+            shuffle(index)
+        dataset['split_cand'].append(candidates[i] for i in
+                                     index[int(s1):int(s2)])
+        dataset['target'].append([candidates[i].info['key_value_pairs'][key]
+                                 for i in index[int(s1):int(s2)]])
         # Get any new remainder.
         r = max(0, r-1)
         # Define next split.

@@ -5,6 +5,7 @@ Created on Tue Jan  3 12:01:30 2017
 @author: mhangaard
 """
 import numpy as np
+from random import shuffle
 
 from .fingerprint_setup import sure_independence_screening
 
@@ -129,7 +130,7 @@ class fpm_operations():
                 nfi += 1
         return new_features
 
-    def fpmatrix_split(self, nsplit):
+    def fpmatrix_split(self, nsplit, replacement=False):
         """ Routine to split list of candidates into sublists. This can be
             useful for bootstrapping, LOOCV, etc.
             Input:
@@ -139,7 +140,8 @@ class fpm_operations():
                 list
         """
         dataset = []
-        np.random.shuffle(self.X)
+        index = range(len(self.X))
+        shuffle(index)
         # Calculate the number of items per split.
         n = len(self.X) / nsplit
         # Get any remainders.
@@ -148,7 +150,9 @@ class fpm_operations():
         s1 = 0
         s2 = n + min(1, r)
         for _ in range(nsplit):
-            dataset.append(self.X[int(s1):int(s2), :])
+            if replacement:
+                shuffle(index)
+            dataset.append(self.X[index[int(s1):int(s2)]])
             # Get any new remainder.
             r = max(0, r-1)
             # Define next split.
