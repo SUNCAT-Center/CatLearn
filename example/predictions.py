@@ -11,6 +11,7 @@ from __future__ import print_function
 
 from sys import argv
 import numpy as np
+
 from atoml.fingerprint_setup import normalize
 # from adsorbate_fingerprint_mhh import AdsorbateFingerprintGenerator
 from atoml.predict import FitnessPrediction
@@ -21,7 +22,7 @@ targets = fpm_raw[:, -1]
 
 fpm_predict0 = np.genfromtxt('fpm_predict.txt')
 
-indexes = [14, 2, 1, 9]  # feature indexes
+indexes = [6, 7, 16, 11]  # feature indexes
 
 fpm_train = fpm_train0[:, indexes]
 fpm_predict = fpm_predict0[:, indexes]
@@ -44,8 +45,4 @@ output = krr.get_predictions(train_fp=nfp['train'],
 y = output['prediction']
 
 predicted_fpm = np.hstack([fpm_predict0, np.vstack(y)])
-
-# print(y)
-i = np.argmin(y)
-print(fpm_predict0[i])[int(argv[1])]
-# np.savetxt('prediction.txt', predicted_fpm)
+np.savetxt('prediction.txt', predicted_fpm)
