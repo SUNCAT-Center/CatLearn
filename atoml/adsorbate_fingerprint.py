@@ -76,9 +76,7 @@ class AdsorbateFingerprintGenerator(object):
             traj.append(atoms)
         return traj
 
-    def db2adds_info(self, fname='metals.db',
-                     selection=['series!=slab', 'layers=5', 'facet=1x1x1',
-                                'kpts=4x6']):  # selection=[]):
+    def db2adds_info(self, fname='example.db', selection=[]):  # selection=[]):
         c = ase.db.connect(fname)
         s = c.select(selection)
         traj = []
