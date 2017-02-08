@@ -196,6 +196,7 @@ class FitnessPrediction(object):
                 in ktb]
 
     def fixed_basis(self, test_fp, train_fp, basis, ktb, cinv, target):
+        """ Function to apply fixed basis. """
         ud = defaultdict(list)
         # Calculate the K(X*,X*) covarience matrix.
         ktest = np.asarray([[self.kernel(fp1=fp1, fp2=fp2)
