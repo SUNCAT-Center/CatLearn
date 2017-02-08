@@ -88,7 +88,7 @@ def data_split(candidates, nsplit, key):
     return dataset
 
 
-def remove_outliers(candidates, key, con=1.4826, dev=3.):
+def remove_outliers(candidates, key, con=1.4826, dev=3., constraint=None):
     """ Preprocessing routine to remove outliers in the data based on the
         median absolute deviation. Only candidates that are unfit, e.g. less
         positive raw_score, are removed as outliers.
@@ -99,6 +99,11 @@ def remove_outliers(candidates, key, con=1.4826, dev=3.):
 
         dev: float
             The number of deviations from the median to account for.
+
+        constraint: str
+            Can be set to 'low' to remove candidates with targets that are too
+            small/negative or 'high' for outliers that are too large/positive.
+            Default is to remove all.
     """
     target = []
     for c in candidates:
@@ -111,9 +116,21 @@ def remove_outliers(candidates, key, con=1.4826, dev=3.):
     mad = con*(np.median(np.abs(vals - med)))
 
     processed = []
-    for c in candidates:
-        if c.info['key_value_pairs'][key] > med - (dev * mad):
-            processed.append(c)
+    if constraint is None:
+        for c in candidates:
+            if c.info['key_value_pairs'][key] > med - (dev * mad) and \
+               c.info['key_value_pairs'][key] < med + (dev * mad):
+                processed.append(c)
+
+    elif constraint is 'low':
+        for c in candidates:
+            if c.info['key_value_pairs'][key] > med - (dev * mad):
+                processed.append(c)
+
+    elif constraint is 'high':
+        for c in candidates:
+            if c.info['key_value_pairs'][key] < med + (dev * mad):
+                processed.append(c)
 
     return processed
 
