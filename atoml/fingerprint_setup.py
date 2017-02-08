@@ -88,7 +88,7 @@ def get_combined_descriptors(fpv_list):
     return np.hstack(L_F)
 
 
-def get_keyvaluepair(c=[], fpv_name='None', single=True):
+def get_keyvaluepair(c=[], fpv_name='None'):
     if len(c) == 0:
         return ['kvp_'+fpv_name]
     else:
@@ -103,6 +103,9 @@ def return_fpv(candidates, fpv_name, use_prior=True):
     """ Function to sequentially combine fingerprint vectors and return them
         for a list of atoms objects.
     """
+    #Put fpv_name in a list, if it is not already.
+    if not isinstance(fpv_name, list):
+        fpv_name = [fpv_name]
     # Check to see if we are dealing with a list of candidates or a single
     # atoms object.
     if type(candidates) is defaultdict or type(candidates) is list:

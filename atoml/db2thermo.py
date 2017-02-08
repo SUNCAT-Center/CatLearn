@@ -74,7 +74,7 @@ def db2dict(fname, selection=[]):
     abinitio_energies = {}
     dbids = {}
     for d in ssurf:                 #get slabs and adsorbates from .db
-        abinitio_energy = float(d.enrgy)
+        abinitio_energy = float(d.enrgy) #float(d.ab_initio_energy)
         if 'mol' in d:              #is row a molecule?
             mol = str(d.mol)
             if mol+'_gas' not in abinitio_energies:
