@@ -75,7 +75,7 @@ def db_sel2fp(calctype, fname, selection, moldb=None, bulkdb=None,
 
 def get_combined_descriptors(fpv_list):
     """ Function to sequentially combine feature label vectors and return them
-        for a list of atoms objects. Analogous to get_combined_fpv
+        for a list of atoms objects. Analogous to return_fpv function.
 
         Input:  atoms object
                 functions that return fingerprints
