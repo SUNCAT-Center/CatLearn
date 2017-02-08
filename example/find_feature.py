@@ -7,15 +7,19 @@ Created on Fri Nov 18 14:30:20 2016
 
 
 """
+from __future__ import print_function
 
 from sys import argv
+import numpy as np
+
 from atoml.fingerprint_setup import get_combined_descriptors
 from atoml.adsorbate_fingerprint import AdsorbateFingerprintGenerator
-import numpy as np
 
 slabs = 'example.db'
 
-fpv_train = AdsorbateFingerprintGenerator(moldb='mol.db', bulkdb='ref_bulks_k24.db', slabs=slabs)
+fpv_train = AdsorbateFingerprintGenerator(moldb='mol.db',
+                                          bulkdb='ref_bulks_k24.db',
+                                          slabs=slabs)
 
 fpv_labels = [
     fpv_train.primary_addatom,
@@ -30,6 +34,3 @@ fpv_labels = [
 
 L_F = get_combined_descriptors(fpv_labels)
 print(L_F, len(L_F))
-
-
-

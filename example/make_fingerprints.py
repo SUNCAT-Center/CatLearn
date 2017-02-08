@@ -7,15 +7,21 @@ Created on Fri Nov 18 14:30:20 2016
 
 
 """
+from __future__ import print_function
 
-from atoml.fingerprint_setup import get_fpv, return_fpv, get_combined_descriptors
-from atoml.adsorbate_fingerprint import AdsorbateFingerprintGenerator
 import numpy as np
 
-fpv_train = AdsorbateFingerprintGenerator(moldb='mol.db', bulkdb='ref_bulks_k24.db', slabs='example.db')
+from atoml.fingerprint_setup import (get_fpv, return_fpv,
+                                     get_combined_descriptors)
+from atoml.adsorbate_fingerprint import AdsorbateFingerprintGenerator
 
-#training and validation data
-train_cand = fpv_train.db2adds_info('example.db', selection=['series!=slab','id<17'])
+fpv_train = AdsorbateFingerprintGenerator(moldb='mol.db',
+                                          bulkdb='ref_bulks_k24.db',
+                                          slabs='example.db')
+
+# Training and validation data.
+train_cand = fpv_train.db2adds_info('example.db', selection=['series!=slab',
+                                                             'id<17'])
 print(len(train_cand), 'training candidates')
 
 train_fpv = [
@@ -36,14 +42,15 @@ print('Getting fingerprint vectors')
 cfpv = return_fpv(train_cand, train_fpv)
 y = return_fpv(train_cand, fpv_train.get_Ef, use_prior=False)
 print(np.shape(y))
-fpm = np.hstack([cfpv,np.vstack(y)])
+fpm = np.hstack([cfpv, np.vstack(y)])
 print(np.shape(fpm))
 np.savetxt('fpm.txt', fpm)
 
-
-
-fpv_predict = AdsorbateFingerprintGenerator(moldb='mol.db', bulkdb='ref_bulks_k24.db', slabs='predict.db')
-predict_cand = fpv_predict.db2adds_info('example.db', selection=['series!=slab','id>=17'])
+fpv_predict = AdsorbateFingerprintGenerator(moldb='mol.db',
+                                            bulkdb='ref_bulks_k24.db',
+                                            slabs='predict.db')
+predict_cand = fpv_predict.db2adds_info('example.db',
+                                        selection=['series!=slab',
+                                                   'id>=17'])
 cfpv_new = return_fpv(train_cand, train_fpv)
 np.savetxt('fpm_predict.txt', cfpv_new)
-
