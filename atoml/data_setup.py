@@ -84,8 +84,8 @@ def data_split(candidates, nsplit, key, replacement=False):
     for _ in range(nsplit):
         if replacement:
             shuffle(index)
-        dataset['split_cand'].append(candidates[i] for i in
-                                     index[int(s1):int(s2)])
+        dataset['split_cand'].append([candidates[i] for i in
+                                      index[int(s1):int(s2)]])
         dataset['target'].append([candidates[i].info['key_value_pairs'][key]
                                  for i in index[int(s1):int(s2)]])
         # Get any new remainder.
