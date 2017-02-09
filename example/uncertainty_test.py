@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 
 from ase.ga.data import DataConnection
 from atoml.data_setup import get_unique, get_train, target_standardize
-from atoml.fingerprint_setup import standardize, return_fpv
+from atoml.fingerprint_setup import standardize, normalize, return_fpv
 from atoml.standard_fingerprint import StandardFingerprintGenerator
 from atoml.particle_fingerprint import ParticleFingerprintGenerator
 from atoml.predict import FitnessPrediction
@@ -26,14 +26,15 @@ trainset = get_train(candidates=all_cand, trainsize=500,
 sfpv = StandardFingerprintGenerator()
 pfpv = ParticleFingerprintGenerator(get_nl=False, max_bonds=13)
 
-# [pfpv.nearestneighbour_fpv]
-# [sfpv.eigenspectrum_fpv]
 # Get the list of fingerprint vectors and normalize them.
-test_fp = return_fpv(testset['candidates'], [sfpv.eigenspectrum_fpv],
+test_fp = return_fpv(testset['candidates'], [sfpv.eigenspectrum_fpv,
+                                             pfpv.nearestneighbour_fpv],
                      use_prior=False)
-train_fp = return_fpv(trainset['candidates'], [sfpv.eigenspectrum_fpv],
+train_fp = return_fpv(trainset['candidates'], [sfpv.eigenspectrum_fpv,
+                                               pfpv.nearestneighbour_fpv],
                       use_prior=False)
-nfp = standardize(train=train_fp, test=test_fp)
+nfp = normalize(train=train_fp, test=test_fp)
+sfp = standardize(train=train_fp, test=test_fp)
 
 ntrain = []
 ntest = []
@@ -65,7 +66,15 @@ pred = krr.get_predictions(train_fp=nfp['train'],
                            get_training_error=True,
                            standardize_target=True,
                            uncertainty=True,
-                           basis=None)  # basis)
+                           basis=basis)
+ae = 0.
+pe = 0.
+for i, j, k in zip(pred['prediction'], pred['basis_analysis']['gX'],
+                   testset['target']):
+    ae += (i-k)**2
+    pe += (j-k)**2
+print((ae/len(testset['target']))**0.5, (pe/len(testset['target']))**0.5)
+exit()
 
 pe = []
 st = target_standardize(testset['target'])

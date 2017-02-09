@@ -167,8 +167,7 @@ class FitnessPrediction(object):
                                                       ktb=ktb,
                                                       cinv=cinv,
                                                       target=train_target,
-                                                      basis=basis,
-                                                      pred=data['prediction'])
+                                                      basis=basis)
 
         return data
 
@@ -219,9 +218,11 @@ class FitnessPrediction(object):
         ud['g_cov'] = covf + np.dot(np.dot(r, np.linalg.inv(gca)),
                                     np.transpose(r))
 
-        # Do prediction.
+        # Do prediction accounting for basis.
         ud['gX'] = np.dot(b, np.transpose(r)) + self.do_prediction(ktb, cinv,
                                                                    target)
+
+        return ud
 
     def get_error(self, prediction, actual):
         """ Returns the root mean squared error for predicted data relative to
