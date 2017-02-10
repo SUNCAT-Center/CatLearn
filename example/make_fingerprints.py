@@ -42,7 +42,8 @@ print('Getting fingerprint vectors')
 cfpv = return_fpv(train_cand, train_fpv)
 y = return_fpv(train_cand, fpv_train.get_Ef, use_prior=False)
 print(np.shape(y))
-fpm = np.hstack([cfpv, np.vstack(y)])
+fpm0 = np.hstack([cfpv, np.vstack(y)])
+fpm = fpm0[~np.isnan(fpm0).any(axis=1)]
 print(np.shape(fpm))
 np.savetxt('fpm.txt', fpm)
 

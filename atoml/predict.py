@@ -207,6 +207,41 @@ class FitnessPrediction(object):
         error['average'] = (sumd / len(prediction)) ** 0.5
         return error
     
+    def dK(self, fp1, fp2):
+        """ derivatives of Kernel functions taking two fingerprint vectors. """
+        # Linear kernel.
+        if self.ktype == 'linear':
+            return None
+        
+        # Polynomial kernel.
+        elif self.ktype == 'polynomial':
+            return None
+        
+        # Gaussian kernel.
+        elif self.ktype == 'gaussian':
+            dK = exp(-sum(np.abs((fp1 - fp2) ** 2)/(2 * self.kwidth ** 2)))*sum(np.abs((fp1 - fp2) ** 2))/(self.kwidth ** 3)
+            return dK
+        
+        # Laplacian kernel.
+        elif self.ktype == 'laplacian':
+            return None
+    
+    def get_derivatives(self, train_fp):
+        """ Returns the elementwise derivative of the covariance 
+            matrix between the training set.
+
+            train_fp: list
+                A list of the training fingerprint vectors.
+        """
+        if type(self.kwidth) is float:
+            self.kwidth = np.zeros(len(train_fp[0]),) + self.kwidth
+
+        dcov = np.asarray([[self.dK(fp1=fp1, fp2=fp2)
+                           for fp1 in train_fp] for fp2 in train_fp])
+        if self.regularization is not None:
+            dcov = dcov + self.regularization * np.identity(len(train_fp))
+        return dcov    
+    
     def log_marginal_likelyhood1(self, cinv, y):
         """ Return the log marginal likelyhood.
         (Equation 5.8 in C. E. Rasmussen and C. K. I. Williams, 2006)
@@ -220,4 +255,12 @@ class FitnessPrediction(object):
         normalization = -n*np.log(2*np.pi)/2
         p = data_fit + complexity + normalization
         return p
+    
+    def dlog_marginal_likelyhood1(self, cinv, dK, y):
+        """ Return the differential of the log marginal likelyhood.
+        (Equation 5.9 in C. E. Rasmussen and C. K. I. Williams, 2006)
+        """
+        alpha = np.dot(np.transpose(cinv),y)
+        dp = np.trace((np.dot(alpha,np.transpose(alpha))-cinv)*dK)/2        
+        return dp
     
