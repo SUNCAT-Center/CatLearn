@@ -206,3 +206,18 @@ class FitnessPrediction(object):
 
         error['average'] = (sumd / len(prediction)) ** 0.5
         return error
+    
+    def log_marginal_likelyhood1(self, cinv, y):
+        """ Return the log marginal likelyhood.
+        (Equation 5.8 in C. E. Rasmussen and C. K. I. Williams, 2006)
+        """
+        n = len(y)
+        y = np.vstack(y)
+        Kyinv=cinv
+        Ky=np.linalg.inv(cinv)
+        data_fit = -(np.dot(np.dot(np.transpose(y),Kyinv),y)/2)[0][0]
+        complexity = -(np.log(np.linalg.det(np.linalg.inv(Ky)))/2)
+        normalization = -n*np.log(2*np.pi)/2
+        p = data_fit + complexity + normalization
+        return p
+    
