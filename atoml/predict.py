@@ -135,7 +135,7 @@ class FitnessPrediction(object):
         # Calculate error associated with predictions on the test data.
         if get_validation_error:
             data['validation_rmse'] = self.get_error(
-                prediction=data['prediction'], actual=test_target)
+                prediction=data['prediction'], target=test_target)
 
         # Calculate error associated with predictions on the training data.
         if get_training_error:
@@ -150,7 +150,7 @@ class FitnessPrediction(object):
 
             # Calculated the error for the prediction on the training data.
             data['training_rmse'] = self.get_error(
-                prediction=data['train_prediction'], actual=train_target)
+                prediction=data['train_prediction'], target=train_target)
 
         # Calculate uncertainty associated with prediction on test data.
         if uncertainty:
@@ -159,7 +159,7 @@ class FitnessPrediction(object):
         return data
 
     def do_prediction(self, ktb, cinv, target):
-        """ Function to do the actual prediction. """
+        """ Function to make the prediction. """
         pred = []
         for kt in ktb:
             ktcinv = np.dot(kt, cinv)
@@ -181,20 +181,25 @@ class FitnessPrediction(object):
         return [(1 - np.dot(np.dot(kt, cinv), np.transpose(kt))) ** 0.5 for kt
                 in ktb]
 
-    def get_error(self, prediction, actual):
+    def get_error(self, prediction, target):
         """ Returns the root mean squared error for predicted data relative to
-            the actual data.
+            the target data.
 
             prediction: list
                 A list of predicted values.
 
-            actual: list
-                A list of actual values.
+            target: list
+                A list of target values.
         """
-        assert len(prediction) == len(actual)
+        msg = 'Something has gone wrong and there are '
+        if len(prediction) < len(target):
+            msg += 'more targets than predictions.'
+        elif len(prediction) > len(target):
+            msg += 'fewer targets than predictions.'
+        assert len(prediction) == len(target), msg
         error = defaultdict(list)
         sumd = 0
-        for i, j in zip(prediction, actual):
+        for i, j in zip(prediction, target):
             e = (i - j) ** 2
             error['all'].append(e ** 0.5)
             sumd += e

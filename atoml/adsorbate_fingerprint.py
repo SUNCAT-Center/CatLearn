@@ -7,13 +7,15 @@ Created on Tue Dec  6 14:09:29 2016
 @author: mhangaard
 
 """
-
 import warnings
 import numpy as np
 import ase.db
 from ase.atoms import string2symbols
-from db2thermo import db2mol, db2surf, mol2ref, get_refs  # get_formation_energies
-from mendeleev import element
+from atoml.db2thermo import db2mol, db2surf, mol2ref, get_refs  # get_formation_energies
+try:
+    from mendeleev import element
+except ImportError:
+    print('mendeleev not imported')
 from random import random
 
 
@@ -25,14 +27,12 @@ class AdsorbateFingerprintGenerator(object):
         if bulkdb is not None:
             self.bulks = bulkdb
             self.rho, self.Z, self.eos_B, self.dbcenter, self.dbfilling, self.d_atoms = self.get_bulk()
-        abinitio_energies, frequency_dict, contribs, dbids = db2mol(moldb, ['vacuum='+str(parameters['vacuum']),'PW='+str(parameters['PW'])])
+        abinitio_energies, dbids = db2mol(moldb, ['vacuum='+str(parameters['vacuum']),'PW='+str(parameters['PW'])])
         self.mol_dict = mol2ref(abinitio_energies)
         self.slabs = slabs
         if slabs is not None:
-            surf_energies, surf_frequencies, surf_contribs, surf_dbids = db2surf(slabs, ['series=slab','layers='+str(parameters['layers']),'kpts='+str(parameters['kpts']),'PW='+str(parameters['PW']),'PSP='+str(parameters['PSP'])])
+            surf_energies, surf_dbids = db2surf(slabs, ['series=slab','layers='+str(parameters['layers']),'kpts='+str(parameters['kpts']),'PW='+str(parameters['PW']),'PSP='+str(parameters['PSP'])])
             abinitio_energies.update(surf_energies)
-            frequency_dict.update(surf_frequencies)
-            contribs.update(surf_contribs)
             dbids.update(surf_dbids)
             # surf_energies211, surf_frequencies211, surf_contribs211, surf_dbids211 = db2surf(slabs, ['Al=0','Rh=0','Pt=0','layers=4','facet=2x1x1','kpts=4x4','PW=500','PSP=gbrv1.5pbe'])
             # abinitio_energies.update(surf_energies211)
@@ -78,9 +78,7 @@ class AdsorbateFingerprintGenerator(object):
             traj.append(atoms)
         return traj
 
-    def db2adds_info(self, fname='metals.db',
-                     selection=['series!=slab', 'layers=5', 'facet=1x1x1',
-                                'kpts=4x6']):  # selection=[]):
+    def db2adds_info(self, fname='example.db', selection=[]):  # selection=[]):
         c = ase.db.connect(fname)
         s = c.select(selection)
         traj = []

@@ -92,6 +92,8 @@ class StandardFingerprintGenerator(object):
                             ad += np.linalg.norm(j-l)
             if co != 0:
                 fp.append(ad / co)
+            else:
+                fp.append(0.)
         return fp
 
     def ptm_structure_fpv(self, atoms):
