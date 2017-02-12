@@ -259,7 +259,7 @@ def iterative_sis(target, train_fpv, size, step=1):
     while len(train_fpv[0]) > size:
         r = len(train_fpv[0]) - step
         if r < size:
-            r = len(train_fpv[0]) - size
+            r = size - len(train_fpv[0])
         sis = sure_independence_screening(target=target, train_fpv=train_fpv,
                                           size=r)
         rejected = rejected + [ordering[i] for i in sis['rejected']]
