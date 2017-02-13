@@ -56,7 +56,8 @@ pred = krr.get_predictions(train_fp=nfp['train'],
 print('Training error:', pred['training_rmse']['average'])
 print('Model error:', pred['validation_rmse']['average'])
 
-write_output(testdata=testset, traindata=trainset, prediction=pred)
+write_output(testatoms=testset, trainatoms=trainset, prediction=pred,
+             testfp=test_fp, trainfp=train_fp)
 
 pred['actual'] = testset['target']
 index = [i for i in range(len(test_fp))]
