@@ -29,7 +29,6 @@ fpv_labels = [
     fpv_train.primary_surfatom,
     fpv_train.primary_surf_nn,
     fpv_train.elemental_dft_properties,
-    fpv_train.randomfpv
     ]
 
 L_F = get_combined_descriptors(fpv_labels)
