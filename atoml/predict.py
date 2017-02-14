@@ -72,9 +72,8 @@ class FitnessPrediction(object):
                            for fp1 in train_fp] for fp2 in train_fp])
         if self.regularization is not None:
             cov = cov + self.regularization * np.identity(len(train_fp))
-        covinv = np.linalg.inv(cov)
-
-        return covinv
+        #cov = np.linalg.inv(cov)
+        return cov
 
     def get_predictions(self, train_fp, test_fp, train_target, cinv=None,
                         test_target=None, uncertainty=False,
@@ -207,60 +206,70 @@ class FitnessPrediction(object):
         error['average'] = (sumd / len(prediction)) ** 0.5
         return error
     
-    def dK(self, fp1, fp2):
+    def dK(self, fp1, fp2, sigma):
         """ derivatives of Kernel functions taking two fingerprint vectors. """
         # Linear kernel.
         if self.ktype == 'linear':
-            return None
+            return 0
         
         # Polynomial kernel.
         elif self.ktype == 'polynomial':
-            return None
+            return 0
         
         # Gaussian kernel.
         elif self.ktype == 'gaussian':
-            dK = exp(-sum(np.abs((fp1 - fp2) ** 2)/(2 * self.kwidth ** 2)))*sum(np.abs((fp1 - fp2) ** 2))/(self.kwidth ** 3)
+            dK = (exp(-np.abs((fp1 - fp2) ** 2)/(2 * sigma ** 2))
+                *np.abs((fp1 - fp2) ** 2)/(sigma ** 3))
             return dK
         
         # Laplacian kernel.
         elif self.ktype == 'laplacian':
-            return None
+            raise NotImplemented
     
     def get_derivatives(self, train_fp):
-        """ Returns the elementwise derivative of the covariance 
-            matrix between the training set.
-
+        """ Returns a vector of partial derivatives of K with respect to the
+        widths (characteristic length scales).
             train_fp: list
                 A list of the training fingerprint vectors.
         """
         if type(self.kwidth) is float:
             self.kwidth = np.zeros(len(train_fp[0]),) + self.kwidth
-
-        dcov = np.asarray([[self.dK(fp1=fp1, fp2=fp2)
-                           for fp1 in train_fp] for fp2 in train_fp])
+        dcovs = []
+        for sigma in self.kwidth:
+            dcov = np.asarray([[self.dK(fp1=fp1, fp2=fp2, sigma=sigma)
+                       for fp1 in train_fp] for fp2 in train_fp])
+            dcovs.append(dcov)
         if self.regularization is not None:
-            dcov = dcov + self.regularization * np.identity(len(train_fp))
+            dcov = dcov# + self.regularization * np.identity(len(train_fp))
+        print(np.shape(dcov))
         return dcov    
     
-    def log_marginal_likelyhood1(self, cinv, y):
+    def log_marginal_likelyhood1(self, cov, cinv, y):
         """ Return the log marginal likelyhood.
         (Equation 5.8 in C. E. Rasmussen and C. K. I. Williams, 2006)
         """
         n = len(y)
         y = np.vstack(y)
-        Kyinv=cinv
-        Ky=np.linalg.inv(cinv)
-        data_fit = -(np.dot(np.dot(np.transpose(y),Kyinv),y)/2)[0][0]
-        complexity = -(np.log(np.linalg.det(np.linalg.inv(Ky)))/2)
+        cinv=np.linalg.inv(cov)
+        data_fit = -(np.dot(np.dot(np.transpose(y),cinv),y)/2.)[0][0]
+        L = np.linalg.cholesky(cinv)
+        logdetcinv = 0
+        for l in range(len(L)):
+            logdetcinv += np.log(L[l,l])
+        complexity = -logdetcinv
         normalization = -n*np.log(2*np.pi)/2
         p = data_fit + complexity + normalization
         return p
     
-    def dlog_marginal_likelyhood1(self, cinv, dK, y):
+    def dlog_marginal_likelyhood1(self, cinv, dcov, y):
         """ Return the differential of the log marginal likelyhood.
         (Equation 5.9 in C. E. Rasmussen and C. K. I. Williams, 2006)
         """
-        alpha = np.dot(np.transpose(cinv),y)
-        dp = np.trace((np.dot(alpha,np.transpose(alpha))-cinv)*dK)/2        
+        print('cinv',np.shape(cinv))
+        alpha = np.dot(cinv,y)
+        print('alpha', alpha)
+        A = np.dot(alpha,np.transpose(alpha))
+        print('A', np.shape(A))
+        dp = np.trace((A-cinv)*dcov)/2.
         return dp
     
