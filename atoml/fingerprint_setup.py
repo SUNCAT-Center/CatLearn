@@ -242,3 +242,31 @@ def sure_independence_screening(target, train_fpv, size=None):
         select['rejected'] = sort_list[1][size:]
 
     return select
+
+
+def iterative_sis(target, train_fpv, size, step=1):
+    """ Function to iteratively reduce the number of featues.
+
+        size: int
+            Number of features that should be left.
+
+        step: int
+            Step size by which to reduce the number of features. Default is 1.
+    """
+    select = defaultdict(list)
+    ordering = list(range(len(train_fpv[0])))
+    rejected = []
+    while len(train_fpv[0]) > size:
+        r = len(train_fpv[0]) - step
+        if r < size:
+            r = size - len(train_fpv[0])
+        sis = sure_independence_screening(target=target, train_fpv=train_fpv,
+                                          size=r)
+        rejected = rejected + [ordering[i] for i in sis['rejected']]
+        ordering = [ordering[i] for i in sis['accepted']]
+        train_fpv = np.delete(train_fpv, sis['rejected'], 1)
+    select['accepted'] = ordering
+    select['rejected'] = rejected
+    select['train_fpv'] = train_fpv
+
+    return select

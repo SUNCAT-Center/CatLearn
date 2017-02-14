@@ -116,6 +116,7 @@ class FitnessPrediction(object):
         if type(self.kwidth) is float:
             self.kwidth = np.zeros(len(train_fp[0]),) + self.kwidth
         if standardize_target:
+            error_train = train_target
             self.standardize_data = target_standardize(train_target)
             train_target = self.standardize_data['target']
 
@@ -150,7 +151,7 @@ class FitnessPrediction(object):
 
             # Calculated the error for the prediction on the training data.
             data['training_rmse'] = self.get_error(
-                prediction=data['train_prediction'], target=train_target)
+                prediction=data['train_prediction'], target=error_train)
 
         # Calculate uncertainty associated with prediction on test data.
         if uncertainty:
