@@ -13,7 +13,7 @@ import numpy as np
 
 from atoml.fingerprint_setup import normalize, standardize
 from atoml.predict import FitnessPrediction
-from atoml.model_selection import dlogp, negative_logp
+from atoml.model_selection import negative_logp
 from scipy.optimize import minimize
 from matplotlib import pyplot as plt
 import pandas as pd
