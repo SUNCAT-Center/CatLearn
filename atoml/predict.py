@@ -121,8 +121,9 @@ class FitnessPrediction(object):
         data = defaultdict(list)
         # Get the Gram matrix on-the-fly if none is suppiled.
         if cinv is None:
-            cinv = self.get_covariance(train_fp)
-
+            cvm = self.get_covariance(train_fp)
+            cinv = np.linalg.inv(cvm)
+            
         # Calculate the covarience between the test and training datasets.
         ktb = np.asarray([[self.kernel(fp1=fp1, fp2=fp2) for fp1 in train_fp]
                           for fp2 in test_fp])
@@ -206,44 +207,6 @@ class FitnessPrediction(object):
         error['average'] = (sumd / len(prediction)) ** 0.5
         return error
     
-    def dK(self, fp1, fp2, sigma):
-        """ derivatives of Kernel functions taking two fingerprint vectors. """
-        # Linear kernel.
-        if self.ktype == 'linear':
-            return 0
-        
-        # Polynomial kernel.
-        elif self.ktype == 'polynomial':
-            return 0
-        
-        # Gaussian kernel.
-        elif self.ktype == 'gaussian':
-            dK = (exp(-np.abs((fp1 - fp2) ** 2)/(2 * sigma ** 2))
-                *np.abs((fp1 - fp2) ** 2)/(sigma ** 3))
-            return dK
-        
-        # Laplacian kernel.
-        elif self.ktype == 'laplacian':
-            raise NotImplemented
-    
-    def get_derivatives(self, train_fp):
-        """ Returns a vector of partial derivatives of K with respect to the
-        widths (characteristic length scales).
-            train_fp: list
-                A list of the training fingerprint vectors.
-        """
-        if type(self.kwidth) is float:
-            self.kwidth = np.zeros(len(train_fp[0]),) + self.kwidth
-        dcovs = []
-        for sigma in self.kwidth:
-            dcov = np.asarray([[self.dK(fp1=fp1, fp2=fp2, sigma=sigma)
-                       for fp1 in train_fp] for fp2 in train_fp])
-            dcovs.append(dcov)
-        if self.regularization is not None:
-            dcov = dcov# + self.regularization * np.identity(len(train_fp))
-        print(np.shape(dcov))
-        return dcov    
-    
     def log_marginal_likelyhood1(self, cov, cinv, y):
         """ Return the log marginal likelyhood.
         (Equation 5.8 in C. E. Rasmussen and C. K. I. Williams, 2006)
@@ -261,15 +224,5 @@ class FitnessPrediction(object):
         p = data_fit + complexity + normalization
         return p
     
-    def dlog_marginal_likelyhood1(self, cinv, dcov, y):
-        """ Return the differential of the log marginal likelyhood.
-        (Equation 5.9 in C. E. Rasmussen and C. K. I. Williams, 2006)
-        """
-        print('cinv',np.shape(cinv))
-        alpha = np.dot(cinv,y)
-        print('alpha', alpha)
-        A = np.dot(alpha,np.transpose(alpha))
-        print('A', np.shape(A))
-        dp = np.trace((A-cinv)*dcov)/2.
-        return dp
+
     
