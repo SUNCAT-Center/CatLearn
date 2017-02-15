@@ -4,13 +4,14 @@ Created on Fri Nov 18 14:30:20 2016
 
 @author: mhangaard
 
-
-
+This example script requires that the make_fingerprints.py has already been run
+or that the user has generated a feature matrix in fpm.txt.
 """
 import numpy as np
+from scipy.optimize import minimize
+
 from atoml.fingerprint_setup import standardize
 from atoml.model_selection import negative_logp
-from scipy.optimize import minimize
 
 # Get the list of fingerprint vectors and normalize them.
 fpm_raw = np.genfromtxt('fpm.txt')
