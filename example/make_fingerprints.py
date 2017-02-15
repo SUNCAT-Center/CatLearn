@@ -3,9 +3,6 @@
 Created on Fri Nov 18 14:30:20 2016
 
 @author: mhangaard
-
-
-
 """
 from __future__ import print_function
 
