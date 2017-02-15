@@ -7,16 +7,20 @@ Created on Tue Dec  6 14:09:29 2016
 @author: mhangaard
 
 """
+from __future__ import print_function
+
 import warnings
 import numpy as np
+from random import random
+
 import ase.db
 from ase.atoms import string2symbols
 from atoml.db2thermo import db2mol, db2surf, mol2ref, get_refs  # get_formation_energies
+
 try:
     from mendeleev import element
 except ImportError:
     print('mendeleev not imported')
-from random import random
 
 
 class AdsorbateFingerprintGenerator(object):

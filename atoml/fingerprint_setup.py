@@ -1,4 +1,6 @@
 """ Functions to setup fingerprint vectors. """
+from __future__ import print_function
+
 import numpy as np
 from collections import defaultdict
 from math import log
