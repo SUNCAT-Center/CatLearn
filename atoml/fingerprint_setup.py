@@ -248,14 +248,16 @@ def sure_independence_screening(target, train_fpv, size=None, standard=True):
     p = np.shape(train_fpv)[1]
     # NOTE: Magnitude is not scaled between -1 and 1
     omega = np.transpose(train_fpv).dot(target) / p
+    abso = [abs(i) for i in omega]
 
     order = list(range(np.shape(train_fpv)[1]))
-    sort_list = [list(i) for i in zip(*sorted(zip(abs(omega), order),
+    sort_list = [list(i) for i in zip(*sorted(zip(abso, order),
                                               key=lambda x: x[0],
                                               reverse=True))]
 
     select['sorted'] = sort_list[1]
     select['correlation'] = sort_list[0]
+    select['ordered_corr'] = abso
     if size is not None:
         select['accepted'] = sort_list[1][:size]
         select['rejected'] = sort_list[1][size:]
@@ -292,6 +294,9 @@ def iterative_sis(target, train_fpv, size=None, step=None):
     # Initiate the feature reduction.
     sis = sure_independence_screening(target=target, train_fpv=train_fpv,
                                       size=step, standard=False)
+    print('Correlation difference between best and worst feature:',
+          max(sis['ordered_corr']) - min(sis['ordered_corr']))
+    correlation = [sis['ordered_corr'][i] for i in sis['accepted']]
     accepted += [ordering[i] for i in sis['accepted']]
     ordering = [ordering[i] for i in sis['rejected']]
     reduced_fpv = np.delete(train_fpv, sis['rejected'], 1)
@@ -312,14 +317,18 @@ def iterative_sis(target, train_fpv, size=None, step=None):
         # Do SIS analysis on the residuals.
         sis = sure_independence_screening(target=target, train_fpv=response,
                                           size=step, standard=False)
-
         # Keep track of accepted and rejected features.
+        print('Correlation difference between best and worst feature:',
+              max(sis['ordered_corr']) - min(sis['ordered_corr']))
+        correlation += [sis['ordered_corr'][i] for i in sis['accepted']]
         accepted += [ordering[i] for i in sis['accepted']]
         ordering = [ordering[i] for i in sis['rejected']]
         new_fpv = np.delete(train_fpv, sis['rejected'], 1)
         reduced_fpv = np.concatenate((reduced_fpv, new_fpv), axis=1)
         train_fpv = np.delete(train_fpv, sis['accepted'], 1)
+    correlation += [sis['ordered_corr'][i] for i in sis['rejected']]
 
+    select['correlation'] = correlation
     select['accepted'] = accepted
     select['rejected'] = ordering
     select['train_fpv'] = reduced_fpv
