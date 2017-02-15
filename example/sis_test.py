@@ -5,9 +5,6 @@
 from __future__ import print_function
 
 import numpy as np
-import seaborn as sns
-import pandas as pd
-import matplotlib.pyplot as plt
 
 from ase.ga.data import DataConnection
 from atoml.data_setup import get_unique, get_train
@@ -74,27 +71,22 @@ def do_pred(ptrain_fp, ptest_fp):
     print('Model error:', pred['validation_rmse']['average'])
 
 
+# Get base predictions.
+print('Base Predictions')
+do_pred(ptrain_fp=train_fp, ptest_fp=test_fp)
+
 # Get correlation for descriptors from SIS.
 print('Getting descriptor correlation')
 sis = sure_independence_screening(target=trainset['target'],
-                                  train_fpv=train_fp, size=15)
+                                  train_fpv=train_fp, size=40)
 print('sis features:', sis['accepted'])
 sis_test_fp = np.delete(test_fp, sis['rejected'], 1)
 sis_train_fp = np.delete(train_fp, sis['rejected'], 1)
 do_pred(ptrain_fp=sis_train_fp, ptest_fp=sis_test_fp)
 
-it_sis = iterative_sis(target=trainset['target'], train_fpv=train_fp, size=15,
-                       step=1)
+it_sis = iterative_sis(target=trainset['target'], train_fpv=train_fp,
+                       size=40, step=4)
 print('iterative_sis features:', it_sis['accepted'])
 it_sis_test_fp = np.delete(test_fp, it_sis['rejected'], 1)
 it_sis_train_fp = np.delete(train_fp, it_sis['rejected'], 1)
 do_pred(ptrain_fp=it_sis_train_fp, ptest_fp=it_sis_test_fp)
-
-exit()
-
-# Plot the results.
-index = [i for i in range(len(test_fp[0]))]
-df = pd.DataFrame(data=sis, index=index)
-with sns.axes_style("white"):
-    sns.pointplot(x='sorted', y='correlation', data=df)
-plt.show()
