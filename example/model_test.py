@@ -4,6 +4,7 @@
 """
 from __future__ import print_function
 
+import numpy as np
 import seaborn as sns
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -41,10 +42,11 @@ krr = FitnessPrediction(ktype='gaussian',
 
 # Do the predictions.
 cvm = krr.get_covariance(train_fp=nfp['train'])
+cinv = np.linalg.inv(cvm)
 print('Making the predictions')
 pred = krr.get_predictions(train_fp=nfp['train'],
                            test_fp=nfp['test'],
-                           cinv=cvm,
+                           cinv=cinv,
                            train_target=trainset['target'],
                            test_target=testset['target'],
                            get_validation_error=True,

@@ -18,9 +18,9 @@ fpm_raw = np.genfromtxt('fpm.txt')
 shape = np.shape(fpm_raw)
 print(shape)
 
-energy = fpm_raw[:, -1]
+energy = fpm_raw[:, -2]
 
-fpm_ml0 = fpm_raw[:, :-1]
+fpm_ml0 = fpm_raw[:, :-2]
 
 # Operations to generate new descriptors
 # ops = fpm_operations(fpm_ml0)
