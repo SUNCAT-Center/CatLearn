@@ -15,7 +15,7 @@ from random import random
 
 import ase.db
 from ase.atoms import string2symbols
-from atoml.db2thermo import db2mol, db2surf, mol2ref, get_refs  # get_formation_energies
+from .db2thermo import db2mol, db2surf, mol2ref, get_refs  # get_formation_energies
 
 try:
     from mendeleev import element
