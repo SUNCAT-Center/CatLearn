@@ -31,10 +31,11 @@ nfp = normalize(train=train_fp, test=test_fp)
 # Set up the prediction routine.
 krr = FitnessPrediction(ktype='linear')
 cvm = krr.get_covariance(train_fp=nfp['train'])
-assert np.shape(cvm) == (50, 50)
+cinv = np.linalg.inv(cvm)
+assert np.shape(cinv) == (50, 50)
 pred = krr.get_predictions(train_fp=nfp['train'],
                            test_fp=nfp['test'],
-                           cinv=cvm,
+                           cinv=cinv,
                            train_target=trainset['target'],
                            test_target=testset['target'],
                            get_validation_error=True,
@@ -47,10 +48,11 @@ krr = FitnessPrediction(ktype='polynomial',
                         kfree=0.,
                         kdegree=2.)
 cvm = krr.get_covariance(train_fp=nfp['train'])
-assert np.shape(cvm) == (50, 50)
+cinv = np.linalg.inv(cvm)
+assert np.shape(cinv) == (50, 50)
 pred = krr.get_predictions(train_fp=nfp['train'],
                            test_fp=nfp['test'],
-                           cinv=cvm,
+                           cinv=cinv,
                            train_target=trainset['target'],
                            test_target=testset['target'],
                            get_validation_error=True,
@@ -63,10 +65,11 @@ krr = FitnessPrediction(ktype='gaussian',
                         kwidth=0.5,
                         regularization=0.001)
 cvm = krr.get_covariance(train_fp=nfp['train'])
-assert np.shape(cvm) == (50, 50)
+cinv = np.linalg.inv(cvm)
+assert np.shape(cinv) == (50, 50)
 pred = krr.get_predictions(train_fp=nfp['train'],
                            test_fp=nfp['test'],
-                           cinv=cvm,
+                           cinv=cinv,
                            train_target=trainset['target'],
                            test_target=testset['target'],
                            get_validation_error=True,
@@ -84,10 +87,11 @@ krr = FitnessPrediction(ktype='laplacian',
                         kwidth=0.5,
                         regularization=0.001)
 cvm = krr.get_covariance(train_fp=nfp['train'])
-assert np.shape(cvm) == (50, 50)
+cinv = np.linalg.inv(cvm)
+assert np.shape(cinv) == (50, 50)
 pred = krr.get_predictions(train_fp=nfp['train'],
                            test_fp=nfp['test'],
-                           cinv=cvm,
+                           cinv=cinv,
                            train_target=trainset['target'],
                            test_target=testset['target'],
                            get_validation_error=True,

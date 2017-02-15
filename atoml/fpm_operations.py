@@ -5,6 +5,7 @@ Created on Tue Jan  3 12:01:30 2017
 @author: mhangaard
 """
 import numpy as np
+from random import shuffle
 
 from .fingerprint_setup import sure_independence_screening
 
@@ -129,29 +130,51 @@ class fpm_operations():
                 nfi += 1
         return new_features
 
-    def fpmatrix_split(self, nsplit):
-        """ Routine to split list of candidates into sublists. This can be
+    def fpmatrix_split(self, nsplit, fix_size=None, replacement=False):
+        """ Routine to split feature matrix and return sublists. This can be
             useful for bootstrapping, LOOCV, etc.
-            Input:
-                nsplit: int
-                The number of bins that data should be divided into.
-            Output:
-                list
+
+            nsplit: int
+                The number of bins that data should be devided into.
+
+            fix_size: int
+                Define a fixed sample size, e.g. nsplit=5 and fix_size=100,
+                this generate 5 x 100 data split. Default is None meaning all
+                avaliable data is divided nsplit times.
+
+            replacement: boolean
+                Set to true if samples are to be generated with replacement
+                e.g. the same candidates can be in samles multiple times.
+                Default is False.
         """
+        if fix_size is not None:
+            msg = 'Cannot divide dataset in this way, number of candidates is '
+            msg += 'too small'
+            assert len(self.X) >= nsplit * fix_size, msg
         dataset = []
-        np.random.shuffle(self.X)
-        # Calculate the number of items per split.
-        n = len(self.X) / nsplit
-        # Get any remainders.
-        r = len(self.X) % nsplit
-        # Define the start and finish of first split.
+        index = list(range(len(self.X)))
+        shuffle(index)
+        # Find the size of the divides based on all candidates.
         s1 = 0
-        s2 = n + min(1, r)
+        if fix_size is None:
+            # Calculate the number of items per split.
+            n = len(self.X) / nsplit
+            # Get any remainders.
+            r = len(self.X) % nsplit
+            # Define the start and finish of first split.
+            s2 = n + min(1, r)
+        else:
+            s2 = fix_size
         for _ in range(nsplit):
-            dataset.append(self.X[int(s1):int(s2), :])
-            # Get any new remainder.
-            r = max(0, r-1)
-            # Define next split.
+            if replacement:
+                shuffle(index)
+            dataset.append(self.X[index[int(s1):int(s2)]])
             s1 = s2
-            s2 = s2 + n + min(1, r)
+            if fix_size is None:
+                # Get any new remainder.
+                r = max(0, r-1)
+                # Define next split.
+                s2 = s2 + n + min(1, r)
+            else:
+                s2 = s2 + fix_size
         return dataset

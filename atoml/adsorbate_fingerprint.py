@@ -7,33 +7,45 @@ Created on Tue Dec  6 14:09:29 2016
 @author: mhangaard
 
 """
+from __future__ import print_function
 
 import warnings
 import numpy as np
+from random import random
+
 import ase.db
 from ase.atoms import string2symbols
-from db2thermo import db2mol, db2surf, mol2ref, get_refs  # get_formation_energies
-from mendeleev import element
-from random import random
+from .db2thermo import db2mol, db2surf, mol2ref, get_refs  # get_formation_energies
+
+try:
+    from mendeleev import element
+except ImportError:
+    print('mendeleev not imported')
 
 
 class AdsorbateFingerprintGenerator(object):
-    def __init__(self, moldb='mol.db', bulkdb=None, slabs=None):
+    def __init__(self, moldb=None, bulkdb=None, slabs=None):
         self.mols = moldb
         parameters = {'vacuum': 8, 'layers': 5, 'PW': 500, 'kpts': '4x6',
                       'PSP': 'gbrv1.5pbe'}
+        abinitio_energies, dbids = db2mol(moldb, ['vacuum='+str(parameters['vacuum']),'PW='+str(parameters['PW'])])
+        self.mol_dict = mol2ref(abinitio_energies)
         if bulkdb is not None:
             self.bulks = bulkdb
             self.rho, self.Z, self.eos_B, self.dbcenter, self.dbfilling, self.d_atoms = self.get_bulk()
-        abinitio_energies, frequency_dict, contribs, dbids = db2mol(moldb, ['vacuum='+str(parameters['vacuum']),'PW='+str(parameters['PW'])])
-        self.mol_dict = mol2ref(abinitio_energies)
         self.slabs = slabs
         if slabs is not None:
-            surf_energies, surf_frequencies, surf_contribs, surf_dbids = db2surf(slabs, ['series=slab','layers='+str(parameters['layers']),'kpts='+str(parameters['kpts']),'PW='+str(parameters['PW']),'PSP='+str(parameters['PSP'])])
+            surf_energies, surf_dbids = db2surf(slabs, ['series=slab','layers='+str(parameters['layers']),'kpts='+str(parameters['kpts']),'PW='+str(parameters['PW']),'PSP='+str(parameters['PSP'])])
             abinitio_energies.update(surf_energies)
-            frequency_dict.update(surf_frequencies)
-            contribs.update(surf_contribs)
             dbids.update(surf_dbids)
+            adds_energies, adds_dbids = db2surf(slabs, ['series!=slab','layers='+str(parameters['layers']),'kpts='+str(parameters['kpts']),'PW='+str(parameters['PW']),'PSP='+str(parameters['PSP'])])
+            abinitio_energies.update(adds_energies)
+            dbids.update(adds_dbids)
+            stable_adds_ids = []
+            for key in abinitio_energies:
+                if 'slab' not in key and 'gas' not in key:
+                    stable_adds_ids.append(dbids[key])
+            self.stable_adds_ids = stable_adds_ids
             # surf_energies211, surf_frequencies211, surf_contribs211, surf_dbids211 = db2surf(slabs, ['Al=0','Rh=0','Pt=0','layers=4','facet=2x1x1','kpts=4x4','PW=500','PSP=gbrv1.5pbe'])
             # abinitio_energies.update(surf_energies211)
             # frequency_dict.update(surf_frequencies211)
@@ -43,52 +55,30 @@ class AdsorbateFingerprintGenerator(object):
         self.abinitio_energies = abinitio_energies
         # self.rho, self.Z, self.eos_B, self.d_atoms = self.get_bulk()
         # self.Ef = get_formation_energies(abinitio_energies, ref_dict)
-        # stable_adds_ids = []
-        # for key in abinitio_energies:
-        #    if 'slab' not in key and 'gas' not in key:
-        #        stable_adds_ids.append(dbids[key])
-        # self.stable_adds_ids = stable_adds_ids
 
-    def db2atoms_info(self, fname='test_set.db',
-                      selection=['series!=slab', 'layers=5', 'facet=1x1x1',
-                                 'kpts=4x6']):  # selection=[]):
-        c = ase.db.connect(fname)
-        s = c.select(selection)
-        traj = []
-        for d in s:
-            dbid = int(d.id)
-            d = c.get(dbid)
-            atoms = c.get_atoms(dbid)
-            atoms.info['key_value_pairs'] = d.key_value_pairs
-            traj.append(atoms)
-        return traj
-
-    def db2surf_info(self):  # selection=[]):
+    def db2surf_info(self, selection=[]):  # selection=[]):
         c = ase.db.connect(self.slabs)
+        s = c.select(selection)
         traj = []
-        for dbid in self.stable_adds_ids:
-            # dbid = int(d.id)
-            d = c.get(dbid)
-            name = str(d.name)
-            thermo_key = str(d.series) + '_' + name + '_' + str(
-                d.phase) + '_' + str(d.facet)
+        for d in s:
+            dbid = int(d.id)
+            if not dbid in self.stable_adds_ids:
+                continue
             atoms = c.get_atoms(dbid)
             atoms.info['key_value_pairs'] = d.key_value_pairs
-            atoms.info['key_value_pairs']['Ef'] = self.Ef[thermo_key]
+            atoms.info['dbid'] = int(d.id)
             traj.append(atoms)
         return traj
 
-    def db2adds_info(self, fname='metals.db',
-                     selection=['series!=slab', 'layers=5', 'facet=1x1x1',
-                                'kpts=4x6']):  # selection=[]):
+    def db2atoms_info(self, fname, selection=[]):  # selection=[]):
         c = ase.db.connect(fname)
         s = c.select(selection)
         traj = []
         for d in s:
             dbid = int(d.id)
-            d = c.get(dbid)
             atoms = c.get_atoms(dbid)
             atoms.info['key_value_pairs'] = d.key_value_pairs
+            atoms.info['dbid'] = int(d.id)
             traj.append(atoms)
         return traj
 
@@ -392,6 +382,9 @@ class AdsorbateFingerprintGenerator(object):
         else:
             return [random()]
 
+    def info2Ef(self, atoms):
+        return atoms['info']['Ef']
+
     def get_Ef(self, atoms=None):
         if atoms is None:
             return ['Ef']
@@ -410,6 +403,9 @@ class AdsorbateFingerprintGenerator(object):
                 Ef = np.NaN
                 warnings.warn(thermo_key+' not found. get_Ef returns NaN')
             return [Ef]
+
+    def get_dbid(self, atoms):
+        return int(atoms.info['dbid'])
 
     def get_keyvaluepair(self, atoms=None, field_name='None'):
         if atoms is None:

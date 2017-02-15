@@ -1,6 +1,9 @@
 """ Functions to setup fingerprint vectors. """
+from __future__ import print_function
+
 import numpy as np
 from collections import defaultdict
+from math import log
 
 import ase.db
 from .data_setup import target_standardize
@@ -75,7 +78,7 @@ def db_sel2fp(calctype, fname, selection, moldb=None, bulkdb=None,
 
 def get_combined_descriptors(fpv_list):
     """ Function to sequentially combine feature label vectors and return them
-        for a list of atoms objects. Analogous to get_combined_fpv
+        for a list of atoms objects. Analogous to return_fpv function.
 
         Input:  atoms object
                 functions that return fingerprints
@@ -93,7 +96,7 @@ def get_combined_descriptors(fpv_list):
     return np.hstack(L_F)
 
 
-def get_keyvaluepair(c=[], fpv_name='None', single=True):
+def get_keyvaluepair(c=[], fpv_name='None'):
     if len(c) == 0:
         return ['kvp_'+fpv_name]
     else:
@@ -108,6 +111,9 @@ def return_fpv(candidates, fpv_name, use_prior=True):
     """ Function to sequentially combine fingerprint vectors and return them
         for a list of atoms objects.
     """
+    # Put fpv_name in a list, if it is not already.
+    if not isinstance(fpv_name, list):
+        fpv_name = [fpv_name]
     # Check to see if we are dealing with a list of candidates or a single
     # atoms object.
     if type(candidates) is defaultdict or type(candidates) is list:
@@ -215,27 +221,118 @@ def normalize(train, test=None):
     return norm
 
 
-def sure_independence_screening(target, train_fpv, size=None):
+def sure_independence_screening(target, train_fpv, size=None, standard=True):
     """ Feature selection based on SIS discussed in Fan, J., Lv, J., J. R.
         Stat. Soc.: Series B, 2008, 70, 849.
+
+        target: list
+            The target values for the training data.
+
+        train_fpv: array
+            The feature matrix for the training data.
+
+        size: int
+            Number of features that should be left.
+
+        std: boolean
+            It is expected that the features and targets have been standardized
+            prior to analysis. Automated if True.
     """
+    if size is not None:
+        msg = 'Too few features avaliable, matrix cannot be reduced.'
+        assert len(train_fpv[0]) >= size, msg
+    if standard:
+        target = target_standardize(target)['target']
+        train_fpv = standardize(train=train_fpv)['train']
+
     select = defaultdict(list)
-    std_x = standardize(train=train_fpv)
-    std_t = target_standardize(target)
 
-    p = np.shape(std_x['train'])[1]
+    p = np.shape(train_fpv)[1]
     # NOTE: Magnitude is not scaled between -1 and 1
-    omega = np.transpose(std_x['train']).dot(std_t['target']) / p
+    omega = np.transpose(train_fpv).dot(target) / p
+    abso = [abs(i) for i in omega]
 
-    order = list(range(np.shape(std_x['train'])[1]))
-    sort_list = [list(i) for i in zip(*sorted(zip(abs(omega), order),
+    order = list(range(np.shape(train_fpv)[1]))
+    sort_list = [list(i) for i in zip(*sorted(zip(abso, order),
                                               key=lambda x: x[0],
                                               reverse=True))]
 
     select['sorted'] = sort_list[1]
     select['correlation'] = sort_list[0]
+    select['ordered_corr'] = abso
     if size is not None:
         select['accepted'] = sort_list[1][:size]
         select['rejected'] = sort_list[1][size:]
+
+    return select
+
+
+def iterative_sis(target, train_fpv, size=None, step=None):
+    """ Function to reduce the number of featues in an iterative manner using
+        SIS.
+
+        step: int
+            Step size by which to reduce the number of features. Default is
+            n / log(n).
+    """
+    # Standardize the training and target values.
+    target = target_standardize(target)['target']
+    train_fpv = standardize(train=train_fpv)['train']
+
+    # Assign default values for number of features to return and step size.
+    if size is None:
+        size = len(train_fpv)
+    msg = 'Not enough features to perform iterative SIS analysis, reduce size.'
+    assert len(train_fpv[0]) > size, msg
+    if step is None:
+        step = round(len(train_fpv) / log(len(train_fpv)))
+    msg = 'Step size is too large, reduce it.'
+    assert step < size
+
+    select = defaultdict(list)
+    ordering = list(range(len(train_fpv[0])))
+    accepted = []
+
+    # Initiate the feature reduction.
+    sis = sure_independence_screening(target=target, train_fpv=train_fpv,
+                                      size=step, standard=False)
+    print('Correlation difference between best and worst feature:',
+          max(sis['ordered_corr']) - min(sis['ordered_corr']))
+    correlation = [sis['ordered_corr'][i] for i in sis['accepted']]
+    accepted += [ordering[i] for i in sis['accepted']]
+    ordering = [ordering[i] for i in sis['rejected']]
+    reduced_fpv = np.delete(train_fpv, sis['rejected'], 1)
+    train_fpv = np.delete(train_fpv, sis['accepted'], 1)
+
+    # Iteratively reduce the remaining number of features by the step size.
+    while len(reduced_fpv[0]) < size:
+        if size - len(reduced_fpv[0]) < step:
+            step = size - len(reduced_fpv[0])  # Calculate the remainder.
+        # Calculate the residual for the remaining features.
+        response = []
+        for d in np.transpose(train_fpv):
+            for a in np.transpose(reduced_fpv):
+                d = (d - np.dot(d, a) - a) / (np.linalg.norm(a) ** 2)
+            response.append(d)
+        response = np.transpose(response)
+
+        # Do SIS analysis on the residuals.
+        sis = sure_independence_screening(target=target, train_fpv=response,
+                                          size=step, standard=False)
+        # Keep track of accepted and rejected features.
+        print('Correlation difference between best and worst feature:',
+              max(sis['ordered_corr']) - min(sis['ordered_corr']))
+        correlation += [sis['ordered_corr'][i] for i in sis['accepted']]
+        accepted += [ordering[i] for i in sis['accepted']]
+        ordering = [ordering[i] for i in sis['rejected']]
+        new_fpv = np.delete(train_fpv, sis['rejected'], 1)
+        reduced_fpv = np.concatenate((reduced_fpv, new_fpv), axis=1)
+        train_fpv = np.delete(train_fpv, sis['accepted'], 1)
+    correlation += [sis['ordered_corr'][i] for i in sis['rejected']]
+
+    select['correlation'] = correlation
+    select['accepted'] = accepted
+    select['rejected'] = ordering
+    select['train_fpv'] = reduced_fpv
 
     return select
