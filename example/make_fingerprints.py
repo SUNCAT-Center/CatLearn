@@ -11,11 +11,9 @@ from __future__ import print_function
 
 import numpy as np
 
-from atoml.fingerprint_setup import (return_fpv,
-                                     get_combined_descriptors)
+from atoml.fingerprint_setup import return_fpv, get_combined_descriptors
 from atoml.adsorbate_fingerprint import AdsorbateFingerprintGenerator
 from atoml.fpm_operations import fpm_operations
-
 
 fpv_train = AdsorbateFingerprintGenerator(moldb='mol.db',
                                           bulkdb='ref_bulks_k24.db',
@@ -47,21 +45,22 @@ print(np.shape(y))
 fpm0 = np.hstack([cfpv, np.vstack(y), np.vstack(dbid)])
 print('removing any training examples with NaN in the target value field')
 fpm = fpm0[~np.isnan(fpm0).any(axis=1)]
-print('Saving',np.shape(fpm), 'matrix. Last column is the ase.db id. Second last column is the target value.')
+print('Saving', np.shape(fpm), 'matrix. Last column is the ase.db id. Second \
+      last column is the target value.')
 np.savetxt('fpm.txt', fpm)
 
-#fpv_predict = AdsorbateFingerprintGenerator(moldb='mol.db',
+# fpv_predict = AdsorbateFingerprintGenerator(moldb='mol.db',
 #                                            bulkdb='ref_bulks_k24.db',
 #                                            slabs='predict.db')
-#predict_cand = fpv_predict.db2adds_info('example.db',
+# predict_cand = fpv_predict.db2adds_info('example.db',
 #                                        selection=['series!=slab',
 #                                                   'id>=50'])
-#cfpv_new = return_fpv(predict_cand, train_fpv)
-#np.savetxt('fpm_predict.txt', cfpv_new)
+# cfpv_new = return_fpv(predict_cand, train_fpv)
+# np.savetxt('fpm_predict.txt', cfpv_new)
 
 nsplit = 2
 print('Creating', nsplit, '-fold split.')
 ops = fpm_operations(fpm)
 split = ops.fpmatrix_split(nsplit)
 for i in range(nsplit):
-    np.savetxt('fpm_'+str(i)+'.txt', split[i])
+    np.savetxt('fpm_' + str(i) + '.txt', split[i])
