@@ -3,7 +3,7 @@ import numpy as np
 from random import shuffle
 from collections import defaultdict
 
-from .output import write_datasetup
+from .output import write_data_setup
 
 
 def get_unique(candidates, testsize, key, writeout=True):
@@ -25,7 +25,7 @@ def get_unique(candidates, testsize, key, writeout=True):
             break
 
     if writeout:
-        write_datasetup(function='get_unique', data=dataset)
+        write_data_setup(function='get_unique', data=dataset)
 
     return dataset
 
@@ -62,7 +62,7 @@ def get_train(candidates, key, trainsize=None, taken_cand=None, writeout=True):
             break
 
     if writeout:
-        write_datasetup(function='get_train', data=dataset)
+        write_data_setup(function='get_train', data=dataset)
 
     return dataset
 
@@ -125,7 +125,7 @@ def data_split(candidates, nsplit, key, fix_size=None, replacement=False,
             s2 = s2 + fix_size
 
     if writeout:
-        write_datasetup(function='data_split', data=dataset)
+        write_data_setup(function='data_split', data=dataset)
 
     return dataset
 
@@ -183,7 +183,7 @@ def remove_outliers(candidates, key, con=1.4826, dev=3., constraint=None,
                 dataset['removed'].append(o)
 
     if writeout:
-        write_datasetup(function='remove_outliers', data=dataset)
+        write_data_setup(function='remove_outliers', data=dataset)
 
     return dataset
 
@@ -203,6 +203,6 @@ def target_standardize(target, writeout=True):
         data['target'].append((i - data['mean']) / data['std'])
 
     if writeout:
-        write_datasetup(function='target_standardize', data=data)
+        write_data_setup(function='target_standardize', data=data)
 
     return data
