@@ -46,3 +46,18 @@ def write_datasetup(function, data):
                         data['target'][l + 1][r])
                 writefile.write(str(row) + '\n')
             writefile.write('\nEnd of get_train function.\n \n')
+
+        if function is 'remove_outliers':
+            writefile.write('Output from atoml.remove_outliers. Run on %s\n'
+                            % localtime)
+            writefile.write('Index of candidates removed:\n' +
+                            str(data['removed']) + '\n')
+            writefile.write('\nEnd of remove_outliers function.\n \n')
+
+        if function is 'target_standardize':
+            writefile.write('Output from atoml.target_standardize. Run on %s\n'
+                            % localtime)
+            writefile.write('Target mean is: ' + str(data['mean']) + '\n')
+            writefile.write('Target standard deviation is: ' +
+                            str(data['std']) + '\n')
+            writefile.write('\nEnd of target_standardize function.\n \n')

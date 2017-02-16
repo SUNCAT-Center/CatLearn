@@ -130,7 +130,8 @@ def data_split(candidates, nsplit, key, fix_size=None, replacement=False,
     return dataset
 
 
-def remove_outliers(candidates, key, con=1.4826, dev=3., constraint=None):
+def remove_outliers(candidates, key, con=1.4826, dev=3., constraint=None,
+                    writeout=True):
     """ Preprocessing routine to remove outliers in the data based on the
         median absolute deviation. Only candidates that are unfit, e.g. less
         positive raw_score, are removed as outliers.
@@ -147,7 +148,9 @@ def remove_outliers(candidates, key, con=1.4826, dev=3., constraint=None):
             small/negative or 'high' for outliers that are too large/positive.
             Default is to remove all.
     """
+    dataset = defaultdict(list)
     target = []
+    order = list(range(len(candidates)))
     for c in candidates:
         target.append(c.info['key_value_pairs'][key])
 
@@ -157,27 +160,35 @@ def remove_outliers(candidates, key, con=1.4826, dev=3., constraint=None):
     # get median absolute deviation
     mad = con*(np.median(np.abs(vals - med)))
 
-    processed = []
     if constraint is None:
-        for c in candidates:
+        for c, o in zip(candidates, order):
             if c.info['key_value_pairs'][key] > med - (dev * mad) and \
                c.info['key_value_pairs'][key] < med + (dev * mad):
-                processed.append(c)
+                dataset['processed'].append(c)
+            else:
+                dataset['removed'].append(o)
 
     elif constraint is 'low':
-        for c in candidates:
+        for c, o in zip(candidates, order):
             if c.info['key_value_pairs'][key] > med - (dev * mad):
-                processed.append(c)
+                dataset['processed'].append(c)
+            else:
+                dataset['removed'].append(o)
 
     elif constraint is 'high':
-        for c in candidates:
+        for c, o in zip(candidates, order):
             if c.info['key_value_pairs'][key] < med + (dev * mad):
-                processed.append(c)
+                dataset['processed'].append(c)
+            else:
+                dataset['removed'].append(o)
 
-    return processed
+    if writeout:
+        write_datasetup(function='remove_outliers', data=dataset)
+
+    return dataset
 
 
-def target_standardize(target):
+def target_standardize(target, writeout=True):
     """ Returns a list of standardized target values.
 
         target: list
@@ -190,5 +201,8 @@ def target_standardize(target):
     data['std'] = float(np.std(target))
     for i in target:
         data['target'].append((i - data['mean']) / data['std'])
+
+    if writeout:
+        write_datasetup(function='target_standardize', data=data)
 
     return data
