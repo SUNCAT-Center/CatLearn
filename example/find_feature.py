@@ -3,14 +3,8 @@
 Created on Fri Nov 18 14:30:20 2016
 
 @author: mhangaard
-
-
-
 """
 from __future__ import print_function
-
-from sys import argv
-import numpy as np
 
 from atoml.fingerprint_setup import get_combined_descriptors
 from atoml.adsorbate_fingerprint import AdsorbateFingerprintGenerator

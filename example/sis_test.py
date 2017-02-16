@@ -58,9 +58,10 @@ def do_pred(ptrain_fp, ptest_fp):
 
     # Do the predictions.
     cvm = krr.get_covariance(train_fp=nfp['train'])
+    cinv = np.linalg.inv(cvm)
     pred = krr.get_predictions(train_fp=nfp['train'],
                                test_fp=nfp['test'],
-                               cinv=cvm,
+                               cinv=cinv,
                                train_target=trainset['target'],
                                test_target=testset['target'],
                                get_validation_error=True,
@@ -80,6 +81,7 @@ print('Getting descriptor correlation')
 sis = sure_independence_screening(target=trainset['target'],
                                   train_fpv=train_fp, size=40)
 print('sis features:', sis['accepted'])
+print('sis correlation:', sis['correlation'])
 sis_test_fp = np.delete(test_fp, sis['rejected'], 1)
 sis_train_fp = np.delete(train_fp, sis['rejected'], 1)
 do_pred(ptrain_fp=sis_train_fp, ptest_fp=sis_test_fp)
@@ -87,6 +89,7 @@ do_pred(ptrain_fp=sis_train_fp, ptest_fp=sis_test_fp)
 it_sis = iterative_sis(target=trainset['target'], train_fpv=train_fp,
                        size=40, step=4)
 print('iterative_sis features:', it_sis['accepted'])
+print('iterative_sis correlation:', it_sis['correlation'])
 it_sis_test_fp = np.delete(test_fp, it_sis['rejected'], 1)
 it_sis_train_fp = np.delete(train_fp, it_sis['rejected'], 1)
 do_pred(ptrain_fp=it_sis_train_fp, ptest_fp=it_sis_test_fp)

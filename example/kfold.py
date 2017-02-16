@@ -4,27 +4,27 @@ Created on Fri Nov 18 14:30:20 2016
 
 @author: mhangaard
 
-
-
+This example script requires that the make_fingerprints.py has already been run
+or that the user has generated a feature matrix in fpm_(i).txt.
 """
 from __future__ import print_function
 
 import numpy as np
 
-from atoml.fingerprint_setup import normalize, standardize
+from atoml.fingerprint_setup import standardize  # normalize
 from atoml.predict import FitnessPrediction
 from atoml.model_selection import negative_logp
 from scipy.optimize import minimize
-from matplotlib import pyplot as plt
-import pandas as pd
-import seaborn as sns
+# from matplotlib import pyplot as plt
+# import pandas as pd
+# import seaborn as sns
 
-nsplit = 2 
+nsplit = 2
 
 split_fpv = []
 split_energy = []
 for i in range(nsplit):
-    split = np.genfromtxt('fpm_'+str(i)+'.txt')
+    split = np.genfromtxt('fpm_' + str(i) + '.txt')
     split_fpv.append(split[:, :-1])
     split_energy.append(split[:, -1])
 
@@ -40,7 +40,7 @@ for i in range(nsplit):
 print('Make predictions based in k-fold samples')
 train_rmse = []
 val_rmse = []
-colors = ['r','b']
+colors = ['r', 'b']
 for i in range(nsplit):
     # Setup the test, training and fingerprint datasets.
     traine = []
@@ -60,21 +60,20 @@ for i in range(nsplit):
         test_fp.append(v)
     # Get the list of fingerprint vectors and normalize them.
     nfp = standardize(train=train_fp, test=test_fp)
-    regularization=.001
+    regularization = 0.001
     m = np.shape(nfp['train'])[1]
     sigma = np.ones(m)
     sigma *= 0.5
     if False:
         # Optimize hyperparameters
-        a=(nfp, traine, regularization)
-        #Hyper parameter bounds.
-        b=((1E-9,None),)*(m)
+        a = (nfp, traine, regularization)
+        # Hyperparameter bounds.
+        b = ((1E-9, None), ) * (m)
         popt = minimize(negative_logp, sigma, args=a, bounds=b)
-        sigma=popt['x']
+        sigma = popt['x']
     # Set up the prediction routine.
-    krr = FitnessPrediction(ktype='gaussian',
-                        kwidth=sigma,
-                        regularization=.001)#regularization)
+    krr = FitnessPrediction(ktype='gaussian', kwidth=sigma,
+                            regularization=.001)  # regularization)
     # Do the training.
     cvm = krr.get_covariance(train_fp=nfp['train'])
     cinv = np.linalg.inv(cvm)
