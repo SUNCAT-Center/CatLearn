@@ -3,8 +3,10 @@ import numpy as np
 from random import shuffle
 from collections import defaultdict
 
+from .output import write_datasetup
 
-def get_unique(candidates, testsize, key):
+
+def get_unique(candidates, testsize, key, writeout=True):
     """ Returns a unique test dataset in the form of a integer list, to track
         selected candidates, and a list of atoms objects making up the set.
     """
@@ -22,10 +24,13 @@ def get_unique(candidates, testsize, key):
         else:
             break
 
+    if writeout:
+        write_datasetup(function='get_unique', data=dataset)
+
     return dataset
 
 
-def get_train(candidates, key, trainsize=None, taken_cand=None):
+def get_train(candidates, key, trainsize=None, taken_cand=None, writeout=True):
     """ Returns a training dataset in the form of a list of atoms objects
         making up the set and a list of the target values. The list is in a
         random order. If the original order is required, use the 'order' list.
@@ -56,10 +61,14 @@ def get_train(candidates, key, trainsize=None, taken_cand=None):
                 len(dataset['candidates']) == trainsize:
             break
 
+    if writeout:
+        write_datasetup(function='get_train', data=dataset)
+
     return dataset
 
 
-def data_split(candidates, nsplit, key, fix_size=None, replacement=False):
+def data_split(candidates, nsplit, key, fix_size=None, replacement=False,
+               writeout=True):
     """ Routine to split list of candidates into sublists. This can be
         useful for bootstrapping, CV, etc.
 
@@ -96,12 +105,16 @@ def data_split(candidates, nsplit, key, fix_size=None, replacement=False):
         s2 = fix_size
     # Divide up the candidates:
     for _ in range(nsplit):
+        # If replacement, allow repetition of candidates.
         if replacement:
             shuffle(index)
+        # Store the generated division of data.
         dataset['split_cand'].append([candidates[i] for i in
                                       index[int(s1):int(s2)]])
         dataset['target'].append([candidates[i].info['key_value_pairs'][key]
                                  for i in index[int(s1):int(s2)]])
+        dataset['index'].append(index[int(s1):int(s2)])
+        # Set new bounds.
         s1 = s2
         if fix_size is None:
             # Get any new remainder.
@@ -110,6 +123,9 @@ def data_split(candidates, nsplit, key, fix_size=None, replacement=False):
             s2 = s2 + n + min(1, r)
         else:
             s2 = s2 + fix_size
+
+    if writeout:
+        write_datasetup(function='data_split', data=dataset)
 
     return dataset
 
