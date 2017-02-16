@@ -4,6 +4,7 @@ from math import exp
 from collections import defaultdict
 
 from .data_setup import target_standardize
+from .output import write_predict
 
 
 class FitnessPrediction(object):
@@ -78,7 +79,7 @@ class FitnessPrediction(object):
     def get_predictions(self, train_fp, test_fp, train_target, cinv=None,
                         test_target=None, uncertainty=False,
                         get_validation_error=False, get_training_error=False,
-                        standardize_target=True):
+                        standardize_target=True, writeout=True):
         """ Returns a list of predictions for a test dataset.
 
             train_fp: list
@@ -156,6 +157,9 @@ class FitnessPrediction(object):
         # Calculate uncertainty associated with prediction on test data.
         if uncertainty:
             data['uncertainty'] = self.get_uncertainty(cinv=cinv, ktb=ktb)
+
+        if writeout:
+            write_predict(function='get_predictions', data=data)
 
         return data
 
