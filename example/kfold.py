@@ -16,25 +16,25 @@ from atoml.predict import FitnessPrediction
 from atoml.model_selection import negative_logp
 from scipy.optimize import minimize
 from matplotlib import pyplot as plt
+from atoml.fpm_operations import fpmatrix_split
 import pandas as pd
 import seaborn as sns
 
 nsplit = 2 
 
-split_fpv = []
-split_energy = []
-for i in range(nsplit):
-    split = np.genfromtxt('fpm_'+str(i)+'.txt')
-    split_fpv.append(split[:, :-1])
-    split_energy.append(split[:, -1])
+fpm_y = np.genfromtxt('fpm.txt')
 
-indexes = [12, 6, 7, 1, 15, 18, 4]
+split_fpv = fpmatrix_split(fpm_y, nsplit)
+
+indexes = [9, 18, 25, 32, 36]
+
+split_energy = []
 
 # Subset of the fingerprint vector.
 for i in range(nsplit):
-    fpm = split_fpv[i]
-    shape = np.shape(fpm)
-    reduced_fpv = split_fpv[i][:, indexes]
+    split_energy.append(split_fpv[i][:, -2])
+    fpm = split_fpv[i][:,:-2]
+    reduced_fpv = fpm[:, indexes]
     split_fpv[i] = reduced_fpv
 
 print('Make predictions based in k-fold samples')
@@ -58,19 +58,22 @@ for i in range(nsplit):
         teste.append(e)
     for v in split_fpv[i]:
         test_fp.append(v)
-    # Get the list of fingerprint vectors and normalize them.
-    nfp = standardize(train=train_fp, test=test_fp)
     regularization=.001
-    m = np.shape(nfp['train'])[1]
+    m = np.shape(reduced_fpv)[1]
     sigma = np.ones(m)
     sigma *= 0.5
-    if False:
+    if True:
+        # Get the list of fingerprint vectors and standardize them.
+        nfp = standardize(train=train_fp, test=test_fp)
         # Optimize hyperparameters
         a=(nfp, traine, regularization)
         #Hyper parameter bounds.
         b=((1E-9,None),)*(m)
         popt = minimize(negative_logp, sigma, args=a, bounds=b)
         sigma=popt['x']
+    else:
+        # Get the list of fingerprint vectors and normalize them.
+        nfp = normalize(train=train_fp, test=test_fp)
     # Set up the prediction routine.
     krr = FitnessPrediction(ktype='gaussian',
                         kwidth=sigma,

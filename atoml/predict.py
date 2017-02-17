@@ -214,13 +214,12 @@ class FitnessPrediction(object):
         """
         n = len(y)
         y = np.vstack(y)
-        cinv=np.linalg.inv(cov)
         data_fit = -(np.dot(np.dot(np.transpose(y),cinv),y)/2.)[0][0]
-        L = np.linalg.cholesky(cinv)
-        logdetcinv = 0
+        L = np.linalg.cholesky(cov)
+        logdetcov = 0
         for l in range(len(L)):
-            logdetcinv += np.log(L[l,l])
-        complexity = -logdetcinv
+            logdetcov += np.log(L[l,l])
+        complexity = -logdetcov
         normalization = -n*np.log(2*np.pi)/2
         p = data_fit + complexity + normalization
         return p
