@@ -335,7 +335,7 @@ def iterative_sis(target, train_fpv, size=None, step=None, writeout=True):
         response = []
         for d in np.transpose(train_fpv):
             for a in np.transpose(reduced_fpv):
-                d = (d - np.dot(d, a) - a) / (np.linalg.norm(a) ** 2)
+                d = (d - np.dot(a, np.dot(d, a))) / (np.linalg.norm(a) ** 2)
             response.append(d)
         response = np.transpose(response)
 
