@@ -32,19 +32,19 @@ split_fpv = list(split_fpv_0)
 shape = np.shape(split_fpv_0[0])
 
 #select feature combinations to test
-FEATURES = [20, 13, 17, 35, 12, 19, 15, 6, 4, 5, 11, 18, 7, 2, 8, 22, 1, 0]        #forward greedy
-start = [12, 6, 8, 5, 4, 11] #random.randint(0,shape[1])  #forward greedy
+#FEATURES = range(1,shape[1])#forward greedy
+start = [53,9,19,36,39,48] #random.randint(0,shape[1])  #forward greedy
 
-#FEATURES = start #backward greedy
+FEATURES = start #backward greedy
 
 
 TRAIN_RMSE = []
 VAL_RMSE = []
 for fs in FEATURES:
     sigma = None
-    #indexes = list(FEATURES)    #backward greedy
-    #indexes.remove(fs)          #backward greedy
-    indexes = start + [fs]        #forward greedy
+    indexes = list(FEATURES)    #backward greedy
+    indexes.remove(fs)          #backward greedy
+    #indexes = start + [fs]        #forward greedy
     print(indexes)
     #subset of the fingerprint vector
     for i in range(nsplit):
@@ -73,7 +73,7 @@ for fs in FEATURES:
         for v in split_fpv[i]:
             test_fp.append(v)
         # Get the list of fingerprint vectors and normalize them.
-        nfp = standardize(train=train_fp, test=test_fp)
+        nfp = normalize(train=train_fp, test=test_fp)
         # Do the training.
         # Optimize hyperparameters
         m = np.shape(nfp['train'])[1]
@@ -109,6 +109,6 @@ for fs in FEATURES:
 
 plt.scatter(FEATURES, TRAIN_RMSE, c='r')
 plt.scatter(FEATURES, VAL_RMSE, c='b')
-print('Min Training error:', min(TRAIN_RMSE), '+/-', np.std(train_rmse))
-print('Min Validation error:', min(VAL_RMSE), '+/-', np.std(val_rmse))
+print('Training error:', min(TRAIN_RMSE), '+/-', np.std(train_rmse))
+print('Average Validation error:', min(VAL_RMSE), '+/-', np.std(val_rmse))
 plt.show()

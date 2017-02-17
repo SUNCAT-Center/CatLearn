@@ -22,14 +22,23 @@ fpv_train = AdsorbateFingerprintGenerator(moldb='mol.db',
                                           slabs=slabs)
 
 fpv_labels = [
-    fpv_train.primary_addatom,
-    fpv_train.primary_adds_nn,
-    fpv_train.Z_add,
-    fpv_train.adds_sum,
+    #fpv_train.primary_addatom,
+    #fpv_train.primary_adds_nn,
+    #fpv_train.Z_add,
+    #fpv_train.adds_sum,
     fpv_train.primary_surfatom,
     fpv_train.primary_surf_nn,
     fpv_train.elemental_dft_properties,
     ]
 
 L_F = get_combined_descriptors(fpv_labels)
-print(L_F, len(L_F))
+print(len(L_F), 'descriptors:', L_F)
+
+for a in argv[1:]:
+    a = a.replace(',','')
+    try:
+        ind = int(a)
+        print(L_F[ind])
+    except ValueError:
+        label = a
+        print(label, np.where(L_F == label))
