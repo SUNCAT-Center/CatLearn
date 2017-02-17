@@ -3,8 +3,10 @@ import numpy as np
 from random import shuffle
 from collections import defaultdict
 
+from .output import write_data_setup
 
-def get_unique(candidates, testsize, key):
+
+def get_unique(candidates, testsize, key, writeout=True):
     """ Returns a unique test dataset in the form of a integer list, to track
         selected candidates, and a list of atoms objects making up the set.
     """
@@ -22,10 +24,13 @@ def get_unique(candidates, testsize, key):
         else:
             break
 
+    if writeout:
+        write_data_setup(function='get_unique', data=dataset)
+
     return dataset
 
 
-def get_train(candidates, key, trainsize=None, taken_cand=None):
+def get_train(candidates, key, trainsize=None, taken_cand=None, writeout=True):
     """ Returns a training dataset in the form of a list of atoms objects
         making up the set and a list of the target values. The list is in a
         random order. If the original order is required, use the 'order' list.
@@ -56,10 +61,14 @@ def get_train(candidates, key, trainsize=None, taken_cand=None):
                 len(dataset['candidates']) == trainsize:
             break
 
+    if writeout:
+        write_data_setup(function='get_train', data=dataset)
+
     return dataset
 
 
-def data_split(candidates, nsplit, key, fix_size=None, replacement=False):
+def data_split(candidates, nsplit, key, fix_size=None, replacement=False,
+               writeout=True):
     """ Routine to split list of candidates into sublists. This can be
         useful for bootstrapping, CV, etc.
 
@@ -96,12 +105,16 @@ def data_split(candidates, nsplit, key, fix_size=None, replacement=False):
         s2 = fix_size
     # Divide up the candidates:
     for _ in range(nsplit):
+        # If replacement, allow repetition of candidates.
         if replacement:
             shuffle(index)
+        # Store the generated division of data.
         dataset['split_cand'].append([candidates[i] for i in
                                       index[int(s1):int(s2)]])
         dataset['target'].append([candidates[i].info['key_value_pairs'][key]
                                  for i in index[int(s1):int(s2)]])
+        dataset['index'].append(index[int(s1):int(s2)])
+        # Set new bounds.
         s1 = s2
         if fix_size is None:
             # Get any new remainder.
@@ -111,10 +124,14 @@ def data_split(candidates, nsplit, key, fix_size=None, replacement=False):
         else:
             s2 = s2 + fix_size
 
+    if writeout:
+        write_data_setup(function='data_split', data=dataset)
+
     return dataset
 
 
-def remove_outliers(candidates, key, con=1.4826, dev=3., constraint=None):
+def remove_outliers(candidates, key, con=1.4826, dev=3., constraint=None,
+                    writeout=True):
     """ Preprocessing routine to remove outliers in the data based on the
         median absolute deviation. Only candidates that are unfit, e.g. less
         positive raw_score, are removed as outliers.
@@ -131,7 +148,9 @@ def remove_outliers(candidates, key, con=1.4826, dev=3., constraint=None):
             small/negative or 'high' for outliers that are too large/positive.
             Default is to remove all.
     """
+    dataset = defaultdict(list)
     target = []
+    order = list(range(len(candidates)))
     for c in candidates:
         target.append(c.info['key_value_pairs'][key])
 
@@ -141,27 +160,35 @@ def remove_outliers(candidates, key, con=1.4826, dev=3., constraint=None):
     # get median absolute deviation
     mad = con*(np.median(np.abs(vals - med)))
 
-    processed = []
     if constraint is None:
-        for c in candidates:
+        for c, o in zip(candidates, order):
             if c.info['key_value_pairs'][key] > med - (dev * mad) and \
                c.info['key_value_pairs'][key] < med + (dev * mad):
-                processed.append(c)
+                dataset['processed'].append(c)
+            else:
+                dataset['removed'].append(o)
 
     elif constraint is 'low':
-        for c in candidates:
+        for c, o in zip(candidates, order):
             if c.info['key_value_pairs'][key] > med - (dev * mad):
-                processed.append(c)
+                dataset['processed'].append(c)
+            else:
+                dataset['removed'].append(o)
 
     elif constraint is 'high':
-        for c in candidates:
+        for c, o in zip(candidates, order):
             if c.info['key_value_pairs'][key] < med + (dev * mad):
-                processed.append(c)
+                dataset['processed'].append(c)
+            else:
+                dataset['removed'].append(o)
 
-    return processed
+    if writeout:
+        write_data_setup(function='remove_outliers', data=dataset)
+
+    return dataset
 
 
-def target_standardize(target):
+def target_standardize(target, writeout=True):
     """ Returns a list of standardized target values.
 
         target: list
@@ -174,5 +201,8 @@ def target_standardize(target):
     data['std'] = float(np.std(target))
     for i in target:
         data['target'].append((i - data['mean']) / data['std'])
+
+    if writeout:
+        write_data_setup(function='target_standardize', data=data)
 
     return data

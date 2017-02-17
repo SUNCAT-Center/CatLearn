@@ -3,14 +3,8 @@
 Created on Fri Nov 18 14:30:20 2016
 
 @author: mhangaard
-
-
-
 """
 from __future__ import print_function
-
-from sys import argv
-import numpy as np
 
 from atoml.fingerprint_setup import get_combined_descriptors
 from atoml.adsorbate_fingerprint import AdsorbateFingerprintGenerator
@@ -29,7 +23,6 @@ fpv_labels = [
     fpv_train.primary_surfatom,
     fpv_train.primary_surf_nn,
     fpv_train.elemental_dft_properties,
-    fpv_train.randomfpv
     ]
 
 L_F = get_combined_descriptors(fpv_labels)

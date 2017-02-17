@@ -5,13 +5,13 @@
 from __future__ import print_function
 
 import numpy as np
-import seaborn as sns
-import pandas as pd
-import matplotlib.pyplot as plt
 
 from ase.ga.data import DataConnection
-from atoml.data_setup import get_unique, get_train
-from atoml.fingerprint_setup import normalize, return_fpv
+from atoml.data_setup import (get_unique, get_train, data_split,
+                              target_standardize, remove_outliers)
+from atoml.fingerprint_setup import (standardize, normalize, return_fpv,
+                                     sure_independence_screening,
+                                     iterative_sis)
 from atoml.particle_fingerprint import ParticleFingerprintGenerator
 from atoml.predict import FitnessPrediction
 
@@ -27,13 +27,24 @@ all_cand = db.get_all_relaxed_candidates(use_extinct=False)
 testset = get_unique(candidates=all_cand, testsize=500, key='raw_score')
 trainset = get_train(candidates=all_cand, trainsize=500,
                      taken_cand=testset['taken'], key='raw_score')
+split = data_split(candidates=all_cand, nsplit=3, key='raw_score')
+rm = remove_outliers(candidates=all_cand, key='raw_score')
+std = target_standardize(trainset['target'])
 
 # Get the list of fingerprint vectors and normalize them.
 print('Getting the fingerprint vectors')
 fpv = ParticleFingerprintGenerator(get_nl=False, max_bonds=13)
 test_fp = return_fpv(testset['candidates'], [fpv.bond_count_fpv])
-train_fp = return_fpv(trainset['candidates'], [fpv.bond_count_fpv])
+train_fp = return_fpv(trainset['candidates'], [fpv.bond_count_fpv],
+                      writeout=True)
+sfp = standardize(train=train_fp, test=test_fp)
 nfp = normalize(train=train_fp, test=test_fp)
+
+sis = sure_independence_screening(target=trainset['target'],
+                                  train_fpv=nfp['train'], size=4,
+                                  writeout=True)
+sis = iterative_sis(target=trainset['target'], train_fpv=nfp['train'], size=4,
+                    step=1)
 
 # Set up the prediction routine.
 krr = FitnessPrediction(ktype='gaussian',
@@ -51,16 +62,3 @@ pred = krr.get_predictions(train_fp=nfp['train'],
                            test_target=testset['target'],
                            get_validation_error=True,
                            get_training_error=True)
-
-# Print the error associated with the predictions.
-print('Training error:', pred['training_rmse']['average'])
-print('Model error:', pred['validation_rmse']['average'])
-
-pred['actual'] = testset['target']
-index = [i for i in range(len(test_fp))]
-df = pd.DataFrame(data=pred, index=index)
-with sns.axes_style("white"):
-    sns.regplot(x='actual', y='prediction', data=df)
-plt.title('Validation RMSE: {0:.3f}'.format(
-    pred['validation_rmse']['average']))
-plt.show()

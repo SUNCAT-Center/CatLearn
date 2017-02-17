@@ -4,12 +4,11 @@ Created on Fri Nov 18 14:30:20 2016
 
 @author: mhangaard
 
-
-
+This example script requires that the make_fingerprints.py has already been run
+or that the user has generated a feature matrix in fpm.txt.
 """
 from __future__ import print_function
 
-from sys import argv
 import numpy as np
 
 from atoml.fingerprint_setup import normalize
@@ -35,6 +34,7 @@ krr = FitnessPrediction(ktype='gaussian',
 nfp = normalize(train=fpm_train, test=fpm_predict)
 # Do the training.
 cvm = krr.get_covariance(train_fp=nfp['train'])
+cinv = np.linalg.inv(cvm)
 # Do the prediction
 output = krr.get_predictions(train_fp=nfp['train'],
                              test_fp=nfp['test'],

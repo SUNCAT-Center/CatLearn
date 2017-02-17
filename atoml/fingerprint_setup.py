@@ -1,4 +1,6 @@
 """ Functions to setup fingerprint vectors. """
+from __future__ import print_function
+
 import numpy as np
 from collections import defaultdict
 from math import log
@@ -7,6 +9,7 @@ import ase.db
 from .data_setup import target_standardize
 from .particle_fingerprint import ParticleFingerprintGenerator
 from .adsorbate_fingerprint import AdsorbateFingerprintGenerator
+from .output import write_fingerprint_setup
 
 no_mendeleev = False
 try:
@@ -105,13 +108,22 @@ def get_keyvaluepair(c=[], fpv_name='None'):
         return out
 
 
-def return_fpv(candidates, fpv_name, use_prior=True):
+def return_fpv(candidates, fpv_name, use_prior=True, writeout=False):
     """ Function to sequentially combine fingerprint vectors and return them
         for a list of atoms objects.
     """
     # Put fpv_name in a list, if it is not already.
     if not isinstance(fpv_name, list):
         fpv_name = [fpv_name]
+
+    # Write out variables.
+    if writeout:
+        var = defaultdict(list)
+        # TODO: Sort out the names.
+        var['name'].append(fpv_name)
+        var['prior'].append(use_prior)
+        write_fingerprint_setup(function='return_fpv', data=var)
+
     # Check to see if we are dealing with a list of candidates or a single
     # atoms object.
     if type(candidates) is defaultdict or type(candidates) is list:
@@ -155,7 +167,7 @@ def concatenate_fpv(c, fpv_name):
     return fpv
 
 
-def standardize(train, test=None):
+def standardize(train, test=None, writeout=True):
     """ Standardize each descriptor in the FPV relative to the mean and
         standard deviation. If test data is supplied it is standardized
         relative to the training dataset.
@@ -173,9 +185,10 @@ def standardize(train, test=None):
         std_fpv.append(float(np.std(tt[i])))
         mean_fpv.append(float(np.mean(tt[i])))
 
-    # Replace zero std with value 1 for devision.
     std_fpv = np.asarray(std_fpv)
+    # Replace zero std with value 1 for devision.
     np.place(std_fpv, std_fpv == 0., [1.])
+    mean_fpv = np.asarray(mean_fpv)
 
     std = defaultdict(list)
     for i in train:
@@ -186,10 +199,13 @@ def standardize(train, test=None):
     std['std'] = std_fpv
     std['mean'] = mean_fpv
 
+    if writeout:
+        write_fingerprint_setup(function='standardize', data=std)
+
     return std
 
 
-def normalize(train, test=None):
+def normalize(train, test=None, writeout=True):
     """ Normalize each descriptor in the FPV to min/max or mean centered. If
         test data is supplied it is standardized relative to the training
         dataset.
@@ -202,24 +218,29 @@ def normalize(train, test=None):
         max_fpv.append(float(max(tt[i])))
         min_fpv.append(float(min(tt[i])))
         mean_fpv.append(float(np.mean(tt[i])))
-    dif = np.asarray(max_fpv) - np.asarray(min_fpv)
 
+    dif = np.asarray(max_fpv) - np.asarray(min_fpv)
     # Replace zero difference with value 1 for devision.
     np.place(dif, dif == 0., [1.])
+    mean_fpv = np.asarray(mean_fpv)
 
     norm = defaultdict(list)
     for i in train:
-        norm['train'].append(np.asarray((i - np.asarray(mean_fpv)) / dif))
+        norm['train'].append(np.asarray((i - mean_fpv) / dif))
     if test is not None:
         for i in test:
-            norm['test'].append(np.asarray((i - np.asarray(mean_fpv)) / dif))
-    norm['mean'] = np.asarray(mean_fpv)
+            norm['test'].append(np.asarray((i - mean_fpv) / dif))
+    norm['mean'] = mean_fpv
     norm['dif'] = dif
+
+    if writeout:
+        write_fingerprint_setup(function='normalize', data=norm)
 
     return norm
 
 
-def sure_independence_screening(target, train_fpv, size=None, standard=True):
+def sure_independence_screening(target, train_fpv, size=None, standard=True,
+                                writeout=False):
     """ Feature selection based on SIS discussed in Fan, J., Lv, J., J. R.
         Stat. Soc.: Series B, 2008, 70, 849.
 
@@ -240,30 +261,36 @@ def sure_independence_screening(target, train_fpv, size=None, standard=True):
         msg = 'Too few features avaliable, matrix cannot be reduced.'
         assert len(train_fpv[0]) >= size, msg
     if standard:
-        target = target_standardize(target)['target']
-        train_fpv = standardize(train=train_fpv)['train']
+        target = target_standardize(target=target, writeout=False)['target']
+        train_fpv = standardize(train=train_fpv, writeout=False)['train']
 
     select = defaultdict(list)
 
     p = np.shape(train_fpv)[1]
     # NOTE: Magnitude is not scaled between -1 and 1
     omega = np.transpose(train_fpv).dot(target) / p
+    abso = [abs(i) for i in omega]
 
     order = list(range(np.shape(train_fpv)[1]))
-    sort_list = [list(i) for i in zip(*sorted(zip(abs(omega), order),
+    sort_list = [list(i) for i in zip(*sorted(zip(abso, order),
                                               key=lambda x: x[0],
                                               reverse=True))]
 
     select['sorted'] = sort_list[1]
     select['correlation'] = sort_list[0]
+    select['ordered_corr'] = abso
     if size is not None:
         select['accepted'] = sort_list[1][:size]
         select['rejected'] = sort_list[1][size:]
 
+    if writeout:
+        write_fingerprint_setup(function='sure_independence_screening',
+                                data=select)
+
     return select
 
 
-def iterative_sis(target, train_fpv, size=None, step=None):
+def iterative_sis(target, train_fpv, size=None, step=None, writeout=True):
     """ Function to reduce the number of featues in an iterative manner using
         SIS.
 
@@ -272,8 +299,8 @@ def iterative_sis(target, train_fpv, size=None, step=None):
             n / log(n).
     """
     # Standardize the training and target values.
-    target = target_standardize(target)['target']
-    train_fpv = standardize(train=train_fpv)['train']
+    target = target_standardize(target=target, writeout=False)['target']
+    train_fpv = standardize(train=train_fpv, writeout=False)['train']
 
     # Assign default values for number of features to return and step size.
     if size is None:
@@ -292,6 +319,9 @@ def iterative_sis(target, train_fpv, size=None, step=None):
     # Initiate the feature reduction.
     sis = sure_independence_screening(target=target, train_fpv=train_fpv,
                                       size=step, standard=False)
+    print('Correlation difference between best and worst feature:',
+          max(sis['ordered_corr']) - min(sis['ordered_corr']))
+    correlation = [sis['ordered_corr'][i] for i in sis['accepted']]
     accepted += [ordering[i] for i in sis['accepted']]
     ordering = [ordering[i] for i in sis['rejected']]
     reduced_fpv = np.delete(train_fpv, sis['rejected'], 1)
@@ -305,23 +335,30 @@ def iterative_sis(target, train_fpv, size=None, step=None):
         response = []
         for d in np.transpose(train_fpv):
             for a in np.transpose(reduced_fpv):
-                d = (d - np.dot(d, a) - a) / (np.linalg.norm(a) ** 2)
+                d = (d - np.dot(a, np.dot(d, a))) / (np.linalg.norm(a) ** 2)
             response.append(d)
         response = np.transpose(response)
 
         # Do SIS analysis on the residuals.
         sis = sure_independence_screening(target=target, train_fpv=response,
                                           size=step, standard=False)
-
         # Keep track of accepted and rejected features.
+        print('Correlation difference between best and worst feature:',
+              max(sis['ordered_corr']) - min(sis['ordered_corr']))
+        correlation += [sis['ordered_corr'][i] for i in sis['accepted']]
         accepted += [ordering[i] for i in sis['accepted']]
         ordering = [ordering[i] for i in sis['rejected']]
         new_fpv = np.delete(train_fpv, sis['rejected'], 1)
         reduced_fpv = np.concatenate((reduced_fpv, new_fpv), axis=1)
         train_fpv = np.delete(train_fpv, sis['accepted'], 1)
+    correlation += [sis['ordered_corr'][i] for i in sis['rejected']]
 
+    select['correlation'] = correlation
     select['accepted'] = accepted
     select['rejected'] = ordering
     select['train_fpv'] = reduced_fpv
+
+    if writeout:
+        write_fingerprint_setup(function='iterative_sis', data=select)
 
     return select
