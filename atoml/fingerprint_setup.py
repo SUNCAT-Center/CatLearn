@@ -290,7 +290,8 @@ def sure_independence_screening(target, train_fpv, size=None, standard=True,
     return select
 
 
-def iterative_sis(target, train_fpv, size=None, step=None, writeout=True):
+def iterative_sis(target, train_fpv, size=None, step=None, cutoff=None,
+                  writeout=True):
     """ Function to reduce the number of featues in an iterative manner using
         SIS.
 
@@ -319,8 +320,8 @@ def iterative_sis(target, train_fpv, size=None, step=None, writeout=True):
     # Initiate the feature reduction.
     sis = sure_independence_screening(target=target, train_fpv=train_fpv,
                                       size=step, standard=False)
-    print('Correlation difference between best and worst feature:',
-          max(sis['ordered_corr']) - min(sis['ordered_corr']))
+    dif = max(sis['ordered_corr']) - min(sis['ordered_corr'])
+    print('Correlation difference between best and worst feature:', dif)
     correlation = [sis['ordered_corr'][i] for i in sis['accepted']]
     accepted += [ordering[i] for i in sis['accepted']]
     ordering = [ordering[i] for i in sis['rejected']]
@@ -343,14 +344,16 @@ def iterative_sis(target, train_fpv, size=None, step=None, writeout=True):
         sis = sure_independence_screening(target=target, train_fpv=response,
                                           size=step, standard=False)
         # Keep track of accepted and rejected features.
-        print('Correlation difference between best and worst feature:',
-              max(sis['ordered_corr']) - min(sis['ordered_corr']))
+        dif = max(sis['ordered_corr']) - min(sis['ordered_corr'])
+        print('Correlation difference between best and worst feature:', dif)
         correlation += [sis['ordered_corr'][i] for i in sis['accepted']]
         accepted += [ordering[i] for i in sis['accepted']]
         ordering = [ordering[i] for i in sis['rejected']]
         new_fpv = np.delete(train_fpv, sis['rejected'], 1)
         reduced_fpv = np.concatenate((reduced_fpv, new_fpv), axis=1)
         train_fpv = np.delete(train_fpv, sis['accepted'], 1)
+        if cutoff is not None and dif < cutoff:
+            break
     correlation += [sis['ordered_corr'][i] for i in sis['rejected']]
 
     select['correlation'] = correlation
@@ -362,3 +365,46 @@ def iterative_sis(target, train_fpv, size=None, step=None, writeout=True):
         write_fingerprint_setup(function='iterative_sis', data=select)
 
     return select
+
+
+def pca(components, train_fpv, test_fpv=None, writeout=True):
+    """ Principal component analysis.
+
+        components: int
+            Number of principal components to transform the feature set by.
+
+        test_fpv: array
+            The feature matrix for the testing data.
+    """
+    data = defaultdict(list)
+    data['components'] = components
+    if test_fpv is not None:
+        std = standardize(train=train_fpv, test=test_fpv, writeout=False)
+        train_fpv = np.asarray(std['train'])
+    else:
+        train_fpv = standardize(train=train_fpv, writeout=False)['train']
+
+    u, s, v = np.linalg.svd(np.transpose(train_fpv))
+
+    # Make a list of (eigenvalue, eigenvector) tuples
+    eig_pairs = [(np.abs(s[i]), u[:, i]) for i in range(len(s))]
+
+    # Get the varience as percentage.
+    data['varience'] = [(i / sum(s))*100 for i in sorted(s, reverse=True)]
+
+    # Form the projection matrix.
+    features = len(train_fpv[0])
+    pm = eig_pairs[0][1].reshape(features, 1)
+    if components > 1:
+        for i in range(components - 1):
+            pm = np.append(pm, eig_pairs[i][1].reshape(features, 1), axis=1)
+
+    # Form feature matrix based on principal components.
+    data['train_fpv'] = train_fpv.dot(pm)
+    if train_fpv is not None:
+        data['test_fpv'] = np.asarray(std['test']).dot(pm)
+
+    if writeout:
+        write_fingerprint_setup(function='pca', data=data)
+
+    return data

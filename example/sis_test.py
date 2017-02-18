@@ -9,7 +9,7 @@ import numpy as np
 from ase.ga.data import DataConnection
 from atoml.data_setup import get_unique, get_train
 from atoml.fingerprint_setup import (return_fpv, sure_independence_screening,
-                                     iterative_sis, normalize)
+                                     iterative_sis, normalize, pca)
 from atoml.particle_fingerprint import ParticleFingerprintGenerator
 from atoml.standard_fingerprint import StandardFingerprintGenerator
 from atoml.predict import FitnessPrediction
@@ -23,8 +23,8 @@ print('Getting candidates from the database')
 all_cand = db.get_all_relaxed_candidates(use_extinct=False)
 
 # Setup the test and training datasets.
-testset = get_unique(candidates=all_cand, testsize=500, key='raw_score')
-trainset = get_train(candidates=all_cand, trainsize=500,
+testset = get_unique(candidates=all_cand, testsize=10, key='raw_score')
+trainset = get_train(candidates=all_cand, trainsize=20,
                      taken_cand=testset['taken'], key='raw_score')
 
 # Get the list of fingerprint vectors and normalize them.
@@ -72,6 +72,11 @@ def do_pred(ptrain_fp, ptest_fp):
     print('Model error:', pred['validation_rmse']['average'])
 
 
+for i in range(len(train_fp)):
+    pca_r = pca(components=i+1, train_fpv=train_fp, test_fpv=test_fp)
+    print('PREDICTION FOR', i+1, 'COMPONENTS')
+    do_pred(ptrain_fp=pca_r['train_fpv'], ptest_fp=pca_r['test_fpv'])
+
 # Get base predictions.
 print('Base Predictions')
 do_pred(ptrain_fp=train_fp, ptest_fp=test_fp)
@@ -93,3 +98,11 @@ print('iterative_sis correlation:', it_sis['correlation'])
 it_sis_test_fp = np.delete(test_fp, it_sis['rejected'], 1)
 it_sis_train_fp = np.delete(train_fp, it_sis['rejected'], 1)
 do_pred(ptrain_fp=it_sis_train_fp, ptest_fp=it_sis_test_fp)
+
+cut_sis = iterative_sis(target=trainset['target'], train_fpv=train_fp,
+                        size=40, step=4, cutoff=1.e-2)
+print('iterative_sis + cutoff features:', cut_sis['accepted'])
+print('iterative_sis + cutoff correlation:', cut_sis['correlation'])
+cut_sis_test_fp = np.delete(test_fp, cut_sis['rejected'], 1)
+cut_sis_train_fp = np.delete(train_fp, cut_sis['rejected'], 1)
+do_pred(ptrain_fp=cut_sis_train_fp, ptest_fp=cut_sis_test_fp)
