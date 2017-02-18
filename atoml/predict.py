@@ -213,18 +213,17 @@ class FitnessPrediction(object):
         return error
 
     def log_marginal_likelyhood1(self, cov, cinv, y):
-        """ Return the log marginal likelyhood, as defined by Equation 5.8 in
-            C. E. Rasmussen and C. K. I. Williams, 2006.
+        """ Return the log marginal likelyhood.
+        (Equation 5.8 in C. E. Rasmussen and C. K. I. Williams, 2006)
         """
         n = len(y)
         y = np.vstack(y)
-        cinv = np.linalg.inv(cov)
-        data_fit = -(np.dot(np.dot(np.transpose(y), cinv), y) / 2.)[0][0]
-        L = np.linalg.cholesky(cinv)
-        logdetcinv = 0
+        data_fit = -(np.dot(np.dot(np.transpose(y),cinv),y)/2.)[0][0]
+        L = np.linalg.cholesky(cov)
+        logdetcov = 0
         for l in range(len(L)):
-            logdetcinv += np.log(L[l, l])
-        complexity = -logdetcinv
-        normalization = -n * np.log(2 * np.pi) / 2
+            logdetcov += np.log(L[l,l])
+        complexity = -logdetcov
+        normalization = -n*np.log(2*np.pi)/2
         p = data_fit + complexity + normalization
         return p
