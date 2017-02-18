@@ -82,8 +82,12 @@ def write_fingerprint_setup(function, data):
                             str(data['dif']) + '\n')
             writefile.write('\nEnd of normalize function.\n \n')
 
+
+def write_feature_select(function, data):
+    """ Write output for the fingerprint functions. """
+    with open('ATOMLout.txt', 'a+') as writefile:
         if function is 'sure_independence_screening':
-            st = 'Output from fingerprint_setup.sure_independence_screening.' \
+            st = 'Output from feature_select.sure_independence_screening.' \
              + dt
             writefile.write(st)
             writefile.write('Correlation is:\n' + str(data['ordered_corr']))
@@ -97,7 +101,7 @@ def write_fingerprint_setup(function, data):
                             \n')
 
         if function is 'iterative_sis':
-            writefile.write('Output from fingerprint_setup.iterative_sis.' +
+            writefile.write('Output from feature_select.iterative_sis.' +
                             dt)
             writefile.write('Correlation is:\n' + str(data['correlation']))
             if 'accepted' in data:
@@ -109,7 +113,7 @@ def write_fingerprint_setup(function, data):
             writefile.write('\nEnd of iterative_sis function.\n \n')
 
         if function is 'pca':
-            writefile.write('Output from fingerprint_setup.pca.' + dt)
+            writefile.write('Output from feature_select.pca.' + dt)
             writefile.write('Number of components included: ' +
                             str(data['components']) + '\nVarience is:\n' +
                             str(data['varience']) + '\n')

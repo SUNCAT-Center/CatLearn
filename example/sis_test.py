@@ -8,8 +8,9 @@ import numpy as np
 
 from ase.ga.data import DataConnection
 from atoml.data_setup import get_unique, get_train
-from atoml.fingerprint_setup import (return_fpv, sure_independence_screening,
-                                     iterative_sis, normalize, pca)
+from atoml.fingerprint_setup import return_fpv, normalize
+from atoml.feature_select import (sure_independence_screening, iterative_sis,
+                                  pca)
 from atoml.particle_fingerprint import ParticleFingerprintGenerator
 from atoml.standard_fingerprint import StandardFingerprintGenerator
 from atoml.predict import FitnessPrediction
@@ -23,8 +24,8 @@ print('Getting candidates from the database')
 all_cand = db.get_all_relaxed_candidates(use_extinct=False)
 
 # Setup the test and training datasets.
-testset = get_unique(candidates=all_cand, testsize=10, key='raw_score')
-trainset = get_train(candidates=all_cand, trainsize=20,
+testset = get_unique(candidates=all_cand, testsize=500, key='raw_score')
+trainset = get_train(candidates=all_cand, trainsize=500,
                      taken_cand=testset['taken'], key='raw_score')
 
 # Get the list of fingerprint vectors and normalize them.

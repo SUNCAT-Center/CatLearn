@@ -2,12 +2,10 @@
 from __future__ import print_function
 
 import time
-import numpy as np
 
 from ase.ga.data import DataConnection
 from atoml.data_setup import get_train, get_unique
-from atoml.fingerprint_setup import (return_fpv, sure_independence_screening,
-                                     iterative_sis, normalize, standardize)
+from atoml.fingerprint_setup import return_fpv, normalize, standardize
 from atoml.particle_fingerprint import ParticleFingerprintGenerator
 from atoml.standard_fingerprint import StandardFingerprintGenerator
 
@@ -147,19 +145,6 @@ test_fp = return_fpv(testset['candidates'], [pfpv.nearestneighbour_fpv,
 train_fp = return_fpv(trainset['candidates'], [pfpv.nearestneighbour_fpv,
                                                sfpv.mass_fpv,
                                                sfpv.composition_fpv])
-
-sis = sure_independence_screening(target=trainset['target'],
-                                  train_fpv=train_fp, size=4)
-sis_test_fp = np.delete(test_fp, sis['rejected'], 1)
-sis_train_fp = np.delete(train_fp, sis['rejected'], 1)
-assert len(sis_test_fp[0]) == 4 and len(sis_train_fp[0]) == 4
-
-it_sis = iterative_sis(target=trainset['target'], train_fpv=train_fp, size=4,
-                       step=1)
-it_sis_test_fp = np.delete(test_fp, it_sis['rejected'], 1)
-it_sis_train_fp = np.delete(train_fp, it_sis['rejected'], 1)
-assert len(sis_test_fp[0]) == 4 and len(sis_train_fp[0]) == 4
-
 nfp = normalize(test=test_fp, train=train_fp)
 sfp = standardize(test=test_fp, train=train_fp)
 print('Combined features and SIS: %.3f' % (time.time() - start_time))
