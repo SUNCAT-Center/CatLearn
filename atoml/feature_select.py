@@ -2,6 +2,7 @@
 from __future__ import print_function
 
 import numpy as np
+from scipy.stats import pearsonr, spearmanr, kendalltau
 from collections import defaultdict
 from math import log
 
@@ -11,7 +12,7 @@ from .output import write_feature_select
 
 
 def sure_independence_screening(target, train_fpv, size=None, standard=True,
-                                writeout=False):
+                                corr='usr', writeout=False):
     """ Feature selection based on SIS discussed in Fan, J., Lv, J., J. R.
         Stat. Soc.: Series B, 2008, 70, 849.
 
@@ -27,6 +28,9 @@ def sure_independence_screening(target, train_fpv, size=None, standard=True,
         std: boolean
             It is expected that the features and targets have been standardized
             prior to analysis. Automated if True.
+
+        corr: str
+            Correlation coefficient to use.
     """
     if size is not None:
         msg = 'Too few features avaliable, matrix cannot be reduced.'
@@ -37,11 +41,31 @@ def sure_independence_screening(target, train_fpv, size=None, standard=True,
 
     select = defaultdict(list)
 
-    p = np.shape(train_fpv)[1]
-    # NOTE: Magnitude is not scaled between -1 and 1
-    omega = np.transpose(train_fpv).dot(target) / p
-    abso = [abs(i) for i in omega]
+    omega = []
+    if corr is 'pearson':
+        for d in np.transpose(train_fpv):
+            if all(d) == 0.:
+                omega.append(0.)
+            else:
+                omega.append(pearsonr(x=d, y=target)[0])
+    if corr is 'spearman':
+        for d in np.transpose(train_fpv):
+            if all(d) == 0.:
+                omega.append(0.)
+            else:
+                omega.append(spearmanr(a=d, b=target)[0])
+    if corr is 'kendall':
+        for d in np.transpose(train_fpv):
+            if all(d) == 0.:
+                omega.append(0.)
+            else:
+                omega.append(kendalltau(x=d, y=target)[0])
 
+    if corr is 'usr':
+        p = np.shape(train_fpv)[1]
+        omega = np.transpose(train_fpv).dot(target) / p
+
+    abso = [abs(i) for i in omega]
     order = list(range(np.shape(train_fpv)[1]))
     sort_list = [list(i) for i in zip(*sorted(zip(abso, order),
                                               key=lambda x: x[0],
@@ -62,7 +86,7 @@ def sure_independence_screening(target, train_fpv, size=None, standard=True,
 
 
 def iterative_sis(target, train_fpv, size=None, step=None, cutoff=None,
-                  writeout=True):
+                  corr='pearson', std=False, writeout=True):
     """ Function to reduce the number of featues in an iterative manner using
         SIS.
 
@@ -71,8 +95,9 @@ def iterative_sis(target, train_fpv, size=None, step=None, cutoff=None,
             n / log(n).
     """
     # Standardize the training and target values.
-    target = target_standardize(target=target, writeout=False)['target']
-    train_fpv = standardize(train=train_fpv, writeout=False)['train']
+    if std:
+        target = target_standardize(target=target, writeout=False)['target']
+        train_fpv = standardize(train=train_fpv, writeout=False)['train']
 
     # Assign default values for number of features to return and step size.
     if size is None:
@@ -90,7 +115,7 @@ def iterative_sis(target, train_fpv, size=None, step=None, cutoff=None,
 
     # Initiate the feature reduction.
     sis = sure_independence_screening(target=target, train_fpv=train_fpv,
-                                      size=step, standard=False)
+                                      size=step, standard=False, corr=corr)
     dif = max(sis['ordered_corr']) - min(sis['ordered_corr'])
     print('Correlation difference between best and worst feature:', dif)
     correlation = [sis['ordered_corr'][i] for i in sis['accepted']]
@@ -113,7 +138,7 @@ def iterative_sis(target, train_fpv, size=None, step=None, cutoff=None,
 
         # Do SIS analysis on the residuals.
         sis = sure_independence_screening(target=target, train_fpv=response,
-                                          size=step, standard=False)
+                                          size=step, standard=False, corr=corr)
         # Keep track of accepted and rejected features.
         dif = max(sis['ordered_corr']) - min(sis['ordered_corr'])
         print('Correlation difference between best and worst feature:', dif)

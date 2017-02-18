@@ -92,18 +92,38 @@ sis_test_fp = np.delete(test_fp, sis['rejected'], 1)
 sis_train_fp = np.delete(train_fp, sis['rejected'], 1)
 do_pred(ptrain_fp=sis_train_fp, ptest_fp=sis_test_fp)
 
+print('User')
 it_sis = iterative_sis(target=trainset['target'], train_fpv=train_fp,
-                       size=40, step=4)
+                       size=40, step=4, corr='usr', std=True)
 print('iterative_sis features:', it_sis['accepted'])
 print('iterative_sis correlation:', it_sis['correlation'])
 it_sis_test_fp = np.delete(test_fp, it_sis['rejected'], 1)
 it_sis_train_fp = np.delete(train_fp, it_sis['rejected'], 1)
 do_pred(ptrain_fp=it_sis_train_fp, ptest_fp=it_sis_test_fp)
 
-cut_sis = iterative_sis(target=trainset['target'], train_fpv=train_fp,
-                        size=40, step=4, cutoff=1.e-2)
-print('iterative_sis + cutoff features:', cut_sis['accepted'])
-print('iterative_sis + cutoff correlation:', cut_sis['correlation'])
-cut_sis_test_fp = np.delete(test_fp, cut_sis['rejected'], 1)
-cut_sis_train_fp = np.delete(train_fp, cut_sis['rejected'], 1)
-do_pred(ptrain_fp=cut_sis_train_fp, ptest_fp=cut_sis_test_fp)
+print('pearson')
+it_sis = iterative_sis(target=trainset['target'], train_fpv=train_fp,
+                       size=40, step=4, corr='pearson')
+print('iterative_sis features:', it_sis['accepted'])
+print('iterative_sis correlation:', it_sis['correlation'])
+it_sis_test_fp = np.delete(test_fp, it_sis['rejected'], 1)
+it_sis_train_fp = np.delete(train_fp, it_sis['rejected'], 1)
+do_pred(ptrain_fp=it_sis_train_fp, ptest_fp=it_sis_test_fp)
+
+print('spearman')
+it_sis = iterative_sis(target=trainset['target'], train_fpv=train_fp,
+                       size=40, step=4, corr='spearman')
+print('iterative_sis features:', it_sis['accepted'])
+print('iterative_sis correlation:', it_sis['correlation'])
+it_sis_test_fp = np.delete(test_fp, it_sis['rejected'], 1)
+it_sis_train_fp = np.delete(train_fp, it_sis['rejected'], 1)
+do_pred(ptrain_fp=it_sis_train_fp, ptest_fp=it_sis_test_fp)
+
+print('kendall')
+it_sis = iterative_sis(target=trainset['target'], train_fpv=train_fp,
+                       size=40, step=4, corr='kendall')
+print('iterative_sis features:', it_sis['accepted'])
+print('iterative_sis correlation:', it_sis['correlation'])
+it_sis_test_fp = np.delete(test_fp, it_sis['rejected'], 1)
+it_sis_train_fp = np.delete(train_fp, it_sis['rejected'], 1)
+do_pred(ptrain_fp=it_sis_train_fp, ptest_fp=it_sis_test_fp)
