@@ -100,6 +100,20 @@ def write_feature_select(function, data):
             writefile.write('\nEnd of sure_independence_screening function.\n \
                             \n')
 
+        if function is 'sure_independence_screening':
+            st = """Output from
+                feature_select.robust_rank_correlation_screening.""" + dt
+            writefile.write(st)
+            writefile.write('Correlation is:\n' + str(data['ordered_corr']))
+            if 'accepted' in data:
+                writefile.write('\nAccepted features are:\n' +
+                                str(data['accepted']))
+            if 'rejected' in data:
+                writefile.write('\nRejected features are:\n' +
+                                str(data['rejected']) + '\n')
+            writefile.write("""\nEnd of robust_rank_correlation_screening
+                            function.\n \n""")
+
         if function is 'iterative_sis':
             writefile.write('Output from feature_select.iterative_sis.' +
                             dt)

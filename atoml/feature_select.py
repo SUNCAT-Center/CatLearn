@@ -6,13 +6,11 @@ from scipy.stats import pearsonr, spearmanr, kendalltau
 from collections import defaultdict
 from math import log
 
-from .data_setup import target_standardize
 from .fingerprint_setup import standardize
 from .output import write_feature_select
 
 
-def sure_independence_screening(target, train_fpv, size=None, standard=True,
-                                corr='usr', writeout=False):
+def sure_independence_screening(target, train_fpv, size=None, writeout=False):
     """ Feature selection based on SIS discussed in Fan, J., Lv, J., J. R.
         Stat. Soc.: Series B, 2008, 70, 849.
 
@@ -35,35 +33,15 @@ def sure_independence_screening(target, train_fpv, size=None, standard=True,
     if size is not None:
         msg = 'Too few features avaliable, matrix cannot be reduced.'
         assert len(train_fpv[0]) >= size, msg
-    if standard:
-        target = target_standardize(target=target, writeout=False)['target']
-        train_fpv = standardize(train=train_fpv, writeout=False)['train']
 
     select = defaultdict(list)
 
     omega = []
-    if corr is 'pearson':
-        for d in np.transpose(train_fpv):
-            if all(d) == 0.:
-                omega.append(0.)
-            else:
-                omega.append(pearsonr(x=d, y=target)[0])
-    if corr is 'spearman':
-        for d in np.transpose(train_fpv):
-            if all(d) == 0.:
-                omega.append(0.)
-            else:
-                omega.append(spearmanr(a=d, b=target)[0])
-    if corr is 'kendall':
-        for d in np.transpose(train_fpv):
-            if all(d) == 0.:
-                omega.append(0.)
-            else:
-                omega.append(kendalltau(x=d, y=target)[0])
-
-    if corr is 'usr':
-        p = np.shape(train_fpv)[1]
-        omega = np.transpose(train_fpv).dot(target) / p
+    for d in np.transpose(train_fpv):
+        if all(d) == 0.:
+            omega.append(0.)
+        else:
+            omega.append(pearsonr(x=d, y=target)[0])
 
     abso = [abs(i) for i in omega]
     order = list(range(np.shape(train_fpv)[1]))
@@ -85,8 +63,51 @@ def sure_independence_screening(target, train_fpv, size=None, standard=True,
     return select
 
 
-def iterative_sis(target, train_fpv, size=None, step=None, cutoff=None,
-                  corr='pearson', std=False, writeout=True):
+def robust_rank_correlation_screening(target, train_fpv, size=None,
+                                      corr='kendall', writeout=False):
+    """ Correlation using kendall coefficients. """
+    if size is not None:
+        msg = 'Too few features avaliable, matrix cannot be reduced.'
+        assert len(train_fpv[0]) >= size, msg
+
+    select = defaultdict(list)
+
+    omega = []
+    if corr is 'kendall':
+        for d in np.transpose(train_fpv):
+            if all(d) == 0.:
+                omega.append(0.)
+            else:
+                tau = kendalltau(x=d, y=target)[0]
+                omega.append(tau - 0.25)
+    elif corr is 'spearman':
+        for d in np.transpose(train_fpv):
+            if all(d) == 0.:
+                omega.append(0.)
+            else:
+                omega.append(spearmanr(a=d, b=target)[0])
+
+    abso = [abs(i) for i in omega]
+    order = list(range(np.shape(train_fpv)[1]))
+    sort_list = [list(i) for i in zip(*sorted(zip(abso, order),
+                                              key=lambda x: x[0],
+                                              reverse=True))]
+
+    select['sorted'] = sort_list[1]
+    select['correlation'] = sort_list[0]
+    select['ordered_corr'] = abso
+    if size is not None:
+        select['accepted'] = sort_list[1][:size]
+        select['rejected'] = sort_list[1][size:]
+
+    if writeout:
+        write_feature_select(function='robust_rank_correlation_screening',
+                             data=select)
+
+    return select
+
+
+def iterative_sis(target, train_fpv, size=None, step=None, writeout=True):
     """ Function to reduce the number of featues in an iterative manner using
         SIS.
 
@@ -94,11 +115,6 @@ def iterative_sis(target, train_fpv, size=None, step=None, cutoff=None,
             Step size by which to reduce the number of features. Default is
             n / log(n).
     """
-    # Standardize the training and target values.
-    if std:
-        target = target_standardize(target=target, writeout=False)['target']
-        train_fpv = standardize(train=train_fpv, writeout=False)['train']
-
     # Assign default values for number of features to return and step size.
     if size is None:
         size = len(train_fpv)
@@ -115,9 +131,7 @@ def iterative_sis(target, train_fpv, size=None, step=None, cutoff=None,
 
     # Initiate the feature reduction.
     sis = sure_independence_screening(target=target, train_fpv=train_fpv,
-                                      size=step, standard=False, corr=corr)
-    dif = max(sis['ordered_corr']) - min(sis['ordered_corr'])
-    print('Correlation difference between best and worst feature:', dif)
+                                      size=step)
     correlation = [sis['ordered_corr'][i] for i in sis['accepted']]
     accepted += [ordering[i] for i in sis['accepted']]
     ordering = [ordering[i] for i in sis['rejected']]
@@ -138,18 +152,14 @@ def iterative_sis(target, train_fpv, size=None, step=None, cutoff=None,
 
         # Do SIS analysis on the residuals.
         sis = sure_independence_screening(target=target, train_fpv=response,
-                                          size=step, standard=False, corr=corr)
+                                          size=step)
         # Keep track of accepted and rejected features.
-        dif = max(sis['ordered_corr']) - min(sis['ordered_corr'])
-        print('Correlation difference between best and worst feature:', dif)
         correlation += [sis['ordered_corr'][i] for i in sis['accepted']]
         accepted += [ordering[i] for i in sis['accepted']]
         ordering = [ordering[i] for i in sis['rejected']]
         new_fpv = np.delete(train_fpv, sis['rejected'], 1)
         reduced_fpv = np.concatenate((reduced_fpv, new_fpv), axis=1)
         train_fpv = np.delete(train_fpv, sis['accepted'], 1)
-        if cutoff is not None and dif < cutoff:
-            break
     correlation += [sis['ordered_corr'][i] for i in sis['rejected']]
 
     select['correlation'] = correlation
