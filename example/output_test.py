@@ -9,9 +9,8 @@ import numpy as np
 from ase.ga.data import DataConnection
 from atoml.data_setup import (get_unique, get_train, data_split,
                               target_standardize, remove_outliers)
-from atoml.fingerprint_setup import (standardize, normalize, return_fpv,
-                                     sure_independence_screening,
-                                     iterative_sis)
+from atoml.fingerprint_setup import standardize, normalize, return_fpv
+from atoml.feature_select import sure_independence_screening, iterative_sis
 from atoml.particle_fingerprint import ParticleFingerprintGenerator
 from atoml.predict import FitnessPrediction
 

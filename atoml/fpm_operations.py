@@ -7,7 +7,7 @@ Created on Tue Jan  3 12:01:30 2017
 import numpy as np
 from random import shuffle
 
-from .fingerprint_setup import sure_independence_screening
+from .feature_select import sure_independence_screening
 
 
 def triangular(n):
@@ -26,10 +26,10 @@ def do_sis(X, y, size=None, increment=1):
 
     Output:
         l: list of s surviving indices.
-        
+
     Example:
         l = do_sis(X,y)
-        X[:,l] 
+        X[:,l]
         will produce the fingerprint matrix using only surviving descriptors.
     """
     shape = np.shape(X)
@@ -42,6 +42,7 @@ def do_sis(X, y, size=None, increment=1):
         X = X[:, select['accepted']]
         l = l[select['accepted']]
     return l
+
 
 def get_order_2(A):
     """Get all combinations x_ij = x_i * x_j, where x_i,j are features.
@@ -62,6 +63,7 @@ def get_order_2(A):
             nfi += 1
     return new_features
 
+
 def get_labels_order_2(l):
     """Get all combinations ij, where i,j are feature labels.
     Input)
@@ -75,6 +77,7 @@ def get_labels_order_2(l):
         for f2 in range(f1, L):
             new_features.append(l[f1] + '_x_' + l[f2])
     return np.array(new_features)
+
 
 def get_order_2ab(A, a, b):
     """Get all combinations x_ij = x_i*a * x_j*b, where x_i,j are features.
@@ -98,6 +101,7 @@ def get_order_2ab(A, a, b):
             new_features[:, nfi] = new_feature
             nfi += 1
     return new_features
+
 
 def get_ablog(A, a, b):
     A
@@ -123,6 +127,7 @@ def get_ablog(A, a, b):
             new_features[:, nfi] = new_feature
             nfi += 1
     return new_features
+
 
 def fpmatrix_split(X, nsplit, fix_size=None, replacement=False):
     """ Routine to split feature matrix and return sublists. This can be
