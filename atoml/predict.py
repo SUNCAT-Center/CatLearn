@@ -77,7 +77,7 @@ class FitnessPrediction(object):
         return cov
 
     def get_predictions(self, train_fp, test_fp, train_target, cinv=None,
-                        test_target=None, uncertainty=False,
+                        test_target=None, uncertainty=False, basis=None,
                         get_validation_error=False, get_training_error=False,
                         standardize_target=True, writeout=True):
         """ Returns a list of predictions for a test dataset.
@@ -103,6 +103,11 @@ class FitnessPrediction(object):
             uncertainty: boolean
                 Return data on the predicted uncertainty if True. Default is
                 False.
+
+            basis: function
+                Basis functions to assess the reliability of the uncertainty
+                predictions. Must be a callable function that takes a list of
+                descriptors and returns another list.
 
             get_validation_error: boolean
                 Return the error associated with the prediction on the test set
@@ -158,6 +163,15 @@ class FitnessPrediction(object):
         if uncertainty:
             data['uncertainty'] = self.get_uncertainty(cinv=cinv, ktb=ktb)
 
+        if basis is not None:
+            data['basis_analysis'] = self.fixed_basis(train_fp=train_fp,
+                                                      test_fp=test_fp,
+                                                      ktb=ktb,
+                                                      cinv=cinv,
+                                                      target=train_target,
+                                                      test_target=test_target,
+                                                      basis=basis)
+
         if writeout:
             write_predict(function='get_predictions', data=data)
 
@@ -185,6 +199,43 @@ class FitnessPrediction(object):
         # Predict the uncertainty.
         return [(1 - np.dot(np.dot(kt, cinv), np.transpose(kt))) ** 0.5 for kt
                 in ktb]
+
+    def fixed_basis(self, test_fp, train_fp, basis, ktb, cinv, target,
+                    test_target):
+        """ Function to apply fixed basis. Returns the predictions gX on the
+            residual. """
+        data = defaultdict(list)
+        # Calculate the K(X*,X*) covarience matrix.
+        ktest = np.asarray([[self.kernel(fp1=fp1, fp2=fp2)
+                             for fp1 in test_fp] for fp2 in test_fp])
+
+        # Form H and H* matrix, multiplying X by basis.
+        train_matrix = np.asarray([basis(i) for i in train_fp])
+        test_matrix = np.asarray([basis(i) for i in test_fp])
+
+        # Calculate R.
+        r = test_matrix - ktb.dot(cinv.dot(train_matrix))
+
+        # Calculate beta.
+        b1 = np.linalg.inv(train_matrix.T.dot(cinv.dot(train_matrix)))
+        b2 = np.asarray(target).dot(cinv.dot(train_matrix))
+        beta = b1.dot(b2)
+
+        # Form the covarience function based on the residual.
+        covf = ktest - ktb.dot(cinv.dot(ktb.T))
+        gca = train_matrix.T.dot(cinv.dot(train_matrix))
+        data['g_cov'] = covf + r.dot(np.linalg.inv(gca).dot(r.T))
+
+        # Do prediction accounting for basis.
+        data['gX'] = self.do_prediction(ktb=ktb, cinv=cinv, target=target) + \
+            beta.dot(r.T)
+
+        # Calculated the error for the residual prediction on the test data.
+        if test_target is not None:
+            data['validation_rmse'] = self.get_error(prediction=data['gX'],
+                                                     target=test_target)
+
+        return data
 
     def get_error(self, prediction, target):
         """ Returns the root mean squared error for predicted data relative to
