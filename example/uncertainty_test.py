@@ -30,24 +30,14 @@ sfpv = StandardFingerprintGenerator()
 pfpv = ParticleFingerprintGenerator(get_nl=False, max_bonds=13)
 
 # Get the list of fingerprint vectors and normalize them.
-test_fp = return_fpv(testset['candidates'], [  # sfpv.eigenspectrum_fpv,
+test_fp = return_fpv(testset['candidates'], [sfpv.eigenspectrum_fpv,
                                              pfpv.nearestneighbour_fpv],
                      use_prior=False)
-train_fp = return_fpv(trainset['candidates'], [  # sfpv.eigenspectrum_fpv,
+train_fp = return_fpv(trainset['candidates'], [sfpv.eigenspectrum_fpv,
                                                pfpv.nearestneighbour_fpv],
                       use_prior=False)
 nfp = normalize(train=train_fp, test=test_fp)
 sfp = standardize(train=train_fp, test=test_fp)
-
-# ntrain = []
-# ntest = []
-# for i in nfp['train']:
-#    ntrain.append(i * 1.)
-# for i in nfp['test']:
-#    ntest.append(i * 1.)
-
-# nfp['train'] = ntrain
-# nfp['test'] = ntest
 
 # Set up the prediction routine.
 krr = FitnessPrediction(ktype='gaussian',
@@ -75,13 +65,9 @@ pred = krr.get_predictions(train_fp=nfp['train'],
 if cleanup:
     os.remove('ATOMLout.txt')
 
-ae = 0.
-pe = 0.
-for i, j, k in zip(pred['prediction'], pred['basis_analysis']['gX'],
-                   testset['target']):
-    ae += (i-k)**2
-    pe += (j-k)**2
-print((ae/len(testset['target']))**0.5, (pe/len(testset['target']))**0.5)
+print('GP:', pred['validation_rmse']['average'], 'Residual:',
+      pred['basis_analysis']['validation_rmse']['average'])
+
 exit()
 
 pe = []
