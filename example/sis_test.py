@@ -10,7 +10,8 @@ import os
 from ase.ga.data import DataConnection
 from atoml.data_setup import get_unique, get_train
 from atoml.fingerprint_setup import return_fpv, normalize
-from atoml.feature_select import (sure_independence_screening, iterative_sis,
+from atoml.feature_select import (sure_independence_screening,
+                                  iterative_screening,
                                   robust_rank_correlation_screening, pca)
 from atoml.particle_fingerprint import ParticleFingerprintGenerator
 from atoml.standard_fingerprint import StandardFingerprintGenerator
@@ -112,13 +113,29 @@ rrcs_test_fp = np.delete(test_fp, rrcs['rejected'], 1)
 rrcs_train_fp = np.delete(train_fp, rrcs['rejected'], 1)
 do_pred(ptrain_fp=rrcs_train_fp, ptest_fp=rrcs_test_fp)
 
-it_sis = iterative_sis(target=trainset['target'], train_fpv=train_fp,
-                       size=40, step=4)
+it_sis = iterative_screening(target=trainset['target'], train_fpv=train_fp,
+                             size=40, step=4, method='sis')
 print('iterative_sis features:', it_sis['accepted'])
 print('iterative_sis correlation:', it_sis['correlation'])
 it_sis_test_fp = np.delete(test_fp, it_sis['rejected'], 1)
 it_sis_train_fp = np.delete(train_fp, it_sis['rejected'], 1)
 do_pred(ptrain_fp=it_sis_train_fp, ptest_fp=it_sis_test_fp)
+
+it_rrcs = iterative_screening(target=trainset['target'], train_fpv=train_fp,
+                              size=40, step=4, method='rrcs', corr='kendall')
+print('iterative_rrcs features (kendall):', it_rrcs['accepted'])
+print('iterative_rrcs correlation (kendall):', it_rrcs['correlation'])
+it_rrcs_test_fp = np.delete(test_fp, it_rrcs['rejected'], 1)
+it_rrcs_train_fp = np.delete(train_fp, it_rrcs['rejected'], 1)
+do_pred(ptrain_fp=it_rrcs_train_fp, ptest_fp=it_rrcs_test_fp)
+
+it_rrcs = iterative_screening(target=trainset['target'], train_fpv=train_fp,
+                              size=40, step=4, method='rrcs', corr='spearman')
+print('iterative_rrcs features (spearman):', it_rrcs['accepted'])
+print('iterative_rrcs correlation (spearman):', it_rrcs['correlation'])
+it_rrcs_test_fp = np.delete(test_fp, it_rrcs['rejected'], 1)
+it_rrcs_train_fp = np.delete(train_fp, it_rrcs['rejected'], 1)
+do_pred(ptrain_fp=it_rrcs_train_fp, ptest_fp=it_rrcs_test_fp)
 
 if cleanup:
     os.remove('ATOMLout.txt')

@@ -100,7 +100,7 @@ def write_feature_select(function, data):
             writefile.write('\nEnd of sure_independence_screening function.\n \
                             \n')
 
-        if function is 'sure_independence_screening':
+        if function is 'robust_rank_correlation_screening':
             st = """Output from
                 feature_select.robust_rank_correlation_screening.""" + dt
             writefile.write(st)
@@ -114,7 +114,7 @@ def write_feature_select(function, data):
             writefile.write("""\nEnd of robust_rank_correlation_screening
                             function.\n \n""")
 
-        if function is 'iterative_sis':
+        if function is 'iterative_screening':
             writefile.write('Output from feature_select.iterative_sis.' +
                             dt)
             writefile.write('Correlation is:\n' + str(data['correlation']))
@@ -124,7 +124,7 @@ def write_feature_select(function, data):
             if 'rejected' in data:
                 writefile.write('\nRejected features are:\n' +
                                 str(data['rejected']) + '\n')
-            writefile.write('\nEnd of iterative_sis function.\n \n')
+            writefile.write('\nEnd of iterative_screening function.\n \n')
 
         if function is 'pca':
             writefile.write('Output from feature_select.pca.' + dt)

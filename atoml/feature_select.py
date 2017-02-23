@@ -107,18 +107,27 @@ def robust_rank_correlation_screening(target, train_fpv, size=None,
     return select
 
 
-def iterative_sis(target, train_fpv, size=None, step=None, writeout=True):
+def iterative_screening(target, train_fpv, size=None, step=None, method='sis',
+                        corr='kendall', writeout=True):
     """ Function to reduce the number of featues in an iterative manner using
-        SIS.
+        SIS or RRCS.
 
         step: int
             Step size by which to reduce the number of features. Default is
             n / log(n).
+
+        method: str
+            Specify the correlation method to be used, can be either sis or
+            rrcs. Default is sis.
+
+        corr: str
+            Correlation to be used in rrcs, can be either kendall or spearman.
+            Default is kendall.
     """
     # Assign default values for number of features to return and step size.
     if size is None:
         size = len(train_fpv)
-    msg = 'Not enough features to perform iterative SIS analysis, reduce size.'
+    msg = 'Not enough features to perform iterative screening, reduce size.'
     assert len(train_fpv[0]) > size, msg
     if step is None:
         step = round(len(train_fpv) / log(len(train_fpv)))
@@ -130,13 +139,18 @@ def iterative_sis(target, train_fpv, size=None, step=None, writeout=True):
     accepted = []
 
     # Initiate the feature reduction.
-    sis = sure_independence_screening(target=target, train_fpv=train_fpv,
-                                      size=step)
-    correlation = [sis['ordered_corr'][i] for i in sis['accepted']]
-    accepted += [ordering[i] for i in sis['accepted']]
-    ordering = [ordering[i] for i in sis['rejected']]
-    reduced_fpv = np.delete(train_fpv, sis['rejected'], 1)
-    train_fpv = np.delete(train_fpv, sis['accepted'], 1)
+    if method is 'sis':
+        screen = sure_independence_screening(target=target,
+                                             train_fpv=train_fpv, size=step)
+    elif method is 'rrcs':
+        screen = robust_rank_correlation_screening(target=target,
+                                                   train_fpv=train_fpv,
+                                                   size=step, corr=corr)
+    correlation = [screen['ordered_corr'][i] for i in screen['accepted']]
+    accepted += [ordering[i] for i in screen['accepted']]
+    ordering = [ordering[i] for i in screen['rejected']]
+    reduced_fpv = np.delete(train_fpv, screen['rejected'], 1)
+    train_fpv = np.delete(train_fpv, screen['accepted'], 1)
 
     # Iteratively reduce the remaining number of features by the step size.
     while len(reduced_fpv[0]) < size:
@@ -150,17 +164,23 @@ def iterative_sis(target, train_fpv, size=None, step=None, writeout=True):
             response.append(d)
         response = np.transpose(response)
 
-        # Do SIS analysis on the residuals.
-        sis = sure_independence_screening(target=target, train_fpv=response,
-                                          size=step)
+        # Do screening analysis on the residuals.
+        if method is 'sis':
+            screen = sure_independence_screening(target=target,
+                                                 train_fpv=train_fpv,
+                                                 size=step)
+        elif method is 'rrcs':
+            screen = robust_rank_correlation_screening(target=target,
+                                                       train_fpv=train_fpv,
+                                                       size=step, corr=corr)
         # Keep track of accepted and rejected features.
-        correlation += [sis['ordered_corr'][i] for i in sis['accepted']]
-        accepted += [ordering[i] for i in sis['accepted']]
-        ordering = [ordering[i] for i in sis['rejected']]
-        new_fpv = np.delete(train_fpv, sis['rejected'], 1)
+        correlation += [screen['ordered_corr'][i] for i in screen['accepted']]
+        accepted += [ordering[i] for i in screen['accepted']]
+        ordering = [ordering[i] for i in screen['rejected']]
+        new_fpv = np.delete(train_fpv, screen['rejected'], 1)
         reduced_fpv = np.concatenate((reduced_fpv, new_fpv), axis=1)
-        train_fpv = np.delete(train_fpv, sis['accepted'], 1)
-    correlation += [sis['ordered_corr'][i] for i in sis['rejected']]
+        train_fpv = np.delete(train_fpv, screen['accepted'], 1)
+    correlation += [screen['ordered_corr'][i] for i in screen['rejected']]
 
     select['correlation'] = correlation
     select['accepted'] = accepted
@@ -168,7 +188,7 @@ def iterative_sis(target, train_fpv, size=None, step=None, writeout=True):
     select['train_fpv'] = reduced_fpv
 
     if writeout:
-        write_feature_select(function='iterative_sis', data=select)
+        write_feature_select(function='iterative_screening', data=select)
 
     return select
 
