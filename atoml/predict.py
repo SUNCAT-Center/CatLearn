@@ -169,6 +169,7 @@ class FitnessPrediction(object):
                                                       ktb=ktb,
                                                       cinv=cinv,
                                                       target=train_target,
+                                                      test_target=test_target,
                                                       basis=basis)
 
         if writeout:
@@ -199,7 +200,8 @@ class FitnessPrediction(object):
         return [(1 - np.dot(np.dot(kt, cinv), np.transpose(kt))) ** 0.5 for kt
                 in ktb]
 
-    def fixed_basis(self, test_fp, train_fp, basis, ktb, cinv, target):
+    def fixed_basis(self, test_fp, train_fp, basis, ktb, cinv, target,
+                    test_target):
         """ Function to apply fixed basis. """
         ud = defaultdict(list)
         # Calculate the K(X*,X*) covarience matrix.
@@ -226,6 +228,11 @@ class FitnessPrediction(object):
         # Do prediction accounting for basis.
         ud['gX'] = self.do_prediction(ktb=ktb, cinv=cinv, target=target) + \
             beta.dot(r.T)
+
+        # Calculated the error for the residual prediction on the test data.
+        if test_target is not None:
+            ud['validation_rmse'] = self.get_error(prediction=ud['gX'],
+                                                   target=test_target)
 
         return ud
 
