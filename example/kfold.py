@@ -4,45 +4,41 @@ Created on Fri Nov 18 14:30:20 2016
 
 @author: mhangaard
 
-
-
+This example script requires that the make_fingerprints.py has already been run
+or that the user has generated a feature matrix in fpm_(i).txt.
 """
 from __future__ import print_function
 
 import numpy as np
 
-from atoml.fingerprint_setup import normalize
-from atoml.fpm_operations import fpm_operations
+from atoml.fingerprint_setup import standardize, normalize
 from atoml.predict import FitnessPrediction
+from atoml.model_selection import negative_logp
+from scipy.optimize import minimize
+from atoml.fpm_operations import fpmatrix_split
+
 
 nsplit = 2
 
-fpm = np.genfromtxt('fpm.txt')
-ops = fpm_operations(fpm)
-split = ops.fpmatrix_split(nsplit)
+fpm_y = np.genfromtxt('fpm.txt')
+split = fpmatrix_split(fpm_y, nsplit)
+indexes = [9, 18, 25, 32, 36]
 
-split_fpv = []
 split_energy = []
-for i in range(nsplit):
-    split_fpv.append(split[i][:, :-1])
-    split_energy.append(split[i][:, -1])
-
-indexes = [14, 2, 1, 9]
-
+split_fpv = []
 # Subset of the fingerprint vector.
 for i in range(nsplit):
-    fpm = split_fpv[i]
-    shape = np.shape(fpm)
-    reduced_fpv = split_fpv[i][:, indexes]
-    split_fpv[i] = reduced_fpv
-
-# Set up the prediction routine.
-krr = FitnessPrediction(ktype='gaussian',
-                        kwidth=0.5,
-                        regularization=0.001)
+    split_energy.append(split[i][:, -2])
+    fpm = split[i][:,:-2]
+    reduced_fpv = fpm[:, indexes]
+    split_fpv.append(reduced_fpv)
+    print(np.shape(reduced_fpv))
+    print(np.shape(split_energy[i]))
+    
 print('Make predictions based in k-fold samples')
 train_rmse = []
 val_rmse = []
+sigma = None
 for i in range(nsplit):
     # Setup the test, training and fingerprint datasets.
     traine = []
@@ -60,20 +56,39 @@ for i in range(nsplit):
         teste.append(e)
     for v in split_fpv[i]:
         test_fp.append(v)
-    # Get the list of fingerprint vectors and normalize them.
-    nfp = normalize(train=train_fp, test=test_fp)
+    regularization=.001
+    m = np.shape(reduced_fpv)[1]
+    if sigma == None:
+        sigma = np.ones(m)
+        sigma *= 0.5
+    if False:
+        # Get the list of fingerprint vectors and standardize them.
+        nfp = standardize(train=train_fp, test=test_fp)
+        # Optimize hyperparameters
+        a=(nfp, traine, regularization)
+        #Hyper parameter bounds.
+        b=((1E-9,None),)*(m)
+        popt = minimize(negative_logp, sigma, args=a, bounds=b)
+        sigma=popt['x']
+    else:
+        # Get the list of fingerprint vectors and normalize them.
+        nfp = normalize(train=train_fp, test=test_fp)
+    # Set up the prediction routine.
+    krr = FitnessPrediction(ktype='gaussian', kwidth=sigma,
+                            regularization=regularization)  # regularization)
     # Do the training.
     cvm = krr.get_covariance(train_fp=nfp['train'])
+    cinv = np.linalg.inv(cvm)
     # Do the prediction
     pred = krr.get_predictions(train_fp=nfp['train'],
                                test_fp=nfp['test'],
-                               cinv=cvm,
+                               cinv=cinv,
                                train_target=traine,
                                get_validation_error=True,
                                get_training_error=True,
                                test_target=teste)
     # Print the error associated with the predictions.
-    train_rmse = pred['training_rmse']['all']
-    val_rmse = pred['validation_rmse']['all']
-    print('Training error:', np.mean(train_rmse), '+/-', np.std(train_rmse))
-    print('Validation error:', np.mean(val_rmse), '+/-', np.std(val_rmse))
+    train_rmse = pred['training_rmse']['average']
+    val_rmse = pred['validation_rmse']['average']
+    print('Training error:', train_rmse)
+    print('Validation error:', val_rmse)

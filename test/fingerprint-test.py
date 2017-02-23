@@ -5,7 +5,7 @@ import time
 
 from ase.ga.data import DataConnection
 from atoml.data_setup import get_train, get_unique
-from atoml.fingerprint_setup import normalize, standardize, return_fpv
+from atoml.fingerprint_setup import return_fpv, normalize, standardize
 from atoml.particle_fingerprint import ParticleFingerprintGenerator
 from atoml.standard_fingerprint import StandardFingerprintGenerator
 
@@ -147,7 +147,7 @@ train_fp = return_fpv(trainset['candidates'], [pfpv.nearestneighbour_fpv,
                                                sfpv.composition_fpv])
 nfp = normalize(test=test_fp, train=train_fp)
 sfp = standardize(test=test_fp, train=train_fp)
-print('Combined NN, Mass, Comp: %.3f' % (time.time() - start_time))
+print('Combined features and SIS: %.3f' % (time.time() - start_time))
 assert len(test_fp) == 5 and len(train_fp) == 10
 assert len(nfp['train'][0]) == 7 and len(nfp['test'][0]) == 7
 assert len(sfp['train'][0]) == 7 and len(sfp['test'][0]) == 7

@@ -1,11 +1,13 @@
 """ Functions to setup fingerprint vectors. """
+from __future__ import print_function
+
 import numpy as np
 from collections import defaultdict
 
 import ase.db
-from .data_setup import target_standardize
 from .particle_fingerprint import ParticleFingerprintGenerator
 from .adsorbate_fingerprint import AdsorbateFingerprintGenerator
+from .output import write_fingerprint_setup
 
 no_mendeleev = False
 try:
@@ -104,13 +106,22 @@ def get_keyvaluepair(c=[], fpv_name='None'):
         return out
 
 
-def return_fpv(candidates, fpv_name, use_prior=True):
+def return_fpv(candidates, fpv_name, use_prior=True, writeout=False):
     """ Function to sequentially combine fingerprint vectors and return them
         for a list of atoms objects.
     """
     # Put fpv_name in a list, if it is not already.
     if not isinstance(fpv_name, list):
         fpv_name = [fpv_name]
+
+    # Write out variables.
+    if writeout:
+        var = defaultdict(list)
+        # TODO: Sort out the names.
+        var['name'].append(fpv_name)
+        var['prior'].append(use_prior)
+        write_fingerprint_setup(function='return_fpv', data=var)
+
     # Check to see if we are dealing with a list of candidates or a single
     # atoms object.
     if type(candidates) is defaultdict or type(candidates) is list:
@@ -154,7 +165,7 @@ def concatenate_fpv(c, fpv_name):
     return fpv
 
 
-def standardize(train, test=None):
+def standardize(train, test=None, writeout=True):
     """ Standardize each descriptor in the FPV relative to the mean and
         standard deviation. If test data is supplied it is standardized
         relative to the training dataset.
@@ -172,9 +183,10 @@ def standardize(train, test=None):
         std_fpv.append(float(np.std(tt[i])))
         mean_fpv.append(float(np.mean(tt[i])))
 
-    # Replace zero std with value 1 for devision.
     std_fpv = np.asarray(std_fpv)
+    # Replace zero std with value 1 for devision.
     np.place(std_fpv, std_fpv == 0., [1.])
+    mean_fpv = np.asarray(mean_fpv)
 
     std = defaultdict(list)
     for i in train:
@@ -185,10 +197,13 @@ def standardize(train, test=None):
     std['std'] = std_fpv
     std['mean'] = mean_fpv
 
+    if writeout:
+        write_fingerprint_setup(function='standardize', data=std)
+
     return std
 
 
-def normalize(train, test=None):
+def normalize(train, test=None, writeout=True):
     """ Normalize each descriptor in the FPV to min/max or mean centered. If
         test data is supplied it is standardized relative to the training
         dataset.
@@ -201,44 +216,22 @@ def normalize(train, test=None):
         max_fpv.append(float(max(tt[i])))
         min_fpv.append(float(min(tt[i])))
         mean_fpv.append(float(np.mean(tt[i])))
-    dif = np.asarray(max_fpv) - np.asarray(min_fpv)
 
+    dif = np.asarray(max_fpv) - np.asarray(min_fpv)
     # Replace zero difference with value 1 for devision.
     np.place(dif, dif == 0., [1.])
+    mean_fpv = np.asarray(mean_fpv)
 
     norm = defaultdict(list)
     for i in train:
-        norm['train'].append(np.asarray((i - np.asarray(mean_fpv)) / dif))
+        norm['train'].append(np.asarray((i - mean_fpv) / dif))
     if test is not None:
         for i in test:
-            norm['test'].append(np.asarray((i - np.asarray(mean_fpv)) / dif))
-    norm['mean'] = np.asarray(mean_fpv)
+            norm['test'].append(np.asarray((i - mean_fpv) / dif))
+    norm['mean'] = mean_fpv
     norm['dif'] = dif
 
+    if writeout:
+        write_fingerprint_setup(function='normalize', data=norm)
+
     return norm
-
-
-def sure_independence_screening(target, train_fpv, size=None):
-    """ Feature selection based on SIS discussed in Fan, J., Lv, J., J. R.
-        Stat. Soc.: Series B, 2008, 70, 849.
-    """
-    select = defaultdict(list)
-    std_x = standardize(train=train_fpv)
-    std_t = target_standardize(target)
-
-    p = np.shape(std_x['train'])[1]
-    # NOTE: Magnitude is not scaled between -1 and 1
-    omega = np.transpose(std_x['train']).dot(std_t['target']) / p
-
-    order = list(range(np.shape(std_x['train'])[1]))
-    sort_list = [list(i) for i in zip(*sorted(zip(abs(omega), order),
-                                              key=lambda x: x[0],
-                                              reverse=True))]
-
-    select['sorted'] = sort_list[1]
-    select['correlation'] = sort_list[0]
-    if size is not None:
-        select['accepted'] = sort_list[1][:size]
-        select['rejected'] = sort_list[1][size:]
-
-    return select

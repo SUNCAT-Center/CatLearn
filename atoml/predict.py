@@ -4,6 +4,7 @@ from math import exp
 from collections import defaultdict
 
 from .data_setup import target_standardize
+from .output import write_predict
 
 
 class FitnessPrediction(object):
@@ -72,14 +73,13 @@ class FitnessPrediction(object):
                            for fp1 in train_fp] for fp2 in train_fp])
         if self.regularization is not None:
             cov = cov + self.regularization * np.identity(len(train_fp))
-        covinv = np.linalg.inv(cov)
 
-        return covinv
+        return cov
 
     def get_predictions(self, train_fp, test_fp, train_target, cinv=None,
                         test_target=None, uncertainty=False, basis=None,
                         get_validation_error=False, get_training_error=False,
-                        standardize_target=True):
+                        standardize_target=True, writeout=True):
         """ Returns a list of predictions for a test dataset.
 
             train_fp: list
@@ -121,13 +121,15 @@ class FitnessPrediction(object):
         if type(self.kwidth) is float:
             self.kwidth = np.zeros(len(train_fp[0]),) + self.kwidth
         if standardize_target:
+            error_train = train_target
             self.standardize_data = target_standardize(train_target)
             train_target = self.standardize_data['target']
 
         data = defaultdict(list)
         # Get the Gram matrix on-the-fly if none is suppiled.
         if cinv is None:
-            cinv = self.get_covariance(train_fp)
+            cvm = self.get_covariance(train_fp)
+            cinv = np.linalg.inv(cvm)
 
         # Calculate the covarience between the test and training datasets.
         ktb = np.asarray([[self.kernel(fp1=fp1, fp2=fp2) for fp1 in train_fp]
@@ -140,7 +142,7 @@ class FitnessPrediction(object):
         # Calculate error associated with predictions on the test data.
         if get_validation_error:
             data['validation_rmse'] = self.get_error(
-                prediction=data['prediction'], actual=test_target)
+                prediction=data['prediction'], target=test_target)
 
         # Calculate error associated with predictions on the training data.
         if get_training_error:
@@ -155,7 +157,7 @@ class FitnessPrediction(object):
 
             # Calculated the error for the prediction on the training data.
             data['training_rmse'] = self.get_error(
-                prediction=data['train_prediction'], actual=train_target)
+                prediction=data['train_prediction'], target=error_train)
 
         # Calculate uncertainty associated with prediction on test data.
         if uncertainty:
@@ -169,10 +171,13 @@ class FitnessPrediction(object):
                                                       target=train_target,
                                                       basis=basis)
 
+        if writeout:
+            write_predict(function='get_predictions', data=data)
+
         return data
 
     def do_prediction(self, ktb, cinv, target):
-        """ Function to do the actual prediction. """
+        """ Function to make the prediction. """
         pred = []
         for kt in ktb:
             ktcinv = np.dot(kt, cinv)
@@ -224,23 +229,44 @@ class FitnessPrediction(object):
 
         return ud
 
-    def get_error(self, prediction, actual):
+    def get_error(self, prediction, target):
         """ Returns the root mean squared error for predicted data relative to
-            the actual data.
+            the target data.
 
             prediction: list
                 A list of predicted values.
 
-            actual: list
-                A list of actual values.
+            target: list
+                A list of target values.
         """
-        assert len(prediction) == len(actual)
+        msg = 'Something has gone wrong and there are '
+        if len(prediction) < len(target):
+            msg += 'more targets than predictions.'
+        elif len(prediction) > len(target):
+            msg += 'fewer targets than predictions.'
+        assert len(prediction) == len(target), msg
         error = defaultdict(list)
         sumd = 0
-        for i, j in zip(prediction, actual):
+        for i, j in zip(prediction, target):
             e = (i - j) ** 2
             error['all'].append(e ** 0.5)
             sumd += e
 
         error['average'] = (sumd / len(prediction)) ** 0.5
         return error
+
+    def log_marginal_likelyhood1(self, cov, cinv, y):
+        """ Return the log marginal likelyhood.
+        (Equation 5.8 in C. E. Rasmussen and C. K. I. Williams, 2006)
+        """
+        n = len(y)
+        y = np.vstack(y)
+        data_fit = -(np.dot(np.dot(np.transpose(y), cinv), y)/2.)[0][0]
+        L = np.linalg.cholesky(cov)
+        logdetcov = 0
+        for l in range(len(L)):
+            logdetcov += np.log(L[l, l])
+        complexity = -logdetcov
+        normalization = -n*np.log(2*np.pi)/2
+        p = data_fit + complexity + normalization
+        return p
