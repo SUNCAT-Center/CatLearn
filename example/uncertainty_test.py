@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 
 from ase.ga.data import DataConnection
 from atoml.data_setup import get_unique, get_train, target_standardize
-from atoml.fingerprint_setup import standardize, normalize, return_fpv
+from atoml.fingerprint_setup import normalize, return_fpv
 from atoml.standard_fingerprint import StandardFingerprintGenerator
 from atoml.particle_fingerprint import ParticleFingerprintGenerator
 from atoml.predict import FitnessPrediction
@@ -37,7 +37,6 @@ train_fp = return_fpv(trainset['candidates'], [sfpv.eigenspectrum_fpv,
                                                pfpv.nearestneighbour_fpv],
                       use_prior=False)
 nfp = normalize(train=train_fp, test=test_fp)
-sfp = standardize(train=train_fp, test=test_fp)
 
 # Set up the prediction routine.
 krr = FitnessPrediction(ktype='gaussian',

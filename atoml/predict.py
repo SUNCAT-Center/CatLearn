@@ -202,8 +202,9 @@ class FitnessPrediction(object):
 
     def fixed_basis(self, test_fp, train_fp, basis, ktb, cinv, target,
                     test_target):
-        """ Function to apply fixed basis. """
-        ud = defaultdict(list)
+        """ Function to apply fixed basis. Returns the predictions gX on the
+            residual. """
+        data = defaultdict(list)
         # Calculate the K(X*,X*) covarience matrix.
         ktest = np.asarray([[self.kernel(fp1=fp1, fp2=fp2)
                              for fp1 in test_fp] for fp2 in test_fp])
@@ -220,21 +221,21 @@ class FitnessPrediction(object):
         b2 = np.asarray(target).dot(cinv.dot(train_matrix))
         beta = b1.dot(b2)
 
+        # Form the covarience function based on the residual.
         covf = ktest - ktb.dot(cinv.dot(ktb.T))
         gca = train_matrix.T.dot(cinv.dot(train_matrix))
-        g_cov = covf + r.dot(np.linalg.inv(gca).dot(r.T))
-        ud['g_cov'] = g_cov
+        data['g_cov'] = covf + r.dot(np.linalg.inv(gca).dot(r.T))
 
         # Do prediction accounting for basis.
-        ud['gX'] = self.do_prediction(ktb=ktb, cinv=cinv, target=target) + \
+        data['gX'] = self.do_prediction(ktb=ktb, cinv=cinv, target=target) + \
             beta.dot(r.T)
 
         # Calculated the error for the residual prediction on the test data.
         if test_target is not None:
-            ud['validation_rmse'] = self.get_error(prediction=ud['gX'],
-                                                   target=test_target)
+            data['validation_rmse'] = self.get_error(prediction=data['gX'],
+                                                     target=test_target)
 
-        return ud
+        return data
 
     def get_error(self, prediction, target):
         """ Returns the root mean squared error for predicted data relative to
