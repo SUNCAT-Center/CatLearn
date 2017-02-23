@@ -1,5 +1,7 @@
 from __future__ import print_function
 
+import os
+import numpy as np
 import seaborn as sns
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -11,6 +13,7 @@ from atoml.standard_fingerprint import StandardFingerprintGenerator
 from atoml.particle_fingerprint import ParticleFingerprintGenerator
 from atoml.predict import FitnessPrediction
 
+cleanup = True
 
 db = DataConnection('gadb.db')
 
@@ -27,30 +30,31 @@ sfpv = StandardFingerprintGenerator()
 pfpv = ParticleFingerprintGenerator(get_nl=False, max_bonds=13)
 
 # Get the list of fingerprint vectors and normalize them.
-test_fp = return_fpv(testset['candidates'], [sfpv.eigenspectrum_fpv,
+test_fp = return_fpv(testset['candidates'], [  # sfpv.eigenspectrum_fpv,
                                              pfpv.nearestneighbour_fpv],
                      use_prior=False)
-train_fp = return_fpv(trainset['candidates'], [sfpv.eigenspectrum_fpv,
+train_fp = return_fpv(trainset['candidates'], [  # sfpv.eigenspectrum_fpv,
                                                pfpv.nearestneighbour_fpv],
                       use_prior=False)
 nfp = normalize(train=train_fp, test=test_fp)
 sfp = standardize(train=train_fp, test=test_fp)
 
-ntrain = []
-ntest = []
-for i in nfp['train']:
-    ntrain.append(i * 1.)
-for i in nfp['test']:
-    ntest.append(i * 1.)
+# ntrain = []
+# ntest = []
+# for i in nfp['train']:
+#    ntrain.append(i * 1.)
+# for i in nfp['test']:
+#    ntest.append(i * 1.)
 
-nfp['train'] = ntrain
-nfp['test'] = ntest
+# nfp['train'] = ntrain
+# nfp['test'] = ntest
 
 # Set up the prediction routine.
 krr = FitnessPrediction(ktype='gaussian',
                         kwidth=0.5,
                         regularization=0.001)
 cvm = krr.get_covariance(train_fp=nfp['train'])
+cvm = np.linalg.inv(cvm)
 
 
 def basis(descriptors):
@@ -67,6 +71,10 @@ pred = krr.get_predictions(train_fp=nfp['train'],
                            standardize_target=True,
                            uncertainty=True,
                            basis=basis)
+
+if cleanup:
+    os.remove('ATOMLout.txt')
+
 ae = 0.
 pe = 0.
 for i, j, k in zip(pred['prediction'], pred['basis_analysis']['gX'],
