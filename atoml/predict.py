@@ -207,25 +207,25 @@ class FitnessPrediction(object):
                              for fp1 in test_fp] for fp2 in test_fp])
 
         # Form H and H* matrix, multiplying X by basis.
-        train_matrix = [basis(i) for i in train_fp]
-        test_matrix = [basis(i) for i in test_fp]
+        train_matrix = np.asarray([basis(i) for i in train_fp])
+        test_matrix = np.asarray([basis(i) for i in test_fp])
 
         # Calculate R.
-        r = test_matrix - np.dot(ktb, np.dot(cinv, train_matrix))
+        r = test_matrix - ktb.dot(cinv.dot(train_matrix))
 
         # Calculate beta.
-        bp = np.linalg.inv(np.dot(np.dot(cinv, train_matrix),
-                                  np.transpose(train_matrix)))
-        b = np.dot(target, np.dot(bp, np.dot(cinv, train_matrix)))
+        b1 = np.linalg.inv(train_matrix.T.dot(cinv.dot(train_matrix)))
+        b2 = np.asarray(target).dot(cinv.dot(train_matrix))
+        beta = b1.dot(b2)
 
-        covf = ktest - np.dot(np.dot(ktb, cinv), np.transpose(ktb))
-        gca = np.dot(np.transpose(train_matrix), np.dot(cinv, train_matrix))
-        ud['g_cov'] = covf + np.dot(np.dot(r, np.linalg.inv(gca)),
-                                    np.transpose(r))
+        covf = ktest - ktb.dot(cinv.dot(ktb.T))
+        gca = train_matrix.T.dot(cinv.dot(train_matrix))
+        g_cov = covf + r.dot(np.linalg.inv(gca).dot(r.T))
+        ud['g_cov'] = g_cov
 
         # Do prediction accounting for basis.
-        ud['gX'] = np.dot(b, np.transpose(r)) + self.do_prediction(ktb, cinv,
-                                                                   target)
+        ud['gX'] = self.do_prediction(ktb=ktb, cinv=cinv, target=target) + \
+            beta.dot(r.T)
 
         return ud
 
