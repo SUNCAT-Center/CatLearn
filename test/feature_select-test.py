@@ -6,8 +6,9 @@ import numpy as np
 from ase.ga.data import DataConnection
 from atoml.data_setup import get_train, get_unique
 from atoml.fingerprint_setup import return_fpv
-from atoml.feature_select import (sure_independence_screening, iterative_sis,
-                                  pca)
+from atoml.feature_select import (sure_independence_screening,
+                                  iterative_screening,
+                                  robust_rank_correlation_screening, pca)
 from atoml.particle_fingerprint import ParticleFingerprintGenerator
 from atoml.standard_fingerprint import StandardFingerprintGenerator
 
@@ -46,11 +47,37 @@ sis_test_fp = np.delete(test_fp, sis['rejected'], 1)
 sis_train_fp = np.delete(train_fp, sis['rejected'], 1)
 assert len(sis_test_fp[0]) == 4 and len(sis_train_fp[0]) == 4
 
-it_sis = iterative_sis(target=trainset['target'], train_fpv=train_fp, size=4,
-                       step=1)
+rrcs = robust_rank_correlation_screening(target=trainset['target'],
+                                         train_fpv=train_fp, size=4,
+                                         corr='kendall')
+rrcs_test_fp = np.delete(test_fp, rrcs['rejected'], 1)
+rrcs_train_fp = np.delete(train_fp, rrcs['rejected'], 1)
+assert len(rrcs_test_fp[0]) == 4 and len(rrcs_train_fp[0]) == 4
+
+rrcs = robust_rank_correlation_screening(target=trainset['target'],
+                                         train_fpv=train_fp, size=4,
+                                         corr='spearman')
+rrcs_test_fp = np.delete(test_fp, rrcs['rejected'], 1)
+rrcs_train_fp = np.delete(train_fp, rrcs['rejected'], 1)
+assert len(rrcs_test_fp[0]) == 4 and len(rrcs_train_fp[0]) == 4
+
+it_sis = iterative_screening(target=trainset['target'], train_fpv=train_fp,
+                             size=4, step=1, method='sis')
 it_sis_test_fp = np.delete(test_fp, it_sis['rejected'], 1)
 it_sis_train_fp = np.delete(train_fp, it_sis['rejected'], 1)
-assert len(sis_test_fp[0]) == 4 and len(sis_train_fp[0]) == 4
+assert len(it_sis_test_fp[0]) == 4 and len(it_sis_train_fp[0]) == 4
+
+it_rrcs = iterative_screening(target=trainset['target'], train_fpv=train_fp,
+                              size=4, step=1, method='rrcs', corr='kendall')
+it_rrcs_test_fp = np.delete(test_fp, it_rrcs['rejected'], 1)
+it_rrcs_train_fp = np.delete(train_fp, it_rrcs['rejected'], 1)
+assert len(it_rrcs_test_fp[0]) == 4 and len(it_rrcs_train_fp[0]) == 4
+
+it_rrcs = iterative_screening(target=trainset['target'], train_fpv=train_fp,
+                              size=4, step=1, method='rrcs', corr='spearman')
+it_rrcs_test_fp = np.delete(test_fp, it_rrcs['rejected'], 1)
+it_rrcs_train_fp = np.delete(train_fp, it_rrcs['rejected'], 1)
+assert len(it_rrcs_test_fp[0]) == 4 and len(it_rrcs_train_fp[0]) == 4
 
 pca_r = pca(components=4, train_fpv=train_fp, test_fpv=test_fp)
 assert len(pca_r['test_fpv'][0]) == 4 and len(pca_r['train_fpv'][0]) == 4
