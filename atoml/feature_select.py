@@ -207,7 +207,6 @@ def iterative_screening(target, train_fpv, test_fpv=None, size=None, step=None,
 
     if test_fpv is not None:
         select['test_fpv'] = np.delete(test_fpv, ordering, 1)
-        print(np.shape(select['test_fpv']))
 
     select['correlation'] = correlation
     select['accepted'] = accepted
