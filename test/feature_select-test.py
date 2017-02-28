@@ -62,21 +62,23 @@ rrcs_train_fp = np.delete(train_fp, rrcs['rejected'], 1)
 assert len(rrcs_test_fp[0]) == 4 and len(rrcs_train_fp[0]) == 4
 
 it_sis = iterative_screening(target=trainset['target'], train_fpv=train_fp,
-                             size=4, step=1, method='sis')
-it_sis_test_fp = np.delete(test_fp, it_sis['rejected'], 1)
-it_sis_train_fp = np.delete(train_fp, it_sis['rejected'], 1)
+                             test_fpv=test_fp, size=4, step=1, method='sis')
+it_sis_test_fp = it_sis['test_fpv']
+it_sis_train_fp = it_sis['train_fpv']
 assert len(it_sis_test_fp[0]) == 4 and len(it_sis_train_fp[0]) == 4
 
 it_rrcs = iterative_screening(target=trainset['target'], train_fpv=train_fp,
-                              size=4, step=1, method='rrcs', corr='kendall')
-it_rrcs_test_fp = np.delete(test_fp, it_rrcs['rejected'], 1)
-it_rrcs_train_fp = np.delete(train_fp, it_rrcs['rejected'], 1)
+                              test_fpv=test_fp, size=4, step=1, method='rrcs',
+                              corr='kendall')
+it_rrcs_test_fp = it_rrcs['test_fpv']
+it_rrcs_train_fp = it_rrcs['train_fpv']
 assert len(it_rrcs_test_fp[0]) == 4 and len(it_rrcs_train_fp[0]) == 4
 
 it_rrcs = iterative_screening(target=trainset['target'], train_fpv=train_fp,
-                              size=4, step=1, method='rrcs', corr='spearman')
-it_rrcs_test_fp = np.delete(test_fp, it_rrcs['rejected'], 1)
-it_rrcs_train_fp = np.delete(train_fp, it_rrcs['rejected'], 1)
+                              test_fpv=test_fp, size=4, step=1, method='rrcs',
+                              corr='spearman')
+it_rrcs_test_fp = it_rrcs['test_fpv']
+it_rrcs_train_fp = it_rrcs['train_fpv']
 assert len(it_rrcs_test_fp[0]) == 4 and len(it_rrcs_train_fp[0]) == 4
 
 pca_r = pca(components=4, train_fpv=train_fp, test_fpv=test_fp)
