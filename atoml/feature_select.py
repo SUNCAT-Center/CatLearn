@@ -44,7 +44,7 @@ def sure_independence_screening(target, train_fpv, size=None, cleanup=False,
 
     omega = []
     for d in np.transpose(train_fpv):
-        if all(d) == 0.:
+        if np.allclose(d, d[0]):
             omega.append(0.)
         else:
             omega.append(pearsonr(x=d, y=target)[0])
@@ -90,14 +90,14 @@ def robust_rank_correlation_screening(target, train_fpv, size=None,
     omega = []
     if corr is 'kendall':
         for d in np.transpose(train_fpv):
-            if all(d) == 0.:
+            if np.allclose(d, d[0]):
                 omega.append(0.)
             else:
                 tau = kendalltau(x=d, y=target)[0]
                 omega.append(tau - 0.25)
     elif corr is 'spearman':
         for d in np.transpose(train_fpv):
-            if all(d) == 0.:
+            if np.allclose(d, d[0]):
                 omega.append(0.)
             else:
                 omega.append(spearmanr(a=d, b=target)[0])
@@ -159,17 +159,16 @@ def iterative_screening(target, train_fpv, test_fpv=None, size=None, step=None,
     select = defaultdict(list)
     ordering = list(range(len(train_fpv[0])))
     accepted = []
+    keep_train = train_fpv
 
     # Initiate the feature reduction.
     if method is 'sis':
         screen = sure_independence_screening(target=target,
-                                             train_fpv=train_fpv, size=step,
-                                             cleanup=False)
+                                             train_fpv=train_fpv, size=step)
     elif method is 'rrcs':
         screen = robust_rank_correlation_screening(target=target,
                                                    train_fpv=train_fpv,
-                                                   size=step, corr=corr,
-                                                   cleanup=False)
+                                                   size=step, corr=corr)
     correlation = [screen['ordered_corr'][i] for i in screen['accepted']]
     accepted += [ordering[i] for i in screen['accepted']]
     ordering = [ordering[i] for i in screen['rejected']]
@@ -191,13 +190,12 @@ def iterative_screening(target, train_fpv, test_fpv=None, size=None, step=None,
         # Do screening analysis on the residuals.
         if method is 'sis':
             screen = sure_independence_screening(target=target,
-                                                 train_fpv=train_fpv,
-                                                 size=step, cleanup=False)
+                                                 train_fpv=response,
+                                                 size=step)
         elif method is 'rrcs':
             screen = robust_rank_correlation_screening(target=target,
-                                                       train_fpv=train_fpv,
-                                                       size=step, corr=corr,
-                                                       cleanup=False)
+                                                       train_fpv=response,
+                                                       size=step, corr=corr)
         # Keep track of accepted and rejected features.
         correlation += [screen['ordered_corr'][i] for i in screen['accepted']]
         accepted += [ordering[i] for i in screen['accepted']]
@@ -207,11 +205,14 @@ def iterative_screening(target, train_fpv, test_fpv=None, size=None, step=None,
         train_fpv = np.delete(train_fpv, screen['accepted'], 1)
     correlation += [screen['ordered_corr'][i] for i in screen['rejected']]
 
+    if test_fpv is not None:
+        select['test_fpv'] = np.delete(test_fpv, ordering, 1)
+        print(np.shape(select['test_fpv']))
+
     select['correlation'] = correlation
     select['accepted'] = accepted
     select['rejected'] = ordering
-    select['train_fpv'] = reduced_fpv
-    select['test_fpv'] = np.delete(test_fpv, screen['rejected'], 1)
+    select['train_fpv'] = np.delete(keep_train, ordering, 1)
 
     if writeout:
         write_feature_select(function='iterative_screening', data=select)

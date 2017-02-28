@@ -114,28 +114,24 @@ rrcs_train_fp = np.delete(train_fp, rrcs['rejected'], 1)
 do_pred(ptrain_fp=rrcs_train_fp, ptest_fp=rrcs_test_fp)
 
 it_sis = iterative_screening(target=trainset['target'], train_fpv=train_fp,
-                             size=40, step=4, method='sis')
+                             test_fpv=test_fp, size=40, step=4, method='sis')
 print('iterative_sis features:', it_sis['accepted'])
 print('iterative_sis correlation:', it_sis['correlation'])
-it_sis_test_fp = np.delete(test_fp, it_sis['rejected'], 1)
-it_sis_train_fp = np.delete(train_fp, it_sis['rejected'], 1)
-do_pred(ptrain_fp=it_sis_train_fp, ptest_fp=it_sis_test_fp)
+do_pred(ptrain_fp=it_sis['train_fpv'], ptest_fp=it_sis['test_fpv'])
 
 it_rrcs = iterative_screening(target=trainset['target'], train_fpv=train_fp,
-                              size=40, step=4, method='rrcs', corr='kendall')
+                              test_fpv=test_fp, size=40, step=4, method='rrcs',
+                              corr='kendall')
 print('iterative_rrcs features (kendall):', it_rrcs['accepted'])
 print('iterative_rrcs correlation (kendall):', it_rrcs['correlation'])
-it_rrcs_test_fp = np.delete(test_fp, it_rrcs['rejected'], 1)
-it_rrcs_train_fp = np.delete(train_fp, it_rrcs['rejected'], 1)
-do_pred(ptrain_fp=it_rrcs_train_fp, ptest_fp=it_rrcs_test_fp)
+do_pred(ptrain_fp=it_rrcs['train_fpv'], ptest_fp=it_rrcs['test_fpv'])
 
 it_rrcs = iterative_screening(target=trainset['target'], train_fpv=train_fp,
-                              size=40, step=4, method='rrcs', corr='spearman')
+                              test_fpv=test_fp, size=40, step=4, method='rrcs',
+                              corr='spearman')
 print('iterative_rrcs features (spearman):', it_rrcs['accepted'])
 print('iterative_rrcs correlation (spearman):', it_rrcs['correlation'])
-it_rrcs_test_fp = np.delete(test_fp, it_rrcs['rejected'], 1)
-it_rrcs_train_fp = np.delete(train_fp, it_rrcs['rejected'], 1)
-do_pred(ptrain_fp=it_rrcs_train_fp, ptest_fp=it_rrcs_test_fp)
+do_pred(ptrain_fp=it_rrcs['train_fpv'], ptest_fp=it_rrcs['test_fpv'])
 
 if cleanup:
     os.remove('ATOMLout.txt')
