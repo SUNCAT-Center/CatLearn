@@ -141,8 +141,8 @@ class FitnessPrediction(object):
 
         # Calculate error associated with predictions on the test data.
         if get_validation_error:
-            data['validation_rmse'] = self.get_error(
-                prediction=data['prediction'], target=test_target)
+            data['validation_rmse'] = get_error(prediction=data['prediction'],
+                                                target=test_target)
 
         # Calculate error associated with predictions on the training data.
         if get_training_error:
@@ -156,7 +156,7 @@ class FitnessPrediction(object):
                                                           target=train_target)
 
             # Calculated the error for the prediction on the training data.
-            data['training_rmse'] = self.get_error(
+            data['training_rmse'] = get_error(
                 prediction=data['train_prediction'], target=error_train)
 
         # Calculate uncertainty associated with prediction on test data.
@@ -232,36 +232,10 @@ class FitnessPrediction(object):
 
         # Calculated the error for the residual prediction on the test data.
         if test_target is not None:
-            data['validation_rmse'] = self.get_error(prediction=data['gX'],
-                                                     target=test_target)
+            data['validation_rmse'] = get_error(prediction=data['gX'],
+                                                target=test_target)
 
         return data
-
-    def get_error(self, prediction, target):
-        """ Returns the root mean squared error for predicted data relative to
-            the target data.
-
-            prediction: list
-                A list of predicted values.
-
-            target: list
-                A list of target values.
-        """
-        msg = 'Something has gone wrong and there are '
-        if len(prediction) < len(target):
-            msg += 'more targets than predictions.'
-        elif len(prediction) > len(target):
-            msg += 'fewer targets than predictions.'
-        assert len(prediction) == len(target), msg
-        error = defaultdict(list)
-        sumd = 0
-        for i, j in zip(prediction, target):
-            e = (i - j) ** 2
-            error['all'].append(e ** 0.5)
-            sumd += e
-
-        error['average'] = (sumd / len(prediction)) ** 0.5
-        return error
 
     def log_marginal_likelyhood1(self, cov, cinv, y):
         """ Return the log marginal likelyhood.
@@ -278,3 +252,30 @@ class FitnessPrediction(object):
         normalization = -n*np.log(2*np.pi)/2
         p = data_fit + complexity + normalization
         return p
+
+
+def get_error(prediction, target):
+    """ Returns the root mean squared error for predicted data relative to
+        the target data.
+
+        prediction: list
+            A list of predicted values.
+
+        target: list
+            A list of target values.
+    """
+    msg = 'Something has gone wrong and there are '
+    if len(prediction) < len(target):
+        msg += 'more targets than predictions.'
+    elif len(prediction) > len(target):
+        msg += 'fewer targets than predictions.'
+    assert len(prediction) == len(target), msg
+    error = defaultdict(list)
+    sumd = 0
+    for i, j in zip(prediction, target):
+        e = (i - j) ** 2
+        error['all'].append(e ** 0.5)
+        sumd += e
+
+    error['average'] = (sumd / len(prediction)) ** 0.5
+    return error
