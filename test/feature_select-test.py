@@ -6,9 +6,9 @@ import numpy as np
 from ase.ga.data import DataConnection
 from atoml.data_setup import get_train, get_unique
 from atoml.fingerprint_setup import return_fpv
-from atoml.feature_select import (sure_independence_screening,
+from atoml.feature_select import (lasso, pca, sure_independence_screening,
                                   iterative_screening,
-                                  robust_rank_correlation_screening, pca)
+                                  robust_rank_correlation_screening)
 from atoml.particle_fingerprint import ParticleFingerprintGenerator
 from atoml.standard_fingerprint import StandardFingerprintGenerator
 
@@ -83,3 +83,7 @@ assert len(it_rrcs_test_fp[0]) == 4 and len(it_rrcs_train_fp[0]) == 4
 
 pca_r = pca(components=4, train_fpv=train_fp, test_fpv=test_fp)
 assert len(pca_r['test_fpv'][0]) == 4 and len(pca_r['train_fpv'][0]) == 4
+
+ls = lasso(size=4, target=trainset['target'], train=train_fp, test=test_fp,
+           test_target=testset['target'], alpha=1.e-5, max_iter=1e5)
+assert len(ls['test_fpv'][0]) == 4 and len(ls['train_fpv'][0]) == 4

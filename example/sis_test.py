@@ -88,9 +88,9 @@ for i in range(min(len(test_fp), len(test_fp[0])) - 1):
 
 print('LASSO Predictions')
 ls = lasso(size=40, target=trainset['target'], train=train_fp, test=test_fp,
-           test_target=testset['target'], alpha=1.e-5, max_iter=100000)
+           test_target=testset['target'], alpha=1.e-5, max_iter=1e5)
 print('linear model error:', ls['linear_error'])
-do_pred(ptrain_fp=ls['train_fp'], ptest_fp=ls['test_fp'])
+do_pred(ptrain_fp=ls['train_fpv'], ptest_fp=ls['test_fpv'])
 
 # Get correlation for descriptors from SIS.
 print('Getting descriptor correlation')

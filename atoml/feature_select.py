@@ -63,9 +63,9 @@ def lasso(size, target, train, test=None, alpha=1.e-5, max_iter=1e5,
 
     select['accepted'] = sort_list[1][:size]
     select['rejected'] = sort_list[1][size:]
-    select['train_fp'] = np.delete(train_fp, select['rejected'], 1)
+    select['train_fpv'] = np.delete(train_fp, select['rejected'], 1)
     if test is not None:
-        select['test_fp'] = np.delete(test_fp, select['rejected'], 1)
+        select['test_fpv'] = np.delete(test_fp, select['rejected'], 1)
 
     return select
 
