@@ -5,6 +5,7 @@
 from __future__ import print_function
 
 import numpy as np
+from scipy.optimize import minimize
 import os
 import seaborn as sns
 import pandas as pd
@@ -15,6 +16,8 @@ from atoml.data_setup import get_unique, get_train
 from atoml.fingerprint_setup import normalize, return_fpv
 from atoml.particle_fingerprint import ParticleFingerprintGenerator
 from atoml.predict import FitnessPrediction
+from atoml.model_selection import negative_logp
+from atoml.feature_select import clean_zero
 
 # Decide whether to remove output.
 cleanup = True
@@ -34,8 +37,13 @@ trainset = get_train(candidates=all_cand, trainsize=500,
 # Get the list of fingerprint vectors and normalize them.
 print('Getting the fingerprint vectors')
 fpv = ParticleFingerprintGenerator(get_nl=False, max_bonds=13)
-test_fp = return_fpv(testset['candidates'], [fpv.bond_count_fpv])
-train_fp = return_fpv(trainset['candidates'], [fpv.bond_count_fpv])
+test_fp = return_fpv(testset['candidates'], [fpv.nearestneighbour_fpv])
+train_fp = return_fpv(trainset['candidates'], [fpv.nearestneighbour_fpv])
+
+c = clean_zero(train=train_fp, test=test_fp)
+test_fp = c['test']
+train_fp = c['train']
+
 nfp = normalize(train=train_fp, test=test_fp)
 
 # Set up the prediction routine.
@@ -59,8 +67,49 @@ pred = krr.get_predictions(train_fp=nfp['train'],
 print('Training error:', pred['training_rmse']['average'])
 print('Model error:', pred['validation_rmse']['average'])
 
+m = np.shape(train_fp)[1]
+n = len(trainset['target'])
+
+# Hyper parameter starting guesses.
+theta = np.ones(m)
+theta *= 0.5
+regularization = 0.001
+
+a = (nfp, trainset['target'], regularization)
+
+# Hyper parameter bounds.
+b = ((1E-9, None), ) * (m)
+print('Optimizing hyperparameters')
+popt = minimize(negative_logp, theta, args=a, bounds=b)
+print('Widths aka characteristic lengths = ', popt['x'])
+p = -negative_logp(popt['x'], nfp, trainset['target'], regularization)
+
+
+# Set up the prediction routine.
+krr = FitnessPrediction(ktype='gaussian',
+                        kwidth=popt['x'],
+                        regularization=0.001)
+
+# Do the predictions.
+cvm = krr.get_covariance(train_fp=nfp['train'])
+cinv = np.linalg.inv(cvm)
+print('Making the predictions')
+pred = krr.get_predictions(train_fp=nfp['train'],
+                           test_fp=nfp['test'],
+                           cinv=cinv,
+                           train_target=trainset['target'],
+                           test_target=testset['target'],
+                           get_validation_error=True,
+                           get_training_error=True)
+
+# Print the error associated with the predictions.
+print('Training error:', pred['training_rmse']['average'])
+print('Model error:', pred['validation_rmse']['average'])
+
 if cleanup:
     os.remove('ATOMLout.txt')
+
+exit()
 
 pred['actual'] = testset['target']
 index = [i for i in range(len(test_fp))]
