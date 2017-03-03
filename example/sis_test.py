@@ -10,7 +10,7 @@ import os
 from ase.ga.data import DataConnection
 from atoml.data_setup import get_unique, get_train
 from atoml.fingerprint_setup import return_fpv, normalize
-from atoml.feature_select import (sure_independence_screening,
+from atoml.feature_select import (lasso, sure_independence_screening,
                                   iterative_screening,
                                   robust_rank_correlation_screening, pca)
 from atoml.particle_fingerprint import ParticleFingerprintGenerator
@@ -85,6 +85,12 @@ print('PCA Predictions')
 for i in range(min(len(test_fp), len(test_fp[0])) - 1):
     pca_r = pca(components=i + 1, train_fpv=train_fp, test_fpv=test_fp)
     do_pred(ptrain_fp=pca_r['train_fpv'], ptest_fp=pca_r['test_fpv'])
+
+print('LASSO Predictions')
+ls = lasso(size=40, target=trainset['target'], train=train_fp, test=test_fp,
+           test_target=testset['target'], alpha=1.e-5, max_iter=100000)
+print('linear model error:', ls['linear_error'])
+do_pred(ptrain_fp=ls['train_fp'], ptest_fp=ls['test_fp'])
 
 # Get correlation for descriptors from SIS.
 print('Getting descriptor correlation')

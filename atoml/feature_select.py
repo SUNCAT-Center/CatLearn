@@ -8,6 +8,66 @@ from math import log
 
 from .fingerprint_setup import standardize
 from .output import write_feature_select
+from .predict import get_error
+
+no_skl = False
+try:
+    from sklearn.linear_model import Lasso
+except ImportError:
+    no_skl = True
+
+
+def lasso(size, target, train, test=None, alpha=1.e-5, max_iter=1e5,
+          test_target=None, steps=None):
+    """ Use the scikit-learn implementation of lasso for feature selection. """
+    msg = "Must install scikit-learn to use this function:"
+    msg += " http://scikit-learn.org/stable/"
+    assert not no_skl, msg
+
+    if test is not None:
+        c = clean_zero(train=train, test=test)
+        test_fp = c['test']
+        train_fp = c['train']
+    else:
+        test_fp = clean_zero(train=train)['train']
+
+    select = defaultdict(list)
+
+    if steps is not None:
+        alpha = alpha * 10
+        for _ in range(steps):
+            alpha = alpha / 10
+            lasso = Lasso(alpha=alpha, max_iter=max_iter, fit_intercept=True,
+                          normalize=True, selection='random')
+            xy_lasso = lasso.fit(train_fp, target)
+            if test is not None:
+                linear = xy_lasso.predict(test_fp)
+                select['linear_error'].append(
+                    get_error(prediction=linear,
+                              target=test_target)['average'])
+    else:
+        lasso = Lasso(alpha=alpha, max_iter=max_iter, fit_intercept=True,
+                      normalize=True, selection='random')
+        xy_lasso = lasso.fit(train_fp, target)
+        if test is not None:
+            linear = xy_lasso.predict(test_fp)
+            select['linear_error'].append(
+                get_error(prediction=linear, target=test_target)['average'])
+    select['coefs'] = xy_lasso.coef_
+    index = list(range(len(select['coefs'])))
+    coef = [abs(i) for i in select['coefs']]
+
+    sort_list = [list(i) for i in zip(*sorted(zip(coef, index),
+                                              key=lambda x: x[0],
+                                              reverse=True))]
+
+    select['accepted'] = sort_list[1][:size]
+    select['rejected'] = sort_list[1][size:]
+    select['train_fp'] = np.delete(train_fp, select['rejected'], 1)
+    if test is not None:
+        select['test_fp'] = np.delete(test_fp, select['rejected'], 1)
+
+    return select
 
 
 def sure_independence_screening(target, train_fpv, size=None, cleanup=False,
