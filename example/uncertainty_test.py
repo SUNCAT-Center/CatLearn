@@ -67,25 +67,18 @@ if cleanup:
 print('GP:', pred['validation_rmse']['average'], 'Residual:',
       pred['basis_analysis']['validation_rmse']['average'])
 
-exit()
-
 pe = []
 st = target_standardize(testset['target'])
 st = st['target']
 sp = target_standardize(pred['prediction'])
 sp = sp['target']
-print('prediction | uncertainty | error')
 for i, j, l, m, k in zip(pred['prediction'],
                          pred['uncertainty'],
                          pred['validation_rmse']['all'],
                          st, sp):
     e = (k - m) / j
     pe.append(e)
-    print(i, '|', j, '|', l)
-print('gaussian prediction:', pred['validation_rmse']['average'])
 x = pd.Series(pe, name="Rel. Uncertainty")
-
-print(min(pred['validation_rmse']['all']), max(pred['validation_rmse']['all']))
 
 pred['Prediction'] = pred['prediction']
 pred['Actual'] = testset['target']
