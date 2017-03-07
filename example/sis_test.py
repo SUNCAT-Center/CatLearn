@@ -10,7 +10,7 @@ import os
 from ase.ga.data import DataConnection
 from atoml.data_setup import get_unique, get_train
 from atoml.fingerprint_setup import return_fpv, normalize
-from atoml.feature_select import (sure_independence_screening,
+from atoml.feature_select import (lasso, sure_independence_screening,
                                   iterative_screening,
                                   robust_rank_correlation_screening, pca)
 from atoml.particle_fingerprint import ParticleFingerprintGenerator
@@ -86,6 +86,12 @@ for i in range(min(len(test_fp), len(test_fp[0])) - 1):
     pca_r = pca(components=i + 1, train_fpv=train_fp, test_fpv=test_fp)
     do_pred(ptrain_fp=pca_r['train_fpv'], ptest_fp=pca_r['test_fpv'])
 
+print('LASSO Predictions')
+ls = lasso(size=40, target=trainset['target'], train=train_fp, test=test_fp,
+           test_target=testset['target'], alpha=1.e-5, max_iter=1e5)
+print('linear model error:', ls['linear_error'])
+do_pred(ptrain_fp=ls['train_fpv'], ptest_fp=ls['test_fpv'])
+
 # Get correlation for descriptors from SIS.
 print('Getting descriptor correlation')
 sis = sure_independence_screening(target=trainset['target'],
@@ -114,28 +120,24 @@ rrcs_train_fp = np.delete(train_fp, rrcs['rejected'], 1)
 do_pred(ptrain_fp=rrcs_train_fp, ptest_fp=rrcs_test_fp)
 
 it_sis = iterative_screening(target=trainset['target'], train_fpv=train_fp,
-                             size=40, step=4, method='sis')
+                             test_fpv=test_fp, size=40, step=4, method='sis')
 print('iterative_sis features:', it_sis['accepted'])
 print('iterative_sis correlation:', it_sis['correlation'])
-it_sis_test_fp = np.delete(test_fp, it_sis['rejected'], 1)
-it_sis_train_fp = np.delete(train_fp, it_sis['rejected'], 1)
-do_pred(ptrain_fp=it_sis_train_fp, ptest_fp=it_sis_test_fp)
+do_pred(ptrain_fp=it_sis['train_fpv'], ptest_fp=it_sis['test_fpv'])
 
 it_rrcs = iterative_screening(target=trainset['target'], train_fpv=train_fp,
-                              size=40, step=4, method='rrcs', corr='kendall')
+                              test_fpv=test_fp, size=40, step=4, method='rrcs',
+                              corr='kendall')
 print('iterative_rrcs features (kendall):', it_rrcs['accepted'])
 print('iterative_rrcs correlation (kendall):', it_rrcs['correlation'])
-it_rrcs_test_fp = np.delete(test_fp, it_rrcs['rejected'], 1)
-it_rrcs_train_fp = np.delete(train_fp, it_rrcs['rejected'], 1)
-do_pred(ptrain_fp=it_rrcs_train_fp, ptest_fp=it_rrcs_test_fp)
+do_pred(ptrain_fp=it_rrcs['train_fpv'], ptest_fp=it_rrcs['test_fpv'])
 
 it_rrcs = iterative_screening(target=trainset['target'], train_fpv=train_fp,
-                              size=40, step=4, method='rrcs', corr='spearman')
+                              test_fpv=test_fp, size=40, step=4, method='rrcs',
+                              corr='spearman')
 print('iterative_rrcs features (spearman):', it_rrcs['accepted'])
 print('iterative_rrcs correlation (spearman):', it_rrcs['correlation'])
-it_rrcs_test_fp = np.delete(test_fp, it_rrcs['rejected'], 1)
-it_rrcs_train_fp = np.delete(train_fp, it_rrcs['rejected'], 1)
-do_pred(ptrain_fp=it_rrcs_train_fp, ptest_fp=it_rrcs_test_fp)
+do_pred(ptrain_fp=it_rrcs['train_fpv'], ptest_fp=it_rrcs['test_fpv'])
 
 if cleanup:
     os.remove('ATOMLout.txt')
