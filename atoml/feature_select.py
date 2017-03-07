@@ -19,6 +19,7 @@ except ImportError:
 
 def lasso(size, target, train, test=None, alpha=1.e-5, max_iter=1e5,
           test_target=None, steps=None):
+    # NOTE: Try Partial Least Squares Method instead.
     """ Use the scikit-learn implementation of lasso for feature selection. """
     msg = "Must install scikit-learn to use this function:"
     msg += " http://scikit-learn.org/stable/"
