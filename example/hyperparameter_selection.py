@@ -24,16 +24,17 @@ n = len(targets)
 nfp = standardize(train=fpm_train)
 
 # Hyper parameter starting guesses.
-theta = np.ones(m)
-theta *= 0.5
-regularization = 0.001
+sigma = np.ones(m)
+sigma *= 0.5
+regularization = 0.1
+theta = np.append(sigma, regularization)
 
-a = (nfp, targets, regularization)
+a = (nfp, targets)
 
 # Hyper parameter bounds.
-b = ((1E-9, None), ) * (m)
+b = ((1E-9, None), ) * (m+1)
 print('Optimizing hyperparameters')
 popt = minimize(negative_logp, theta, args=a, bounds=b)
 print('Widths aka characteristic lengths = ', popt['x'])
-p = -negative_logp(popt['x'], nfp, targets, regularization)
+p = -negative_logp(popt['x'], nfp, targets)
 print(popt)

@@ -63,19 +63,46 @@ def get_order_2(A):
             nfi += 1
     return new_features
 
+def get_div_order_2(A):
+    """Get all combinations x_ij = x_i / x_j, where x_i,j are features.
+    The sorting order in dimension 0 is preserved. If a value is 0, 
+    Inf is returned. 
+    Input)
+        A: nxm matrix, where n is the number of training examples and
+        m is the number of features.
+    Output)
+        n x m**2 matrix
+    """
+    shapeA = np.shape(A)
+    nfi = 0
+    # Preallocate:
+    new_features = np.zeros([shapeA[0], shapeA[1]**2])
+    for f1 in range(shapeA[1]):
+        for f2 in range(shapeA[1]):
+            new_feature = np.true_divide(A[:, f1],A[:, f2])
+            new_features[:, nfi] = new_feature
+            nfi += 1
+    return new_features
 
-def get_labels_order_2(l):
+def get_labels_order_2(l, div=False):
     """Get all combinations ij, where i,j are feature labels.
     Input)
         x: length m vector, where m is the number of features.
     Output)
-        traingular(m) vector
+        m**2 vector or triangular(m) vector
     """
     L = len(l)
     new_features = []
+    if div:
+        op = '_div_'
+        s=0
+    else:
+        op = '_x_'
     for f1 in range(L):
-        for f2 in range(f1, L):
-            new_features.append(l[f1] + '_x_' + l[f2])
+        if not div:
+            s=f1
+        for f2 in range(s, L):
+            new_features.append(l[f1] + op + l[f2])
     return np.array(new_features)
 
 
