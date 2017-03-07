@@ -11,12 +11,11 @@ from __future__ import print_function
 
 import warnings
 import numpy as np
-from random import random
 
 import ase.db
 from ase.atoms import string2symbols
 from .db2thermo import db2mol, db2surf, mol2ref, get_refs  # get_formation_energies
-from ase.data import ground_state_magnetic_moments
+from ase.data import ground_state_magnetic_moments, covalent_radii, atomic_numbers, chemical_symbols
 
 try:
     from mendeleev import element
@@ -302,8 +301,8 @@ class AdsorbateFingerprintGenerator(object):
 
     def primary_adds_nn(self, atoms=None):
         """ Function that takes an atoms objects and returns a fingerprint
-            vector containing the count of C, O, H and N atoms in the adsorbate
-            first group.
+            vector containing the count of C, O, H, N and also metal atoms,
+            that are neighbors to the binding atom.
         """
         if atoms is None:
             return ['nn_num_C', 'nn_num_H', 'nn_num_M']
