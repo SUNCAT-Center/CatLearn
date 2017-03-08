@@ -64,9 +64,9 @@ def lasso(size, target, train, test=None, alpha=1.e-5, max_iter=1e5,
 
     select['accepted'] = sort_list[1][:size]
     select['rejected'] = sort_list[1][size:]
-    select['train_fpv'] = np.delete(train_fp, select['rejected'], 1)
+    select['train_fpv'] = np.delete(train_fp, select['rejected'], axis=1)
     if test is not None:
-        select['test_fpv'] = np.delete(test_fp, select['rejected'], 1)
+        select['test_fpv'] = np.delete(test_fp, select['rejected'], axis=1)
 
     return select
 
@@ -185,7 +185,7 @@ def robust_rank_correlation_screening(target, train_fpv, size=None,
 
 def iterative_screening(target, train_fpv, test_fpv=None, size=None, step=None,
                         method='sis', corr='kendall', cleanup=False,
-                        writeout=True):
+                        feature_names=None, writeout=True):
     """ Function to reduce the number of featues in an iterative manner using
         SIS or RRCS.
 
@@ -196,6 +196,9 @@ def iterative_screening(target, train_fpv, test_fpv=None, size=None, step=None,
         method: str
             Specify the correlation method to be used, can be either sis or
             rrcs. Default is sis.
+
+        feature_names: list
+            List of the feature names to be track useful features.
 
         cleanup: boolean
             Select whether to clean up the feature matrix. Default is True.
@@ -233,8 +236,8 @@ def iterative_screening(target, train_fpv, test_fpv=None, size=None, step=None,
     correlation = [screen['ordered_corr'][i] for i in screen['accepted']]
     accepted += [ordering[i] for i in screen['accepted']]
     ordering = [ordering[i] for i in screen['rejected']]
-    reduced_fpv = np.delete(train_fpv, screen['rejected'], 1)
-    train_fpv = np.delete(train_fpv, screen['accepted'], 1)
+    reduced_fpv = np.delete(train_fpv, screen['rejected'], axis=1)
+    train_fpv = np.delete(train_fpv, screen['accepted'], axis=1)
 
     # Iteratively reduce the remaining number of features by the step size.
     while len(reduced_fpv[0]) < size:
@@ -261,18 +264,20 @@ def iterative_screening(target, train_fpv, test_fpv=None, size=None, step=None,
         correlation += [screen['ordered_corr'][i] for i in screen['accepted']]
         accepted += [ordering[i] for i in screen['accepted']]
         ordering = [ordering[i] for i in screen['rejected']]
-        new_fpv = np.delete(train_fpv, screen['rejected'], 1)
+        new_fpv = np.delete(train_fpv, screen['rejected'], axis=1)
         reduced_fpv = np.concatenate((reduced_fpv, new_fpv), axis=1)
-        train_fpv = np.delete(train_fpv, screen['accepted'], 1)
+        train_fpv = np.delete(train_fpv, screen['accepted'], axis=1)
     correlation += [screen['ordered_corr'][i] for i in screen['rejected']]
 
     if test_fpv is not None:
-        select['test_fpv'] = np.delete(test_fpv, ordering, 1)
+        select['test_fpv'] = np.delete(test_fpv, ordering, axis=1)
+    if feature_names is not None:
+        select['names'] = list(np.delete(feature_names, ordering, axis=0))
 
     select['correlation'] = correlation
     select['accepted'] = accepted
     select['rejected'] = ordering
-    select['train_fpv'] = np.delete(keep_train, ordering, 1)
+    select['train_fpv'] = np.delete(keep_train, ordering, axis=1)
 
     if writeout:
         write_feature_select(function='iterative_screening', data=select)
@@ -339,10 +344,10 @@ def clean_zero(train, test=None):
             clean['index'].append(i)
     # Remove bad data from feature matrix.
     if 'index' in clean:
-        m = np.delete(m, clean['index'], 0)
+        m = np.delete(m, clean['index'], axis=0)
         clean['train'] = m.T
         if test is not None:
-            clean['test'] = np.delete(test.T, clean['index'], 0).T
+            clean['test'] = np.delete(test.T, clean['index'], axis=0).T
     else:
         clean['train'] = train
         clean['test'] = test
