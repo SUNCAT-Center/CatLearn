@@ -19,19 +19,16 @@ def from_atoms(train_atoms, fpv_function, train_target, test_atoms=None,
         feature_names = ['f' + str(i) for i in range(len(train_matrix[0]))]
 
     # Make feature matrix for test data if atoms objects are supplied.
+    test_id, test_matrix = None, None
     if test_atoms is not None:
         test_matrix = fpv_function(test_atoms)
         test_id = [a.info['unique_id'] for a in test_atoms]
-        return from_matrix(train_matrix=train_matrix,
-                           feature_names=feature_names, train_id=train_id,
-                           train_target=train_target, test_matrix=test_matrix,
-                           test_id=test_id, test_target=test_target,
-                           create_db=create_db, db_name=db_name)
-    else:
-        return from_matrix(train_matrix=train_matrix,
-                           feature_names=feature_names, train_id=train_id,
-                           train_target=train_target, create_db=create_db,
-                           db_name=db_name)
+
+    return from_matrix(train_matrix=train_matrix,
+                       feature_names=feature_names, train_id=train_id,
+                       train_target=train_target, test_matrix=test_matrix,
+                       test_id=test_id, test_target=test_target,
+                       create_db=create_db, db_name=db_name)
 
 
 def from_matrix(train_matrix, feature_names, train_id, train_target,
