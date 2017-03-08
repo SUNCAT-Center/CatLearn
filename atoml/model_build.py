@@ -7,6 +7,9 @@ from .fpm_operations import (get_order_2, get_order_2ab, get_ablog,
                              get_div_order_2, get_labels_order_2,
                              get_labels_order_2ab, get_labels_ablog)
 from .feature_select import iterative_screening
+from .fingerprint_setup import standardize
+
+from .fit_funcs import find_optimal_regularization, RR
 
 
 class ModelBuilder(object):
@@ -112,7 +115,7 @@ class ModelBuilder(object):
 
         if test_matrix is not None:
             test_matrix = self.expand_matrix(test_matrix,
-                                             return_names=False)
+                                             return_names=False)[0]
             if self.create_db:
                 self.db_store(type='test', atoms_id=test_id,
                               feature_matrix=test_matrix,
@@ -121,10 +124,12 @@ class ModelBuilder(object):
 
         return self.reduce_matrix(train_matrix=train_matrix,
                                   test_matrix=test_matrix,
-                                  target=train_target,
+                                  train_target=train_target,
+                                  test_target=test_target,
                                   feature_names=feature_names)
 
-    def expand_matrix(self, feature_matrix, feature_names):
+    def expand_matrix(self, feature_matrix, feature_names=None,
+                      return_names=True):
         """ Expand the feature matrix by combing original features. """
         # Extend the feature matrix combinatorially.
         order_2 = get_order_2(feature_matrix)
@@ -136,17 +141,18 @@ class ModelBuilder(object):
                                          div_order_2, order_2ab, ablog),
                                         axis=1)
 
-        # Extend the feature naming scheme.
-        order_2 = get_labels_order_2(feature_names)
-        div_order_2 = get_labels_order_2(feature_names, div=True)
-        order_2ab = get_labels_order_2ab(feature_names, a=2, b=3)
-        ablog = get_labels_ablog(feature_names, a=2, b=3)
-        feature_names += order_2 + div_order_2 + order_2ab + ablog
+        if return_names:
+            # Extend the feature naming scheme.
+            order_2 = get_labels_order_2(feature_names)
+            div_order_2 = get_labels_order_2(feature_names, div=True)
+            order_2ab = get_labels_order_2ab(feature_names, a=2, b=3)
+            ablog = get_labels_ablog(feature_names, a=2, b=3)
+            feature_names += order_2 + div_order_2 + order_2ab + ablog
 
         return feature_matrix, feature_names
 
-    def reduce_matrix(self, train_matrix, target, feature_names,
-                      test_matrix=None):
+    def reduce_matrix(self, train_matrix, train_target, feature_names,
+                      test_matrix=None, test_target=None):
         """ Function to reduce the feature space. """
         # Check to see if there are more features than data points.
         d = len(train_matrix[1])
@@ -157,18 +163,58 @@ class ModelBuilder(object):
             s = int(round(log(d/n)**0.5, 0))
             if s == 0:
                 s = 1
-            itred = iterative_screening(target=target, train_fpv=train_matrix,
+            itred = iterative_screening(target=train_target,
+                                        train_fpv=train_matrix,
                                         test_fpv=test_matrix, size=n, step=s,
                                         method=self.screening_method,
-                                        corr=self.screening_correlation)
+                                        corr=self.screening_correlation,
+                                        feature_names=feature_names)
             # Update the feature matrix.
             train_matrix = itred['train_fpv']
             if test_matrix is not None:
                 test_matrix = itred['test_fpv']
+            feature_names = itred['names']
 
-        # Ridge regression to get ordering of features.
+        # Find importance of features andtrain a ridge regression model.
+        linear = self.ridge_regression(train_matrix=train_matrix,
+                                       train_target=train_target,
+                                       test_matrix=test_matrix,
+                                       test_target=test_target,
+                                       feature_names=feature_names)
+        coefs, linear_error = linear[0][0], linear[1]
+        order, feature_names = linear[0][1], linear[0][2]
 
         # LOOCV testing.
+
+    def ridge_regression(self, train_matrix, train_target, feature_names,
+                         test_matrix=None, test_target=None):
+        """ Function to trean a linear ridge regression model. The importance
+            of features is calculated from the coefficients.
+        """
+        sf = standardize(train=train_matrix, test=test_matrix)
+        test_matrix, train_matrix = sf['test'], np.asarray(sf['train'])
+        # Ridge regression to get ordering of features.
+        target = np.asarray(train_target)
+        b = find_optimal_regularization(X=train_matrix, Y=target, p=0, Ns=1000)
+        coef = RR(X=train_matrix, Y=target, p=0, omega2=b, W2=None, Vh=None)[0]
+
+        if test_matrix is not None:
+            # Test the model.
+            sumd = 0.
+            for i, j in zip(test_matrix, test_target):
+                sumd += (np.dot(coef, i) - j) ** 2
+            error = (sumd / len(test_matrix)) ** 0.5
+
+        order = list(range(len(coef)))
+        sort_list = [list(i) for i in zip(*sorted(zip(abs(coef), order,
+                                                      feature_names),
+                                                  key=lambda x: x[0],
+                                                  reverse=True))]
+
+        return sort_list, error
+
+    def loocv(self, order, train_matrxi, train_target):
+        """ Function to automate the loocv. """
 
     def db_store(self, type, atoms_id, feature_matrix, target,
                  feature_names):
