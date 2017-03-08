@@ -63,10 +63,11 @@ def get_order_2(A):
             nfi += 1
     return new_features
 
+
 def get_div_order_2(A):
     """Get all combinations x_ij = x_i / x_j, where x_i,j are features.
-    The sorting order in dimension 0 is preserved. If a value is 0, 
-    Inf is returned. 
+    The sorting order in dimension 0 is preserved. If a value is 0,
+    Inf is returned.
     Input)
         A: nxm matrix, where n is the number of training examples and
         m is the number of features.
@@ -79,10 +80,11 @@ def get_div_order_2(A):
     new_features = np.zeros([shapeA[0], shapeA[1]**2])
     for f1 in range(shapeA[1]):
         for f2 in range(shapeA[1]):
-            new_feature = np.true_divide(A[:, f1],A[:, f2])
+            new_feature = np.true_divide(A[:, f1], A[:, f2])
             new_features[:, nfi] = new_feature
             nfi += 1
     return new_features
+
 
 def get_labels_order_2(l, div=False):
     """Get all combinations ij, where i,j are feature labels.
@@ -95,15 +97,15 @@ def get_labels_order_2(l, div=False):
     new_features = []
     if div:
         op = '_div_'
-        s=0
+        s = 0
     else:
         op = '_x_'
     for f1 in range(L):
         if not div:
-            s=f1
+            s = f1
         for f2 in range(s, L):
             new_features.append(l[f1] + op + l[f2])
-    return np.array(new_features)
+    return new_features
 
 
 def get_order_2ab(A, a, b):
@@ -130,6 +132,22 @@ def get_order_2ab(A, a, b):
     return new_features
 
 
+def get_labels_order_2ab(l, a, b):
+    """Get all combinations ij, where i,j are feature labels.
+    Input)
+        x: length m vector, where m is the number of features.
+    Output)
+        m**2 vector or triangular(m) vector
+    """
+    L = len(l)
+    new_features = []
+    for f1 in range(L):
+        for f2 in range(f1, L):
+            new_features.append(l[f1] + '_' + str(a) + '_x_' + l[f2] + '_' +
+                                str(b))
+    return new_features
+
+
 def get_ablog(A, a, b):
     A
     """Get all combinations x_ij = a*log(x_i) + b*log(x_j),
@@ -153,6 +171,23 @@ def get_ablog(A, a, b):
             new_feature = a*np.log(A[:, f1]) + b*np.log(A[:, f2])
             new_features[:, nfi] = new_feature
             nfi += 1
+    return new_features
+
+
+def get_labels_ablog(l, a, b):
+    """Get all combinations ij, where i,j are feature labels.
+    Input)
+        x: length m vector, where m is the number of features.
+    Output)
+        m**2 vector or triangular(m) vector
+    """
+    L = len(l)
+    new_features = []
+    for f1 in range(L):
+        for f2 in range(f1, L):
+            # TODO Better string formatting with numbers.
+            new_features.append('log' + str(a) + '_' + l[f1] + 'log' + str(b) +
+                                '_' + l[f2])
     return new_features
 
 

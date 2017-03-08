@@ -4,6 +4,8 @@
 """
 from __future__ import print_function
 
+import os
+
 from ase.ga.data import DataConnection
 from atoml.data_setup import get_unique, get_train
 from atoml.fingerprint_setup import return_fpv
@@ -12,7 +14,6 @@ from atoml.model_build import from_atoms
 
 # Decide whether to remove output and print graph.
 cleanup = True
-plot = False
 
 # Define starting guess for hyperparameters.
 width = 0.5
@@ -26,8 +27,8 @@ print('Getting candidates from the database')
 all_cand = db.get_all_relaxed_candidates(use_extinct=False)
 
 # Setup the test and training datasets.
-testset = get_unique(candidates=all_cand, testsize=500, key='raw_score')
-trainset = get_train(candidates=all_cand, trainsize=500,
+testset = get_unique(candidates=all_cand, testsize=5, key='raw_score')
+trainset = get_train(candidates=all_cand, trainsize=10,
                      taken_cand=testset['taken'], key='raw_score')
 
 # Get the list of fingerprint vectors and normalize them.
@@ -39,6 +40,12 @@ def fpvf(atoms):
     return return_fpv(atoms, [fpv.nearestneighbour_fpv])
 
 
-from_atoms(train_atoms=trainset['candidates'], fpv_function=fpvf,
-           key='raw_score', test_atoms=testset['candidates'],
+from_atoms(train_atoms=trainset['candidates'], train_target=trainset['target'],
+           fpv_function=fpvf,
+           test_atoms=testset['candidates'], test_target=testset['target'],
            feature_names=None, db_name='fpv_store.sqlite')
+
+if cleanup:
+    os.remove('train_fpv_store.sqlite')
+    os.remove('test_fpv_store.sqlite')
+    os.remove('ATOMLout.txt')
