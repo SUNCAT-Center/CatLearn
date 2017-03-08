@@ -8,7 +8,7 @@ from .fpm_operations import (get_order_2, get_order_2ab, get_ablog,
 
 
 def from_atoms(train_atoms, fpv_function, train_target, test_atoms=None,
-               test_target=None, feature_names=None,
+               test_target=None, feature_names=None, create_db=True,
                db_name='fpv_store.sqlite'):
     """ Build model from a set of atoms objects. """
     train_matrix = fpv_function(train_atoms)
@@ -23,16 +23,17 @@ def from_atoms(train_atoms, fpv_function, train_target, test_atoms=None,
                            feature_names=feature_names, train_id=train_id,
                            train_target=train_target, test_matrix=test_matrix,
                            test_id=test_id, test_target=test_target,
-                           db_name=db_name)
+                           create_db=create_db, db_name=db_name)
     else:
         return from_matrix(train_matrix=train_matrix,
                            feature_names=feature_names, train_id=train_id,
-                           train_target=train_target, db_name=db_name)
+                           train_target=train_target, create_db=create_db,
+                           db_name=db_name)
 
 
 def from_matrix(train_matrix, feature_names, train_id, train_target,
                 test_matrix=None, test_id=None, test_target=None,
-                db_name='fpv_store.sqlite'):
+                create_db=True, db_name='fpv_store.sqlite'):
     """ Build a model from a pre-generated feature matrix. """
     train_matrix, feature_names = expand_matrix(train_matrix, feature_names)
     # Add on the id and target values.
@@ -43,11 +44,12 @@ def from_matrix(train_matrix, feature_names, train_id, train_target,
 
     dnames = feature_names + ['target']
 
-    # Define database parameters to store features.
-    train_db = DescriptorDatabase(db_name='train_' + db_name,
-                                  table='FingerVector')
-    train_db.create_db(names=dnames)
-    train_db.fill_db(descriptor_names=dnames, data=train_dmat)
+    if create_db:
+        # Define database parameters to store features.
+        train_db = DescriptorDatabase(db_name='train_' + db_name,
+                                      table='FingerVector')
+        train_db.create_db(names=dnames)
+        train_db.fill_db(descriptor_names=dnames, data=train_dmat)
 
     if test_matrix is not None:
         test_matrix = expand_matrix(test_matrix, return_names=False)
@@ -57,11 +59,12 @@ def from_matrix(train_matrix, feature_names, train_id, train_target,
         test_target = [[i] for i in test_target]
         test_dmat = np.append(test_dmat, test_target, axis=1)
 
-        # Define database parameters to store features.
-        test_db = DescriptorDatabase(db_name='test_' + db_name,
-                                     table='FingerVector')
-        test_db.create_db(names=dnames)
-        test_db.fill_db(descriptor_names=dnames, data=test_dmat)
+        if create_db:
+            # Define database parameters to store features.
+            test_db = DescriptorDatabase(db_name='test_' + db_name,
+                                         table='FingerVector')
+            test_db.create_db(names=dnames)
+            test_db.fill_db(descriptor_names=dnames, data=test_dmat)
 
 
 def expand_matrix(feature_matrix, feature_names=None, return_names=True):

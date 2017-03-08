@@ -43,7 +43,7 @@ def fpvf(atoms):
 from_atoms(train_atoms=trainset['candidates'], train_target=trainset['target'],
            fpv_function=fpvf,
            test_atoms=testset['candidates'], test_target=testset['target'],
-           feature_names=None, db_name='fpv_store.sqlite')
+           feature_names=None, create_db=True, db_name='fpv_store.sqlite')
 
 if cleanup:
     os.remove('train_fpv_store.sqlite')
