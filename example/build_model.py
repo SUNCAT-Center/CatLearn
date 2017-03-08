@@ -10,7 +10,7 @@ from ase.ga.data import DataConnection
 from atoml.data_setup import get_unique, get_train
 from atoml.fingerprint_setup import return_fpv
 from atoml.particle_fingerprint import ParticleFingerprintGenerator
-from atoml.model_build import from_atoms
+from atoml.model_build import ModelBuilder
 
 # Decide whether to remove output and print graph.
 cleanup = True
@@ -40,10 +40,11 @@ def fpvf(atoms):
     return return_fpv(atoms, [fpv.nearestneighbour_fpv])
 
 
-from_atoms(train_atoms=trainset['candidates'], train_target=trainset['target'],
-           fpv_function=fpvf,
-           test_atoms=testset['candidates'], test_target=testset['target'],
-           feature_names=None, create_db=True, db_name='fpv_store.sqlite')
+mb = ModelBuilder(create_db=True, db_name='fpv_store.sqlite')
+mb.from_atoms(train_atoms=trainset['candidates'],
+              train_target=trainset['target'],
+              fpv_function=fpvf, test_atoms=testset['candidates'],
+              test_target=testset['target'], feature_names=None)
 
 if cleanup:
     os.remove('train_fpv_store.sqlite')
