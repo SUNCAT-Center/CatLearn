@@ -6,7 +6,7 @@ from .database_functions import DescriptorDatabase
 from .fpm_operations import (get_order_2, get_order_2ab, get_ablog,
                              get_div_order_2, get_labels_order_2,
                              get_labels_order_2ab, get_labels_ablog)
-from .feature_select import iterative_screening, clean_zero
+from .feature_select import iterative_screening, pca, clean_zero
 from .fingerprint_setup import standardize
 from .predict import FitnessPrediction
 
@@ -16,7 +16,8 @@ from .fit_funcs import find_optimal_regularization, RR
 class ModelBuilder(object):
     def __init__(self, create_db=True, db_name='fpv_store.sqlite',
                  screening_method='rrcs', screening_correlation='kendall',
-                 initial_prediction=True, clean_features=True, expand=True):
+                 initial_prediction=True, clean_features=True, expand=True,
+                 optimize=True, size=None):
         """ Function to make a best guess for a GP model that will give
             reasonable results.
 
@@ -42,6 +43,14 @@ class ModelBuilder(object):
 
             clean_features: boolean
                 Remove zero distribution features if True. Default is True.
+
+            optimize: boolean
+                Allow the function to try and predict the ideal size of the
+                feature matrix. Default is True.
+
+            size: int
+                If optimize is False, set the number of features to be
+                returned. Will return the n best.
         """
         self.create_db = create_db
         self.db_name = db_name
@@ -50,6 +59,8 @@ class ModelBuilder(object):
         self.initial_prediction = initial_prediction
         self.clean_features = clean_features
         self.expand = expand
+        self.optimize = optimize
+        self.size = size
 
     def from_atoms(self, train_atoms, fpv_function, train_target,
                    test_atoms=None, test_target=None, feature_names=None):
@@ -122,6 +133,12 @@ class ModelBuilder(object):
         test_matrix = c['test']
         train_matrix = c['train']
 
+        if self.size is not None:
+            msg = 'Feature space that is too small to be reduced to size'
+            msg += ' %s. Note this is checked after the' % str(self.size)
+            msg += ' matrix has been scrubbed of zero difference features.'
+            assert len(train_matrix[0]) > self.size, msg
+
         if self.initial_prediction:
             p = self.make_prediction(train_matrix=train_matrix,
                                      test_matrix=test_matrix,
@@ -181,26 +198,30 @@ class ModelBuilder(object):
                                        standardize_target=False,
                                        writeout=False)
 
+    def basis(self, descriptors):
+        """ Simple linear basis. """
+        linear = descriptors * ([1] * len(descriptors))
+        return linear
+
     def expand_matrix(self, feature_matrix, feature_names=None,
                       return_names=True):
         """ Expand the feature matrix by combing original features. """
         # Extend the feature matrix combinatorially.
         order_2 = get_order_2(feature_matrix)
         div_order_2 = get_div_order_2(feature_matrix)
-        order_2ab = get_order_2ab(feature_matrix, a=2, b=3)
-        ablog = get_ablog(feature_matrix, a=2, b=3)
+        # order_2ab = get_order_2ab(feature_matrix, a=2, b=3)
+        # ablog = get_ablog(feature_matrix, a=2, b=3)
 
-        feature_matrix = np.concatenate((feature_matrix, order_2,
-                                         div_order_2, order_2ab, ablog),
+        feature_matrix = np.concatenate((feature_matrix, order_2, div_order_2),
                                         axis=1)
 
         if return_names:
             # Extend the feature naming scheme.
             order_2 = get_labels_order_2(feature_names)
             div_order_2 = get_labels_order_2(feature_names, div=True)
-            order_2ab = get_labels_order_2ab(feature_names, a=2, b=3)
-            ablog = get_labels_ablog(feature_names, a=2, b=3)
-            feature_names += order_2 + div_order_2 + order_2ab + ablog
+            # order_2ab = get_labels_order_2ab(feature_names, a=2, b=3)
+            # ablog = get_labels_ablog(feature_names, a=2, b=3)
+            feature_names += order_2 + div_order_2
 
         return feature_matrix, feature_names
 
@@ -211,22 +232,12 @@ class ModelBuilder(object):
         d = len(train_matrix[1])
         n = len(train_matrix)
         if d > n:
-            # Use correlation screening to reduce features down to number
-            # of data.
-            s = int(round(log(d/n)**0.5, 0))
-            if s == 0:
-                s = 1
-            itred = iterative_screening(target=train_target,
-                                        train_fpv=train_matrix,
-                                        test_fpv=test_matrix, size=n, step=s,
-                                        method=self.screening_method,
-                                        corr=self.screening_correlation,
-                                        feature_names=feature_names)
-            # Update the feature matrix.
-            train_matrix = itred['train_fpv']
-            if test_matrix is not None:
-                test_matrix = itred['test_fpv']
-            feature_names = itred['names']
+            sf = self.screening(train_matrix=train_matrix,
+                                train_target=train_target,
+                                test_matrix=test_matrix,
+                                test_target=test_target,
+                                feature_names=feature_names)
+            train_matrix, test_matrix, feature_names = sf
 
         # Find importance of features andtrain a ridge regression model.
         linear = self.ridge_regression(train_matrix=train_matrix,
@@ -237,23 +248,85 @@ class ModelBuilder(object):
         coefs, linear_error = linear[0][0], linear[1]
         order, feature_names = linear[0][1], linear[0][2]
 
-        print(feature_names)
+        if self.optimize:
+            best_p1 = float('inf')
+            for s in range(1, len(order) + 1):
+                remove_features = order[s:]
+                reduced_train = np.delete(train_matrix, remove_features,
+                                          axis=1)
+                reduced_test = np.delete(test_matrix, remove_features, axis=1)
 
-        for i in range(1, len(order) + 1):
-            remove_features = order[i:]
-            reduced_train = np.delete(train_matrix, remove_features, axis=1)
-            reduced_test = np.delete(test_matrix, remove_features, axis=1)
+                p = self.make_prediction(train_matrix=reduced_train,
+                                         test_matrix=reduced_test,
+                                         train_target=train_target,
+                                         test_target=test_target, width=0.5,
+                                         regularization=0.001)
 
-            p = self.make_prediction(train_matrix=reduced_train,
-                                     test_matrix=reduced_test,
-                                     train_target=train_target,
-                                     test_target=test_target, width=0.5,
-                                     regularization=0.001)
+                if p['validation_rmse']['average'] < best_p1:
+                    best_p1, self.size = p['validation_rmse']['average'], s
 
-            print(p['validation_rmse']['average'], linear_error -
-                  p['validation_rmse']['average'])
-            # LOOCV testing.
-        print(linear_error)
+                if s > 1:
+                    pcar = self.pca_opt(max_comp=s, train_matrix=reduced_train,
+                                        test_matrix=reduced_test,
+                                        train_target=train_target,
+                                        test_target=test_target)
+                    best_pca, cc, cs = pcar
+
+            print('Best error:', best_p1, 'from', self.size, 'features',
+                  '\nPCA Error:', best_pca, 'with', cc, 'components from', cs,
+                  'features\nLinear Regression Error:', linear_error)
+
+        remove_features = order[self.size:]
+        train_matrix = np.delete(train_matrix, remove_features, axis=1)
+        if test_matrix is not None:
+            test_matrix = np.delete(test_matrix, remove_features, axis=1)
+
+        return feature_names, train_matrix, test_matrix
+
+    def screening(self, train_matrix, train_target, feature_names,
+                  test_matrix=None, test_target=None):
+        """ Function to perform the iterative screening. """
+        # Use correlation screening to reduce features down to number
+        # of data.
+        d = len(train_matrix[1])
+        n = len(train_matrix)
+        s = int(round(log(d/n)**0.5, 0))
+        if s == 0:
+            s = 1
+        itred = iterative_screening(target=train_target,
+                                    train_fpv=train_matrix,
+                                    test_fpv=test_matrix, size=n, step=s,
+                                    method=self.screening_method,
+                                    corr=self.screening_correlation,
+                                    feature_names=feature_names)
+        # Update the feature matrix.
+        train_matrix = itred['train_fpv']
+        if test_matrix is not None:
+            test_matrix = itred['test_fpv']
+        feature_names = itred['names']
+
+        return train_matrix, test_matrix, feature_names
+
+    def pca_opt(self, max_comp, train_matrix, test_matrix, train_target,
+                test_target):
+        """ Function to do the PCA optimization. """
+        best_pca = float('inf')
+        for c in range(1, max_comp):
+            comp = pca(components=c, train_fpv=train_matrix,
+                       test_fpv=test_matrix)
+
+            pc = self.make_prediction(train_matrix=comp['train_fpv'],
+                                      test_matrix=comp['test_fpv'],
+                                      train_target=train_target,
+                                      test_target=test_target,
+                                      width=0.5,
+                                      regularization=0.001)
+
+            if pc['validation_rmse']['average'] < best_pca:
+                best_pca = pc['validation_rmse']['average']
+                cc, cs = c, max_comp
+
+        return best_pca, cc, cs
 
     def ridge_regression(self, train_matrix, train_target, feature_names,
                          test_matrix=None, test_target=None):
@@ -264,7 +337,7 @@ class ModelBuilder(object):
         test_matrix, train_matrix = sf['test'], np.asarray(sf['train'])
         # Ridge regression to get ordering of features.
         target = np.asarray(train_target)
-        b = find_optimal_regularization(X=train_matrix, Y=target, p=0, Ns=1000)
+        b = find_optimal_regularization(X=train_matrix, Y=target, p=0, Ns=100)
         coef = RR(X=train_matrix, Y=target, p=0, omega2=b, W2=None, Vh=None)[0]
 
         if test_matrix is not None:
