@@ -6,15 +6,17 @@ from .database_functions import DescriptorDatabase
 from .fpm_operations import (get_order_2, get_order_2ab, get_ablog,
                              get_div_order_2, get_labels_order_2,
                              get_labels_order_2ab, get_labels_ablog)
-from .feature_select import iterative_screening
+from .feature_select import iterative_screening, clean_zero
 from .fingerprint_setup import standardize
+from .predict import FitnessPrediction
 
 from .fit_funcs import find_optimal_regularization, RR
 
 
 class ModelBuilder(object):
     def __init__(self, create_db=True, db_name='fpv_store.sqlite',
-                 screening_method='rrcs', screening_correlation='kendall'):
+                 screening_method='rrcs', screening_correlation='kendall',
+                 initial_prediction=True, clean_features=True, expand=True):
         """ Function to make a best guess for a GP model that will give
             reasonable results.
 
@@ -33,11 +35,21 @@ class ModelBuilder(object):
             screening_correlation: string
                 Correlation used in screening routine. Only required for rrcs.
                 Default is Kendall.
+
+            initial_prediction: boolean
+                Set True to make prediction on the model first proposed, all
+                original features suggested. Default is True.
+
+            clean_features: boolean
+                Remove zero distribution features if True. Default is True.
         """
         self.create_db = create_db
         self.db_name = db_name
         self.screening_method = screening_method
         self.screening_correlation = screening_correlation
+        self.initial_prediction = initial_prediction
+        self.clean_features = clean_features
+        self.expand = expand
 
     def from_atoms(self, train_atoms, fpv_function, train_target,
                    test_atoms=None, test_target=None, feature_names=None):
@@ -106,16 +118,32 @@ class ModelBuilder(object):
                 List of uuids corresponding to the atoms objects in the
                 test dataset.
         """
-        train_matrix, feature_names = self.expand_matrix(train_matrix,
-                                                         feature_names)
+        c = clean_zero(train=train_matrix, test=test_matrix)
+        test_matrix = c['test']
+        train_matrix = c['train']
+
+        if self.initial_prediction:
+            p = self.make_prediction(train_matrix=train_matrix,
+                                     test_matrix=test_matrix,
+                                     train_target=train_target,
+                                     test_target=test_target, width=0.5,
+                                     regularization=0.001)
+
+            print('Initial Model:', p['validation_rmse']['average'])
+
+        if self.expand:
+            train_matrix, feature_names = self.expand_matrix(train_matrix,
+                                                             feature_names)
+
         if self.create_db:
             self.db_store(type='train', atoms_id=train_id,
                           feature_matrix=train_matrix, target=train_target,
                           feature_names=feature_names)
 
         if test_matrix is not None:
-            test_matrix = self.expand_matrix(test_matrix,
-                                             return_names=False)[0]
+            if self.expand:
+                test_matrix = self.expand_matrix(test_matrix,
+                                                 return_names=False)[0]
             if self.create_db:
                 self.db_store(type='test', atoms_id=test_id,
                               feature_matrix=test_matrix,
@@ -127,6 +155,31 @@ class ModelBuilder(object):
                                   train_target=train_target,
                                   test_target=test_target,
                                   feature_names=feature_names)
+
+    def make_prediction(self, train_matrix, test_matrix, train_target,
+                        test_target=None, width=0.5, regularization=0.001):
+        """ Function to make predictions for a given model.
+
+            width: float or list
+                Set the kernel width.
+
+            regularization: float
+               Set the smoothing function.
+        """
+        predict = FitnessPrediction(ktype='gaussian', kwidth=width,
+                                    regularization=regularization)
+
+        sf = standardize(train=train_matrix, test=test_matrix)
+        tests, trains = sf['test'], sf['train']
+
+        return predict.get_predictions(train_fp=trains, test_fp=tests,
+                                       train_target=train_target, cinv=None,
+                                       test_target=test_target,
+                                       uncertainty=False, basis=None,
+                                       get_validation_error=True,
+                                       get_training_error=True,
+                                       standardize_target=False,
+                                       writeout=False)
 
     def expand_matrix(self, feature_matrix, feature_names=None,
                       return_names=True):
@@ -184,7 +237,23 @@ class ModelBuilder(object):
         coefs, linear_error = linear[0][0], linear[1]
         order, feature_names = linear[0][1], linear[0][2]
 
-        # LOOCV testing.
+        print(feature_names)
+
+        for i in range(1, len(order) + 1):
+            remove_features = order[i:]
+            reduced_train = np.delete(train_matrix, remove_features, axis=1)
+            reduced_test = np.delete(test_matrix, remove_features, axis=1)
+
+            p = self.make_prediction(train_matrix=reduced_train,
+                                     test_matrix=reduced_test,
+                                     train_target=train_target,
+                                     test_target=test_target, width=0.5,
+                                     regularization=0.001)
+
+            print(p['validation_rmse']['average'], linear_error -
+                  p['validation_rmse']['average'])
+            # LOOCV testing.
+        print(linear_error)
 
     def ridge_regression(self, train_matrix, train_target, feature_names,
                          test_matrix=None, test_target=None):

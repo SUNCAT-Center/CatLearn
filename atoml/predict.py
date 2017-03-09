@@ -120,8 +120,8 @@ class FitnessPrediction(object):
         self.standardize_target = standardize_target
         if type(self.kwidth) is float:
             self.kwidth = np.zeros(len(train_fp[0]),) + self.kwidth
+        error_train = train_target
         if standardize_target:
-            error_train = train_target
             self.standardize_data = target_standardize(train_target)
             train_target = self.standardize_data['target']
 
