@@ -1,14 +1,16 @@
 """ Functions to build a baseline model. """
 import numpy as np
+from scipy.optimize import minimize
 from math import log
 
 from .database_functions import DescriptorDatabase
 from .fpm_operations import (get_order_2, get_order_2ab, get_ablog,
                              get_div_order_2, get_labels_order_2,
                              get_labels_order_2ab, get_labels_ablog)
-from .feature_select import iterative_screening, pca, clean_zero
+from .feature_select import iterative_screening, pca, lasso, clean_zero
 from .fingerprint_setup import standardize
 from .predict import FitnessPrediction
+from .model_selection import negative_logp
 
 from .fit_funcs import find_optimal_regularization, RR
 
@@ -62,7 +64,7 @@ class ModelBuilder(object):
         self.optimize = optimize
         self.size = size
 
-    def from_atoms(self, train_atoms, fpv_function, train_target,
+    def from_atoms(self, train_atoms, fpv_function, train_target, test=True,
                    test_atoms=None, test_target=None, feature_names=None):
         """ Build model from a set of atoms objects.
 
@@ -101,12 +103,24 @@ class ModelBuilder(object):
             test_matrix = fpv_function(test_atoms)
             test_id = [a.info['unique_id'] for a in test_atoms]
 
-        return self.from_matrix(train_matrix=train_matrix,
-                                feature_names=feature_names,
-                                train_id=train_id,
-                                train_target=train_target,
-                                test_matrix=test_matrix, test_id=test_id,
-                                test_target=test_target)
+        if test:
+            return self.from_matrix(train_matrix=train_matrix,
+                                    feature_names=feature_names,
+                                    train_id=train_id,
+                                    train_target=train_target,
+                                    test_matrix=test_matrix, test_id=test_id,
+                                    test_target=test_target)
+
+        else:
+            self.db_store(type='train', atoms_id=train_id,
+                          feature_matrix=train_matrix, target=train_target,
+                          feature_names=feature_names,
+                          table='OriginalFeatureSpace')
+            if test_atoms is not None:
+                self.db_store(type='test', atoms_id=test_id,
+                              feature_matrix=test_matrix, target=test_target,
+                              feature_names=feature_names,
+                              table='OriginalFeatureSpace')
 
     def from_matrix(self, train_matrix, feature_names, train_id,
                     train_target, test_matrix=None, test_id=None,
@@ -144,9 +158,15 @@ class ModelBuilder(object):
                                      test_matrix=test_matrix,
                                      train_target=train_target,
                                      test_target=test_target, width=0.5,
-                                     regularization=0.001)
+                                     regularization=0.001, opt_h=True)
 
             print('Initial Model:', p['validation_rmse']['average'])
+
+            o_red = self.reduce_matrix(train_matrix=train_matrix,
+                                       test_matrix=test_matrix,
+                                       train_target=train_target,
+                                       test_target=test_target,
+                                       feature_names=feature_names)
 
         if self.expand:
             train_matrix, feature_names = self.expand_matrix(train_matrix,
@@ -155,7 +175,8 @@ class ModelBuilder(object):
         if self.create_db:
             self.db_store(type='train', atoms_id=train_id,
                           feature_matrix=train_matrix, target=train_target,
-                          feature_names=feature_names)
+                          feature_names=feature_names,
+                          table='ExpandedFeatureSpace')
 
         if test_matrix is not None:
             if self.expand:
@@ -165,7 +186,8 @@ class ModelBuilder(object):
                 self.db_store(type='test', atoms_id=test_id,
                               feature_matrix=test_matrix,
                               target=test_target,
-                              feature_names=feature_names)
+                              feature_names=feature_names,
+                              table='ExpandedFeatureSpace')
 
         return self.reduce_matrix(train_matrix=train_matrix,
                                   test_matrix=test_matrix,
@@ -174,7 +196,8 @@ class ModelBuilder(object):
                                   feature_names=feature_names)
 
     def make_prediction(self, train_matrix, test_matrix, train_target,
-                        test_target=None, width=0.5, regularization=0.001):
+                        test_target=None, width=0.5, regularization=0.001,
+                        opt_h=True):
         """ Function to make predictions for a given model.
 
             width: float or list
@@ -183,11 +206,17 @@ class ModelBuilder(object):
             regularization: float
                Set the smoothing function.
         """
-        predict = FitnessPrediction(ktype='gaussian', kwidth=width,
-                                    regularization=regularization)
-
         sf = standardize(train=train_matrix, test=test_matrix)
         tests, trains = sf['test'], sf['train']
+
+        if opt_h:
+            width, regularization = self.hyp_opt(features=sf,
+                                                 train_target=train_target,
+                                                 width=width,
+                                                 reg=regularization)
+
+        predict = FitnessPrediction(ktype='gaussian', kwidth=width,
+                                    regularization=regularization)
 
         return predict.get_predictions(train_fp=trains, test_fp=tests,
                                        train_target=train_target, cinv=None,
@@ -203,30 +232,48 @@ class ModelBuilder(object):
         linear = descriptors * ([1] * len(descriptors))
         return linear
 
+    def hyp_opt(self, features, train_target, width, reg):
+        """ Function to do the hyperparameter optimization. """
+        # Hyper parameter starting guesses.
+        m = np.shape(features['train'])[1]
+        sigma = np.ones(m)
+        sigma *= width
+        theta = np.append(sigma, reg)
+
+        a = (features, train_target)
+
+        # Hyper parameter bounds.
+        b = ((1E-9, None), ) * (m+1)
+
+        # Do the optimization.
+        popt = minimize(negative_logp, theta, args=a, bounds=b)['x']
+
+        return popt[:-1], popt[-1:]
+
     def expand_matrix(self, feature_matrix, feature_names=None,
                       return_names=True):
         """ Expand the feature matrix by combing original features. """
         # Extend the feature matrix combinatorially.
         order_2 = get_order_2(feature_matrix)
         div_order_2 = get_div_order_2(feature_matrix)
-        # order_2ab = get_order_2ab(feature_matrix, a=2, b=3)
-        # ablog = get_ablog(feature_matrix, a=2, b=3)
+        order_2ab = get_order_2ab(feature_matrix, a=2, b=3)
+        ablog = get_ablog(feature_matrix, a=2, b=3)
 
-        feature_matrix = np.concatenate((feature_matrix, order_2, div_order_2),
-                                        axis=1)
+        feature_matrix = np.concatenate((feature_matrix, order_2, div_order_2,
+                                         order_2ab, ablog), axis=1)
 
         if return_names:
             # Extend the feature naming scheme.
             order_2 = get_labels_order_2(feature_names)
             div_order_2 = get_labels_order_2(feature_names, div=True)
-            # order_2ab = get_labels_order_2ab(feature_names, a=2, b=3)
-            # ablog = get_labels_ablog(feature_names, a=2, b=3)
-            feature_names += order_2 + div_order_2
+            order_2ab = get_labels_order_2ab(feature_names, a=2, b=3)
+            ablog = get_labels_ablog(feature_names, a=2, b=3)
+            feature_names += order_2 + div_order_2 + order_2ab + ablog
 
         return feature_matrix, feature_names
 
     def reduce_matrix(self, train_matrix, train_target, feature_names,
-                      test_matrix=None, test_target=None):
+                      test_matrix=None, test_target=None, limit=10):
         """ Function to reduce the feature space. """
         # Check to see if there are more features than data points.
         d = len(train_matrix[1])
@@ -248,9 +295,19 @@ class ModelBuilder(object):
         coefs, linear_error = linear[0][0], linear[1]
         order, feature_names = linear[0][1], linear[0][2]
 
+        las = self.lasso_opt(size=len(train_matrix[0]),
+                             train_target=train_target,
+                             train_matrix=train_matrix,
+                             test_matrix=test_matrix, test_target=test_target,
+                             alpha=1.e-1, max_iter=1e6, steps=20)
+
+        print(feature_names)
+
         if self.optimize:
+            if limit is None:
+                limit = len(order) + 1
             best_p1 = float('inf')
-            for s in range(1, len(order) + 1):
+            for s in range(1, limit):
                 remove_features = order[s:]
                 reduced_train = np.delete(train_matrix, remove_features,
                                           axis=1)
@@ -274,7 +331,8 @@ class ModelBuilder(object):
 
             print('Best error:', best_p1, 'from', self.size, 'features',
                   '\nPCA Error:', best_pca, 'with', cc, 'components from', cs,
-                  'features\nLinear Regression Error:', linear_error)
+                  'features\nLinear Regression Error:', linear_error,
+                  '\nLasso Error:', las['linear_error'][0])
 
         remove_features = order[self.size:]
         train_matrix = np.delete(train_matrix, remove_features, axis=1)
@@ -355,11 +413,18 @@ class ModelBuilder(object):
 
         return sort_list, error
 
+    def lasso_opt(self, size, train_target, train_matrix, test_matrix=None,
+                  test_target=None, alpha=1.e-5, max_iter=1e5, steps=None):
+        """ Function to perform lasso selection of features. """
+        return lasso(size=size, target=train_target, train=train_matrix,
+                     test=test_matrix, alpha=alpha, max_iter=max_iter,
+                     test_target=test_target, steps=steps)
+
     def loocv(self, order, train_matrxi, train_target):
         """ Function to automate the loocv. """
 
     def db_store(self, type, atoms_id, feature_matrix, target,
-                 feature_names):
+                 feature_names, table):
         """ Function to automatically store feature matrix.
 
             type: string
@@ -375,6 +440,6 @@ class ModelBuilder(object):
 
         # Define database parameters to store features.
         new_db = DescriptorDatabase(db_name=type + '_' + self.db_name,
-                                    table='FingerVector')
+                                    table=table)
         new_db.create_db(names=dnames)
         new_db.fill_db(descriptor_names=dnames, data=dmat)
