@@ -430,9 +430,6 @@ class ModelBuilder(object):
 
         return ml, mf + 1
 
-    def loocv(self, order, train_matrxi, train_target):
-        """ Function to automate the loocv. """
-
     def db_store(self, type, atoms_id, feature_matrix, target,
                  feature_names, table):
         """ Function to automatically store feature matrix.
