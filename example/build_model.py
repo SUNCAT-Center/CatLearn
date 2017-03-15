@@ -16,7 +16,8 @@ from atoml.database_functions import DescriptorDatabase
 
 # Decide whether to remove output and print graph.
 cleanup = False
-build_db = True
+build_db = False
+test_model = True
 
 mb = ModelBuilder(expand=True, optimize=True, size=None)
 
@@ -30,7 +31,7 @@ if build_db:
 
     # Setup the test and training datasets.
     testset = get_unique(candidates=all_cand, testsize=5, key='raw_score')
-    trainset = get_train(candidates=all_cand, trainsize=10,
+    trainset = get_train(candidates=all_cand, trainsize=15,
                          taken_cand=testset['taken'], key='raw_score')
 
     # Get the list of fingerprint vectors and normalize them.
@@ -49,7 +50,7 @@ if build_db:
                   fpv_function=fpvf, test_atoms=testset['candidates'],
                   test_target=testset['target'], feature_names=None)
 
-else:
+if test_model:
     dd_train = DescriptorDatabase(db_name='train_fpv_store.sqlite',
                                   table='OriginalFeatureSpace')
     dd_test = DescriptorDatabase(db_name='test_fpv_store.sqlite',

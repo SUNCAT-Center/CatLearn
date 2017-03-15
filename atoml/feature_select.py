@@ -42,16 +42,21 @@ def lasso(size, target, train, test=None, alpha=1.e-5, max_iter=1e5,
                           normalize=True, selection='random')
             xy_lasso = lasso.fit(train_fp, target)
             nz = len(xy_lasso.coef_) - (xy_lasso.coef_ == 0.).sum()
+            if test is not None:
+                linear = xy_lasso.predict(test_fp)
+                select['linear_error'].append(
+                    get_error(prediction=linear,
+                              target=test_target)['average'])
             if nz >= size:
                 break
     else:
         lasso = Lasso(alpha=alpha, max_iter=max_iter, fit_intercept=True,
                       normalize=True, selection='random')
         xy_lasso = lasso.fit(train_fp, target)
-    if test is not None:
-        linear = xy_lasso.predict(test_fp)
-        select['linear_error'].append(get_error(prediction=linear,
-                                                target=test_target)['average'])
+        if test is not None:
+            linear = xy_lasso.predict(test_fp)
+            select['linear_error'].append(
+                get_error(prediction=linear, target=test_target)['average'])
     select['coefs'] = xy_lasso.coef_
     index = list(range(len(select['coefs'])))
     coef = [abs(i) for i in select['coefs']]

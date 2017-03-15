@@ -273,11 +273,15 @@ class ModelBuilder(object):
         return feature_matrix, feature_names
 
     def reduce_matrix(self, train_matrix, train_target, feature_names,
-                      test_matrix=None, test_target=None, limit=10):
+                      test_matrix=None, test_target=None, limit=None):
         """ Function to reduce the feature space. """
         # Check to see if there are more features than data points.
         d = len(train_matrix[1])
         n = len(train_matrix)
+
+        if limit is not None:
+            assert limit > d
+
         if d > n:
             sf = self.screening(train_matrix=train_matrix,
                                 train_target=train_target,
@@ -295,19 +299,20 @@ class ModelBuilder(object):
         coefs, linear_error = linear[0][0], linear[1]
         order, feature_names = linear[0][1], linear[0][2]
 
-        las = self.lasso_opt(size=len(train_matrix[0]),
-                             train_target=train_target,
-                             train_matrix=train_matrix,
-                             test_matrix=test_matrix, test_target=test_target,
-                             alpha=1.e-1, max_iter=1e6, steps=20)
+        ml, mf = self.lasso_opt(size=len(train_matrix[0]),
+                                train_target=train_target,
+                                train_matrix=train_matrix,
+                                test_matrix=test_matrix,
+                                test_target=test_target,
+                                alpha=1.e-1, max_iter=1e6, steps=20)
 
         print(feature_names)
 
         if self.optimize:
             if limit is None:
-                limit = len(order) + 1
+                limit = len(train_matrix[1])
             best_p1 = float('inf')
-            for s in range(1, limit):
+            for s in range(1, limit + 1):
                 remove_features = order[s:]
                 reduced_train = np.delete(train_matrix, remove_features,
                                           axis=1)
@@ -329,10 +334,11 @@ class ModelBuilder(object):
                                         test_target=test_target)
                     best_pca, cc, cs = pcar
 
+            print('max features:', len(train_matrix[0]))
             print('Best error:', best_p1, 'from', self.size, 'features',
                   '\nPCA Error:', best_pca, 'with', cc, 'components from', cs,
                   'features\nLinear Regression Error:', linear_error,
-                  '\nLasso Error:', las['linear_error'][0])
+                  '\nLasso Error:', ml, 'for', mf, 'features')
 
         remove_features = order[self.size:]
         train_matrix = np.delete(train_matrix, remove_features, axis=1)
@@ -416,9 +422,13 @@ class ModelBuilder(object):
     def lasso_opt(self, size, train_target, train_matrix, test_matrix=None,
                   test_target=None, alpha=1.e-5, max_iter=1e5, steps=None):
         """ Function to perform lasso selection of features. """
-        return lasso(size=size, target=train_target, train=train_matrix,
-                     test=test_matrix, alpha=alpha, max_iter=max_iter,
-                     test_target=test_target, steps=steps)
+        las = lasso(size=size, target=train_target, train=train_matrix,
+                    test=test_matrix, alpha=alpha, max_iter=max_iter,
+                    test_target=test_target, steps=steps)
+        ml = min(las['linear_error'])
+        mf = las['linear_error'].index(min(las['linear_error']))
+
+        return ml, mf + 1
 
     def loocv(self, order, train_matrxi, train_target):
         """ Function to automate the loocv. """
