@@ -30,8 +30,8 @@ class DescriptorDatabase(object):
             cstring += ', %s float' % i
 
         # Create a table
-        cursor.execute("""CREATE TABLE %(table)s (%(cstring)s)""" %
-                       {'table': self.table, 'cstring': cstring})
+        cursor.execute("""CREATE TABLE IF NOT EXISTS %(table)s (%(cstring)s)"""
+                       % {'table': self.table, 'cstring': cstring})
 
     def fill_db(self, descriptor_names, data):
         """ Function to fill the descriptor database. """
