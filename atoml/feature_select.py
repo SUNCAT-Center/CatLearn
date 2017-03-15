@@ -10,11 +10,11 @@ from .fingerprint_setup import standardize
 from .output import write_feature_select
 from .predict import get_error
 
-no_skl = False
+no_sklearn = False
 try:
     from sklearn.linear_model import Lasso
 except ImportError:
-    no_skl = True
+    no_sklearn = True
 
 
 def lasso(size, target, train, test=None, alpha=1.e-5, max_iter=1e5,
@@ -23,7 +23,7 @@ def lasso(size, target, train, test=None, alpha=1.e-5, max_iter=1e5,
     """ Use the scikit-learn implementation of lasso for feature selection. """
     msg = "Must install scikit-learn to use this function:"
     msg += " http://scikit-learn.org/stable/"
-    assert not no_skl, msg
+    assert not no_sklearn, msg
 
     if test is not None:
         c = clean_zero(train=train, test=test)
@@ -37,23 +37,21 @@ def lasso(size, target, train, test=None, alpha=1.e-5, max_iter=1e5,
     if steps is not None:
         alpha = alpha * 10
         for _ in range(steps):
-            alpha = alpha / 10
+            alpha = alpha / 2
             lasso = Lasso(alpha=alpha, max_iter=max_iter, fit_intercept=True,
                           normalize=True, selection='random')
             xy_lasso = lasso.fit(train_fp, target)
-            if test is not None:
-                linear = xy_lasso.predict(test_fp)
-                select['linear_error'].append(
-                    get_error(prediction=linear,
-                              target=test_target)['average'])
+            nz = len(xy_lasso.coef_) - (xy_lasso.coef_ == 0.).sum()
+            if nz >= size:
+                break
     else:
         lasso = Lasso(alpha=alpha, max_iter=max_iter, fit_intercept=True,
                       normalize=True, selection='random')
         xy_lasso = lasso.fit(train_fp, target)
-        if test is not None:
-            linear = xy_lasso.predict(test_fp)
-            select['linear_error'].append(
-                get_error(prediction=linear, target=test_target)['average'])
+    if test is not None:
+        linear = xy_lasso.predict(test_fp)
+        select['linear_error'].append(get_error(prediction=linear,
+                                                target=test_target)['average'])
     select['coefs'] = xy_lasso.coef_
     index = list(range(len(select['coefs'])))
     coef = [abs(i) for i in select['coefs']]
