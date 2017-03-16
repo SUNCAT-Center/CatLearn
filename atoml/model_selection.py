@@ -5,7 +5,9 @@ Created on Fri Nov 18 14:30:20 2016
 @author: mhangaard
 """
 import numpy as np
+import scipy as sp
 from .predict import FitnessPrediction
+from numpy.core.umath_tests import inner1d
 
 def log_marginal_likelyhood1(cov, cinv, y):
     """ Return the log marginal likelyhood.
@@ -13,7 +15,7 @@ def log_marginal_likelyhood1(cov, cinv, y):
     """
     n = len(y)
     y = np.vstack(y)
-    data_fit = -(np.dot(np.dot(np.transpose(y), cinv), y)/2.)[0][0]
+    data_fit = -(np.dot(np.dot(np.transpose(y), cinv), y)/2.)
     L = np.linalg.cholesky(cov)
     logdetcov = 0
     for l in range(len(L)):
@@ -23,7 +25,7 @@ def log_marginal_likelyhood1(cov, cinv, y):
     p = data_fit + complexity + normalization
     return p
 
-def dkernel_dsigma(fp1, fp2, sigma, j, ktype='gaussian'):
+def dkernel_dsigma(fp1, fp2, sigma, ktype='gaussian'):
     """ Derivative of Kernel functions taking two fingerprint vectors. """
     # Linear kernel.
     if ktype == 'linear':
@@ -35,27 +37,65 @@ def dkernel_dsigma(fp1, fp2, sigma, j, ktype='gaussian'):
 
     # Gaussian kernel.
     elif ktype == 'gaussian':
-        return (np.exp(np.abs((fp1 - fp2)[j]) ** 2 / (2 * sigma[j] ** 2)
-            ) * (np.abs((fp1 - fp2)[j]) ** 2) / (sigma[j] ** 3) )
+        return (np.exp(-np.abs(fp1 - fp2) ** 2 / (2 * sigma ** 2)
+            ) * (-np.abs(fp1 - fp2) ** 2) / (sigma ** 3) )
 
     # Laplacian kernel.
     elif ktype == 'laplacian':
         raise NotImplementedError('Differentials of Laplacian kernel.')
     
-def dK_dsigma(sigma, train_fp, j):
-    """ Returns the covariance matrix between training dataset.
-
+def dK_dsigma_j(train_fp, sigma, j):
+    """ Returns the partial differential of the covariance matrix with respect
+        to the j'th width.
+        
         train_fp: list
             A list of the training fingerprint vectors.
+            
+        sigma: list or float
+            A list of the widths or the j'th width.   
+            
+        j: int
+            index of the width, with repsect to which we will differentiate.
     """
-    if type(sigma) is float:
-        sigma = np.zeros(len(train_fp[0]),) + sigma
-
-    dK_j = np.asarray([[dkernel_dsigma(fp1, fp2, sigma, j)
+    dK_j = np.asarray([[dkernel_dsigma(fp1[j], fp2[j], sigma)
                        for fp1 in train_fp] for fp2 in train_fp])
     return dK_j
 
-def negative_logp(theta, nfp, targets):
+def get_dlogp(train_fp, cov, widths, noise, y):
+    """ Return the derived log marginal likelyhood.
+    (Equation 5.9 in C. E. Rasmussen and C. K. I. Williams, 2006)
+    
+    Input:
+        train_fp: n x m matrix
+        cov: n x n positive definite matrix
+        widths: vector of length m
+        noise: float
+        y: vector of length n
+    """
+    dimsigma = len(widths)
+    L = sp.linalg.cholesky(cov, lower=True)
+    a = sp.linalg.cho_solve((L, True), y)
+    a2 = np.sum(inner1d(a, a))
+    trcinv = sp.linalg.cho_solve((L, True), np.eye(cov.shape[0]))
+    dp = []
+    for j in range(0,dimsigma):
+        dKdtheta_j = dK_dsigma_j(train_fp, widths[j], j)
+        # Compute "0.5 * trace(tmp.dot(K_gradient))" without
+        # constructing the full matrix tmp.dot(K_gradient) since only
+        # its diagonal is required
+        dpj = 0.5 * np.sum(inner1d(a2-trcinv, dKdtheta_j.T))
+        dpj = dpj.sum(-1)
+        dp.append(dpj)
+    dKdnoise = np.identity(len(train_fp))
+    # Compute "0.5 * trace(tmp.dot(K_gradient))" without
+    # constructing the full matrix tmp.dot(K_gradient) since only
+    # its diagonal is required
+    dpj = 0.5 * np.sum(inner1d(a2-trcinv, dKdnoise.T))
+    dpj = dpj.sum(-1)
+    dp.append(dpj)
+    return np.array(dp)
+
+def negative_logp(theta, train_fp, targets):
     """ Routine to calculate the negative of the  log marginal likelyhood as a
         function of the hyperparameters, the standardised or normalized
         fingerprints and the target values.
@@ -75,20 +115,20 @@ def negative_logp(theta, nfp, targets):
     krr = FitnessPrediction(ktype='gaussian', kwidth=sigma,
                             regularization=alpha)
     # Get the covariance matrix.
-    cov = krr.get_covariance(train_fp=nfp['train'])
+    cov = krr.get_covariance(train_fp=train_fp)
     # Invert the covariance matrix.
     cinv = np.linalg.inv(cov)
     # Get the inference level 1 marginal likelyhood.
     logp = log_marginal_likelyhood1(cov=cov, cinv=cinv, y=targets)
     return -logp
 
-def negative_dlogp(theta, nfp, targets):
-    """ Routine to calculate the negative of the  log marginal likelyhood as a
-        function of the hyperparameters, the standardised or normalized
-        fingerprints and the target values.
+def negative_dlogp(theta, train_fp, targets):
+    """ Routine to calculate the negative of the derived log marginal 
+        likelyhood as a function of the hyperparameters, 
+        the standardised or normalized fingerprints and the target values.
 
     Input:
-        theta: Length m+1 vector. Element 0 is lamda for regularization.
+        theta: Length m+1 vector. Element 0 is the noise parameter.
             The remaining elements are the m widths (sigma).
         nfp: n x m matrix.
         targets: Length n vector.
@@ -99,13 +139,11 @@ def negative_dlogp(theta, nfp, targets):
     """
     # Set up the prediction routine.
     sigma = theta[:-1]
-    alpha = theta[-1]
+    noise = theta[-1]
     krr = FitnessPrediction(ktype='gaussian', kwidth=sigma,
-                            regularization=alpha)
+                            regularization=noise)
     # Get the covariance matrix.
-    cov = krr.get_covariance(train_fp=nfp['train'])
-    # Invert the covariance matrix.
-    cinv = np.linalg.inv(cov)
-    # Get the inference level 1 marginal likelyhood.
-    dlogp = krr.dlogp_sckl(cov=cov, cinv=cinv, y=targets)
-    return -dlogp
+    cov = krr.get_covariance(train_fp=train_fp)
+    dlogp = get_dlogp(train_fp, cov=cov, widths=sigma, noise=noise, y=targets)
+    neg_dlogp = -dlogp
+    return neg_dlogp
