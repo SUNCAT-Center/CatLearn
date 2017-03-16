@@ -288,7 +288,8 @@ def iterative_screening(target, train_fpv, test_fpv=None, size=None, step=None,
     return select
 
 
-def pca(components, train_fpv, test_fpv=None, cleanup=False, writeout=True):
+def pca(components, train_fpv, test_fpv=None, cleanup=False, scale=False,
+        writeout=True):
     """ Principal component analysis.
 
         components: int
@@ -299,17 +300,14 @@ def pca(components, train_fpv, test_fpv=None, cleanup=False, writeout=True):
     """
     data = defaultdict(list)
     data['components'] = components
-    if test_fpv is not None:
-        if cleanup:
-            c = clean_zero(train=train_fpv, test=test_fpv)
-            train_fpv = c['train']
-            test_fpv = c['test']
+    if cleanup:
+        c = clean_zero(train=train_fpv, test=test_fpv)
+        test_fpv = c['test']
+        train_fpv = c['train']
+    if scale:
         std = standardize(train=train_fpv, test=test_fpv, writeout=False)
-        train_fpv = np.asarray(std['train'])
-    else:
-        if cleanup:
-            train_fpv = clean_zero(train_fpv)['train']
-        train_fpv = standardize(train=train_fpv, writeout=False)['train']
+        test_fpv = std['test']
+        train_fpv = std['train']
 
     u, s, v = np.linalg.svd(np.transpose(train_fpv))
 
@@ -329,7 +327,7 @@ def pca(components, train_fpv, test_fpv=None, cleanup=False, writeout=True):
     # Form feature matrix based on principal components.
     data['train_fpv'] = train_fpv.dot(pm)
     if train_fpv is not None:
-        data['test_fpv'] = np.asarray(std['test']).dot(pm)
+        data['test_fpv'] = np.asarray(test_fpv).dot(pm)
 
     if writeout:
         write_feature_select(function='pca', data=data)
@@ -347,12 +345,10 @@ def clean_zero(train, test=None):
             clean['index'].append(i)
     # Remove bad data from feature matrix.
     if 'index' in clean:
-        m = np.delete(m, clean['index'], axis=0)
-        clean['train'] = m.T
+        train = np.delete(m, clean['index'], axis=0).T
         if test is not None:
-            clean['test'] = np.delete(test.T, clean['index'], axis=0).T
-    else:
-        clean['train'] = train
-        clean['test'] = test
+            test = np.delete(test.T, clean['index'], axis=0).T
+    clean['train'] = train
+    clean['test'] = test
 
     return clean
