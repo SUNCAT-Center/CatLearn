@@ -238,8 +238,6 @@ class FitnessPrediction(object):
         return data
 
 
-
-
 def get_error(prediction, target):
     """ Returns the root mean squared error for predicted data relative to
         the target data.
