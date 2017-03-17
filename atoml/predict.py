@@ -1,13 +1,10 @@
 """ Predictive KRR functions. """
 import numpy as np
 from scipy.spatial import distance
-from math import exp
 from collections import defaultdict
 
 from .data_setup import target_standardize
 from .output import write_predict
-
-import time
 
 
 class FitnessPrediction(object):
@@ -46,7 +43,7 @@ class FitnessPrediction(object):
         self.regularization = regularization
 
     def kernel(self, m1, m2=None):
-        """ Kernel functions taking two fingerprint vectors. """
+        """ Kernel functions taking n x d feature matrix. """
         if m2 is None:
             # Linear kernel.
             if self.ktype == 'linear':

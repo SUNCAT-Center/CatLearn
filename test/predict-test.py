@@ -47,7 +47,7 @@ print('linear prediction:', pred['validation_rmse']['average'])
 krr = FitnessPrediction(ktype='polynomial',
                         kfree=0.,
                         kdegree=2.)
-cvm = krr.get_covariance(train_fp=nfp['train'])
+cvm = krr.get_covariance(train_matrix=nfp['train'])
 cinv = np.linalg.inv(cvm)
 assert np.shape(cinv) == (50, 50)
 pred = krr.get_predictions(train_fp=nfp['train'],
@@ -64,7 +64,7 @@ print('polynomial prediction:', pred['validation_rmse']['average'])
 krr = FitnessPrediction(ktype='gaussian',
                         kwidth=0.5,
                         regularization=0.001)
-cvm = krr.get_covariance(train_fp=nfp['train'])
+cvm = krr.get_covariance(train_matrix=nfp['train'])
 cinv = np.linalg.inv(cvm)
 assert np.shape(cinv) == (50, 50)
 pred = krr.get_predictions(train_fp=nfp['train'],
@@ -86,7 +86,7 @@ for i, j, k, in zip(pred['prediction'],
 krr = FitnessPrediction(ktype='laplacian',
                         kwidth=0.5,
                         regularization=0.001)
-cvm = krr.get_covariance(train_fp=nfp['train'])
+cvm = krr.get_covariance(train_matrix=nfp['train'])
 cinv = np.linalg.inv(cvm)
 assert np.shape(cinv) == (50, 50)
 pred = krr.get_predictions(train_fp=nfp['train'],
