@@ -30,7 +30,7 @@ nfp = normalize(train=train_fp, test=test_fp)
 
 # Set up the prediction routine.
 krr = FitnessPrediction(ktype='linear')
-cvm = krr.get_covariance(train_fp=nfp['train'])
+cvm = krr.get_covariance(train_matrix=nfp['train'])
 cinv = np.linalg.inv(cvm)
 assert np.shape(cinv) == (50, 50)
 pred = krr.get_predictions(train_fp=nfp['train'],

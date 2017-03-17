@@ -51,7 +51,7 @@ krr = FitnessPrediction(ktype='gaussian',
                         regularization=0.001)
 
 # Do the predictions.
-cvm = krr.get_covariance(train_fp=nfp['train'])
+cvm = krr.get_covariance(train_matrix=nfp['train'])
 cinv = np.linalg.inv(cvm)
 print('Making the predictions')
 pred = krr.get_predictions(train_fp=nfp['train'],

@@ -1,10 +1,13 @@
 """ Predictive KRR functions. """
 import numpy as np
+from scipy.spatial import distance
 from math import exp
 from collections import defaultdict
 
 from .data_setup import target_standardize
 from .output import write_predict
+
+import time
 
 
 class FitnessPrediction(object):
@@ -42,37 +45,64 @@ class FitnessPrediction(object):
         self.kdegree = kdegree
         self.regularization = regularization
 
-    def kernel(self, fp1, fp2):
+    def kernel(self, m1, m2=None):
         """ Kernel functions taking two fingerprint vectors. """
+        if m2 is None:
+            # Linear kernel.
+            if self.ktype == 'linear':
+                return np.dot(m1, np.transpose(m1))
+
+            # Polynomial kernel.
+            elif self.ktype == 'polynomial':
+                return(np.dot(m1, np.transpose(m1)) + self.kfree) ** self.kdegree
+
+            # Gaussian kernel.
+            elif self.ktype == 'gaussian':
+                k = distance.pdist(m1 / self.kwidth, metric='sqeuclidean')
+                k = distance.squareform(np.exp(-.5 * k))
+                np.fill_diagonal(k, 1)
+                return k
+
+            # Laplacian kernel.
+            elif self.ktype == 'laplacian':
+                k = distance.pdist(m1 / self.kwidth, metric='euclidean')
+                k = distance.squareform(np.exp(-k))
+                np.fill_diagonal(k, 1)
+                return k
+
         # Linear kernel.
-        if self.ktype == 'linear':
-            return sum(fp1 * fp2)
+        elif self.ktype == 'linear':
+            return np.dot(m1, np.transpose(m2))
 
         # Polynomial kernel.
         elif self.ktype == 'polynomial':
-            return(sum(fp1 * fp2) + self.kfree) ** self.kdegree
+            return(np.dot(m1, np.transpose(m2)) + self.kfree) ** self.kdegree
 
         # Gaussian kernel.
         elif self.ktype == 'gaussian':
-            return exp(-sum(np.abs((fp1 - fp2) ** 2) / (2 * self.kwidth ** 2)))
+            k = distance.cdist(m1 / self.kwidth, m2 / self.kwidth,
+                               metric='sqeuclidean')
+            return np.exp(-.5 * k)
 
         # Laplacian kernel.
         elif self.ktype == 'laplacian':
-            return exp(-sum(np.abs((fp1 - fp2) / self.kwidth)))
+            k = distance.cdist(m1 / self.kwidth, m2 / self.kwidth,
+                               metric='euclidean')
+            return np.exp(-k)
 
-    def get_covariance(self, train_fp):
+    def get_covariance(self, train_matrix):
         """ Returns the covariance matrix between training dataset.
 
-            train_fp: list
+            train_matrix: list
                 A list of the training fingerprint vectors.
         """
         if type(self.kwidth) is float:
-            self.kwidth = np.zeros(len(train_fp[0]),) + self.kwidth
+            self.kwidth = np.zeros(len(train_matrix[0]),) + self.kwidth
 
-        cov = np.asarray([[self.kernel(fp1=fp1, fp2=fp2)
-                           for fp1 in train_fp] for fp2 in train_fp])
+        cov = self.kernel(train_matrix)
+
         if self.regularization is not None:
-            cov = cov + self.regularization * np.identity(len(train_fp))
+            cov = cov + self.regularization * np.identity(len(train_matrix))
 
         return cov
 
@@ -132,8 +162,7 @@ class FitnessPrediction(object):
             cinv = np.linalg.inv(cvm)
 
         # Calculate the covarience between the test and training datasets.
-        ktb = np.asarray([[self.kernel(fp1=fp1, fp2=fp2) for fp1 in train_fp]
-                          for fp2 in test_fp])
+        ktb = self.kernel(test_fp, train_fp)
 
         # Build the list of predictions.
         data['prediction'] = self.do_prediction(ktb=ktb, cinv=cinv,
@@ -147,8 +176,7 @@ class FitnessPrediction(object):
         # Calculate error associated with predictions on the training data.
         if get_training_error:
             # Calculate the covarience between the training dataset.
-            kt_train = np.asarray([[self.kernel(fp1=fp1, fp2=fp2) for fp1 in
-                                    train_fp] for fp2 in train_fp])
+            kt_train = self.kernel(train_fp, train_fp)
 
             # Calculate predictions for the training data.
             data['train_prediction'] = self.do_prediction(ktb=kt_train,
@@ -206,8 +234,7 @@ class FitnessPrediction(object):
             residual. """
         data = defaultdict(list)
         # Calculate the K(X*,X*) covarience matrix.
-        ktest = np.asarray([[self.kernel(fp1=fp1, fp2=fp2)
-                             for fp1 in test_fp] for fp2 in test_fp])
+        ktest = self.kernel(test_fp, test_fp)
 
         # Form H and H* matrix, multiplying X by basis.
         train_matrix = np.asarray([basis(i) for i in train_fp])

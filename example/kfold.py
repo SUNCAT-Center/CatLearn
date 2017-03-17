@@ -29,12 +29,12 @@ split_fpv = []
 # Subset of the fingerprint vector.
 for i in range(nsplit):
     split_energy.append(split[i][:, -2])
-    fpm = split[i][:,:-2]
+    fpm = split[i][:, :-2]
     reduced_fpv = fpm[:, indexes]
     split_fpv.append(reduced_fpv)
     print(np.shape(reduced_fpv))
     print(np.shape(split_energy[i]))
-    
+
 print('Make predictions based in k-fold samples')
 train_rmse = []
 val_rmse = []
@@ -56,20 +56,20 @@ for i in range(nsplit):
         teste.append(e)
     for v in split_fpv[i]:
         test_fp.append(v)
-    regularization=.001
+    regularization = .001
     m = np.shape(reduced_fpv)[1]
-    if sigma == None:
+    if sigma is None:
         sigma = np.ones(m)
         sigma *= 0.5
     if False:
         # Get the list of fingerprint vectors and standardize them.
         nfp = standardize(train=train_fp, test=test_fp)
         # Optimize hyperparameters
-        a=(nfp, traine, regularization)
-        #Hyper parameter bounds.
-        b=((1E-9,None),)*(m)
+        a = (nfp, traine, regularization)
+        # Hyper parameter bounds.
+        b = ((1E-9, None), ) * (m)
         popt = minimize(negative_logp, sigma, args=a, bounds=b)
-        sigma=popt['x']
+        sigma = popt['x']
     else:
         # Get the list of fingerprint vectors and normalize them.
         nfp = normalize(train=train_fp, test=test_fp)
@@ -77,7 +77,7 @@ for i in range(nsplit):
     krr = FitnessPrediction(ktype='gaussian', kwidth=sigma,
                             regularization=regularization)  # regularization)
     # Do the training.
-    cvm = krr.get_covariance(train_fp=nfp['train'])
+    cvm = krr.get_covariance(train_matrix=nfp['train'])
     cinv = np.linalg.inv(cvm)
     # Do the prediction
     pred = krr.get_predictions(train_fp=nfp['train'],
