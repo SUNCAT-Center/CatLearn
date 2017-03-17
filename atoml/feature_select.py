@@ -50,8 +50,8 @@ def lasso(size, target, train, test=None, alpha=1.e-5, max_iter=1e5,
             select['features'].append(nz)
             if nz >= size:
                 break
-        select['min_features'] = select['features'].index(
-            min(select['linear_error']))
+        mi = select['linear_error'].index(min(select['linear_error']))
+        select['min_features'] = select['features'][mi]
     else:
         lasso = Lasso(alpha=alpha, max_iter=max_iter, fit_intercept=True,
                       normalize=True, selection='random')

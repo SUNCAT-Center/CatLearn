@@ -54,7 +54,8 @@ class FitnessPrediction(object):
 
             # Polynomial kernel.
             elif self.ktype == 'polynomial':
-                return(np.dot(m1, np.transpose(m1)) + self.kfree) ** self.kdegree
+                return(np.dot(m1, np.transpose(m1)) + self.kfree) ** \
+                 self.kdegree
 
             # Gaussian kernel.
             elif self.ktype == 'gaussian':
