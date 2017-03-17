@@ -206,11 +206,10 @@ class FitnessPrediction(object):
     def do_prediction(self, ktb, cinv, target):
         """ Function to make the prediction. """
         pred = []
+        train_mean = np.mean(target)
+        target_values = target - train_mean
         for kt in ktb:
             ktcinv = np.dot(kt, cinv)
-            target_values = target
-            train_mean = np.mean(target_values)
-            target_values -= train_mean
             p = np.dot(ktcinv, target_values) + train_mean
             if self.standardize_target:
                 pred.append((p * self.standardize_data['std']) +
