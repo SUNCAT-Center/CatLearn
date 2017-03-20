@@ -149,6 +149,9 @@ class FitnessPrediction(object):
             cost: str
                 Define the way the cost function is calculated. Default is
                 root mean squared error.
+
+            epsilon: float
+                Threshold for insensitive error calculation.
         """
         self.standardize_target = standardize_target
         if type(self.kwidth) is float:
