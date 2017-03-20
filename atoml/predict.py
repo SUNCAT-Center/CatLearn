@@ -278,12 +278,12 @@ def get_error(prediction, target):
     elif len(prediction) > len(target):
         msg += 'fewer targets than predictions.'
     assert len(prediction) == len(target), msg
-    error = defaultdict(list)
-    sumd = 0
-    for i, j in zip(prediction, target):
-        e = (i - j) ** 2
-        error['all'].append(e ** 0.5)
-        sumd += e
 
-    error['average'] = (sumd / len(prediction)) ** 0.5
+    error = defaultdict(list)
+
+    # Root mean squared cost function
+    e = np.square(prediction - target)
+    error['all'] = np.sqrt(e)
+    error['average'] = np.sqrt(np.sum(e)/len(e))
+
     return error
