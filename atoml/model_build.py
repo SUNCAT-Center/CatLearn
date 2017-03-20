@@ -311,11 +311,11 @@ class ModelBuilder(object):
         coefs, linear_error = linear[0][0], linear[1]
         order, feature_names = linear[0][1], linear[0][2]
 
-        ml, mf = self.lasso_opt(size=d, train_target=train_target,
-                                train_matrix=train_matrix,
-                                test_matrix=test_matrix,
-                                test_target=test_target,
-                                alpha=1.e-1, max_iter=1e6, steps=20)
+        ml, mf, mo = self.lasso_opt(size=d, train_target=train_target,
+                                    train_matrix=train_matrix,
+                                    test_matrix=test_matrix,
+                                    test_target=test_target,
+                                    alpha=1.e-1, max_iter=1e6, steps=20)
 
         print(feature_names)
 
@@ -324,7 +324,8 @@ class ModelBuilder(object):
                 limit = d
             best_p1 = float('inf')
             for s in range(1, limit + 1):
-                remove_features = order[s:]
+                # remove_features = order[s:]
+                remove_features = mo[s:]
                 reduced_train = np.delete(train_matrix, remove_features,
                                           axis=1)
                 reduced_test = np.delete(test_matrix, remove_features, axis=1)
@@ -351,7 +352,8 @@ class ModelBuilder(object):
                   'features\nLinear Regression Error:', linear_error,
                   '\nLasso Error:', ml, 'for', mf, 'features')
 
-        remove_features = order[self.size:]
+        # remove_features = order[self.size:]
+        remove_features = mo[self.size:]
         train_matrix = np.delete(train_matrix, remove_features, axis=1)
         if test_matrix is not None:
             test_matrix = np.delete(test_matrix, remove_features, axis=1)
@@ -461,8 +463,9 @@ class ModelBuilder(object):
                     test_target=test_target, steps=steps)
         ml = min(las['linear_error'])
         mf = las['min_features']
+        mo = las['order']
 
-        return ml, mf
+        return ml, mf, mo
 
     def db_store(self, type, atoms_id, feature_matrix, target,
                  feature_names, table):
