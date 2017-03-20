@@ -25,12 +25,9 @@ def lasso(size, target, train, test=None, alpha=1.e-5, max_iter=1e5,
     msg += " http://scikit-learn.org/stable/"
     assert not no_sklearn, msg
 
-    if test is not None:
-        c = clean_zero(train=train, test=test)
-        test_fp = c['test']
-        train_fp = c['train']
-    else:
-        test_fp = clean_zero(train=train)['train']
+    c = clean_zero(train=train, test=test)
+    test_fp = c['test']
+    train_fp = c['train']
 
     select = defaultdict(list)
 
@@ -60,19 +57,17 @@ def lasso(size, target, train, test=None, alpha=1.e-5, max_iter=1e5,
             linear = xy_lasso.predict(test_fp)
             select['linear_error'].append(
                 get_error(prediction=linear, target=test_target)['average'])
-    select['coefs'] = xy_lasso.coef_
+    select['coefs'] = np.abs(xy_lasso.coef_)
     index = list(range(len(select['coefs'])))
-    coef = [abs(i) for i in select['coefs']]
 
-    sort_list = [list(i) for i in zip(*sorted(zip(coef, index),
+    sort_list = [list(i) for i in zip(*sorted(zip(select['coefs'], index),
                                               key=lambda x: x[0],
                                               reverse=True))]
 
-    select['accepted'] = sort_list[1][:size]
-    select['rejected'] = sort_list[1][size:]
-    select['train_fpv'] = np.delete(train_fp, select['rejected'], axis=1)
+    select['order'] = sort_list[1]
+    select['train_fpv'] = np.delete(train_fp, sort_list[1][size:], axis=1)
     if test is not None:
-        select['test_fpv'] = np.delete(test_fp, select['rejected'], axis=1)
+        select['test_fpv'] = np.delete(test_fp, sort_list[1][size:], axis=1)
 
     return select
 
