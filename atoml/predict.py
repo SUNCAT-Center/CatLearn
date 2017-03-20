@@ -107,7 +107,7 @@ class FitnessPrediction(object):
     def get_predictions(self, train_fp, test_fp, train_target, cinv=None,
                         test_target=None, uncertainty=False, basis=None,
                         get_validation_error=False, get_training_error=False,
-                        standardize_target=True, cost='squared',
+                        standardize_target=True, cost='squared', epsilon=None,
                         writeout=False):
         """ Returns a list of predictions for a test dataset.
 
@@ -174,7 +174,8 @@ class FitnessPrediction(object):
         # Calculate error associated with predictions on the test data.
         if get_validation_error:
             data['validation_rmse'] = get_error(prediction=data['prediction'],
-                                                target=test_target, cost=cost)
+                                                target=test_target, cost=cost,
+                                                epsilon=epsilon)
 
         # Calculate error associated with predictions on the training data.
         if get_training_error:
@@ -189,7 +190,7 @@ class FitnessPrediction(object):
             # Calculated the error for the prediction on the training data.
             data['training_rmse'] = get_error(
                 prediction=data['train_prediction'], target=error_train,
-                cost=cost)
+                cost=cost, epsilon=epsilon)
 
         # Calculate uncertainty associated with prediction on test data.
         if uncertainty:
@@ -201,7 +202,8 @@ class FitnessPrediction(object):
                                                       ktb=ktb, cinv=cinv,
                                                       target=train_target,
                                                       test_target=test_target,
-                                                      basis=basis, cost=cost)
+                                                      basis=basis, cost=cost,
+                                                      epsilon=epsilon)
 
         if writeout:
             write_predict(function='get_predictions', data=data)
@@ -231,7 +233,7 @@ class FitnessPrediction(object):
                 in ktb]
 
     def fixed_basis(self, test_fp, train_fp, basis, ktb, cinv, target,
-                    test_target, cost):
+                    test_target, cost, epsilon):
         """ Function to apply fixed basis. Returns the predictions gX on the
             residual. """
         data = defaultdict(list)
@@ -262,14 +264,15 @@ class FitnessPrediction(object):
         # Calculated the error for the residual prediction on the test data.
         if test_target is not None:
             data['validation_rmse'] = get_error(prediction=data['gX'],
-                                                target=test_target, cost=cost)
+                                                target=test_target, cost=cost,
+                                                epsilon=epsilon)
 
         return data
 
 
-def get_error(prediction, target, cost='squared'):
-    """ Returns the root mean squared error for predicted data relative to
-        the target data.
+def get_error(prediction, target, cost='squared', epsilon=None):
+    """ Returns the error for predicted data relative to target data. Discussed
+        in: Rosasco et al, Neural Computation, (2004), 16, 1063-1076.
 
         prediction: list
             A list of predicted values.
@@ -294,9 +297,16 @@ def get_error(prediction, target, cost='squared'):
         error['all'] = np.sqrt(e)
         error['average'] = np.sqrt(np.sum(e)/len(e))
 
-    if cost is 'absolute':
+    elif cost is 'absolute':
         # Absolute error function.
         e = np.abs(prediction - target)
+        error['all'] = e
+        error['average'] = np.sum(e)/len(e)
+
+    elif cost is 'insensitive':
+        # Epsilon-insensitive error function.
+        e = np.abs(prediction - target) - epsilon
+        np.place(e, e < 0, 0)
         error['all'] = e
         error['average'] = np.sum(e)/len(e)
 
