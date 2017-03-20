@@ -74,13 +74,24 @@ pred = krr.get_predictions(train_fp=nfp['train'],
                            test_target=testset['target'],
                            get_validation_error=True,
                            get_training_error=True,
-                           uncertainty=True)
+                           uncertainty=True,
+                           cost='squared')
 assert len(pred['prediction']) == 10
 print('gaussian prediction:', pred['validation_rmse']['average'])
 for i, j, k, in zip(pred['prediction'],
                     pred['uncertainty'],
                     pred['validation_rmse']['all']):
     print(i, j, k)
+
+pred = krr.get_predictions(train_fp=nfp['train'],
+                           test_fp=nfp['test'],
+                           cinv=cinv,
+                           train_target=trainset['target'],
+                           test_target=testset['target'],
+                           get_validation_error=True,
+                           get_training_error=True,
+                           cost='absolute')
+print('gaussian prediction (abs):', pred['validation_rmse']['average'])
 
 # Set up the prediction routine.
 krr = FitnessPrediction(ktype='laplacian',

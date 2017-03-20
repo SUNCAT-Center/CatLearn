@@ -107,7 +107,8 @@ class FitnessPrediction(object):
     def get_predictions(self, train_fp, test_fp, train_target, cinv=None,
                         test_target=None, uncertainty=False, basis=None,
                         get_validation_error=False, get_training_error=False,
-                        standardize_target=True, writeout=False):
+                        standardize_target=True, cost='squared',
+                        writeout=False):
         """ Returns a list of predictions for a test dataset.
 
             train_fp: list
@@ -144,6 +145,10 @@ class FitnessPrediction(object):
             get_training_error: boolean
                 Return the error associated with the prediction on the training
                 set of data if True. Default is False.
+
+            cost: str
+                Define the way the cost function is calculated. Default is
+                root mean squared error.
         """
         self.standardize_target = standardize_target
         if type(self.kwidth) is float:
@@ -169,7 +174,7 @@ class FitnessPrediction(object):
         # Calculate error associated with predictions on the test data.
         if get_validation_error:
             data['validation_rmse'] = get_error(prediction=data['prediction'],
-                                                target=test_target)
+                                                target=test_target, cost=cost)
 
         # Calculate error associated with predictions on the training data.
         if get_training_error:
@@ -183,7 +188,8 @@ class FitnessPrediction(object):
 
             # Calculated the error for the prediction on the training data.
             data['training_rmse'] = get_error(
-                prediction=data['train_prediction'], target=error_train)
+                prediction=data['train_prediction'], target=error_train,
+                cost=cost)
 
         # Calculate uncertainty associated with prediction on test data.
         if uncertainty:
@@ -192,11 +198,10 @@ class FitnessPrediction(object):
         if basis is not None:
             data['basis_analysis'] = self.fixed_basis(train_fp=train_fp,
                                                       test_fp=test_fp,
-                                                      ktb=ktb,
-                                                      cinv=cinv,
+                                                      ktb=ktb, cinv=cinv,
                                                       target=train_target,
                                                       test_target=test_target,
-                                                      basis=basis)
+                                                      basis=basis, cost=cost)
 
         if writeout:
             write_predict(function='get_predictions', data=data)
@@ -226,7 +231,7 @@ class FitnessPrediction(object):
                 in ktb]
 
     def fixed_basis(self, test_fp, train_fp, basis, ktb, cinv, target,
-                    test_target):
+                    test_target, cost):
         """ Function to apply fixed basis. Returns the predictions gX on the
             residual. """
         data = defaultdict(list)
@@ -257,12 +262,12 @@ class FitnessPrediction(object):
         # Calculated the error for the residual prediction on the test data.
         if test_target is not None:
             data['validation_rmse'] = get_error(prediction=data['gX'],
-                                                target=test_target)
+                                                target=test_target, cost=cost)
 
         return data
 
 
-def get_error(prediction, target):
+def get_error(prediction, target, cost='squared'):
     """ Returns the root mean squared error for predicted data relative to
         the target data.
 
@@ -280,10 +285,19 @@ def get_error(prediction, target):
     assert len(prediction) == len(target), msg
 
     error = defaultdict(list)
+    prediction = np.asarray(prediction)
+    target = np.asarray(target)
 
-    # Root mean squared cost function
-    e = np.square(np.asarray(prediction) - np.asarray(target))
-    error['all'] = np.sqrt(e)
-    error['average'] = np.sqrt(np.sum(e)/len(e))
+    if cost is 'squared':
+        # Root mean squared error function.
+        e = np.square(prediction - target)
+        error['all'] = np.sqrt(e)
+        error['average'] = np.sqrt(np.sum(e)/len(e))
+
+    if cost is 'absolute':
+        # Absolute error function.
+        e = np.abs(prediction - target)
+        error['all'] = e
+        error['average'] = np.sum(e)/len(e)
 
     return error
