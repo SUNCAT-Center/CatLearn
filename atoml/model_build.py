@@ -143,9 +143,14 @@ class ModelBuilder(object):
                 List of uuids corresponding to the atoms objects in the
                 test dataset.
         """
+        # Remove features with zero varience.
         c = clean_zero(train=train_matrix, test=test_matrix)
         test_matrix = c['test']
         train_matrix = c['train']
+        # Standardize the feature matrix.
+        std = standardize(train=train_matrix, test=test_matrix)
+        test_matrix = std['test']
+        train_matrix = std['train']
 
         if self.size is not None:
             msg = 'Feature space that is too small to be reduced to size'
@@ -158,7 +163,7 @@ class ModelBuilder(object):
                                      test_matrix=test_matrix,
                                      train_target=train_target,
                                      test_target=test_target, width=0.5,
-                                     regularization=0.001, opt_h=True)
+                                     regularization=0.001, opt_h=False)
 
             print('Initial Model:', p['validation_rmse']['average'])
 
@@ -167,6 +172,8 @@ class ModelBuilder(object):
                                        train_target=train_target,
                                        test_target=test_target,
                                        feature_names=feature_names)
+
+        exit()
 
         if self.expand:
             train_matrix, feature_names = self.expand_matrix(train_matrix,
@@ -189,15 +196,20 @@ class ModelBuilder(object):
                               feature_names=feature_names,
                               table='ExpandedFeatureSpace')
 
+        # Standardize the expanded feature matrix.
+        std = standardize(train=train_matrix, test=test_matrix)
+        test_matrix = std['test']
+        train_matrix = std['train']
+
         return self.reduce_matrix(train_matrix=train_matrix,
                                   test_matrix=test_matrix,
                                   train_target=train_target,
                                   test_target=test_target,
-                                  feature_names=feature_names)
+                                  feature_names=feature_names, limit=7)
 
     def make_prediction(self, train_matrix, test_matrix, train_target,
                         test_target=None, width=0.5, regularization=0.001,
-                        opt_h=True):
+                        opt_h=False):
         """ Function to make predictions for a given model.
 
             width: float or list
@@ -206,9 +218,8 @@ class ModelBuilder(object):
             regularization: float
                Set the smoothing function.
         """
-        sf = standardize(train=train_matrix, test=test_matrix)
-        tests, trains = sf['test'], sf['train']
-
+        # NOTE: Doesn't make sense to require dict, test never used?
+        sf = {'train': train_matrix, 'test': test_matrix}
         if opt_h:
             width, regularization = self.hyp_opt(features=sf,
                                                  train_target=train_target,
@@ -218,14 +229,14 @@ class ModelBuilder(object):
         predict = FitnessPrediction(ktype='gaussian', kwidth=width,
                                     regularization=regularization)
 
-        return predict.get_predictions(train_fp=trains, test_fp=tests,
+        return predict.get_predictions(train_fp=train_matrix,
+                                       test_fp=test_matrix,
                                        train_target=train_target, cinv=None,
                                        test_target=test_target,
                                        uncertainty=False, basis=None,
                                        get_validation_error=True,
                                        get_training_error=True,
-                                       standardize_target=False,
-                                       writeout=False)
+                                       standardize_target=False)
 
     def basis(self, descriptors):
         """ Simple linear basis. """
@@ -276,11 +287,11 @@ class ModelBuilder(object):
                       test_matrix=None, test_target=None, limit=None):
         """ Function to reduce the feature space. """
         # Check to see if there are more features than data points.
-        d = len(train_matrix[1])
-        n = len(train_matrix)
+        n = np.shape(train_matrix)[0]
+        d = np.shape(train_matrix)[1]
 
         if limit is not None:
-            assert limit > d
+            assert limit < d
 
         if d > n:
             sf = self.screening(train_matrix=train_matrix,
@@ -289,6 +300,9 @@ class ModelBuilder(object):
                                 test_target=test_target,
                                 feature_names=feature_names)
             train_matrix, test_matrix, feature_names = sf
+
+        # self.svd_order(train_matrix)
+        # exit()
 
         # Find importance of features andtrain a ridge regression model.
         linear = self.ridge_regression(train_matrix=train_matrix,
@@ -299,8 +313,9 @@ class ModelBuilder(object):
         coefs, linear_error = linear[0][0], linear[1]
         order, feature_names = linear[0][1], linear[0][2]
 
-        ml, mf = self.lasso_opt(size=len(train_matrix[0]),
-                                train_target=train_target,
+        print('d', d)
+
+        ml, mf = self.lasso_opt(size=d, train_target=train_target,
                                 train_matrix=train_matrix,
                                 test_matrix=test_matrix,
                                 test_target=test_target,
@@ -310,7 +325,7 @@ class ModelBuilder(object):
 
         if self.optimize:
             if limit is None:
-                limit = len(train_matrix[1])
+                limit = d
             best_p1 = float('inf')
             for s in range(1, limit + 1):
                 remove_features = order[s:]
@@ -392,13 +407,36 @@ class ModelBuilder(object):
 
         return best_pca, cc, cs
 
+    def svd_order(self, train_matrix):
+        """ Order the features acording to SVD analysis. """
+        # u = n x n matrix
+        # s = min(n, d) singular values
+        # v = d x d matrix
+        u, s, v = np.linalg.svd(train_matrix, full_matrices=True)
+
+        for i in range(len(s)):
+            if i > 0:
+                s[i] = 0.
+        # s = [[i] for i in s]
+
+        # Transform s vector into matrix.
+        sm = np.zeros((u.shape[0], v.shape[0]),
+                      dtype=float)
+        sm[:v.shape[0], :v.shape[0]] = np.diag(s)
+        # Form reduced rank matrix.
+        rrank = np.dot(u, np.dot(sm, v))
+
+        print(u)
+        print(sm)
+        print(v)
+        print(rrank)
+        print(train_matrix)
+
     def ridge_regression(self, train_matrix, train_target, feature_names,
                          test_matrix=None, test_target=None):
         """ Function to trean a linear ridge regression model. The importance
             of features is calculated from the coefficients.
         """
-        sf = standardize(train=train_matrix, test=test_matrix)
-        test_matrix, train_matrix = sf['test'], np.asarray(sf['train'])
         # Ridge regression to get ordering of features.
         target = np.asarray(train_target)
         b = find_optimal_regularization(X=train_matrix, Y=target, p=0, Ns=100)
@@ -426,9 +464,9 @@ class ModelBuilder(object):
                     test=test_matrix, alpha=alpha, max_iter=max_iter,
                     test_target=test_target, steps=steps)
         ml = min(las['linear_error'])
-        mf = las['linear_error'].index(min(las['linear_error']))
+        mf = las['min_features']
 
-        return ml, mf + 1
+        return ml, mf
 
     def db_store(self, type, atoms_id, feature_matrix, target,
                  feature_names, table):

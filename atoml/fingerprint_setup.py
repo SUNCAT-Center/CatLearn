@@ -165,7 +165,7 @@ def concatenate_fpv(c, fpv_name):
     return fpv
 
 
-def standardize(train, test=None, writeout=True):
+def standardize(train, test=None, writeout=False):
     """ Standardize each descriptor in the FPV relative to the mean and
         standard deviation. If test data is supplied it is standardized
         relative to the training dataset.
@@ -196,7 +196,7 @@ def standardize(train, test=None, writeout=True):
     return std
 
 
-def normalize(train, test=None, writeout=True):
+def normalize(train, test=None, writeout=False):
     """ Normalize each descriptor in the FPV to min/max or mean centered. If
         test data is supplied it is standardized relative to the training
         dataset.

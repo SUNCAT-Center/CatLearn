@@ -191,7 +191,7 @@ def robust_rank_correlation_screening(target, train_fpv, size=None,
 
 def iterative_screening(target, train_fpv, test_fpv=None, size=None, step=None,
                         method='sis', corr='kendall', cleanup=False,
-                        feature_names=None, writeout=True):
+                        feature_names=None, writeout=False):
     """ Function to reduce the number of featues in an iterative manner using
         SIS or RRCS.
 
@@ -292,7 +292,7 @@ def iterative_screening(target, train_fpv, test_fpv=None, size=None, step=None,
 
 
 def pca(components, train_fpv, test_fpv=None, cleanup=False, scale=False,
-        writeout=True):
+        writeout=False):
     """ Principal component analysis.
 
         components: int
@@ -308,7 +308,7 @@ def pca(components, train_fpv, test_fpv=None, cleanup=False, scale=False,
         test_fpv = c['test']
         train_fpv = c['train']
     if scale:
-        std = standardize(train=train_fpv, test=test_fpv, writeout=False)
+        std = standardize(train=train_fpv, test=test_fpv)
         test_fpv = std['test']
         train_fpv = std['train']
 

@@ -30,8 +30,8 @@ if build_db:
     all_cand = db.get_all_relaxed_candidates(use_extinct=False)
 
     # Setup the test and training datasets.
-    testset = get_unique(candidates=all_cand, testsize=5, key='raw_score')
-    trainset = get_train(candidates=all_cand, trainsize=15,
+    testset = get_unique(candidates=all_cand, testsize=500, key='raw_score')
+    trainset = get_train(candidates=all_cand, trainsize=500,
                          taken_cand=testset['taken'], key='raw_score')
 
     # Get the list of fingerprint vectors and normalize them.

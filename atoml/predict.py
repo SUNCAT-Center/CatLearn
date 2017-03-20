@@ -107,7 +107,7 @@ class FitnessPrediction(object):
     def get_predictions(self, train_fp, test_fp, train_target, cinv=None,
                         test_target=None, uncertainty=False, basis=None,
                         get_validation_error=False, get_training_error=False,
-                        standardize_target=True, writeout=True):
+                        standardize_target=True, writeout=False):
         """ Returns a list of predictions for a test dataset.
 
             train_fp: list
