@@ -282,7 +282,7 @@ def get_error(prediction, target):
     error = defaultdict(list)
 
     # Root mean squared cost function
-    e = np.square(prediction - target)
+    e = np.square(np.asarray(prediction) - np.asarray(target))
     error['all'] = np.sqrt(e)
     error['average'] = np.sqrt(np.sum(e)/len(e))
 
