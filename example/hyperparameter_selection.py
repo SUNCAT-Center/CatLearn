@@ -22,7 +22,7 @@ targets = fpm_raw[:, -1]
 
 m = np.shape(fpm_train)[1]
 n = len(targets)
-nfp = standardize(train=fpm_train)['train']
+nfp = np.array(standardize(train=fpm_train)['train'])
 
 # Hyper parameter starting guesses.
 sigma = np.ones(m)

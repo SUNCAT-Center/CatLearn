@@ -6,6 +6,7 @@ Created on Fri Nov 18 14:30:20 2016
 """
 import numpy as np
 import scipy as sp
+from scipy.spatial import distance
 from .predict import FitnessPrediction
 from numpy.core.umath_tests import inner1d
 
@@ -25,8 +26,11 @@ def log_marginal_likelyhood1(cov, cinv, y):
     p = data_fit + complexity + normalization
     return p
 
-def dkernel_dsigma(fp1, fp2, sigma, ktype='gaussian'):
-    """ Derivative of Kernel functions taking two fingerprint vectors. """
+def dkernel_dsigma(fpm_j, sigma_j, ktype='gaussian'):
+    """ Derivative of Kernel functions taking two fingerprint vectors. 
+                
+        
+    """
     # Linear kernel.
     if ktype == 'linear':
         return 0
@@ -37,8 +41,17 @@ def dkernel_dsigma(fp1, fp2, sigma, ktype='gaussian'):
 
     # Gaussian kernel.
     elif ktype == 'gaussian':
-        return (np.exp(-np.abs(fp1 - fp2) ** 2 / (2 * sigma ** 2)
-            ) * (-np.abs(fp1 - fp2) ** 2) / (sigma ** 3) )
+        n=len(fpm_j)
+        gram = np.zeros([n,n])
+        for i, x1 in enumerate(fpm_j):
+            for j, x2 in enumerate(fpm_j):
+                if j >= i:
+                    break
+                d_ij = abs(x1-x2)
+                gram[i,j]=d_ij
+                gram[j,i]=d_ij
+        dk = np.exp(-.5 * gram**2 / (sigma_j**2)) * (gram**2 / (sigma_j**3))
+        return  dk
 
     # Laplacian kernel.
     elif ktype == 'laplacian':
@@ -51,14 +64,13 @@ def dK_dsigma_j(train_fp, sigma, j):
         train_fp: list
             A list of the training fingerprint vectors.
             
-        sigma: list or float
+        sigma: float
             A list of the widths or the j'th width.   
             
         j: int
             index of the width, with repsect to which we will differentiate.
     """
-    dK_j = np.asarray([[dkernel_dsigma(fp1[j], fp2[j], sigma)
-                       for fp1 in train_fp] for fp2 in train_fp])
+    dK_j = dkernel_dsigma(train_fp[:,j], sigma[j])
     return dK_j
 
 def get_dlogp(train_fp, cov, widths, noise, y):
@@ -79,7 +91,7 @@ def get_dlogp(train_fp, cov, widths, noise, y):
     trcinv = sp.linalg.cho_solve((L, True), np.eye(cov.shape[0]))
     dp = []
     for j in range(0,dimsigma):
-        dKdtheta_j = dK_dsigma_j(train_fp, widths[j], j)
+        dKdtheta_j = dkernel_dsigma(train_fp[:,j], widths[j])
         # Compute "0.5 * trace(tmp.dot(K_gradient))" without
         # constructing the full matrix tmp.dot(K_gradient) since only
         # its diagonal is required
