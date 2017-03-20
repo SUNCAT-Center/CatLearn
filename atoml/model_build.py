@@ -173,8 +173,6 @@ class ModelBuilder(object):
                                        test_target=test_target,
                                        feature_names=feature_names)
 
-        exit()
-
         if self.expand:
             train_matrix, feature_names = self.expand_matrix(train_matrix,
                                                              feature_names)
@@ -312,8 +310,6 @@ class ModelBuilder(object):
                                        feature_names=feature_names)
         coefs, linear_error = linear[0][0], linear[1]
         order, feature_names = linear[0][1], linear[0][2]
-
-        print('d', d)
 
         ml, mf = self.lasso_opt(size=d, train_target=train_target,
                                 train_matrix=train_matrix,

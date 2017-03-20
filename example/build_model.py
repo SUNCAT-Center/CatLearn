@@ -74,4 +74,3 @@ if test_model:
 if cleanup:
     os.remove('train_fpv_store.sqlite')
     os.remove('test_fpv_store.sqlite')
-os.remove('ATOMLout.txt')
