@@ -63,7 +63,7 @@ class FitnessPrediction(object):
 
             # Laplacian kernel.
             elif self.ktype == 'laplacian':
-                k = distance.pdist(m1 / self.kwidth, metric='euclidean')
+                k = distance.pdist(m1 / self.kwidth, metric='cityblock')
                 k = distance.squareform(np.exp(-k))
                 np.fill_diagonal(k, 1)
                 return k
@@ -85,7 +85,7 @@ class FitnessPrediction(object):
         # Laplacian kernel.
         elif self.ktype == 'laplacian':
             k = distance.cdist(m1 / self.kwidth, m2 / self.kwidth,
-                               metric='euclidean')
+                               metric='cityblock')
             return np.exp(-k)
 
     def get_covariance(self, train_matrix):
