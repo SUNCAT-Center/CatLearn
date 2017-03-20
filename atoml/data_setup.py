@@ -198,10 +198,9 @@ def target_standardize(target, writeout=False):
     target = np.asarray(target)
 
     data = defaultdict(list)
-    data['mean'] = float(np.mean(target))
-    data['std'] = float(np.std(target))
-    for i in target:
-        data['target'].append((i - data['mean']) / data['std'])
+    data['mean'] = np.mean(target)
+    data['std'] = np.std(target)
+    data['target'] = (target - data['mean']) / data['std']
 
     if writeout:
         write_data_setup(function='target_standardize', data=data)
