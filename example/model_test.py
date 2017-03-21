@@ -19,6 +19,8 @@ from atoml.predict import FitnessPrediction
 from atoml.model_selection import negative_logp
 from atoml.feature_select import clean_zero
 
+from atoml.fpm_operations import cluster_features
+
 # Decide whether to remove output and print graph.
 cleanup = True
 plot = False
@@ -50,27 +52,22 @@ test_fp = c['test']
 train_fp = c['train']
 
 
-def do_predict(train, test):
+def do_predict(train, test, train_target, test_target):
     nfp = normalize(train=train, test=test)
 
     # Do the predictions.
     cvm = krr.get_covariance(train_matrix=nfp['train'])
     cinv = np.linalg.inv(cvm)
-    print('Making the predictions')
     pred = krr.get_predictions(train_fp=nfp['train'],
                                test_fp=nfp['test'],
                                cinv=cinv,
-                               train_target=trainset['target'],
-                               test_target=testset['target'],
+                               train_target=train_target,
+                               test_target=test_target,
                                get_validation_error=True,
                                get_training_error=True)
 
-    # Print the error associated with the predictions.
-    print('Training error:', pred['training_rmse']['average'])
-    print('Model error:', pred['validation_rmse']['average'])
-
     if plot:
-        pred['actual'] = testset['target']
+        pred['actual'] = test_target
         index = [i for i in range(len(test_fp))]
         df = pd.DataFrame(data=pred, index=index)
         with sns.axes_style("white"):
@@ -79,13 +76,43 @@ def do_predict(train, test):
             pred['validation_rmse']['average']))
         plt.show()
 
+    return pred
+
 
 # Set up the prediction routine.
 krr = FitnessPrediction(ktype='gaussian',
                         kwidth=width,
                         regularization=reg)
 
-do_predict(train=train_fp, test=test_fp)
+print('All training data')
+a = do_predict(train=train_fp, test=test_fp, train_target=trainset['target'],
+               test_target=testset['target'])
+
+# Print the error associated with the predictions.
+print('Training error:', a['training_rmse']['average'])
+print('Model error:', a['validation_rmse']['average'])
+
+print('Clustered training data')
+k = 2
+cl = cluster_features(train_matrix=train_fp, train_target=trainset['target'],
+                      k=k, test_matrix=test_fp, test_target=testset['target'])
+
+sp = []
+st = []
+e = 0.
+for i in set(cl['test_order']):
+    s = do_predict(train=cl['train_features'][i],
+                   test=cl['test_features'][i],
+                   train_target=cl['train_target'][i],
+                   test_target=cl['test_target'][i])
+    for j, k in zip(s['prediction'], cl['test_target'][i]):
+        e += (j - k) ** 2
+print((e / len(testset['target'])) ** 0.5)
+
+# plt.scatter(mass, trainset['target'], c=colors)
+# plt.show()
+
+exit()
 
 m = np.shape(train_fp)[1]
 n = len(trainset['target'])
