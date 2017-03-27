@@ -15,9 +15,9 @@ from atoml.model_build import ModelBuilder
 from atoml.database_functions import DescriptorDatabase
 
 # Decide whether to remove output and print graph.
-cleanup = False
-build_db = False
-test_model = True
+cleanup = True
+build_db = True
+test_model = False
 
 mb = ModelBuilder(expand=True, optimize=True, size=None)
 
@@ -45,7 +45,7 @@ if build_db:
                                   sfpv.mass_fpv,
                                   sfpv.composition_fpv])
 
-    mb.from_atoms(test=False, train_atoms=trainset['candidates'],
+    mb.from_atoms(build=True, train_atoms=trainset['candidates'],
                   train_target=trainset['target'],
                   fpv_function=fpvf, test_atoms=testset['candidates'],
                   test_target=testset['target'], feature_names=None)
@@ -66,7 +66,7 @@ if test_model:
     test_target = dd_test.query_db(names=['target']).flatten()
     test_id = dd_test.query_db(names=['uuid']).flatten()
 
-    mb.from_matrix(train_matrix=train_matrix, feature_names=feature_names,
+    mb.build_model(train_matrix=train_matrix, feature_names=feature_names,
                    train_id=train_id, train_target=train_target,
                    test_matrix=test_matrix, test_id=test_id,
                    test_target=test_target)

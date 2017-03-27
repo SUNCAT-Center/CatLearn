@@ -155,8 +155,7 @@ def robust_rank_correlation_screening(target, train_fpv, size=None,
             if np.allclose(d, d[0]):
                 omega.append(0.)
             else:
-                tau = kendalltau(x=d, y=target)[0]
-                omega.append(tau - 0.25)
+                omega.append(kendalltau(x=d, y=target)[0])
     elif corr is 'spearman':
         for d in np.transpose(train_fpv):
             if np.allclose(d, d[0]):
