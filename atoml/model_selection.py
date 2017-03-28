@@ -5,29 +5,26 @@ Created on Fri Nov 18 14:30:20 2016
 @author: mhangaard
 """
 import numpy as np
-import scipy as sp
-from scipy.spatial import distance
+from scipy.linalg import cholesky, cho_solve
 from .predict import FitnessPrediction
 from numpy.core.umath_tests import inner1d
 
-def log_marginal_likelyhood1(cov, cinv, y):
+def log_marginal_likelyhood1(K, cinv, y):
     """ Return the log marginal likelyhood.
     (Equation 5.8 in C. E. Rasmussen and C. K. I. Williams, 2006)
     """
     n = len(y)
     y = np.vstack(y)
-    data_fit = -(np.dot(np.dot(np.transpose(y), cinv), y))
-    L = np.linalg.cholesky(cov)
-    logdetcov = 0
-    for l in range(len(L)):
-        logdetcov += np.log(L[l, l])
-    complexity = -logdetcov
-    normalization = -n*np.log(2*np.pi)
-    p = (data_fit + complexity + normalization)/2.
+    L = cholesky(K, lower=True)
+    a = cho_solve((L, True), y)
+    data_fit = -.5*np.dot(y.T, a)
+    complexity = -np.log(np.diag(L)).sum()      #(A.18) in R. & W.
+    normalization = -.5*n*np.log(2*np.pi)
+    p = (data_fit + complexity + normalization).sum()
     return p
 
-def dkernel_dsigma(fpm_j, width_j, ktype='gaussian'):
-    """ Derivative of Kernel functions taking two fingerprint vectors. 
+def dkernel_dwidth(fpm_j, width_j, ktype='gaussian'):
+    """ Partial derivative of Kernel functions. 
                 
         
     """
@@ -50,14 +47,14 @@ def dkernel_dsigma(fpm_j, width_j, ktype='gaussian'):
                 d_ij = abs(x1-x2)
                 gram[i,j]=d_ij
                 gram[j,i]=d_ij
-        dk = np.exp(-.5 * gram**2 / (width_j**2)) * (gram**2 / (width_j**3))
-        return  dk
+        dkdw_j = np.exp(-.5 * gram**2 / (width_j**2)) * (gram**2 / (width_j**3))
+        return  dkdw_j
 
     # Laplacian kernel.
     elif ktype == 'laplacian':
         raise NotImplementedError('Differentials of Laplacian kernel.')
     
-def dK_dsigma_j(train_fp, widths, j):
+def dK_dwidth_j(train_fp, widths, j):
     """ Returns the partial differential of the covariance matrix with respect
         to the j'th width.
         
@@ -74,40 +71,43 @@ def dK_dsigma_j(train_fp, widths, j):
         width_j = widths
     else:
         width_j = widths[j]
-    dK_j = dkernel_dsigma(train_fp[:,j], width_j)
+    dK_j = dkernel_dwidth(train_fp[:,j], width_j)
     return dK_j
 
-def get_dlogp(train_fp, cov, widths, noise, y):
-    """ Return the derived log marginal likelyhood.
+def get_dlogp(train_fp, K, widths, noise, y):
+    """ Return the gradient of the log marginal likelyhood.
     (Equation 5.9 in C. E. Rasmussen and C. K. I. Williams, 2006)
     
     Input:
         train_fp: n x m matrix
-        cov: n x n positive definite matrix
+        K: n x n positive definite matrix
         widths: vector of length m
         noise: float
         y: vector of length n
     """
-    dimsigma = len(widths)
-    L = sp.linalg.cholesky(cov, lower=True)
-    a = sp.linalg.cho_solve((L, True), y)
-    a2 = np.sum(inner1d(a, a))
-    trcinv = sp.linalg.cho_solve((L, True), np.eye(cov.shape[0]))
+    m = len(widths)
+    n=len(y)
+    L = cholesky(K, lower=True)
+    a = cho_solve((L, True), y) #np.dot(cinv,y)
+    #aa = inner1d(a, a)  #np.dot(a,a.T)
+    aa = np.diag(a**2)
+    Q = aa - cho_solve((L, True), np.eye(n))
     dp = []
-    for j in range(0,dimsigma):
-        dKdtheta_j = dkernel_dsigma(train_fp[:,j], widths[j])
+    for j in range(0,m):
+        dKdtheta_j = dkernel_dwidth(train_fp[:,j], widths[j])
         # Compute "0.5 * trace(tmp.dot(K_gradient))" without
         # constructing the full matrix tmp.dot(K_gradient) since only
         # its diagonal is required
-        dpj = 0.5 * np.sum(inner1d(a2-trcinv, dKdtheta_j))
-        dpj = dpj.sum(-1)
-        dp.append(dpj)
+        dpj = 0.5 * np.sum(inner1d(Q, dKdtheta_j))
+        jacj = dpj.sum(0)
+        dp.append(jacj)
     dKdnoise = np.identity(len(train_fp))
-    # Compute "0.5 * trace(tmp.dot(K_gradient))" without
-    # constructing the full matrix tmp.dot(K_gradient) since only
-    # its diagonal is required
-    dpj = 0.5 * np.sum(inner1d(a2-trcinv, dKdnoise))
-    dpj = dpj.sum(-1)
+    #term1 = np.dot(np.dot(np.dot(np.dot(y.T,cinv),dKdnoise),cinv),y)
+    #term2 = np.sum(inner1d(trcinv,dKdnoise.T))
+    #print(np.shape(term1))
+    #dpj = 0.5 * (term1 - term2)
+    #print(np.shape(dpj))
+    dpj = 0.5 * np.sum(inner1d(Q, dKdnoise))
     dp.append(dpj)
     return np.array(dp)
 
@@ -131,11 +131,11 @@ def negative_logp(theta, train_fp, targets):
     krr = FitnessPrediction(ktype='gaussian', kwidth=sigma,
                             regularization=alpha)
     # Get the covariance matrix.
-    cov = krr.get_covariance(train_fp=train_fp)
+    K = krr.get_covariance(train_fp=train_fp)
     # Invert the covariance matrix.
-    cinv = np.linalg.inv(cov)
+    cinv = np.linalg.inv(K)
     # Get the inference level 1 marginal likelyhood.
-    logp = log_marginal_likelyhood1(cov=cov, cinv=cinv, y=targets)
+    logp = log_marginal_likelyhood1(K=K, cinv=cinv, y=targets)
     return -logp
 
 def negative_dlogp(theta, train_fp, targets):
@@ -151,15 +151,15 @@ def negative_dlogp(theta, train_fp, targets):
 
     Output:
         -dlogp, where dlogp is the the gradient vector of the 
-        log marginal likelyhood.
+        log marginal likelyhood with respect to the hyperparameters.
     """
     # Set up the prediction routine.
-    sigma = theta[:-1]
+    w = theta[:-1]
     noise = theta[-1]
-    krr = FitnessPrediction(ktype='gaussian', kwidth=sigma,
+    krr = FitnessPrediction(ktype='gaussian', kwidth=w,
                             regularization=noise)
     # Get the covariance matrix.
-    cov = krr.get_covariance(train_fp=train_fp)
-    dlogp = get_dlogp(train_fp, cov=cov, widths=sigma, noise=noise, y=targets)
+    K = krr.get_covariance(train_fp=train_fp)
+    dlogp = get_dlogp(train_fp, K=K, widths=w, noise=noise, y=targets)
     neg_dlogp = -dlogp
     return neg_dlogp
