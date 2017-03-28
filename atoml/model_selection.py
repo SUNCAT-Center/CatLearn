@@ -88,27 +88,21 @@ def get_dlogp(train_fp, K, widths, noise, y):
     m = len(widths)
     n=len(y)
     L = cholesky(K, lower=True)
-    a = cho_solve((L, True), y) #np.dot(cinv,y)
-    #aa = inner1d(a, a)  #np.dot(a,a.T)
+    a = cho_solve((L, True), y)
+    C = cho_solve((L, True), np.eye(n))
     aa = np.diag(a**2)
-    Q = aa - cho_solve((L, True), np.eye(n))
+    Q = aa - C
     dp = []
     for j in range(0,m):
         dKdtheta_j = dkernel_dwidth(train_fp[:,j], widths[j])
         # Compute "0.5 * trace(tmp.dot(K_gradient))" without
         # constructing the full matrix tmp.dot(K_gradient) since only
         # its diagonal is required
-        dpj = 0.5 * np.sum(inner1d(Q, dKdtheta_j))
-        jacj = dpj.sum(0)
-        dp.append(jacj)
+        dfit = inner1d(a,inner1d(a.T, dKdtheta_j.T))
+        dcomp = -np.sum(inner1d(C, dKdtheta_j.T))
+        dp.append(0.5*(dfit-dcomp))
     dKdnoise = np.identity(len(train_fp))
-    #term1 = np.dot(np.dot(np.dot(np.dot(y.T,cinv),dKdnoise),cinv),y)
-    #term2 = np.sum(inner1d(trcinv,dKdnoise.T))
-    #print(np.shape(term1))
-    #dpj = 0.5 * (term1 - term2)
-    #print(np.shape(dpj))
-    dpj = 0.5 * np.sum(inner1d(Q, dKdnoise))
-    dp.append(dpj)
+    dp.append(0.5*(np.sum(inner1d(Q, dKdnoise.T))))
     return np.array(dp)
 
 def negative_logp(theta, train_fp, targets):
