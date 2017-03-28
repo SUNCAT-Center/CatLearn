@@ -11,30 +11,39 @@ import numpy as np
 from scipy.optimize import minimize
 
 from atoml.fingerprint_setup import standardize
-from atoml.model_selection import negative_logp
+from atoml.model_selection import negative_logp, negative_dlogp
+import time
 
 # Get the list of fingerprint vectors and normalize them.
 fpm_raw = np.genfromtxt('fpm.txt')
 fpm_train0 = fpm_raw[:, :-1]
-fpm_train = fpm_train0[:, :21]  # [6,7,8,10,11,13,20]]
+fpm_train = fpm_train0[:, :10]  # [6,7,8,10,11,13,20]]
 targets = fpm_raw[:, -1]
 
 m = np.shape(fpm_train)[1]
 n = len(targets)
-nfp = standardize(train=fpm_train)
+nfp = np.array(standardize(train=fpm_train)['train'])
 
 # Hyper parameter starting guesses.
 sigma = np.ones(m)
-sigma *= 0.5
-regularization = 0.1
+sigma *= 3.0
+regularization = 0.03
 theta = np.append(sigma, regularization)
 
 a = (nfp, targets)
 
 # Hyper parameter bounds.
-b = ((1E-9, None), ) * (m+1)
+b = ((1E-12, None), ) * (m+1)
+print('initial logp=', -negative_logp(theta, nfp, targets))
+print('initial dlogp=', -negative_dlogp(theta, nfp, targets))
 print('Optimizing hyperparameters')
-popt = minimize(negative_logp, theta, args=a, bounds=b)
+start = time.time()
+#popt = minimize(negative_logp, theta, args=a, bounds=b, options={'disp': True})
+#popt = minimize(negative_logp, theta, args=a, bounds=b, jac=negative_dlogp, options={'disp': True})
+popt = minimize(negative_logp, theta, args=a, jac=negative_dlogp, options={'disp': True}, method='TNC')
+end = time.time()
 print('Widths aka characteristic lengths = ', popt['x'])
-p = -negative_logp(popt['x'], nfp, targets)
-print(popt)
+print(end - start, 'seconds')
+print('final logp=', -negative_logp(popt['x'], nfp, targets))
+print('final dlogp=', -negative_dlogp(popt['x'], nfp, targets))
+#print(popt)
