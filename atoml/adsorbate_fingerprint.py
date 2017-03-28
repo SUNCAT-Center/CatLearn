@@ -15,8 +15,8 @@ import numpy as np
 import ase.db
 from ase.atoms import string2symbols
 from .db2thermo import db2mol, db2surf, mol2ref, get_refs  # get_formation_energies
-#from ase.data import ground_state_magnetic_moments, covalent_radii
-#from ase.data import atomic_numbers, chemical_symbols
+from ase.data import ground_state_magnetic_moments#, covalent_radii
+from ase.data import atomic_numbers, chemical_symbols
 
 try:
     from mendeleev import element
@@ -52,17 +52,32 @@ def info2primary_index(atoms):
             liste.append([a, m, d])
     L = np.array(liste)
     i = np.argmin(L[:, 2])
-    i_add = L[i, 0]
-    i_surf = L[i, 1]
-    Z_add1 = atoms.numbers[int(L[i, 0])]
-    Z_surf1 = atoms.numbers[int(L[i, 0])]
-    return i_add, i_surf, Z_add1, Z_surf1
+    i_add1 = L[i, 0]
+    i_surf1 = L[i, 1]
+    Z_add1 = atoms.numbers[int(i_add1)]
+    Z_surf1 = atoms.numbers[int(i_surf1)]
+    return i_add1, i_surf1, Z_add1, Z_surf1
 
 class AdsorbateFingerprintGenerator(object):
     def __init__(self, moldb=None, bulkdb=None, slabs=None, parameters=None):
+        """ 
+        Precomputes
+        
+        Input:
+            moldb:  path/filename.db
+            bulkdb: path/filename.db
+            slabs:  path/filename.db
+            parameters: dict with keywords:
+                            vacuum,
+                            layers,
+                            PW,
+                            kpts,
+                            PSP
+        """
         if parameters == None:
             parameters = {'vacuum': 8, 'layers': 5, 'PW': 500, 'kpts': '4x6',
                       'PSP': 'gbrv1.5pbe'}
+        # If molecules are supplied, add their ground state energies to dicts.
         if moldb is not None:
             self.mols = moldb
             self.abinitio_energies, dbids = db2mol(moldb, ['vacuum='+str(parameters['vacuum']),'PW='+str(parameters['PW']), 'PSP='+str(parameters['PSP'])])
@@ -70,6 +85,7 @@ class AdsorbateFingerprintGenerator(object):
         else:
             self.abinitio_energies = {}
             dbids = {}
+        # If bulks are supplied, add their calculated properties to dicts.
         if bulkdb is not None:
             self.bulks = bulkdb
             [self.rho, self.Z, self.eos_B, 
@@ -80,6 +96,8 @@ class AdsorbateFingerprintGenerator(object):
                 self.dbkurt,
                 self.d_atoms] = self.get_bulk()
         self.slabs = slabs
+        # If mols are supplied, calculate adsorbate energies and add them to
+        # dicts. 
         if slabs is not None and moldb is not None:
             surf_energies, surf_dbids = db2surf(slabs, 
                 ['series=slab',
@@ -112,6 +130,8 @@ class AdsorbateFingerprintGenerator(object):
         # self.Ef = get_formation_energies(abinitio_energies, ref_dict)
 
     def db2surf_info(self, selection=[]):  # selection=[]):
+        """ Returns a list of atoms objects including only the most stable 
+          adsorbate state for each key in the dict self.abinitio_energies."""
         c = ase.db.connect(self.slabs)
         s = c.select(selection)
         traj = []
@@ -121,6 +141,10 @@ class AdsorbateFingerprintGenerator(object):
                 continue
             atoms = c.get_atoms(dbid)
             atoms.info['key_value_pairs'] = d.key_value_pairs
+            if not str(d.bulk) == str(d.term):
+                print('Removing overlayer structures!')
+                continue
+            atoms.info['dbid'] = int(d.id)
             atoms.info['add_atoms'] = adds_index(atoms)
             atoms.info['metal_atoms'] = metal_index(atoms)
             i_add1, i_surf1, Z_add1, Z_surf1 = info2primary_index(atoms)
@@ -132,6 +156,7 @@ class AdsorbateFingerprintGenerator(object):
         return traj
 
     def db2atoms_info(self, fname, selection=[]):  # selection=[]):
+        """ Returns a list of atoms objects. """
         c = ase.db.connect(fname)
         s = c.select(selection)
         traj = []
@@ -151,6 +176,9 @@ class AdsorbateFingerprintGenerator(object):
         return traj
 
     def get_bulk(self):
+        """ Returns dictionaries with properties calculated for bulk
+        structures contained in self.bulks.
+        """
         c = ase.db.connect(self.bulks)
         s = c.select()
         Z = {}
@@ -198,6 +226,8 @@ class AdsorbateFingerprintGenerator(object):
         return trajs
 
     def term(self, atoms=None):  # , adds_dict):
+        """ Returns a fingerprint vector with propeties of the element name
+        saved in the atoms.info['key_value_pairs']['term'] """
         if atoms is None:
             return ['rho_vol_term', 'rho_A_term', 'B_eos_term', 
                     'dbcenter_term',
@@ -237,6 +267,8 @@ class AdsorbateFingerprintGenerator(object):
                 ]
     
     def bulk(self, atoms=None):  # , adds_dict):
+        """ Returns a fingerprint vector with propeties of the element name
+        saved in the atoms.info['key_value_pairs']['bulk'] """
         if atoms is None:
             return ['rho_vol_bulk', 'rho_A_bulk', 'B_eos_bulk', 
                     'dbcenter_bulk',
@@ -327,8 +359,9 @@ class AdsorbateFingerprintGenerator(object):
                     'heat_of_formationsurf1',
                     'melting_point_surf1',
                     'boiling_point_surf1',
-                    'thermal_conductivity_surf1',
-                    'specific_heat_surf1', 'en_allen_surf1',
+                    #'thermal_conductivity_surf1',
+                    #'specific_heat_surf1', 
+                    'en_allen_surf1',
                     'en_pauling_surf1', 'atomic_radius_surf1',
                     'vdw_radius_surf1', 'ion_e_surf1',
                     'dbcenter_surf1',
@@ -354,7 +387,7 @@ class AdsorbateFingerprintGenerator(object):
             #Z0 = atoms.numbers[int(L[i, 0])]
             Z0 = int(atoms.info['Z_surf1'])
             mnlv = element(Z0)
-            name=str(mnlv.symbol)
+            name = chemical_symbols[Z0]
             try:
                 dbcenter=float(self.dbcenter[name])
                 dbfilling=float(self.dbfilling[name])
@@ -367,7 +400,7 @@ class AdsorbateFingerprintGenerator(object):
                 dbwidth=np.NaN
                 dbskew=np.NaN
                 dbkurt=np.NaN
-                warnings.warn(name+' has no d-band info.')
+                print(name+' has no d-band info.')
             return [Z0,
                     int(mnlv.period),
                     int(mnlv.group_id),
@@ -376,8 +409,8 @@ class AdsorbateFingerprintGenerator(object):
                     float(mnlv.heat_of_formation),
                     float(mnlv.melting_point),
                     float(mnlv.boiling_point),
-                    float(mnlv.thermal_conductivity),
-                    float(mnlv.specific_heat),
+                    #float(mnlv.thermal_conductivity),
+                    #float(mnlv.specific_heat),
                     float(mnlv.en_allen),
                     float(mnlv.en_pauling),
                     float(mnlv.atomic_radius),
@@ -485,7 +518,7 @@ class AdsorbateFingerprintGenerator(object):
                     'av_heat_of_formation',
                     'av_melting_point',
                     'av_boiling_point',
-                    'av_specific_heat',
+                    #'av_specific_heat',
                     'av_en_allen',
                     'av_en_pauling',
                     'av_ionenergies',
@@ -534,7 +567,7 @@ class AdsorbateFingerprintGenerator(object):
             heat_of_formation=[mnlv0.heat_of_formation]
             melting_point=[mnlv0.melting_point]
             boiling_point=[mnlv0.boiling_point]
-            specific_heat=[mnlv0.specific_heat]
+            #specific_heat=[mnlv0.specific_heat]
             en_allen=[mnlv0.en_allen]
             en_pauling=[mnlv0.en_pauling]
             ionenergies=[mnlv0.ionenergies[1]]
@@ -557,7 +590,7 @@ class AdsorbateFingerprintGenerator(object):
                         dbskew.append(self.dbskew[sym])
                         dbkurt.append(self.dbkurt[sym])
                     heat_of_formation.append(mnlv.heat_of_formation)
-                    specific_heat.append(mnlv.specific_heat)
+                    #specific_heat.append(mnlv.specific_heat)
                     en_allen.append(mnlv.en_allen)
                     en_pauling.append(mnlv.en_pauling)
                     ionenergies.append(mnlv.ionenergies[1])
@@ -574,7 +607,7 @@ class AdsorbateFingerprintGenerator(object):
             av_heat_of_formation = np.average(heat_of_formation)
             av_melting_point = np.average(melting_point)
             av_boiling_point = np.average(boiling_point)
-            av_specific_heat = np.average(specific_heat)            
+            #av_specific_heat = np.average(specific_heat)            
             av_en_allen = np.average(en_allen)
             av_en_pauling = np.average(en_pauling)
             av_ionenergies = np.average(ionenergies)
@@ -591,7 +624,7 @@ class AdsorbateFingerprintGenerator(object):
                     av_heat_of_formation,
                     av_melting_point,
                     av_boiling_point,
-                    av_specific_heat,
+                    #av_specific_heat,
                     av_en_allen,
                     av_en_pauling,
                     av_ionenergies,
