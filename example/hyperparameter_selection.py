@@ -24,9 +24,11 @@ m = np.shape(fpm_train)[1]
 n = len(targets)
 nfp = np.array(standardize(train=fpm_train)['train'])
 
+print(n, 'training examples')
+
 # Hyper parameter starting guesses.
 sigma = np.ones(m)
-sigma *= 3.0
+sigma *= 0.1
 regularization = 0.03
 theta = np.append(sigma, regularization)
 
