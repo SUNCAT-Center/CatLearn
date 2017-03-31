@@ -9,18 +9,19 @@ from scipy.linalg import cholesky, cho_solve
 from .predict import FitnessPrediction
 from numpy.core.umath_tests import inner1d
 
-def log_marginal_likelyhood1(K, cinv, y):
+def log_marginal_likelyhood1(K, y):
     """ Return the log marginal likelyhood.
     (Equation 5.8 in C. E. Rasmussen and C. K. I. Williams, 2006)
     """
     n = len(y)
-    y = np.vstack(y)
+    y = y.reshape([n,1])
+    #print(np.shape(K), np.max(K), np.min(K))
     L = cholesky(K, lower=True)
     a = cho_solve((L, True), y)
-    data_fit = -.5*np.dot(y.T, a)
+    datafit = -.5*np.dot(y.T, a)
     complexity = -np.log(np.diag(L)).sum()      #(A.18) in R. & W.
     normalization = -.5*n*np.log(2*np.pi)
-    p = (data_fit + complexity + normalization).sum()
+    p = (datafit + complexity + normalization).sum()
     return p
 
 def dkernel_dwidth(fpm_j, width_j, ktype='gaussian'):
@@ -87,10 +88,11 @@ def get_dlogp(train_fp, K, widths, noise, y):
     """
     m = len(widths)
     n=len(y)
+    y=y.reshape([n,1])
     L = cholesky(K, lower=True)
     a = cho_solve((L, True), y)
     C = cho_solve((L, True), np.eye(n))
-    aa = np.diag(a**2)
+    aa = a*a.T #inner1d(a,a)
     Q = aa - C
     dp = []
     for j in range(0,m):
@@ -98,11 +100,12 @@ def get_dlogp(train_fp, K, widths, noise, y):
         # Compute "0.5 * trace(tmp.dot(K_gradient))" without
         # constructing the full matrix tmp.dot(K_gradient) since only
         # its diagonal is required
-        dfit = inner1d(a,inner1d(a.T, dKdtheta_j.T))
-        dcomp = -np.sum(inner1d(C, dKdtheta_j.T))
-        dp.append(0.5*(dfit-dcomp))
-    dKdnoise = np.identity(len(train_fp))
-    dp.append(0.5*(np.sum(inner1d(Q, dKdnoise.T))))
+        #dfit = inner1d(aa,dKdtheta_j.T)
+        #dcomp = -np.sum(inner1d(C, dKdtheta_j.T))
+        #dp.append(0.5*(dfit-dcomp))
+        dp.append(0.5*np.sum(inner1d(Q, dKdtheta_j.T)))
+    dKdnoise = np.identity(n)
+    dp.append(0.5*np.sum(inner1d(Q, dKdnoise.T)))
     return np.array(dp)
 
 def negative_logp(theta, train_fp, targets):
@@ -126,10 +129,8 @@ def negative_logp(theta, train_fp, targets):
                             regularization=alpha)
     # Get the covariance matrix.
     K = krr.get_covariance(train_fp=train_fp)
-    # Invert the covariance matrix.
-    cinv = np.linalg.inv(K)
     # Get the inference level 1 marginal likelyhood.
-    logp = log_marginal_likelyhood1(K=K, cinv=cinv, y=targets)
+    logp = log_marginal_likelyhood1(K=K, y=targets)
     return -logp
 
 def negative_dlogp(theta, train_fp, targets):
