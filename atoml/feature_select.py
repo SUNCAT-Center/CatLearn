@@ -10,51 +10,51 @@ from .fingerprint_setup import standardize
 from .output import write_feature_select
 from .predict import get_error
 
-no_sklearn = False
+sk_learn = False
 try:
     from sklearn.linear_model import Lasso
 except ImportError:
-    no_sklearn = True
+    sk_learn = True
 
 
-def lasso(size, target, train, test=None, alpha=1.e-5, max_iter=1e5,
-          test_target=None, steps=None):
-    # NOTE: Try Partial Least Squares Method instead.
+def lasso(size, target, train_matrix, steps=None, alpha=1.e-5, min_alpha=1.e-8,
+          max_alpha=1.e-1, max_iter=1e5, test_matrix=None, test_target=None):
     """ Use the scikit-learn implementation of lasso for feature selection. """
     msg = "Must install scikit-learn to use this function:"
     msg += " http://scikit-learn.org/stable/"
-    assert not no_sklearn, msg
+    assert not sk_learn, msg
 
-    c = clean_zero(train=train, test=test)
-    test_fp = c['test']
-    train_fp = c['train']
+    c = clean_zero(train=train_matrix, test=test_matrix)
+    test_matrix = c['test']
+    train_matrix = c['train']
 
     select = defaultdict(list)
 
     if steps is not None:
-        alpha = alpha * 10
-        for _ in range(steps):
-            alpha = alpha / 2
+        alpha_list = np.linspace(max_alpha, min_alpha, steps)
+        for alpha in alpha_list:
             lasso = Lasso(alpha=alpha, max_iter=max_iter, fit_intercept=True,
                           normalize=True, selection='random')
-            xy_lasso = lasso.fit(train_fp, target)
+            xy_lasso = lasso.fit(train_matrix, target)
             nz = len(xy_lasso.coef_) - (xy_lasso.coef_ == 0.).sum()
-            if test is not None:
-                linear = xy_lasso.predict(test_fp)
-                select['linear_error'].append(
-                    get_error(prediction=linear,
-                              target=test_target)['average'])
-            select['features'].append(nz)
+            if nz not in select['features']:
+                if test_matrix is not None:
+                    linear = xy_lasso.predict(test_matrix)
+                    select['linear_error'].append(
+                        get_error(prediction=linear,
+                                  target=test_target)['average'])
+                select['features'].append(nz)
             if nz >= size:
                 break
-        mi = select['linear_error'].index(min(select['linear_error']))
-        select['min_features'] = select['features'][mi]
+        if 'linear_error' in select:
+            mi = select['linear_error'].index(min(select['linear_error']))
+            select['min_features'] = select['features'][mi]
     else:
         lasso = Lasso(alpha=alpha, max_iter=max_iter, fit_intercept=True,
                       normalize=True, selection='random')
-        xy_lasso = lasso.fit(train_fp, target)
-        if test is not None:
-            linear = xy_lasso.predict(test_fp)
+        xy_lasso = lasso.fit(train_matrix, target)
+        if test_matrix is not None:
+            linear = xy_lasso.predict(test_matrix)
             select['linear_error'].append(
                 get_error(prediction=linear, target=test_target)['average'])
     select['coefs'] = np.abs(xy_lasso.coef_)
@@ -63,11 +63,13 @@ def lasso(size, target, train, test=None, alpha=1.e-5, max_iter=1e5,
     sort_list = [list(i) for i in zip(*sorted(zip(select['coefs'], index),
                                               key=lambda x: x[0],
                                               reverse=True))]
-
+    # NOTE should check that have the desired number of none zero coefficients.
     select['order'] = sort_list[1]
-    select['train_fpv'] = np.delete(train_fp, sort_list[1][size:], axis=1)
-    if test is not None:
-        select['test_fpv'] = np.delete(test_fp, sort_list[1][size:], axis=1)
+    select['train_matrix'] = np.delete(train_matrix, sort_list[1][size:],
+                                       axis=1)
+    if test_matrix is not None:
+        select['test_matrix'] = np.delete(test_matrix, sort_list[1][size:],
+                                          axis=1)
 
     return select
 
@@ -77,28 +79,25 @@ def sure_independence_screening(target, train_fpv, size=None, cleanup=False,
     """ Feature selection based on SIS discussed in Fan, J., Lv, J., J. R.
         Stat. Soc.: Series B, 2008, 70, 849.
 
-        target: list
+        Parameters
+        ----------
+        target : list
             The target values for the training data.
-
-        train_fpv: array
+        train_fpv : array
             The feature matrix for the training data.
-
-        size: int
+        size : int
             Number of features that should be left.
-
-        std: boolean
+        std : boolean
             It is expected that the features and targets have been standardized
             prior to analysis. Automated if True.
-
-        corr: str
+        corr : str
             Correlation coefficient to use.
-
-        cleanup: boolean
+        cleanup : boolean
             Select whether to clean up the feature matrix. Default is False.
     """
     if size is not None:
         msg = 'Too few features avaliable, matrix cannot be reduced.'
-        assert len(train_fpv[0]) >= size, msg
+        assert len(train_fpv[0]) > size, msg
     if cleanup:
         train_fpv = clean_zero(train_fpv)['train']
 
@@ -143,7 +142,7 @@ def robust_rank_correlation_screening(target, train_fpv, size=None,
         """
     if size is not None:
         msg = 'Too few features avaliable, matrix cannot be reduced.'
-        assert len(train_fpv[0]) >= size, msg
+        assert len(train_fpv[0]) > size, msg
     if cleanup:
         train_fpv = clean_zero(train_fpv)['train']
 
@@ -189,18 +188,17 @@ def iterative_screening(target, train_fpv, test_fpv=None, size=None, step=None,
     """ Function to reduce the number of featues in an iterative manner using
         SIS or RRCS.
 
-        step: int
+        Parameters
+        ----------
+        step : int
             Step size by which to reduce the number of features. Default is
             n / log(n).
-
-        method: str
+        method : str
             Specify the correlation method to be used, can be either sis or
             rrcs. Default is sis.
-
-        feature_names: list
+        feature_names : list
             List of the feature names to be track useful features.
-
-        cleanup: boolean
+        cleanup : boolean
             Select whether to clean up the feature matrix. Default is True.
     """
     if cleanup:
@@ -210,39 +208,52 @@ def iterative_screening(target, train_fpv, test_fpv=None, size=None, step=None,
             test_fpv = c['test']
         else:
             train_fpv = clean_zero(train_fpv)['train']
+
+    n = np.shape(train_fpv)[0]
+    f = np.shape(train_fpv)[1]
+
     # Assign default values for number of features to return and step size.
     if size is None:
-        size = len(train_fpv)
-    msg = 'Not enough features to perform iterative screening, reduce size.'
-    assert len(train_fpv[0]) > size, msg
+        size = n
+    msg = 'Not enough features to perform iterative screening, must be two '
+    msg += 'times as many features compared to the size.'
+    assert f > 2 * size, msg
     if step is None:
-        step = round(len(train_fpv) / log(len(train_fpv)))
+        step = round(n / log(n))
     msg = 'Step size is too large, reduce it.'
     assert step < size
 
     select = defaultdict(list)
-    ordering = list(range(len(train_fpv[0])))
-    accepted = []
+    ordering = list(range(f))
+    rejected = ordering
     keep_train = train_fpv
 
     # Initiate the feature reduction.
     if method is 'sis':
         screen = sure_independence_screening(target=target,
-                                             train_fpv=train_fpv, size=step)
+                                             train_fpv=train_fpv, size=size)
     elif method is 'rrcs':
         screen = robust_rank_correlation_screening(target=target,
                                                    train_fpv=train_fpv,
-                                                   size=step, corr=corr)
-    correlation = [screen['ordered_corr'][i] for i in screen['accepted']]
-    accepted += [ordering[i] for i in screen['accepted']]
-    ordering = [ordering[i] for i in screen['rejected']]
-    reduced_fpv = np.delete(train_fpv, screen['rejected'], axis=1)
-    train_fpv = np.delete(train_fpv, screen['accepted'], axis=1)
+                                                   size=size, corr=corr)
+    screen_matrix = np.delete(train_fpv, screen['rejected'], axis=1)
 
+    # Do LASSO down to step size.
+    lr = lasso(size=step, target=target, train_matrix=screen_matrix,
+               min_alpha=1.e-10, max_alpha=5.e-1, max_iter=1e5, steps=500)
+    reduced_fpv = lr['train_matrix']
+    sis_accept = [screen['accepted'][i] for i in lr['order'][:step]]
+    accepted = [ordering[i] for i in sis_accept]
+    train_fpv = np.delete(train_fpv, accepted, axis=1)
+    print('start', len(rejected), len(accepted))
+    for i in accepted:
+        rejected.remove(i)
+    print('finish', len(rejected))
     # Iteratively reduce the remaining number of features by the step size.
     while len(reduced_fpv[0]) < size:
         if size - len(reduced_fpv[0]) < step:
             step = size - len(reduced_fpv[0])  # Calculate the remainder.
+            print(step)
         # Calculate the residual for the remaining features.
         response = []
         for d in np.transpose(train_fpv):
@@ -254,30 +265,36 @@ def iterative_screening(target, train_fpv, test_fpv=None, size=None, step=None,
         # Do screening analysis on the residuals.
         if method is 'sis':
             screen = sure_independence_screening(target=target,
-                                                 train_fpv=response,
-                                                 size=step)
+                                                 train_fpv=train_fpv,
+                                                 size=size)
         elif method is 'rrcs':
             screen = robust_rank_correlation_screening(target=target,
-                                                       train_fpv=response,
-                                                       size=step, corr=corr)
-        # Keep track of accepted and rejected features.
-        correlation += [screen['ordered_corr'][i] for i in screen['accepted']]
-        accepted += [ordering[i] for i in screen['accepted']]
-        ordering = [ordering[i] for i in screen['rejected']]
-        new_fpv = np.delete(train_fpv, screen['rejected'], axis=1)
-        reduced_fpv = np.concatenate((reduced_fpv, new_fpv), axis=1)
-        train_fpv = np.delete(train_fpv, screen['accepted'], axis=1)
-    correlation += [screen['ordered_corr'][i] for i in screen['rejected']]
+                                                       train_fpv=train_fpv,
+                                                       size=size, corr=corr)
+        screen_matrix = np.delete(train_fpv, screen['rejected'], axis=1)
+
+        # Do LASSO down to step size on remaining features.
+        lr = lasso(size=step, target=target, train_matrix=screen_matrix,
+                   min_alpha=1.e-10, max_alpha=5.e-1, max_iter=1e5, steps=500)
+        reduced_fpv = np.concatenate((reduced_fpv, lr['train_matrix']), axis=1)
+        sis_accept = [screen['accepted'][i] for i in lr['order'][:step]]
+        accepted += [ordering[i] for i in sis_accept]
+        train_fpv = np.delete(train_fpv, accepted, axis=1)
+        print('start', len(rejected), len(rejected))
+        print(rejected)
+        exit()
+        for i in accepted:
+            rejected.remove(i)
+        print('finish', len(rejected))
 
     if test_fpv is not None:
-        select['test_fpv'] = np.delete(test_fpv, ordering, axis=1)
+        select['test_fpv'] = np.delete(test_fpv, rejected, axis=1)
     if feature_names is not None:
-        select['names'] = list(np.delete(feature_names, ordering, axis=0))
+        select['names'] = list(np.delete(feature_names, rejected, axis=0))
 
-    select['correlation'] = correlation
     select['accepted'] = accepted
-    select['rejected'] = ordering
-    select['train_fpv'] = np.delete(keep_train, ordering, axis=1)
+    select['rejected'] = rejected
+    select['train_fpv'] = np.delete(keep_train, rejected, axis=1)
 
     if writeout:
         write_feature_select(function='iterative_screening', data=select)
@@ -289,10 +306,11 @@ def pca(components, train_fpv, test_fpv=None, cleanup=False, scale=False,
         writeout=False):
     """ Principal component analysis.
 
-        components: int
+        Parameters
+        ----------
+        components : int
             Number of principal components to transform the feature set by.
-
-        test_fpv: array
+        test_fpv : array
             The feature matrix for the testing data.
     """
     data = defaultdict(list)

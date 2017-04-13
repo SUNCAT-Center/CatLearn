@@ -1,4 +1,9 @@
-""" Predictive KRR functions. """
+""" Functions to make predictions based on Gaussian Processes machine learning
+    model.
+"""
+from __future__ import absolute_import
+from __future__ import division
+
 import numpy as np
 from scipy.spatial import distance
 from collections import defaultdict
@@ -11,25 +16,23 @@ class FitnessPrediction(object):
     """ Kernel ridge regression functions for the machine learning. This can be
         used to predict the fitness of an atoms object.
 
-        ktype: string
+        Parameters
+        ----------
+        ktype : string
             The kernel type, several have been pre-defined. Default is the
             Gaussian kernel.
-
-        kwidth: float or list
+        kwidth : float or list
             The kernel width, required for a number of the kernel types. If a
             float is supplied it is converted to a d-length array, containing a
             width for each descriptor. Default is 0.5.
-
-        kfree: float
+        kfree : float
             Free parameter for the polynomial kernel, giving trading off for
             the influence of higher-order and lower-order terms in the
             polynomial. Default is homogeneous (c=0).
-
-        kdegree: float
+        kdegree : float
             Degree parameter for the polynomial kernel. Default is quadratic
             (d=2).
-
-        regularization: float
+        regularization : float
             The regularization strength (smoothing function) applied to the
             kernel matrix.
     """
@@ -43,7 +46,19 @@ class FitnessPrediction(object):
         self.regularization = regularization
 
     def kernel(self, m1, m2=None):
-        """ Kernel functions taking n x d feature matrix. """
+        """ Kernel functions taking n x d feature matrix.
+
+            Parameters
+            ----------
+            m1 : array
+                Feature matrix for training (or test) data.
+            m2 : array
+                Feature matrix for test data.
+
+            Returns
+            -------
+            Kernelized representation of the feature space as array.
+        """
         if m2 is None:
             # Linear kernel.
             if self.ktype == 'linear':
@@ -91,7 +106,9 @@ class FitnessPrediction(object):
     def get_covariance(self, train_matrix):
         """ Returns the covariance matrix between training dataset.
 
-            train_matrix: list
+            Parameters
+            ----------
+            train_matrix : list
                 A list of the training fingerprint vectors.
         """
         if type(self.kwidth) is float:
@@ -277,10 +294,11 @@ def get_error(prediction, target, cost='squared', epsilon=None):
     """ Returns the error for predicted data relative to target data. Discussed
         in: Rosasco et al, Neural Computation, (2004), 16, 1063-1076.
 
-        prediction: list
+        Parameters
+        ----------
+        prediction : list
             A list of predicted values.
-
-        target: list
+        target : list
             A list of target values.
     """
     msg = 'Something has gone wrong and there are '

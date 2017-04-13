@@ -8,6 +8,8 @@ from .fpm_operations import (get_order_2, get_order_2ab, get_ablog,
                              get_div_order_2, get_labels_order_2,
                              get_labels_order_2ab, get_labels_ablog)
 from .feature_select import iterative_screening, pca, lasso, clean_zero
+from .feature_select import robust_rank_correlation_screening as rr_screen
+from .feature_select import sure_independence_screening as sure_screen
 from .fingerprint_setup import standardize
 from .predict import FitnessPrediction
 from .model_selection import negative_logp
@@ -159,7 +161,8 @@ class ModelBuilder(object):
                                   feature_names=feature_names,
                                   train_id=train_id, train_target=train_target,
                                   test_matrix=test_matrix, test_id=test_id,
-                                  test_target=test_target, limit=7)
+                                  test_target=test_target,
+                                  limit=np.shape(train_matrix)[0])
 
         if self.expand:
             train_matrix, feature_names = self.expand_matrix(train_matrix,
@@ -189,7 +192,8 @@ class ModelBuilder(object):
                                             train_target=train_target,
                                             test_matrix=test_matrix,
                                             test_id=test_id,
-                                            test_target=test_target, limit=40)
+                                            test_target=test_target,
+                                            limit=np.shape(train_matrix)[0])
 
     def build_model(self, train_matrix, train_target, feature_names=None,
                     train_id=None, test_matrix=None, test_id=None,
@@ -319,6 +323,8 @@ class ModelBuilder(object):
                                 feature_names=feature_names)
             train_matrix, test_matrix, feature_names = sf
 
+        print(len(feature_names))
+
         # Find importance of features andtrain a ridge regression model.
         linear = self.ridge_regression(train_matrix=train_matrix,
                                        train_target=train_target,
@@ -339,7 +345,7 @@ class ModelBuilder(object):
 
         if self.optimize:
             if limit is None:
-                limit = d
+                limit = n
             best_p1 = float('inf')
             for s in range(1, limit + 1):
                 # remove_features = order[s:]
@@ -375,31 +381,50 @@ class ModelBuilder(object):
         if test_matrix is not None:
             test_matrix = np.delete(test_matrix, remove_features, axis=1)
 
+        print(d, limit, np.shape(train_matrix), np.shape(test_matrix))
+
         return feature_names, train_matrix, test_matrix
 
     def screening(self, train_matrix, train_target, feature_names,
                   test_matrix=None, test_target=None):
-        """ Function to perform the iterative screening. """
+        """ Function to perform the sure screening. If the number of features
+            is greater than twize the size of data, the iterative function is
+            used. """
         # Use correlation screening to reduce features down to number
         # of data.
-        d = len(train_matrix[1])
-        n = len(train_matrix)
+        n = np.shape(train_matrix)[0]
+        d = np.shape(train_matrix)[1]
         s = int(round(log(d/n)**0.5, 0))
         if s == 0:
             s = 1
-        itred = iterative_screening(target=train_target,
-                                    train_fpv=train_matrix,
-                                    test_fpv=test_matrix, size=n, step=s,
-                                    method=self.screening_method,
-                                    corr=self.screening_correlation,
-                                    feature_names=feature_names)
-        # Update the feature matrix.
-        train_matrix = itred['train_fpv']
-        if test_matrix is not None:
-            test_matrix = itred['test_fpv']
-        feature_names = itred['names']
 
-        return train_matrix, test_matrix, feature_names
+        if d > 2 * n:
+            screen = iterative_screening(target=train_target,
+                                         train_fpv=train_matrix,
+                                         test_fpv=test_matrix, size=n, step=s,
+                                         method=self.screening_method,
+                                         corr=self.screening_correlation,
+                                         feature_names=feature_names,
+                                         cleanup=False)
+        else:
+            if self.screening_method is 'rrcs':
+                screen = rr_screen(target=train_target, train_fpv=train_matrix,
+                                   size=n, corr=self.screening_correlation,
+                                   cleanup=False, writeout=False)
+            elif self.screening_method is 'sis':
+                screen = sure_screen(target=train_target,
+                                     train_fpv=train_matrix, size=n,
+                                     cleanup=False, writeout=False)
+
+        # Update the feature matrix.
+        train_matrix = np.delete(train_matrix, screen['rejected'], axis=1)
+        if test_matrix is not None:
+            test_matrix = np.delete(test_matrix, screen['rejected'], axis=1)
+        feature_names = list(np.delete(feature_names, screen['rejected'],
+                                       axis=0))
+
+        print('in screening routine', np.shape(train_matrix), len(screen['rejected']))
+        return np.asarray(train_matrix), np.asarray(test_matrix), feature_names
 
     def pca_opt(self, max_comp, train_matrix, test_matrix, train_target,
                 test_target):
@@ -475,8 +500,8 @@ class ModelBuilder(object):
     def lasso_opt(self, size, train_target, train_matrix, test_matrix=None,
                   test_target=None, alpha=1.e-5, max_iter=1e5, steps=None):
         """ Function to perform lasso selection of features. """
-        las = lasso(size=size, target=train_target, train=train_matrix,
-                    test=test_matrix, alpha=alpha, max_iter=max_iter,
+        las = lasso(size=size, target=train_target, train_matrix=train_matrix,
+                    test_matrix=test_matrix, alpha=alpha, max_iter=max_iter,
                     test_target=test_target, steps=steps)
         ml = min(las['linear_error'])
         mf = las['min_features']
