@@ -8,3 +8,5 @@
 
 *   When new functions are added, tests should be written and added to the CI
     script.
+
+*   Should use NumPy style docstrings.
