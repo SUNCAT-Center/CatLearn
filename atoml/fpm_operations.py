@@ -18,21 +18,32 @@ def triangular(n):
 
 def do_sis(X, y, size=None, increment=1):
     """ function to narrow down a list of descriptors based on sure
-    independence screening.
-    Input:
-        X: n x m matrix
-        y: length n vector
-        l: length m list of strings (optional)
-        size: integer (optional)
-        increment: integeer (optional)
+        independence screening.
 
-    Output:
-        l: list of s surviving indices.
+        Parameters
+        ----------
+        X : array
+            n x m matrix
+        y : list
+            Length n vector
+        l : list
+            Length m list of strings (optional)
+        size : integer
+            (optional)
+        increment : integer
+            (optional)
 
-    Example:
-        l = do_sis(X,y)
-        X[:,l]
-        will produce the fingerprint matrix using only surviving descriptors.
+        Returns
+        -------
+        l : list
+            List of s surviving indices.
+
+        Example
+        -------
+            l = do_sis(X,y)
+            X[:,l]
+            will produce the fingerprint matrix using only surviving
+            descriptors.
     """
     shape = np.shape(X)
     l = np.arange(shape[1])
@@ -47,12 +58,17 @@ def do_sis(X, y, size=None, increment=1):
 
 
 def get_order_2(A):
-    """Get all combinations x_ij = x_i * x_j, where x_i,j are features.
-    The sorting order in dimension 0 is preserved.
-    Input)
-        A: nxm matrix, where n is the number of training examples and
-        m is the number of features.
-    Output)
+    """ Get all combinations x_ij = x_i * x_j, where x_i,j are features. The
+        sorting order in dimension 0 is preserved.
+
+        Parameters
+        ----------
+        A : array
+            n x m matrix, where n is the number of training examples and m is
+            the number of features.
+
+        Returns
+        -------
         n x triangular(m) matrix
     """
     shapeA = np.shape(A)
@@ -67,13 +83,18 @@ def get_order_2(A):
 
 
 def get_div_order_2(A):
-    """Get all combinations x_ij = x_i / x_j, where x_i,j are features.
-    The sorting order in dimension 0 is preserved. If a value is 0,
-    Inf is returned.
-    Input)
-        A: nxm matrix, where n is the number of training examples and
-        m is the number of features.
-    Output)
+    """ Get all combinations x_ij = x_i / x_j, where x_i,j are features. The
+        sorting order in dimension 0 is preserved. If a value is 0, Inf is
+        returned.
+
+        Parameters
+        ----------
+        A : array
+            n x m matrix, where n is the number of training examples and m is
+            the number of features.
+
+        Returns
+        -------
         n x m**2 matrix
     """
     shapeA = np.shape(A)
@@ -89,10 +110,15 @@ def get_div_order_2(A):
 
 
 def get_labels_order_2(l, div=False):
-    """Get all combinations ij, where i,j are feature labels.
-    Input)
-        x: length m vector, where m is the number of features.
-    Output)
+    """ Get all combinations ij, where i,j are feature labels.
+
+        Parameters
+        ----------
+        x : list
+            Length m vector, where m is the number of features.
+
+        Returns
+        -------
         m**2 vector or triangular(m) vector
     """
     L = len(l)
@@ -111,16 +137,20 @@ def get_labels_order_2(l, div=False):
 
 
 def get_order_2ab(A, a, b):
-    """Get all combinations x_ij = x_i*a * x_j*b, where x_i,j are features.
-    The sorting order in dimension 0 is preserved.
-    Input)
-        A: nxm matrix, where n is the number of training examples and
-        m is the number of features.
+    """ Get all combinations x_ij = x_i*a * x_j*b, where x_i,j are features. The
+        sorting order in dimension 0 is preserved.
 
-        a: float
+        Parameters
+        ----------
+        A : array
+            n x m matrix, where n is the number of training examples and m is
+            the number of features.
+        a : float
 
-        b: float
-    Output)
+        b : float
+
+        Returns
+        -------
         n x triangular(m) matrix
     """
     shapeA = np.shape(A)
@@ -135,10 +165,15 @@ def get_order_2ab(A, a, b):
 
 
 def get_labels_order_2ab(l, a, b):
-    """Get all combinations ij, where i,j are feature labels.
-    Input)
-        x: length m vector, where m is the number of features.
-    Output)
+    """ Get all combinations ij, where i,j are feature labels.
+
+        Parameters
+        ----------
+        x : list
+            Length m vector, where m is the number of features.
+
+        Returns
+        -------
         m**2 vector or triangular(m) vector
     """
     L = len(l)
@@ -151,21 +186,25 @@ def get_labels_order_2ab(l, a, b):
 
 
 def get_ablog(A, a, b):
-    A
-    """Get all combinations x_ij = a*log(x_i) + b*log(x_j),
-    where x_i,j are features.
-    The sorting order in dimension 0 is preserved.
-    Input)
-        A: nxm matrix, where n is the number of training examples and
-        m is the number of features.
+    """ Get all combinations x_ij = a*log(x_i) + b*log(x_j), where x_i,j are
+        features. The sorting order in dimension 0 is preserved.
 
-        a: float
+        Parameters
+        ----------
+        A : array
+            An n x m matrix, where n is the number of training examples and
+            m is the number of features.
+        a : float
 
-        b: float
-    Output)
+        b : float
+
+        Returns
+        -------
         n x triangular(m) matrix
     """
     shapeA = np.shape(A)
+    shift = np.abs(np.min(A, axis=0)) + 1.
+    A += shift
     nfi = 0
     new_features = np.zeros([shapeA[0], triangular(shapeA[1])])
     for f1 in range(shapeA[1]):
@@ -177,11 +216,16 @@ def get_ablog(A, a, b):
 
 
 def get_labels_ablog(l, a, b):
-    """Get all combinations ij, where i,j are feature labels.
-    Input)
-        x: length m vector, where m is the number of features.
-    Output)
-        m**2 vector or triangular(m) vector
+    """ Get all combinations ij, where i,j are feature labels.
+
+        Parameters
+        ----------
+        a : float
+        b : float
+
+        Returns
+        -------
+        m ** 2 vector or triangular(m) vector
     """
     L = len(l)
     new_features = []
@@ -197,18 +241,17 @@ def fpmatrix_split(X, nsplit, fix_size=None, replacement=False):
     """ Routine to split feature matrix and return sublists. This can be
         useful for bootstrapping, LOOCV, etc.
 
-        nsplit: int
+        Parameters
+        ----------
+        nsplit : int
             The number of bins that data should be devided into.
-
-        fix_size: int
-            Define a fixed sample size, e.g. nsplit=5 and fix_size=100,
-            this generate 5 x 100 data split. Default is None meaning all
-            avaliable data is divided nsplit times.
-
-        replacement: boolean
-            Set to true if samples are to be generated with replacement
-            e.g. the same candidates can be in samles multiple times.
-            Default is False.
+        fix_size : int
+            Define a fixed sample size, e.g. nsplit=5 fix_size=100, generates
+            5 x 100 data split. Default is None, all avaliable data is divided
+            nsplit times.
+        replacement : boolean
+            Set true to generate samples with replacement e.g. a candidate can
+            be in multiple samles. Default is False.
     """
     if fix_size is not None:
         msg = 'Cannot divide dataset in this way, number of candidates is '
