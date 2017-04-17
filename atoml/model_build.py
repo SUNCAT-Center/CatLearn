@@ -145,12 +145,16 @@ class ModelBuilder(object):
                           table='OriginalFeatureSpace')
 
         if build:
+            limit = np.shape(train_matrix)[0]
+            if np.shape(train_matrix)[1] < limit:
+                print('Initial model will rank all features')
+                limit = np.shape(train_matrix)[1]
             im = self.build_model(train_matrix=train_matrix,
                                   feature_names=feature_names,
                                   train_id=train_id, train_target=train_target,
                                   test_matrix=test_matrix, test_id=test_id,
                                   test_target=test_target,
-                                  limit=np.shape(train_matrix)[0])
+                                  limit=limit)
 
         if self.expand:
             train_matrix, feature_names = self.expand_matrix(train_matrix,

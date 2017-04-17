@@ -294,6 +294,7 @@ def iterative_screening(target, train_fpv, test_fpv=None, size=None, step=None,
         reduced_fpv = np.concatenate((reduced_fpv, lr['train_matrix']), axis=1)
         sis_accept = [screen['accepted'][i] for i in lr['order'][:step]]
         new_accepted = [ordering[i] for i in sis_accept]
+        new_accepted.sort(reverse=True)
         train_fpv = np.delete(train_fpv, new_accepted, axis=1)
         for i in new_accepted:
             del rejected[i]
