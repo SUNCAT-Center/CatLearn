@@ -221,19 +221,20 @@ def iterative_screening(target, train_fpv, test_fpv=None, size=None, step=None,
     f = np.shape(train_fpv)[1]
 
     select = defaultdict(list)
-    ordering = list(range(f))
-    rejected = ordering
-    keep_train = train_fpv
+    rejected = list(range(f))
+    accepted = []
 
     zd = []
     if cleanup:
         c = clean_zero(train=train_fpv, test=test_fpv)
         train_fpv = c['train']
-        test_fpv = c['test']
         if 'index' in c:
             zd = c['index']
+            zd.sort(reverse=True)
             for i in zd:
                 del rejected[i]
+
+    keep_train = train_fpv
 
     # Assign default values for number of features to return and step size.
     if size is None:
@@ -259,11 +260,17 @@ def iterative_screening(target, train_fpv, test_fpv=None, size=None, step=None,
     # Do LASSO down to step size.
     lr = lasso(size=step, target=target, train_matrix=screen_matrix,
                min_alpha=1.e-10, max_alpha=5.e-1, max_iter=1e5, steps=500)
-    reduced_fpv = lr['train_matrix']
-    accepted = [screen['accepted'][i] for i in lr['order'][:step]]
-    train_fpv = np.delete(train_fpv, accepted, axis=1)
-    for i in accepted:
+
+    # Sort all new ordering of accepted and rejected features.
+    sis_accept = [screen['accepted'][i] for i in lr['order'][:step]]
+    sis_accept.sort(reverse=True)
+    for i in sis_accept:
+        accepted.append(rejected[i])
         del rejected[i]
+
+    # Create new active feature matrix.
+    train_fpv = np.delete(keep_train, accepted, axis=1)
+    reduced_fpv = np.delete(keep_train, rejected, axis=1)
 
     # Iteratively reduce the remaining number of features by the step size.
     while len(reduced_fpv[0]) < size:
@@ -273,8 +280,8 @@ def iterative_screening(target, train_fpv, test_fpv=None, size=None, step=None,
         response = []
         for d in np.transpose(train_fpv):
             for a in np.transpose(reduced_fpv):
-                d = (d - np.dot(a, np.dot(d, a))) / (np.linalg.norm(a) ** 2)
-            response.append(d)
+                r = (d - np.dot(a, np.dot(d, a))) / (np.linalg.norm(a) ** 2)
+            response.append(r)
         response = np.transpose(response)
 
         # Do screening analysis on the residuals.
@@ -291,14 +298,17 @@ def iterative_screening(target, train_fpv, test_fpv=None, size=None, step=None,
         # Do LASSO down to step size on remaining features.
         lr = lasso(size=step, target=target, train_matrix=screen_matrix,
                    min_alpha=1.e-10, max_alpha=5.e-1, max_iter=1e5, steps=500)
-        reduced_fpv = np.concatenate((reduced_fpv, lr['train_matrix']), axis=1)
+
+        # Sort all new ordering of accepted and rejected features.
         sis_accept = [screen['accepted'][i] for i in lr['order'][:step]]
-        new_accepted = [ordering[i] for i in sis_accept]
-        new_accepted.sort(reverse=True)
-        train_fpv = np.delete(train_fpv, new_accepted, axis=1)
-        for i in new_accepted:
+        sis_accept.sort(reverse=True)
+        for i in sis_accept:
+            accepted.append(rejected[i])
             del rejected[i]
-        accepted += new_accepted
+
+        # Create new active feature matrix.
+        train_fpv = np.delete(keep_train, accepted, axis=1)
+        reduced_fpv = np.delete(keep_train, rejected, axis=1)
 
     # Add on index of zero difference features removed at the start.
     rejected += zd
@@ -310,7 +320,7 @@ def iterative_screening(target, train_fpv, test_fpv=None, size=None, step=None,
 
     select['accepted'] = accepted
     select['rejected'] = rejected
-    select['train_fpv'] = np.delete(keep_train, rejected, axis=1)
+    select['train_fpv'] = reduced_fpv
     select['names'] = feature_names
 
     if writeout:
