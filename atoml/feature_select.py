@@ -17,9 +17,34 @@ except ImportError:
     sk_learn = True
 
 
-def lasso(size, target, train_matrix, steps=None, alpha=1.e-5, min_alpha=1.e-8,
+def lasso(size, target, train_matrix, steps=None, alpha=None, min_alpha=1.e-8,
           max_alpha=1.e-1, max_iter=1e5, test_matrix=None, test_target=None):
-    """ Use the scikit-learn implementation of lasso for feature selection. """
+    """ Use the scikit-learn implementation of lasso for feature selection. All
+        features are ordered according to they corresponding coefficients.
+
+        Parameters
+        ----------
+        size : int
+            Number of features that should be returned.
+        target : list
+            List containg the target values.
+        train_matrix : array
+            An n x f array containg the training features.
+        steps : int
+            Number of steps to be taken in the penalty function.
+        alpha : float
+            Single penalty without looping over a range.
+        min_alpha : float
+            Starting penalty when searching over range. Default is 1.e-8.
+        max_alpha : float
+            Final penalty when searching over range. Default is 1.e-1.
+        max_iter : float
+            Maximum number of iterations taken minimizing the lasso function.
+        test_matrix : array
+            An n x f array containg the test features.
+        test_target : list
+            List containg the actual target values for testing.
+    """
     msg = "Must install scikit-learn to use this function:"
     msg += " http://scikit-learn.org/stable/"
     assert not sk_learn, msg
@@ -81,7 +106,7 @@ def sure_independence_screening(target, train_fpv, size=None, writeout=False):
         train_fpv : array
             The feature matrix for the training data.
         size : int
-            Number of features that should be left.
+            Number of features that should be returned.
     """
     if size is not None:
         msg = 'Too few features avaliable, matrix cannot be reduced.'
@@ -128,12 +153,10 @@ def robust_rank_correlation_screening(target, train_fpv, size=None,
         train_fpv : array
             The feature matrix for the training data.
         size : int
-            Number of features that should be left.
+            Number of features that should be returned.
         corr : str
             Select correlation function, either kendall or spearman. Default is
             kendall.
-        cleanup : boolean
-            Select whether to clean up the feature matrix. Default is False.
     """
     if size is not None:
         msg = 'Too few features avaliable, matrix cannot be reduced.'
