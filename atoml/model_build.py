@@ -398,11 +398,11 @@ class ModelBuilder(object):
             if self.screening_method is 'rrcs':
                 screen = rr_screen(target=train_target, train_fpv=train_matrix,
                                    size=n, corr=self.screening_correlation,
-                                   cleanup=False, writeout=False)
+                                   writeout=False)
             elif self.screening_method is 'sis':
                 screen = sure_screen(target=train_target,
                                      train_fpv=train_matrix, size=n,
-                                     cleanup=False, writeout=False)
+                                     writeout=False)
 
         # Update the feature matrix.
         train_matrix = np.delete(train_matrix, screen['rejected'], axis=1)

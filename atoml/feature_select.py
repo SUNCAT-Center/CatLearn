@@ -18,17 +18,11 @@ except ImportError:
 
 
 def lasso(size, target, train_matrix, steps=None, alpha=1.e-5, min_alpha=1.e-8,
-          max_alpha=1.e-1, max_iter=1e5, test_matrix=None, test_target=None,
-          cleanup=False):
+          max_alpha=1.e-1, max_iter=1e5, test_matrix=None, test_target=None):
     """ Use the scikit-learn implementation of lasso for feature selection. """
     msg = "Must install scikit-learn to use this function:"
     msg += " http://scikit-learn.org/stable/"
     assert not sk_learn, msg
-
-    if cleanup:
-        c = clean_zero(train=train_matrix, test=test_matrix)
-        test_matrix = c['test']
-        train_matrix = c['train']
 
     select = defaultdict(list)
 
@@ -76,8 +70,7 @@ def lasso(size, target, train_matrix, steps=None, alpha=1.e-5, min_alpha=1.e-8,
     return select
 
 
-def sure_independence_screening(target, train_fpv, size=None, cleanup=False,
-                                writeout=False):
+def sure_independence_screening(target, train_fpv, size=None, writeout=False):
     """ Feature selection based on SIS discussed in Fan, J., Lv, J., J. R.
         Stat. Soc.: Series B, 2008, 70, 849.
 
@@ -89,14 +82,10 @@ def sure_independence_screening(target, train_fpv, size=None, cleanup=False,
             The feature matrix for the training data.
         size : int
             Number of features that should be left.
-        cleanup : boolean
-            Select whether to clean up the feature matrix. Default is False.
     """
     if size is not None:
         msg = 'Too few features avaliable, matrix cannot be reduced.'
         assert len(train_fpv[0]) > size, msg
-    if cleanup:
-        train_fpv = clean_zero(train_fpv)['train']
 
     select = defaultdict(list)
 
@@ -128,8 +117,7 @@ def sure_independence_screening(target, train_fpv, size=None, cleanup=False,
 
 
 def robust_rank_correlation_screening(target, train_fpv, size=None,
-                                      corr='kendall', cleanup=False,
-                                      writeout=False):
+                                      corr='kendall', writeout=False):
     """ Feature selection based on rank correlation coefficients. This can
         either be in the form of Kendall or Spearman's rank correlation.
 
@@ -150,8 +138,6 @@ def robust_rank_correlation_screening(target, train_fpv, size=None,
     if size is not None:
         msg = 'Too few features avaliable, matrix cannot be reduced.'
         assert len(train_fpv[0]) > size, msg
-    if cleanup:
-        train_fpv = clean_zero(train_fpv)['train']
 
     select = defaultdict(list)
 
