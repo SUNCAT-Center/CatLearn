@@ -34,15 +34,23 @@ class FitnessPrediction(object):
         regularization : float
             The regularization strength (smoothing function) applied to the
             kernel matrix.
+        combine_kernels : string
+            Define how to combine kernels, can be addative or dot product.
+        kernel_list : dict
+            List of functions when combining kernels, each coupled with a List
+            of features on which the given kernel should act. Example:
+            {'gaussian': [1, 2, 5], 'linear': [0, 3, 4]}
     """
 
     def __init__(self, ktype='gaussian', kwidth=0.5, kfree=0., kdegree=2.,
-                 regularization=None):
+                 regularization=None, combine_kernels=None, kernel_list=None):
         self.ktype = ktype
         self.kwidth = kwidth
         self.kfree = kfree
         self.kdegree = kdegree
         self.regularization = regularization
+        self.combine_kernels = combine_kernels
+        self.kernel_list = kernel_list
 
     def kernel(self, m1, m2=None):
         """ Kernel functions taking n x d feature matrix.
@@ -60,14 +68,14 @@ class FitnessPrediction(object):
         """
         if m2 is None:
             # Gaussian kernel.
-            if self.ktype == 'gaussian':
+            if self.ktype is 'gaussian':
                 k = distance.pdist(m1 / self.kwidth, metric='sqeuclidean')
                 k = distance.squareform(np.exp(-.5 * k))
                 np.fill_diagonal(k, 1)
                 return k
 
             # Laplacian kernel.
-            elif self.ktype == 'laplacian':
+            elif self.ktype is 'laplacian':
                 k = distance.pdist(m1 / self.kwidth, metric='cityblock')
                 k = distance.squareform(np.exp(-k))
                 np.fill_diagonal(k, 1)
@@ -77,24 +85,53 @@ class FitnessPrediction(object):
             m2 = m1
 
         # Linear kernel.
-        if self.ktype == 'linear':
+        if self.ktype is 'linear':
             return np.dot(m1, np.transpose(m2))
 
         # Polynomial kernel.
-        elif self.ktype == 'polynomial':
+        elif self.ktype is 'polynomial':
             return(np.dot(m1, np.transpose(m2)) + self.kfree) ** self.kdegree
 
         # Gaussian kernel.
-        elif self.ktype == 'gaussian':
+        elif self.ktype is 'gaussian':
             k = distance.cdist(m1 / self.kwidth, m2 / self.kwidth,
                                metric='sqeuclidean')
             return np.exp(-.5 * k)
 
         # Laplacian kernel.
-        elif self.ktype == 'laplacian':
+        elif self.ktype is 'laplacian':
             k = distance.cdist(m1 / self.kwidth, m2 / self.kwidth,
                                metric='cityblock')
             return np.exp(-k)
+
+    def kernel_combine(self, m1, m2=None):
+        """ Function to generate a covarience matric with a combination of
+            kernel functions.
+        """
+        msg = 'Must combine covarience from more than one kernel.'
+        assert len(self.kernel_list > 1), msg
+
+        # Form addative covariance matrix.
+        if self.combine_kernels is 'addative':
+            c = np.zeros((np.shape(m1[0])[0], np.shape(m1[0])[0]))
+            for k in self.kernel_list:
+                f1 = m1[:, self.kernel_list[k]]
+                if m2 is not None:
+                    f2 = m2[:, self.kernel_list[k]]
+                self.ktype = k
+                c += self.kernel(m1=f1, m2=f2)
+            return c
+
+        # Form multliplication covariance matrix.
+        if self.combine_kernels is 'multiplication':
+            c = np.ones((np.shape(m1[0])[0], np.shape(m1[0])[0]))
+            for k in self.kernel_list:
+                f1 = m1[:, self.kernel_list[k]]
+                if m2 is not None:
+                    f2 = m2[:, self.kernel_list[k]]
+                self.ktype = k
+                c *= self.kernel(m1=f1, m2=f2)
+            return c
 
     def get_covariance(self, train_matrix):
         """ Returns the covariance matrix between training dataset.
@@ -107,7 +144,10 @@ class FitnessPrediction(object):
         if type(self.kwidth) is float:
             self.kwidth = np.zeros(len(train_matrix[0]),) + self.kwidth
 
-        cov = self.kernel(train_matrix)
+        if self.combine_kernels is None:
+            cov = self.kernel(train_matrix)
+        else:
+            cov = self.kernel_combine(train_matrix)
 
         if self.regularization is not None:
             cov = cov + self.regularization * np.identity(len(train_matrix))
@@ -170,7 +210,10 @@ class FitnessPrediction(object):
             cinv = np.linalg.inv(cvm)
 
         # Calculate the covarience between the test and training datasets.
-        ktb = self.kernel(test_fp, train_fp)
+        if self.combine_kernels is None:
+            ktb = self.kernel(test_fp, train_fp)
+        else:
+            ktb = self.kernel_combine(test_fp, train_fp)
 
         # Build the list of predictions.
         data['prediction'] = self.do_prediction(ktb=ktb, cinv=cinv,
@@ -185,7 +228,10 @@ class FitnessPrediction(object):
         # Calculate error associated with predictions on the training data.
         if get_training_error:
             # Calculate the covarience between the training dataset.
-            kt_train = self.kernel(train_fp, train_fp)
+            if self.combine_kernels is None:
+                kt_train = self.kernel(train_fp)
+            else:
+                kt_train = self.kernel_combine(train_fp)
 
             # Calculate predictions for the training data.
             data['train_prediction'] = self.do_prediction(ktb=kt_train,
@@ -243,7 +289,10 @@ class FitnessPrediction(object):
             residual. """
         data = defaultdict(list)
         # Calculate the K(X*,X*) covarience matrix.
-        ktest = self.kernel(test_fp, test_fp)
+        if self.combine_kernels is None:
+            ktest = self.kernel(test_fp)
+        else:
+            ktest = self.kernel_combine(test_fp)
 
         # Form H and H* matrix, multiplying X by basis.
         train_matrix = np.asarray([basis(i) for i in train_fp])
