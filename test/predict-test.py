@@ -122,7 +122,7 @@ assert len(pred['prediction']) == 10
 print('laplacian prediction:', pred['validation_rmse']['average'])
 
 # Set up the prediction routine.
-krr = FitnessPrediction(combine_kernels='addative',
+krr = FitnessPrediction(combine_kernels='addition',
                         kernel_list={'linear': [0, 1], 'gaussian': [2, 3]},
                         kwidth=0.5,
                         regularization=0.001)
@@ -137,7 +137,7 @@ pred = krr.get_predictions(train_fp=nfp['train'],
                            get_validation_error=True,
                            get_training_error=True)
 assert len(pred['prediction']) == 10
-print('addative prediction:', pred['validation_rmse']['average'])
+print('addition prediction:', pred['validation_rmse']['average'])
 
 # Set up the prediction routine.
 krr = FitnessPrediction(combine_kernels='multiplication',

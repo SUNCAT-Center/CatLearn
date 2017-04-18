@@ -35,7 +35,7 @@ class FitnessPrediction(object):
             The regularization strength (smoothing function) applied to the
             kernel matrix.
         combine_kernels : string
-            Define how to combine kernels, can be addative or dot product.
+            Define how to combine kernels, can be addition or multiplication.
         kernel_list : dict
             List of functions when combining kernels, each coupled with a List
             of features on which the given kernel should act. Example:
@@ -126,8 +126,8 @@ class FitnessPrediction(object):
         msg = 'Must combine covarience from more than one kernel.'
         assert len(self.kernel_list) > 1, msg
 
-        # Form addative covariance matrix.
-        if self.combine_kernels is 'addative':
+        # Form additive covariance matrix.
+        if self.combine_kernels is 'addition':
             if m2 is None:
                 c = np.zeros((np.shape(m1)[0], np.shape(m1)[0]))
                 f2 = m2
