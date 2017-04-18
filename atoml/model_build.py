@@ -338,8 +338,8 @@ class ModelBuilder(object):
         ml, mf, mo = self.lasso_opt(size=d, train_target=train_target,
                                     train_matrix=train_matrix,
                                     test_matrix=test_matrix,
-                                    test_target=test_target,
-                                    alpha=1.e-1, max_iter=1e6, steps=20)
+                                    test_target=test_target, max_iter=1e6,
+                                    steps=20)
 
         print(feature_names)
         best_size = self.size
@@ -474,11 +474,28 @@ class ModelBuilder(object):
 
         return sort_list, error
 
-    def lasso_opt(self, size, train_target, train_matrix, test_matrix=None,
-                  test_target=None, alpha=1.e-5, max_iter=1e5, steps=None):
-        """ Function to perform lasso selection of features. """
+    def lasso_opt(self, size, train_target, train_matrix, steps=None,
+                  min_alpha=1.e-8, max_alpha=1.e-1, max_iter=1e5,
+                  test_matrix=None, test_target=None):
+        """ Function to perform lasso selection of features.
+
+            Parameters
+            ----------
+            size : int
+                Number of features that should be returned.
+            steps : int
+                Number of steps to be taken in the penalty function.
+            min_alpha : float
+                Starting penalty when searching over range. Default is 1.e-8.
+            max_alpha : float
+                Final penalty when searching over range. Default is 1.e-1.
+            max_iter : float
+                Maximum number of iterations taken minimizing the lasso
+                function.
+        """
         las = lasso(size=size, target=train_target, train_matrix=train_matrix,
-                    test_matrix=test_matrix, alpha=alpha, max_iter=max_iter,
+                    test_matrix=test_matrix, min_alpha=min_alpha,
+                    max_alpha=max_alpha, max_iter=max_iter,
                     test_target=test_target, steps=steps)
         ml = min(las['linear_error'])
         mf = las['min_features']
