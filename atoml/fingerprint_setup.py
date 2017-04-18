@@ -165,7 +165,7 @@ def concatenate_fpv(c, fpv_name):
     return fpv
 
 
-def standardize(train, test=None, writeout=True):
+def standardize(train, test=None, writeout=False):
     """ Standardize each descriptor in the FPV relative to the mean and
         standard deviation. If test data is supplied it is standardized
         relative to the training dataset.
@@ -176,24 +176,17 @@ def standardize(train, test=None, writeout=True):
         test: list
             List of atoms objects to be used as test dataset.
     """
-    std_fpv = []
-    mean_fpv = []
-    tt = np.transpose(train)
-    for i in range(len(tt)):
-        std_fpv.append(float(np.std(tt[i])))
-        mean_fpv.append(float(np.mean(tt[i])))
-
-    std_fpv = np.asarray(std_fpv)
+    mean_fpv = np.mean(train, axis=0)
+    std_fpv = np.std(train, axis=0)
     # Replace zero std with value 1 for devision.
     np.place(std_fpv, std_fpv == 0., [1.])
-    mean_fpv = np.asarray(mean_fpv)
 
     std = defaultdict(list)
-    for i in train:
-        std['train'].append((i - mean_fpv) / std_fpv)
+    std['train'] = (train - mean_fpv) / std_fpv
     if test is not None:
-        for i in test:
-            std['test'].append((i - mean_fpv) / std_fpv)
+        test = (test - mean_fpv) / std_fpv
+
+    std['test'] = test
     std['std'] = std_fpv
     std['mean'] = mean_fpv
 
@@ -203,31 +196,22 @@ def standardize(train, test=None, writeout=True):
     return std
 
 
-def normalize(train, test=None, writeout=True):
+def normalize(train, test=None, writeout=False):
     """ Normalize each descriptor in the FPV to min/max or mean centered. If
         test data is supplied it is standardized relative to the training
         dataset.
     """
-    max_fpv = []
-    min_fpv = []
-    mean_fpv = []
-    tt = np.transpose(train)
-    for i in range(len(tt)):
-        max_fpv.append(float(max(tt[i])))
-        min_fpv.append(float(min(tt[i])))
-        mean_fpv.append(float(np.mean(tt[i])))
-
-    dif = np.asarray(max_fpv) - np.asarray(min_fpv)
+    mean_fpv = np.mean(train, axis=0)
+    dif = np.max(train, axis=0) - np.min(train, axis=0)
     # Replace zero difference with value 1 for devision.
     np.place(dif, dif == 0., [1.])
-    mean_fpv = np.asarray(mean_fpv)
 
     norm = defaultdict(list)
-    for i in train:
-        norm['train'].append(np.asarray((i - mean_fpv) / dif))
+    norm['train'] = (train - mean_fpv) / dif
     if test is not None:
-        for i in test:
-            norm['test'].append(np.asarray((i - mean_fpv) / dif))
+        test = (test - mean_fpv) / dif
+
+    norm['test'] = test
     norm['mean'] = mean_fpv
     norm['dif'] = dif
 

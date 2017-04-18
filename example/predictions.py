@@ -33,7 +33,7 @@ krr = FitnessPrediction(ktype='gaussian',
 # Get the list of fingerprint vectors and normalize them.
 nfp = normalize(train=fpm_train, test=fpm_predict)
 # Do the training.
-cvm = krr.get_covariance(train_fp=nfp['train'])
+cvm = krr.get_covariance(train_matrix=nfp['train'])
 cinv = np.linalg.inv(cvm)
 # Do the prediction
 output = krr.get_predictions(train_fp=nfp['train'],

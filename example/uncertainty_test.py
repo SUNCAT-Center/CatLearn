@@ -42,7 +42,7 @@ nfp = normalize(train=train_fp, test=test_fp)
 krr = FitnessPrediction(ktype='gaussian',
                         kwidth=0.5,
                         regularization=0.001)
-cvm = krr.get_covariance(train_fp=nfp['train'])
+cvm = krr.get_covariance(train_matrix=nfp['train'])
 cvm = np.linalg.inv(cvm)
 
 

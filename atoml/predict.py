@@ -1,6 +1,11 @@
-""" Predictive KRR functions. """
+""" Functions to make predictions based on Gaussian Processes machine learning
+    model.
+"""
+from __future__ import absolute_import
+from __future__ import division
+
 import numpy as np
-from math import exp
+from scipy.spatial import distance
 from collections import defaultdict
 
 from .data_setup import target_standardize
@@ -11,25 +16,23 @@ class FitnessPrediction(object):
     """ Kernel ridge regression functions for the machine learning. This can be
         used to predict the fitness of an atoms object.
 
-        ktype: string
+        Parameters
+        ----------
+        ktype : string
             The kernel type, several have been pre-defined. Default is the
             Gaussian kernel.
-
-        kwidth: float or list
+        kwidth : float or list
             The kernel width, required for a number of the kernel types. If a
             float is supplied it is converted to a d-length array, containing a
             width for each descriptor. Default is 0.5.
-
-        kfree: float
+        kfree : float
             Free parameter for the polynomial kernel, giving trading off for
             the influence of higher-order and lower-order terms in the
             polynomial. Default is homogeneous (c=0).
-
-        kdegree: float
+        kdegree : float
             Degree parameter for the polynomial kernel. Default is quadratic
             (d=2).
-
-        regularization: float
+        regularization : float
             The regularization strength (smoothing function) applied to the
             kernel matrix.
     """
@@ -42,44 +45,87 @@ class FitnessPrediction(object):
         self.kdegree = kdegree
         self.regularization = regularization
 
-    def kernel(self, fp1, fp2):
-        """ Kernel functions taking two fingerprint vectors. """
+    def kernel(self, m1, m2=None):
+        """ Kernel functions taking n x d feature matrix.
+
+            Parameters
+            ----------
+            m1 : array
+                Feature matrix for training (or test) data.
+            m2 : array
+                Feature matrix for test data.
+
+            Returns
+            -------
+            Kernelized representation of the feature space as array.
+        """
+        if m2 is None:
+            # Linear kernel.
+            if self.ktype == 'linear':
+                return np.dot(m1, np.transpose(m1))
+
+            # Polynomial kernel.
+            elif self.ktype == 'polynomial':
+                return(np.dot(m1, np.transpose(m1)) + self.kfree) ** \
+                 self.kdegree
+
+            # Gaussian kernel.
+            elif self.ktype == 'gaussian':
+                k = distance.pdist(m1 / self.kwidth, metric='sqeuclidean')
+                k = distance.squareform(np.exp(-.5 * k))
+                np.fill_diagonal(k, 1)
+                return k
+
+            # Laplacian kernel.
+            elif self.ktype == 'laplacian':
+                k = distance.pdist(m1 / self.kwidth, metric='cityblock')
+                k = distance.squareform(np.exp(-k))
+                np.fill_diagonal(k, 1)
+                return k
+
         # Linear kernel.
-        if self.ktype == 'linear':
-            return sum(fp1 * fp2)
+        elif self.ktype == 'linear':
+            return np.dot(m1, np.transpose(m2))
 
         # Polynomial kernel.
         elif self.ktype == 'polynomial':
-            return(sum(fp1 * fp2) + self.kfree) ** self.kdegree
+            return(np.dot(m1, np.transpose(m2)) + self.kfree) ** self.kdegree
 
         # Gaussian kernel.
         elif self.ktype == 'gaussian':
-            return exp(-sum(np.abs((fp1 - fp2) ** 2) / (2 * self.kwidth ** 2)))
+            k = distance.cdist(m1 / self.kwidth, m2 / self.kwidth,
+                               metric='sqeuclidean')
+            return np.exp(-.5 * k)
 
         # Laplacian kernel.
         elif self.ktype == 'laplacian':
-            return exp(-sum(np.abs((fp1 - fp2) / self.kwidth)))
+            k = distance.cdist(m1 / self.kwidth, m2 / self.kwidth,
+                               metric='cityblock')
+            return np.exp(-k)
 
-    def get_covariance(self, train_fp):
+    def get_covariance(self, train_matrix):
         """ Returns the covariance matrix between training dataset.
 
-            train_fp: list
+            Parameters
+            ----------
+            train_matrix : list
                 A list of the training fingerprint vectors.
         """
         if type(self.kwidth) is float:
-            self.kwidth = np.zeros(len(train_fp[0]),) + self.kwidth
+            self.kwidth = np.zeros(len(train_matrix[0]),) + self.kwidth
 
-        cov = np.asarray([[self.kernel(fp1=fp1, fp2=fp2)
-                           for fp1 in train_fp] for fp2 in train_fp])
+        cov = self.kernel(train_matrix)
+
         if self.regularization is not None:
-            cov = cov + self.regularization * np.identity(len(train_fp))
+            cov = cov + self.regularization * np.identity(len(train_matrix))
 
         return cov
 
     def get_predictions(self, train_fp, test_fp, train_target, cinv=None,
                         test_target=None, uncertainty=False, basis=None,
                         get_validation_error=False, get_training_error=False,
-                        standardize_target=True, writeout=True):
+                        standardize_target=True, cost='squared', epsilon=None,
+                        writeout=False):
         """ Returns a list of predictions for a test dataset.
 
             train_fp: list
@@ -116,12 +162,19 @@ class FitnessPrediction(object):
             get_training_error: boolean
                 Return the error associated with the prediction on the training
                 set of data if True. Default is False.
+
+            cost: str
+                Define the way the cost function is calculated. Default is
+                root mean squared error.
+
+            epsilon: float
+                Threshold for insensitive error calculation.
         """
         self.standardize_target = standardize_target
         if type(self.kwidth) is float:
             self.kwidth = np.zeros(len(train_fp[0]),) + self.kwidth
+        error_train = train_target
         if standardize_target:
-            error_train = train_target
             self.standardize_data = target_standardize(train_target)
             train_target = self.standardize_data['target']
 
@@ -132,8 +185,7 @@ class FitnessPrediction(object):
             cinv = np.linalg.inv(cvm)
 
         # Calculate the covarience between the test and training datasets.
-        ktb = np.asarray([[self.kernel(fp1=fp1, fp2=fp2) for fp1 in train_fp]
-                          for fp2 in test_fp])
+        ktb = self.kernel(test_fp, train_fp)
 
         # Build the list of predictions.
         data['prediction'] = self.do_prediction(ktb=ktb, cinv=cinv,
@@ -142,13 +194,13 @@ class FitnessPrediction(object):
         # Calculate error associated with predictions on the test data.
         if get_validation_error:
             data['validation_rmse'] = get_error(prediction=data['prediction'],
-                                                target=test_target)
+                                                target=test_target, cost=cost,
+                                                epsilon=epsilon)
 
         # Calculate error associated with predictions on the training data.
         if get_training_error:
             # Calculate the covarience between the training dataset.
-            kt_train = np.asarray([[self.kernel(fp1=fp1, fp2=fp2) for fp1 in
-                                    train_fp] for fp2 in train_fp])
+            kt_train = self.kernel(train_fp, train_fp)
 
             # Calculate predictions for the training data.
             data['train_prediction'] = self.do_prediction(ktb=kt_train,
@@ -157,7 +209,8 @@ class FitnessPrediction(object):
 
             # Calculated the error for the prediction on the training data.
             data['training_rmse'] = get_error(
-                prediction=data['train_prediction'], target=error_train)
+                prediction=data['train_prediction'], target=error_train,
+                cost=cost, epsilon=epsilon)
 
         # Calculate uncertainty associated with prediction on test data.
         if uncertainty:
@@ -166,11 +219,11 @@ class FitnessPrediction(object):
         if basis is not None:
             data['basis_analysis'] = self.fixed_basis(train_fp=train_fp,
                                                       test_fp=test_fp,
-                                                      ktb=ktb,
-                                                      cinv=cinv,
+                                                      ktb=ktb, cinv=cinv,
                                                       target=train_target,
                                                       test_target=test_target,
-                                                      basis=basis)
+                                                      basis=basis, cost=cost,
+                                                      epsilon=epsilon)
 
         if writeout:
             write_predict(function='get_predictions', data=data)
@@ -180,11 +233,10 @@ class FitnessPrediction(object):
     def do_prediction(self, ktb, cinv, target):
         """ Function to make the prediction. """
         pred = []
+        train_mean = np.mean(target)
+        target_values = target - train_mean
         for kt in ktb:
             ktcinv = np.dot(kt, cinv)
-            target_values = target
-            train_mean = np.mean(target_values)
-            target_values -= train_mean
             p = np.dot(ktcinv, target_values) + train_mean
             if self.standardize_target:
                 pred.append((p * self.standardize_data['std']) +
@@ -201,13 +253,12 @@ class FitnessPrediction(object):
                 in ktb]
 
     def fixed_basis(self, test_fp, train_fp, basis, ktb, cinv, target,
-                    test_target):
+                    test_target, cost, epsilon):
         """ Function to apply fixed basis. Returns the predictions gX on the
             residual. """
         data = defaultdict(list)
         # Calculate the K(X*,X*) covarience matrix.
-        ktest = np.asarray([[self.kernel(fp1=fp1, fp2=fp2)
-                             for fp1 in test_fp] for fp2 in test_fp])
+        ktest = self.kernel(test_fp, test_fp)
 
         # Form H and H* matrix, multiplying X by basis.
         train_matrix = np.asarray([basis(i) for i in train_fp])
@@ -233,21 +284,21 @@ class FitnessPrediction(object):
         # Calculated the error for the residual prediction on the test data.
         if test_target is not None:
             data['validation_rmse'] = get_error(prediction=data['gX'],
-                                                target=test_target)
+                                                target=test_target, cost=cost,
+                                                epsilon=epsilon)
 
         return data
 
 
+def get_error(prediction, target, cost='squared', epsilon=None):
+    """ Returns the error for predicted data relative to target data. Discussed
+        in: Rosasco et al, Neural Computation, (2004), 16, 1063-1076.
 
-
-def get_error(prediction, target):
-    """ Returns the root mean squared error for predicted data relative to
-        the target data.
-
-        prediction: list
+        Parameters
+        ----------
+        prediction : list
             A list of predicted values.
-
-        target: list
+        target : list
             A list of target values.
     """
     msg = 'Something has gone wrong and there are '
@@ -256,12 +307,28 @@ def get_error(prediction, target):
     elif len(prediction) > len(target):
         msg += 'fewer targets than predictions.'
     assert len(prediction) == len(target), msg
-    error = defaultdict(list)
-    sumd = 0
-    for i, j in zip(prediction, target):
-        e = (i - j) ** 2
-        error['all'].append(e ** 0.5)
-        sumd += e
 
-    error['average'] = (sumd / len(prediction)) ** 0.5
+    error = defaultdict(list)
+    prediction = np.asarray(prediction)
+    target = np.asarray(target)
+
+    if cost is 'squared':
+        # Root mean squared error function.
+        e = np.square(prediction - target)
+        error['all'] = np.sqrt(e)
+        error['average'] = np.sqrt(np.sum(e)/len(e))
+
+    elif cost is 'absolute':
+        # Absolute error function.
+        e = np.abs(prediction - target)
+        error['all'] = e
+        error['average'] = np.sum(e)/len(e)
+
+    elif cost is 'insensitive':
+        # Epsilon-insensitive error function.
+        e = np.abs(prediction - target) - epsilon
+        np.place(e, e < 0, 0)
+        error['all'] = e
+        error['average'] = np.sum(e)/len(e)
+
     return error
