@@ -59,17 +59,8 @@ class FitnessPrediction(object):
             Kernelized representation of the feature space as array.
         """
         if m2 is None:
-            # Linear kernel.
-            if self.ktype == 'linear':
-                return np.dot(m1, np.transpose(m1))
-
-            # Polynomial kernel.
-            elif self.ktype == 'polynomial':
-                return(np.dot(m1, np.transpose(m1)) + self.kfree) ** \
-                 self.kdegree
-
             # Gaussian kernel.
-            elif self.ktype == 'gaussian':
+            if self.ktype == 'gaussian':
                 k = distance.pdist(m1 / self.kwidth, metric='sqeuclidean')
                 k = distance.squareform(np.exp(-.5 * k))
                 np.fill_diagonal(k, 1)
@@ -82,8 +73,11 @@ class FitnessPrediction(object):
                 np.fill_diagonal(k, 1)
                 return k
 
+            # Otherwise set m2 equal to m1 as functions are the same.
+            m2 = m1
+
         # Linear kernel.
-        elif self.ktype == 'linear':
+        if self.ktype == 'linear':
             return np.dot(m1, np.transpose(m2))
 
         # Polynomial kernel.
