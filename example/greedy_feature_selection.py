@@ -32,19 +32,20 @@ split_fpv = list(split_fpv_0)
 shape = np.shape(split_fpv_0[0])
 
 #select feature combinations to test
-#FEATURES = range(1,shape[1])#forward greedy
-start = [53,9,19,36,39,48] #random.randint(0,shape[1])  #forward greedy
+FEATURES = range(1,shape[1])#forward greedy
+#start = [53,9,19,36,39,48] #random.randint(0,shape[1])  #forward greedy
+start = [0] #forward greedy
 
-FEATURES = start #backward greedy
+#FEATURES = start #backward greedy
 
 
 TRAIN_RMSE = []
 VAL_RMSE = []
 for fs in FEATURES:
     sigma = None
-    indexes = list(FEATURES)    #backward greedy
-    indexes.remove(fs)          #backward greedy
-    #indexes = start + [fs]        #forward greedy
+    #indexes = list(FEATURES)    #backward greedy
+    #indexes.remove(fs)          #backward greedy
+    indexes = start + [fs]        #forward greedy
     print(indexes)
     #subset of the fingerprint vector
     for i in range(nsplit):
@@ -81,12 +82,14 @@ for fs in FEATURES:
             sigma = np.ones(m)
             sigma *= 0.5
         regularization=.001
-        if False:
-            a=(nfp, traine, regularization)
+        theta = np.append(sigma,regularization)
+        if True:
+            a=(np.array(nfp['train']), traine)
             #Hyper parameter bounds.
-            b=((1E-9,None),)*(m)
-            popt = minimize(negative_logp, sigma, args=a, bounds=b)#, options={'disp': True})
-            sigma = popt['x']
+            b=((1E-12,None),)*(m+1)
+            popt = minimize(negative_logp, theta, args=a, bounds=b)#, options={'disp': True})
+            sigma = popt['x'][:-1]
+            regularization = popt['x'][-1]
         # Set up the prediction routine.
         krr = FitnessPrediction(ktype='gaussian',
                                 kwidth=sigma,
