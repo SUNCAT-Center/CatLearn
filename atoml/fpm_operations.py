@@ -4,6 +4,9 @@ Created on Tue Jan  3 12:01:30 2017
 
 @author: mhangaard
 """
+from __future__ import absolute_import
+from __future__ import division
+
 import numpy as np
 from scipy import cluster
 from random import shuffle

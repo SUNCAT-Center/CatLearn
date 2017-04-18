@@ -1,4 +1,7 @@
 """ Data generation functions. """
+from __future__ import absolute_import
+from __future__ import division
+
 import numpy as np
 from random import shuffle
 from collections import defaultdict
