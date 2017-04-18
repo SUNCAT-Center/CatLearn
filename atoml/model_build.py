@@ -405,15 +405,16 @@ class ModelBuilder(object):
                                          corr=self.screening_correlation,
                                          feature_names=feature_names,
                                          cleanup=False)
-        else:
-            if self.screening_method is 'rrcs':
-                screen = rr_screen(target=train_target, train_fpv=train_matrix,
-                                   size=n, corr=self.screening_correlation,
-                                   writeout=False)
-            elif self.screening_method is 'sis':
-                screen = sure_screen(target=train_target,
-                                     train_fpv=train_matrix, size=n,
-                                     writeout=False)
+            return (np.asarray(screen['train_fpv']),
+                    np.asarray(screen['test_fpv']), screen['names'])
+
+        if self.screening_method is 'rrcs':
+            screen = rr_screen(target=train_target, train_fpv=train_matrix,
+                               size=n, corr=self.screening_correlation,
+                               writeout=False)
+        elif self.screening_method is 'sis':
+            screen = sure_screen(target=train_target, train_fpv=train_matrix,
+                                 size=n, writeout=False)
 
         # Update the feature matrix.
         train_matrix = np.delete(train_matrix, screen['rejected'], axis=1)
