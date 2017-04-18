@@ -8,7 +8,6 @@ import numpy as np
 from scipy.spatial import distance
 from collections import defaultdict
 
-from .data_setup import target_standardize
 from .output import write_predict
 
 
@@ -288,6 +287,25 @@ class FitnessPrediction(object):
                                                 epsilon=epsilon)
 
         return data
+
+
+def target_standardize(target, writeout=False):
+    """ Returns a list of standardized target values.
+
+        target: list
+            A list of the target values.
+    """
+    target = np.asarray(target)
+
+    data = defaultdict(list)
+    data['mean'] = np.mean(target)
+    data['std'] = np.std(target)
+    data['target'] = (target - data['mean']) / data['std']
+
+    if writeout:
+        write_predict(function='target_standardize', data=data)
+
+    return data
 
 
 def get_error(prediction, target, cost='squared', epsilon=None):
