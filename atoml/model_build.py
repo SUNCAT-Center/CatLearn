@@ -426,7 +426,13 @@ class ModelBuilder(object):
 
     def pca_opt(self, max_comp, train_matrix, test_matrix, train_target,
                 test_target):
-        """ Function to do the PCA optimization. """
+        """ Function to do the PCA optimization.
+
+            Parameters
+            ----------
+            max_comp : int
+                Limit of components to include.
+        """
         best_pca = float('inf')
         for c in range(1, max_comp):
             comp = pca(components=c, train_fpv=train_matrix,
@@ -488,6 +494,17 @@ class ModelBuilder(object):
             ----------
             type : string
                 Set the name of the data to be stored, e.g. train.
+            atoms_id : list
+                The UUIDs for the corresponding atoms objects.
+            feature_matrix : array
+                An n x d array containing all of the numeric feature values.
+            target : list
+                A list of all the target values.
+            feature_names : list
+                A list of all the feature names.
+            table : string
+                The table name that data should be added to. Different tables
+                are used to store the original and extended feature sets.
         """
         # Add on the id and target values.
         atoms_id = [[i] for i in atoms_id]
