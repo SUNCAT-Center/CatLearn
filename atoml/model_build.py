@@ -442,31 +442,6 @@ class ModelBuilder(object):
 
         return best_pca, cc, cs
 
-    def svd_order(self, train_matrix):
-        """ Order the features acording to SVD analysis. """
-        # u = n x n matrix
-        # s = min(n, d) singular values
-        # v = d x d matrix
-        u, s, v = np.linalg.svd(train_matrix, full_matrices=True)
-
-        for i in range(len(s)):
-            if i > 0:
-                s[i] = 0.
-        # s = [[i] for i in s]
-
-        # Transform s vector into matrix.
-        sm = np.zeros((u.shape[0], v.shape[0]),
-                      dtype=float)
-        sm[:v.shape[0], :v.shape[0]] = np.diag(s)
-        # Form reduced rank matrix.
-        rrank = np.dot(u, np.dot(sm, v))
-
-        print(u)
-        print(sm)
-        print(v)
-        print(rrank)
-        print(train_matrix)
-
     def ridge_regression(self, train_matrix, train_target, feature_names,
                          test_matrix=None, test_target=None):
         """ Function to trean a linear ridge regression model. The importance
