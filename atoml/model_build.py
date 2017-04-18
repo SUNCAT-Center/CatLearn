@@ -25,7 +25,8 @@ class ModelBuilder(object):
     def __init__(self, update_train_db=True, update_test_db=True,
                  db_name='fpv_store.sqlite', screening_method='rrcs',
                  screening_correlation='kendall', initial_prediction=True,
-                 clean_features=True, expand=True, optimize=True, size=None):
+                 clean_features=True, expand=True, optimize=True, size=None,
+                 width=0.5, regularization=0.001):
         """ Function to make a best guess for a GP model that will give
             reasonable results.
 
@@ -57,6 +58,10 @@ class ModelBuilder(object):
             size : int
                 If optimize is False, set the number of features to be
                 returned. Will return the n best.
+            width : float or list
+                Starting guess for the kernel weights.
+            regularization : float
+                Starting guess for the noise parameter.
         """
         self.update_train_db = update_train_db
         self.update_test_db = update_test_db
@@ -68,6 +73,8 @@ class ModelBuilder(object):
         self.expand = expand
         self.optimize = optimize
         self.size = size
+        self.width = width
+        self.regularization = regularization
 
     def from_atoms(self, train_atoms, fpv_function, train_target, build=True,
                    test_atoms=None, test_target=None, feature_names=None):
@@ -216,8 +223,7 @@ class ModelBuilder(object):
             p = self.make_prediction(train_matrix=train_matrix,
                                      test_matrix=test_matrix,
                                      train_target=train_target,
-                                     test_target=test_target, width=0.5,
-                                     regularization=0.001, opt_h=False)
+                                     test_target=test_target, opt_h=False)
 
             print('Initial Model:', p['validation_rmse']['average'])
 
@@ -228,8 +234,7 @@ class ModelBuilder(object):
                                   feature_names=feature_names, limit=limit)
 
     def make_prediction(self, train_matrix, test_matrix, train_target,
-                        test_target=None, width=0.5, regularization=0.001,
-                        opt_h=False):
+                        test_target=None, opt_h=False):
         """ Function to make predictions for a given model.
 
             Parameters
@@ -242,13 +247,12 @@ class ModelBuilder(object):
         # NOTE: Doesn't make sense to require dict, test never used?
         sf = {'train': train_matrix, 'test': test_matrix}
         if opt_h:
-            width, regularization = self.hyp_opt(features=sf,
-                                                 train_target=train_target,
-                                                 width=width,
-                                                 reg=regularization)
+            w, r = self.hyp_opt(features=sf, train_target=train_target,
+                                width=self.width, reg=self.regularization)
+            self.width, self.regularization = w, r
 
-        predict = FitnessPrediction(ktype='gaussian', kwidth=width,
-                                    regularization=regularization)
+        predict = FitnessPrediction(ktype='gaussian', kwidth=self.width,
+                                    regularization=self.regularization)
 
         return predict.get_predictions(train_fp=train_matrix,
                                        test_fp=test_matrix,
@@ -264,13 +268,13 @@ class ModelBuilder(object):
         linear = descriptors * ([1] * len(descriptors))
         return linear
 
-    def hyp_opt(self, features, train_target, width, reg):
+    def hyp_opt(self, features, train_target):
         """ Function to do the hyperparameter optimization. """
         # Hyper parameter starting guesses.
         m = np.shape(features['train'])[1]
         sigma = np.ones(m)
-        sigma *= width
-        theta = np.append(sigma, reg)
+        sigma *= self.width
+        theta = np.append(sigma, self.regularization)
 
         a = (features, train_target)
 
@@ -354,8 +358,7 @@ class ModelBuilder(object):
                 p = self.make_prediction(train_matrix=reduced_train,
                                          test_matrix=reduced_test,
                                          train_target=train_target,
-                                         test_target=test_target, width=0.5,
-                                         regularization=0.001)
+                                         test_target=test_target)
 
                 if p['validation_rmse']['average'] < best_p1:
                     best_p1, best_size = p['validation_rmse']['average'], s
@@ -432,9 +435,7 @@ class ModelBuilder(object):
             pc = self.make_prediction(train_matrix=comp['train_fpv'],
                                       test_matrix=comp['test_fpv'],
                                       train_target=train_target,
-                                      test_target=test_target,
-                                      width=0.5,
-                                      regularization=0.001)
+                                      test_target=test_target)
 
             if pc['validation_rmse']['average'] < best_pca:
                 best_pca = pc['validation_rmse']['average']
