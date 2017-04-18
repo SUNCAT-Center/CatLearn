@@ -1,4 +1,7 @@
 """ Data generation functions. """
+from __future__ import absolute_import
+from __future__ import division
+
 import numpy as np
 from random import shuffle
 from collections import defaultdict
@@ -187,22 +190,3 @@ def remove_outliers(candidates, key, con=1.4826, dev=3., constraint=None,
         write_data_setup(function='remove_outliers', data=dataset)
 
     return dataset
-
-
-def target_standardize(target, writeout=False):
-    """ Returns a list of standardized target values.
-
-        target: list
-            A list of the target values.
-    """
-    target = np.asarray(target)
-
-    data = defaultdict(list)
-    data['mean'] = np.mean(target)
-    data['std'] = np.std(target)
-    data['target'] = (target - data['mean']) / data['std']
-
-    if writeout:
-        write_data_setup(function='target_standardize', data=data)
-
-    return data

@@ -51,13 +51,6 @@ def write_data_setup(function, data):
                             str(data['removed']) + '\n')
             writefile.write('\nEnd of remove_outliers function.\n \n')
 
-        if function is 'target_standardize':
-            writefile.write('Output from data_setup.target_standardize.' + dt)
-            writefile.write('Target mean is: ' + str(data['mean']) + '\n')
-            writefile.write('Target standard deviation is: ' +
-                            str(data['std']) + '\n')
-            writefile.write('\nEnd of target_standardize function.\n \n')
-
 
 def write_fingerprint_setup(function, data):
     """ Write output for the fingerprint functions. """
@@ -154,3 +147,10 @@ def write_predict(function, data):
                                 data['validation_rmse']['all']):
                     writefile.write(str(i) + ', ' + str(j) + '\n')
             writefile.write('\nEnd of get_predictions function.\n \n')
+
+        if function is 'target_standardize':
+            writefile.write('Output from data_setup.target_standardize.' + dt)
+            writefile.write('Target mean is: ' + str(data['mean']) + '\n')
+            writefile.write('Target standard deviation is: ' +
+                            str(data['std']) + '\n')
+            writefile.write('\nEnd of target_standardize function.\n \n')
