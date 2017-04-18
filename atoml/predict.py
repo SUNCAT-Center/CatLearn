@@ -125,48 +125,40 @@ class FitnessPrediction(object):
                         get_validation_error=False, get_training_error=False,
                         standardize_target=True, cost='squared', epsilon=None,
                         writeout=False):
-        """ Returns a list of predictions for a test dataset.
+        """ Function to perform the prediction on some training and test data.
 
-            train_fp: list
+            Parameters
+            ----------
+            train_fp : list
                 A list of the training fingerprint vectors.
-
-            test_fp: list
+            test_fp : list
                 A list of the testing fingerprint vectors.
-
-            train_target: list
+            train_target : list
                 A list of the the training targets used to generate the
                 predictions.
-
-            cinv: matrix
+            cinv : matrix
                 Covariance matrix for training dataset. Can be calculated on-
                 the-fly or defined to utilize a model numerous times.
-
-            test_target: list
+            test_target : list
                 A list of the the test targets used to generate the
                 prediction errors.
-
-            uncertainty: boolean
+            uncertainty : boolean
                 Return data on the predicted uncertainty if True. Default is
                 False.
-
-            basis: function
+            basis : function
                 Basis functions to assess the reliability of the uncertainty
                 predictions. Must be a callable function that takes a list of
                 descriptors and returns another list.
-
-            get_validation_error: boolean
+            get_validation_error : boolean
                 Return the error associated with the prediction on the test set
                 of data if True. Default is False.
-
-            get_training_error: boolean
+            get_training_error : boolean
                 Return the error associated with the prediction on the training
                 set of data if True. Default is False.
-
-            cost: str
+            cost : str
                 Define the way the cost function is calculated. Default is
                 root mean squared error.
-
-            epsilon: float
+            epsilon : float
                 Threshold for insensitive error calculation.
         """
         self.standardize_target = standardize_target
@@ -292,7 +284,9 @@ class FitnessPrediction(object):
 def target_standardize(target, writeout=False):
     """ Returns a list of standardized target values.
 
-        target: list
+        Parameters
+        ----------
+        target : list
             A list of the target values.
     """
     target = np.asarray(target)
