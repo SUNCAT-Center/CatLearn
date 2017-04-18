@@ -34,15 +34,27 @@ class FitnessPrediction(object):
         regularization : float
             The regularization strength (smoothing function) applied to the
             kernel matrix.
+        combine_kernels : string
+            Define how to combine kernels, can be addition or multiplication.
+        kernel_list : dict
+            List of functions when combining kernels, each coupled with a List
+            of features on which the given kernel should act. Example:
+            {'gaussian': [1, 2, 5], 'linear': [0, 3, 4]}
+        width_combine : dict
+            List of feature widths, set up in same way as kernel_list.
     """
 
     def __init__(self, ktype='gaussian', kwidth=0.5, kfree=0., kdegree=2.,
-                 regularization=None):
+                 regularization=None, combine_kernels=None, kernel_list=None,
+                 width_combine=None):
         self.ktype = ktype
         self.kwidth = kwidth
         self.kfree = kfree
         self.kdegree = kdegree
         self.regularization = regularization
+        self.combine_kernels = combine_kernels
+        self.kernel_list = kernel_list
+        self.width_combine = width_combine
 
     def kernel(self, m1, m2=None):
         """ Kernel functions taking n x d feature matrix.
@@ -60,14 +72,14 @@ class FitnessPrediction(object):
         """
         if m2 is None:
             # Gaussian kernel.
-            if self.ktype == 'gaussian':
+            if self.ktype is 'gaussian':
                 k = distance.pdist(m1 / self.kwidth, metric='sqeuclidean')
                 k = distance.squareform(np.exp(-.5 * k))
                 np.fill_diagonal(k, 1)
                 return k
 
             # Laplacian kernel.
-            elif self.ktype == 'laplacian':
+            elif self.ktype is 'laplacian':
                 k = distance.pdist(m1 / self.kwidth, metric='cityblock')
                 k = distance.squareform(np.exp(-k))
                 np.fill_diagonal(k, 1)
@@ -77,24 +89,74 @@ class FitnessPrediction(object):
             m2 = m1
 
         # Linear kernel.
-        if self.ktype == 'linear':
+        if self.ktype is 'linear':
             return np.dot(m1, np.transpose(m2))
 
         # Polynomial kernel.
-        elif self.ktype == 'polynomial':
+        elif self.ktype is 'polynomial':
             return(np.dot(m1, np.transpose(m2)) + self.kfree) ** self.kdegree
 
         # Gaussian kernel.
-        elif self.ktype == 'gaussian':
+        elif self.ktype is 'gaussian':
             k = distance.cdist(m1 / self.kwidth, m2 / self.kwidth,
                                metric='sqeuclidean')
             return np.exp(-.5 * k)
 
         # Laplacian kernel.
-        elif self.ktype == 'laplacian':
+        elif self.ktype is 'laplacian':
             k = distance.cdist(m1 / self.kwidth, m2 / self.kwidth,
                                metric='cityblock')
             return np.exp(-k)
+
+    def kernel_combine(self, m1, m2=None):
+        """ Function to generate a covarience matric with a combination of
+            kernel functions.
+
+            Parameters
+            ----------
+            m1 : array
+                Feature matrix for training (or test) data.
+            m2 : array
+                Feature matrix for test data.
+
+            Returns
+            -------
+            Combined kernelized representation of the feature space as array.
+        """
+        msg = 'Must combine covarience from more than one kernel.'
+        assert len(self.kernel_list) > 1, msg
+
+        # Form additive covariance matrix.
+        if self.combine_kernels is 'addition':
+            if m2 is None:
+                c = np.zeros((np.shape(m1)[0], np.shape(m1)[0]))
+                f2 = m2
+            else:
+                c = np.zeros((np.shape(m1)[0], np.shape(m2)[0]))
+            for k in self.kernel_list:
+                self.kwidth = self.width_combine[k]
+                f1 = m1[:, self.kernel_list[k]]
+                if m2 is not None:
+                    f2 = m2[:, self.kernel_list[k]]
+                self.ktype = k
+                c += self.kernel(m1=f1, m2=f2)
+            return c
+
+        # Form multliplication covariance matrix.
+        if self.combine_kernels is 'multiplication':
+            if m2 is None:
+                c = np.ones((np.shape(m1)[0], np.shape(m1)[0]))
+                f2 = m2
+            else:
+                c = np.ones((np.shape(m1)[0], np.shape(m2)[0]))
+            for k in self.kernel_list:
+                self.kwidth = self.width_combine[k]
+                f1 = m1[:, self.kernel_list[k]]
+                if m2 is not None:
+                    f2 = m2[:, self.kernel_list[k]]
+                self.ktype = k
+                c *= self.kernel(m1=f1, m2=f2)
+            return c
 
     def get_covariance(self, train_matrix):
         """ Returns the covariance matrix between training dataset.
@@ -106,8 +168,15 @@ class FitnessPrediction(object):
         """
         if type(self.kwidth) is float:
             self.kwidth = np.zeros(len(train_matrix[0]),) + self.kwidth
+        if self.width_combine is None and self.combine_kernels is not None:
+            self.width_combine = {}
+            for k in self.kernel_list:
+                self.width_combine[k] = self.kwidth[self.kernel_list[k]]
 
-        cov = self.kernel(train_matrix)
+        if self.combine_kernels is None:
+            cov = self.kernel(m1=train_matrix, m2=None)
+        else:
+            cov = self.kernel_combine(m1=train_matrix, m2=None)
 
         if self.regularization is not None:
             cov = cov + self.regularization * np.identity(len(train_matrix))
@@ -158,6 +227,10 @@ class FitnessPrediction(object):
         self.standardize_target = standardize_target
         if type(self.kwidth) is float:
             self.kwidth = np.zeros(len(train_fp[0]),) + self.kwidth
+        if self.width_combine is None and self.combine_kernels is not None:
+            self.width_combine = {}
+            for k in self.kernel_list:
+                self.width_combine[k] = self.kwidth[self.kernel_list[k]]
         error_train = train_target
         if standardize_target:
             self.standardize_data = target_standardize(train_target)
@@ -170,7 +243,10 @@ class FitnessPrediction(object):
             cinv = np.linalg.inv(cvm)
 
         # Calculate the covarience between the test and training datasets.
-        ktb = self.kernel(test_fp, train_fp)
+        if self.combine_kernels is None:
+            ktb = self.kernel(m1=test_fp, m2=train_fp)
+        else:
+            ktb = self.kernel_combine(m1=test_fp, m2=train_fp)
 
         # Build the list of predictions.
         data['prediction'] = self.do_prediction(ktb=ktb, cinv=cinv,
@@ -185,7 +261,10 @@ class FitnessPrediction(object):
         # Calculate error associated with predictions on the training data.
         if get_training_error:
             # Calculate the covarience between the training dataset.
-            kt_train = self.kernel(train_fp, train_fp)
+            if self.combine_kernels is None:
+                kt_train = self.kernel(m1=train_fp, m2=None)
+            else:
+                kt_train = self.kernel_combine(m1=train_fp, m2=None)
 
             # Calculate predictions for the training data.
             data['train_prediction'] = self.do_prediction(ktb=kt_train,
@@ -224,10 +303,9 @@ class FitnessPrediction(object):
             ktcinv = np.dot(kt, cinv)
             p = np.dot(ktcinv, target_values) + train_mean
             if self.standardize_target:
-                pred.append((p * self.standardize_data['std']) +
-                            self.standardize_data['mean'])
-            else:
-                pred.append(p)
+                p = (p * self.standardize_data['std']) + \
+                 self.standardize_data['mean']
+            pred.append(p)
 
         return pred
 
@@ -243,7 +321,10 @@ class FitnessPrediction(object):
             residual. """
         data = defaultdict(list)
         # Calculate the K(X*,X*) covarience matrix.
-        ktest = self.kernel(test_fp, test_fp)
+        if self.combine_kernels is None:
+            ktest = self.kernel(m1=test_fp, m2=None)
+        else:
+            ktest = self.kernel_combine(m1=test_fp, m2=None)
 
         # Form H and H* matrix, multiplying X by basis.
         train_matrix = np.asarray([basis(i) for i in train_fp])
