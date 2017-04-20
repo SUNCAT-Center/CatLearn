@@ -244,9 +244,9 @@ class ModelBuilder(object):
             regularization : float
                Set the smoothing function.
         """
-        # NOTE: Doesn't make sense to require dict, test never used?
-        sf = {'train': train_matrix, 'test': test_matrix}
         if opt_h:
+            # NOTE: Doesn't make sense to require dict, test never used?
+            sf = {'train': train_matrix, 'test': test_matrix}
             w, r = self.hyp_opt(features=sf, train_target=train_target,
                                 width=self.width, reg=self.regularization)
             self.width, self.regularization = w, r
@@ -397,6 +397,8 @@ class ModelBuilder(object):
         if s == 0:
             s = 1
 
+        # If there are greater than twice as many features than datapoints,
+        # do iterative screening.
         if d > 2 * n:
             screen = iterative_screening(target=train_target,
                                          train_fpv=train_matrix,
@@ -405,9 +407,10 @@ class ModelBuilder(object):
                                          corr=self.screening_correlation,
                                          feature_names=feature_names,
                                          cleanup=False)
-            return (np.asarray(screen['train_fpv']),
-                    np.asarray(screen['test_fpv']), screen['names'])
 
+            return train_matrix, test_matrix, screen['names']
+
+        # Otherwise just do a single iteration of screening.
         if self.screening_method is 'rrcs':
             screen = rr_screen(target=train_target, train_fpv=train_matrix,
                                size=n, corr=self.screening_correlation,
@@ -423,7 +426,7 @@ class ModelBuilder(object):
         feature_names = list(np.delete(feature_names, screen['rejected'],
                                        axis=0))
 
-        return np.asarray(train_matrix), np.asarray(test_matrix), feature_names
+        return train_matrix, test_matrix, feature_names
 
     def pca_opt(self, max_comp, train_matrix, test_matrix, train_target,
                 test_target):
@@ -435,12 +438,14 @@ class ModelBuilder(object):
                 Limit of components to include.
         """
         best_pca = float('inf')
+        # Loop over the number of components to be considered.
+        comp = pca(components=max_comp, train_fpv=train_matrix,
+                   test_fpv=test_matrix)
         for c in range(1, max_comp):
-            comp = pca(components=c, train_fpv=train_matrix,
-                       test_fpv=test_matrix)
-
-            pc = self.make_prediction(train_matrix=comp['train_fpv'],
-                                      test_matrix=comp['test_fpv'],
+            pca_matrix = comp['train_fpv'][:, :c]
+            pca_matrix = comp['test_fpv'][:, :c]
+            pc = self.make_prediction(train_matrix=pca_matrix,
+                                      test_matrix=pca_matrix,
                                       train_target=train_target,
                                       test_target=test_target)
 
