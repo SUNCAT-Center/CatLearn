@@ -8,6 +8,7 @@ contributor: doylead
 """
 import numpy as np
 from random import shuffle
+from itertools import combinations_with_replacement
 
 from .feature_select import sure_independence_screening
 
@@ -238,3 +239,60 @@ def _separate_list(p):
                 right.append(p[j])
         combinations.append((left,right))
     return combinations
+
+def generate_positive_features(p,N,exclude=False,s=False):
+    '''
+    Routine to generate a list of polynomial combinations of variables
+    in list p up to order N.
+    
+    Example:
+    p = (a,b,c) ; N = 3
+
+    returns (order not preserved)
+    [a*a*a, a*a*b, a*a*c, a*b*b, a*b*c, a*c*c, b*b*b, b*b*c, b*c*c,
+    c*c*c, a*a, a*b, a*c, b*b, b*c, c*c, a, b, c]
+
+    Inputs)
+        p: list
+            Features to be combined
+        N: non-negative integer
+            The maximum polynomial coefficient for combinations
+        exclude: bool
+            Set exclude=True to avoid returning 1 to represent the
+            zeroth power
+        s: bool
+            Set s=True to return a list of strings
+            Set s=False to evaluate each element in the list
+
+    Outputs)
+        all_powers: list
+            A list containing all polynomial combinations of the 
+            input variables up to and including order N
+    '''
+    if N==0 and s:
+        return ['1']
+    elif N==0 and not s:
+        return [1]
+    elif N==1 and s:
+        return p+["1"]
+    elif N==1 and not s:
+        return p+[1]
+    if N==1 and exclude:
+        return p
+    else:
+        all_powers = []
+        for i in range(N,0,-1):
+            thisPower = combinations_with_replacement(p,i)
+            tuples = list(thisPower)
+            ntuples = len(tuples)
+            thisPowerFeatures = ['*'.join(tuples[j]) for j in range(ntuples)]
+            if not s:
+                thisPowerFeatures = [eval(j) for j in thisPowerFeatures]
+            all_powers.append(thisPowerFeatures)
+        if not exclude:
+            if s:
+                all_powers.append(['1'])
+            else:
+                all_powers.append([1])
+        all_powers = [item for sublist in all_powers for item in sublist]
+        return all_powers
