@@ -1,8 +1,10 @@
 # -*- coding: utf-8 -*-
 """
 Created on Tue Jan  3 12:01:30 2017
+Modified Mon April 24 2017
 
 @author: mhangaard
+contributor: doylead
 """
 import numpy as np
 from random import shuffle
@@ -204,3 +206,35 @@ def fpmatrix_split(X, nsplit, fix_size=None, replacement=False):
         else:
             s2 = s2 + fix_size
     return dataset
+
+def _separate_list(p):
+    '''
+    Routine to split any list into all possible combinations of two
+    lists which, combined, contain all elements.
+
+    Inputs)
+        p: list
+            The list to be split
+
+    Outputs)
+        combinations: list
+            A list containing num_combinations elements, each of which
+            is a tuple.  Each tuple contains two elements, each of which
+            is a list.  These two tuple elements have no intersection, and
+            their union is p.
+    '''
+    num_elements = len(p)
+    num_combinations = (2**num_elements - 2)/2
+    key = '0%db'%num_elements
+    combinations = []
+    for i in range(1,num_combinations+1):
+        bin_str = format(i,key)
+        left = []
+        right = []
+        for j in range(num_elements):
+            if bin_str[j]=='0':
+                left.append(p[j])
+            elif bin_str[j]=='1':
+                right.append(p[j])
+        combinations.append((left,right))
+    return combinations
