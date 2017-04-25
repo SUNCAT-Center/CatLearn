@@ -306,8 +306,8 @@ def generate_positive_features(p,N,exclude=False,s=False):
 
     Outputs)
         all_powers: list
-            A list containing all polynomial combinations of the 
-            input variables up to and including order N
+            A list of combinations of the input features to meet the
+            required specifications
     '''
     if N==0 and s:
         return ['1']
@@ -350,22 +350,32 @@ def generate_features(p, max_num=2, max_den=1, log=False, sqrt=False,
 
     Inputs)
         p: list
-
+            User-provided list of physical features to be combined
         max_num: non-negative integer
-
+            The maximum order of the polynomial in the numerator of the
+            composite features
         max_den: non-negative integer
-
+            The maximum order of the polynomial in the denominator of the
+            composite features
         log: boolean
-
+            (not currently supported)
+            Set to True to include terms involving the logarithm of the input
+            features
         sqrt: boolean
-
-        exclude: boolean
-
-        s: boolean
+            (not currently supported)
+            Set to True to include terms involving the square root of the input
+            features
+        exclude: bool
+            Set exclude=True to avoid returning 1 to represent the
+            zeroth power
+        s: bool
+            Set s=True to return a list of strings
+            Set s=False to evaluate each element in the list
 
     Outputs)
         features: list
-            
+            A list of combinations of the input features to meet the
+            required specifications
     '''
     if max_den == 0:
         return generate_positive_features(p,max_num,exclude=exclude,s=s)
