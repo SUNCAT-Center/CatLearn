@@ -242,7 +242,7 @@ def _separate_list(p):
 
 def _decode_key(p,key):
     '''
-    Routine to decode a "key" as implemented in generate_polynomial_features.
+    Routine to decode a "key" as implemented in generate_features.
     These "keys" are used to avoid duplicate terms in the numerator and denominator
 
     Inputs)
@@ -338,3 +338,66 @@ def generate_positive_features(p,N,exclude=False,s=False):
         all_powers = [item for sublist in all_powers for item in sublist]
         return all_powers
 
+def generate_features(p, max_num=2, max_den=1, log=False, sqrt=False,
+        exclude=False, s=False):
+    '''
+    A routine to generate composite features from a combination of user-provided
+    input features.
+
+    developer note: This is currently scales *quite slowly* with max_den.
+    There's surely a better way to do this, but it's apparently currently
+    functional
+
+    Inputs)
+        p: list
+
+        max_num: non-negative integer
+
+        max_den: non-negative integer
+
+        log: boolean
+
+        sqrt: boolean
+
+        exclude: boolean
+
+        s: boolean
+
+    Outputs)
+        features: list
+            
+    '''
+    if max_den == 0:
+        return generate_positive_features(p,max_num,exclude=exclude,s=s)
+    if max_num == 0:
+        dup_feature_keys = generate_positive_features(p,max_den,exclude=exclude,s=True)
+        features = []
+        for key in dup_feature_keys:
+            val = '1/('+key+')'
+            features.append(val)
+        if not s:
+            features = [eval('1.*'+i) for i in features]
+        return features
+    else:
+        num_p = len(p)
+        p_str = [str(i) for i in range(num_p)]
+        features = []
+        feature_keys = generate_positive_features(p_str,max_num,exclude=True,s=True)
+        dup_feature_keys = generate_positive_features(p_str,max_den,exclude=True,s=True)
+        for key1 in feature_keys:
+            l1 = key1.split('*')
+            for key2 in dup_feature_keys:
+                    l2 = key2.split('*')
+                    intersect = list(set.intersection(set(l1),set(l2)))
+                    if not intersect:
+                        val = _decode_key(p,key1)+'/('+_decode_key(p,key2)+')'
+                        features.append(val)
+        for key1 in feature_keys:
+            features.append(_decode_key(p,key1)+'/(1)')
+        for key2 in dup_feature_keys:
+            features.apepnd('1/('+_decode_key(p,key2)+')')
+        if not exclude:
+            features.append('1')
+        if not s:
+            features = [eval('1.*'+str.replace(i,'^','**')) for i in features]
+        return features
