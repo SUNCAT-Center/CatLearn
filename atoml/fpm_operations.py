@@ -313,9 +313,9 @@ def generate_positive_features(p,N,exclude=False,s=False):
         return ['1']
     elif N==0 and not s:
         return [1]
-    elif N==1 and s:
+    elif N==1 and not exclude and s:
         return p+["1"]
-    elif N==1 and not s:
+    elif N==1 and not exclude and not s:
         return p+[1]
     if N==1 and exclude:
         return p
@@ -395,7 +395,7 @@ def generate_features(p, max_num=2, max_den=1, log=False, sqrt=False,
         for key1 in feature_keys:
             features.append(_decode_key(p,key1)+'/(1)')
         for key2 in dup_feature_keys:
-            features.apepnd('1/('+_decode_key(p,key2)+')')
+            features.append('1/('+_decode_key(p,key2)+')')
         if not exclude:
             features.append('1')
         if not s:
