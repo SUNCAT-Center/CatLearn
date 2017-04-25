@@ -15,7 +15,6 @@ python_2_7_tests:
     - python fingerprint-test.py
     - python feature_select-test.py
     - python database-test.py
-    - rm ATOMLout.txt
 
 python_3_tests:
   script:
@@ -34,4 +33,3 @@ python_3_tests:
     - python3 fingerprint-test.py
     - python3 feature_select-test.py
     - python3 database-test.py
-    - rm ATOMLout.txt

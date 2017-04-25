@@ -62,7 +62,7 @@ def do_pred(ptrain_fp, ptest_fp):
                             regularization=0.001)
 
     # Do the predictions.
-    cvm = krr.get_covariance(train_fp=nfp['train'])
+    cvm = krr.get_covariance(train_matrix=nfp['train'])
     cinv = np.linalg.inv(cvm)
     pred = krr.get_predictions(train_fp=nfp['train'],
                                test_fp=nfp['test'],

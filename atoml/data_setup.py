@@ -1,4 +1,7 @@
 """ Data generation functions. """
+from __future__ import absolute_import
+from __future__ import division
+
 import numpy as np
 from random import shuffle
 from collections import defaultdict
@@ -6,7 +9,7 @@ from collections import defaultdict
 from .output import write_data_setup
 
 
-def get_unique(candidates, testsize, key, writeout=True):
+def get_unique(candidates, testsize, key, writeout=False):
     """ Returns a unique test dataset in the form of a integer list, to track
         selected candidates, and a list of atoms objects making up the set.
     """
@@ -30,7 +33,8 @@ def get_unique(candidates, testsize, key, writeout=True):
     return dataset
 
 
-def get_train(candidates, key, trainsize=None, taken_cand=None, writeout=True):
+def get_train(candidates, key, trainsize=None, taken_cand=None,
+              writeout=False):
     """ Returns a training dataset in the form of a list of atoms objects
         making up the set and a list of the target values. The list is in a
         random order. If the original order is required, use the 'order' list.
@@ -68,7 +72,7 @@ def get_train(candidates, key, trainsize=None, taken_cand=None, writeout=True):
 
 
 def data_split(candidates, nsplit, key, fix_size=None, replacement=False,
-               writeout=True):
+               writeout=False):
     """ Routine to split list of candidates into sublists. This can be
         useful for bootstrapping, CV, etc.
 
@@ -131,7 +135,7 @@ def data_split(candidates, nsplit, key, fix_size=None, replacement=False,
 
 
 def remove_outliers(candidates, key, con=1.4826, dev=3., constraint=None,
-                    writeout=True):
+                    writeout=False):
     """ Preprocessing routine to remove outliers in the data based on the
         median absolute deviation. Only candidates that are unfit, e.g. less
         positive raw_score, are removed as outliers.
@@ -186,23 +190,3 @@ def remove_outliers(candidates, key, con=1.4826, dev=3., constraint=None,
         write_data_setup(function='remove_outliers', data=dataset)
 
     return dataset
-
-
-def target_standardize(target, writeout=True):
-    """ Returns a list of standardized target values.
-
-        target: list
-            A list of the target values.
-    """
-    target = np.asarray(target)
-
-    data = defaultdict(list)
-    data['mean'] = float(np.mean(target))
-    data['std'] = float(np.std(target))
-    for i in target:
-        data['target'].append((i - data['mean']) / data['std'])
-
-    if writeout:
-        write_data_setup(function='target_standardize', data=data)
-
-    return data

@@ -2,19 +2,19 @@
 ![Build Status](https://gitlab.com/atoML/AtoML/badges/master/build.svg)
 
 Utilities for building and testing Atomic Machine Learning (AtoML) models.
-Kernel Ridge Regression (KRR) machine learning routines are implemented. These
+Gaussian Processes (GP) machine learning routines are implemented. These
 will take a numpy array of training and test fingerprint vectors along with a
 vector of target values.
 
-In general, any data prepared in this fashion can be fed to the KRR routines,
-a number of additional routines have been added that interface with ASE. This
-integration allows for the manipulation of atoms objects through KRR
+In general, any data prepared in this fashion can be fed to the GP routines,
+a number of additional functions have been added that interface with ASE. This
+integration allows for the manipulation of atoms objects through GP
 predictions, as well as dynamic generation of fingerprint descriptors through
 use of the many ASE functions.
 
 ## Requirements
 
-*   [Python](https://www.python.org) 2.6, 2.7, 3.4, 3.5
+*   [Python](https://www.python.org) 2.7, 3.4, 3.5
 *   [Numpy](https://docs.scipy.org/doc/numpy/reference/)
 *   [ASE](https://wiki.fysik.dtu.dk/ase/) (Atomic Simulation Environment)
 

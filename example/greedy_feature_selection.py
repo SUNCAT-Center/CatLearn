@@ -94,7 +94,7 @@ for fs in FEATURES:
         krr = FitnessPrediction(ktype='gaussian',
                                 kwidth=sigma,
                                 regularization=regularization)
-        cvm = krr.get_covariance(train_fp=nfp['train'])
+        cvm = krr.get_covariance(train_matrix=nfp['train'])
         cinv = np.linalg.inv(cvm)
         # Do the prediction
         pred = krr.get_predictions(train_fp=nfp['train'],

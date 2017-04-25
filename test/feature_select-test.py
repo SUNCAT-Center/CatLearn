@@ -35,11 +35,15 @@ pfpv = ParticleFingerprintGenerator(atom_numbers=[78, 79], max_bonds=13,
 sfpv = StandardFingerprintGenerator(atom_types=[78, 79])
 
 test_fp = return_fpv(testset['candidates'], [pfpv.nearestneighbour_fpv,
+                                             pfpv.bond_count_fpv,
                                              sfpv.mass_fpv,
-                                             sfpv.composition_fpv])
+                                             sfpv.composition_fpv,
+                                             sfpv.distance_fpv])
 train_fp = return_fpv(trainset['candidates'], [pfpv.nearestneighbour_fpv,
+                                               pfpv.bond_count_fpv,
                                                sfpv.mass_fpv,
-                                               sfpv.composition_fpv])
+                                               sfpv.composition_fpv,
+                                               sfpv.distance_fpv])
 
 sis = sure_independence_screening(target=trainset['target'],
                                   train_fpv=train_fp, size=4)
@@ -84,6 +88,7 @@ assert len(it_rrcs_test_fp[0]) == 4 and len(it_rrcs_train_fp[0]) == 4
 pca_r = pca(components=4, train_fpv=train_fp, test_fpv=test_fp)
 assert len(pca_r['test_fpv'][0]) == 4 and len(pca_r['train_fpv'][0]) == 4
 
-ls = lasso(size=4, target=trainset['target'], train=train_fp, test=test_fp,
-           test_target=testset['target'], alpha=1.e-5, max_iter=1e5)
-assert len(ls['test_fpv'][0]) == 4 and len(ls['train_fpv'][0]) == 4
+ls = lasso(size=4, target=trainset['target'], train_matrix=train_fp,
+           test_matrix=test_fp, test_target=testset['target'], alpha=1.e-5,
+           max_iter=1e5)
+assert len(ls['test_matrix'][0]) == 4 and len(ls['train_matrix'][0]) == 4

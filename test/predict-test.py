@@ -30,7 +30,7 @@ nfp = normalize(train=train_fp, test=test_fp)
 
 # Set up the prediction routine.
 krr = FitnessPrediction(ktype='linear')
-cvm = krr.get_covariance(train_fp=nfp['train'])
+cvm = krr.get_covariance(train_matrix=nfp['train'])
 cinv = np.linalg.inv(cvm)
 assert np.shape(cinv) == (50, 50)
 pred = krr.get_predictions(train_fp=nfp['train'],
@@ -47,7 +47,7 @@ print('linear prediction:', pred['validation_rmse']['average'])
 krr = FitnessPrediction(ktype='polynomial',
                         kfree=0.,
                         kdegree=2.)
-cvm = krr.get_covariance(train_fp=nfp['train'])
+cvm = krr.get_covariance(train_matrix=nfp['train'])
 cinv = np.linalg.inv(cvm)
 assert np.shape(cinv) == (50, 50)
 pred = krr.get_predictions(train_fp=nfp['train'],
@@ -64,7 +64,7 @@ print('polynomial prediction:', pred['validation_rmse']['average'])
 krr = FitnessPrediction(ktype='gaussian',
                         kwidth=0.5,
                         regularization=0.001)
-cvm = krr.get_covariance(train_fp=nfp['train'])
+cvm = krr.get_covariance(train_matrix=nfp['train'])
 cinv = np.linalg.inv(cvm)
 assert np.shape(cinv) == (50, 50)
 pred = krr.get_predictions(train_fp=nfp['train'],
@@ -74,7 +74,8 @@ pred = krr.get_predictions(train_fp=nfp['train'],
                            test_target=testset['target'],
                            get_validation_error=True,
                            get_training_error=True,
-                           uncertainty=True)
+                           uncertainty=True,
+                           cost='squared')
 assert len(pred['prediction']) == 10
 print('gaussian prediction:', pred['validation_rmse']['average'])
 for i, j, k, in zip(pred['prediction'],
@@ -82,11 +83,32 @@ for i, j, k, in zip(pred['prediction'],
                     pred['validation_rmse']['all']):
     print(i, j, k)
 
+pred = krr.get_predictions(train_fp=nfp['train'],
+                           test_fp=nfp['test'],
+                           cinv=cinv,
+                           train_target=trainset['target'],
+                           test_target=testset['target'],
+                           get_validation_error=True,
+                           get_training_error=True,
+                           cost='absolute')
+print('gaussian prediction (abs):', pred['validation_rmse']['average'])
+
+pred = krr.get_predictions(train_fp=nfp['train'],
+                           test_fp=nfp['test'],
+                           cinv=cinv,
+                           train_target=trainset['target'],
+                           test_target=testset['target'],
+                           get_validation_error=True,
+                           get_training_error=True,
+                           cost='insensitive',
+                           epsilon=0.1)
+print('gaussian prediction (ins):', pred['validation_rmse']['average'])
+
 # Set up the prediction routine.
 krr = FitnessPrediction(ktype='laplacian',
                         kwidth=0.5,
                         regularization=0.001)
-cvm = krr.get_covariance(train_fp=nfp['train'])
+cvm = krr.get_covariance(train_matrix=nfp['train'])
 cinv = np.linalg.inv(cvm)
 assert np.shape(cinv) == (50, 50)
 pred = krr.get_predictions(train_fp=nfp['train'],
@@ -98,3 +120,39 @@ pred = krr.get_predictions(train_fp=nfp['train'],
                            get_training_error=True)
 assert len(pred['prediction']) == 10
 print('laplacian prediction:', pred['validation_rmse']['average'])
+
+# Set up the prediction routine.
+krr = FitnessPrediction(combine_kernels='addition',
+                        kernel_list={'linear': [0, 1], 'gaussian': [2, 3]},
+                        kwidth=0.5,
+                        regularization=0.001)
+cvm = krr.get_covariance(train_matrix=nfp['train'])
+cinv = np.linalg.inv(cvm)
+assert np.shape(cinv) == (50, 50)
+pred = krr.get_predictions(train_fp=nfp['train'],
+                           test_fp=nfp['test'],
+                           cinv=cinv,
+                           train_target=trainset['target'],
+                           test_target=testset['target'],
+                           get_validation_error=True,
+                           get_training_error=True)
+assert len(pred['prediction']) == 10
+print('addition prediction:', pred['validation_rmse']['average'])
+
+# Set up the prediction routine.
+krr = FitnessPrediction(combine_kernels='multiplication',
+                        kernel_list={'linear': [0, 1], 'gaussian': [2, 3]},
+                        kwidth=0.5,
+                        regularization=0.001)
+cvm = krr.get_covariance(train_matrix=nfp['train'])
+cinv = np.linalg.inv(cvm)
+assert np.shape(cinv) == (50, 50)
+pred = krr.get_predictions(train_fp=nfp['train'],
+                           test_fp=nfp['test'],
+                           cinv=cinv,
+                           train_target=trainset['target'],
+                           test_target=testset['target'],
+                           get_validation_error=True,
+                           get_training_error=True)
+assert len(pred['prediction']) == 10
+print('multiplication prediction:', pred['validation_rmse']['average'])
