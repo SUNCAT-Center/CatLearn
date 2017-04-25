@@ -25,7 +25,7 @@ def do_sis(X, y, size=None, increment=1):
         y: length n vector
         l: length m list of strings (optional)
         size: integer (optional)
-        increment: integeer (optional)
+        increment: integer (optional)
 
     Output:
         l: list of s surviving indices.
@@ -240,6 +240,46 @@ def _separate_list(p):
         combinations.append((left,right))
     return combinations
 
+def _decode_key(p,key):
+    '''
+    Routine to decode a "key" as implemented in generate_polynomial_features.
+    These "keys" are used to avoid duplicate terms in the numerator and denominator
+
+    Inputs)
+        p: list
+            The list of input features provided by the user
+        key: string
+            A string containing a composite term, where each original feature in p
+            is represented by its index.
+
+            Example:
+            The term given by p[0]*p[1]*p[1]*p[4] would have the key "0*1*1*4"
+
+    Outputs)
+        p_prime: string
+            A string containing the composite term as a function of the original 
+            input features
+    '''
+    p = [str(i) for i in  p]
+    elements = key.split('*')
+    translated_elements = [p[int(i)] for i in elements]
+    unique_elements = list(set(translated_elements))
+    unique_elements.sort()
+    count_elements = {}
+    for ele in unique_elements:
+        count_elements[ele] = 0
+    for ele in translated_elements:
+        count_elements[ele] += 1
+    ele_list = []
+    for ele in unique_elements:
+        count = count_elements[ele]
+        if count == 1:
+            ele_list.append(ele)
+        if count >= 2:
+            ele_list.append(ele+'^%d'%count)
+    p_prime = '*'.join(ele_list)
+    return p_prime
+
 def generate_positive_features(p,N,exclude=False,s=False):
     '''
     Routine to generate a list of polynomial combinations of variables
@@ -281,6 +321,7 @@ def generate_positive_features(p,N,exclude=False,s=False):
         return p
     else:
         all_powers = []
+        p = [str(i) for i in p]
         for i in range(N,0,-1):
             thisPower = combinations_with_replacement(p,i)
             tuples = list(thisPower)
@@ -296,3 +337,4 @@ def generate_positive_features(p,N,exclude=False,s=False):
                 all_powers.append([1])
         all_powers = [item for sublist in all_powers for item in sublist]
         return all_powers
+
