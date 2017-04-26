@@ -1,8 +1,10 @@
 # -*- coding: utf-8 -*-
 """
 Created on Tue Jan  3 12:01:30 2017
+Modified Mon April 24 2017
 
 @author: mhangaard
+contributor: doylead
 """
 from __future__ import absolute_import
 from __future__ import division
@@ -10,6 +12,7 @@ from __future__ import division
 import numpy as np
 from scipy import cluster
 from random import shuffle
+from itertools import combinations_with_replacement
 from collections import defaultdict
 
 from .feature_select import sure_independence_screening
@@ -288,6 +291,209 @@ def fpmatrix_split(X, nsplit, fix_size=None, replacement=False):
             s2 = s2 + fix_size
     return dataset
 
+def _separate_list(p):
+    '''
+    Routine to split any list into all possible combinations of two
+    lists which, combined, contain all elements.
+
+    Inputs)
+        p: list
+            The list to be split
+
+    Outputs)
+        combinations: list
+            A list containing num_combinations elements, each of which
+            is a tuple.  Each tuple contains two elements, each of which
+            is a list.  These two tuple elements have no intersection, and
+            their union is p.
+    '''
+    num_elements = len(p)
+    num_combinations = (2**num_elements - 2)/2
+    key = '0%db'%num_elements
+    combinations = []
+    for i in range(1,num_combinations+1):
+        bin_str = format(i,key)
+        left = []
+        right = []
+        for j in range(num_elements):
+            if bin_str[j]=='0':
+                left.append(p[j])
+            elif bin_str[j]=='1':
+                right.append(p[j])
+        combinations.append((left,right))
+    return combinations
+
+def _decode_key(p,key):
+    '''
+    Routine to decode a "key" as implemented in generate_features.
+    These "keys" are used to avoid duplicate terms in the numerator and denominator
+
+    Inputs)
+        p: list
+            The list of input features provided by the user
+        key: string
+            A string containing a composite term, where each original feature in p
+            is represented by its index.
+
+            Example:
+            The term given by p[0]*p[1]*p[1]*p[4] would have the key "0*1*1*4"
+
+    Outputs)
+        p_prime: string
+            A string containing the composite term as a function of the original 
+            input features
+    '''
+    p = [str(i) for i in  p]
+    elements = key.split('*')
+    translated_elements = [p[int(i)] for i in elements]
+    unique_elements = list(set(translated_elements))
+    unique_elements.sort()
+    count_elements = {}
+    for ele in unique_elements:
+        count_elements[ele] = 0
+    for ele in translated_elements:
+        count_elements[ele] += 1
+    ele_list = []
+    for ele in unique_elements:
+        count = count_elements[ele]
+        if count == 1:
+            ele_list.append(ele)
+        if count >= 2:
+            ele_list.append(ele+'^%d'%count)
+    p_prime = '*'.join(ele_list)
+    return p_prime
+
+def generate_positive_features(p,N,exclude=False,s=False):
+    '''
+    Routine to generate a list of polynomial combinations of variables
+    in list p up to order N.
+    
+    Example:
+    p = (a,b,c) ; N = 3
+
+    returns (order not preserved)
+    [a*a*a, a*a*b, a*a*c, a*b*b, a*b*c, a*c*c, b*b*b, b*b*c, b*c*c,
+    c*c*c, a*a, a*b, a*c, b*b, b*c, c*c, a, b, c]
+
+    Inputs)
+        p: list
+            Features to be combined
+        N: non-negative integer
+            The maximum polynomial coefficient for combinations
+        exclude: bool
+            Set exclude=True to avoid returning 1 to represent the
+            zeroth power
+        s: bool
+            Set s=True to return a list of strings
+            Set s=False to evaluate each element in the list
+
+    Outputs)
+        all_powers: list
+            A list of combinations of the input features to meet the
+            required specifications
+    '''
+    if N==0 and s:
+        return ['1']
+    elif N==0 and not s:
+        return [1]
+    elif N==1 and not exclude and s:
+        return p+["1"]
+    elif N==1 and not exclude and not s:
+        return p+[1]
+    if N==1 and exclude:
+        return p
+    else:
+        all_powers = []
+        p = [str(i) for i in p]
+        for i in range(N,0,-1):
+            thisPower = combinations_with_replacement(p,i)
+            tuples = list(thisPower)
+            ntuples = len(tuples)
+            thisPowerFeatures = ['*'.join(tuples[j]) for j in range(ntuples)]
+            if not s:
+                thisPowerFeatures = [eval(j) for j in thisPowerFeatures]
+            all_powers.append(thisPowerFeatures)
+        if not exclude:
+            if s:
+                all_powers.append(['1'])
+            else:
+                all_powers.append([1])
+        all_powers = [item for sublist in all_powers for item in sublist]
+        return all_powers
+
+def generate_features(p, max_num=2, max_den=1, log=False, sqrt=False,
+        exclude=False, s=False):
+    '''
+    A routine to generate composite features from a combination of user-provided
+    input features.
+
+    developer note: This is currently scales *quite slowly* with max_den.
+    There's surely a better way to do this, but it's apparently currently
+    functional
+
+    Inputs)
+        p: list
+            User-provided list of physical features to be combined
+        max_num: non-negative integer
+            The maximum order of the polynomial in the numerator of the
+            composite features
+        max_den: non-negative integer
+            The maximum order of the polynomial in the denominator of the
+            composite features
+        log: boolean
+            (not currently supported)
+            Set to True to include terms involving the logarithm of the input
+            features
+        sqrt: boolean
+            (not currently supported)
+            Set to True to include terms involving the square root of the input
+            features
+        exclude: bool
+            Set exclude=True to avoid returning 1 to represent the
+            zeroth power
+        s: bool
+            Set s=True to return a list of strings
+            Set s=False to evaluate each element in the list
+
+    Outputs)
+        features: list
+            A list of combinations of the input features to meet the
+            required specifications
+    '''
+    if max_den == 0:
+        return generate_positive_features(p,max_num,exclude=exclude,s=s)
+    if max_num == 0:
+        dup_feature_keys = generate_positive_features(p,max_den,exclude=exclude,s=True)
+        features = []
+        for key in dup_feature_keys:
+            val = '1/('+key+')'
+            features.append(val)
+        if not s:
+            features = [eval('1.*'+i) for i in features]
+        return features
+    else:
+        num_p = len(p)
+        p_str = [str(i) for i in range(num_p)]
+        features = []
+        feature_keys = generate_positive_features(p_str,max_num,exclude=True,s=True)
+        dup_feature_keys = generate_positive_features(p_str,max_den,exclude=True,s=True)
+        for key1 in feature_keys:
+            l1 = key1.split('*')
+            for key2 in dup_feature_keys:
+                    l2 = key2.split('*')
+                    intersect = list(set.intersection(set(l1),set(l2)))
+                    if not intersect:
+                        val = _decode_key(p,key1)+'/('+_decode_key(p,key2)+')'
+                        features.append(val)
+        for key1 in feature_keys:
+            features.append(_decode_key(p,key1)+'/(1)')
+        for key2 in dup_feature_keys:
+            features.append('1/('+_decode_key(p,key2)+')')
+        if not exclude:
+            features.append('1')
+        if not s:
+            features = [eval('1.*'+str.replace(i,'^','**')) for i in features]
+        return features
 
 def cluster_features(train_matrix, train_target, k=2, test_matrix=None,
                      test_target=None):
