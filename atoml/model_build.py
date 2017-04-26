@@ -25,7 +25,8 @@ class ModelBuilder(object):
     def __init__(self, update_train_db=True, update_test_db=True,
                  db_name='fpv_store.sqlite', screening_method='rrcs',
                  screening_correlation='kendall', initial_prediction=True,
-                 clean_features=True, expand=True, optimize=True, size=None):
+                 clean_features=True, expand=True, optimize=True, size=None,
+                 width=0.5, regularization=0.001):
         """ Function to make a best guess for a GP model that will give
             reasonable results.
 
@@ -57,6 +58,10 @@ class ModelBuilder(object):
             size : int
                 If optimize is False, set the number of features to be
                 returned. Will return the n best.
+            width : float or list
+                Starting guess for the kernel weights.
+            regularization : float
+                Starting guess for the noise parameter.
         """
         self.update_train_db = update_train_db
         self.update_test_db = update_test_db
@@ -68,6 +73,8 @@ class ModelBuilder(object):
         self.expand = expand
         self.optimize = optimize
         self.size = size
+        self.width = width
+        self.regularization = regularization
 
     def from_atoms(self, train_atoms, fpv_function, train_target, build=True,
                    test_atoms=None, test_target=None, feature_names=None):
@@ -216,8 +223,7 @@ class ModelBuilder(object):
             p = self.make_prediction(train_matrix=train_matrix,
                                      test_matrix=test_matrix,
                                      train_target=train_target,
-                                     test_target=test_target, width=0.5,
-                                     regularization=0.001, opt_h=False)
+                                     test_target=test_target, opt_h=False)
 
             print('Initial Model:', p['validation_rmse']['average'])
 
@@ -228,8 +234,7 @@ class ModelBuilder(object):
                                   feature_names=feature_names, limit=limit)
 
     def make_prediction(self, train_matrix, test_matrix, train_target,
-                        test_target=None, width=0.5, regularization=0.001,
-                        opt_h=False):
+                        test_target=None, opt_h=False):
         """ Function to make predictions for a given model.
 
             Parameters
@@ -239,16 +244,15 @@ class ModelBuilder(object):
             regularization : float
                Set the smoothing function.
         """
-        # NOTE: Doesn't make sense to require dict, test never used?
-        sf = {'train': train_matrix, 'test': test_matrix}
         if opt_h:
-            width, regularization = self.hyp_opt(features=sf,
-                                                 train_target=train_target,
-                                                 width=width,
-                                                 reg=regularization)
+            # NOTE: Doesn't make sense to require dict, test never used?
+            sf = {'train': train_matrix, 'test': test_matrix}
+            w, r = self.hyp_opt(features=sf, train_target=train_target,
+                                width=self.width, reg=self.regularization)
+            self.width, self.regularization = w, r
 
-        predict = FitnessPrediction(ktype='gaussian', kwidth=width,
-                                    regularization=regularization)
+        predict = FitnessPrediction(ktype='gaussian', kwidth=self.width,
+                                    regularization=self.regularization)
 
         return predict.get_predictions(train_fp=train_matrix,
                                        test_fp=test_matrix,
@@ -264,13 +268,13 @@ class ModelBuilder(object):
         linear = descriptors * ([1] * len(descriptors))
         return linear
 
-    def hyp_opt(self, features, train_target, width, reg):
+    def hyp_opt(self, features, train_target):
         """ Function to do the hyperparameter optimization. """
         # Hyper parameter starting guesses.
         m = np.shape(features['train'])[1]
         sigma = np.ones(m)
-        sigma *= width
-        theta = np.append(sigma, reg)
+        sigma *= self.width
+        theta = np.append(sigma, self.regularization)
 
         a = (features, train_target)
 
@@ -334,8 +338,8 @@ class ModelBuilder(object):
         ml, mf, mo = self.lasso_opt(size=d, train_target=train_target,
                                     train_matrix=train_matrix,
                                     test_matrix=test_matrix,
-                                    test_target=test_target,
-                                    alpha=1.e-1, max_iter=1e6, steps=20)
+                                    test_target=test_target, max_iter=1e6,
+                                    steps=20)
 
         print(feature_names)
         best_size = self.size
@@ -354,8 +358,7 @@ class ModelBuilder(object):
                 p = self.make_prediction(train_matrix=reduced_train,
                                          test_matrix=reduced_test,
                                          train_target=train_target,
-                                         test_target=test_target, width=0.5,
-                                         regularization=0.001)
+                                         test_target=test_target)
 
                 if p['validation_rmse']['average'] < best_p1:
                     best_p1, best_size = p['validation_rmse']['average'], s
@@ -394,6 +397,8 @@ class ModelBuilder(object):
         if s == 0:
             s = 1
 
+        # If there are greater than twice as many features than datapoints,
+        # do iterative screening.
         if d > 2 * n:
             screen = iterative_screening(target=train_target,
                                          train_fpv=train_matrix,
@@ -402,15 +407,17 @@ class ModelBuilder(object):
                                          corr=self.screening_correlation,
                                          feature_names=feature_names,
                                          cleanup=False)
-        else:
-            if self.screening_method is 'rrcs':
-                screen = rr_screen(target=train_target, train_fpv=train_matrix,
-                                   size=n, corr=self.screening_correlation,
-                                   writeout=False)
-            elif self.screening_method is 'sis':
-                screen = sure_screen(target=train_target,
-                                     train_fpv=train_matrix, size=n,
-                                     writeout=False)
+
+            return train_matrix, test_matrix, screen['names']
+
+        # Otherwise just do a single iteration of screening.
+        if self.screening_method is 'rrcs':
+            screen = rr_screen(target=train_target, train_fpv=train_matrix,
+                               size=n, corr=self.screening_correlation,
+                               writeout=False)
+        elif self.screening_method is 'sis':
+            screen = sure_screen(target=train_target, train_fpv=train_matrix,
+                                 size=n, writeout=False)
 
         # Update the feature matrix.
         train_matrix = np.delete(train_matrix, screen['rejected'], axis=1)
@@ -419,53 +426,34 @@ class ModelBuilder(object):
         feature_names = list(np.delete(feature_names, screen['rejected'],
                                        axis=0))
 
-        return np.asarray(train_matrix), np.asarray(test_matrix), feature_names
+        return train_matrix, test_matrix, feature_names
 
     def pca_opt(self, max_comp, train_matrix, test_matrix, train_target,
                 test_target):
-        """ Function to do the PCA optimization. """
-        best_pca = float('inf')
-        for c in range(1, max_comp):
-            comp = pca(components=c, train_fpv=train_matrix,
-                       test_fpv=test_matrix)
+        """ Function to do the PCA optimization.
 
-            pc = self.make_prediction(train_matrix=comp['train_fpv'],
-                                      test_matrix=comp['test_fpv'],
+            Parameters
+            ----------
+            max_comp : int
+                Limit of components to include.
+        """
+        best_pca = float('inf')
+        # Loop over the number of components to be considered.
+        comp = pca(components=max_comp, train_fpv=train_matrix,
+                   test_fpv=test_matrix)
+        for c in range(1, max_comp):
+            pca_matrix = comp['train_fpv'][:, :c]
+            pca_matrix = comp['test_fpv'][:, :c]
+            pc = self.make_prediction(train_matrix=pca_matrix,
+                                      test_matrix=pca_matrix,
                                       train_target=train_target,
-                                      test_target=test_target,
-                                      width=0.5,
-                                      regularization=0.001)
+                                      test_target=test_target)
 
             if pc['validation_rmse']['average'] < best_pca:
                 best_pca = pc['validation_rmse']['average']
                 cc, cs = c, max_comp
 
         return best_pca, cc, cs
-
-    def svd_order(self, train_matrix):
-        """ Order the features acording to SVD analysis. """
-        # u = n x n matrix
-        # s = min(n, d) singular values
-        # v = d x d matrix
-        u, s, v = np.linalg.svd(train_matrix, full_matrices=True)
-
-        for i in range(len(s)):
-            if i > 0:
-                s[i] = 0.
-        # s = [[i] for i in s]
-
-        # Transform s vector into matrix.
-        sm = np.zeros((u.shape[0], v.shape[0]),
-                      dtype=float)
-        sm[:v.shape[0], :v.shape[0]] = np.diag(s)
-        # Form reduced rank matrix.
-        rrank = np.dot(u, np.dot(sm, v))
-
-        print(u)
-        print(sm)
-        print(v)
-        print(rrank)
-        print(train_matrix)
 
     def ridge_regression(self, train_matrix, train_target, feature_names,
                          test_matrix=None, test_target=None):
@@ -492,11 +480,28 @@ class ModelBuilder(object):
 
         return sort_list, error
 
-    def lasso_opt(self, size, train_target, train_matrix, test_matrix=None,
-                  test_target=None, alpha=1.e-5, max_iter=1e5, steps=None):
-        """ Function to perform lasso selection of features. """
+    def lasso_opt(self, size, train_target, train_matrix, steps=None,
+                  min_alpha=1.e-8, max_alpha=1.e-1, max_iter=1e5,
+                  test_matrix=None, test_target=None):
+        """ Function to perform lasso selection of features.
+
+            Parameters
+            ----------
+            size : int
+                Number of features that should be returned.
+            steps : int
+                Number of steps to be taken in the penalty function.
+            min_alpha : float
+                Starting penalty when searching over range. Default is 1.e-8.
+            max_alpha : float
+                Final penalty when searching over range. Default is 1.e-1.
+            max_iter : float
+                Maximum number of iterations taken minimizing the lasso
+                function.
+        """
         las = lasso(size=size, target=train_target, train_matrix=train_matrix,
-                    test_matrix=test_matrix, alpha=alpha, max_iter=max_iter,
+                    test_matrix=test_matrix, min_alpha=min_alpha,
+                    max_alpha=max_alpha, max_iter=max_iter,
                     test_target=test_target, steps=steps)
         ml = min(las['linear_error'])
         mf = las['min_features']
@@ -512,6 +517,17 @@ class ModelBuilder(object):
             ----------
             type : string
                 Set the name of the data to be stored, e.g. train.
+            atoms_id : list
+                The UUIDs for the corresponding atoms objects.
+            feature_matrix : array
+                An n x d array containing all of the numeric feature values.
+            target : list
+                A list of all the target values.
+            feature_names : list
+                A list of all the feature names.
+            table : string
+                The table name that data should be added to. Different tables
+                are used to store the original and extended feature sets.
         """
         # Add on the id and target values.
         atoms_id = [[i] for i in atoms_id]
