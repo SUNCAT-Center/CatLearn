@@ -31,9 +31,9 @@ def connection_matrix(atoms, dx=0.2):
         x = []
         for j in r:
             if j in nl[i]:
-                x.append(1)
+                x.append(1.)
             else:
-                x.append(0)
+                x.append(0.)
         cm.append(x)
 
     return np.asarray(cm)
@@ -53,9 +53,9 @@ def element_list(an, no):
     hm = []
     for n in an:
         if n == no:
-            hm.append(1)
+            hm.append(1.)
         else:
-            hm.append(0)
+            hm.append(0.)
 
     return hm
 
@@ -78,9 +78,9 @@ def heteroatomic_matrix(an, el):
             x = []
             for j in an:
                 if j != el[0]:
-                    x.append(1)
+                    x.append(1.)
                 else:
-                    x.append(0)
+                    x.append(0.)
         else:
             x = [0] * len(an)
         hm.append(x)
@@ -98,9 +98,9 @@ def generalized_matrix(cm):
     """
     gm = []
     for i in cm:
-        tot = 0
+        tot = 0.
         for j in range(len(i)):
-            if i[j] == 1:
+            if i[j] == 1.:
                 tot += sum(i)
         gm.append(tot / 12.)
 
@@ -127,7 +127,7 @@ def property_matrix(atoms, property):
         x.append(ce[s])
     pm = [x] * len(atoms)
 
-    return np.asarray(pm)
+    return np.asarray(np.float64(pm))
 
 
 def base_f(atoms, property=None):
@@ -173,4 +173,4 @@ def base_f(atoms, property=None):
         fp.append(np.sum((np.array(gm) * np.array(el)) ** 2))
         fp.append(np.sum((np.array(gm) * np.array(el)) ** 0.5))
 
-    return np.asarray(np.float64(fp))
+    return np.asarray(fp)
