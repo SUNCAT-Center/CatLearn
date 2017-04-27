@@ -9,9 +9,40 @@ from __future__ import division
 
 import numpy as np
 from scipy.linalg import cholesky, cho_solve
-from .predict import FitnessPrediction
 from numpy.core.umath_tests import inner1d
+from .covariance import get_covariance
+from .kernels import dkernel_dwidth
 
+def log_marginal_likelihood(theta, train_fp, y, ktype='gaussian', width_combine=None, 
+                       combine_kernels=None, kernel_list=None):
+    """ Return the log marginal likelyhood.
+        (Equation 5.8 in C. E. Rasmussen and C. K. I. Williams, 2006)
+    """
+    if combine_kernels is not None:
+        raise NotImplementedError
+    if ktype is not 'gaussian':
+        raise NotImplementedError
+    kwidth = theta[:-1]
+    regularization = theta[-1]
+    # Get the covariance matrix.
+    K = get_covariance(train_fp, ktype,
+                       kwidth=kwidth, 
+                       kfree=None, 
+                       kdegree=None, 
+                       width_combine=None, 
+                       combine_kernels=None, 
+                       kernel_list=None, 
+                       regularization=regularization)
+    n = len(y)
+    y = y.reshape([n, 1])
+    # print(np.shape(K), np.max(K), np.min(K))
+    L = cholesky(K, lower=True)
+    a = cho_solve((L, True), y)
+    datafit = -.5*np.dot(y.T, a)
+    complexity = -np.log(np.diag(L)).sum()  # (A.18) in R. & W.
+    normalization = -.5*n*np.log(2*np.pi)
+    p = (datafit + complexity + normalization).sum()
+    return -p
 
 def log_marginal_likelyhood1(K, y):
     """ Return the log marginal likelyhood.
@@ -27,58 +58,6 @@ def log_marginal_likelyhood1(K, y):
     normalization = -.5*n*np.log(2*np.pi)
     p = (datafit + complexity + normalization).sum()
     return p
-
-
-def dkernel_dwidth(fpm_j, width_j, ktype='gaussian'):
-    """ Partial derivative of Kernel functions. """
-    # Linear kernel.
-    if ktype == 'linear':
-        return 0
-
-    # Polynomial kernel.
-    elif ktype == 'polynomial':
-        return 0
-
-    # Gaussian kernel.
-    elif ktype == 'gaussian':
-        n = len(fpm_j)
-        gram = np.zeros([n, n])
-        for i, x1 in enumerate(fpm_j):
-            for j, x2 in enumerate(fpm_j):
-                if j >= i:
-                    break
-                d_ij = abs(x1-x2)
-                gram[i, j] = d_ij
-                gram[j, i] = d_ij
-        dkdw_j = np.exp(-.5 * gram**2 / (width_j**2)) * (gram**2 /
-                                                         (width_j**3))
-        return dkdw_j
-
-    # Laplacian kernel.
-    elif ktype == 'laplacian':
-        raise NotImplementedError('Differentials of Laplacian kernel.')
-
-
-def dK_dwidth_j(train_fp, widths, j):
-    """ Returns the partial differential of the covariance matrix with respect
-        to the j'th width.
-
-        Parameters
-        ----------
-        train_fp : list
-            A list of the training fingerprint vectors.
-        widths : float
-            A list of the widths or the j'th width.
-        j : int
-            Index of the width, with repsect to which we will differentiate.
-    """
-    if type(widths) is float:
-        width_j = widths
-    else:
-        width_j = widths[j]
-    dK_j = dkernel_dwidth(train_fp[:, j], width_j)
-    return dK_j
-
 
 def get_dlogp(train_fp, K, widths, noise, y):
     """ Return the gradient of the log marginal likelyhood.
@@ -113,6 +92,48 @@ def get_dlogp(train_fp, K, widths, noise, y):
     dp.append(0.5*np.sum(inner1d(Q, dKdnoise.T)))
     return np.array(dp)
 
+def gradient_log_p(theta, train_fp, y, ktype='gaussian', width_combine=None, 
+                       combine_kernels=None, kernel_list=None):
+    """ Return the gradient of the log marginal likelyhood.
+        (Equation 5.9 in C. E. Rasmussen and C. K. I. Williams, 2006)
+
+        Input:
+            train_fp: n x m matrix
+            K: n x n positive definite matrix
+            widths: vector of length m
+            noise: float
+            y: vector of length n
+    """
+    if combine_kernels is not None:
+        raise NotImplementedError
+    if ktype is not 'gaussian':
+        raise NotImplementedError
+    kwidth = theta[:-1]
+    regularization = theta[-1]
+    K = get_covariance(train_fp, kwidth=kwidth, width_combine=None, 
+                       combine_kernels=None, kernel_list=None, 
+                       regularization=regularization)
+    m = len(kwidth)
+    n = len(y)
+    y = y.reshape([n, 1])
+    L = cholesky(K, lower=True)
+    a = cho_solve((L, True), y)
+    C = cho_solve((L, True), np.eye(n))
+    aa = a*a.T  # inner1d(a,a)
+    Q = aa - C
+    dp = []
+    for j in range(0, m):
+        dKdtheta_j = dkernel_dwidth(train_fp[:, j], kwidth[j])
+        # Compute "0.5 * trace(tmp.dot(K_gradient))" without
+        # constructing the full matrix tmp.dot(K_gradient) since only
+        # its diagonal is required
+        # dfit = inner1d(aa,dKdtheta_j.T)
+        # dcomp = -np.sum(inner1d(C, dKdtheta_j.T))
+        # dp.append(0.5*(dfit-dcomp))
+        dp.append(0.5*np.sum(inner1d(Q, dKdtheta_j.T)))
+    dKdnoise = np.identity(n)
+    dp.append(0.5*np.sum(inner1d(Q, dKdnoise.T)))
+    return np.array(dp)
 
 def negative_logp(theta, train_fp, targets):
     """ Routine to calculate the negative of the  log marginal likelyhood as a
@@ -129,12 +150,12 @@ def negative_logp(theta, train_fp, targets):
             -logp, where logp is the the log marginal likelyhood.
     """
     # Set up the prediction routine.
-    sigma = theta[:-1]
-    alpha = theta[-1]
-    krr = FitnessPrediction(ktype='gaussian', kwidth=sigma,
-                            regularization=alpha)
+    kwidth = theta[:-1]
+    regularization = theta[-1]
     # Get the covariance matrix.
-    K = krr.get_covariance(train_fp=train_fp)
+    K = get_covariance(train_fp, kwidth=kwidth, width_combine=None, 
+                       combine_kernels=None, kernel_list=None, 
+                       regularization=regularization)
     # Get the inference level 1 marginal likelyhood.
     logp = log_marginal_likelyhood1(K=K, y=targets)
     return -logp
@@ -156,12 +177,13 @@ def negative_dlogp(theta, train_fp, targets):
             log marginal likelyhood with respect to the hyperparameters.
     """
     # Set up the prediction routine.
-    w = theta[:-1]
-    noise = theta[-1]
-    krr = FitnessPrediction(ktype='gaussian', kwidth=w,
-                            regularization=noise)
+    kwidth = theta[:-1]
+    regularization = theta[-1]
     # Get the covariance matrix.
-    K = krr.get_covariance(train_fp=train_fp)
-    dlogp = get_dlogp(train_fp, K=K, widths=w, noise=noise, y=targets)
+    K = get_covariance(train_fp, kwidth=kwidth, width_combine=None, 
+                       combine_kernels=None, kernel_list=None, 
+                       regularization=regularization)
+    dlogp = get_dlogp(train_fp, K=K, widths=kwidth, 
+                      noise=regularization, y=targets)
     neg_dlogp = -dlogp
     return neg_dlogp
