@@ -3,6 +3,7 @@ from __future__ import absolute_import
 from __future__ import division
 
 import numpy as np
+from mendeleev import element
 
 from ase.ga.utilities import get_neighborlist
 
@@ -18,7 +19,10 @@ def connection_matrix(atoms, dx=0.2):
             Buffer to calculate nearest neighbor pairs.
     """
     # Use ase.ga neighbor list generator.
-    nl = get_neighborlist(atoms, dx=dx)
+    if 'neighborlist' in atoms.info['key_value_pairs']:
+        nl = atoms.info['key_value_pairs']['neighborlist']
+    else:
+        nl = get_neighborlist(atoms, dx=dx)
 
     cm = []
     r = range(len(atoms))
@@ -103,7 +107,30 @@ def generalized_matrix(cm):
     return np.asarray(gm)
 
 
-def base_f(atoms):
+def property_matrix(atoms, property):
+    """ Generate a property matrix based on the atomic types.
+
+        Parameters
+        ----------
+        atoms : object
+            The target ase atoms opject.
+        property : str
+            The target property from mendeleev.
+    """
+    sy = atoms.get_chemical_symbols()
+    ce = {}
+    for s in set(sy):
+        ce[s] = eval('element("' + s + '").' + property)
+
+    x = []
+    for s in sy:
+        x.append(ce[s])
+    pm = [x] * len(atoms)
+
+    return np.asarray(pm)
+
+
+def base_f(atoms, property=None):
     """ Function to generate features from atoms objects.
 
         Parameters
@@ -115,6 +142,9 @@ def base_f(atoms):
 
     # Generate the required data from atoms object.
     cm = connection_matrix(atoms, dx=0.2)
+    if property is not None:
+        pm = property_matrix(atoms=atoms, property=property)
+        cm *= pm
     scm = np.sum(cm, axis=1)
     gm = generalized_matrix(cm)
     an = atoms.get_atomic_numbers()
@@ -143,4 +173,4 @@ def base_f(atoms):
         fp.append(np.sum((np.array(gm) * np.array(el)) ** 2))
         fp.append(np.sum((np.array(gm) * np.array(el)) ** 0.5))
 
-    return np.float64(fp)
+    return np.asarray(np.float64(fp))
