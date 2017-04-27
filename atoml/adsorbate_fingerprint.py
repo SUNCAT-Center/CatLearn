@@ -25,13 +25,27 @@ except ImportError:
 
 def n_outer(mnlv):
     econf=mnlv.econf.split(' ')[1:]
-    n=0
+    n_tot=0
+    ns=0
+    np=0
+    nd=0
+    nf=0
     for shell in econf:
+        n_shell=0
         if shell[-1].isalpha:
-            n+=1
+            n_shell=1
         else:
-            n+=int(shell[-1])
-    return n
+            n_shell=int(shell[-1])
+        n_tot += n_shell
+        if 's' in shell:
+            ns += n_shell
+        if 'p' in shell:
+            ns += n_shell
+        if 'd' in shell:
+            nd += n_shell
+        elif 'f' in shell:
+            nf += n_shell
+    return n_tot, ns, np, nd, nf
 
 def metal_index(atoms):
     metal_atoms = [a.index for a in atoms if a.symbol not in
@@ -44,7 +58,7 @@ def adds_index(atoms):
 
 def info2primary_index(atoms):
     liste = []
-    surf_atoms = atoms.info['metal_atoms']
+    surf_atoms = atoms.info['surf_atoms']
     add_atoms = atoms.info['add_atoms']
     for m in surf_atoms:
         for a in add_atoms:
@@ -146,7 +160,7 @@ class AdsorbateFingerprintGenerator(object):
                 continue
             atoms.info['dbid'] = int(d.id)
             atoms.info['add_atoms'] = adds_index(atoms)
-            atoms.info['metal_atoms'] = metal_index(atoms)
+            atoms.info['surf_atoms'] = metal_index(atoms)
             i_add1, i_surf1, Z_add1, Z_surf1 = info2primary_index(atoms)
             atoms.info['i_add1'] = i_add1
             atoms.info['i_surf1'] = i_surf1
@@ -166,7 +180,7 @@ class AdsorbateFingerprintGenerator(object):
             atoms.info['key_value_pairs'] = d.key_value_pairs
             atoms.info['dbid'] = int(d.id)
             atoms.info['add_atoms'] = adds_index(atoms)
-            atoms.info['metal_atoms'] = metal_index(atoms)
+            atoms.info['surf_atoms'] = metal_index(atoms)
             i_add1, i_surf1, Z_add1, Z_surf1 = info2primary_index(atoms)
             atoms.info['i_add1'] = i_add1
             atoms.info['i_surf1'] = i_surf1
@@ -318,18 +332,6 @@ class AdsorbateFingerprintGenerator(object):
                     'en_pauling_add1', 'atomic_radius_add1', 'vdw_radius_add1',
                     'ion_e_add1', 'ground_state_magmom_add1']
         else:
-            #metal_atoms = [a.index for a in atoms if a.symbol not in
-            #               ['H', 'C', 'O', 'N']]
-            #add_atoms = [a.index for a in atoms if a.symbol in
-            #             ['H', 'C', 'O', 'N']]
-            #liste = []
-            #for m in metal_atoms:
-            #    for a in add_atoms:
-            #        d = atoms.get_distance(m, a, mic=True, vector=False)
-            #        liste.append([a, d])
-            #L = np.array(liste)
-            #i = np.argmin(L[:, 1])
-            #Z0 = atoms.numbers[int(L[i, 0])]
             Z0 = int(atoms.info['Z_add1'])
             mnlv = element(Z0)
             result = [
@@ -370,21 +372,12 @@ class AdsorbateFingerprintGenerator(object):
                     'dbskew_surf1',
                     'dbkurtosis_surf1',
                     'ne_outer_surf1',
+                    'ne_s_surf1',
+                    'ne_p_surf1',
+                    'ne_d_surf1',
+                    'ne_f_surf1',
                     'ground_state_magmom_surf1']
         else:
-            #metal_atoms = [a.index for a in atoms if a.symbol not in
-            #               ['H', 'C', 'O', 'N']]
-            #add_atoms = [a.index for a in atoms if a.symbol in
-            #             ['H', 'C', 'O', 'N']]
-            # layer, z_layer = get_layers(atoms[metal_atoms], (0,0,1), tol=1.0)
-            #liste = []
-            #for m in metal_atoms:
-            #    for a in add_atoms:
-            #        d = atoms.get_distance(m, a, mic=True, vector=False)
-            #        liste.append([m, d])
-            #L = np.array(liste)
-            #i = np.argmin(L[:, 1])
-            #Z0 = atoms.numbers[int(L[i, 0])]
             Z0 = int(atoms.info['Z_surf1'])
             mnlv = element(Z0)
             name = chemical_symbols[Z0]
@@ -401,6 +394,7 @@ class AdsorbateFingerprintGenerator(object):
                 dbskew=np.NaN
                 dbkurt=np.NaN
                 print(name+' has no d-band info.')
+            n_tot, n_s, n_p, n_d, n_f = n_outer(mnlv)
             return [Z0,
                     int(mnlv.period),
                     int(mnlv.group_id),
@@ -421,7 +415,11 @@ class AdsorbateFingerprintGenerator(object):
                     dbwidth,
                     dbskew,
                     dbkurt,
-                    n_outer(mnlv),
+                    n_tot,
+                    n_s,
+                    n_p,
+                    n_d,
+                    n_f,
                     float(ground_state_magnetic_moments[Z0])
                     ]
     
@@ -448,10 +446,10 @@ class AdsorbateFingerprintGenerator(object):
             return ['nn_num_C', 'nn_num_H', 'nn_num_M']
         else:
             addsyms = ['H', 'C', 'O', 'N']
-            metal_atoms = [a.index for a in atoms if a.symbol not in addsyms]
-            add_atoms = [a.index for a in atoms if a.symbol in addsyms]
+            surf_atoms = atoms.info['surf_atoms']
+            add_atoms = atoms.info['add_atoms']
             liste = []
-            for m in metal_atoms:
+            for m in surf_atoms:
                 for a in add_atoms:
                     d = atoms.get_distance(m, a, mic=True, vector=False)
                     liste.append([a, d])
@@ -480,12 +478,10 @@ class AdsorbateFingerprintGenerator(object):
         if atoms is None:
             return ['num_C_add2nn', 'num_H_add2nn', 'num_M_add2nn']
         else:
-            metal_atoms = [a.index for a in atoms if a.symbol not in
-                           ['H', 'C', 'O', 'N']]
-            add_atoms = [a.index for a in atoms if a.symbol in
-                         ['H', 'C', 'O', 'N']]
+            surf_atoms = atoms.info['surf_atoms']
+            add_atoms = ['add_atoms']
             liste = []
-            for m in metal_atoms:
+            for m in surf_atoms:
                 for a in add_atoms:
                     d = atoms.get_distance(m, a, mic=True, vector=False)
                     liste.append([a, d])
@@ -498,7 +494,7 @@ class AdsorbateFingerprintGenerator(object):
             nC1 = len([a.index for a in atoms if a.symbol == 'C' and
                       atoms.get_distance(secondary_add, a.index, mic=True) <
                       1.3 and a.index != secondary_add])
-            nM = len([a.index for a in atoms if a.symbol in metal_atoms and
+            nM = len([a.index for a in atoms if a.symbol not in add_atoms and
                      atoms.get_distance(secondary_add, a.index, mic=True) <
                      2.35])
             return [nC1, nH1, nM]  # , nN, nH]
@@ -525,6 +521,10 @@ class AdsorbateFingerprintGenerator(object):
                     'av_atomic_radius',
                     'av_ground_state_magmom',
                     'av_ne_outer',
+                    'av_ne_s',
+                    'av_ne_p',
+                    'av_ne_d',
+                    'av_ne_f',
                     ]
         else:
             metal_atoms = [a.index for a in atoms if a.symbol not in
@@ -573,9 +573,14 @@ class AdsorbateFingerprintGenerator(object):
             ionenergies=[mnlv0.ionenergies[1]]
             atomic_radius=[mnlv0.atomic_radius]
             ground_state_magmom=[ground_state_magnetic_moments[Z0]]
-            ne_outer=[n_outer(mnlv0)]
+            n_tot0, n_s0, n_p0, n_d0, n_f0 = n_outer(mnlv0)
+            n_tot = [n_tot0]
+            n_s = [n_s0]
+            n_p = [n_p0]
+            n_d = [n_d0]
+            n_f = [n_f0]
             q_self = []
-            n=1                     #WIP for other than hexagonal surfaces.
+            n=0
             for nn in ai:
                 q = nn[0]
                 sym = symbols[metal_atoms[q]]
@@ -596,7 +601,12 @@ class AdsorbateFingerprintGenerator(object):
                     ionenergies.append(mnlv.ionenergies[1])
                     atomic_radius.append(r_bond_nn)
                     ground_state_magmom.append(ground_state_magnetic_moments[numbers[q]])
-                    ne_outer.append(n_outer(mnlv))
+                    n_tot0, n_s0, n_p0, n_d0, n_f0 = n_outer(mnlv)
+                    n_tot.append(n_tot0)
+                    n_s.append(n_s0)
+                    n_p.append(n_d0)
+                    n_d.append(n_p0)
+                    n_f.append(n_f0)
                     if sym == name:
                         q_self.append(q)
             av_dbcenter = np.average(dbcenter)
@@ -613,7 +623,11 @@ class AdsorbateFingerprintGenerator(object):
             av_ionenergies = np.average(ionenergies)
             av_atomic_radius = np.average(atomic_radius)
             av_ground_state_magmom = np.average(ground_state_magmom)
-            av_ne_outer= np.average(ne_outer)
+            av_ne_outer= np.average(n_tot)
+            av_n_s = np.average(n_s)
+            av_n_p = np.average(n_p)
+            av_n_d = np.average(n_d)
+            av_n_f = np.average(n_f)
             n_self = len(q_self)
             return [n, n_self, 
                     av_dbcenter, 
@@ -631,6 +645,10 @@ class AdsorbateFingerprintGenerator(object):
                     av_atomic_radius,
                     av_ground_state_magmom,
                     av_ne_outer,
+                    av_n_s,
+                    av_n_p,
+                    av_n_d,
+                    av_n_f,
                     ]
 
     def adds_sum(self, atoms=None):
@@ -642,8 +660,7 @@ class AdsorbateFingerprintGenerator(object):
                     'sum_en_allen', 'av_en_allen', 'sum_en_pauling',
                     'av_en_pauling']
         else:
-            add_atoms = [a.index for a in atoms if a.symbol in
-                         ['H', 'C', 'O', 'N']]
+            add_atoms = atoms.info['add_atoms']
             electron_affinity = 0
             en_allen = 0
             en_pauling = 0
