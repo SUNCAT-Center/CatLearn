@@ -316,13 +316,14 @@ def iterative_screening(target, train_fpv, test_fpv=None, size=None, step=None,
     rejected += zd
 
     if test_fpv is not None:
-        select['test_fpv'] = np.delete(test_fpv, rejected, axis=1)
+        test_fpv = np.delete(test_fpv, rejected, axis=1)
     if feature_names is not None:
         feature_names = list(np.delete(feature_names, rejected, axis=0))
 
     select['accepted'] = accepted
     select['rejected'] = rejected
     select['train_fpv'] = reduced_fpv
+    select['test_fpv'] = test_fpv
     select['names'] = feature_names
 
     if writeout:

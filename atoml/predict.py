@@ -223,10 +223,9 @@ class FitnessPrediction(object):
             ktcinv = np.dot(kt, cinv)
             p = np.dot(ktcinv, target_values) + train_mean
             if self.standardize_target:
-                pred.append((p * self.standardize_data['std']) +
-                            self.standardize_data['mean'])
-            else:
-                pred.append(p)
+                p = (p * self.standardize_data['std']) + \
+                 self.standardize_data['mean']
+            pred.append(p)
 
         return pred
 
