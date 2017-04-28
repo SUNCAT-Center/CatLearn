@@ -11,7 +11,7 @@ import numpy as np
 from scipy.linalg import cholesky, cho_solve
 from numpy.core.umath_tests import inner1d
 from .covariance import get_covariance, gramian
-#from .kernels import dkernel_dwidth
+from .kernels import dkernel_dwidth
 
 def log_marginal_likelihood(theta, train_fp, y, ktype):
     """ Return the log marginal likelyhood.
@@ -31,8 +31,7 @@ def log_marginal_likelihood(theta, train_fp, y, ktype):
     p = (datafit + complexity + normalization).sum()
     return -p
 
-def gradient_log_p(theta, train_fp, y, ktype='gaussian', width_combine=None, 
-                       combine_kernels=None, kernel_list=None):
+def gradient_log_p(theta, train_fp, y, ktype='gaussian'):
     """ Return the gradient of the log marginal likelyhood.
         (Equation 5.9 in C. E. Rasmussen and C. K. I. Williams, 2006)
 
@@ -43,15 +42,11 @@ def gradient_log_p(theta, train_fp, y, ktype='gaussian', width_combine=None,
             noise: float
             y: vector of length n
     """
-    if combine_kernels is not None:
-        raise NotImplementedError
     if ktype is not 'gaussian':
         raise NotImplementedError
     kwidth = theta[:-1]
-    regularization = theta[-1]
-    K = get_covariance(train_fp, kwidth=kwidth, width_combine=None, 
-                       combine_kernels=None, kernel_list=None, 
-                       regularization=regularization)
+    kdict = {'k1': {'type': ktype, 'width': kwidth}}
+    K = gramian(train_fp, kdict, regularization=theta[-1])
     m = len(kwidth)
     n = len(y)
     y = y.reshape([n, 1])
