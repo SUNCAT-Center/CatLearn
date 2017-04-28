@@ -9,7 +9,7 @@ from scipy.optimize import minimize
 from collections import defaultdict
 from .model_selection import log_marginal_likelihood
 from .output import write_predict
-from .covariance import get_covariance, general_covariance, testset_covariance
+from .covariance import gramian, get_covariance
 from .kernels import kernel, kernel_combine
 
 class FitnessPrediction(object):
@@ -18,31 +18,14 @@ class FitnessPrediction(object):
 
         Parameters
         ----------
-        ktype : string
-            The kernel type, several have been pre-defined. Default is the
-            Gaussian kernel.
-        kwidth : float or list
-            The kernel width, required for a number of the kernel types. If a
-            float is supplied it is converted to a d-length array, containing a
-            width for each descriptor. Default is 0.5.
-        kfree : float
-            Free parameter for the polynomial kernel, giving trading off for
-            the influence of higher-order and lower-order terms in the
-            polynomial. Default is homogeneous (c=0).
-        kdegree : float
-            Degree parameter for the polynomial kernel. Default is quadratic
-            (d=2).
+        kernel_dict    : dict of dicts
+            Each dict in kernel_dict contains information on a kernel.
+            The 'type' key is required to contain the name of kernel function:
+            'linear', 'polynomial', 'gaussian' or 'laplacian'.
+            The hyperparameters 'width', 'kfree'
         regularization : float
             The regularization strength (smoothing function) applied to the
             kernel matrix.
-        combine_kernels : string
-            Define how to combine kernels, can be addition or multiplication.
-        kernel_list : dict
-            List of functions when combining kernels, each coupled with a List
-            of features on which the given kernel should act. Example:
-            {'gaussian': [1, 2, 5], 'linear': [0, 3, 4]}
-        width_combine : dict
-            List of feature widths, set up in same way as kernel_list.
     """
     def __init__(self, kernel_dict, regularization=None):
         assert kernel_dict is not None
@@ -139,13 +122,13 @@ class FitnessPrediction(object):
         data = defaultdict(list)
         # Get the Gram matrix on-the-fly if none is suppiled.
         if cinv is None:
-            cvm = general_covariance(train_fp, 
+            cvm = gramian(train_fp, 
                                      kernel_dict=self.kernel_dict,
                                      regularization=self.regularization)
             cinv = np.linalg.inv(cvm)
         
         # Calculate the covarience between the test and training datasets.
-        ktb = testset_covariance(test_fp, train_fp, self.kernel_dict)
+        ktb = get_covariance(test_fp, train_fp, self.kernel_dict)
 
         # Build the list of predictions.
         data['prediction'] = self.do_prediction(ktb=ktb, cinv=cinv,
@@ -160,9 +143,7 @@ class FitnessPrediction(object):
         # Calculate error associated with predictions on the training data.
         if get_training_error:
             # Calculate the covarience between the training dataset.
-            kt_train = general_covariance(train_fp,
-                                          self.kernel_dict, 
-                                          regularization=None)
+            kt_train = gramian(train_fp, self.kernel_dict, regularization=None)
 
             # Calculate predictions for the training data.
             data['train_prediction'] = self.do_prediction(ktb=kt_train,
@@ -219,7 +200,7 @@ class FitnessPrediction(object):
             residual. """
         data = defaultdict(list)
         # Calculate the K(X*,X*) covarience matrix.
-        ktest = general_covariance(test_fp, 
+        ktest = gramian(test_fp, 
                                    self.kernel_dict, regularization=None)
 
         # Form H and H* matrix, multiplying X by basis.
