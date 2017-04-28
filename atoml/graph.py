@@ -5,7 +5,41 @@ from __future__ import division
 import numpy as np
 from mendeleev import element
 
-from ase.ga.utilities import get_neighborlist
+from ase.data import covalent_radii
+
+
+def get_neighborlist(atoms, dx=0.2, neighbor_number=1):
+    """ Make dict of neighboring atoms. Possible to return neighbors from
+        defined neighbor shell e.g. 1st, 2nd, 3rd.
+
+        Parameters
+        ----------
+        atoms : object
+            Target ase atoms object on which to get neighbor list.
+        dx : float
+            Buffer to calculate nearest neighbor pairs.
+        neighbor_number : int
+            NOT IMPLEMENTED YET.
+    """
+    conn = {}
+    for atomi in atoms:
+        conn_this_atom = []
+        for atomj in atoms:
+            if atomi.index != atomj.index:
+                pi = np.asarray(atomi.position)
+                pj = np.asarray(atomj.position)
+                d = np.linalg.norm(pi - pj)
+                cri = covalent_radii[atomi.number]
+                crj = covalent_radii[atomj.number]
+                if neighbor_number == 1:
+                    d_max1 = 0.
+                else:
+                    d_max1 = ((neighbor_number - 1) * (crj + cri)) + dx
+                d_max2 = (neighbor_number * (crj + cri)) + dx
+                if d > d_max1 and d < d_max2:
+                    conn_this_atom.append(atomj.index)
+        conn[atomi.index] = conn_this_atom
+    return conn
 
 
 def connection_matrix(atoms, dx=0.2):
