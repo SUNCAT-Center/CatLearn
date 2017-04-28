@@ -100,7 +100,7 @@ def generalized_matrix(cm):
     for i in cm:
         tot = 0.
         for j in range(len(i)):
-            if i[j] == 1.:
+            if i[j] != 0.:
                 tot += sum(i)
         gm.append(tot / 12.)
 
@@ -130,35 +130,32 @@ def property_matrix(atoms, property):
     return np.asarray(np.float64(pm))
 
 
-def base_f(atoms, property=None):
-    """ Function to generate features from atoms objects.
+def get_features(an, cm, sum_cm, gen_cm):
+    """ Function to generate the actual feature vector.
 
         Parameters
         ----------
-        atoms : object
-            The target ase atoms object.
+        an : list
+            Ordered list of atomic numbers.
+        cm : array
+            The coordination matrix.
+        sum_cm : list
+            The summed vectors of the coordination matrix.
+        gen_cm : array
+            The generalized coordination matrix.
     """
     fp = []
-
-    # Generate the required data from atoms object.
-    cm = connection_matrix(atoms, dx=0.2)
-    if property is not None:
-        pm = property_matrix(atoms=atoms, property=property)
-        cm *= pm
-    scm = np.sum(cm, axis=1)
-    gm = generalized_matrix(cm)
-    an = atoms.get_atomic_numbers()
-
     # Get level one fingerprint. Sum of coordination for each atom type.
     done = []
     for e in set(an):
         el = element_list(an, e)
-        fp.append(np.sum(np.array(scm) * np.array(el)))
-        fp.append(np.sum((np.array(scm) * np.array(el)) ** 2))
-        fp.append(np.sum((np.array(scm) * np.array(el)) ** 0.5))
+        x = np.array(sum_cm) * np.array(el)
+        fp.append(np.sum(x))
+        fp.append(np.sum(x ** 2))
+        fp.append(np.sum(x ** 0.5))
 
         # Get level two fingerprint. Total AA, AB, BB etc bonds.
-        pt = np.array(([el] * len(atoms)))
+        pt = np.array(([el] * len(an)))
         em = np.sum(np.sum(pt * np.array(cm), axis=1))
         fp.append(em)
         if e not in done:
@@ -166,11 +163,45 @@ def base_f(atoms, property=None):
         for eo in set(an):
             if eo not in done:
                 hm = heteroatomic_matrix(an, [e, eo])
-                fp.append(np.sum(np.sum(np.array(hm) * np.array(cm), axis=1)))
+                fp.append(np.sum(np.sum(np.array(hm) * np.array(cm),
+                                        axis=1)))
 
         # Get level three fingerprint. Generalized coordination number.
-        fp.append(np.sum(np.array(gm) * np.array(el)))
-        fp.append(np.sum((np.array(gm) * np.array(el)) ** 2))
-        fp.append(np.sum((np.array(gm) * np.array(el)) ** 0.5))
+        x = np.array(gen_cm) * np.array(el)
+        fp.append(np.sum(x))
+        fp.append(np.sum(x ** 2))
+        fp.append(np.sum(x ** 0.5))
+
+    return fp
+
+
+def base_f(atoms, property=None):
+    """ Function to generate features from atoms objects.
+
+        Parameters
+        ----------
+        atoms : object
+            The target ase atoms object.
+        property : list
+            List of the target properties from mendeleev.
+    """
+    fp = []
+
+    # Generate the required data from atoms object.
+    an = atoms.get_atomic_numbers()
+    cm_store = connection_matrix(atoms, dx=0.2)
+    sum_cm = np.sum(cm_store, axis=1)
+    gen_cm = generalized_matrix(cm_store)
+
+    fp += get_features(an=an, cm=cm_store, sum_cm=sum_cm, gen_cm=gen_cm)
+
+    if property is not None:
+        for p in property:
+            pm = property_matrix(atoms=atoms, property=p)
+            cm = cm_store * pm
+            sum_cm = np.sum(cm, axis=1)
+            gen_cm = generalized_matrix(cm)
+
+            fp += get_features(an=an, cm=cm, sum_cm=sum_cm, gen_cm=gen_cm)
 
     return np.asarray(fp)
