@@ -13,10 +13,7 @@ import numpy as np
 
 from atoml.fingerprint_setup import standardize, normalize
 from atoml.predict import FitnessPrediction
-from atoml.model_selection import log_marginal_likelihood
-from scipy.optimize import minimize
 from atoml.fpm_operations import fpmatrix_split
-from atoml import kernels
 
 nsplit = 2
 
@@ -61,7 +58,7 @@ for i in range(nsplit):
     if sigma is None:
         sigma = np.ones(m)
         sigma *= 0.3
-        theta = np.append(sigma, regularization)
+        kdict = {'kernel': {'type': 'gaussian', 'width': list(sigma)}}
     if True:
         # Get the list of fingerprint vectors and standardize them.
         nfp = standardize(train=train_fp, test=test_fp)
@@ -69,7 +66,7 @@ for i in range(nsplit):
         # Get the list of fingerprint vectors and normalize them.
         nfp = normalize(train=train_fp, test=test_fp)
     # Set up the prediction routine.
-    krr = FitnessPrediction(ktype='gaussian', kwidth=sigma,
+    krr = FitnessPrediction(kernel_dict=kdict,
                             regularization=regularization)  # regularization)
     # Do the training.
     pred = krr.get_predictions(train_fp=nfp['train'],
@@ -78,7 +75,8 @@ for i in range(nsplit):
                                train_target=traine,
                                get_validation_error=True,
                                get_training_error=True,
-                               test_target=teste)
+                               test_target=teste, 
+                               optimize_hyperparameters=True)
     # Print the error associated with the predictions.
     train_rmse = pred['training_rmse']['average']
     val_rmse = pred['validation_rmse']['average']

@@ -14,10 +14,11 @@ def gaussian_kernel(m1, m2=None, theta=None):
         k = distance.pdist(m1 / kwidth, metric='sqeuclidean')
         k = distance.squareform(np.exp(-.5 * k))
         np.fill_diagonal(k, 1)
+        return k
     else:
         k = distance.cdist(m1 / kwidth, m2 / kwidth,
                            metric='sqeuclidean')
-    return np.exp(-.5 * k)
+        return np.exp(-.5 * k)
 
 def d_gaussian_kernel(m1, m2=None, theta=None):
     kwidth = theta
@@ -45,8 +46,8 @@ def d_linear_kernel(m1, m2=None, theta=None):
     return np.dot(m1, np.transpose(m2))
 
 def polynomial_kernel(m1, m2=None, theta=None):
-    kfree = theta[::2]
-    kdegree = theta[1::2]
+    kfree = theta[0]
+    kdegree = theta[1]
     if m2 is None:
         m2 = m1
     return(np.dot(m1, np.transpose(m2)) + kfree) ** kdegree
@@ -54,16 +55,17 @@ def polynomial_kernel(m1, m2=None, theta=None):
 def d_polynomial_kernel(m1, m2=None, theta=None):
     raise NotImplementedError('To Do')
 
-def laplacian_kernel(m1, m2, theta=None):
+def laplacian_kernel(m1, m2=None, theta=None):
+    kwidth = theta
     if m2 is None:
-        kwidth = theta
         k = distance.pdist(m1 / kwidth, metric='cityblock')
         k = distance.squareform(np.exp(-k))
         np.fill_diagonal(k, 1)
+        return k
     else:
         k = distance.cdist(m1 / kwidth, m2 / kwidth,
                                metric='cityblock')
-    return np.exp(-k)
+        return np.exp(-k)
 
 def kernel(ktype, m1, m2=None, kwidth=None, kfree=None, kdegree=None):
     """ Kernel functions taking n x d feature matrix.

@@ -31,7 +31,7 @@ sigma *= 0.3
 regularization = 0.03
 theta = np.append(sigma, regularization)
 
-a = (nfp, targets, 'gaussian', None, None, None)
+a = (nfp, targets, 'gaussian')
 
 # Hyper parameter bounds.
 b = ((1E-9, None), ) * (m+1)
