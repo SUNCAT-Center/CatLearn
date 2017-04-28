@@ -50,7 +50,6 @@ def polynomial_kernel(m1, m2=None, theta=None):
     return(np.dot(m1, np.transpose(m2)) + kfree) ** kdegree
 
 def d_polynomial_kernel(m1, m2=None, theta=None):
-    return(np.dot(m1, np.transpose(m2)) + kfree) ** kdegree-1
     raise NotImplementedError('To Do')
 
 def laplacian_kernel(m1, m2=None, theta=None):

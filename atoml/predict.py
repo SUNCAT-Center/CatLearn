@@ -104,10 +104,9 @@ class GaussianProcess(object):
             # Set bounds for hyperparameters
             bounds = ((1E-6,1e3),)*(len(theta))
             # Optimize
-            #self.theta_opt = minimize(log_marginal_likelihood, theta, 
-            #                     args=args, bounds=bounds)
-            self.theta_opt = minimize(log_marginal_likelihood, theta, 
-                                 args=args, bounds=bounds, jac=gradient_log_p)
+            self.theta_opt = minimize(log_marginal_likelihood, theta,
+                                      args=args, 
+                                      bounds=bounds)#, jac=gradient_log_p)
             # Update kernel_dict and regularization
             self.kernel_dict[kernelkey]['width'] = self.theta_opt['x'][:-1]
             self.regularization = self.theta_opt['x'][-1]

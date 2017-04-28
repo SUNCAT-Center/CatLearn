@@ -67,4 +67,4 @@ def gradient_log_p(theta, train_fp, y, ktype='gaussian'):
         dp.append(0.5*np.sum(inner1d(Q, dKdtheta_j.T)))
     dKdnoise = np.identity(n)
     dp.append(0.5*np.sum(inner1d(Q, dKdnoise.T)))
-    return np.array(dp)
+    return -np.array(dp)
