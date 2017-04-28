@@ -12,7 +12,7 @@ from __future__ import print_function
 import numpy as np
 
 from atoml.fingerprint_setup import standardize, normalize
-from atoml.predict import FitnessPrediction
+from atoml.predict import GaussianProcess
 from atoml.fpm_operations import fpmatrix_split
 
 nsplit = 2
@@ -66,7 +66,7 @@ for i in range(nsplit):
         # Get the list of fingerprint vectors and normalize them.
         nfp = normalize(train=train_fp, test=test_fp)
     # Set up the prediction routine.
-    krr = FitnessPrediction(kernel_dict=kdict,
+    krr = GaussianProcess(kernel_dict=kdict,
                             regularization=regularization)  # regularization)
     # Do the training.
     pred = krr.get_predictions(train_fp=nfp['train'],

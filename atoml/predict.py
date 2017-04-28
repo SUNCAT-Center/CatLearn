@@ -10,9 +10,8 @@ from collections import defaultdict
 from .model_selection import log_marginal_likelihood
 from .output import write_predict
 from .covariance import gramian, get_covariance
-from .kernels import kernel, kernel_combine
 
-class FitnessPrediction(object):
+class GaussianProcess(object):
     """ Kernel ridge regression functions for the machine learning. This can be
         used to predict the fitness of an atoms object.
 
@@ -28,7 +27,6 @@ class FitnessPrediction(object):
             kernel matrix.
     """
     def __init__(self, kernel_dict, regularization=None):
-        assert kernel_dict is not None
         self.kernel_dict = kernel_dict
         self.regularization = regularization
         
@@ -122,9 +120,8 @@ class FitnessPrediction(object):
         data = defaultdict(list)
         # Get the Gram matrix on-the-fly if none is suppiled.
         if cinv is None:
-            cvm = gramian(train_fp, 
-                                     kernel_dict=self.kernel_dict,
-                                     regularization=self.regularization)
+            cvm = gramian(train_fp, kernel_dict=self.kernel_dict,
+                          regularization=self.regularization)
             cinv = np.linalg.inv(cvm)
         
         # Calculate the covarience between the test and training datasets.
@@ -200,8 +197,7 @@ class FitnessPrediction(object):
             residual. """
         data = defaultdict(list)
         # Calculate the K(X*,X*) covarience matrix.
-        ktest = gramian(test_fp, 
-                                   self.kernel_dict, regularization=None)
+        ktest = gramian(test_fp, self.kernel_dict, regularization=None)
 
         # Form H and H* matrix, multiplying X by basis.
         train_matrix = np.asarray([basis(i) for i in train_fp])

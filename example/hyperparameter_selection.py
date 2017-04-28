@@ -10,7 +10,7 @@ or that the user has generated a feature matrix in fpm.txt.
 import numpy as np
 from scipy.optimize import minimize
 from atoml.fingerprint_setup import standardize
-from atoml.model_selection import negative_logp, negative_dlogp, log_marginal_likelihood, gradient_log_p
+from atoml.model_selection import log_marginal_likelihood, gradient_log_p
 import time
 
 # Get the list of fingerprint vectors and normalize them.

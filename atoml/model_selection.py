@@ -11,7 +11,7 @@ import numpy as np
 from scipy.linalg import cholesky, cho_solve
 from numpy.core.umath_tests import inner1d
 from .covariance import get_covariance, gramian
-from .kernels import dkernel_dwidth
+#from .kernels import dkernel_dwidth
 
 def log_marginal_likelihood(theta, train_fp, y, ktype):
     """ Return the log marginal likelyhood.

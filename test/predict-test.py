@@ -7,7 +7,7 @@ from ase.ga.data import DataConnection
 from atoml.data_setup import get_unique, get_train
 from atoml.fingerprint_setup import normalize, return_fpv
 from atoml.particle_fingerprint import ParticleFingerprintGenerator
-from atoml.predict import FitnessPrediction
+from atoml.predict import GaussianProcess
 
 
 db = DataConnection('gadb.db')
@@ -30,7 +30,7 @@ nfp = normalize(train=train_fp, test=test_fp)
 
 # Set up the prediction routine.
 kdict = {'k1': {'type': 'linear'}}
-krr = FitnessPrediction(kernel_dict=kdict)
+krr = GaussianProcess(kernel_dict=kdict)
 #krr = FitnessPrediction(ktype='linear')
 #cvm = krr.get_covariance(train_matrix=nfp['train'])
 #cinv = np.linalg.inv(cvm)
@@ -48,7 +48,7 @@ print('linear prediction:', pred['validation_rmse']['average'])
 
 # Set up the prediction routine.
 kdict = {'k1': {'type': 'polynomial', 'kfree': 0., 'kdegree': 2.}}
-krr = FitnessPrediction(kernel_dict=kdict)
+krr = GaussianProcess(kernel_dict=kdict)
 #krr = FitnessPrediction(ktype='polynomial',
 #                        kfree=0.,
 #                        kdegree=2.)
@@ -68,7 +68,7 @@ print('polynomial prediction:', pred['validation_rmse']['average'])
 
 # Set up the prediction routine.
 kdict = {'k1': {'type': 'gaussian', 'width': 0.5}}
-krr = FitnessPrediction(kernel_dict=kdict,
+krr = GaussianProcess(kernel_dict=kdict,
                         regularization=0.001)
 #krr = FitnessPrediction(ktype='gaussian',
 #                        kwidth=0.5,
@@ -115,7 +115,7 @@ print('gaussian prediction (ins):', pred['validation_rmse']['average'])
 
 # Set up the prediction routine.
 kdict = {'k1': {'type': 'laplacian', 'width': 0.5}}
-krr = FitnessPrediction(kernel_dict=kdict,
+krr = GaussianProcess(kernel_dict=kdict,
                         regularization=0.001)
 #krr = FitnessPrediction(ktype='laplacian',
 #                        kwidth=0.5,
@@ -138,7 +138,7 @@ print('laplacian prediction:', pred['validation_rmse']['average'])
 kdict = {'k1': {'type': 'linear', 'features': [0, 1]},
                 'k2': {'type': 'gaussian', 'features': [2, 3], 'width': 0.5}
                 }
-krr = FitnessPrediction(kernel_dict=kdict,
+krr = GaussianProcess(kernel_dict=kdict,
                         regularization=0.001)
 #krr = FitnessPrediction(combine_kernels='addition',
 #                        kernel_list={'linear': [0, 1], 'gaussian': [2, 3]},
@@ -163,7 +163,7 @@ kdict = {'k1': {'type': 'linear', 'features': [0, 1]},
                 'k2': {'type': 'gaussian', 'features': [2, 3], 'width': 0.5,
                        'operation': 'multiplication'}
                 }
-krr = FitnessPrediction(kernel_dict=kdict,
+krr = GaussianProcess(kernel_dict=kdict,
                         regularization=0.001)
 #krr = FitnessPrediction(combine_kernels='multiplication',
 #                        kernel_list={'linear': [0, 1], 'gaussian': [2, 3]},

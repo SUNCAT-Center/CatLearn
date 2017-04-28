@@ -65,4 +65,34 @@ def laplacian_kernel(m1, m2=None, theta=None):
                                metric='cityblock')
         return np.exp(-k)
 
+def dkernel_dwidth(fpm_j, width_j, ktype='gaussian'):
+    """ Partial derivative of Kernel functions. """
+    # Linear kernel.
+    if ktype == 'linear':
+        return 0
+
+    # Polynomial kernel.
+    elif ktype == 'polynomial':
+        raise NotImplementedError('Differentials of polynomial kernel.')
+
+    # Gaussian kernel.
+    elif ktype == 'gaussian':
+        n = len(fpm_j)
+        gram = np.zeros([n, n])
+        # Construct Gram matrix.
+        for i, x1 in enumerate(fpm_j):
+            for j, x2 in enumerate(fpm_j):
+                if j >= i:
+                    break
+                d_ij = abs(x1-x2)
+                gram[i, j] = d_ij
+                gram[j, i] = d_ij
+        # Insert gram matrix in differentiated kernel.
+        dkdw_j = np.exp(-.5 * gram**2 / (width_j**2)) * (gram**2 /
+                                                         (width_j**3))
+        return dkdw_j
+
+    # Laplacian kernel.
+    elif ktype == 'laplacian':
+        raise NotImplementedError('Differentials of Laplacian kernel.')
     

@@ -5,7 +5,6 @@ Created on Wed Apr 26 17:27:47 2017
 """
 
 import numpy as np
-from .kernels import kernel, kernel_combine, dkernel_dwidth
 from atoml import kernels as ak
 
 def gramian(train_matrix, kernel_dict={}, regularization=None):
