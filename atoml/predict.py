@@ -89,7 +89,7 @@ class GaussianProcess(object):
                 # Store hyperparameters in theta
                 if nkernels > 0:
                     raise NotImplementedError('Optimize combined kernels.')
-                if ktype is 'gaussian':
+                if ktype == 'gaussian' or ktype == 'laplacian':
                     kwidth = self.kernel_dict[kernelkey]['width']
                     if type(kwidth) is float:
                         kwidth = np.zeros(N_D,) + kwidth
@@ -97,7 +97,7 @@ class GaussianProcess(object):
                                       self.regularization)
                     nkernels += 1
                 else:
-                    raise NotImplementedError('Optimize', self.ktype)
+                    raise NotImplementedError('Optimize', self.kernel_dict[kernelkey]['type'])
             
             # Define fixed arguments for log_marginal_likelihood
             args = (np.array(train_fp), train_target, ktype)
