@@ -5,189 +5,36 @@ from __future__ import absolute_import
 from __future__ import division
 
 import numpy as np
-from scipy.spatial import distance
+from scipy.optimize import minimize
 from collections import defaultdict
-
+from .model_selection import log_marginal_likelihood, gradient_log_p
 from .output import write_predict
+from .covariance import gramian, get_covariance
 
-
-class FitnessPrediction(object):
+class GaussianProcess(object):
     """ Kernel ridge regression functions for the machine learning. This can be
         used to predict the fitness of an atoms object.
 
         Parameters
         ----------
-        ktype : string
-            The kernel type, several have been pre-defined. Default is the
-            Gaussian kernel.
-        kwidth : float or list
-            The kernel width, required for a number of the kernel types. If a
-            float is supplied it is converted to a d-length array, containing a
-            width for each descriptor. Default is 0.5.
-        kfree : float
-            Free parameter for the polynomial kernel, giving trading off for
-            the influence of higher-order and lower-order terms in the
-            polynomial. Default is homogeneous (c=0).
-        kdegree : float
-            Degree parameter for the polynomial kernel. Default is quadratic
-            (d=2).
+        kernel_dict    : dict of dicts
+            Each dict in kernel_dict contains information on a kernel.
+            The 'type' key is required to contain the name of kernel function:
+            'linear', 'polynomial', 'gaussian' or 'laplacian'.
+            The hyperparameters 'width', 'kfree'
         regularization : float
             The regularization strength (smoothing function) applied to the
             kernel matrix.
-        combine_kernels : string
-            Define how to combine kernels, can be addition or multiplication.
-        kernel_list : dict
-            List of functions when combining kernels, each coupled with a List
-            of features on which the given kernel should act. Example:
-            {'gaussian': [1, 2, 5], 'linear': [0, 3, 4]}
-        width_combine : dict
-            List of feature widths, set up in same way as kernel_list.
     """
-
-    def __init__(self, ktype='gaussian', kwidth=0.5, kfree=0., kdegree=2.,
-                 regularization=None, combine_kernels=None, kernel_list=None,
-                 width_combine=None):
-        self.ktype = ktype
-        self.kwidth = kwidth
-        self.kfree = kfree
-        self.kdegree = kdegree
+    def __init__(self, kernel_dict, regularization=None):
+        self.kernel_dict = kernel_dict
         self.regularization = regularization
-        self.combine_kernels = combine_kernels
-        self.kernel_list = kernel_list
-        self.width_combine = width_combine
-
-    def kernel(self, m1, m2=None):
-        """ Kernel functions taking n x d feature matrix.
-
-            Parameters
-            ----------
-            m1 : array
-                Feature matrix for training (or test) data.
-            m2 : array
-                Feature matrix for test data.
-
-            Returns
-            -------
-            Kernelized representation of the feature space as array.
-        """
-        if m2 is None:
-            # Gaussian kernel.
-            if self.ktype is 'gaussian':
-                k = distance.pdist(m1 / self.kwidth, metric='sqeuclidean')
-                k = distance.squareform(np.exp(-.5 * k))
-                np.fill_diagonal(k, 1)
-                return k
-
-            # Laplacian kernel.
-            elif self.ktype is 'laplacian':
-                k = distance.pdist(m1 / self.kwidth, metric='cityblock')
-                k = distance.squareform(np.exp(-k))
-                np.fill_diagonal(k, 1)
-                return k
-
-            # Otherwise set m2 equal to m1 as functions are the same.
-            m2 = m1
-
-        # Linear kernel.
-        if self.ktype is 'linear':
-            return np.dot(m1, np.transpose(m2))
-
-        # Polynomial kernel.
-        elif self.ktype is 'polynomial':
-            return(np.dot(m1, np.transpose(m2)) + self.kfree) ** self.kdegree
-
-        # Gaussian kernel.
-        elif self.ktype is 'gaussian':
-            k = distance.cdist(m1 / self.kwidth, m2 / self.kwidth,
-                               metric='sqeuclidean')
-            return np.exp(-.5 * k)
-
-        # Laplacian kernel.
-        elif self.ktype is 'laplacian':
-            k = distance.cdist(m1 / self.kwidth, m2 / self.kwidth,
-                               metric='cityblock')
-            return np.exp(-k)
-
-    def kernel_combine(self, m1, m2=None):
-        """ Function to generate a covarience matric with a combination of
-            kernel functions.
-
-            Parameters
-            ----------
-            m1 : array
-                Feature matrix for training (or test) data.
-            m2 : array
-                Feature matrix for test data.
-
-            Returns
-            -------
-            Combined kernelized representation of the feature space as array.
-        """
-        msg = 'Must combine covarience from more than one kernel.'
-        assert len(self.kernel_list) > 1, msg
-
-        # Form additive covariance matrix.
-        if self.combine_kernels is 'addition':
-            if m2 is None:
-                c = np.zeros((np.shape(m1)[0], np.shape(m1)[0]))
-                f2 = m2
-            else:
-                c = np.zeros((np.shape(m1)[0], np.shape(m2)[0]))
-            for k in self.kernel_list:
-                self.kwidth = self.width_combine[k]
-                f1 = m1[:, self.kernel_list[k]]
-                if m2 is not None:
-                    f2 = m2[:, self.kernel_list[k]]
-                self.ktype = k
-                c += self.kernel(m1=f1, m2=f2)
-            return c
-
-        # Form multliplication covariance matrix.
-        if self.combine_kernels is 'multiplication':
-            if m2 is None:
-                c = np.ones((np.shape(m1)[0], np.shape(m1)[0]))
-                f2 = m2
-            else:
-                c = np.ones((np.shape(m1)[0], np.shape(m2)[0]))
-            for k in self.kernel_list:
-                self.kwidth = self.width_combine[k]
-                f1 = m1[:, self.kernel_list[k]]
-                if m2 is not None:
-                    f2 = m2[:, self.kernel_list[k]]
-                self.ktype = k
-                c *= self.kernel(m1=f1, m2=f2)
-            return c
-
-    def get_covariance(self, train_matrix):
-        """ Returns the covariance matrix between training dataset.
-
-            Parameters
-            ----------
-            train_matrix : list
-                A list of the training fingerprint vectors.
-        """
-        if type(self.kwidth) is float:
-            self.kwidth = np.zeros(len(train_matrix[0]),) + self.kwidth
-        if self.width_combine is None and self.combine_kernels is not None:
-            self.width_combine = {}
-            for k in self.kernel_list:
-                self.width_combine[k] = self.kwidth[self.kernel_list[k]]
-
-        if self.combine_kernels is None:
-            cov = self.kernel(m1=train_matrix, m2=None)
-        else:
-            cov = self.kernel_combine(m1=train_matrix, m2=None)
-
-        if self.regularization is not None:
-            cov = cov + self.regularization * np.identity(len(train_matrix))
-
-        return cov
-
+        
     def get_predictions(self, train_fp, test_fp, train_target, cinv=None,
                         test_target=None, uncertainty=False, basis=None,
                         get_validation_error=False, get_training_error=False,
                         standardize_target=True, cost='squared', epsilon=None,
-                        writeout=False):
+                        writeout=False, optimize_hyperparameters=True):
         """ Function to perform the prediction on some training and test data.
 
             Parameters
@@ -225,28 +72,59 @@ class FitnessPrediction(object):
                 Threshold for insensitive error calculation.
         """
         self.standardize_target = standardize_target
-        if type(self.kwidth) is float:
-            self.kwidth = np.zeros(len(train_fp[0]),) + self.kwidth
-        if self.width_combine is None and self.combine_kernels is not None:
-            self.width_combine = {}
-            for k in self.kernel_list:
-                self.width_combine[k] = self.kwidth[self.kernel_list[k]]
+        N_train, N_D = np.shape(train_fp)
+        
         error_train = train_target
         if standardize_target:
             self.standardize_data = target_standardize(train_target)
             train_target = self.standardize_data['target']
 
+        # Optimize hyperparameters.
+        if optimize_hyperparameters:
+            # Loop through kernels
+            nkernels = 0
+            for kernelkey in self.kernel_dict:
+                # Get the type
+                ktype = str(self.kernel_dict[kernelkey]['type'])
+                # Store hyperparameters in theta
+                if nkernels > 0:
+                    raise NotImplementedError('Optimize combined kernels.')
+                if ktype == 'gaussian' or ktype == 'laplacian':
+                    kwidth = self.kernel_dict[kernelkey]['width']
+                    if type(kwidth) is float:
+                        kwidth = np.zeros(N_D,) + kwidth
+                    theta = np.append(kwidth,
+                                      self.regularization)
+                    nkernels += 1
+                else:
+                    raise NotImplementedError('Optimize', self.kernel_dict[kernelkey]['type'])
+            
+            # Define fixed arguments for log_marginal_likelihood
+            args = (np.array(train_fp), train_target, ktype)
+            # Set bounds for hyperparameters
+            bounds = ((1E-6,1e3),)*(len(theta))
+            # Optimize
+            self.theta_opt = minimize(log_marginal_likelihood, theta,
+                                      args=args, 
+                                      bounds=bounds)#, jac=gradient_log_p)
+            # Update kernel_dict and regularization
+            self.kernel_dict[kernelkey]['width'] = self.theta_opt['x'][:-1]
+            self.regularization = self.theta_opt['x'][-1]
+            
+            print('Optimized hyperparameters: kernel widths = ',
+                  self.theta_opt['x'][:-1],
+                  'regularization = ', self.theta_opt['x'][-1])
+        
+        
         data = defaultdict(list)
         # Get the Gram matrix on-the-fly if none is suppiled.
         if cinv is None:
-            cvm = self.get_covariance(train_fp)
+            cvm = gramian(train_fp, kernel_dict=self.kernel_dict,
+                          regularization=self.regularization)
             cinv = np.linalg.inv(cvm)
-
+        
         # Calculate the covarience between the test and training datasets.
-        if self.combine_kernels is None:
-            ktb = self.kernel(m1=test_fp, m2=train_fp)
-        else:
-            ktb = self.kernel_combine(m1=test_fp, m2=train_fp)
+        ktb = get_covariance(test_fp, train_fp, self.kernel_dict)
 
         # Build the list of predictions.
         data['prediction'] = self.do_prediction(ktb=ktb, cinv=cinv,
@@ -261,10 +139,7 @@ class FitnessPrediction(object):
         # Calculate error associated with predictions on the training data.
         if get_training_error:
             # Calculate the covarience between the training dataset.
-            if self.combine_kernels is None:
-                kt_train = self.kernel(m1=train_fp, m2=None)
-            else:
-                kt_train = self.kernel_combine(m1=train_fp, m2=None)
+            kt_train = gramian(train_fp, self.kernel_dict, regularization=None)
 
             # Calculate predictions for the training data.
             data['train_prediction'] = self.do_prediction(ktb=kt_train,
@@ -321,10 +196,7 @@ class FitnessPrediction(object):
             residual. """
         data = defaultdict(list)
         # Calculate the K(X*,X*) covarience matrix.
-        if self.combine_kernels is None:
-            ktest = self.kernel(m1=test_fp, m2=None)
-        else:
-            ktest = self.kernel_combine(m1=test_fp, m2=None)
+        ktest = gramian(test_fp, self.kernel_dict, regularization=None)
 
         # Form H and H* matrix, multiplying X by basis.
         train_matrix = np.asarray([basis(i) for i in train_fp])
@@ -354,8 +226,7 @@ class FitnessPrediction(object):
                                                 epsilon=epsilon)
 
         return data
-
-
+    
 def target_standardize(target, writeout=False):
     """ Returns a list of standardized target values.
 
