@@ -1,4 +1,6 @@
-""" Functions to build a graph based on the neighbor list. """
+""" Functions to build a neighbor matrix feature representation of descrete
+    systems.
+"""
 from __future__ import absolute_import
 from __future__ import division
 
@@ -22,23 +24,23 @@ def get_neighborlist(atoms, dx=0.2, neighbor_number=1):
             NOT IMPLEMENTED YET.
     """
     conn = {}
-    for atomi in atoms:
+    for a1 in atoms:
         conn_this_atom = []
-        for atomj in atoms:
-            if atomi.index != atomj.index:
-                pi = np.asarray(atomi.position)
-                pj = np.asarray(atomj.position)
-                d = np.linalg.norm(pi - pj)
-                cri = covalent_radii[atomi.number]
-                crj = covalent_radii[atomj.number]
+        for a2 in atoms:
+            if a1.index != a2.index:
+                p1 = np.asarray(a1.position)
+                p2 = np.asarray(a2.position)
+                d = np.linalg.norm(p1 - p2)
+                r1 = covalent_radii[a1.number]
+                r2 = covalent_radii[a2.number]
                 if neighbor_number == 1:
                     d_max1 = 0.
                 else:
-                    d_max1 = ((neighbor_number - 1) * (crj + cri)) + dx
-                d_max2 = (neighbor_number * (crj + cri)) + dx
+                    d_max1 = ((neighbor_number - 1) * (r2 + r1)) + dx
+                d_max2 = (neighbor_number * (r2 + r1)) + dx
                 if d > d_max1 and d < d_max2:
-                    conn_this_atom.append(atomj.index)
-        conn[atomi.index] = conn_this_atom
+                    conn_this_atom.append(a2.index)
+        conn[a1.index] = conn_this_atom
     return conn
 
 
@@ -58,19 +60,19 @@ def connection_matrix(atoms, dx=0.2):
     else:
         nl = get_neighborlist(atoms, dx=dx)
 
-    cm = []
-    r = range(len(atoms))
+    conn_mat = []
+    index = range(len(atoms))
     # Create binary matrix denoting connections.
-    for i in r:
-        x = []
-        for j in r:
-            if j in nl[i]:
-                x.append(1.)
+    for index1 in index:
+        conn_x = []
+        for index2 in index:
+            if index2 in nl[index1]:
+                conn_x.append(1.)
             else:
-                x.append(0.)
-        cm.append(x)
+                conn_x.append(0.)
+        conn_mat.append(conn_x)
 
-    return np.asarray(cm)
+    return np.asarray(conn_mat)
 
 
 def element_list(an, no):
@@ -84,14 +86,14 @@ def element_list(an, no):
         no : int
             Select atom number.
     """
-    hm = []
+    binary_inter = []
     for n in an:
         if n == no:
-            hm.append(1.)
+            binary_inter.append(1.)
         else:
-            hm.append(0.)
+            binary_inter.append(0.)
 
-    return hm
+    return binary_inter
 
 
 def heteroatomic_matrix(an, el):
@@ -106,23 +108,23 @@ def heteroatomic_matrix(an, el):
         el : list
             List of two atom numbers on which to map interactions.
     """
-    hm = []
+    binary_inter = []
     for i in an:
         if i == el[0]:
-            x = []
+            inter_x = []
             for j in an:
                 if j != el[0]:
-                    x.append(1.)
+                    inter_x.append(1.)
                 else:
-                    x.append(0.)
+                    inter_x.append(0.)
         else:
-            x = [0] * len(an)
-        hm.append(x)
+            inter_x = [0] * len(an)
+        binary_inter.append(inter_x)
 
-    return np.asarray(hm)
+    return np.asarray(binary_inter)
 
 
-def generalized_matrix(cm):
+def generalized_matrix(conn_mat):
     """ Get the generalized coordination matrix.
 
         Parameters
@@ -130,15 +132,15 @@ def generalized_matrix(cm):
         cm : array
             The connections matrix.
     """
-    gm = []
-    for i in cm:
+    gen_mat = []
+    for i in conn_mat:
         tot = 0.
         for j in range(len(i)):
             if i[j] != 0.:
                 tot += sum(i)
-        gm.append(tot / 12.)
+        gen_mat.append(tot / 12.)
 
-    return np.asarray(gm)
+    return np.asarray(gen_mat)
 
 
 def property_matrix(atoms, property):
@@ -151,20 +153,20 @@ def property_matrix(atoms, property):
         property : str
             The target property from mendeleev.
     """
-    sy = atoms.get_chemical_symbols()
-    ce = {}
-    for s in set(sy):
-        ce[s] = eval('element("' + s + '").' + property)
+    symb = atoms.get_chemical_symbols()
+    atomic_prop = {}
+    for s in set(symb):
+        atomic_prop[s] = eval('element("' + s + '").' + property)
 
-    x = []
-    for s in sy:
-        x.append(ce[s])
-    pm = [x] * len(atoms)
+    prop_x = []
+    for s in symb:
+        prop_x.append(atomic_prop[s])
+    prop_mat = [prop_x] * len(atoms)
 
-    return np.asarray(np.float64(pm))
+    return np.asarray(np.float64(prop_mat))
 
 
-def get_features(an, cm, sum_cm, gen_cm):
+def get_features(an, conn_mat, sum_cm, gen_mat):
     """ Function to generate the actual feature vector.
 
         Parameters
@@ -178,35 +180,35 @@ def get_features(an, cm, sum_cm, gen_cm):
         gen_cm : array
             The generalized coordination matrix.
     """
-    fp = []
+    feature = []
     # Get level one fingerprint. Sum of coordination for each atom type.
     done = []
     for e in set(an):
         el = element_list(an, e)
         x = np.array(sum_cm) * np.array(el)
-        fp.append(np.sum(x))
-        fp.append(np.sum(x ** 2))
-        fp.append(np.sum(x ** 0.5))
+        feature.append(np.sum(x))
+        feature.append(np.sum(x ** 2))
+        feature.append(np.sum(x ** 0.5))
 
         # Get level two fingerprint. Total AA, AB, BB etc bonds.
         pt = np.array(([el] * len(an)))
-        em = np.sum(np.sum(pt * np.array(cm), axis=1))
-        fp.append(em)
+        em = np.sum(np.sum(pt * np.array(conn_mat), axis=1))
+        feature.append(em)
         if e not in done:
             done.append(e)
         for eo in set(an):
             if eo not in done:
                 hm = heteroatomic_matrix(an, [e, eo])
-                fp.append(np.sum(np.sum(np.array(hm) * np.array(cm),
-                                        axis=1)))
+                feature.append(np.sum(np.sum(np.array(hm) * np.array(conn_mat),
+                                             axis=1)))
 
         # Get level three fingerprint. Generalized coordination number.
-        x = np.array(gen_cm) * np.array(el)
-        fp.append(np.sum(x))
-        fp.append(np.sum(x ** 2))
-        fp.append(np.sum(x ** 0.5))
+        x = np.array(gen_mat) * np.array(el)
+        feature.append(np.sum(x))
+        feature.append(np.sum(x ** 2))
+        feature.append(np.sum(x ** 0.5))
 
-    return fp
+    return feature
 
 
 def base_f(atoms, property=None):
@@ -219,23 +221,25 @@ def base_f(atoms, property=None):
         property : list
             List of the target properties from mendeleev.
     """
-    fp = []
+    features = []
 
     # Generate the required data from atoms object.
     an = atoms.get_atomic_numbers()
-    cm_store = connection_matrix(atoms, dx=0.2)
-    sum_cm = np.sum(cm_store, axis=1)
-    gen_cm = generalized_matrix(cm_store)
+    conn_mat_store = connection_matrix(atoms, dx=0.2)
+    sum_conn_mat = np.sum(conn_mat_store, axis=1)
+    gen_mat = generalized_matrix(conn_mat_store)
 
-    fp += get_features(an=an, cm=cm_store, sum_cm=sum_cm, gen_cm=gen_cm)
+    features += get_features(an=an, conn_mat=conn_mat_store,
+                             sum_cm=sum_conn_mat, gen_mat=gen_mat)
 
     if property is not None:
         for p in property:
-            pm = property_matrix(atoms=atoms, property=p)
-            cm = cm_store * pm
-            sum_cm = np.sum(cm, axis=1)
-            gen_cm = generalized_matrix(cm)
+            prop_mat = property_matrix(atoms=atoms, property=p)
+            conn_mat = conn_mat_store * prop_mat
+            sum_cm = np.sum(conn_mat, axis=1)
+            gen_cm = generalized_matrix(conn_mat)
 
-            fp += get_features(an=an, cm=cm, sum_cm=sum_cm, gen_cm=gen_cm)
+            features += get_features(an=an, conn_mat=conn_mat, sum_cm=sum_cm,
+                                     gen_mat=gen_cm)
 
-    return np.asarray(fp)
+    return np.asarray(features)
