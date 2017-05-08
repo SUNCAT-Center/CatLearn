@@ -10,7 +10,7 @@ from __future__ import division
 import numpy as np
 from scipy.linalg import cholesky, cho_solve
 from numpy.core.umath_tests import inner1d
-from .covariance import get_covariance, gramian
+from .covariance import get_covariance
 from .kernels import dkernel_dwidth, list2kdict
 
 def log_marginal_likelihood(theta, train_fp, y, kernel_dict):
@@ -19,7 +19,8 @@ def log_marginal_likelihood(theta, train_fp, y, kernel_dict):
     """
     # Get the covariance matrix.
     kernel_dict = list2kdict(theta, kernel_dict)
-    K = gramian(train_fp, kernel_dict, regularization=theta[-1])
+    K = get_covariance(train_fp, None, kernel_dict=kernel_dict, 
+                       regularization=theta[-1])
     n = len(y)
     y = y.reshape([n, 1])
     # print(np.shape(K), np.max(K), np.min(K))
