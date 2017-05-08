@@ -11,15 +11,15 @@ import numpy as np
 from scipy.linalg import cholesky, cho_solve
 from numpy.core.umath_tests import inner1d
 from .covariance import get_covariance, gramian
-from .kernels import dkernel_dwidth
+from .kernels import dkernel_dwidth, list2kdict
 
-def log_marginal_likelihood(theta, train_fp, y, ktype):
+def log_marginal_likelihood(theta, train_fp, y, kernel_dict):
     """ Return the log marginal likelyhood.
         (Equation 5.8 in C. E. Rasmussen and C. K. I. Williams, 2006)
     """
     # Get the covariance matrix.
-    kdict = {'k1': {'type': ktype, 'theta': theta[:-1]}}
-    K = gramian(train_fp, kdict, regularization=theta[-1])
+    kernel_dict = list2kdict(theta, kernel_dict)
+    K = gramian(train_fp, kernel_dict, regularization=theta[-1])
     n = len(y)
     y = y.reshape([n, 1])
     # print(np.shape(K), np.max(K), np.min(K))

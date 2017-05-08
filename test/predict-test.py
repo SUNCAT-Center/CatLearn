@@ -130,7 +130,7 @@ pred = krr.get_predictions(train_fp=nfp['train'],
                            test_target=testset['target'],
                            get_validation_error=True,
                            get_training_error=True,
-                           optimize_hyperparameters=False)
+                           optimize_hyperparameters=True)
 assert len(pred['prediction']) == 10
 print('laplacian prediction:', pred['validation_rmse']['average'])
 
@@ -154,7 +154,7 @@ pred = krr.get_predictions(train_fp=nfp['train'],
                            test_target=testset['target'],
                            get_validation_error=True,
                            get_training_error=True,
-                           optimize_hyperparameters=False)
+                           optimize_hyperparameters=True)
 assert len(pred['prediction']) == 10
 print('addition prediction:', pred['validation_rmse']['average'])
 
@@ -179,6 +179,6 @@ pred = krr.get_predictions(train_fp=nfp['train'],
                            test_target=testset['target'],
                            get_validation_error=True,
                            get_training_error=True,
-                           optimize_hyperparameters=False)
+                           optimize_hyperparameters=True)
 assert len(pred['prediction']) == 10
 print('multiplication prediction:', pred['validation_rmse']['average'])

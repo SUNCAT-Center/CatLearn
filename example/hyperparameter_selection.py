@@ -31,7 +31,9 @@ sigma *= 0.3
 regularization = 0.03
 theta = np.append(sigma, regularization)
 
-a = (nfp, targets, 'gaussian')
+kernel_dict = {'kernel': {'type': 'gaussian', 'width': list(sigma)}, 'k2': {'type': 'linear', 'operation': 'multiplication'}}
+
+a = (nfp, targets, kernel_dict)
 
 # Hyper parameter bounds.
 b = ((1E-9, None), ) * (m+1)

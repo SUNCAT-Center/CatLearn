@@ -20,50 +20,16 @@ def gramian(train_matrix, kernel_dict={}, regularization=None):
     cov = np.zeros([N,N])
     # Loop over kernels in kernel_dict
     for key in kernel_dict:
-        # Get the type
-        ktype = str(kernel_dict[key]['type'])
-        
-        # Store hyperparameters in single list theta
-        if (ktype == 'gaussian' or 
-            ktype == 'laplacian') and 'width' in kernel_dict[key]:
-            theta = kernel_dict[key]['width']
-            if type(theta) is float:
-                theta = np.zeros(N_D,) + theta
-        
-        # Polynomials have pairs of hyperparamters kfree, kdegree
-        elif ktype == 'polynomial':
-            #kfree = kernel_dict[key]['kfree']
-            #kdegree = kernel_dict[key]['kdegree']
-            theta = [kernel_dict[key]['kfree'], kernel_dict[key]['kdegree']]
-            #if type(kfree) is float:
-            #    kfree = np.zeros(N_D,) + kfree
-            #if type(kdegree) is float:
-            #    kdegree = np.zeros(N_D,) + kdegree
-            #zipped_theta = zip(kfree,kdegree)
-            # Pass them in order [kfree1, kdegree1, kfree2, kdegree2,...]
-            #theta = [hp for k in zipped_theta for hp in k]
-        # Linear kernels have no hyperparameters
-        elif ktype == 'linear':
-            theta = None
-        
-        # Default hyperparameter keys for other kernels
-        elif 'hyperparameters' in kernel_dict[key]:
-            theta = kernel_dict[key]['hyperparameters']
-            if type(theta) is float:
-                theta = np.zeros(N_D,) + theta
-        
-        elif 'theta' in kernel_dict[key]:
-            theta = kernel_dict[key]['theta']
-            if type(theta) is float:
-                theta = np.zeros(N_D,) + theta
-
+        ktype = kernel_dict[key]['type']
         
         # Select a subset of features for the kernel
-        if 'features' in key:
+        if 'features' in kernel_dict[key]:
             train_fp = train_matrix[:, kernel_dict[key]['features']]
+            theta = ak.kdict2list(kernel_dict[key], N_D)
         else:
             train_fp = train_matrix
-                
+            theta = ak.kdict2list(kernel_dict[key], N_D)
+        
         # Get the covariance matrix
         if ('operation' in kernel_dict[key] and 
             kernel_dict[key]['operation'] == 'multiplication'):
@@ -130,7 +96,7 @@ def get_covariance(train_matrix, test_matrix, kernel_dict={}):
                 theta = np.zeros(N_D,) + theta
         
         # Select a subset of features for the kernel
-        if 'features' in key:
+        if 'features' in kernel_dict[key]:
             train_fp = train_matrix[:, kernel_dict[key]['features']]
             test_fp = test_matrix[:, kernel_dict[key]['features']]
         else:
