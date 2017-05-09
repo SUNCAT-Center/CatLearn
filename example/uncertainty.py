@@ -1,19 +1,16 @@
 from __future__ import print_function
+from __future__ import absolute_import
 
-import os
-import numpy as np
 import seaborn as sns
 import pandas as pd
 import matplotlib.pyplot as plt
 
 from ase.ga.data import DataConnection
-from atoml.data_setup import get_unique, get_train, target_standardize
+from atoml.data_setup import get_unique, get_train
 from atoml.fingerprint_setup import normalize, return_fpv
 from atoml.standard_fingerprint import StandardFingerprintGenerator
 from atoml.particle_fingerprint import ParticleFingerprintGenerator
-from atoml.predict import FitnessPrediction
-
-cleanup = True
+from atoml.predict import GaussianProcess, target_standardize
 
 db = DataConnection('gadb.db')
 
@@ -39,30 +36,24 @@ train_fp = return_fpv(trainset['candidates'], [sfpv.eigenspectrum_fpv,
 nfp = normalize(train=train_fp, test=test_fp)
 
 # Set up the prediction routine.
-krr = FitnessPrediction(ktype='gaussian',
-                        kwidth=0.5,
-                        regularization=0.001)
-cvm = krr.get_covariance(train_matrix=nfp['train'])
-cvm = np.linalg.inv(cvm)
+kdict = {'k1': {'type': 'gaussian', 'width': 0.5}}
+gp = GaussianProcess(kernel_dict=kdict, regularization=0.001)
 
 
 def basis(descriptors):
     return descriptors * ([1] * len(descriptors))
 
 
-pred = krr.get_predictions(train_fp=nfp['train'],
-                           test_fp=nfp['test'],
-                           cinv=cvm,
-                           train_target=trainset['target'],
-                           test_target=testset['target'],
-                           get_validation_error=True,
-                           get_training_error=True,
-                           standardize_target=True,
-                           uncertainty=True,
-                           basis=basis)
-
-if cleanup:
-    os.remove('ATOMLout.txt')
+pred = gp.get_predictions(train_fp=nfp['train'],
+                          test_fp=nfp['test'],
+                          train_target=trainset['target'],
+                          test_target=testset['target'],
+                          get_validation_error=True,
+                          get_training_error=True,
+                          standardize_target=True,
+                          uncertainty=True,
+                          basis=basis,
+                          optimize_hyperparameters=False)
 
 print('GP:', pred['validation_rmse']['average'], 'Residual:',
       pred['basis_analysis']['validation_rmse']['average'])
