@@ -105,6 +105,9 @@ class GaussianProcess(object):
             self.standardize_data = target_standardize(train_target)
             train_target = self.standardize_data['target']
 
+        data = defaultdict(list)
+        data['input_kernels'] = self.kernel_dict
+        data['input_regularization'] = self.regularization
         # Optimize hyperparameters.
         if optimize_hyperparameters:
             # Loop through kernels
@@ -124,13 +127,9 @@ class GaussianProcess(object):
             self.kernel_dict = list2kdict(self.theta_opt['x'][:-1], 
                                           self.kernel_dict)
             self.regularization = self.theta_opt['x'][-1]
-            
-            print('Optimized hyperparameters: kernel widths = ',
-                  self.theta_opt['x'][:-1],
-                  'regularization = ', self.theta_opt['x'][-1])
+            data['optimized_kernels'] = self.kernel_dict
+            data['optimized_regularization'] = self.regularization
         
-        
-        data = defaultdict(list)
         # Get the Gram matrix on-the-fly if none is suppiled.
         if cinv is None:
             cvm = get_covariance(train_fp, None, kernel_dict=self.kernel_dict,
@@ -153,7 +152,8 @@ class GaussianProcess(object):
         # Calculate error associated with predictions on the training data.
         if get_training_error:
             # Calculate the covarience between the training dataset.
-            kt_train = get_covariance(train_fp, None, self.kernel_dict, regularization=None)
+            kt_train = get_covariance(train_fp, None, self.kernel_dict,
+                                      regularization=None)
 
             # Calculate predictions for the training data.
             data['train_prediction'] = self.do_prediction(ktb=kt_train,

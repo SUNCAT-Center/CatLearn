@@ -7,7 +7,8 @@ Created on Wed Apr 26 17:27:47 2017
 import numpy as np
 from atoml import kernels as ak
 
-def get_covariance(train_matrix, test_matrix=None, kernel_dict={}, regularization=None):
+def get_covariance(train_matrix, test_matrix=None, kernel_dict={},
+                   regularization=None):
     """ Returns the covariance matrix of training dataset.
 
         Parameters
