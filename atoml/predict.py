@@ -58,7 +58,7 @@ class GaussianProcess(object):
                         test_target=None, uncertainty=False, basis=None,
                         get_validation_error=False, get_training_error=False,
                         standardize_target=True, cost='squared', epsilon=None,
-                        writeout=False, optimize_hyperparameters=True):
+                        writeout=False, optimize_hyperparameters=False):
         """ Function to perform the prediction on some training and test data.
 
             Parameters

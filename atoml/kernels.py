@@ -166,26 +166,6 @@ def gaussian_kernel(m1, m2=None, theta=None):
                            metric='sqeuclidean')
         return np.exp(-.5 * k)
 
-def d_gaussian_kernel(fpm_j, theta=None):
-    """
-        W.I.P.
-    """
-    kwidth_j = theta
-    n = len(fpm_j)
-    gram = np.zeros([n, n])
-    # Construct Gram matrix.
-    for i, x1 in enumerate(fpm_j):
-        for j, x2 in enumerate(fpm_j):
-            if j >= i:
-                break
-            d_ij = abs(x1-x2)
-            gram[i, j] = d_ij
-            gram[j, i] = d_ij
-    # Insert gram matrix in differentiated kernel.
-    dkdw_j = np.exp(-.5 * gram**2 / (kwidth_j**2)) * (gram**2 /
-                                                     (kwidth_j**3))
-    return dkdw_j
-
 def linear_kernel(m1, m2=None, theta=None):
     """
         Returns the covariance matrix between datasets m1 and m2 
@@ -228,12 +208,6 @@ def polynomial_kernel(m1, m2=None, theta=None):
         m2 = m1
     return(np.dot(m1, np.transpose(m2)) + kfree) ** kdegree
 
-def d_polynomial_kernel(m1, m2=None, theta=None):
-    """
-        W.I.P.
-    """
-    raise NotImplementedError('To Do')
-
 def laplacian_kernel(m1, m2=None, theta=None):
     kwidth = theta
     if m2 is None:
@@ -245,39 +219,4 @@ def laplacian_kernel(m1, m2=None, theta=None):
         k = distance.cdist(m1 / kwidth, m2 / kwidth,
                                metric='cityblock')
         return np.exp(-k)
-
-def dkernel_dwidth(fpm_j, width_j, ktype='gaussian'):
-    """ 
-        Returns the partial derivative of kernel functions. 
-        
-        W.I.P.
-    """
-    # Linear kernel.
-    if ktype == 'linear':
-        return 0
-
-    # Polynomial kernel.
-    elif ktype == 'polynomial':
-        raise NotImplementedError('Differentials of polynomial kernel.')
-
-    # Gaussian kernel.
-    elif ktype == 'gaussian':
-        n = len(fpm_j)
-        gram = np.zeros([n, n])
-        # Construct Gram matrix.
-        for i, x1 in enumerate(fpm_j):
-            for j, x2 in enumerate(fpm_j):
-                if j >= i:
-                    break
-                d_ij = abs(x1-x2)
-                gram[i, j] = d_ij
-                gram[j, i] = d_ij
-        # Insert gram matrix in differentiated kernel.
-        dkdw_j = np.exp(-.5 * gram**2 / (width_j**2)) * (gram**2 /
-                                                         (width_j**3))
-        return dkdw_j
-
-    # Laplacian kernel.
-    elif ktype == 'laplacian':
-        raise NotImplementedError('Differentials of Laplacian kernel.')
     
