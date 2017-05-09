@@ -4,7 +4,6 @@ from __future__ import absolute_import
 from __future__ import division
 
 import numpy as np
-from scipy.optimize import minimize
 from math import log
 
 from .database_functions import DescriptorDatabase
@@ -15,8 +14,7 @@ from .feature_select import iterative_screening, pca, lasso, clean_zero
 from .feature_select import robust_rank_correlation_screening as rr_screen
 from .feature_select import sure_independence_screening as sure_screen
 from .fingerprint_setup import standardize
-from .predict import FitnessPrediction
-from .model_selection import negative_logp
+from .predict import GaussianProcess
 
 from .fit_funcs import find_optimal_regularization, RR
 
@@ -239,20 +237,12 @@ class ModelBuilder(object):
 
             Parameters
             ----------
-            width : float or list
-                Set the kernel width.
-            regularization : float
-               Set the smoothing function.
+            opt_h : boolean
+                Set whether to optimize the hyperparameters. Default is False.
         """
-        if opt_h:
-            # NOTE: Doesn't make sense to require dict, test never used?
-            sf = {'train': train_matrix, 'test': test_matrix}
-            w, r = self.hyp_opt(features=sf, train_target=train_target,
-                                width=self.width, reg=self.regularization)
-            self.width, self.regularization = w, r
-
-        predict = FitnessPrediction(ktype='gaussian', kwidth=self.width,
-                                    regularization=self.regularization)
+        kdict = {'k1': {'type': 'gaussian', 'width': self.width}}
+        predict = GaussianProcess(kernel_dict=kdict,
+                                  regularization=self.regularization)
 
         return predict.get_predictions(train_fp=train_matrix,
                                        test_fp=test_matrix,
@@ -261,30 +251,13 @@ class ModelBuilder(object):
                                        uncertainty=False, basis=None,
                                        get_validation_error=True,
                                        get_training_error=True,
-                                       standardize_target=False)
+                                       standardize_target=False,
+                                       optimize_hyperparameters=opt_h)
 
     def basis(self, descriptors):
         """ Simple linear basis. """
         linear = descriptors * ([1] * len(descriptors))
         return linear
-
-    def hyp_opt(self, features, train_target):
-        """ Function to do the hyperparameter optimization. """
-        # Hyper parameter starting guesses.
-        m = np.shape(features['train'])[1]
-        sigma = np.ones(m)
-        sigma *= self.width
-        theta = np.append(sigma, self.regularization)
-
-        a = (features, train_target)
-
-        # Hyper parameter bounds.
-        b = ((1E-9, None), ) * (m+1)
-
-        # Do the optimization.
-        popt = minimize(negative_logp, theta, args=a, bounds=b)['x']
-
-        return popt[:-1], popt[-1:]
 
     def expand_matrix(self, feature_matrix, feature_names=None,
                       return_names=True):
