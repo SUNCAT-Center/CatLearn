@@ -4,9 +4,6 @@
 """
 from __future__ import print_function
 
-import numpy as np
-from scipy.optimize import minimize
-import os
 import seaborn as sns
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -15,11 +12,8 @@ from ase.ga.data import DataConnection
 from atoml.data_setup import get_unique, get_train
 from atoml.fingerprint_setup import normalize, return_fpv
 from atoml.particle_fingerprint import ParticleFingerprintGenerator
-from atoml.predict import FitnessPrediction
-from atoml.model_selection import negative_logp
+from atoml.predict import GaussianProcess
 from atoml.feature_select import clean_zero
-
-from atoml.fpm_operations import cluster_features
 
 # Decide whether to remove output and print graph.
 cleanup = True
@@ -52,19 +46,18 @@ test_fp = c['test']
 train_fp = c['train']
 
 
-def do_predict(train, test, train_target, test_target):
+def do_predict(train, test, train_target, test_target, hopt=False):
+    # Scale features.
     nfp = normalize(train=train, test=test)
 
     # Do the predictions.
-    cvm = krr.get_covariance(train_matrix=nfp['train'])
-    cinv = np.linalg.inv(cvm)
-    pred = krr.get_predictions(train_fp=nfp['train'],
-                               test_fp=nfp['test'],
-                               cinv=cinv,
-                               train_target=train_target,
-                               test_target=test_target,
-                               get_validation_error=True,
-                               get_training_error=True)
+    pred = gp.get_predictions(train_fp=nfp['train'],
+                              test_fp=nfp['test'],
+                              train_target=train_target,
+                              test_target=test_target,
+                              get_validation_error=True,
+                              get_training_error=True,
+                              optimize_hyperparameters=hopt)
 
     if plot:
         pred['actual'] = test_target
@@ -80,65 +73,22 @@ def do_predict(train, test, train_target, test_target):
 
 
 # Set up the prediction routine.
-krr = FitnessPrediction(ktype='gaussian',
-                        kwidth=width,
-                        regularization=reg)
+kdict = {'k1': {'type': 'gaussian', 'width': 0.5}}
+gp = GaussianProcess(kernel_dict=kdict, regularization=0.001)
 
-print('All training data')
+print('Original parameters')
 a = do_predict(train=train_fp, test=test_fp, train_target=trainset['target'],
-               test_target=testset['target'])
+               test_target=testset['target'], hopt=False)
 
 # Print the error associated with the predictions.
 print('Training error:', a['training_rmse']['average'])
 print('Model error:', a['validation_rmse']['average'])
 
-print('Clustered training data')
-k = 2
-cl = cluster_features(train_matrix=train_fp, train_target=trainset['target'],
-                      k=k, test_matrix=test_fp, test_target=testset['target'])
+# Try with hyperparameter optimization.
+print('Optimized parameters')
+a = do_predict(train=train_fp, test=test_fp, train_target=trainset['target'],
+               test_target=testset['target'], hopt=True)
 
-sp = []
-st = []
-e = 0.
-for i in set(cl['test_order']):
-    s = do_predict(train=cl['train_features'][i],
-                   test=cl['test_features'][i],
-                   train_target=cl['train_target'][i],
-                   test_target=cl['test_target'][i])
-    for j, k in zip(s['prediction'], cl['test_target'][i]):
-        e += (j - k) ** 2
-print((e / len(testset['target'])) ** 0.5)
-
-# plt.scatter(mass, trainset['target'], c=colors)
-# plt.show()
-
-exit()
-
-m = np.shape(train_fp)[1]
-n = len(trainset['target'])
-
-# Hyper parameter starting guesses.
-theta = np.ones(m)
-theta *= width
-regularization = reg
-
-nfp = normalize(train=train_fp)
-a = (nfp, trainset['target'], regularization)
-
-# Hyper parameter bounds.
-b = ((1E-9, None), ) * (m)
-print('Optimizing hyperparameters')
-popt = minimize(negative_logp, theta, args=a, bounds=b)
-print('Widths aka characteristic lengths = ', popt['x'])
-p = -negative_logp(popt['x'], nfp, trainset['target'], regularization)
-
-
-# Set up the prediction routine.
-krr = FitnessPrediction(ktype='gaussian',
-                        kwidth=popt['x'],
-                        regularization=reg)
-
-do_predict(train=train_fp, test=test_fp)
-
-if cleanup:
-    os.remove('ATOMLout.txt')
+# Print the error associated with the predictions.
+print('Training error:', a['training_rmse']['average'])
+print('Model error:', a['validation_rmse']['average'])
