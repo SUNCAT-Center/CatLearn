@@ -15,6 +15,13 @@ def get_covariance(train_matrix, test_matrix=None, kernel_dict={},
         ----------
         train_matrix : list
             A list of the training fingerprint vectors.
+        
+        test_matrix : list
+            A list of the test fingerprint vectors.
+            
+        kernel_dict : dict of dicts
+        
+        regularization : None or float
     """
     N_train, N_D = np.shape(train_matrix)
     if test_matrix is not None:

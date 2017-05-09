@@ -16,6 +16,19 @@ from .kernels import dkernel_dwidth, list2kdict
 def log_marginal_likelihood(theta, train_fp, y, kernel_dict):
     """ Return the log marginal likelyhood.
         (Equation 5.8 in C. E. Rasmussen and C. K. I. Williams, 2006)
+        
+        Parameters
+        ----------
+        theta : list
+        
+        train_fp : list
+            A list of the test fingerprint vectors.
+        
+        y : list
+            A list of target values
+            
+        kernel_dict: dict
+            A dictionary of kernel dictionaries
     """
     # Get the covariance matrix.
     kernel_dict = list2kdict(theta, kernel_dict)
@@ -47,7 +60,7 @@ def gradient_log_p(theta, train_fp, y, ktype='gaussian'):
         raise NotImplementedError
     kwidth = theta[:-1]
     kdict = {'k1': {'type': ktype, 'width': kwidth}}
-    K = gramian(train_fp, kdict, regularization=theta[-1])
+    K = get_covariance(train_fp, None, kdict, regularization=theta[-1])
     m = len(kwidth)
     n = len(y)
     y = y.reshape([n, 1])
