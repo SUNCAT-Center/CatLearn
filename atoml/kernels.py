@@ -8,30 +8,29 @@ Contains kernel functions and gradients of kernels.
 import numpy as np
 from scipy.spatial import distance
 
+
 def kdict2list(kdict, N_D=None):
-    """
-        Returns an ordered list of hyperparameters, given a dictionary containing
-        properties of a single kernel. The dictionary must contain either the key
-        'hyperparameters' or 'theta' containing a list of hyperparameters 
-        or the keys 'type' containing the type name in a string and 
-        'width' in the case of a 'gaussian' or 'laplacian' type or the keys
-        'kdegree' and 'kfree' in the case of a 'polynomial' type.
-            
+    """ Returns ordered list of hyperparameters, given a dictionary containing
+        properties of a single kernel. The dictionary must contain either the
+        key 'hyperparameters' or 'theta' containing a list of hyperparameters
+        or the keys 'type' containing the type name in a string and 'width' in
+        the case of a 'gaussian' or 'laplacian' type or the keys 'kdegree' and
+        'kfree' in the case of a 'polynomial' type.
+
         Parameters
         ----------
         kdict : dict
             A kernel dictionary containing the keys 'type' and optional
             keys containing the hyperparameters of the kernel.
-        
+
         N_D : none or int
-    
+            ????
     """
-    # Get the type
+    # Get the kernel type.
     ktype = str(kdict['type'])
-    
+
     # Store hyperparameters in single list theta
-    if (ktype == 'gaussian' or 
-        ktype == 'laplacian') and 'width' in kdict:
+    if (ktype == 'gaussian' or ktype == 'laplacian') and 'width' in kdict:
         theta = kdict['width']
         if 'features' in kdict:
             N_D = len(kdict['features'])
@@ -39,23 +38,23 @@ def kdict2list(kdict, N_D=None):
             N_D = len(kdict['width'])
         if type(theta) is float:
             theta = np.zeros(N_D,) + theta
-    
+
     # Polynomials have pairs of hyperparamters kfree, kdegree
     elif ktype == 'polynomial':
-        #kfree = kernel_dict[key]['kfree']
-        #kdegree = kernel_dict[key]['kdegree']
+        # kfree = kernel_dict[key]['kfree']
+        # kdegree = kernel_dict[key]['kdegree']
         theta = [kdict['kfree'], kdict['kdegree']]
-        #if type(kfree) is float:
+        # if type(kfree) is float:
         #    kfree = np.zeros(N_D,) + kfree
-        #if type(kdegree) is float:
+        # if type(kdegree) is float:
         #    kdegree = np.zeros(N_D,) + kdegree
-        #zipped_theta = zip(kfree,kdegree)
+        # zipped_theta = zip(kfree,kdegree)
         # Pass them in order [kfree1, kdegree1, kfree2, kdegree2,...]
-        #theta = [hp for k in zipped_theta for hp in k]
+        # theta = [hp for k in zipped_theta for hp in k]
     # Linear kernels have no hyperparameters
     elif ktype == 'linear':
         theta = []
-    
+
     # Default hyperparameter keys for other kernels
     elif 'hyperparameters' in kdict:
         theta = kdict['hyperparameters']
@@ -65,7 +64,7 @@ def kdict2list(kdict, N_D=None):
             N_D = len(theta)
         if type(theta) is float:
             theta = np.zeros(N_D,) + theta
-    
+
     elif 'theta' in kdict:
         theta = kdict['theta']
         if 'features' in kdict:
@@ -76,42 +75,42 @@ def kdict2list(kdict, N_D=None):
             theta = np.zeros(N_D,) + theta
     return theta
 
+
 def kdicts2list(kernel_dict, N_D=None):
-    """
-        Returns an ordered list of hyperparameters given the kernel dictionary.
-        The kernel dictionary must contain one or more dictionaries, each 
+    """ Returns an ordered list of hyperparameters given the kernel dictionary.
+        The kernel dictionary must contain one or more dictionaries, each
         specifying the type and hyperparameters.
-        
+
         Parameters
         ----------
         kernel_dict : dict
             A dictionary containing kernel dictionaries.
-        
+
         N_D : none or int
     """
-    theta=[]
+    theta = []
     for kernel_key in kernel_dict:
         theta.append(kdict2list(kernel_dict[kernel_key], N_D=N_D))
     hyperparameters = np.concatenate(theta)
     return hyperparameters
 
+
 def list2kdict(hyperparameters, kernel_dict):
-    """
-        Returns a updated kernel dictionary with updated hyperparameters, 
-        given an ordered list of hyperparametersthe and the previous kernel 
-        dictionary. The kernel dictionary must contain a dictionary for each 
-        kernel type in the same order as their respective hyperparameters 
+    """ Returns a updated kernel dictionary with updated hyperparameters,
+        given an ordered list of hyperparametersthe and the previous kernel
+        dictionary. The kernel dictionary must contain a dictionary for each
+        kernel type in the same order as their respective hyperparameters
         in the list hyperparameters.
-        
+
         Parameters
         ----------
         hyperparameters : list
-        
+
         kernel_dict : dict
             A dictionary containing kernel dictionaries.
-    
+
     """
-    ki=0
+    ki = 0
     for key in kernel_dict:
         ktype = kernel_dict[key]['type']
         # Retreive hyperparameters from a single list theta
@@ -120,18 +119,18 @@ def list2kdict(hyperparameters, kernel_dict):
             theta = hyperparameters[ki:ki+N_D]
             kernel_dict[key]['width'] = theta
             ki += N_D
-        
+
         # Polynomials have pairs of hyperparamters kfree, kdegree
         elif ktype == 'polynomial':
             theta = hyperparameters[ki:ki+2]
             kernel_dict[key]['kfree'] = theta[0]
             kernel_dict[key]['kdegree'] = theta[1]
             ki += 2
-    
+
         # Linear kernels have no hyperparameters
         elif ktype == 'linear':
             continue
-        
+
         # Default hyperparameter keys for other kernels
         else:
             N_D = len(kernel_dict[key]['hyperparameters'])
@@ -139,11 +138,12 @@ def list2kdict(hyperparameters, kernel_dict):
             kernel_dict[key]['hyperparameters'] = theta
     return kernel_dict
 
+
 def gaussian_kernel(m1, m2=None, theta=None):
     """
-        Returns the covariance matrix between datasets m1 and m2 
+        Returns the covariance matrix between datasets m1 and m2
         with a gaussian kernel.
-        
+
         Parameters
         ----------
         m1 : list
@@ -151,9 +151,9 @@ def gaussian_kernel(m1, m2=None, theta=None):
 
         m2 : list or None
             A list of the training fingerprint vectors.
-            
+
         theta : list
-        
+
     """
     kwidth = theta
     if m2 is None:
@@ -166,11 +166,12 @@ def gaussian_kernel(m1, m2=None, theta=None):
                            metric='sqeuclidean')
         return np.exp(-.5 * k)
 
+
 def linear_kernel(m1, m2=None, theta=None):
     """
-        Returns the covariance matrix between datasets m1 and m2 
+        Returns the covariance matrix between datasets m1 and m2
         with a linear kernel.
-        
+
         Parameters
         ----------
         m1 : list
@@ -178,19 +179,20 @@ def linear_kernel(m1, m2=None, theta=None):
 
         m2 : list or None
             A list of the training fingerprint vectors.
-            
+
         theta : list
-        
+
     """
     if m2 is None:
         m2 = m1
     return np.dot(m1, np.transpose(m2))
 
+
 def polynomial_kernel(m1, m2=None, theta=None):
     """
-        Returns the covariance matrix between datasets m1 and m2 
+        Returns the covariance matrix between datasets m1 and m2
         with a polynomial kernel.
-        
+
         Parameters
         ----------
         m1 : list
@@ -198,15 +200,16 @@ def polynomial_kernel(m1, m2=None, theta=None):
 
         m2 : list or None
             A list of the training fingerprint vectors.
-            
+
         theta : list
-        
+
     """
     kfree = theta[0]
     kdegree = theta[1]
     if m2 is None:
         m2 = m1
     return(np.dot(m1, np.transpose(m2)) + kfree) ** kdegree
+
 
 def laplacian_kernel(m1, m2=None, theta=None):
     kwidth = theta
@@ -216,7 +219,5 @@ def laplacian_kernel(m1, m2=None, theta=None):
         np.fill_diagonal(k, 1)
         return k
     else:
-        k = distance.cdist(m1 / kwidth, m2 / kwidth,
-                               metric='cityblock')
+        k = distance.cdist(m1 / kwidth, m2 / kwidth, metric='cityblock')
         return np.exp(-k)
-    
