@@ -1,5 +1,4 @@
 import sqlite3
-import os
 import numpy as np
 
 
@@ -29,7 +28,7 @@ class DescriptorDatabase(object):
                 List of heading names for features and targets.
         """
         # Attach database
-        conn = sqlite3.connect(os.getcwd() + '/' + self.db_name)
+        conn = sqlite3.connect(self.db_name)
         cursor = conn.cursor()
 
         cstring = 'uuid text'
@@ -47,7 +46,7 @@ class DescriptorDatabase(object):
             new_column : str
                 Name of new feature or target.
         """
-        conn = sqlite3.connect(os.getcwd() + '/' + self.db_name)
+        conn = sqlite3.connect(self.db_name)
         cursor = conn.cursor()
 
         for c in new_column:
@@ -68,7 +67,7 @@ class DescriptorDatabase(object):
                 should contain floats corresponding to the descriptor names
                 provided.
         """
-        conn = sqlite3.connect(os.getcwd() + '/' + self.db_name)
+        conn = sqlite3.connect(self.db_name)
         cursor = conn.cursor()
 
         qm = '(?'
@@ -92,7 +91,7 @@ class DescriptorDatabase(object):
             unique_id : str
                 The UUID of the entry to be updated.
         """
-        conn = sqlite3.connect(os.getcwd() + '/' + self.db_name)
+        conn = sqlite3.connect(self.db_name)
         cursor = conn.cursor()
 
         sql = """
@@ -126,7 +125,7 @@ class DescriptorDatabase(object):
                     d += ', %s' % i
             names = d
 
-        conn = sqlite3.connect(os.getcwd() + '/' + self.db_name)
+        conn = sqlite3.connect(self.db_name)
         cursor = conn.cursor()
         data = []
         if unique_id is None:
@@ -143,7 +142,7 @@ class DescriptorDatabase(object):
 
     def get_column_names(self):
         """ Function to get the of a supplied table column names. """
-        conn = sqlite3.connect(os.getcwd() + '/' + self.db_name)
+        conn = sqlite3.connect(self.db_name)
         cursor = conn.execute('select * from %s' % self.table)
 
         return [description[0] for description in cursor.description]
