@@ -3,14 +3,14 @@
 
 Utilities for building and testing Atomic Machine Learning (AtoML) models.
 Gaussian Processes (GP) machine learning routines are implemented. These
-will take a numpy array of training and test fingerprint vectors along with a
+will take a numpy array of training and test feature matrices along with a
 vector of target values.
 
 In general, any data prepared in this fashion can be fed to the GP routines,
 a number of additional functions have been added that interface with ASE. This
 integration allows for the manipulation of atoms objects through GP
-predictions, as well as dynamic generation of fingerprint descriptors through
-use of the many ASE functions.
+predictions, as well as dynamic generation of descriptors through use of the
+many ASE functions.
 
 ## Requirements
 
