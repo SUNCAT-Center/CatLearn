@@ -10,7 +10,7 @@ or that the user has generated a feature matrix in fpm.txt.
 import numpy as np
 from scipy.optimize import minimize
 from atoml.fingerprint_setup import standardize
-from atoml.model_selection import log_marginal_likelihood, gradient_log_p
+from atoml.model_selection import log_marginal_likelihood
 import time
 
 # Get the list of fingerprint vectors and normalize them.
@@ -31,7 +31,9 @@ sigma *= 0.3
 regularization = 0.03
 theta = np.append(sigma, regularization)
 
-a = (nfp, targets, 'gaussian')
+kernel_dict = {'kernel': {'type': 'gaussian', 'width': list(sigma)}, 'k2': {'type': 'linear', 'operation': 'multiplication'}}
+
+a = (nfp, targets, kernel_dict)
 
 # Hyper parameter bounds.
 b = ((1E-9, None), ) * (m+1)

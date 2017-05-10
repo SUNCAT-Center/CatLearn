@@ -9,17 +9,30 @@ from __future__ import division
 
 import numpy as np
 from scipy.linalg import cholesky, cho_solve
-from numpy.core.umath_tests import inner1d
-from .covariance import get_covariance, gramian
-from .kernels import dkernel_dwidth
+from .covariance import get_covariance
+from .kernels import list2kdict
 
-def log_marginal_likelihood(theta, train_fp, y, ktype):
+def log_marginal_likelihood(theta, train_fp, y, kernel_dict):
     """ Return the log marginal likelyhood.
         (Equation 5.8 in C. E. Rasmussen and C. K. I. Williams, 2006)
+        
+        Parameters
+        ----------
+        theta : list
+        
+        train_fp : list
+            A list of the test fingerprint vectors.
+        
+        y : list
+            A list of target values
+            
+        kernel_dict: dict
+            A dictionary of kernel dictionaries
     """
     # Get the covariance matrix.
-    kdict = {'k1': {'type': ktype, 'theta': theta[:-1]}}
-    K = gramian(train_fp, kdict, regularization=theta[-1])
+    kernel_dict = list2kdict(theta, kernel_dict)
+    K = get_covariance(train_fp, None, kernel_dict=kernel_dict, 
+                       regularization=theta[-1])
     n = len(y)
     y = y.reshape([n, 1])
     # print(np.shape(K), np.max(K), np.min(K))
@@ -30,41 +43,3 @@ def log_marginal_likelihood(theta, train_fp, y, ktype):
     normalization = -.5*n*np.log(2*np.pi)
     p = (datafit + complexity + normalization).sum()
     return -p
-
-def gradient_log_p(theta, train_fp, y, ktype='gaussian'):
-    """ Return the gradient of the log marginal likelyhood.
-        (Equation 5.9 in C. E. Rasmussen and C. K. I. Williams, 2006)
-
-        Input:
-            train_fp: n x m matrix
-            K: n x n positive definite matrix
-            widths: vector of length m
-            noise: float
-            y: vector of length n
-    """
-    if ktype is not 'gaussian':
-        raise NotImplementedError
-    kwidth = theta[:-1]
-    kdict = {'k1': {'type': ktype, 'width': kwidth}}
-    K = gramian(train_fp, kdict, regularization=theta[-1])
-    m = len(kwidth)
-    n = len(y)
-    y = y.reshape([n, 1])
-    L = cholesky(K, lower=True)
-    a = cho_solve((L, True), y)
-    C = cho_solve((L, True), np.eye(n))
-    aa = a*a.T  # inner1d(a,a)
-    Q = aa - C
-    dp = []
-    for j in range(0, m):
-        dKdtheta_j = dkernel_dwidth(train_fp[:, j], kwidth[j])
-        # Compute "0.5 * trace(tmp.dot(K_gradient))" without
-        # constructing the full matrix tmp.dot(K_gradient) since only
-        # its diagonal is required
-        # dfit = inner1d(aa,dKdtheta_j.T)
-        # dcomp = -np.sum(inner1d(C, dKdtheta_j.T))
-        # dp.append(0.5*(dfit-dcomp))
-        dp.append(0.5*np.sum(inner1d(Q, dKdtheta_j.T)))
-    dKdnoise = np.identity(n)
-    dp.append(0.5*np.sum(inner1d(Q, dKdnoise.T)))
-    return -np.array(dp)
