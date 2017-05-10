@@ -32,31 +32,30 @@ def get_covariance(kernel_dict, train_matrix, test_matrix=None,
         N_test = N_train
     # Initialize covariance matrix
     cov = np.zeros([N_train, N_test])
+
+    # Keep copies of original matrices.
+    train_store, test_store = train_matrix, test_matrix
+
     # Loop over kernels in kernel_dict
     for key in kernel_dict:
+        train_matrix, test_matrix = train_store, test_store
         ktype = kernel_dict[key]['type']
 
         # Select a subset of features for the kernel
         if 'features' in kernel_dict[key]:
-            train_fp = train_matrix[:, kernel_dict[key]['features']]
+            train_matrix = train_matrix[:, kernel_dict[key]['features']]
             if test_matrix is not None:
-                test_fp = test_matrix[:, kernel_dict[key]['features']]
-            else:
-                test_fp = None
-            theta = ak.kdict2list(kernel_dict[key], N_D)
-        else:
-            train_fp = train_matrix
-            test_fp = test_matrix
-            theta = ak.kdict2list(kernel_dict[key], N_D)
+                test_matrix = test_matrix[:, kernel_dict[key]['features']]
+        theta = ak.kdict2list(kernel_dict[key], N_D)
 
         # Get the covariance matrix
         if 'operation' in kernel_dict[key] and \
            kernel_dict[key]['operation'] == 'multiplication':
             cov *= eval('ak.'+str(ktype) +
-                        '_kernel(train_fp,test_fp,theta=theta)')
+                        '_kernel(train_matrix, test_matrix, theta=theta)')
         else:
             cov += eval('ak.' + str(ktype) +
-                        '_kernel(train_fp,test_fp,theta=theta)')
+                        '_kernel(train_matrix, test_matrix, theta=theta)')
     if regularization is not None:
         cov += regularization * np.identity(len(cov))
     return cov
