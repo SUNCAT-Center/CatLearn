@@ -12,26 +12,27 @@ from scipy.linalg import cholesky, cho_solve
 from .covariance import get_covariance
 from .kernels import list2kdict
 
+
 def log_marginal_likelihood(theta, train_fp, y, kernel_dict):
     """ Return the log marginal likelyhood.
         (Equation 5.8 in C. E. Rasmussen and C. K. I. Williams, 2006)
-        
+
         Parameters
         ----------
         theta : list
-        
+
         train_fp : list
             A list of the test fingerprint vectors.
-        
+
         y : list
             A list of target values
-            
+
         kernel_dict: dict
             A dictionary of kernel dictionaries
     """
     # Get the covariance matrix.
     kernel_dict = list2kdict(theta, kernel_dict)
-    K = get_covariance(train_fp, None, kernel_dict=kernel_dict, 
+    K = get_covariance(kernel_dict=kernel_dict, train_matrix=train_fp,
                        regularization=theta[-1])
     n = len(y)
     y = y.reshape([n, 1])
