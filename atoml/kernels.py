@@ -22,7 +22,6 @@ def kdict2list(kdict, N_D=None):
         kdict : dict
             A kernel dictionary containing the keys 'type' and optional
             keys containing the hyperparameters of the kernel.
-
         N_D : none or int
             ????
     """
@@ -85,8 +84,8 @@ def kdicts2list(kernel_dict, N_D=None):
         ----------
         kernel_dict : dict
             A dictionary containing kernel dictionaries.
-
-        N_D : none or int
+        N_D : int
+            ????
     """
     theta = []
     for kernel_key in kernel_dict:
@@ -105,10 +104,9 @@ def list2kdict(hyperparameters, kernel_dict):
         Parameters
         ----------
         hyperparameters : list
-
+            ????
         kernel_dict : dict
             A dictionary containing kernel dictionaries.
-
     """
     ki = 0
     for key in kernel_dict:
@@ -140,20 +138,17 @@ def list2kdict(hyperparameters, kernel_dict):
 
 
 def gaussian_kernel(m1, m2=None, theta=None):
-    """
-        Returns the covariance matrix between datasets m1 and m2
+    """ Returns the covariance matrix between datasets m1 and m2
         with a gaussian kernel.
 
         Parameters
         ----------
         m1 : list
             A list of the training fingerprint vectors.
-
-        m2 : list or None
+        m2 : list
             A list of the training fingerprint vectors.
-
         theta : list
-
+            A list of widths for each feature.
     """
     kwidth = theta
     if m2 is None:
@@ -168,20 +163,17 @@ def gaussian_kernel(m1, m2=None, theta=None):
 
 
 def linear_kernel(m1, m2=None, theta=None):
-    """
-        Returns the covariance matrix between datasets m1 and m2
+    """ Returns the covariance matrix between datasets m1 and m2
         with a linear kernel.
 
         Parameters
         ----------
         m1 : list
             A list of the training fingerprint vectors.
-
         m2 : list or None
             A list of the training fingerprint vectors.
-
         theta : list
-
+            Will always be None. Probably needs removing.
     """
     if m2 is None:
         m2 = m1
@@ -189,20 +181,17 @@ def linear_kernel(m1, m2=None, theta=None):
 
 
 def polynomial_kernel(m1, m2=None, theta=None):
-    """
-        Returns the covariance matrix between datasets m1 and m2
+    """ Returns the covariance matrix between datasets m1 and m2
         with a polynomial kernel.
 
         Parameters
         ----------
         m1 : list
             A list of the training fingerprint vectors.
-
         m2 : list or None
             A list of the training fingerprint vectors.
-
         theta : list
-
+            A list containg constant and degree for polynomial.
     """
     kfree = theta[0]
     kdegree = theta[1]
@@ -212,12 +201,23 @@ def polynomial_kernel(m1, m2=None, theta=None):
 
 
 def laplacian_kernel(m1, m2=None, theta=None):
-    kwidth = theta
+    """ Returns the covariance matrix between datasets m1 and m2
+        with a laplacian kernel.
+
+        Parameters
+        ----------
+        m1 : list
+            A list of the training fingerprint vectors.
+        m2 : list or None
+            A list of the training fingerprint vectors.
+        theta : list
+            A list of widths for each feature.
+    """
     if m2 is None:
-        k = distance.pdist(m1 / kwidth, metric='cityblock')
+        k = distance.pdist(m1 / theta, metric='cityblock')
         k = distance.squareform(np.exp(-k))
         np.fill_diagonal(k, 1)
         return k
     else:
-        k = distance.cdist(m1 / kwidth, m2 / kwidth, metric='cityblock')
+        k = distance.cdist(m1 / theta, m2 / theta, metric='cityblock')
         return np.exp(-k)
