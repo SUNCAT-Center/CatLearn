@@ -16,13 +16,12 @@ def get_covariance(kernel_dict, train_matrix, test_matrix=None,
         ----------
         train_matrix : list
             A list of the training fingerprint vectors.
-
         test_matrix : list
             A list of the test fingerprint vectors.
-
         kernel_dict : dict of dicts
-
+            A dict containing all data for the kernel functions.
         regularization : None or float
+            Smoothing parameter for the Gramm matrix.
     """
     N_train, N_D = np.shape(train_matrix)
     if test_matrix is not None:

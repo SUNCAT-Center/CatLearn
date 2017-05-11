@@ -20,13 +20,11 @@ def log_marginal_likelihood(theta, train_fp, y, kernel_dict):
         Parameters
         ----------
         theta : list
-
+            A list containing the hyperparameters.
         train_fp : list
             A list of the test fingerprint vectors.
-
         y : list
             A list of target values
-
         kernel_dict: dict
             A dictionary of kernel dictionaries
     """
