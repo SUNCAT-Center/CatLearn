@@ -134,14 +134,13 @@ class GaussianProcess(object):
         # Get the Gram matrix on-the-fly if none is suppiled.
         if cinv is None:
             cvm = get_covariance(kernel_dict=self.kernel_dict,
-                                 train_matrix=train_fp,
+                                 matrix1=train_fp,
                                  regularization=self.regularization)
             cinv = np.linalg.inv(cvm)
 
         # Calculate the covarience between the test and training datasets.
-        ktb = get_covariance(kernel_dict=self.kernel_dict,
-                             train_matrix=test_fp, test_matrix=train_fp,
-                             regularization=None)
+        ktb = get_covariance(kernel_dict=self.kernel_dict, matrix1=test_fp,
+                             matrix2=train_fp, regularization=None)
 
         # Build the list of predictions.
         data['prediction'] = self.do_prediction(ktb=ktb, cinv=cinv,
@@ -157,8 +156,7 @@ class GaussianProcess(object):
         if get_training_error:
             # Calculate the covarience between the training dataset.
             kt_train = get_covariance(kernel_dict=self.kernel_dict,
-                                      train_matrix=train_fp,
-                                      regularization=None)
+                                      matrix1=train_fp, regularization=None)
 
             # Calculate predictions for the training data.
             data['train_prediction'] = self.do_prediction(ktb=kt_train,
@@ -215,8 +213,8 @@ class GaussianProcess(object):
             residual. """
         data = defaultdict(list)
         # Calculate the K(X*,X*) covarience matrix.
-        ktest = get_covariance(kernel_dict=self.kernel_dict,
-                               train_matrix=test_fp, regularization=None)
+        ktest = get_covariance(kernel_dict=self.kernel_dict, matrix1=test_fp,
+                               regularization=None)
 
         # Form H and H* matrix, multiplying X by basis.
         train_matrix = np.asarray([basis(i) for i in train_fp])
