@@ -12,6 +12,7 @@ from .output import write_predict
 from .covariance import get_covariance
 from .kernels import kdicts2list, list2kdict
 
+
 class GaussianProcess(object):
     """ Kernel ridge regression functions for the machine learning. This can be
         used to predict the fitness of an atoms object.
@@ -36,18 +37,18 @@ class GaussianProcess(object):
         for key in kdict:
             if 'features' in kdict[key]:
                 N_D = len(kdict[key]['features'])
-            #ktype = kdict[key]['type']
+            # ktype = kdict[key]['type']
             if 'width' in kdict[key]:
                 theta = kdict[key]['width']
                 if type(theta) is float:
                     self.kernel_dict[key]['width'] = np.zeros(N_D,) + theta
-            
+
             elif 'hyperparameters' in kdict[key]:
                 theta = kdict[key]['hyperparameters']
                 if type(theta) is float:
                     self.kernel_dict[key]['hyperparameters'] = (
                         np.zeros(N_D,) + theta)
-            
+
             elif 'theta' in kdict[key]:
                 theta = kdict[key]['theta']
                 if type(theta) is float:
@@ -99,7 +100,7 @@ class GaussianProcess(object):
         # Kernel dictionary should contain hyperparameters in lists:
         self.prepare_kernels(N_D)
         self.standardize_target = standardize_target
-        
+
         error_train = train_target
         if standardize_target:
             self.standardize_data = target_standardize(train_target)
@@ -114,30 +115,32 @@ class GaussianProcess(object):
             theta = kdicts2list(self.kernel_dict, N_D=N_D)
             if self.regularization is not None:
                 theta = np.append(theta, self.regularization)
-            
+
             # Define fixed arguments for log_marginal_likelihood
             args = (np.array(train_fp), train_target, self.kernel_dict)
             # Set bounds for hyperparameters
-            bounds = ((1E-6,1e3),)*(len(theta))
+            bounds = ((1E-6, 1e3),)*(len(theta))
             # Optimize
             self.theta_opt = minimize(log_marginal_likelihood, theta,
-                                      args=args, 
-                                      bounds=bounds)#, jac=gradient_log_p)
+                                      args=args,
+                                      bounds=bounds)  # , jac=gradient_log_p)
             # Update kernel_dict and regularization
-            self.kernel_dict = list2kdict(self.theta_opt['x'][:-1], 
+            self.kernel_dict = list2kdict(self.theta_opt['x'][:-1],
                                           self.kernel_dict)
             self.regularization = self.theta_opt['x'][-1]
             data['optimized_kernels'] = self.kernel_dict
             data['optimized_regularization'] = self.regularization
-        
+
         # Get the Gram matrix on-the-fly if none is suppiled.
         if cinv is None:
-            cvm = get_covariance(train_fp, None, kernel_dict=self.kernel_dict,
-                          regularization=self.regularization)
+            cvm = get_covariance(kernel_dict=self.kernel_dict,
+                                 matrix1=train_fp,
+                                 regularization=self.regularization)
             cinv = np.linalg.inv(cvm)
-        
+
         # Calculate the covarience between the test and training datasets.
-        ktb = get_covariance(test_fp, train_fp, self.kernel_dict)
+        ktb = get_covariance(kernel_dict=self.kernel_dict, matrix1=test_fp,
+                             matrix2=train_fp, regularization=None)
 
         # Build the list of predictions.
         data['prediction'] = self.do_prediction(ktb=ktb, cinv=cinv,
@@ -152,8 +155,8 @@ class GaussianProcess(object):
         # Calculate error associated with predictions on the training data.
         if get_training_error:
             # Calculate the covarience between the training dataset.
-            kt_train = get_covariance(train_fp, None, self.kernel_dict,
-                                      regularization=None)
+            kt_train = get_covariance(kernel_dict=self.kernel_dict,
+                                      matrix1=train_fp, regularization=None)
 
             # Calculate predictions for the training data.
             data['train_prediction'] = self.do_prediction(ktb=kt_train,
@@ -210,7 +213,8 @@ class GaussianProcess(object):
             residual. """
         data = defaultdict(list)
         # Calculate the K(X*,X*) covarience matrix.
-        ktest = get_covariance(test_fp, None, self.kernel_dict, regularization=None)
+        ktest = get_covariance(kernel_dict=self.kernel_dict, matrix1=test_fp,
+                               regularization=None)
 
         # Form H and H* matrix, multiplying X by basis.
         train_matrix = np.asarray([basis(i) for i in train_fp])
@@ -240,7 +244,8 @@ class GaussianProcess(object):
                                                 epsilon=epsilon)
 
         return data
-    
+
+
 def target_standardize(target, writeout=False):
     """ Returns a list of standardized target values.
 
