@@ -170,7 +170,9 @@ class GaussianProcess(object):
 
         # Calculate uncertainty associated with prediction on test data.
         if uncertainty:
-            data['uncertainty'] = self.get_uncertainty(cinv=cinv, ktb=ktb)
+            data['uncertainty'] = [(1 - np.dot(np.dot(kt, cinv),
+                                               np.transpose(kt))) ** 0.5 for
+                                   kt in ktb]
 
         if basis is not None:
             data['basis_analysis'] = self.fixed_basis(train_fp=train_fp,
@@ -188,24 +190,16 @@ class GaussianProcess(object):
 
     def do_prediction(self, ktb, cinv, target):
         """ Function to make the prediction. """
-        pred = []
         train_mean = np.mean(target)
         target_values = target - train_mean
-        for kt in ktb:
-            ktcinv = np.dot(kt, cinv)
-            p = np.dot(ktcinv, target_values) + train_mean
-            if self.standardize_target:
-                p = (p * self.standardize_data['std']) + \
-                 self.standardize_data['mean']
-            pred.append(p)
+
+        ktbcinv = np.einsum('ij,jk->ik', ktb, cinv)
+        pred = np.dot(ktbcinv, target_values) + train_mean
+        if self.standardize_target:
+            pred = (pred * self.standardize_data['std']) + \
+             self.standardize_data['mean']
 
         return pred
-
-    def get_uncertainty(self, cinv, ktb):
-        """ Function to get the predicted uncertainty."""
-        # Predict the uncertainty.
-        return [(1 - np.dot(np.dot(kt, cinv), np.transpose(kt))) ** 0.5 for kt
-                in ktb]
 
     def fixed_basis(self, test_fp, train_fp, basis, ktb, cinv, target,
                     test_target, cost, epsilon):

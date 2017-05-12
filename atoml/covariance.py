@@ -51,10 +51,10 @@ def get_covariance(kernel_dict, matrix1, matrix2=None,
         if 'operation' in kernel_dict[key] and \
            kernel_dict[key]['operation'] == 'multiplication':
             cov *= eval('ak.'+str(ktype) +
-                        '_kernel(matrix1, matrix2, theta=theta)')
+                        '_kernel(m1=matrix1, m2=matrix2, theta=theta)')
         else:
             cov += eval('ak.' + str(ktype) +
-                        '_kernel(matrix1, matrix2, theta=theta)')
+                        '_kernel(m1=matrix1, m2=matrix2, theta=theta)')
     if regularization is not None:
         cov += regularization * np.identity(len(cov))
     return cov

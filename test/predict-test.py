@@ -27,7 +27,7 @@ train_fp = return_fpv(trainset['candidates'], [fpv.nearestneighbour_fpv])
 nfp = normalize(train=train_fp, test=test_fp)
 
 # Test prediction routine with linear kernel.
-kdict = {'k1': {'type': 'linear'}}
+kdict = {'k1': {'type': 'linear', 'const': 0.}}
 gp = GaussianProcess(kernel_dict=kdict)
 pred = gp.get_predictions(train_fp=nfp['train'],
                           test_fp=nfp['test'],
@@ -41,7 +41,7 @@ assert len(pred['prediction']) == 10
 print('linear prediction:', pred['validation_rmse']['average'])
 
 # Test prediction routine with polynomial kernel.
-kdict = {'k1': {'type': 'polynomial', 'kfree': 0., 'kdegree': 2.}}
+kdict = {'k1': {'type': 'polynomial', 'slope': 0.5, 'degree': 2., 'const': 0.}}
 gp = GaussianProcess(kernel_dict=kdict)
 pred = gp.get_predictions(train_fp=nfp['train'],
                           test_fp=nfp['test'],
@@ -109,7 +109,7 @@ assert len(pred['prediction']) == 10
 print('laplacian prediction:', pred['validation_rmse']['average'])
 
 # Test prediction routine with addative linear and gaussian kernel.
-kdict = {'k1': {'type': 'linear', 'features': [0, 1]},
+kdict = {'k1': {'type': 'linear', 'features': [0, 1], 'const': 0.},
          'k2': {'type': 'gaussian', 'features': [2, 3], 'width': 0.5}}
 gp = GaussianProcess(kernel_dict=kdict, regularization=0.001)
 pred = gp.get_predictions(train_fp=nfp['train'],
@@ -124,7 +124,7 @@ assert len(pred['prediction']) == 10
 print('addition prediction:', pred['validation_rmse']['average'])
 
 # Test prediction routine with multiplication of linear and gaussian kernel.
-kdict = {'k1': {'type': 'linear', 'features': [0, 1]},
+kdict = {'k1': {'type': 'linear', 'features': [0, 1], 'const': 0.},
          'k2': {'type': 'gaussian', 'features': [2, 3], 'width': 0.5,
                 'operation': 'multiplication'}}
 gp = GaussianProcess(kernel_dict=kdict, regularization=0.001)
