@@ -190,13 +190,15 @@ class GaussianProcess(object):
 
     def do_prediction(self, ktb, cinv, target):
         """ Function to make the prediction. """
+        pred = []
         train_mean = np.mean(target)
         target_values = target - train_mean
+        for kt in ktb:
+            ktcinv = np.dot(kt, cinv)
+            pred.append(np.dot(ktcinv, target_values) + train_mean)
 
-        ktbcinv = np.einsum('ij,jk->ik', ktb, cinv)
-        pred = np.dot(ktbcinv, target_values) + train_mean
         if self.standardize_target:
-            pred = (pred * self.standardize_data['std']) + \
+            pred = (np.asarray(pred) * self.standardize_data['std']) + \
              self.standardize_data['mean']
 
         return pred
