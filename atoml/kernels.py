@@ -120,15 +120,17 @@ def list2kdict(hyperparameters, kernel_dict):
 
         # Polynomials have pairs of hyperparamters kfree, kdegree
         elif ktype == 'polynomial':
-            theta = hyperparameters[ki:ki+2]
+            theta = hyperparameters[ki:ki+3]
             kernel_dict[key]['slope'] = theta[0]
             kernel_dict[key]['degree'] = theta[1]
-            kernel_dict[key]['const'] = theta[1]
+            kernel_dict[key]['const'] = theta[2]
             ki += 3
 
         # Linear kernels have no hyperparameters
         elif ktype == 'linear':
-            continue
+            theta = hyperparameters[ki:ki+1]
+            kernel_dict[key]['const'] = theta[0]
+            ki += 1
 
         # Default hyperparameter keys for other kernels
         else:
