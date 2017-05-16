@@ -7,6 +7,8 @@ from __future__ import division
 import numpy as np
 from scipy.optimize import minimize
 from collections import defaultdict
+import functools
+
 from .model_selection import log_marginal_likelihood
 from .output import write_predict
 from .covariance import get_covariance
@@ -189,14 +191,29 @@ class GaussianProcess(object):
         return data
 
     def do_prediction(self, ktb, cinv, target):
-        """ Function to make the prediction. """
-        pred = []
-        train_mean = np.mean(target)
-        target_values = target - train_mean
-        for kt in ktb:
-            ktcinv = np.dot(kt, cinv)
-            pred.append(np.dot(ktcinv, target_values) + train_mean)
+        """ Function to make the prediction.
 
+            Parameters
+            ----------
+            ktb : array
+                Covarience matrix between test and training data.
+            cinv : array
+                Inverted Gramm matrix, covarience between training data.
+            target : list
+                The target values for the training data.
+
+            Returns
+            -------
+            pred : list
+                The rescaled predictions for the test data.
+        """
+        tmean = np.mean(target)
+        target_values = target - tmean
+
+        # Form list of the actual predictions.
+        pred = functools.reduce(np.dot, (ktb, cinv, target_values)) + tmean
+
+        # Rescalse the predictions if targets were previously standardized.
         if self.standardize_target:
             pred = (np.asarray(pred) * self.standardize_data['std']) + \
              self.standardize_data['mean']
