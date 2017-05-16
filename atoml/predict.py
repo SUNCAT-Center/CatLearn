@@ -7,6 +7,8 @@ from __future__ import division
 import numpy as np
 from scipy.optimize import minimize
 from collections import defaultdict
+import functools
+
 from .model_selection import log_marginal_likelihood
 from .output import write_predict
 from .covariance import get_covariance
@@ -136,9 +138,10 @@ class GaussianProcess(object):
             cvm = get_covariance(kernel_dict=self.kernel_dict,
                                  matrix1=train_fp,
                                  regularization=self.regularization)
+            # Invert the covariance matrix.
             cinv = np.linalg.inv(cvm)
 
-        # Calculate the covarience between the test and training datasets.
+        # Calculate the covariance between the test and training datasets.
         ktb = get_covariance(kernel_dict=self.kernel_dict, matrix1=test_fp,
                              matrix2=train_fp, regularization=None)
 
@@ -154,7 +157,7 @@ class GaussianProcess(object):
 
         # Calculate error associated with predictions on the training data.
         if get_training_error:
-            # Calculate the covarience between the training dataset.
+            # Calculate the covariance between the training dataset.
             kt_train = get_covariance(kernel_dict=self.kernel_dict,
                                       matrix1=train_fp, regularization=None)
 
@@ -170,7 +173,9 @@ class GaussianProcess(object):
 
         # Calculate uncertainty associated with prediction on test data.
         if uncertainty:
-            data['uncertainty'] = self.get_uncertainty(cinv=cinv, ktb=ktb)
+            data['uncertainty'] = [(1 - np.dot(np.dot(kt, cinv),
+                                               np.transpose(kt))) ** 0.5 for
+                                   kt in ktb]
 
         if basis is not None:
             data['basis_analysis'] = self.fixed_basis(train_fp=train_fp,
@@ -187,32 +192,42 @@ class GaussianProcess(object):
         return data
 
     def do_prediction(self, ktb, cinv, target):
-        """ Function to make the prediction. """
-        pred = []
+        """ Function to make the prediction.
+
+            Parameters
+            ----------
+            ktb : array
+                Covariance matrix between test and training data.
+            cinv : array
+                Inverted Gramm matrix, covariance between training data.
+            target : list
+                The target values for the training data.
+
+            Returns
+            -------
+            pred : list
+                The rescaled predictions for the test data.
+        """
         train_mean = np.mean(target)
         target_values = target - train_mean
-        for kt in ktb:
-            ktcinv = np.dot(kt, cinv)
-            p = np.dot(ktcinv, target_values) + train_mean
-            if self.standardize_target:
-                p = (p * self.standardize_data['std']) + \
-                 self.standardize_data['mean']
-            pred.append(p)
+        alpha = np.dot(cinv, target_values)
+
+        # Form list of the actual predictions.
+        pred = functools.reduce(np.dot, (ktb, alpha)) + train_mean
+
+        # Rescalse the predictions if targets were previously standardized.
+        if self.standardize_target:
+            pred = (np.asarray(pred) * self.standardize_data['std']) + \
+             self.standardize_data['mean']
 
         return pred
-
-    def get_uncertainty(self, cinv, ktb):
-        """ Function to get the predicted uncertainty."""
-        # Predict the uncertainty.
-        return [(1 - np.dot(np.dot(kt, cinv), np.transpose(kt))) ** 0.5 for kt
-                in ktb]
 
     def fixed_basis(self, test_fp, train_fp, basis, ktb, cinv, target,
                     test_target, cost, epsilon):
         """ Function to apply fixed basis. Returns the predictions gX on the
             residual. """
         data = defaultdict(list)
-        # Calculate the K(X*,X*) covarience matrix.
+        # Calculate the K(X*,X*) covariance matrix.
         ktest = get_covariance(kernel_dict=self.kernel_dict, matrix1=test_fp,
                                regularization=None)
 
@@ -228,7 +243,7 @@ class GaussianProcess(object):
         b2 = np.asarray(target).dot(cinv.dot(train_matrix))
         beta = b1.dot(b2)
 
-        # Form the covarience function based on the residual.
+        # Form the covariance function based on the residual.
         covf = ktest - ktb.dot(cinv.dot(ktb.T))
         gca = train_matrix.T.dot(cinv.dot(train_matrix))
         data['g_cov'] = covf + r.dot(np.linalg.inv(gca).dot(r.T))

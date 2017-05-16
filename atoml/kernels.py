@@ -42,7 +42,7 @@ def kdict2list(kdict, N_D=None):
     elif ktype == 'polynomial':
         # kfree = kernel_dict[key]['kfree']
         # kdegree = kernel_dict[key]['kdegree']
-        theta = [kdict['kfree'], kdict['kdegree']]
+        theta = [kdict['slope'], kdict['degree'], kdict['const']]
         # if type(kfree) is float:
         #    kfree = np.zeros(N_D,) + kfree
         # if type(kdegree) is float:
@@ -52,7 +52,7 @@ def kdict2list(kdict, N_D=None):
         # theta = [hp for k in zipped_theta for hp in k]
     # Linear kernels have no hyperparameters
     elif ktype == 'linear':
-        theta = []
+        theta = [kdict['const']]
 
     # Default hyperparameter keys for other kernels
     elif 'hyperparameters' in kdict:
@@ -120,14 +120,17 @@ def list2kdict(hyperparameters, kernel_dict):
 
         # Polynomials have pairs of hyperparamters kfree, kdegree
         elif ktype == 'polynomial':
-            theta = hyperparameters[ki:ki+2]
-            kernel_dict[key]['kfree'] = theta[0]
-            kernel_dict[key]['kdegree'] = theta[1]
-            ki += 2
+            theta = hyperparameters[ki:ki+3]
+            kernel_dict[key]['slope'] = theta[0]
+            kernel_dict[key]['degree'] = theta[1]
+            kernel_dict[key]['const'] = theta[2]
+            ki += 3
 
         # Linear kernels have no hyperparameters
         elif ktype == 'linear':
-            continue
+            theta = hyperparameters[ki:ki+1]
+            kernel_dict[key]['const'] = theta[0]
+            ki += 1
 
         # Default hyperparameter keys for other kernels
         else:
@@ -137,18 +140,18 @@ def list2kdict(hyperparameters, kernel_dict):
     return kernel_dict
 
 
-def gaussian_kernel(m1, m2=None, theta=None):
+def gaussian_kernel(theta, m1, m2=None):
     """ Returns the covariance matrix between datasets m1 and m2
         with a gaussian kernel.
 
         Parameters
         ----------
+        theta : list
+            A list of widths for each feature.
         m1 : list
             A list of the training fingerprint vectors.
         m2 : list
             A list of the training fingerprint vectors.
-        theta : list
-            A list of widths for each feature.
     """
     kwidth = theta
     if m2 is None:
@@ -162,56 +165,58 @@ def gaussian_kernel(m1, m2=None, theta=None):
         return np.exp(-.5 * k)
 
 
-def linear_kernel(m1, m2=None, theta=None):
+def linear_kernel(theta, m1, m2=None):
     """ Returns the covariance matrix between datasets m1 and m2
         with a linear kernel.
 
         Parameters
         ----------
+        theta : list
+            Will always be None. Probably needs removing.
         m1 : list
             A list of the training fingerprint vectors.
         m2 : list or None
             A list of the training fingerprint vectors.
-        theta : list
-            Will always be None. Probably needs removing.
     """
     if m2 is None:
         m2 = m1
-    return np.dot(m1, np.transpose(m2))
+    c = np.zeros([len(m1), len(m2)]) + theta
+    return np.inner(m1, m2) + c
 
 
-def polynomial_kernel(m1, m2=None, theta=None):
+def polynomial_kernel(theta, m1, m2=None):
     """ Returns the covariance matrix between datasets m1 and m2
         with a polynomial kernel.
 
         Parameters
         ----------
+        theta : list
+            A list containing constant, slope and degree for polynomial.
         m1 : list
             A list of the training fingerprint vectors.
         m2 : list or None
             A list of the training fingerprint vectors.
-        theta : list
-            A list containg constant and degree for polynomial.
     """
-    kfree = theta[0]
-    kdegree = theta[1]
+    slope = theta[0]
+    degree = theta[1]
+    const = theta[2]
     if m2 is None:
         m2 = m1
-    return(np.dot(m1, np.transpose(m2)) + kfree) ** kdegree
+    return (const + np.dot(m1, np.transpose(m2)) * slope) ** degree
 
 
-def laplacian_kernel(m1, m2=None, theta=None):
+def laplacian_kernel(theta, m1, m2=None):
     """ Returns the covariance matrix between datasets m1 and m2
         with a laplacian kernel.
 
         Parameters
         ----------
+        theta : list
+            A list of widths for each feature.
         m1 : list
             A list of the training fingerprint vectors.
         m2 : list or None
             A list of the training fingerprint vectors.
-        theta : list
-            A list of widths for each feature.
     """
     if m2 is None:
         k = distance.pdist(m1 / theta, metric='cityblock')
