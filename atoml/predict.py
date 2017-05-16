@@ -139,8 +139,7 @@ class GaussianProcess(object):
                                  matrix1=train_fp,
                                  regularization=self.regularization)
             # Invert the covariance matrix.
-            inv = np.linalg.inv(np.linalg.cholesky(cvm))
-            cinv = np.dot(np.transpose(inv), inv)
+            cinv = np.linalg.inv(cvm)
 
         # Calculate the covariance between the test and training datasets.
         ktb = get_covariance(kernel_dict=self.kernel_dict, matrix1=test_fp,
