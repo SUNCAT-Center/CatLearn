@@ -50,9 +50,9 @@ def matrix_split(X, nsplit, fix_size=None, replacement=False):
             # Get any new remainder.
             r = max(0, r-1)
             # Define next split.
-            s1 += n + min(1, r)
+            s2 += n + min(1, r)
         else:
-            s1 += fix_size
+            s2 += fix_size
     return dataset
 
 
