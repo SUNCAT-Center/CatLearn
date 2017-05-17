@@ -1,8 +1,5 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Wed Apr 26 17:27:47 2017
-
-"""
+""" Generation of covariance matrix. """
+from __future__ import absolute_import
 
 import numpy as np
 from atoml import kernels as ak

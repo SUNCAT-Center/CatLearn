@@ -10,9 +10,10 @@ import numpy as np
 from ase.ga.data import DataConnection
 from atoml.data_setup import get_unique, get_train
 from atoml.fingerprint_setup import return_fpv, normalize
-from atoml.feature_select import (lasso, sure_independence_screening,
+from atoml.feature_select import (sure_independence_screening,
                                   iterative_screening,
                                   robust_rank_correlation_screening, pca)
+from atoml.regression import lasso
 from atoml.particle_fingerprint import ParticleFingerprintGenerator
 from atoml.standard_fingerprint import StandardFingerprintGenerator
 from atoml.predict import GaussianProcess

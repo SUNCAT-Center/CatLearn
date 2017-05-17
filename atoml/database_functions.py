@@ -1,3 +1,4 @@
+""" Functions to create databases storing feature matrix. """
 import sqlite3
 import numpy as np
 

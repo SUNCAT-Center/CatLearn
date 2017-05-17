@@ -3,7 +3,8 @@ from __future__ import print_function
 
 from ase.ga.data import DataConnection
 from atoml.data_setup import get_unique, get_train
-from atoml.fingerprint_setup import normalize, return_fpv
+from atoml.fingerprint_setup import return_fpv
+from atoml.feature_preprocess import normalize
 from atoml.particle_fingerprint import ParticleFingerprintGenerator
 from atoml.predict import GaussianProcess
 
@@ -14,17 +15,17 @@ db = DataConnection('gadb.db')
 all_cand = db.get_all_relaxed_candidates(use_extinct=False)
 
 # Setup the test and training datasets.
-testset = get_unique(candidates=all_cand, testsize=10, key='raw_score')
-trainset = get_train(candidates=all_cand, trainsize=50,
-                     taken_cand=testset['taken'], key='raw_score')
+testset = get_unique(atoms=all_cand, size=10, key='raw_score')
+trainset = get_train(atoms=all_cand, size=50, taken=testset['taken'],
+                     key='raw_score')
 
 # Define fingerprint parameters.
 fpv = ParticleFingerprintGenerator(get_nl=False, max_bonds=13)
 
 # Get the list of fingerprint vectors and normalize them.
-test_fp = return_fpv(testset['candidates'], [fpv.nearestneighbour_fpv])
-train_fp = return_fpv(trainset['candidates'], [fpv.nearestneighbour_fpv])
-nfp = normalize(train=train_fp, test=test_fp)
+test_fp = return_fpv(testset['atoms'], [fpv.nearestneighbour_fpv])
+train_fp = return_fpv(trainset['atoms'], [fpv.nearestneighbour_fpv])
+nfp = normalize(train_matrix=train_fp, test_matrix=test_fp)
 
 # Test prediction routine with linear kernel.
 kdict = {'k1': {'type': 'linear', 'const': 0.}}

@@ -6,9 +6,10 @@ import numpy as np
 from ase.ga.data import DataConnection
 from atoml.data_setup import get_train, get_unique
 from atoml.fingerprint_setup import return_fpv
-from atoml.feature_select import (lasso, pca, sure_independence_screening,
+from atoml.feature_select import (pca, sure_independence_screening,
                                   iterative_screening,
                                   robust_rank_correlation_screening)
+from atoml.regression import lasso
 from atoml.particle_fingerprint import ParticleFingerprintGenerator
 from atoml.standard_fingerprint import StandardFingerprintGenerator
 
@@ -18,14 +19,14 @@ db = DataConnection('gadb.db')
 all_cand = db.get_all_relaxed_candidates(use_extinct=False)
 
 # Setup the test and training datasets.
-testset = get_unique(candidates=all_cand, testsize=5, key='raw_score')
-trainset = get_train(candidates=all_cand, trainsize=10,
-                     taken_cand=testset['taken'], key='raw_score')
+testset = get_unique(atoms=all_cand, size=5, key='raw_score')
+trainset = get_train(atoms=all_cand, size=10, taken=testset['taken'],
+                     key='raw_score')
 
 # Delete the stored values of nnmat to give better indication of timing.
-for i in testset['candidates']:
+for i in testset['atoms']:
     del i.info['data']['nnmat']
-for i in trainset['candidates']:
+for i in trainset['atoms']:
     del i.info['data']['nnmat']
 
 # Initiate the fingerprint generators with relevant input variables.
@@ -34,16 +35,16 @@ pfpv = ParticleFingerprintGenerator(atom_numbers=[78, 79], max_bonds=13,
                                     nbin=4)
 sfpv = StandardFingerprintGenerator(atom_types=[78, 79])
 
-test_fp = return_fpv(testset['candidates'], [pfpv.nearestneighbour_fpv,
-                                             pfpv.bond_count_fpv,
-                                             sfpv.mass_fpv,
-                                             sfpv.composition_fpv,
-                                             sfpv.distance_fpv])
-train_fp = return_fpv(trainset['candidates'], [pfpv.nearestneighbour_fpv,
-                                               pfpv.bond_count_fpv,
-                                               sfpv.mass_fpv,
-                                               sfpv.composition_fpv,
-                                               sfpv.distance_fpv])
+test_fp = return_fpv(testset['atoms'], [pfpv.nearestneighbour_fpv,
+                                        pfpv.bond_count_fpv,
+                                        sfpv.mass_fpv,
+                                        sfpv.composition_fpv,
+                                        sfpv.distance_fpv])
+train_fp = return_fpv(trainset['atoms'], [pfpv.nearestneighbour_fpv,
+                                          pfpv.bond_count_fpv,
+                                          sfpv.mass_fpv,
+                                          sfpv.composition_fpv,
+                                          sfpv.distance_fpv])
 
 sis = sure_independence_screening(target=trainset['target'],
                                   train_fpv=train_fp, size=4)
