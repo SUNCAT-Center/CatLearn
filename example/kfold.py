@@ -12,24 +12,26 @@ from __future__ import print_function
 import numpy as np
 
 from atoml.predict import GaussianProcess
-from atoml.feature_preprocess import fpmatrix_split, standardize, normalize
+from atoml.feature_preprocess import matrix_split, standardize, normalize
 
 nsplit = 2
 
 fpm_y = np.genfromtxt('pure_metals.txt')
-split = fpmatrix_split(fpm_y, nsplit)
+split = matrix_split(fpm_y, nsplit)
 indexes = [3, 8]
+
 
 split_energy = []
 split_fpv = []
 # Subset of the fingerprint vector.
 for i in range(nsplit):
+    print(np.shape(split[i]))
     split_energy.append(split[i][:, -2])
     fpm = split[i][:, :-2]
     reduced_fpv = fpm[:, indexes]
     split_fpv.append(reduced_fpv)
-    print(np.shape(reduced_fpv))
-    print(np.shape(split_energy[i]))
+    #print(np.shape(reduced_fpv))
+    #print(np.shape(split_energy[i]))
 
 print('Make predictions based in k-fold samples')
 train_rmse = []
@@ -58,17 +60,17 @@ for i in range(nsplit):
         sigma = np.ones(m)
         sigma *= 0.3
         kdict = {'gk': {'type': 'gaussian',
-                        'width': [sigma],
+                        'width': sigma,
                         'features': [0]},
                  'lk': {'type': 'linear',
-                        'const': [1],
+                        'const': 1,
                         'features': [1], 'operation': 'multiplication'}}
     if True:
         # Get the list of fingerprint vectors and standardize them.
-        nfp = standardize(train=train_fp, test=test_fp)
+        nfp = standardize(train_matrix=train_fp, test_matrix=test_fp)
     else:
         # Get the list of fingerprint vectors and normalize them.
-        nfp = normalize(train=train_fp, test=test_fp)
+        nfp = normalize(train_matrix=train_fp, test_matrix=test_fp)
     # Set up the prediction routine.
     krr = GaussianProcess(kernel_dict=kdict,
                           regularization=regularization)  # regularization)
