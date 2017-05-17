@@ -61,3 +61,22 @@ def remove_outliers(candidates, key, con=1.4826, dev=3., constraint=None,
         write_data_setup(function='remove_outliers', data=dataset)
 
     return dataset
+
+
+def clean_zero(train, test=None):
+    """ Function to remove features that contribute nothing to the model. """
+    clean = defaultdict(list)
+    m = train.T
+    # Find features that provide no input for model.
+    for i in list(range(len(m))):
+        if np.allclose(m[i], m[i][0]):
+            clean['index'].append(i)
+    # Remove bad data from feature matrix.
+    if 'index' in clean:
+        train = np.delete(m, clean['index'], axis=0).T
+        if test is not None:
+            test = np.delete(test.T, clean['index'], axis=0).T
+    clean['train'] = train
+    clean['test'] = test
+
+    return clean

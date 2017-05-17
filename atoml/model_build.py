@@ -10,7 +10,9 @@ from .database_functions import DescriptorDatabase
 from .feature_expansion import (get_order_2, get_order_2ab, get_ablog,
                                 get_div_order_2, get_labels_order_2,
                                 get_labels_order_2ab, get_labels_ablog)
-from .feature_select import iterative_screening, pca, lasso, clean_zero
+from .feature_select import iterative_screening, pca
+from .utilities import clean_zero
+from .regression import lasso
 from .feature_select import robust_rank_correlation_screening as rr_screen
 from .feature_select import sure_independence_screening as sure_screen
 from .feature_preprocess import standardize
