@@ -10,7 +10,38 @@ Input:
 
 @author: mhangaard
 """
+
+import numpy as np
 import ase.db
+from ase.atoms import string2symbols
+
+
+def metal_index(atoms):
+    metal_atoms = [a.index for a in atoms if a.symbol not in
+                   ['H', 'C', 'O', 'N']]
+    return metal_atoms
+
+
+def adds_index(atoms):
+    add_atoms = [a.index for a in atoms if a.symbol in ['H', 'C', 'O', 'N']]
+    return add_atoms
+
+
+def info2primary_index(atoms):
+    liste = []
+    surf_atoms = atoms.info['surf_atoms']
+    add_atoms = atoms.info['add_atoms']
+    for m in surf_atoms:
+        for a in add_atoms:
+            d = atoms.get_distance(m, a, mic=True, vector=False)
+            liste.append([a, m, d])
+    L = np.array(liste)
+    i = np.argmin(L[:, 2])
+    i_add1 = L[i, 0]
+    i_surf1 = L[i, 1]
+    Z_add1 = atoms.numbers[int(i_add1)]
+    Z_surf1 = atoms.numbers[int(i_surf1)]
+    return i_add1, i_surf1, Z_add1, Z_surf1
 
 
 def db2surf(fname, selection=[]):
@@ -21,10 +52,13 @@ def db2surf(fname, selection=[]):
     # Get slabs and adsorbates from .db.
     for d in ssurf:
         cat = str(d.name)+'_'+str(d.phase)
-        site_name = str(d.surf_lattice)
+        site_name = str(d.facet)
         abinitio_energy = float(d.enrgy)
         # composition=str(d.formula)
-        series = str(d.series)
+        if str(d.series) == 'slab':
+            series = str(d.series)
+        else:
+            series = str(d.adsorbate)
         if series+'_'+cat+'_'+site_name not in abinitio_energies:
             abinitio_energies[series+'_'+cat+'_'+site_name] = abinitio_energy
             dbids[series+'_'+cat+'_'+site_name] = int(d.id)
@@ -64,8 +98,8 @@ def mol2ref(abinitio_energies):
 
 
 # Adapted from CATMAP wiki.
-def get_refs(energy_dict, energy_mols):
-    ref_dict = energy_mols
+def get_refs(energy_dict, mol_dict):
+    ref_dict = mol_dict
     for key in energy_dict.keys():
         if 'slab' in key:
             ser, cat, pha, fac = key.split('_')
@@ -94,7 +128,7 @@ def db2dict(fname, selection=[]):
                 dbids[mol+'_gas'] = int(d.id)
         elif 'add' in d:
             cat = str(d.name) + '_' + str(d.phase)
-            site_name = str(d.surf_lattice)
+            site_name = str(d.facet)
             # composition = str(d.formula)
             series = str(d.series)
             if series + '_' + cat + '_' + site_name not in abinitio_energies:
@@ -107,3 +141,86 @@ def db2dict(fname, selection=[]):
                                   site_name] = abinitio_energy
                 dbids[series + '_' + cat + '_' + site_name] = int(d.id)
     return abinitio_energies, dbids
+
+
+def get_formation_energies(energy_dict, ref_dict):  # adapted from CATMAP wiki
+    formation_energies = {}
+    for key in energy_dict.keys():
+        E0 = 0
+        if 'gas' in key:
+            name, site = key.split('_')
+        else:
+            try:
+                name, cat, pha, fac = key.split('_')
+            except ValueError as err:
+                err.message += 'key='+key
+                raise
+            site = cat+'_'+pha+'_'+fac
+            try:
+                E0 -= ref_dict[site]
+            except KeyError:
+                print('no slab reference '+site)
+                continue
+        if name != 'slab':
+            try:
+                composition = string2symbols(name)
+            except ValueError:
+                name = name[:-2]
+                composition = string2symbols(name)
+            E0 += energy_dict[key]
+            for atom in composition:
+                E0 -= ref_dict[atom]
+            formation_energies[key] = round(E0, 4)
+    return formation_energies
+
+
+def db2surf_info(fname, id_dict, formation_energies=None):
+    """ Returns a list of atoms objects including only the most stable
+        adsorbate state for each key in the dict self.dbids.
+
+        Also attaches the required atoms.info to adsorbate states.
+    """
+    c = ase.db.connect(fname)
+    traj = []
+    for key in id_dict:
+        dbid = id_dict[key]
+        d = c.get(dbid)
+        atoms = c.get_atoms(dbid)
+        atoms.info['key_value_pairs'] = d.key_value_pairs
+        atoms.info['dbid'] = dbid
+        atoms.info['add_atoms'] = adds_index(atoms)
+        atoms.info['surf_atoms'] = metal_index(atoms)
+        i_add1, i_surf1, Z_add1, Z_surf1 = info2primary_index(atoms)
+        atoms.info['i_add1'] = i_add1
+        atoms.info['i_surf1'] = i_surf1
+        atoms.info['Z_add1'] = Z_add1
+        atoms.info['Z_surf1'] = Z_surf1
+        if formation_energies is not None:
+            try:
+                atoms.info['Ef'] = formation_energies[key]
+            except KeyError:
+                atoms.info['Ef'] = np.NaN
+                print(key, 'does not have Ef')
+        traj.append(atoms)
+    return traj
+
+
+def db2atoms_info(fname, selection=[]):
+    """ Returns a list of atoms objects. """
+    c = ase.db.connect(fname)
+    s = c.select(selection)
+    traj = []
+    for d in s:
+        dbid = int(d.id)
+        atoms = c.get_atoms(dbid)
+        atoms.info['key_value_pairs'] = d.key_value_pairs
+        atoms.info['dbid'] = int(d.id)
+        atoms.info['add_atoms'] = adds_index(atoms)
+        atoms.info['surf_atoms'] = metal_index(atoms)
+        i_add1, i_surf1, Z_add1, Z_surf1 = info2primary_index(atoms)
+        atoms.info['i_add1'] = i_add1
+        atoms.info['i_surf1'] = i_surf1
+        atoms.info['Z_add1'] = Z_add1
+        atoms.info['Z_surf1'] = Z_surf1
+        traj.append(atoms)
+    return traj
