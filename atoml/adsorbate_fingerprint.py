@@ -258,7 +258,7 @@ class AdsorbateFingerprintGenerator(object):
         """
         if atoms is None:
             return ['Z', 'period_surf1', 'group_id_surf1',
-                    'electron_affinity_surf1',
+                    # 'electron_affinity_surf1',
                     'dipole_polarizability_surf1',
                     'heat_of_formationsurf1',
                     'melting_point_surf1',
@@ -300,7 +300,7 @@ class AdsorbateFingerprintGenerator(object):
             return [Z0,
                     int(mnlv.period),
                     int(mnlv.group_id),
-                    float(mnlv.electron_affinity),
+                    # float(mnlv.electron_affinity),
                     float(mnlv.dipole_polarizability),
                     float(mnlv.heat_of_formation),
                     float(mnlv.melting_point),
