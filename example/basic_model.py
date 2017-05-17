@@ -14,7 +14,7 @@ from atoml.data_setup import get_unique, get_train
 from atoml.fingerprint_setup import normalize, return_fpv
 from atoml.particle_fingerprint import ParticleFingerprintGenerator
 from atoml.predict import GaussianProcess
-from atoml.feature_select import clean_zero
+from atoml.utilities import clean_zero
 
 # Decide whether to remove output and print graph.
 cleanup = True

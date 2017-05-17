@@ -1,4 +1,6 @@
-""" Particle fingerprint functions. """
+""" Particle fingerprint functions generating sets of features with a physical
+    meaning.
+"""
 from __future__ import absolute_import
 from __future__ import division
 

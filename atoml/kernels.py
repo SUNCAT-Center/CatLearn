@@ -1,10 +1,4 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Tue Apr 25 12:52:25 2017
-
-Contains kernel functions and gradients of kernels.
-
-"""
+""" Contains kernel functions and gradients of kernels. """
 import numpy as np
 from scipy.spatial import distance
 
