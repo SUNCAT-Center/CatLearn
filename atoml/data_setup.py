@@ -71,69 +71,6 @@ def get_train(candidates, key, trainsize=None, taken_cand=None,
     return dataset
 
 
-def data_split(candidates, nsplit, key, fix_size=None, replacement=False,
-               writeout=False):
-    """ Routine to split list of candidates into sublists. This can be
-        useful for bootstrapping, CV, etc.
-
-        nsplit: int
-            The number of bins that data should be devided into.
-
-        fix_size: int
-            Define a fixed sample size, e.g. nsplit=5 and fix_size=100, this
-            generate 5 x 100 data split. Default is None meaning all avaliable
-            data is divided nsplit times.
-
-        replacement: boolean
-            Set to true if samples are to be generated with replacement e.g.
-            the same candidates can be in samles multiple times. Default is
-            False.
-    """
-    if fix_size is not None:
-        msg = 'Cannot divide dataset in this way, number of candidates is too '
-        msg += 'small'
-        assert len(candidates) >= nsplit * fix_size, msg
-    dataset = defaultdict(list)
-    index = list(range(len(candidates)))
-    shuffle(index)
-    # Find the size of the divides based on all candidates.
-    s1 = 0
-    if fix_size is None:
-        # Calculate the number of items per split.
-        n = len(candidates) / nsplit
-        # Get any remainders.
-        r = len(candidates) % nsplit
-        # Define the start and finish of first split.
-        s2 = n + min(1, r)
-    else:
-        s2 = fix_size
-    # Divide up the candidates:
-    for _ in range(nsplit):
-        # If replacement, allow repetition of candidates.
-        if replacement:
-            shuffle(index)
-        # Store the generated division of data.
-        dataset['split_cand'].append([candidates[i] for i in
-                                      index[int(s1):int(s2)]])
-        dataset['target'].append([candidates[i].info['key_value_pairs'][key]
-                                 for i in index[int(s1):int(s2)]])
-        dataset['index'].append(index[int(s1):int(s2)])
-        # Set new bounds.
-        s1 = s2
-        if fix_size is None:
-            # Get any new remainder.
-            r = max(0, r-1)
-            # Define next split.
-            s2 = s2 + n + min(1, r)
-        else:
-            s2 = s2 + fix_size
-
-    if writeout:
-        write_data_setup(function='data_split', data=dataset)
-
-    return dataset
-
-
 def remove_outliers(candidates, key, con=1.4826, dev=3., constraint=None,
                     writeout=False):
     """ Preprocessing routine to remove outliers in the data based on the

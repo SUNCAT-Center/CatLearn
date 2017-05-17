@@ -23,28 +23,6 @@ def write_data_setup(function, data):
                 writefile.write(str(i) + ', ' + str(j) + '\n')
             writefile.write('\nEnd of get_train function.\n \n')
 
-        if function is 'data_split':
-            writefile.write('Output from data_setup.data_split.' + dt)
-            s = 'index set_1, target set_1, '
-            for i in list(range(len(data['split_cand']) - 1)):
-                s += 'index set_' + str(i + 2) + ', target set_' + str(i + 2)
-            writefile.write(s + '\n(training size is ' +
-                            str([len(data['split_cand'][i]) for i in
-                                 list(range(len(data['split_cand'])))]) +
-                            ')\n')
-            for r in list(range(len(data['split_cand'][0]))):
-                row = str(data['index'][0][r]) + ', ' + str(
-                    data['target'][0][r])
-                for l in list(range(len(data['split_cand']) - 1)):
-                    while (len(data['index'][l + 1]) <
-                           len(data['split_cand'][0])):
-                        data['index'][l + 1].append(None)
-                        data['target'][l + 1].append(None)
-                    row += ', ' + str(data['index'][l + 1][r]) + ', ' + str(
-                        data['target'][l + 1][r])
-                writefile.write(str(row) + '\n')
-            writefile.write('\nEnd of get_train function.\n \n')
-
         if function is 'remove_outliers':
             writefile.write('Output from data_setup.remove_outliers.' + dt)
             writefile.write('Index of candidates removed:\n' +
