@@ -1,3 +1,4 @@
+""" Functions to create some basic output. """
 import time
 
 localtime = time.asctime(time.localtime(time.time()))

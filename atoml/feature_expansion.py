@@ -1,11 +1,4 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Tue Jan  3 12:01:30 2017
-Modified Mon April 24 2017
-
-@author: mhangaard
-contributor: doylead
-"""
+""" Functions to expand the feature matrix in a combinatorial fashion. """
 from __future__ import absolute_import
 from __future__ import division
 

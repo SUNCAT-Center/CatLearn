@@ -1,3 +1,4 @@
+""" Functions to process the raw feature matrix. """
 import numpy as np
 from scipy import cluster
 from random import shuffle
