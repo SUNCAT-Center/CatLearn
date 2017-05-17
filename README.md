@@ -12,6 +12,36 @@ integration allows for the manipulation of atoms objects through GP
 predictions, as well as dynamic generation of descriptors through use of the
 many ASE functions.
 
+## AtoML functions
+
+*   Manipulate list of atoms objects to form training and test data. Useful
+when getting data from e.g. a database.
+    -   data_setup.py
+*   Convert ASE atoms objects into feature vectors for a number of potentially
+interesting problems.
+    -   fingerprint_setup.py
+    -   adsorbate_fingerprint.py
+    -   particle_fingerprint.py
+    -   standard_fingerprint.py
+    -   neighborhood_matrix.py
+*   Database functions to store the feature matrix from a given dataset.
+    -   database_functions.py
+*   Feature matrix preprocessing, manipulation to expand in combinatorial
+manner and selection elimination and extraction methods.
+    -   feature_preprocess.py
+    -   feature_expansion.py
+    -   feature_select.py
+*   Gaussian processes predictions with hyperparameter optimization.
+    -   predict.py
+    -   kernels.py
+    -   covarience.py
+    -   model_selection.py
+    -   build_model.py
+
+## Installation
+
+Put the `<install_dir>/` into your `$PYTHONPATH` environment variable.
+
 ## Requirements
 
 *   [Python](https://www.python.org) 2.7, 3.4, 3.5
@@ -24,36 +54,6 @@ many ASE functions.
 *   [Pandas](http://pandas.pydata.org)
 *   [Seaborn](http://seaborn.pydata.org)
 *   [scikit-learn](http://scikit-learn.org/stable/)
-
-## Installation
-
-Put the `<install_dir>/` into your `$PYTHONPATH` environment variable.
-
-## AtoML functions
-
-*   Manipulate list of atoms objects to form training and test data. Useful
-when getting data from e.g. a database.
-    -   `data_setup.py`
-*   Convert ASE atoms objects into feature vectors for a number of potentially
-interesting problems.
-    -   `fingerprint_setup.py`
-    -   `adsorbate_fingerprint.py`
-    -   `particle_fingerprint.py`
-    -   `standard_fingerprint.py`
-    -   `neighborhood_matrix.py`
-*   Database functions to store the feature matrix from a given dataset.
-    -   `database_functions.py`
-*   Feature matrix preprocessing, manipulation to expand in combinatorial
-manner and selection elimination and extraction methods.
-    -   `feature_preprocess.py`
-    -   `feature_expansion.py`
-    -   `feature_select.py`
-*   Gaussian processes predictions with hyperparameter optimization.
-    -   `predict.py`
-    -   `kernels.py`
-    -   `covarience.py`
-    -   `model_selection.py`
-    -   `build_model.py`
 
 ## Dependencies
 ##### Atomic Simulation Environment
