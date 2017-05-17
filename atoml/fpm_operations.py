@@ -10,9 +10,7 @@ from __future__ import absolute_import
 from __future__ import division
 
 import numpy as np
-from scipy import cluster
 from itertools import combinations_with_replacement
-from collections import defaultdict
 
 
 def triangular(n):
@@ -411,62 +409,3 @@ def generate_features(p, max_num=2, max_den=1, log=False, sqrt=False,
             features = [eval('1.*' +
                              str.replace(i, '^', '**')) for i in features]
         return features
-
-
-def cluster_features(train_matrix, train_target, k=2, test_matrix=None,
-                     test_target=None):
-    """ Function to perform k-means clustering in the feature space. """
-    m = defaultdict(list)
-
-    centroids, order = cluster.vq.kmeans2(train_matrix, k)
-    # Generate a list of colors for the training data.
-    c = []
-    for i in range(k):
-        c.append([float(i)/float(k), float(i)/float(k)/float(k-i),
-                  float(k-i)/float(k)])  # R,G,B
-    m['colors'] = ([c[i] for i in order])
-
-    # Break up the training data based on clusters.
-    split_f = {}
-    split_t = {}
-    for f, t, l in zip(train_matrix, train_target, order):
-        if l not in split_f:
-            split_f[l] = []
-            split_t[l] = []
-        split_f[l].append(f)
-        split_t[l].append(t)
-    m['train_features'] = split_f
-    m['train_target'] = split_t
-
-    # Cluster test data based on training centroids.
-    for t, tt in zip(test_matrix, test_target):
-        td = float('inf')
-        for i in range(len(centroids)):
-            d = np.linalg.norm(t - centroids[i])
-            if d < td:
-                mini = i
-                td = d
-        m['test_order'].append(mini)
-
-    # Break up the test data based on clusters.
-    if test_matrix is not None:
-        if test_target is not None:
-            test_f = {}
-            test_t = {}
-            for f, t, l in zip(test_matrix, test_target, m['test_order']):
-                if l not in test_f:
-                    test_f[l] = []
-                    test_t[l] = []
-                test_f[l].append(f)
-                test_t[l].append(t)
-            m['test_features'] = test_f
-            m['test_target'] = test_t
-        else:
-            test_f = {}
-            for f, t, l in zip(test_matrix, m['test_order']):
-                if l not in test_f:
-                    test_f[l] = []
-                test_f[l].append(f)
-            m['train_features'] = test_f
-
-    return m
