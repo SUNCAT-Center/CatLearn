@@ -3,7 +3,8 @@ from __future__ import print_function
 
 from ase.ga.data import DataConnection
 from atoml.data_setup import get_unique, get_train
-from atoml.fingerprint_setup import normalize, return_fpv
+from atoml.fingerprint_setup import return_fpv
+from atoml.feature_preprocess import normalize
 from atoml.particle_fingerprint import ParticleFingerprintGenerator
 from atoml.predict import GaussianProcess
 

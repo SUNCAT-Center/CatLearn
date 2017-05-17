@@ -5,7 +5,8 @@ import time
 
 from ase.ga.data import DataConnection
 from atoml.data_setup import get_train, get_unique
-from atoml.fingerprint_setup import return_fpv, normalize, standardize
+from atoml.fingerprint_setup import return_fpv
+from atoml.feature_preprocess import normalize, standardize
 from atoml.particle_fingerprint import ParticleFingerprintGenerator
 from atoml.standard_fingerprint import StandardFingerprintGenerator
 

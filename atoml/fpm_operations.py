@@ -11,56 +11,12 @@ from __future__ import division
 
 import numpy as np
 from scipy import cluster
-from random import shuffle
 from itertools import combinations_with_replacement
 from collections import defaultdict
-
-from .feature_select import sure_independence_screening
 
 
 def triangular(n):
     return sum(range(n+1))
-
-
-def do_sis(X, y, size=None, increment=1):
-    """ function to narrow down a list of descriptors based on sure
-        independence screening.
-
-        Parameters
-        ----------
-        X : array
-            n x m matrix
-        y : list
-            Length n vector
-        l : list
-            Length m list of strings (optional)
-        size : integer
-            (optional)
-        increment : integer
-            (optional)
-
-        Returns
-        -------
-        l : list
-            List of s surviving indices.
-
-        Example
-        -------
-            l = do_sis(X,y)
-            X[:,l]
-            will produce the fingerprint matrix using only surviving
-            descriptors.
-    """
-    shape = np.shape(X)
-    l = np.arange(shape[1])
-    if size is None:
-        size = shape[0]
-    while shape[1] >= size:
-        shape = np.shape(X)
-        select = sure_independence_screening(y, X, size=shape[1]-increment)
-        X = X[:, select['accepted']]
-        l = l[select['accepted']]
-    return l
 
 
 def get_order_2(A):
@@ -241,55 +197,6 @@ def get_labels_ablog(l, a, b):
             new_features.append('log' + str(a) + '_' + l[f1] + 'log' + str(b) +
                                 '_' + l[f2])
     return new_features
-
-
-def fpmatrix_split(X, nsplit, fix_size=None, replacement=False):
-    """ Routine to split feature matrix and return sublists. This can be
-        useful for bootstrapping, LOOCV, etc.
-
-        Parameters
-        ----------
-        nsplit : int
-            The number of bins that data should be devided into.
-        fix_size : int
-            Define a fixed sample size, e.g. nsplit=5 fix_size=100, generates
-            5 x 100 data split. Default is None, all avaliable data is divided
-            nsplit times.
-        replacement : boolean
-            Set true to generate samples with replacement e.g. a candidate can
-            be in multiple samles. Default is False.
-    """
-    if fix_size is not None:
-        msg = 'Cannot divide dataset in this way, number of candidates is '
-        msg += 'too small'
-        assert len(X) >= nsplit * fix_size, msg
-    dataset = []
-    index = list(range(len(X)))
-    shuffle(index)
-    # Find the size of the divides based on all candidates.
-    s1 = 0
-    if fix_size is None:
-        # Calculate the number of items per split.
-        n = len(X) / nsplit
-        # Get any remainders.
-        r = len(X) % nsplit
-        # Define the start and finish of first split.
-        s2 = n + min(1, r)
-    else:
-        s2 = fix_size
-    for _ in range(nsplit):
-        if replacement:
-            shuffle(index)
-        dataset.append(X[index[int(s1):int(s2)]])
-        s1 = s2
-        if fix_size is None:
-            # Get any new remainder.
-            r = max(0, r-1)
-            # Define next split.
-            s2 = s2 + n + min(1, r)
-        else:
-            s2 = s2 + fix_size
-    return dataset
 
 
 def _separate_list(p):

@@ -8,7 +8,7 @@ from scipy.stats import pearsonr, spearmanr, kendalltau
 from collections import defaultdict
 from math import log
 
-from .fingerprint_setup import standardize
+from .feature_preprocess import standardize
 from .output import write_feature_select
 from .predict import get_error
 

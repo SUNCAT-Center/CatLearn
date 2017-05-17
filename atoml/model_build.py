@@ -13,7 +13,7 @@ from .fpm_operations import (get_order_2, get_order_2ab, get_ablog,
 from .feature_select import iterative_screening, pca, lasso, clean_zero
 from .feature_select import robust_rank_correlation_screening as rr_screen
 from .feature_select import sure_independence_screening as sure_screen
-from .fingerprint_setup import standardize
+from .feature_preprocess import standardize
 from .predict import GaussianProcess
 
 from .fit_funcs import find_optimal_regularization, RR
