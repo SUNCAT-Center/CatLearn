@@ -17,7 +17,10 @@ def kdict2list(kdict, N_D=None):
             A kernel dictionary containing the keys 'type' and optional
             keys containing the hyperparameters of the kernel.
         N_D : none or int
-            ????
+            If the kernel needs a list of hyperparameters, an initial guess
+            for all elements in the list can be given as a float. If a float is
+            given, kdict2list will guess the lenght based on the number of
+            features in the training data.
     """
     # Get the kernel type.
     ktype = str(kdict['type'])
@@ -30,7 +33,7 @@ def kdict2list(kdict, N_D=None):
         elif N_D is None:
             N_D = len(kdict['width'])
         if type(theta) is float:
-            theta = np.zeros(N_D,) + theta
+            theta = [theta]*N_D
 
     # Polynomials have pairs of hyperparamters kfree, kdegree
     elif ktype == 'polynomial':
@@ -56,7 +59,7 @@ def kdict2list(kdict, N_D=None):
         elif N_D is None:
             N_D = len(theta)
         if type(theta) is float:
-            theta = np.zeros(N_D,) + theta
+            theta = [theta]*N_D
 
     elif 'theta' in kdict:
         theta = kdict['theta']
@@ -65,7 +68,7 @@ def kdict2list(kdict, N_D=None):
         elif N_D is None:
             N_D = len(theta)
         if type(theta) is float:
-            theta = np.zeros(N_D,) + theta
+            theta = [theta]*N_D
     return theta
 
 
@@ -79,7 +82,10 @@ def kdicts2list(kernel_dict, N_D=None):
         kernel_dict : dict
             A dictionary containing kernel dictionaries.
         N_D : int
-            ????
+            If the kernel needs a list of hyperparameters, an initial guess
+            for all elements in the list can be given as a float. If a float is
+            given, kdict2list will guess the lenght based on the number of
+            features in the training data.
     """
     theta = []
     for kernel_key in kernel_dict:
@@ -98,7 +104,8 @@ def list2kdict(hyperparameters, kernel_dict):
         Parameters
         ----------
         hyperparameters : list
-            ????
+            All hyperparameters listed in the order they are specified
+            in the kernel dictionary.
         kernel_dict : dict
             A dictionary containing kernel dictionaries.
     """
