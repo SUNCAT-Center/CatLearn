@@ -48,9 +48,9 @@ def fpmatrix_split(X, nsplit, fix_size=None, replacement=False):
             # Get any new remainder.
             r = max(0, r-1)
             # Define next split.
-            s2 = s2 + n + min(1, r)
+            s1 += n + min(1, r)
         else:
-            s2 = s2 + fix_size
+            s1 += fix_size
     return dataset
 
 

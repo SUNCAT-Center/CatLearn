@@ -398,7 +398,8 @@ def generate_features(p, max_num=2, max_den=1, log=False, sqrt=False,
                     l2 = key2.split('*')
                     intersect = list(set.intersection(set(l1), set(l2)))
                     if not intersect:
-                        val = _decode_key(p, key1) + '/(' + _decode_key(p, key2) + ')'
+                        val = _decode_key(p, key1) + '/(' + \
+                         _decode_key(p, key2) + ')'
                         features.append(val)
         for key1 in feature_keys:
             features.append(_decode_key(p, key1) + '/(1)')
@@ -407,7 +408,8 @@ def generate_features(p, max_num=2, max_den=1, log=False, sqrt=False,
         if not exclude:
             features.append('1')
         if not s:
-            features = [eval('1.*' + str.replace(i, '^', '**')) for i in features]
+            features = [eval('1.*' +
+                             str.replace(i, '^', '**')) for i in features]
         return features
 
 
