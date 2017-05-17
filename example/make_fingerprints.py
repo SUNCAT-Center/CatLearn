@@ -31,6 +31,12 @@ train_fpv = [
     fpv_train.elemental_dft_properties,
     ]
 
+
+
+
+
+
+
 L_F = get_combined_descriptors(train_fpv)
 print(len(L_F), 'Original descriptors:', L_F)
 
