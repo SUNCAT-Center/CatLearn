@@ -2,7 +2,8 @@
 from __future__ import print_function
 
 from ase.ga.data import DataConnection
-from atoml.data_setup import get_unique, get_train, remove_outliers
+from atoml.data_setup import get_unique, get_train
+from atoml.utilities import remove_outliers
 
 db = DataConnection('gadb.db')
 
