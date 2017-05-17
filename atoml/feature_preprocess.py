@@ -7,7 +7,7 @@ from collections import defaultdict
 from .output import write_fingerprint_setup
 
 
-def fpmatrix_split(X, nsplit, fix_size=None, replacement=False):
+def matrix_split(X, nsplit, fix_size=None, replacement=False):
     """ Routine to split feature matrix and return sublists. This can be
         useful for bootstrapping, LOOCV, etc.
 
@@ -76,9 +76,9 @@ def standardize(train_matrix, test_matrix=None, writeout=False):
     std = defaultdict(list)
     std['train'] = (train_matrix - feature_mean) / feature_std
     if test_matrix is not None:
-        test = (test_matrix - feature_mean) / feature_std
+        test_matrix = (test_matrix - feature_mean) / feature_std
 
-    std['test'] = test
+    std['test'] = test_matrix
     std['mean'] = feature_mean
     std['std'] = feature_std
 
@@ -108,9 +108,9 @@ def normalize(train_matrix, test_matrix=None, writeout=False):
     norm = defaultdict(list)
     norm['train'] = (train_matrix - feature_mean) / feature_dif
     if test_matrix is not None:
-        test = (test_matrix - feature_mean) / feature_dif
+        test_matrix = (test_matrix - feature_mean) / feature_dif
 
-    norm['test'] = test
+    norm['test'] = test_matrix
     norm['mean'] = feature_mean
     norm['dif'] = feature_dif
 
