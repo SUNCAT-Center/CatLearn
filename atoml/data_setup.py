@@ -1,4 +1,4 @@
-""" Data generation functions. """
+""" Data generation functions to interact with ASE atoms objects. """
 from __future__ import absolute_import
 from __future__ import division
 
