@@ -191,21 +191,21 @@ def get_labels_ablog(l, a, b):
 
 
 def _separate_list(p):
-    '''
-    Routine to split any list into all possible combinations of two
-    lists which, combined, contain all elements.
+    """ Routine to split any list into all possible combinations of two lists
+        which, combined, contain all elements.
 
-    Inputs)
-        p: list
-            The list to be split
+        Parameters
+        ----------
+        p : list
+            The list to be split.
 
-    Outputs)
-        combinations: list
-            A list containing num_combinations elements, each of which
-            is a tuple.  Each tuple contains two elements, each of which
-            is a list.  These two tuple elements have no intersection, and
-            their union is p.
-    '''
+        Returns
+        -------
+        combinations : list
+            A list containing num_combinations elements, each of which is a
+            tuple. Each tuple contains two elements, each of which is a list.
+            These two tuple elements have no intersection, their union is p.
+    """
     num_elements = len(p)
     num_combinations = (2**num_elements - 2)/2
     key = '0%db' % num_elements
@@ -224,26 +224,26 @@ def _separate_list(p):
 
 
 def _decode_key(p, key):
-    '''
-    Routine to decode a "key" as implemented in generate_features.
-    These "keys" are used to avoid duplicate terms in the numerator and
-    denominator.
+    """ Routine to decode a "key" as implemented in generate_features. These
+        keys are used to avoid duplicate terms in numerator and denominator.
 
-    Inputs)
-        p: list
-            The list of input features provided by the user
-        key: string
+        Parameters
+        ----------
+        p : list
+            The list of input features provided by the user.
+        key : string
             A string containing a composite term, where each original feature
             in p is represented by its index.
 
             Example:
             The term given by p[0]*p[1]*p[1]*p[4] would have the key "0*1*1*4"
 
-    Outputs)
-        p_prime: string
+        Returns
+        -------
+        p_prime : string
             A string containing the composite term as a function of the
-            original input features
-    '''
+            original input features.
+    """
     p = [str(i) for i in p]
     elements = key.split('*')
     translated_elements = [p[int(i)] for i in elements]
@@ -266,34 +266,36 @@ def _decode_key(p, key):
 
 
 def generate_positive_features(p, N, exclude=False, s=False):
-    '''
-    Routine to generate a list of polynomial combinations of variables
-    in list p up to order N.
+    """ Routine to generate a list of polynomial combinations of variables in
+        list p up to order N.
 
-    Example:
-    p = (a,b,c) ; N = 3
+        Example:
+        p = (a,b,c) ; N = 3
 
-    returns (order not preserved)
-    [a*a*a, a*a*b, a*a*c, a*b*b, a*b*c, a*c*c, b*b*b, b*b*c, b*c*c,
-    c*c*c, a*a, a*b, a*c, b*b, b*c, c*c, a, b, c]
+        returns (order not preserved)
+        [a*a*a, a*a*b, a*a*c, a*b*b, a*b*c, a*c*c, b*b*b, b*b*c, b*c*c,
+        c*c*c, a*a, a*b, a*c, b*b, b*c, c*c, a, b, c]
 
-    Inputs)
-        p: list
-            Features to be combined
-        N: non-negative integer
-            The maximum polynomial coefficient for combinations
-        exclude: bool
-            Set exclude=True to avoid returning 1 to represent the
-            zeroth power
-        s: bool
-            Set s=True to return a list of strings
-            Set s=False to evaluate each element in the list
+        Parameters
+        ----------
+        p : list
+            Features to be combined.
+        N : integer
+            The maximum polynomial coefficient for combinations. Must be
+            non-negative.
+        exclude : bool
+            Set True to avoid returning 1 to represent the zeroth power.
+            Default is False.
+        s : bool
+            Set True to return a list of strings and False to evaluate each
+            element in the list. Default is False.
 
-    Outputs)
-        all_powers: list
-            A list of combinations of the input features to meet the
-            required specifications
-    '''
+        Returns
+        -------
+        all_powers : list
+            A list of combinations of the input features to meet the required
+            specifications.
+    """
     if N == 0 and s:
         return ['1']
     elif N == 0 and not s:
@@ -326,43 +328,42 @@ def generate_positive_features(p, N, exclude=False, s=False):
 
 def generate_features(p, max_num=2, max_den=1, log=False, sqrt=False,
                       exclude=False, s=False):
-    '''
-    A routine to generate composite features from a combination of
-    user-provided input features.
+    """ A routine to generate composite features from a combination of
+        user-provided input features.
 
-    developer note: This is currently scales *quite slowly* with max_den.
-    There's surely a better way to do this, but it's apparently currently
-    functional
+        developer note: This is currently scales *quite slowly* with max_den.
+        There's surely a better way to do this, but it's apparently currently
+        functional.
 
-    Inputs)
-        p: list
-            User-provided list of physical features to be combined
-        max_num: non-negative integer
+        Parameters
+        ----------
+        p : list
+            User-provided list of physical features to be combined.
+        max_num : integer
             The maximum order of the polynomial in the numerator of the
-            composite features
-        max_den: non-negative integer
+            composite features. Must be non-negative.
+        max_den : integer
             The maximum order of the polynomial in the denominator of the
-            composite features
-        log: boolean
-            (not currently supported)
+            composite features. Must be non-negative.
+        log : boolean (not currently supported)
             Set to True to include terms involving the logarithm of the input
-            features
-        sqrt: boolean
-            (not currently supported)
+            features. Default is False.
+        sqrt : boolean (not currently supported)
             Set to True to include terms involving the square root of the input
-            features
-        exclude: bool
-            Set exclude=True to avoid returning 1 to represent the
-            zeroth power
+            features. Default is False.
+        exclude : bool
+            Set exclude=True to avoid returning 1 to represent the zeroth
+            power. Default is False.
         s: bool
-            Set s=True to return a list of strings
-            Set s=False to evaluate each element in the list
+            Set True to return a list of strings and False to evaluate each
+            element in the list. Default is False.
 
-    Outputs)
-        features: list
+        Returns
+        -------
+        features : list
             A list of combinations of the input features to meet the
-            required specifications
-    '''
+            required specifications.
+    """
     if max_den == 0:
         return generate_positive_features(p, max_num, exclude=exclude, s=s)
     if max_num == 0:
