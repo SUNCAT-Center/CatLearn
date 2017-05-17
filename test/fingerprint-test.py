@@ -21,9 +21,9 @@ trainset = get_train(atoms=all_cand, size=10, taken=testset['taken'],
                      key='raw_score')
 
 # Delete the stored values of nnmat to give better indication of timing.
-for i in testset['candidates']:
+for i in testset['atoms']:
     del i.info['data']['nnmat']
-for i in trainset['candidates']:
+for i in trainset['atoms']:
     del i.info['data']['nnmat']
 
 # Initiate the fingerprint generators with relevant input variables.
@@ -35,9 +35,9 @@ sfpv = StandardFingerprintGenerator(atom_types=[78, 79])
 # Tests get the list of fingerprint vectors and normalize them.
 # Start testing the particle fingerprint vector generators.
 start_time = time.time()
-test_fp = return_fpv(testset['candidates'], [pfpv.nearestneighbour_fpv],
+test_fp = return_fpv(testset['atoms'], [pfpv.nearestneighbour_fpv],
                      use_prior=False)
-train_fp = return_fpv(trainset['candidates'], [pfpv.nearestneighbour_fpv],
+train_fp = return_fpv(trainset['atoms'], [pfpv.nearestneighbour_fpv],
                       use_prior=False)
 nfp = normalize(test_matrix=test_fp, train_matrix=train_fp)
 sfp = standardize(test_matrix=test_fp, train_matrix=train_fp)
@@ -47,9 +47,9 @@ assert len(nfp['train'][0]) == 4 and len(nfp['test'][0]) == 4
 assert len(sfp['train'][0]) == 4 and len(sfp['test'][0]) == 4
 
 start_time = time.time()
-test_fp = return_fpv(testset['candidates'], [pfpv.bond_count_fpv],
+test_fp = return_fpv(testset['atoms'], [pfpv.bond_count_fpv],
                      use_prior=False)
-train_fp = return_fpv(trainset['candidates'], [pfpv.bond_count_fpv],
+train_fp = return_fpv(trainset['atoms'], [pfpv.bond_count_fpv],
                       use_prior=False)
 nfp = normalize(test_matrix=test_fp, train_matrix=train_fp)
 sfp = standardize(test_matrix=test_fp, train_matrix=train_fp)
@@ -59,9 +59,9 @@ assert len(nfp['train'][0]) == 52 and len(nfp['test'][0]) == 52
 assert len(sfp['train'][0]) == 52 and len(sfp['test'][0]) == 52
 
 start_time = time.time()
-test_fp = return_fpv(testset['candidates'], [pfpv.distribution_fpv],
+test_fp = return_fpv(testset['atoms'], [pfpv.distribution_fpv],
                      use_prior=False)
-train_fp = return_fpv(trainset['candidates'], [pfpv.distribution_fpv],
+train_fp = return_fpv(trainset['atoms'], [pfpv.distribution_fpv],
                       use_prior=False)
 nfp = normalize(test_matrix=test_fp, train_matrix=train_fp)
 sfp = standardize(test_matrix=test_fp, train_matrix=train_fp)
@@ -71,9 +71,9 @@ assert len(nfp['train'][0]) == 8 and len(nfp['test'][0]) == 8
 assert len(sfp['train'][0]) == 8 and len(sfp['test'][0]) == 8
 
 start_time = time.time()
-test_fp = return_fpv(testset['candidates'], [pfpv.connections_fpv],
+test_fp = return_fpv(testset['atoms'], [pfpv.connections_fpv],
                      use_prior=False)
-train_fp = return_fpv(trainset['candidates'], [pfpv.connections_fpv],
+train_fp = return_fpv(trainset['atoms'], [pfpv.connections_fpv],
                       use_prior=False)
 nfp = normalize(test_matrix=test_fp, train_matrix=train_fp)
 sfp = standardize(test_matrix=test_fp, train_matrix=train_fp)
@@ -83,8 +83,8 @@ assert len(nfp['train'][0]) == 26 and len(nfp['test'][0]) == 26
 assert len(sfp['train'][0]) == 26 and len(sfp['test'][0]) == 26
 
 start_time = time.time()
-test_fp = return_fpv(testset['candidates'], [pfpv.rdf_fpv], use_prior=False)
-train_fp = return_fpv(trainset['candidates'], [pfpv.rdf_fpv], use_prior=False)
+test_fp = return_fpv(testset['atoms'], [pfpv.rdf_fpv], use_prior=False)
+train_fp = return_fpv(trainset['atoms'], [pfpv.rdf_fpv], use_prior=False)
 nfp = normalize(test_matrix=test_fp, train_matrix=train_fp)
 sfp = standardize(test_matrix=test_fp, train_matrix=train_fp)
 print('rdf_fpv: %.3f' % (time.time() - start_time))
@@ -94,8 +94,8 @@ assert len(sfp['train'][0]) == 20 and len(sfp['test'][0]) == 20
 
 # Start testing the standard fingerprint vector generators.
 start_time = time.time()
-test_fp = return_fpv(testset['candidates'], [sfpv.mass_fpv], use_prior=False)
-train_fp = return_fpv(trainset['candidates'], [sfpv.mass_fpv], use_prior=False)
+test_fp = return_fpv(testset['atoms'], [sfpv.mass_fpv], use_prior=False)
+train_fp = return_fpv(trainset['atoms'], [sfpv.mass_fpv], use_prior=False)
 nfp = normalize(test_matrix=test_fp, train_matrix=train_fp)
 sfp = standardize(test_matrix=test_fp, train_matrix=train_fp)
 print('mass_fpv: %.3f' % (time.time() - start_time))
@@ -104,9 +104,9 @@ assert len(nfp['train'][0]) == 1 and len(nfp['test'][0]) == 1
 assert len(sfp['train'][0]) == 1 and len(sfp['test'][0]) == 1
 
 start_time = time.time()
-test_fp = return_fpv(testset['candidates'], [sfpv.composition_fpv],
+test_fp = return_fpv(testset['atoms'], [sfpv.composition_fpv],
                      use_prior=False)
-train_fp = return_fpv(trainset['candidates'], [sfpv.composition_fpv],
+train_fp = return_fpv(trainset['atoms'], [sfpv.composition_fpv],
                       use_prior=False)
 nfp = normalize(test_matrix=test_fp, train_matrix=train_fp)
 sfp = standardize(test_matrix=test_fp, train_matrix=train_fp)
@@ -116,9 +116,9 @@ assert len(nfp['train'][0]) == 2 and len(nfp['test'][0]) == 2
 assert len(sfp['train'][0]) == 2 and len(sfp['test'][0]) == 2
 
 start_time = time.time()
-test_fp = return_fpv(testset['candidates'], [sfpv.eigenspectrum_fpv],
+test_fp = return_fpv(testset['atoms'], [sfpv.eigenspectrum_fpv],
                      use_prior=False)
-train_fp = return_fpv(trainset['candidates'], [sfpv.eigenspectrum_fpv],
+train_fp = return_fpv(trainset['atoms'], [sfpv.eigenspectrum_fpv],
                       use_prior=False)
 nfp = normalize(test_matrix=test_fp, train_matrix=train_fp)
 sfp = standardize(test_matrix=test_fp, train_matrix=train_fp)
@@ -128,9 +128,9 @@ assert len(nfp['train'][0]) == 147 and len(nfp['test'][0]) == 147
 assert len(sfp['train'][0]) == 147 and len(sfp['test'][0]) == 147
 
 start_time = time.time()
-test_fp = return_fpv(testset['candidates'], [sfpv.distance_fpv],
+test_fp = return_fpv(testset['atoms'], [sfpv.distance_fpv],
                      use_prior=False)
-train_fp = return_fpv(trainset['candidates'], [sfpv.distance_fpv],
+train_fp = return_fpv(trainset['atoms'], [sfpv.distance_fpv],
                       use_prior=False)
 nfp = normalize(test_matrix=test_fp, train_matrix=train_fp)
 sfp = standardize(test_matrix=test_fp, train_matrix=train_fp)
@@ -140,12 +140,12 @@ assert len(nfp['train'][0]) == 2 and len(nfp['test'][0]) == 2
 assert len(sfp['train'][0]) == 2 and len(sfp['test'][0]) == 2
 
 start_time = time.time()
-test_fp = return_fpv(testset['candidates'], [pfpv.nearestneighbour_fpv,
-                                             sfpv.mass_fpv,
-                                             sfpv.composition_fpv])
-train_fp = return_fpv(trainset['candidates'], [pfpv.nearestneighbour_fpv,
-                                               sfpv.mass_fpv,
-                                               sfpv.composition_fpv])
+test_fp = return_fpv(testset['atoms'], [pfpv.nearestneighbour_fpv,
+                                        sfpv.mass_fpv,
+                                        sfpv.composition_fpv])
+train_fp = return_fpv(trainset['atoms'], [pfpv.nearestneighbour_fpv,
+                                          sfpv.mass_fpv,
+                                          sfpv.composition_fpv])
 nfp = normalize(test_matrix=test_fp, train_matrix=train_fp)
 sfp = standardize(test_matrix=test_fp, train_matrix=train_fp)
 print('Combined features and SIS: %.3f' % (time.time() - start_time))

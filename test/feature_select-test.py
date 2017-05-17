@@ -23,9 +23,9 @@ trainset = get_train(atoms=all_cand, size=10, taken=testset['taken'],
                      key='raw_score')
 
 # Delete the stored values of nnmat to give better indication of timing.
-for i in testset['candidates']:
+for i in testset['atoms']:
     del i.info['data']['nnmat']
-for i in trainset['candidates']:
+for i in trainset['atoms']:
     del i.info['data']['nnmat']
 
 # Initiate the fingerprint generators with relevant input variables.
@@ -34,16 +34,16 @@ pfpv = ParticleFingerprintGenerator(atom_numbers=[78, 79], max_bonds=13,
                                     nbin=4)
 sfpv = StandardFingerprintGenerator(atom_types=[78, 79])
 
-test_fp = return_fpv(testset['candidates'], [pfpv.nearestneighbour_fpv,
-                                             pfpv.bond_count_fpv,
-                                             sfpv.mass_fpv,
-                                             sfpv.composition_fpv,
-                                             sfpv.distance_fpv])
-train_fp = return_fpv(trainset['candidates'], [pfpv.nearestneighbour_fpv,
-                                               pfpv.bond_count_fpv,
-                                               sfpv.mass_fpv,
-                                               sfpv.composition_fpv,
-                                               sfpv.distance_fpv])
+test_fp = return_fpv(testset['atoms'], [pfpv.nearestneighbour_fpv,
+                                        pfpv.bond_count_fpv,
+                                        sfpv.mass_fpv,
+                                        sfpv.composition_fpv,
+                                        sfpv.distance_fpv])
+train_fp = return_fpv(trainset['atoms'], [pfpv.nearestneighbour_fpv,
+                                          pfpv.bond_count_fpv,
+                                          sfpv.mass_fpv,
+                                          sfpv.composition_fpv,
+                                          sfpv.distance_fpv])
 
 sis = sure_independence_screening(target=trainset['target'],
                                   train_fpv=train_fp, size=4)

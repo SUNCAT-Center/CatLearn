@@ -23,8 +23,8 @@ trainset = get_train(atoms=all_cand, size=50, taken=testset['taken'],
 fpv = ParticleFingerprintGenerator(get_nl=False, max_bonds=13)
 
 # Get the list of fingerprint vectors and normalize them.
-test_fp = return_fpv(testset['candidates'], [fpv.nearestneighbour_fpv])
-train_fp = return_fpv(trainset['candidates'], [fpv.nearestneighbour_fpv])
+test_fp = return_fpv(testset['atoms'], [fpv.nearestneighbour_fpv])
+train_fp = return_fpv(trainset['atoms'], [fpv.nearestneighbour_fpv])
 nfp = normalize(train_matrix=train_fp, test_matrix=test_fp)
 
 # Test prediction routine with linear kernel.
