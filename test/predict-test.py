@@ -25,7 +25,7 @@ fpv = ParticleFingerprintGenerator(get_nl=False, max_bonds=13)
 # Get the list of fingerprint vectors and normalize them.
 test_fp = return_fpv(testset['candidates'], [fpv.nearestneighbour_fpv])
 train_fp = return_fpv(trainset['candidates'], [fpv.nearestneighbour_fpv])
-nfp = normalize(train=train_fp, test=test_fp)
+nfp = normalize(train_matrix=train_fp, test_matrix=test_fp)
 
 # Test prediction routine with linear kernel.
 kdict = {'k1': {'type': 'linear', 'const': 0.}}

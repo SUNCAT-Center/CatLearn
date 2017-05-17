@@ -39,8 +39,8 @@ test_fp = return_fpv(testset['candidates'], [pfpv.nearestneighbour_fpv],
                      use_prior=False)
 train_fp = return_fpv(trainset['candidates'], [pfpv.nearestneighbour_fpv],
                       use_prior=False)
-nfp = normalize(test=test_fp, train=train_fp)
-sfp = standardize(test=test_fp, train=train_fp)
+nfp = normalize(test_matrix=test_fp, train_matrix=train_fp)
+sfp = standardize(test_matrix=test_fp, train_matrix=train_fp)
 print('nearestneighbour_fpv: %.3f' % (time.time() - start_time))
 assert len(test_fp) == 5 and len(train_fp) == 10
 assert len(nfp['train'][0]) == 4 and len(nfp['test'][0]) == 4
@@ -51,8 +51,8 @@ test_fp = return_fpv(testset['candidates'], [pfpv.bond_count_fpv],
                      use_prior=False)
 train_fp = return_fpv(trainset['candidates'], [pfpv.bond_count_fpv],
                       use_prior=False)
-nfp = normalize(test=test_fp, train=train_fp)
-sfp = standardize(test=test_fp, train=train_fp)
+nfp = normalize(test_matrix=test_fp, train_matrix=train_fp)
+sfp = standardize(test_matrix=test_fp, train_matrix=train_fp)
 print('bond_count_fpv: %.3f' % (time.time() - start_time))
 assert len(test_fp) == 5 and len(train_fp) == 10
 assert len(nfp['train'][0]) == 52 and len(nfp['test'][0]) == 52
@@ -63,8 +63,8 @@ test_fp = return_fpv(testset['candidates'], [pfpv.distribution_fpv],
                      use_prior=False)
 train_fp = return_fpv(trainset['candidates'], [pfpv.distribution_fpv],
                       use_prior=False)
-nfp = normalize(test=test_fp, train=train_fp)
-sfp = standardize(test=test_fp, train=train_fp)
+nfp = normalize(test_matrix=test_fp, train_matrix=train_fp)
+sfp = standardize(test_matrix=test_fp, train_matrix=train_fp)
 print('distribution_fpv: %.3f' % (time.time() - start_time))
 assert len(test_fp) == 5 and len(train_fp) == 10
 assert len(nfp['train'][0]) == 8 and len(nfp['test'][0]) == 8
@@ -75,8 +75,8 @@ test_fp = return_fpv(testset['candidates'], [pfpv.connections_fpv],
                      use_prior=False)
 train_fp = return_fpv(trainset['candidates'], [pfpv.connections_fpv],
                       use_prior=False)
-nfp = normalize(test=test_fp, train=train_fp)
-sfp = standardize(test=test_fp, train=train_fp)
+nfp = normalize(test_matrix=test_fp, train_matrix=train_fp)
+sfp = standardize(test_matrix=test_fp, train_matrix=train_fp)
 print('connections_fpv: %.3f' % (time.time() - start_time))
 assert len(test_fp) == 5 and len(train_fp) == 10
 assert len(nfp['train'][0]) == 26 and len(nfp['test'][0]) == 26
@@ -85,8 +85,8 @@ assert len(sfp['train'][0]) == 26 and len(sfp['test'][0]) == 26
 start_time = time.time()
 test_fp = return_fpv(testset['candidates'], [pfpv.rdf_fpv], use_prior=False)
 train_fp = return_fpv(trainset['candidates'], [pfpv.rdf_fpv], use_prior=False)
-nfp = normalize(test=test_fp, train=train_fp)
-sfp = standardize(test=test_fp, train=train_fp)
+nfp = normalize(test_matrix=test_fp, train_matrix=train_fp)
+sfp = standardize(test_matrix=test_fp, train_matrix=train_fp)
 print('rdf_fpv: %.3f' % (time.time() - start_time))
 assert len(test_fp) == 5 and len(train_fp) == 10
 assert len(nfp['train'][0]) == 20 and len(nfp['test'][0]) == 20
@@ -96,8 +96,8 @@ assert len(sfp['train'][0]) == 20 and len(sfp['test'][0]) == 20
 start_time = time.time()
 test_fp = return_fpv(testset['candidates'], [sfpv.mass_fpv], use_prior=False)
 train_fp = return_fpv(trainset['candidates'], [sfpv.mass_fpv], use_prior=False)
-nfp = normalize(test=test_fp, train=train_fp)
-sfp = standardize(test=test_fp, train=train_fp)
+nfp = normalize(test_matrix=test_fp, train_matrix=train_fp)
+sfp = standardize(test_matrix=test_fp, train_matrix=train_fp)
 print('mass_fpv: %.3f' % (time.time() - start_time))
 assert len(test_fp) == 5 and len(train_fp) == 10
 assert len(nfp['train'][0]) == 1 and len(nfp['test'][0]) == 1
@@ -108,8 +108,8 @@ test_fp = return_fpv(testset['candidates'], [sfpv.composition_fpv],
                      use_prior=False)
 train_fp = return_fpv(trainset['candidates'], [sfpv.composition_fpv],
                       use_prior=False)
-nfp = normalize(test=test_fp, train=train_fp)
-sfp = standardize(test=test_fp, train=train_fp)
+nfp = normalize(test_matrix=test_fp, train_matrix=train_fp)
+sfp = standardize(test_matrix=test_fp, train_matrix=train_fp)
 print('composition_fpv: %.3f' % (time.time() - start_time))
 assert len(test_fp) == 5 and len(train_fp) == 10
 assert len(nfp['train'][0]) == 2 and len(nfp['test'][0]) == 2
@@ -120,8 +120,8 @@ test_fp = return_fpv(testset['candidates'], [sfpv.eigenspectrum_fpv],
                      use_prior=False)
 train_fp = return_fpv(trainset['candidates'], [sfpv.eigenspectrum_fpv],
                       use_prior=False)
-nfp = normalize(test=test_fp, train=train_fp)
-sfp = standardize(test=test_fp, train=train_fp)
+nfp = normalize(test_matrix=test_fp, train_matrix=train_fp)
+sfp = standardize(test_matrix=test_fp, train_matrix=train_fp)
 print('eigenspectrum_fpv: %.3f' % (time.time() - start_time))
 assert len(test_fp) == 5 and len(train_fp) == 10
 assert len(nfp['train'][0]) == 147 and len(nfp['test'][0]) == 147
@@ -132,8 +132,8 @@ test_fp = return_fpv(testset['candidates'], [sfpv.distance_fpv],
                      use_prior=False)
 train_fp = return_fpv(trainset['candidates'], [sfpv.distance_fpv],
                       use_prior=False)
-nfp = normalize(test=test_fp, train=train_fp)
-sfp = standardize(test=test_fp, train=train_fp)
+nfp = normalize(test_matrix=test_fp, train_matrix=train_fp)
+sfp = standardize(test_matrix=test_fp, train_matrix=train_fp)
 print('distance_fpv: %.3f' % (time.time() - start_time))
 assert len(test_fp) == 5 and len(train_fp) == 10
 assert len(nfp['train'][0]) == 2 and len(nfp['test'][0]) == 2
@@ -146,8 +146,8 @@ test_fp = return_fpv(testset['candidates'], [pfpv.nearestneighbour_fpv,
 train_fp = return_fpv(trainset['candidates'], [pfpv.nearestneighbour_fpv,
                                                sfpv.mass_fpv,
                                                sfpv.composition_fpv])
-nfp = normalize(test=test_fp, train=train_fp)
-sfp = standardize(test=test_fp, train=train_fp)
+nfp = normalize(test_matrix=test_fp, train_matrix=train_fp)
+sfp = standardize(test_matrix=test_fp, train_matrix=train_fp)
 print('Combined features and SIS: %.3f' % (time.time() - start_time))
 assert len(test_fp) == 5 and len(train_fp) == 10
 assert len(nfp['train'][0]) == 7 and len(nfp['test'][0]) == 7

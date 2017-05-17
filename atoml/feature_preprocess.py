@@ -55,30 +55,31 @@ def fpmatrix_split(X, nsplit, fix_size=None, replacement=False):
     return dataset
 
 
-def standardize(train, test=None, writeout=False):
-    """ Standardize each descriptor in the FPV relative to the mean and
-        standard deviation. If test data is supplied it is standardized
-        relative to the training dataset.
+def standardize(train_matrix, test_matrix=None, writeout=False):
+    """ Standardize each feature relative to the mean and standard deviation.
+        If test data is supplied it is standardized relative to the training
+        dataset.
 
-        train: list
-            List of atoms objects to be used as training dataset.
-
-        test: list
-            List of atoms objects to be used as test dataset.
+        Parameters
+        ----------
+        train_matrix : list
+            Feature matrix for the training dataset.
+        test_matrix : list
+            Feature matrix for the test dataset.
     """
-    mean_fpv = np.mean(train, axis=0)
-    std_fpv = np.std(train, axis=0)
+    feature_mean = np.mean(train_matrix, axis=0)
+    feature_std = np.std(train_matrix, axis=0)
     # Replace zero std with value 1 for devision.
-    np.place(std_fpv, std_fpv == 0., [1.])
+    np.place(feature_std, feature_std == 0., [1.])
 
     std = defaultdict(list)
-    std['train'] = (train - mean_fpv) / std_fpv
-    if test is not None:
-        test = (test - mean_fpv) / std_fpv
+    std['train'] = (train_matrix - feature_mean) / feature_std
+    if test_matrix is not None:
+        test = (test_matrix - feature_mean) / feature_std
 
     std['test'] = test
-    std['std'] = std_fpv
-    std['mean'] = mean_fpv
+    std['mean'] = feature_mean
+    std['std'] = feature_std
 
     if writeout:
         write_fingerprint_setup(function='standardize', data=std)
@@ -86,24 +87,31 @@ def standardize(train, test=None, writeout=False):
     return std
 
 
-def normalize(train, test=None, writeout=False):
-    """ Normalize each descriptor in the FPV to min/max or mean centered. If
+def normalize(train_matrix, test_matrix=None, writeout=False):
+    """ Normalize each feature relative to mean and min/max variance. If
         test data is supplied it is standardized relative to the training
         dataset.
+
+        Parameters
+        ----------
+        train_matrix : list
+            Feature matrix for the training dataset.
+        test_matrix : list
+            Feature matrix for the test dataset.
     """
-    mean_fpv = np.mean(train, axis=0)
-    dif = np.max(train, axis=0) - np.min(train, axis=0)
+    feature_mean = np.mean(train_matrix, axis=0)
+    feature_dif = np.max(train_matrix, axis=0) - np.min(train_matrix, axis=0)
     # Replace zero difference with value 1 for devision.
-    np.place(dif, dif == 0., [1.])
+    np.place(feature_dif, feature_dif == 0., [1.])
 
     norm = defaultdict(list)
-    norm['train'] = (train - mean_fpv) / dif
-    if test is not None:
-        test = (test - mean_fpv) / dif
+    norm['train'] = (train_matrix - feature_mean) / feature_dif
+    if test_matrix is not None:
+        test = (test_matrix - feature_mean) / feature_dif
 
     norm['test'] = test
-    norm['mean'] = mean_fpv
-    norm['dif'] = dif
+    norm['mean'] = feature_mean
+    norm['dif'] = feature_dif
 
     if writeout:
         write_fingerprint_setup(function='normalize', data=norm)
