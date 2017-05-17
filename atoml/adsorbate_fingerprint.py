@@ -13,7 +13,7 @@ import warnings
 import numpy as np
 
 import ase.db
-from ase.atoms import string2symbols
+# from ase.atoms import string2symbols
 from ase.data import ground_state_magnetic_moments, covalent_radii
 from ase.data import chemical_symbols
 
@@ -21,6 +21,7 @@ try:
     from mendeleev import element
 except ImportError:
     print('mendeleev not imported')
+
 
 def n_outer(mnlv):
     econf = mnlv.econf.split(' ')[1:]
@@ -45,6 +46,7 @@ def n_outer(mnlv):
         elif 'f' in shell:
             nf += n_shell
     return n_tot, ns, np, nd, nf
+
 
 def info2primary_index(atoms):
     liste = []

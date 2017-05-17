@@ -11,15 +11,14 @@ from __future__ import print_function
 
 import numpy as np
 
-from atoml.fingerprint_setup import standardize, normalize
 from atoml.predict import GaussianProcess
-from atoml.fpm_operations import fpmatrix_split
+from atoml.feature_preprocess import fpmatrix_split, standardize, normalize
 
 nsplit = 2
 
-fpm_y = np.genfromtxt('fpm.txt')
+fpm_y = np.genfromtxt('pure_metals.txt')
 split = fpmatrix_split(fpm_y, nsplit)
-indexes = [9, 18, 25, 32, 36]
+indexes = [3, 8]
 
 split_energy = []
 split_fpv = []
@@ -53,12 +52,17 @@ for i in range(nsplit):
         teste.append(e)
     for v in split_fpv[i]:
         test_fp.append(v)
-    regularization = .01
+    regularization = .1
     m = np.shape(reduced_fpv)[1]
     if sigma is None:
         sigma = np.ones(m)
         sigma *= 0.3
-        kdict = {'kernel': {'type': 'gaussian', 'width': list(sigma)}}
+        kdict = {'gk': {'type': 'gaussian',
+                        'width': [sigma],
+                        'features': [0]},
+                 'lk': {'type': 'linear',
+                        'const': [1],
+                        'features': [1], 'operation': 'multiplication'}}
     if True:
         # Get the list of fingerprint vectors and standardize them.
         nfp = standardize(train=train_fp, test=test_fp)
@@ -67,7 +71,7 @@ for i in range(nsplit):
         nfp = normalize(train=train_fp, test=test_fp)
     # Set up the prediction routine.
     krr = GaussianProcess(kernel_dict=kdict,
-                            regularization=regularization)  # regularization)
+                          regularization=regularization)  # regularization)
     # Do the training.
     pred = krr.get_predictions(train_fp=nfp['train'],
                                test_fp=nfp['test'],
@@ -75,7 +79,7 @@ for i in range(nsplit):
                                train_target=traine,
                                get_validation_error=True,
                                get_training_error=True,
-                               test_target=teste, 
+                               test_target=teste,
                                optimize_hyperparameters=True)
     # Print the error associated with the predictions.
     train_rmse = pred['training_rmse']['average']
