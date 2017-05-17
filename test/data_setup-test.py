@@ -13,11 +13,11 @@ prune = remove_outliers(all_cand, key='raw_score')
 assert len(all_cand) != len(prune)
 
 # Setup the test and training datasets.
-testset = get_unique(candidates=all_cand, testsize=10, key='raw_score')
-assert len(testset['candidates']) == 10
+testset = get_unique(atoms=all_cand, size=10, key='raw_score')
+assert len(testset['atoms']) == 10
 assert len(testset['taken']) == 10
 
-trainset = get_train(candidates=all_cand, trainsize=50,
-                     taken_cand=testset['taken'], key='raw_score')
-assert len(trainset['candidates']) == 50
+trainset = get_train(atoms=all_cand, size=50, taken=testset['taken'],
+                     key='raw_score')
+assert len(trainset['atoms']) == 50
 assert len(trainset['target']) == 50

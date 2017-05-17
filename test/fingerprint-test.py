@@ -16,9 +16,9 @@ db = DataConnection('gadb.db')
 all_cand = db.get_all_relaxed_candidates(use_extinct=False)
 
 # Setup the test and training datasets.
-testset = get_unique(candidates=all_cand, testsize=5, key='raw_score')
-trainset = get_train(candidates=all_cand, trainsize=10,
-                     taken_cand=testset['taken'], key='raw_score')
+testset = get_unique(atoms=all_cand, size=5, key='raw_score')
+trainset = get_train(atoms=all_cand, size=10, taken=testset['taken'],
+                     key='raw_score')
 
 # Delete the stored values of nnmat to give better indication of timing.
 for i in testset['candidates']:

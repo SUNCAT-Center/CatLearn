@@ -15,9 +15,9 @@ db = DataConnection('gadb.db')
 all_cand = db.get_all_relaxed_candidates(use_extinct=False)
 
 # Setup the test and training datasets.
-testset = get_unique(candidates=all_cand, testsize=10, key='raw_score')
-trainset = get_train(candidates=all_cand, trainsize=50,
-                     taken_cand=testset['taken'], key='raw_score')
+testset = get_unique(atoms=all_cand, size=10, key='raw_score')
+trainset = get_train(atoms=all_cand, size=50, taken_cand=testset['taken'],
+                     key='raw_score')
 
 # Define fingerprint parameters.
 fpv = ParticleFingerprintGenerator(get_nl=False, max_bonds=13)
