@@ -46,7 +46,7 @@ interesting problems.
 *   Feature matrix preprocessing, manipulation to expand in combinatorial
 manner and selection elimination and extraction methods.
     -   `feature_preprocess.py`
-    -   `fpm_operations.py`
+    -   `feature_expansion.py`
     -   `feature_select.py`
 *   Gaussian processes predictions with hyperparameter optimization.
     -   `predict.py`
