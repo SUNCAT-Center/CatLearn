@@ -10,7 +10,7 @@ from math import log
 
 from .feature_preprocess import standardize
 from .regression import lasso
-from .utilities import clean_zero
+from .utilities import clean_variance
 from .output import write_feature_select
 
 
@@ -145,7 +145,7 @@ def iterative_screening(target, train_fpv, test_fpv=None, size=None, step=None,
 
     zd = []
     if cleanup:
-        c = clean_zero(train=train_fpv, test=test_fpv)
+        c = clean_variance(train=train_fpv, test=test_fpv)
         train_fpv = c['train']
         if 'index' in c:
             zd = c['index']
@@ -263,7 +263,7 @@ def pca(components, train_fpv, test_fpv=None, cleanup=False, scale=False,
     data = defaultdict(list)
     data['components'] = components
     if cleanup:
-        c = clean_zero(train=train_fpv, test=test_fpv)
+        c = clean_variance(train=train_fpv, test=test_fpv)
         test_fpv = c['test']
         train_fpv = c['train']
     if scale:

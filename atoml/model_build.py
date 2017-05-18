@@ -11,7 +11,7 @@ from .feature_expansion import (get_order_2, get_order_2ab, get_ablog,
                                 get_div_order_2, get_labels_order_2,
                                 get_labels_order_2ab, get_labels_ablog)
 from .feature_select import iterative_screening, pca
-from .utilities import clean_zero
+from .utilities import clean_variance
 from .regression import lasso
 from .feature_select import robust_rank_correlation_screening as rr_screen
 from .feature_select import sure_independence_screening as sure_screen
@@ -203,7 +203,7 @@ class ModelBuilder(object):
                     test_target=None, limit=None):
         """ Build a model from a pre-generated feature matrix. """
         # Remove features with zero varience.
-        c = clean_zero(train=train_matrix, test=test_matrix)
+        c = clean_variance(train=train_matrix, test=test_matrix)
         test_matrix = c['test']
         train_matrix = c['train']
         if feature_names is not None:
