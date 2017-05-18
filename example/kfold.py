@@ -25,13 +25,11 @@ split_energy = []
 split_fpv = []
 # Subset of the fingerprint vector.
 for i in range(nsplit):
-    print(np.shape(split[i]))
     split_energy.append(split[i][:, -2])
     fpm = split[i][:, :-2]
     reduced_fpv = fpm[:, indexes]
     split_fpv.append(reduced_fpv)
-    #print(np.shape(reduced_fpv))
-    #print(np.shape(split_energy[i]))
+    print(np.shape(reduced_fpv))
 
 print('Make predictions based in k-fold samples')
 train_rmse = []
@@ -59,12 +57,15 @@ for i in range(nsplit):
     if sigma is None:
         sigma = np.ones(m)
         sigma *= 0.3
-        kdict = {'gk': {'type': 'gaussian',
-                        'width': sigma,
-                        'features': [0]},
+        kdict = {
                  'lk': {'type': 'linear',
-                        'const': 1,
-                        'features': [1], 'operation': 'multiplication'}}
+                        'const': 1.,
+                        'features': [0]},
+                 'gk': {'type': 'gaussian',
+                        'width': .1,
+                        'features': [1], 'operation': 'multiplication'
+                        }
+                 }
     if True:
         # Get the list of fingerprint vectors and standardize them.
         nfp = standardize(train_matrix=train_fp, test_matrix=test_fp)
@@ -72,17 +73,17 @@ for i in range(nsplit):
         # Get the list of fingerprint vectors and normalize them.
         nfp = normalize(train_matrix=train_fp, test_matrix=test_fp)
     # Set up the prediction routine.
-    krr = GaussianProcess(kernel_dict=kdict,
-                          regularization=regularization)  # regularization)
+    gp = GaussianProcess(kernel_dict=kdict,
+                         regularization=regularization)  # regularization)
     # Do the training.
-    pred = krr.get_predictions(train_fp=nfp['train'],
-                               test_fp=nfp['test'],
-                               cinv=None,
-                               train_target=traine,
-                               get_validation_error=True,
-                               get_training_error=True,
-                               test_target=teste,
-                               optimize_hyperparameters=True)
+    pred = gp.get_predictions(train_fp=nfp['train'],
+                              test_fp=nfp['test'],
+                              cinv=None,
+                              train_target=traine,
+                              get_validation_error=True,
+                              get_training_error=True,
+                              test_target=teste,
+                              optimize_hyperparameters=True)
     # Print the error associated with the predictions.
     train_rmse = pred['training_rmse']['average']
     val_rmse = pred['validation_rmse']['average']

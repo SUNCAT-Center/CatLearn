@@ -9,6 +9,8 @@ from atoml.fingerprint_setup import return_fpv, get_combined_descriptors
 from atoml.adsorbate_fingerprint import AdsorbateFingerprintGenerator
 from atoml.db2thermo import db2mol, db2surf, mol2ref, get_refs, \
     get_formation_energies, db2surf_info
+from atoml.predict import GaussianProcess
+from atoml.feature_preprocess import standardize
 import matplotlib.pyplot as plt
 
 if 'pure_metals.txt' not in listdir('.'):
@@ -81,9 +83,28 @@ else:
     asedbid = fpm_y[-1]
 
 # Separate database ids and target values from fingerprints
-fpm = fpm_y[:, [3, 8]]
+fpm = np.array(fpm_y[:, [3, 8]], ndmin=2)
+fpm_gp = np.array(fpm_y[:, [3]], ndmin=2)
 print(fpm)
-
+nfp = standardize(train_matrix=fpm_gp)
+kdict = {
+         'lk': {'type': 'linear',
+                'const': 1.}
+         }
+# Run a Gaussian Process with a linear kernel
+gp = GaussianProcess(kernel_dict=kdict,
+                     regularization=0.3)  # regularization)
+# Do the training.
+prediction = gp.get_predictions(train_fp=nfp['train'],
+                                test_fp=nfp['train'],
+                                train_target=y,
+                                test_target=y,
+                                get_validation_error=False,
+                                get_training_error=True,
+                                optimize_hyperparameters=True
+                                )
+print(prediction['training_rmse']['average'])
+print(prediction['optimized_kernels'], prediction['optimized_regularization'])
 
 # Make simple linear fits.
 x6 = []
@@ -102,6 +123,8 @@ for X in range(len(fpm_y)):
     if fpm[X, 1] == 9:
         x9.append(fpm[X, 0])
         y9.append(y[X])
+xall = x6+x7+x9
+yall = y6+y7+y9
 
 plt.scatter(x6, y6, c='r')
 plt.scatter(x7, y7, c='g')
@@ -109,23 +132,25 @@ plt.scatter(x9, y9, c='b')
 
 start = plt.gca().get_xlim()[0]
 end = plt.gca().get_xlim()[1]
+
+a_all, c_all = np.polyfit(xall, yall, deg=1)
 a7, c7 = np.polyfit(x7, y7, deg=1)
 a9, c9 = np.polyfit(x9, y9, deg=1)
 
 lx = np.linspace(start, end, 2)
+lyall = a_all*lx + c_all
 ly7 = a7*lx + c7
 ly9 = a9*lx + c9
 plt.plot(lx, ly7, alpha=0.6, c='g')
 plt.plot(lx, ly9, alpha=0.6, c='b')
 
+f_all = a_all*np.array(xall) + c_all
 f9 = a9*np.array(x9) + c9
 f7 = a7*np.array(x7) + c7
 
 rmse7 = np.sum((f7 - np.array(y7))**2/len(x7))**(1/2.)
 rmse9 = np.sum((f9 - np.array(y9))**2/len(x9))**(1/2.)
-
-rmse = np.sum((np.concatenate([f7, f9]) -
-               np.concatenate([y7, y9]))**2/len(x9))**(1/2.)
+rmse = np.sum((f_all - np.array(yall))**2/len(xall))**(1/2.)
 
 print(rmse)
 
