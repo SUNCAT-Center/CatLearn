@@ -6,9 +6,9 @@ import numpy as np
 from ase.ga.data import DataConnection
 from atoml.data_setup import get_train, get_unique
 from atoml.fingerprint_setup import return_fpv
-from atoml.feature_select import (sure_independence_screening,
-                                  iterative_screening,
-                                  robust_rank_correlation_screening)
+from atoml.feature_elimination import (sure_independence_screening,
+                                       robust_rank_correlation_screening,
+                                       iterative_screening)
 from atoml.feature_extraction import home_pca
 from atoml.regression import lasso
 from atoml.particle_fingerprint import ParticleFingerprintGenerator
