@@ -11,14 +11,14 @@ def remove_outliers(candidates, key, con=1.4826, dev=3., constraint=None,
         median absolute deviation. Only candidates that are unfit, e.g. less
         positive raw_score, are removed as outliers.
 
-        con: float
+        Parameters
+        ----------
+        con : float
             Constant scale factor dependent on the distribution. Default is
             1.4826 expecting the data is normally distributed.
-
-        dev: float
+        dev : float
             The number of deviations from the median to account for.
-
-        constraint: str
+        constraint : str
             Can be set to 'low' to remove candidates with targets that are too
             small/negative or 'high' for outliers that are too large/positive.
             Default is to remove all.
@@ -63,8 +63,17 @@ def remove_outliers(candidates, key, con=1.4826, dev=3., constraint=None,
     return dataset
 
 
-def clean_zero(train, test=None):
-    """ Function to remove features that contribute nothing to the model. """
+def clean_variance(train, test=None):
+    """ Function to remove features that contribute nothing to the model in the
+        form of zero variance features.
+
+        Parameters
+        ----------
+        train : array
+            Feature matrix for the traing data.
+        test : array
+            Feature matrix for the test data.
+    """
     clean = defaultdict(list)
     m = train.T
     # Find features that provide no input for model.

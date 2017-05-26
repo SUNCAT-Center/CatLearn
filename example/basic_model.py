@@ -14,7 +14,7 @@ from atoml.data_setup import get_unique, get_train
 from atoml.fingerprint_setup import normalize, return_fpv
 from atoml.particle_fingerprint import ParticleFingerprintGenerator
 from atoml.predict import GaussianProcess
-from atoml.utilities import clean_zero
+from atoml.utilities import clean_variance
 
 # Decide whether to remove output and print graph.
 cleanup = True
@@ -42,7 +42,7 @@ fpv = ParticleFingerprintGenerator(get_nl=False, max_bonds=13)
 test_fp = return_fpv(testset['candidates'], [fpv.nearestneighbour_fpv])
 train_fp = return_fpv(trainset['candidates'], [fpv.nearestneighbour_fpv])
 
-c = clean_zero(train=train_fp, test=test_fp)
+c = clean_variance(train=train_fp, test=test_fp)
 test_fp = c['test']
 train_fp = c['train']
 

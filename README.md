@@ -30,7 +30,8 @@ interesting problems.
 manner and selection elimination and extraction methods.
     -   feature_preprocess.py
     -   feature_expansion.py
-    -   feature_select.py
+    -   feature_elimination.py
+    -   feature_extraction.py
 *   Gaussian processes predictions with hyperparameter optimization.
     -   predict.py
     -   kernels.py
