@@ -7,8 +7,8 @@ import numpy as np
 from random import shuffle
 
 
-class HeirarchyValidation(object):
-    """ Class to form heirarchy crossvalidation setup.
+class HierarchyValidation(object):
+    """ Class to form hierarchy crossvalidation setup.
 
         Parameters
         ----------
