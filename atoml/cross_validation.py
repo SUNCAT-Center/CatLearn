@@ -10,21 +10,28 @@ from random import shuffle
 class HierarchyValidation(object):
     """Class to form hierarchy crossvalidation setup.
 
-    Parameters
-    ----------
-    file_name : string
-        Name of file to store the row id for the substes of data. Do not
-        append format type.
-    db_name : string
-        Database name.
-    table : string
-        Name of the table in database.
-    file_format : string
-        Format to save the splitting data, either json, yaml or pickle
-        type. Default is binary pickle file.
+    This class is used to cross-validate with respect to data size. The initial
+    dataset is split in two and subsequent datasets split further until a
+    minimum size is reached. Predictions are made on all subsets of data giving
+    averaged error and certainty at each data size.
     """
 
     def __init__(self, file_name, db_name, table, file_format='pickle'):
+        """Hierarchy crossvalidation setup.
+
+        Parameters
+        ----------
+        file_name : string
+            Name of file to store the row id for the substes of data. Do not
+            append format type.
+        db_name : string
+            Database name.
+        table : string
+            Name of the table in database.
+        file_format : string
+            Format to save the splitting data, either json, yaml or pickle
+            type. Default is binary pickle file.
+        """
         self.file_name = file_name
         self.conn = sqlite3.connect(db_name)
         self.cursor = self.conn.cursor()
@@ -142,7 +149,13 @@ class HierarchyValidation(object):
         return data
 
     def _write_split(self, data):
-        """Function to write the split to file."""
+        """Function to write the split to file.
+
+        Parameters
+        ----------
+        data : dict
+            Index dict generated within the split_index function.
+        """
         if self.file_format is not 'pickle':
             with open(self.file_name + '.' +
                       self.file_format, 'w') as textfile:
