@@ -173,7 +173,7 @@ def linear_kernel(theta, m1, m2=None):
         Parameters
         ----------
         theta : list
-            Will always be None. Probably needs removing.
+            A list containing constant offset.
         m1 : list
             A list of the training fingerprint vectors.
         m2 : list or None
