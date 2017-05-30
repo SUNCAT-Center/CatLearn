@@ -1,4 +1,4 @@
-""" Cross validation routines to work with feature database. """
+"""Cross validation routines to work with feature database."""
 import sqlite3
 import json
 import yaml
@@ -8,21 +8,22 @@ from random import shuffle
 
 
 class HierarchyValidation(object):
-    """ Class to form hierarchy crossvalidation setup.
+    """Class to form hierarchy crossvalidation setup.
 
-        Parameters
-        ----------
-        file_name : string
-            Name of file to store the row id for the substes of data. Do not
-            append format type.
-        db_name : string
-            Database name.
-        table : string
-            Name of the table in database.
-        file_format : string
-            Format to save the splitting data, either json, yaml or pickle
-            type. Default is binary pickle file.
+    Parameters
+    ----------
+    file_name : string
+        Name of file to store the row id for the substes of data. Do not
+        append format type.
+    db_name : string
+        Database name.
+    table : string
+        Name of the table in database.
+    file_format : string
+        Format to save the splitting data, either json, yaml or pickle
+        type. Default is binary pickle file.
     """
+
     def __init__(self, file_name, db_name, table, file_format='pickle'):
         self.file_name = file_name
         self.conn = sqlite3.connect(db_name)
@@ -31,16 +32,16 @@ class HierarchyValidation(object):
         self.file_format = file_format
 
     def split_index(self, min_split, max_split=None, all_index=None):
-        """ Function to split up the db index to form subsets of data.
+        """Function to split up the db index to form subsets of data.
 
-            Parameters
-            ----------
-            min_split : int
-                Minimum size of a data subset.
-            max_split : int
-                Maximum size of a data subset.
-            all_index : list
-                List of indices in the feature database.
+        Parameters
+        ----------
+        min_split : int
+            Minimum size of a data subset.
+        max_split : int
+            Maximum size of a data subset.
+        all_index : list
+            List of indices in the feature database.
         """
         data = {}
         if all_index is None:
@@ -78,7 +79,7 @@ class HierarchyValidation(object):
                     return data
 
     def load_split(self):
-        """ Function to load the split from file. """
+        """Function to load the split from file."""
         if self.file_format is not 'pickle':
             with open(self.file_name + '.' +
                       self.file_format, 'r') as textfile:
@@ -94,14 +95,14 @@ class HierarchyValidation(object):
         return data
 
     def split_predict(self, index_split, predict):
-        """ Function to make predictions looping over all subsets of data.
+        """Function to make predictions looping over all subsets of data.
 
-            Parameters
-            ----------
-            index_split : dict
-                All data for the split.
-            predict : function
-                The prediction function. Must return dict with 'result' in it.
+        Parameters
+        ----------
+        index_split : dict
+            All data for the split.
+        predict : function
+            The prediction function. Must return dict with 'result' in it.
         """
         result = []
         for i in index_split:
@@ -132,7 +133,7 @@ class HierarchyValidation(object):
         return result
 
     def _get_index(self):
-        """ Function to get the list of possible indices. """
+        """Function to get the list of possible indices."""
         data = []
         for row in self.cursor.execute("SELECT uuid FROM %(table)s"
                                        % {'table': self.table}):
@@ -141,7 +142,7 @@ class HierarchyValidation(object):
         return data
 
     def _write_split(self, data):
-        """ Function to write the split to file. """
+        """Function to write the split to file."""
         if self.file_format is not 'pickle':
             with open(self.file_name + '.' +
                       self.file_format, 'w') as textfile:
@@ -155,13 +156,12 @@ class HierarchyValidation(object):
                 pickle.dump(data, textfile, protocol=pickle.HIGHEST_PROTOCOL)
 
     def _compile_split(self, id_list):
-        """ Functions to get large amounts of data from database. Needs to be
-            split in subsets of less than 1000 for sqlite.
+        """Function to get actual data from database.
 
-            Parameters
-            ----------
-            id_list : list
-                The uuids to pull data.
+        Parameters
+        ----------
+        id_list : list
+            The uuids to pull data.
         """
         if len(id_list) > 999:
             store_data = self._get_data(id_list[:999])
@@ -180,12 +180,12 @@ class HierarchyValidation(object):
         return store_data
 
     def _get_data(self, id_list):
-        """ Function to extract raw data from the database.
+        """Function to extract raw data from the database.
 
-            Parameters
-            ----------
-            id_list : list
-                The uuids to pull data.
+        Parameters
+        ----------
+        id_list : list
+            The uuids to pull data.
         """
         qu = ','.join('?' for i in id_list)
         query = 'SELECT * FROM %(table)s WHERE uuid IN (%(uid)s)' \
