@@ -10,7 +10,7 @@ import numpy as np
 
 from atoml.fingerprint_setup import return_fpv, get_combined_descriptors
 from atoml.adsorbate_fingerprint import AdsorbateFingerprintGenerator
-from atoml.fpm_operations import get_order_2, get_labels_order_2, do_sis, fpmatrix_split
+from atoml.feature_expansion import get_order_2, get_labels_order_2, do_sis, fpmatrix_split
 
 fpv_train = AdsorbateFingerprintGenerator(moldb='mol.db',
                                           bulkdb='ref_bulks_k24.db',

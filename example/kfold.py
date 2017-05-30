@@ -14,7 +14,7 @@ import numpy as np
 from atoml.predict import GaussianProcess
 from atoml.feature_preprocess import matrix_split, standardize, normalize
 
-nsplit = 2
+nsplit = 5
 
 fpm_y = np.genfromtxt('pure_metals.txt')
 split = matrix_split(fpm_y, nsplit)
@@ -62,8 +62,9 @@ for i in range(nsplit):
                         'const': 1.,
                         'features': [0]},
                  'gk': {'type': 'gaussian',
-                        'width': .1,
-                        'features': [1], 'operation': 'multiplication'
+                        'width': .00001,
+                        'features': [1],
+                        # 'operation': 'multiplication'
                         }
                  }
     if True:
@@ -89,3 +90,4 @@ for i in range(nsplit):
     val_rmse = pred['validation_rmse']['average']
     print('Training error:', train_rmse)
     print('Validation error:', val_rmse)
+    print(pred['optimized_kernels'], pred['optimized_regularization'])

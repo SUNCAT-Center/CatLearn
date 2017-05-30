@@ -21,8 +21,8 @@ if 'pure_metals.txt' not in listdir('.'):
                                                      'pw=500',
                                                      'vacuum=8',
                                                      'psp=gbrv1.5pbe'])
-    abinitio_energies01, cand_dbids = db2surf(fname, ['series!=slab'])
-    abinitio_energies02, cand_dbids2 = db2surf(fname, ['series=slab'])
+    abinitio_energies01, cand_dbids = db2surf(fname, ['series!=slab', 'phase=fcc'])
+    abinitio_energies02, cand_dbids2 = db2surf(fname, ['series=slab', 'phase=fcc'])
     abinitio_energies.update(abinitio_energies01)
     abinitio_energies.update(abinitio_energies02)
 
@@ -76,86 +76,139 @@ if 'pure_metals.txt' not in listdir('.'):
           ' Second last column is the target value.')
     np.savetxt('pure_metals.txt', fpm_y)
     y = fpm_y[:, -2]
-    asedbid = fpm_y[-1]
+    asedbid = fpm_y[:, -1]
 else:
     fpm_y = np.genfromtxt('pure_metals.txt')
     y = fpm_y[:, -2]
-    asedbid = fpm_y[-1]
+    asedbid = fpm_y[:, -1]
 
 # Separate database ids and target values from fingerprints
 fpm = np.array(fpm_y[:, [3, 8]], ndmin=2)
-fpm_gp = np.array(fpm_y[:, [3]], ndmin=2)
-print(fpm)
-nfp = standardize(train_matrix=fpm_gp)
+# fpm_1d = np.array(fpm_y[:, [3]], ndmin=2)
+
+gp_name = 'gp'
+
+d0min = min(fpm[:, 0])
+d0max = max(fpm[:, 0])
+d1min = min(fpm[:, 1])
+d1max = max(fpm[:, 1])
+fpm_test = np.hstack([np.vstack(3 * list(np.linspace(d0min, d0max, 9))),
+                      np.vstack(9*[7]+9*[8]+9*[9])])
+
+nfp = standardize(train_matrix=fpm, test_matrix=fpm_test)
 kdict = {
-         'lk': {'type': 'linear',
-                'const': 1.}
+         #'lk1': {'type': 'linear',
+         #        'const': .1,
+         #        'features': [0],
+         #        },
+         #'gk': {'type': 'gaussian',
+         #       'width': 1.0,
+         #       'features': [1],
+         #        'operation': 'multiplication'
+                }
          }
 # Run a Gaussian Process with a linear kernel
+
+gp_name += '_SE'
+#gp_name += '_LK'
+
 gp = GaussianProcess(kernel_dict=kdict,
-                     regularization=0.3)  # regularization)
+                     regularization=1.)
 # Do the training.
 prediction = gp.get_predictions(train_fp=nfp['train'],
-                                test_fp=nfp['train'],
+                                test_fp=nfp['test'],
                                 train_target=y,
-                                test_target=y,
                                 get_validation_error=False,
                                 get_training_error=True,
                                 optimize_hyperparameters=True
                                 )
-print(prediction['training_rmse']['average'])
 print(prediction['optimized_kernels'], prediction['optimized_regularization'])
+
+plt.imshow(prediction['prediction'].reshape(3, 9),
+           cmap='hot', interpolation='nearest', extent=[d0min,d0max,d1min,d1max])
+plt.gcf().text(0.2, 0.8, 'RMSE = '+str(round(prediction['training_rmse']['average'], 3)))
+plt.colorbar()
+plt.savefig(gp_name+'.pdf', format='pdf')
+plt.show()
+plt.clf()
 
 # Make simple linear fits.
 x6 = []
 x7 = []
+x8 = []
 x9 = []
 y6 = []
 y7 = []
+y8 = []
 y9 = []
+l6 = []
+l7 = []
+l8 = []
+l9 = []
 for X in range(len(fpm_y)):
     if fpm[X, 1] == 6:
         x6.append(fpm[X, 0])
         y6.append(y[X])
+        l6.append(int(asedbid[X]))
     if fpm[X, 1] == 7:
         x7.append(fpm[X, 0])
         y7.append(y[X])
+        l7.append(int(asedbid[X]))
+    if fpm[X, 1] == 8:
+        x8.append(fpm[X, 0])
+        y8.append(y[X])
+        l8.append(int(asedbid[X]))
     if fpm[X, 1] == 9:
         x9.append(fpm[X, 0])
         y9.append(y[X])
-xall = x6+x7+x9
-yall = y6+y7+y9
+        l9.append(int(asedbid[X]))
+xall = x6+x7+x8+x9
+yall = y6+y7+y8+y9
 
-plt.scatter(x6, y6, c='r')
-plt.scatter(x7, y7, c='g')
+plt.scatter(x7, y7, c='r')
+for i7 in range(len(l7)):
+    plt.annotate(l7[i7], xy=(x7[i7], y7[i7]))
+plt.scatter(x8, y8, c='g')
+for i8 in range(len(l8)):
+    plt.annotate(l8[i8], xy=(x8[i8], y8[i8]))
 plt.scatter(x9, y9, c='b')
+for i9 in range(len(l9)):
+    plt.annotate(l9[i9], xy=(x9[i9], y9[i9]))
 
 start = plt.gca().get_xlim()[0]
 end = plt.gca().get_xlim()[1]
 
 a_all, c_all = np.polyfit(xall, yall, deg=1)
 a7, c7 = np.polyfit(x7, y7, deg=1)
+a8, c8 = np.polyfit(x8, y8, deg=1)
 a9, c9 = np.polyfit(x9, y9, deg=1)
 
 lx = np.linspace(start, end, 2)
 lyall = a_all*lx + c_all
 ly7 = a7*lx + c7
+ly8 = a8*lx + c8
 ly9 = a9*lx + c9
-plt.plot(lx, ly7, alpha=0.6, c='g')
-plt.plot(lx, ly9, alpha=0.6, c='b')
+plt.plot(lx, ly7, alpha=0.6, c='r', label='7')
+plt.plot(lx, ly8, alpha=0.6, c='g', label='8')
+plt.plot(lx, ly9, alpha=0.6, c='b', label='9')
 
 f_all = a_all*np.array(xall) + c_all
-f9 = a9*np.array(x9) + c9
 f7 = a7*np.array(x7) + c7
+f8 = a8*np.array(x8) + c8
+f9 = a9*np.array(x9) + c9
 
 rmse7 = np.sum((f7 - np.array(y7))**2/len(x7))**(1/2.)
+rmse8 = np.sum((f8 - np.array(y8))**2/len(x8))**(1/2.)
 rmse9 = np.sum((f9 - np.array(y9))**2/len(x9))**(1/2.)
 rmse = np.sum((f_all - np.array(yall))**2/len(xall))**(1/2.)
 
 print(rmse)
 
 plt.text(lx[-1], ly7[-1], 'RMSE = '+str(round(rmse7, 3)))
+plt.text(lx[-1], ly8[-1], 'RMSE = '+str(round(rmse8, 3)))
 plt.text(lx[-1], ly9[-1], 'RMSE = '+str(round(rmse9, 3)))
+plt.legend(loc=2, borderaxespad=0.)
+plt.savefig('linear_fit.pdf', format='pdf')
 plt.show()
 
 # Use a Gaussian Process for the same features.
