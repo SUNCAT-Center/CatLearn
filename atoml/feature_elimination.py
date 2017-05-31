@@ -41,12 +41,21 @@ class FeatureScreening(object):
             The target values for the training data.
         feature_matrix : array
             The feature matrix for the training data.
+
+        Returns
+        -------
+        index : list
+            The ordered list of feature indices.
+        correlation : list
+            The ordered list of correlations between features and targets.
         """
         select = defaultdict(list)
 
+        # Get correlation between each feature and the targets.
         corr, order = self._get_correlation(target=target,
                                             feature_matrix=feature_matrix)
 
+        # Order everything highest correlated to least.
         sort_list = [list(i) for i in zip(*sorted(zip(np.abs(corr), order),
                                                   key=lambda x: x[0],
                                                   reverse=True))]
@@ -70,6 +79,12 @@ class FeatureScreening(object):
         step : int
             Step size by which to reduce the number of features. Default is
             n / log(n).
+
+        Returns
+        -------
+        index : list
+            The ordered list of feature indices, top index[:size] will be
+            indices for best features.
         """
         n, f = np.shape(feature_matrix)
         select = defaultdict(list)
@@ -149,6 +164,13 @@ class FeatureScreening(object):
             Number of features to eliminate at each step.
         order : list
             Precomputed ordered indices for features.
+
+        Returns
+        -------
+        reduced_train : array
+            Reduced training feature matrix, now n x size shape.
+        reduced_test : array
+            Reduced test feature matrix, now m x size shape.
         """
         if order is None:
             if self.iterative:
