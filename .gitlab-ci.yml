@@ -13,7 +13,7 @@ python_2_7_tests:
     - python data_setup-test.py
     - python predict-test.py
     - python fingerprint-test.py
-    - python feature_select-test.py
+    # - python feature_select-test.py
     - python database-test.py
 
 python_3_tests:
@@ -31,5 +31,5 @@ python_3_tests:
     - python3 data_setup-test.py
     - python3 predict-test.py
     - python3 fingerprint-test.py
-    - python3 feature_select-test.py
+    # - python3 feature_select-test.py
     - python3 database-test.py
