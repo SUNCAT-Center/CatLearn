@@ -99,7 +99,7 @@ class FeatureScreening(object):
         rscreen = self._reduce_matrix(feature_matrix=feature_matrix,
                                       index_order=iscreen['index'], size=size)
 
-        # Do LASSO down to step size.
+        # Get ordering of remaining features from linear regression.
         regr = self._regression_ordering(target=target,
                                          feature_matrix=rscreen['matrix'],
                                          size=step, steps=500)
@@ -115,7 +115,7 @@ class FeatureScreening(object):
         feature_reduced = np.delete(keep_train, rejected, axis=1)
 
         # Iteratively reduce the remaining number of features by the step size.
-        while len(feature_reduced[0]) < size:
+        while np.shape(feature_reduced)[1] < size:
             # Calculate step/size remainder if necessary.
             if size - np.shape(feature_reduced)[1] < step:
                 step = size - np.shape(feature_reduced)[1]
@@ -128,7 +128,7 @@ class FeatureScreening(object):
                                           index_order=iscreen['index'],
                                           size=size)
 
-            # Do LASSO down to step size on remaining features.
+            # Get ordering of remaining features from linear regression.
             regr = self._regression_ordering(target=target,
                                              feature_matrix=rscreen['matrix'],
                                              size=step, steps=500)
