@@ -25,31 +25,31 @@ trainset = get_train(atoms=all_cand, size=50, taken=testset['taken'],
 
 # Get the list of fingerprint vectors and normalize them.
 print('Getting the fingerprint vectors')
-fpv = ParticleFingerprintGenerator(get_nl=False, max_bonds=13)
+par = ParticleFingerprintGenerator(get_nl=False, max_bonds=13)
 std = StandardFingerprintGenerator()
-test_fp = return_fpv(testset['atoms'], [fpv.nearestneighbour_fpv,
-                                        fpv.bond_count_fpv,
-                                        fpv.distribution_fpv,
-                                        fpv.rdf_fpv,
-                                        std.mass_fpv,
-                                        std.eigenspectrum_fpv,
-                                        std.distance_fpv])
-train_fp = return_fpv(trainset['atoms'], [fpv.nearestneighbour_fpv,
-                                          fpv.bond_count_fpv,
-                                          fpv.distribution_fpv,
-                                          fpv.rdf_fpv,
-                                          std.mass_fpv,
-                                          std.eigenspectrum_fpv,
-                                          std.distance_fpv])
+test_features = return_fpv(testset['atoms'], [par.nearestneighbour_fpv,
+                                              par.bond_count_fpv,
+                                              par.distribution_fpv,
+                                              par.rdf_fpv,
+                                              std.mass_fpv,
+                                              std.eigenspectrum_fpv,
+                                              std.distance_fpv])
+train_features = return_fpv(trainset['atoms'], [par.nearestneighbour_fpv,
+                                                par.bond_count_fpv,
+                                                par.distribution_fpv,
+                                                par.rdf_fpv,
+                                                std.mass_fpv,
+                                                std.eigenspectrum_fpv,
+                                                std.distance_fpv])
 
 
-def do_pred(ptrain_fp, ptest_fp):
+def do_pred(train, test):
     """Function to make prediction."""
-    nfp = normalize(train_matrix=ptrain_fp, test_matrix=ptest_fp)
+    norm = normalize(train_matrix=train, test_matrix=test)
 
     # Do the predictions.
-    pred = gp.get_predictions(train_fp=nfp['train'],
-                              test_fp=nfp['test'],
+    pred = gp.get_predictions(train_fp=norm['train'],
+                              test_fp=norm['test'],
                               train_target=trainset['target'],
                               test_target=testset['target'],
                               get_validation_error=True,
@@ -66,7 +66,7 @@ print('Base Predictions')
 # Set up the prediction routine.
 kdict = {'k1': {'type': 'gaussian', 'width': 0.5}}
 gp = GaussianProcess(kernel_dict=kdict, regularization=0.001)
-do_pred(ptrain_fp=train_fp, ptest_fp=test_fp)
+do_pred(train=train_features, test=test_features)
 
 print('Getting descriptor correlation')
 # Set up the prediction routine.
@@ -75,60 +75,60 @@ gp = GaussianProcess(kernel_dict=kdict, regularization=0.001)
 
 screen = FeatureScreening(correlation='pearson', iterative=False)
 features = screen.eliminat_features(target=trainset['target'],
-                                    train_features=train_fp,
-                                    test_features=test_fp, size=50,
+                                    train_features=train_features,
+                                    test_features=test_features, size=50,
                                     step=None, order=None)
 
-sis_test_fp = features[1]
-sis_train_fp = features[0]
-do_pred(ptrain_fp=sis_train_fp, ptest_fp=sis_test_fp)
+reduced_train = features[0]
+reduced_test = features[1]
+do_pred(train=reduced_train, test=reduced_test)
 
 screen = FeatureScreening(correlation='pearson', iterative=True)
 features = screen.eliminat_features(target=trainset['target'],
-                                    train_features=train_fp,
-                                    test_features=test_fp, size=50,
+                                    train_features=train_features,
+                                    test_features=test_features, size=50,
                                     step=None, order=None)
 
-sis_test_fp = features[1]
-sis_train_fp = features[0]
-do_pred(ptrain_fp=sis_train_fp, ptest_fp=sis_test_fp)
+reduced_train = features[0]
+reduced_test = features[1]
+do_pred(train=reduced_train, test=reduced_test)
 
 screen = FeatureScreening(correlation='spearman', iterative=False)
 features = screen.eliminat_features(target=trainset['target'],
-                                    train_features=train_fp,
-                                    test_features=test_fp, size=50,
+                                    train_features=train_features,
+                                    test_features=test_features, size=50,
                                     step=None, order=None)
 
-sis_test_fp = features[1]
-sis_train_fp = features[0]
-do_pred(ptrain_fp=sis_train_fp, ptest_fp=sis_test_fp)
+reduced_train = features[0]
+reduced_test = features[1]
+do_pred(train=reduced_train, test=reduced_test)
 
 screen = FeatureScreening(correlation='spearman', iterative=True)
 features = screen.eliminat_features(target=trainset['target'],
-                                    train_features=train_fp,
-                                    test_features=test_fp, size=50,
+                                    train_features=train_features,
+                                    test_features=test_features, size=50,
                                     step=None, order=None)
 
-sis_test_fp = features[1]
-sis_train_fp = features[0]
-do_pred(ptrain_fp=sis_train_fp, ptest_fp=sis_test_fp)
+reduced_train = features[0]
+reduced_test = features[1]
+do_pred(train=reduced_train, test=reduced_test)
 
 creen = FeatureScreening(correlation='kendall', iterative=False)
 features = screen.eliminat_features(target=trainset['target'],
-                                    train_features=train_fp,
-                                    test_features=test_fp, size=50,
+                                    train_features=train_features,
+                                    test_features=test_features, size=50,
                                     step=None, order=None)
 
-sis_test_fp = features[1]
-sis_train_fp = features[0]
-do_pred(ptrain_fp=sis_train_fp, ptest_fp=sis_test_fp)
+reduced_train = features[0]
+reduced_test = features[1]
+do_pred(train=reduced_train, test=reduced_test)
 
 screen = FeatureScreening(correlation='kendall', iterative=True)
 features = screen.eliminat_features(target=trainset['target'],
-                                    train_features=train_fp,
-                                    test_features=test_fp, size=50,
+                                    train_features=train_features,
+                                    test_features=test_features, size=50,
                                     step=None, order=None)
 
-sis_test_fp = features[1]
-sis_train_fp = features[0]
-do_pred(ptrain_fp=sis_train_fp, ptest_fp=sis_test_fp)
+reduced_train = features[0]
+reduced_test = features[1]
+do_pred(train=reduced_train, test=reduced_test)
