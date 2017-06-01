@@ -1,7 +1,7 @@
 """A simple example for the hierarchy CV function."""
 import numpy as np
 from atoml.cross_validation import HierarchyValidation
-from atoml.fit_funcs import find_optimal_regularization, RR
+from atoml.ridge_regression import find_optimal_regularization, RR
 
 # Define the hierarchey cv class method.
 hv = HierarchyValidation(db_name='train_db.sqlite', table='FingerVector',
