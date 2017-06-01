@@ -8,7 +8,7 @@ from scipy.stats import pearsonr, spearmanr, kendalltau
 from collections import defaultdict
 from math import log
 
-from .regression import lasso
+from .regression import RegressionFit
 
 
 class FeatureScreening(object):
@@ -100,11 +100,12 @@ class FeatureScreening(object):
                                       index_order=iscreen['index'], size=size)
 
         # Do LASSO down to step size.
-        lr = lasso(size=step, target=target, train_matrix=rscreen['matrix'],
-                   min_alpha=1.e-10, max_alpha=5.e-1, max_iter=1e5, steps=500)
+        regr = self._regression_ordering(target=target,
+                                         feature_matrix=rscreen['matrix'],
+                                         size=step, steps=500)
 
         # Sort all new ordering of accepted and rejected features.
-        sis_accept = [rscreen['accepted'][i] for i in lr['order'][:step]]
+        sis_accept = [rscreen['accepted'][i] for i in regr]
         for i in sorted(sis_accept, reverse=True):
             accepted.append(rejected[i])
             del rejected[i]
@@ -128,12 +129,12 @@ class FeatureScreening(object):
                                           size=size)
 
             # Do LASSO down to step size on remaining features.
-            lr = lasso(size=step, target=target,
-                       train_matrix=rscreen['matrix'], min_alpha=1.e-10,
-                       max_alpha=5.e-1, max_iter=1e5, steps=500)
+            regr = self._regression_ordering(target=target,
+                                             feature_matrix=rscreen['matrix'],
+                                             size=step, steps=500)
 
             # Sort all new ordering of accepted and rejected features.
-            sis_accept = [rscreen['accepted'][i] for i in lr['order'][:step]]
+            sis_accept = [rscreen['accepted'][i] for i in regr]
             for i in sorted(sis_accept, reverse=True):
                 accepted.append(rejected[i])
                 del rejected[i]
@@ -267,6 +268,18 @@ class FeatureScreening(object):
         data['matrix'] = np.delete(feature_matrix, data['rejected'], axis=1)
 
         return data
+
+    def _regression_ordering(self, target, feature_matrix, size, steps):
+        """Function to get ordering of features absed on linear regression."""
+        # Set up the regression fitting function.
+        rf = RegressionFit(train_matrix=feature_matrix, train_target=target,
+                           method='ridge')
+
+        order = rf.feature_select(size=size, iterations=1e5, steps=steps,
+                                  line_search=True, spacing='linear',
+                                  min_alpha=1.e-8, max_alpha=1.e-1, eps=1e-3)
+
+        return order['accepted']
 
     def _get_response(self, feature_matrix):
         """Function to calculate the uncorrelated response of features.
