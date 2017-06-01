@@ -14,7 +14,8 @@ from .regression import RegressionFit
 class FeatureScreening(object):
     """Class for feature elimination based on correlation screening."""
 
-    def __init__(self, correlation='pearson', iterative=True):
+    def __init__(self, correlation='pearson', iterative=True,
+                 regression='ridge'):
         """Screening setup.
 
         Parameters
@@ -25,9 +26,13 @@ class FeatureScreening(object):
         iterative : boolean
             Define whether to perform the iterative version of the screening
             routine. Default is True.
+        regression : str
+            Define regression method for ordering features. Can be ridge,
+            elastic or lasso. Default is ridge regression.
         """
         self.correlation = correlation
         self.iterative = iterative
+        self.regression = regression
 
     def screen(self, target, feature_matrix):
         """Feature selection based on SIS.
@@ -273,7 +278,7 @@ class FeatureScreening(object):
         """Function to get ordering of features absed on linear regression."""
         # Set up the regression fitting function.
         rf = RegressionFit(train_matrix=feature_matrix, train_target=target,
-                           method='ridge')
+                           method=self.regression)
 
         order = rf.feature_select(size=size, iterations=1e5, steps=steps,
                                   line_search=True, spacing='linear',

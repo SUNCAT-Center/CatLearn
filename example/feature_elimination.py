@@ -77,16 +77,17 @@ for c in corr:
     gp = GaussianProcess(kernel_dict=kdict, regularization=0.001)
 
     screen = FeatureScreening(correlation=c, iterative=False)
-    features = screen.eliminat_features(target=trainset['target'],
-                                        train_features=train_features,
-                                        test_features=test_features, size=50,
-                                        step=None, order=None)
+    features = screen.eliminate_features(target=trainset['target'],
+                                         train_features=train_features,
+                                         test_features=test_features, size=50,
+                                         step=None, order=None)
 
     reduced_train = features[0]
     reduced_test = features[1]
     do_pred(train=reduced_train, test=reduced_test)
 
-    screen = FeatureScreening(correlation='pearson', iterative=True)
+    screen = FeatureScreening(correlation='pearson', iterative=True,
+                              regression='ridge')
     features = screen.eliminate_features(target=trainset['target'],
                                          train_features=train_features,
                                          test_features=test_features, size=50,
