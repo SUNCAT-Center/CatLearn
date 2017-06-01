@@ -62,73 +62,36 @@ def do_pred(train, test):
 
 
 # Get base predictions.
-print('Base Predictions')
+print('\nBase Predictions\n')
 # Set up the prediction routine.
 kdict = {'k1': {'type': 'gaussian', 'width': 0.5}}
 gp = GaussianProcess(kernel_dict=kdict, regularization=0.001)
 do_pred(train=train_features, test=test_features)
 
-print('Getting descriptor correlation')
-# Set up the prediction routine.
-kdict = {'k1': {'type': 'gaussian', 'width': 0.5}}
-gp = GaussianProcess(kernel_dict=kdict, regularization=0.001)
+# Get descriptor correlation
+corr = ['pearson', 'spearman', 'kendall']
+for c in corr:
+    print('\nPredictions based on %s correlation\n' % c)
+    # Set up the prediction routine.
+    kdict = {'k1': {'type': 'gaussian', 'width': 0.5}}
+    gp = GaussianProcess(kernel_dict=kdict, regularization=0.001)
 
-screen = FeatureScreening(correlation='pearson', iterative=False)
-features = screen.eliminat_features(target=trainset['target'],
-                                    train_features=train_features,
-                                    test_features=test_features, size=50,
-                                    step=None, order=None)
+    screen = FeatureScreening(correlation=c, iterative=False)
+    features = screen.eliminat_features(target=trainset['target'],
+                                        train_features=train_features,
+                                        test_features=test_features, size=50,
+                                        step=None, order=None)
 
-reduced_train = features[0]
-reduced_test = features[1]
-do_pred(train=reduced_train, test=reduced_test)
+    reduced_train = features[0]
+    reduced_test = features[1]
+    do_pred(train=reduced_train, test=reduced_test)
 
-screen = FeatureScreening(correlation='pearson', iterative=True)
-features = screen.eliminat_features(target=trainset['target'],
-                                    train_features=train_features,
-                                    test_features=test_features, size=50,
-                                    step=None, order=None)
+    screen = FeatureScreening(correlation='pearson', iterative=True)
+    features = screen.eliminat_features(target=trainset['target'],
+                                        train_features=train_features,
+                                        test_features=test_features, size=50,
+                                        step=None, order=None)
 
-reduced_train = features[0]
-reduced_test = features[1]
-do_pred(train=reduced_train, test=reduced_test)
-
-screen = FeatureScreening(correlation='spearman', iterative=False)
-features = screen.eliminat_features(target=trainset['target'],
-                                    train_features=train_features,
-                                    test_features=test_features, size=50,
-                                    step=None, order=None)
-
-reduced_train = features[0]
-reduced_test = features[1]
-do_pred(train=reduced_train, test=reduced_test)
-
-screen = FeatureScreening(correlation='spearman', iterative=True)
-features = screen.eliminat_features(target=trainset['target'],
-                                    train_features=train_features,
-                                    test_features=test_features, size=50,
-                                    step=None, order=None)
-
-reduced_train = features[0]
-reduced_test = features[1]
-do_pred(train=reduced_train, test=reduced_test)
-
-creen = FeatureScreening(correlation='kendall', iterative=False)
-features = screen.eliminat_features(target=trainset['target'],
-                                    train_features=train_features,
-                                    test_features=test_features, size=50,
-                                    step=None, order=None)
-
-reduced_train = features[0]
-reduced_test = features[1]
-do_pred(train=reduced_train, test=reduced_test)
-
-screen = FeatureScreening(correlation='kendall', iterative=True)
-features = screen.eliminat_features(target=trainset['target'],
-                                    train_features=train_features,
-                                    test_features=test_features, size=50,
-                                    step=None, order=None)
-
-reduced_train = features[0]
-reduced_test = features[1]
-do_pred(train=reduced_train, test=reduced_test)
+    reduced_train = features[0]
+    reduced_test = features[1]
+    do_pred(train=reduced_train, test=reduced_test)
