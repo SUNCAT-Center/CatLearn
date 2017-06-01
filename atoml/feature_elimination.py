@@ -147,8 +147,8 @@ class FeatureScreening(object):
 
         return select
 
-    def eliminat_features(self, target, train_features, test_features,
-                          size=None, step=None, order=None):
+    def eliminate_features(self, target, train_features, test_features,
+                           size=None, step=None, order=None):
         """Function to eliminate features from training/test data.
 
         Parameters
