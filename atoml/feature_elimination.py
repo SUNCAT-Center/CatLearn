@@ -125,7 +125,8 @@ class FeatureScreening(object):
             if size - np.shape(feature_reduced)[1] < step:
                 step = size - np.shape(feature_reduced)[1]
             # Calculate the residual for the remaining features.
-            response = self._get_response(feature_matrix=feature_train)
+            response = self._get_response(train_matrix=feature_train,
+                                          reduced_matrix=feature_reduced)
 
             # Do screening analysis on the residuals.
             iscreen = self.screen(target=target, feature_matrix=response)
@@ -286,7 +287,7 @@ class FeatureScreening(object):
 
         return order['accepted']
 
-    def _get_response(self, feature_matrix):
+    def _get_response(self, train_matrix, reduced_matrix):
         """Function to calculate the uncorrelated response of features.
 
         Parameters
@@ -295,8 +296,8 @@ class FeatureScreening(object):
             Array to eliminate features from.
         """
         response = []
-        for d in np.transpose(feature_matrix):
-            for a in np.transpose(feature_matrix):
+        for d in np.transpose(train_matrix):
+            for a in np.transpose(reduced_matrix):
                 r = (d - np.dot(a, np.dot(d, a))) / (np.linalg.norm(a) ** 2)
             response.append(r)
 
