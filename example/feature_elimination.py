@@ -86,7 +86,7 @@ for c in corr:
     reduced_test = features[1]
     do_pred(train=reduced_train, test=reduced_test)
 
-    screen = FeatureScreening(correlation='pearson', iterative=True,
+    screen = FeatureScreening(correlation=c, iterative=True,
                               regression='ridge')
     features = screen.eliminate_features(target=trainset['target'],
                                          train_features=train_features,
