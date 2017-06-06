@@ -1,4 +1,4 @@
-""" Functions to select features for the fingerprint vectors. """
+"""Functions to select features for the fingerprint vectors."""
 from __future__ import print_function
 from __future__ import absolute_import
 from __future__ import division
@@ -8,241 +8,297 @@ from scipy.stats import pearsonr, spearmanr, kendalltau
 from collections import defaultdict
 from math import log
 
-from .regression import lasso
-from .utilities import clean_variance
-from .output import write_feature_select
+from .regression import RegressionFit
 
 
-def sure_independence_screening(target, train_fpv, size=None, writeout=False):
-    """ Feature selection based on SIS discussed in Fan, J., Lv, J., J. R.
+class FeatureScreening(object):
+    """Class for feature elimination based on correlation screening."""
+
+    def __init__(self, correlation='pearson', iterative=True,
+                 regression='ridge'):
+        """Screening setup.
+
+        Parameters
+        ----------
+        correlation : str
+            Type of correlation to use. Can be pearson, spearman or kendall.
+            Default is pearson.
+        iterative : boolean
+            Define whether to perform the iterative version of the screening
+            routine. Default is True.
+        regression : str
+            Define regression method for ordering features. Can be ridge,
+            elastic or lasso. Default is ridge regression.
+        """
+        self.correlation = correlation
+        self.iterative = iterative
+        self.regression = regression
+
+    def screen(self, target, feature_matrix):
+        """Feature selection based on SIS.
+
+        Further discussion on this topic can be found in Fan, J., Lv, J., J. R.
         Stat. Soc.: Series B, 2008, 70, 849.
 
         Parameters
         ----------
         target : list
             The target values for the training data.
-        train_fpv : array
+        feature_matrix : array
             The feature matrix for the training data.
-        size : int
-            Number of features that should be returned.
-    """
-    if size is not None:
-        msg = 'Too few features avaliable, matrix cannot be reduced.'
-        assert len(train_fpv[0]) > size, msg
 
-    select = defaultdict(list)
+        Returns
+        -------
+        index : list
+            The ordered list of feature indices.
+        correlation : list
+            The ordered list of correlations between features and targets.
+        """
+        select = defaultdict(list)
 
-    omega = []
-    for d in np.transpose(train_fpv):
-        if np.allclose(d, d[0]):
-            omega.append(0.)
-        else:
-            omega.append(pearsonr(x=d, y=target)[0])
+        # Get correlation between each feature and the targets.
+        corr, order = self._get_correlation(target=target,
+                                            feature_matrix=feature_matrix)
 
-    abso = [abs(i) for i in omega]
-    order = list(range(np.shape(train_fpv)[1]))
-    sort_list = [list(i) for i in zip(*sorted(zip(abso, order),
-                                              key=lambda x: x[0],
-                                              reverse=True))]
+        # Order everything highest correlated to least.
+        sort_list = [list(i) for i in zip(*sorted(zip(np.abs(corr), order),
+                                                  key=lambda x: x[0],
+                                                  reverse=True))]
 
-    select['sorted'] = sort_list[1]
-    select['correlation'] = sort_list[0]
-    select['ordered_corr'] = abso
-    if size is not None:
-        select['accepted'] = sort_list[1][:size]
-        select['rejected'] = sort_list[1][size:]
+        select['index'] = sort_list[1]
+        select['correlation'] = sort_list[0]
 
-    if writeout:
-        write_feature_select(function='sure_independence_screening',
-                             data=select)
+        return select
 
-    return select
-
-
-def robust_rank_correlation_screening(target, train_fpv, size=None,
-                                      corr='kendall', writeout=False):
-    """ Feature selection based on rank correlation coefficients. This can
-        either be in the form of Kendall or Spearman's rank correlation.
+    def iterative_screen(self, target, feature_matrix, size=None, step=None):
+        """Function iteratively screen featues.
 
         Parameters
         ----------
         target : list
             The target values for the training data.
-        train_fpv : array
+        feature_matrix : array
             The feature matrix for the training data.
         size : int
-            Number of features that should be returned.
-        corr : str
-            Select correlation function, either kendall or spearman. Default is
-            kendall.
-    """
-    if size is not None:
-        msg = 'Too few features avaliable, matrix cannot be reduced.'
-        assert len(train_fpv[0]) > size, msg
-
-    select = defaultdict(list)
-
-    omega = []
-    if corr is 'kendall':
-        for d in np.transpose(train_fpv):
-            if np.allclose(d, d[0]):
-                omega.append(0.)
-            else:
-                omega.append(kendalltau(x=d, y=target)[0])
-    elif corr is 'spearman':
-        for d in np.transpose(train_fpv):
-            if np.allclose(d, d[0]):
-                omega.append(0.)
-            else:
-                omega.append(spearmanr(a=d, b=target)[0])
-
-    abso = [abs(i) for i in omega]
-    order = list(range(np.shape(train_fpv)[1]))
-    sort_list = [list(i) for i in zip(*sorted(zip(abso, order),
-                                              key=lambda x: x[0],
-                                              reverse=True))]
-
-    select['sorted'] = sort_list[1]
-    select['correlation'] = sort_list[0]
-    select['ordered_corr'] = abso
-    if size is not None:
-        select['accepted'] = sort_list[1][:size]
-        select['rejected'] = sort_list[1][size:]
-
-    if writeout:
-        write_feature_select(function='robust_rank_correlation_screening',
-                             data=select)
-
-    return select
-
-
-def iterative_screening(target, train_fpv, test_fpv=None, size=None, step=None,
-                        method='sis', corr='kendall', cleanup=False,
-                        feature_names=None, writeout=False):
-    """ Function to reduce the number of featues in an iterative manner using
-        SIS or RRCS.
-
-        Parameters
-        ----------
+            Number of features to be returned. Default is number of data.
         step : int
             Step size by which to reduce the number of features. Default is
             n / log(n).
-        method : str
-            Specify the correlation method to be used, can be either sis or
-            rrcs. Default is sis.
-        feature_names : list
-            List of the feature names to be track useful features.
-        cleanup : boolean
-            Select whether to clean up the feature matrix. Default is True.
-    """
-    n = np.shape(train_fpv)[0]
-    f = np.shape(train_fpv)[1]
 
-    select = defaultdict(list)
-    rejected = list(range(f))
-    accepted = []
+        Returns
+        -------
+        index : list
+            The ordered list of feature indices, top index[:size] will be
+            indices for best features.
+        """
+        n, f = np.shape(feature_matrix)
+        select = defaultdict(list)
+        accepted, rejected = [], list(range(f))
+        keep_train = feature_matrix
 
-    zd = []
-    if cleanup:
-        c = clean_variance(train=train_fpv, test=test_fpv)
-        train_fpv = c['train']
-        if 'index' in c:
-            zd = c['index']
-            zd.sort(reverse=True)
-            for i in zd:
-                del rejected[i]
+        # Assign default values and/or perform sanity checks.
+        size, step = self._dimension_check(n=n, f=f, size=size, step=step)
 
-    keep_train = train_fpv
+        # Initiate the feature reduction.
+        iscreen = self.screen(target=target, feature_matrix=feature_matrix)
+        rscreen = self._reduce_matrix(feature_matrix=feature_matrix,
+                                      index_order=iscreen['index'], size=size)
 
-    # Assign default values for number of features to return and step size.
-    if size is None:
-        size = n
-    msg = 'Not enough features to perform iterative screening, must be two '
-    msg += 'times as many features compared to the size.'
-    assert f > 2 * size, msg
-    if step is None:
-        step = round(n / log(n))
-    msg = 'Step size is too large, reduce it.'
-    assert step < size
-
-    # Initiate the feature reduction.
-    if method is 'sis':
-        screen = sure_independence_screening(target=target,
-                                             train_fpv=train_fpv, size=size)
-    elif method is 'rrcs':
-        screen = robust_rank_correlation_screening(target=target,
-                                                   train_fpv=train_fpv,
-                                                   size=size, corr=corr)
-    screen_matrix = np.delete(train_fpv, screen['rejected'], axis=1)
-
-    # Do LASSO down to step size.
-    lr = lasso(size=step, target=target, train_matrix=screen_matrix,
-               min_alpha=1.e-10, max_alpha=5.e-1, max_iter=1e5, steps=500)
-
-    # Sort all new ordering of accepted and rejected features.
-    sis_accept = [screen['accepted'][i] for i in lr['order'][:step]]
-    sis_accept.sort(reverse=True)
-    for i in sis_accept:
-        accepted.append(rejected[i])
-        del rejected[i]
-
-    # Create new active feature matrix.
-    train_fpv = np.delete(keep_train, accepted, axis=1)
-    reduced_fpv = np.delete(keep_train, rejected, axis=1)
-
-    # Iteratively reduce the remaining number of features by the step size.
-    while len(reduced_fpv[0]) < size:
-        if size - len(reduced_fpv[0]) < step:
-            step = size - len(reduced_fpv[0])  # Calculate the remainder.
-        # Calculate the residual for the remaining features.
-        response = []
-        for d in np.transpose(train_fpv):
-            for a in np.transpose(reduced_fpv):
-                r = (d - np.dot(a, np.dot(d, a))) / (np.linalg.norm(a) ** 2)
-            response.append(r)
-        response = np.transpose(response)
-
-        # Do screening analysis on the residuals.
-        if method is 'sis':
-            screen = sure_independence_screening(target=target,
-                                                 train_fpv=response,
-                                                 size=size)
-        elif method is 'rrcs':
-            screen = robust_rank_correlation_screening(target=target,
-                                                       train_fpv=response,
-                                                       size=size, corr=corr)
-        screen_matrix = np.delete(response, screen['rejected'], axis=1)
-
-        # Do LASSO down to step size on remaining features.
-        lr = lasso(size=step, target=target, train_matrix=screen_matrix,
-                   min_alpha=1.e-10, max_alpha=5.e-1, max_iter=1e5, steps=500)
+        # Get ordering of remaining features from linear regression.
+        regr = self._regression_ordering(target=target,
+                                         feature_matrix=rscreen['matrix'],
+                                         size=step, steps=500)
 
         # Sort all new ordering of accepted and rejected features.
-        sis_accept = [screen['accepted'][i] for i in lr['order'][:step]]
-        sis_accept.sort(reverse=True)
-        for i in sis_accept:
+        sis_accept = [rscreen['accepted'][i] for i in regr]
+        for i in sorted(sis_accept, reverse=True):
             accepted.append(rejected[i])
             del rejected[i]
 
         # Create new active feature matrix.
-        train_fpv = np.delete(keep_train, accepted, axis=1)
-        reduced_fpv = np.delete(keep_train, rejected, axis=1)
+        feature_train = np.delete(keep_train, accepted, axis=1)
+        feature_reduced = np.delete(keep_train, rejected, axis=1)
 
-    # Add on index of zero difference features removed at the start.
-    rejected += zd
+        # Iteratively reduce the remaining number of features by the step size.
+        while np.shape(feature_reduced)[1] < size:
+            # Calculate step/size remainder if necessary.
+            if size - np.shape(feature_reduced)[1] < step:
+                step = size - np.shape(feature_reduced)[1]
+            # Calculate the residual for the remaining features.
+            response = self._get_response(train_matrix=feature_train,
+                                          reduced_matrix=feature_reduced)
 
-    if test_fpv is not None:
-        test_fpv = np.delete(test_fpv, rejected, axis=1)
-    if feature_names is not None:
-        feature_names = list(np.delete(feature_names, rejected, axis=0))
+            # Do screening analysis on the residuals.
+            iscreen = self.screen(target=target, feature_matrix=response)
+            rscreen = self._reduce_matrix(feature_matrix=response,
+                                          index_order=iscreen['index'],
+                                          size=size)
 
-    select['accepted'] = accepted
-    select['rejected'] = rejected
-    select['train_fpv'] = reduced_fpv
-    select['test_fpv'] = test_fpv
-    select['names'] = feature_names
+            # Get ordering of remaining features from linear regression.
+            regr = self._regression_ordering(target=target,
+                                             feature_matrix=rscreen['matrix'],
+                                             size=step, steps=500)
 
-    if writeout:
-        write_feature_select(function='iterative_screening', data=select)
+            # Sort all new ordering of accepted and rejected features.
+            sis_accept = [rscreen['accepted'][i] for i in regr]
+            for i in sorted(sis_accept, reverse=True):
+                accepted.append(rejected[i])
+                del rejected[i]
 
-    return select
+            # Create new active feature matrix.
+            feature_train = np.delete(keep_train, accepted, axis=1)
+            feature_reduced = np.delete(keep_train, rejected, axis=1)
+
+        select['index'] = list(accepted) + list(rejected)
+
+        return select
+
+    def eliminate_features(self, target, train_features, test_features,
+                           size=None, step=None, order=None):
+        """Function to eliminate features from training/test data.
+
+        Parameters
+        ----------
+        target : list
+            The target values for the training data.
+        train_features : array
+            Array of training data to eliminate features from.
+        test_features : array
+            Array of test data to eliminate features from.
+        size : int
+            Number of features after elimination.
+        step : int
+            Number of features to eliminate at each step.
+        order : list
+            Precomputed ordered indices for features.
+
+        Returns
+        -------
+        reduced_train : array
+            Reduced training feature matrix, now n x size shape.
+        reduced_test : array
+            Reduced test feature matrix, now m x size shape.
+        """
+        if order is None:
+            if self.iterative:
+                order = self.iterative_screen(target=target,
+                                              feature_matrix=train_features,
+                                              size=size, step=step)['index']
+            else:
+                order = self.screen(target=target,
+                                    feature_matrix=train_features)['index']
+
+        reduced_train = self._reduce_matrix(feature_matrix=train_features,
+                                            index_order=order, size=size)
+        reduced_test = self._reduce_matrix(feature_matrix=test_features,
+                                           index_order=order, size=size)
+
+        return reduced_train['matrix'], reduced_test['matrix']
+
+    def _get_correlation(self, target, feature_matrix):
+        """Function to return the correlation between features and targets.
+
+        Parameters
+        ----------
+        target : list
+            The target values for the training data.
+        feature_matrix : array
+            Array to eliminate features from.
+        """
+        # Probably easier to reshape target than take transpose of feature
+        # matrix, should be tested.
+        t = np.reshape(target, (len(target), 1))
+
+        corr = []
+        order = list(range(np.shape(feature_matrix)[1]))
+        for i in order:
+            d = feature_matrix[:, i:i+1]
+            if np.allclose(d, d[0]):
+                corr.append(0.)
+            elif self.correlation is 'pearson':
+                corr.append(pearsonr(x=d, y=t)[0])
+            elif self.correlation is 'spearman':
+                corr.append(spearmanr(a=d, b=t)[0])
+            elif self.correlation is 'kendall':
+                corr.append(kendalltau(x=d, y=t)[0])
+
+        return corr, order
+
+    def _dimension_check(self, n, f, size, step):
+        """Some sanity checks before doing iterative feature elimination.
+
+        Parameters
+        ----------
+        n : int
+            Number of data points.
+        f : int
+            Number of features.
+        size : int
+            Number of features after elimination.
+        step : int
+            Number of features to eliminate at each step.
+        """
+        if size is None:
+            size = n
+
+        if self.iterative:
+            msg = 'Not enough features to perform screening requires 2 x size.'
+            assert f > 2 * size, msg
+
+            if step is None:
+                step = round(n / log(n))
+            msg = 'Step size is too large, reduce it.'
+            assert step < size, msg
+
+        else:
+            msg = 'Not enough features to perform screening.'
+            assert f > size, msg
+
+        return size, step
+
+    def _reduce_matrix(self, feature_matrix, index_order, size):
+        """Function to eliminate features from matrix.
+
+        Parameters
+        ----------
+        feature_matrix : array
+            Array to eliminate features from.
+        index_order : list
+            Feature index ordered according best to worst.
+        size : int
+            Number of features to remain in the matrix.
+        """
+        data = defaultdict(list)
+        data['accepted'] = index_order[:size]
+        data['rejected'] = index_order[size:]
+        data['matrix'] = np.delete(feature_matrix, data['rejected'], axis=1)
+
+        return data
+
+    def _regression_ordering(self, target, feature_matrix, size, steps):
+        """Function to get ordering of features absed on linear regression."""
+        # Set up the regression fitting function.
+        rf = RegressionFit(train_matrix=feature_matrix, train_target=target,
+                           method=self.regression)
+
+        order = rf.feature_select(size=size, iterations=1e5, steps=steps,
+                                  line_search=True, spacing='linear',
+                                  min_alpha=1.e-8, max_alpha=1.e-1, eps=1e-3)
+
+        return order['accepted']
+
+    def _get_response(self, train_matrix, reduced_matrix):
+        """Function to calculate the uncorrelated response of features.
+
+        Parameters
+        ----------
+        feature_matrix : array
+            Array to eliminate features from.
+        """
+        response = []
+        for d in np.transpose(train_matrix):
+            for a in np.transpose(reduced_matrix):
+                r = (d - np.dot(a, np.dot(d, a))) / (np.linalg.norm(a) ** 2)
+            response.append(r)
+
+        return np.transpose(response)

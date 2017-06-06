@@ -19,7 +19,7 @@ from .regression import lasso
 from .feature_preprocess import standardize
 from .predict import GaussianProcess
 
-from .fit_funcs import find_optimal_regularization, RR
+from .ridge_regression import find_optimal_regularization, RR
 
 
 class ModelBuilder(object):

@@ -11,10 +11,10 @@ python_2_7_tests:
     - cd test/
     - python --version
     - python data_setup-test.py
-    - python predict-test.py
     - python fingerprint-test.py
-    - python feature_select-test.py
+    - python feature_eliminate-test.py
     - python database-test.py
+    - python predict-test.py
 
 python_3_tests:
   script:
@@ -29,7 +29,7 @@ python_3_tests:
     - cd test/
     - python3 --version
     - python3 data_setup-test.py
-    - python3 predict-test.py
     - python3 fingerprint-test.py
-    - python3 feature_select-test.py
+    - python3 feature_eliminate-test.py
     - python3 database-test.py
+    - python3 predict-test.py
