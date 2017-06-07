@@ -8,7 +8,7 @@ from ase.ga.data import DataConnection
 from atoml.data_setup import get_unique, get_train
 from atoml.fingerprint_setup import return_fpv
 from atoml.feature_preprocess import normalize
-from atoml.feature_expansion import single_transform
+from atoml.feature_engineering import single_transform
 from atoml.feature_elimination import FeatureScreening
 from atoml.particle_fingerprint import ParticleFingerprintGenerator
 from atoml.standard_fingerprint import StandardFingerprintGenerator
