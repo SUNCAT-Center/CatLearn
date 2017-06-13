@@ -7,7 +7,7 @@ from keras.models import Sequential
 from keras.layers import Dense, Activation, Dropout
 from keras.layers.normalization import BatchNormalization as BatchNorm
 from keras.optimizers import RMSprop, Adam
-from sklearn.preprocessing import scale
+from sklearn.preprocessing import robust_scale
 import matplotlib.pyplot as plt
 
 # load and set up data
@@ -21,7 +21,7 @@ if(shuffle):
 
 # PREPROCESSING
 
-X = scale(np.array(data.iloc[:, :-2]))
+X = robust_scale(np.array(data.iloc[:, :-2]))
 Y = np.array(data.iloc[:, -2])
 idxs = np.array(data.iloc[:, -1])
 
