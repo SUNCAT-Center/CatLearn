@@ -1,4 +1,4 @@
-""" Some useful utilities. """
+"""Some useful utilities."""
 import numpy as np
 from collections import defaultdict
 
@@ -7,21 +7,19 @@ from .output import write_data_setup
 
 def remove_outliers(candidates, key, con=1.4826, dev=3., constraint=None,
                     writeout=False):
-    """ Preprocessing routine to remove outliers in the data based on the
-        median absolute deviation. Only candidates that are unfit, e.g. less
-        positive raw_score, are removed as outliers.
+    """Preprocessing routine to remove outliers by median absolute deviation.
 
-        Parameters
-        ----------
-        con : float
-            Constant scale factor dependent on the distribution. Default is
-            1.4826 expecting the data is normally distributed.
-        dev : float
-            The number of deviations from the median to account for.
-        constraint : str
-            Can be set to 'low' to remove candidates with targets that are too
-            small/negative or 'high' for outliers that are too large/positive.
-            Default is to remove all.
+    Parameters
+    ----------
+    con : float
+        Constant scale factor dependent on the distribution. Default is 1.4826
+        expecting the data is normally distributed.
+    dev : float
+        The number of deviations from the median to account for.
+    constraint : str
+        Can be set to 'low' to remove candidates with targets that are too
+        small/negative or 'high' for outliers that are too large/positive.
+        Default is to remove all.
     """
     dataset = defaultdict(list)
     target = []
@@ -64,15 +62,14 @@ def remove_outliers(candidates, key, con=1.4826, dev=3., constraint=None,
 
 
 def clean_variance(train, test=None):
-    """ Function to remove features that contribute nothing to the model in the
-        form of zero variance features.
+    """Remove features that contribute nothing to the model.
 
-        Parameters
-        ----------
-        train : array
-            Feature matrix for the traing data.
-        test : array
-            Feature matrix for the test data.
+    Parameters
+    ----------
+    train : array
+        Feature matrix for the traing data.
+    test : array
+        Feature matrix for the test data.
     """
     clean = defaultdict(list)
     m = train.T
