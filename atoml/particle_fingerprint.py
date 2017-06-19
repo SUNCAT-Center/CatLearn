@@ -25,7 +25,7 @@ class ParticleFingerprintGenerator(object):
         ----------
         atom_numbers : list
             List of unique atomic numbers.
-        max_bonds: int
+        max_bonds : int
             Count up to the specified number of bonds. Default is 0 to 12.
         get_nl : boolean
             Specify whether to recalculate the neighborlist. Default is False.
