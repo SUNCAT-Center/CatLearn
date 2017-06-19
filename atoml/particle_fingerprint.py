@@ -1,6 +1,4 @@
-""" Particle fingerprint functions generating sets of features with a physical
-    meaning.
-"""
+"""Particle fingerprint functions."""
 from __future__ import absolute_import
 from __future__ import division
 
@@ -17,23 +15,26 @@ except ImportError:
 
 
 class ParticleFingerprintGenerator(object):
+    """Function to build a fingerprint vector based on an atoms object."""
+
     def __init__(self, atom_numbers=None, max_bonds=13, get_nl=False, dx=0.2,
                  cell_size=50., nbin=4, rmax=8., nbins=5):
-        """ atom_numbers: list
-                List of unique atomic numbers. Supplying the list can remove
-                problems with different vectors being generated if the
-                composition varies.
+        """Particle fingerprint generator setup.
 
-            max_bonds: int
-                Count up to the specified number of bonds. Default is 0 to 12.
-
-            get_nl: boolean
-                Specify whether to recalculate the neighborlist. Default is
-                False.
-
-            dx: float
-                Cutoff added to the covalent radii to calculate the
-                neighborlist.
+        Parameters
+        ----------
+        atom_numbers : list
+            List of unique atomic numbers.
+        max_bonds: int
+            Count up to the specified number of bonds. Default is 0 to 12.
+        get_nl : boolean
+            Specify whether to recalculate the neighborlist. Default is False.
+        dx : float
+            Cutoff added to the covalent radii to calculate the neighborlist.
+        cell_size : float
+            Set unit cell size, default is 50.0 angstroms.
+        nbin : int
+            The number of bins supplied to the get_atoms_distribution function.
         """
         self.atom_numbers = atom_numbers
         self.max_bonds = max_bonds
@@ -45,18 +46,11 @@ class ParticleFingerprintGenerator(object):
         self.rmax = rmax
 
     def nearestneighbour_fpv(self, atoms):
-        """ Function that takes an atoms objects and returns a fingerprint
-            vector based on the nearest neighbour average as described in
-            Topics in Catalysis, 2014, 57, 33-39.
-        """
+        """Nearest neighbour average, Topics in Catalysis, 2014, 57, 33."""
         return get_nnmat(atoms)
 
     def bond_count_fpv(self, atoms):
-        """ Function that takes a list of atoms objects and returns a list of
-            fingerprint vectors based on more detailed bond counting than the
-            nearestneighbour_fpv. This function also includes a distribution
-            measure as well as accounting for coordination number.
-        """
+        """Bond counting with a distribution measure for coordination."""
         if self.get_nl:
             # Define the neighborlist.
             atoms.info['data']['neighborlist'] = get_neighborlist(atoms,
@@ -82,18 +76,7 @@ class ParticleFingerprintGenerator(object):
         return track_nnmat.ravel()
 
     def distribution_fpv(self, atoms):
-        """ Function that takes a list of atoms objects and returns a list of
-            fingerprint vectors based on a atomic distribution measure.
-
-            cell_size: float
-                Some of the utility functions work better when the cell is set
-                and atoms centered. The size of the cell can be set with this
-                variable. Default 50.0 angstroms.
-
-            nbin: int
-                The number of bins supplied to the get_atoms_distribution
-                function.
-        """
+        """Return atomic distribution measure."""
         # Center the atoms, works better for some utility functions.
         atoms.set_cell([self.cell_size, self.cell_size, self.cell_size])
         atoms.center()
@@ -114,10 +97,7 @@ class ParticleFingerprintGenerator(object):
         return dist
 
     def connections_fpv(self, atoms):
-        """ Function that takes a list of atoms objects and returns a list of
-            fingerprint vectors based on the sum of the numbers of atoms with
-            a certain number of connections.
-        """
+        """Sum atoms with a certain number of connections."""
         if self.get_nl:
             # Define the neighborlist.
             atoms.info['data']['neighborlist'] = get_neighborlist(atoms,
@@ -136,9 +116,7 @@ class ParticleFingerprintGenerator(object):
         return fp
 
     def rdf_fpv(self, atoms):
-        """Return a list of concatenated partial rdfs
-        for use as fingerprint vector."""
-
+        """Return list of partial rdfs for use as fingerprint vector."""
         if not no_asap:
             rf = RadialDistributionFunction(atoms,
                                             rMax=self.rmax,
