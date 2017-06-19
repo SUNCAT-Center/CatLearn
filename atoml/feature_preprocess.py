@@ -135,20 +135,15 @@ def cluster_features(train_matrix, train_target, k=2, test_matrix=None,
 
 def _cluster_split(feature_matrix, target, order):
     """Function to split up data based on clustering."""
-    split_f = {}
+    split_f = defaultdict(list)
     if target is not None:
-        split_t = {}
+        split_t = defaultdict(list)
         for f, t, l in zip(feature_matrix, target, order):
-            if l not in split_f:
-                split_f[l] = []
-                split_t[l] = []
             split_f[l].append(f)
             split_t[l].append(t)
     else:
         split_t = None
         for f, t, l in zip(feature_matrix, order):
-            if l not in split_f:
-                split_f[l] = []
             split_f[l].append(f)
 
     return split_f, split_t
