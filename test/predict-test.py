@@ -1,5 +1,6 @@
-""" Script to test the prediction functions. """
+"""Script to test the prediction functions."""
 from __future__ import print_function
+from __future__ import absolute_import
 
 from ase.ga.data import DataConnection
 from atoml.data_setup import get_unique, get_train

@@ -1,5 +1,6 @@
-""" Script to test the database functions. """
+"""Script to test the database functions."""
 from __future__ import print_function
+from __future__ import absolute_import
 
 from os import remove
 from random import random

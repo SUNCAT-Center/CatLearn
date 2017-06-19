@@ -1,6 +1,4 @@
-""" Functions to make predictions based on Gaussian Processes machine learning
-    model.
-"""
+"""Functions to make predictions with Gaussian Processes machine learning."""
 from __future__ import absolute_import
 from __future__ import division
 
@@ -16,12 +14,14 @@ from .kernels import kdicts2list, list2kdict
 
 
 class GaussianProcess(object):
-    """ Kernel ridge regression functions for the machine learning. This can be
-        used to predict the fitness of an atoms object.
+    """Gaussian processes functions for the machine learning."""
+
+    def __init__(self, kernel_dict, regularization=None):
+        """Gaussian processes setup.
 
         Parameters
         ----------
-        kernel_dict    : dict of dicts
+        kernel_dict : dict of dicts
             Each dict in kernel_dict contains information on a kernel.
             The 'type' key is required to contain the name of kernel function:
             'linear', 'polynomial', 'gaussian' or 'laplacian'.
@@ -29,12 +29,12 @@ class GaussianProcess(object):
         regularization : float
             The regularization strength (smoothing function) applied to the
             kernel matrix.
-    """
-    def __init__(self, kernel_dict, regularization=None):
+        """
         self.kernel_dict = kernel_dict
         self.regularization = regularization
 
     def prepare_kernels(self, N_D):
+        """Format the kernel_dict."""
         kdict = self.kernel_dict
         for key in kdict:
             if 'features' in kdict[key]:
@@ -62,41 +62,39 @@ class GaussianProcess(object):
                         get_validation_error=False, get_training_error=False,
                         standardize_target=True, cost='squared', epsilon=None,
                         writeout=False, optimize_hyperparameters=False):
-        """ Function to perform the prediction on some training and test data.
+        """Function to perform the prediction on some training and test data.
 
-            Parameters
-            ----------
-            train_fp : list
-                A list of the training fingerprint vectors.
-            test_fp : list
-                A list of the testing fingerprint vectors.
-            train_target : list
-                A list of the the training targets used to generate the
-                predictions.
-            cinv : matrix
-                Covariance matrix for training dataset. Can be calculated on-
-                the-fly or defined to utilize a model numerous times.
-            test_target : list
-                A list of the the test targets used to generate the
-                prediction errors.
-            uncertainty : boolean
-                Return data on the predicted uncertainty if True. Default is
-                False.
-            basis : function
-                Basis functions to assess the reliability of the uncertainty
-                predictions. Must be a callable function that takes a list of
-                descriptors and returns another list.
-            get_validation_error : boolean
-                Return the error associated with the prediction on the test set
-                of data if True. Default is False.
-            get_training_error : boolean
-                Return the error associated with the prediction on the training
-                set of data if True. Default is False.
-            cost : str
-                Define the way the cost function is calculated. Default is
-                root mean squared error.
-            epsilon : float
-                Threshold for insensitive error calculation.
+        Parameters
+        ----------
+        train_fp : list
+            A list of training fingerprint vectors.
+        test_fp : list
+            A list of testing fingerprint vectors.
+        train_target : list
+            A list of training targets used to generate the predictions.
+        cinv : matrix
+            Covariance matrix for training dataset. Calculated on-the-fly or
+            defined to utilize a model numerous times.
+        test_target : list
+            A list of the the test targets used to generate the prediction
+            errors.
+        uncertainty : boolean
+            Return data on the predicted uncertainty if True. Default is False.
+        basis : function
+            Basis functions to assess the reliability of the uncertainty
+            predictions. Must be a callable function that takes a list of
+            descriptors and returns another list.
+        get_validation_error : boolean
+            Return the error associated with the prediction on the test set of
+            data if True. Default is False.
+        get_training_error : boolean
+            Return the error associated with the prediction on the training set
+            of data if True. Default is False.
+        cost : str
+            Define the way the cost function is calculated. Default is root
+            mean squared error.
+        epsilon : float
+            Threshold for insensitive error calculation.
         """
         N_train, N_D = np.shape(train_fp)
         # Kernel dictionary should contain hyperparameters in lists:
@@ -173,9 +171,11 @@ class GaussianProcess(object):
 
         # Calculate uncertainty associated with prediction on test data.
         if uncertainty:
-            data['uncertainty'] = [(1 - np.dot(np.dot(kt, cinv),
-                                               np.transpose(kt))) ** 0.5 for
-                                   kt in ktb]
+            kxx = get_covariance(kernel_dict=self.kernel_dict,
+                                 matrix1=test_fp)
+            data['uncertainty'] = [(kxx[0][0] - np.dot(np.dot(kt, cinv),
+                                                       np.transpose(kt)))
+                                   ** 0.5 for kt in ktb]
 
         if basis is not None:
             data['basis_analysis'] = self.fixed_basis(train_fp=train_fp,
@@ -192,21 +192,21 @@ class GaussianProcess(object):
         return data
 
     def do_prediction(self, ktb, cinv, target):
-        """ Function to make the prediction.
+        """Function to make the prediction.
 
-            Parameters
-            ----------
-            ktb : array
-                Covariance matrix between test and training data.
-            cinv : array
-                Inverted Gramm matrix, covariance between training data.
-            target : list
-                The target values for the training data.
+        Parameters
+        ----------
+        ktb : array
+            Covariance matrix between test and training data.
+        cinv : array
+            Inverted Gramm matrix, covariance between training data.
+        target : list
+            The target values for the training data.
 
-            Returns
-            -------
-            pred : list
-                The rescaled predictions for the test data.
+        Returns
+        -------
+        pred : list
+            The rescaled predictions for the test data.
         """
         train_mean = np.mean(target)
         target_values = target - train_mean
@@ -224,8 +224,12 @@ class GaussianProcess(object):
 
     def fixed_basis(self, test_fp, train_fp, basis, ktb, cinv, target,
                     test_target, cost, epsilon):
-        """ Function to apply fixed basis. Returns the predictions gX on the
-            residual. """
+        """Function to apply fixed basis.
+
+        Returns
+        -------
+            Predictions gX on the residual.
+        """
         data = defaultdict(list)
         # Calculate the K(X*,X*) covariance matrix.
         ktest = get_covariance(kernel_dict=self.kernel_dict, matrix1=test_fp,
@@ -262,12 +266,12 @@ class GaussianProcess(object):
 
 
 def target_standardize(target, writeout=False):
-    """ Returns a list of standardized target values.
+    """Return a list of standardized target values.
 
-        Parameters
-        ----------
-        target : list
-            A list of the target values.
+    Parameters
+    ----------
+    target : list
+        A list of the target values.
     """
     target = np.asarray(target)
 
@@ -283,15 +287,16 @@ def target_standardize(target, writeout=False):
 
 
 def get_error(prediction, target, cost='squared', epsilon=None):
-    """ Returns the error for predicted data relative to target data. Discussed
-        in: Rosasco et al, Neural Computation, (2004), 16, 1063-1076.
+    """Return error for predicted data.
 
-        Parameters
-        ----------
-        prediction : list
-            A list of predicted values.
-        target : list
-            A list of target values.
+    Discussed in: Rosasco et al, Neural Computation, (2004), 16, 1063-1076.
+
+    Parameters
+    ----------
+    prediction : list
+        A list of predicted values.
+    target : list
+        A list of target values.
     """
     msg = 'Something has gone wrong and there are '
     if len(prediction) < len(target):

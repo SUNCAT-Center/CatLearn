@@ -1,5 +1,6 @@
-""" Script to test the data_setup functions. """
+"""Script to test the data_setup functions."""
 from __future__ import print_function
+from __future__ import absolute_import
 
 from ase.ga.data import DataConnection
 from atoml.data_setup import get_unique, get_train

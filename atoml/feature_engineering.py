@@ -1,4 +1,4 @@
-""" Functions to expand the feature matrix in a combinatorial fashion. """
+"""Functions for feature engineering."""
 from __future__ import absolute_import
 from __future__ import division
 
@@ -6,27 +6,46 @@ import numpy as np
 from itertools import combinations_with_replacement
 
 
-def triangular(n):
-    return sum(range(n+1))
+def single_transform(A):
+    """Perform single variable transform x^2, x^0.5 and log(x).
+
+    Parameters
+    ----------
+    A : array
+        n x m matrix, where n is the number of training examples and m is the
+        number of features.
+
+    Returns
+    -------
+    new_features : array
+        The n x m*3 matrix of new features.
+    """
+    scale = A + np.abs(np.min(A, axis=0)) + 1.
+    new_features = np.concatenate((np.square(A), np.sqrt(scale)), axis=1)
+    new_features = np.concatenate((new_features, np.log(scale)), axis=1)
+
+    return new_features
 
 
 def get_order_2(A):
-    """ Get all combinations x_ij = x_i * x_j, where x_i,j are features. The
-        sorting order in dimension 0 is preserved.
+    """Get all combinations x_ij = x_i * x_j, where x_i,j are features.
 
-        Parameters
-        ----------
-        A : array
-            n x m matrix, where n is the number of training examples and m is
-            the number of features.
+    The sorting order in dimension 0 is preserved.
 
-        Returns
-        -------
-        n x triangular(m) matrix
+    Parameters
+    ----------
+    A : array
+        n x m matrix, where n is the number of training examples and m is the
+        number of features.
+
+    Returns
+    -------
+    new_features : array
+        The n x triangular(m) matrix of new features.
     """
     shapeA = np.shape(A)
     nfi = 0
-    new_features = np.zeros([shapeA[0], triangular(shapeA[1])])
+    new_features = np.zeros([shapeA[0], sum(range(shapeA[1] + 1))])
     for f1 in range(shapeA[1]):
         for f2 in range(f1, shapeA[1]):
             new_feature = A[:, f1]*A[:, f2]
@@ -36,19 +55,21 @@ def get_order_2(A):
 
 
 def get_div_order_2(A):
-    """ Get all combinations x_ij = x_i / x_j, where x_i,j are features. The
-        sorting order in dimension 0 is preserved. If a value is 0, Inf is
-        returned.
+    """Get all combinations x_ij = x_i / x_j, where x_i,j are features.
 
-        Parameters
-        ----------
-        A : array
-            n x m matrix, where n is the number of training examples and m is
-            the number of features.
+    The sorting order in dimension 0 is preserved. If a value is 0, Inf is
+    returned.
 
-        Returns
-        -------
-        n x m**2 matrix
+    Parameters
+    ----------
+    A : array
+        n x m matrix, where n is the number of training examples and m is the
+        number of features.
+
+    Returns
+    -------
+    new_features : array
+        The n x m**2 matrix of new features.
     """
     shapeA = np.shape(A)
     nfi = 0
@@ -63,16 +84,17 @@ def get_div_order_2(A):
 
 
 def get_labels_order_2(l, div=False):
-    """ Get all combinations ij, where i,j are feature labels.
+    """Get all combinations ij, where i,j are feature labels.
 
-        Parameters
-        ----------
-        x : list
-            Length m vector, where m is the number of features.
+    Parameters
+    ----------
+    x : list
+        Length m vector, where m is the number of features.
 
-        Returns
-        -------
-        m**2 vector or triangular(m) vector
+    Returns
+    -------
+    new_features : list
+        List of new feature names.
     """
     L = len(l)
     new_features = []
@@ -90,25 +112,27 @@ def get_labels_order_2(l, div=False):
 
 
 def get_order_2ab(A, a, b):
-    """ Get all combinations x_ij = x_i*a * x_j*b, where x_i,j are features. The
-        sorting order in dimension 0 is preserved.
+    """Get all combinations x_ij = x_i*a * x_j*b, where x_i,j are features.
 
-        Parameters
-        ----------
-        A : array
-            n x m matrix, where n is the number of training examples and m is
-            the number of features.
-        a : float
+    The sorting order in dimension 0 is preserved.
 
-        b : float
+    Parameters
+    ----------
+    A : array
+        n x m matrix, where n is the number of training examples and m is the
+        number of features.
+    a : float
 
-        Returns
-        -------
-        n x triangular(m) matrix
+    b : float
+
+    Returns
+    -------
+    new_features : array
+        The n x triangular(m) matrix of new features.
     """
     shapeA = np.shape(A)
     nfi = 0
-    new_features = np.zeros([shapeA[0], triangular(shapeA[1])])
+    new_features = np.zeros([shapeA[0], sum(range(shapeA[1] + 1))])
     for f1 in range(shapeA[1]):
         for f2 in range(f1, shapeA[1]):
             new_feature = A[:, f1]**a * A[:, f2]**b
@@ -118,16 +142,17 @@ def get_order_2ab(A, a, b):
 
 
 def get_labels_order_2ab(l, a, b):
-    """ Get all combinations ij, where i,j are feature labels.
+    """Get all combinations ij, where i,j are feature labels.
 
-        Parameters
-        ----------
-        x : list
-            Length m vector, where m is the number of features.
+    Parameters
+    ----------
+    x : list
+        Length m vector, where m is the number of features.
 
-        Returns
-        -------
-        m**2 vector or triangular(m) vector
+    Returns
+    -------
+    new_features : list
+        List of new feature names.
     """
     L = len(l)
     new_features = []
@@ -139,27 +164,29 @@ def get_labels_order_2ab(l, a, b):
 
 
 def get_ablog(A, a, b):
-    """ Get all combinations x_ij = a*log(x_i) + b*log(x_j), where x_i,j are
-        features. The sorting order in dimension 0 is preserved.
+    """Get all combinations x_ij = a*log(x_i) + b*log(x_j).
 
-        Parameters
-        ----------
-        A : array
-            An n x m matrix, where n is the number of training examples and
-            m is the number of features.
-        a : float
+    The sorting order in dimension 0 is preserved.
 
-        b : float
+    Parameters
+    ----------
+    A : array
+        An n x m matrix, where n is the number of training examples and m is
+        the number of features.
+    a : float
 
-        Returns
-        -------
-        n x triangular(m) matrix
+    b : float
+
+    Returns
+    -------
+    new_features : array
+        The n x triangular(m) matrix of new features.
     """
     shapeA = np.shape(A)
     shift = np.abs(np.min(A, axis=0)) + 1.
     A += shift
     nfi = 0
-    new_features = np.zeros([shapeA[0], triangular(shapeA[1])])
+    new_features = np.zeros([shapeA[0], sum(range(shapeA[1] + 1))])
     for f1 in range(shapeA[1]):
         for f2 in range(f1, shapeA[1]):
             new_feature = a*np.log(A[:, f1]) + b*np.log(A[:, f2])
@@ -169,16 +196,17 @@ def get_ablog(A, a, b):
 
 
 def get_labels_ablog(l, a, b):
-    """ Get all combinations ij, where i,j are feature labels.
+    """Get all combinations ij, where i,j are feature labels.
 
-        Parameters
-        ----------
-        a : float
-        b : float
+    Parameters
+    ----------
+    a : float
+    b : float
 
-        Returns
-        -------
-        m ** 2 vector or triangular(m) vector
+    Returns
+    -------
+    new_features : list
+        List of new feature names.
     """
     L = len(l)
     new_features = []
@@ -191,20 +219,22 @@ def get_labels_ablog(l, a, b):
 
 
 def _separate_list(p):
-    """ Routine to split any list into all possible combinations of two lists
-        which, combined, contain all elements.
+    """Routine to split any list.
 
-        Parameters
-        ----------
-        p : list
-            The list to be split.
+    List is split into all possible combinations of two lists which, combined,
+    contain all elements.
 
-        Returns
-        -------
-        combinations : list
-            A list containing num_combinations elements, each of which is a
-            tuple. Each tuple contains two elements, each of which is a list.
-            These two tuple elements have no intersection, their union is p.
+    Parameters
+    ----------
+    p : list
+        The list to be split.
+
+    Returns
+    -------
+    combinations : list
+        A list containing num_combinations elements, each of which is a tuple.
+        Each tuple contains two elements, each of which is a list. These two
+        tuple elements have no intersection, their union is p.
     """
     num_elements = len(p)
     num_combinations = (2**num_elements - 2)/2
@@ -224,25 +254,26 @@ def _separate_list(p):
 
 
 def _decode_key(p, key):
-    """ Routine to decode a "key" as implemented in generate_features. These
-        keys are used to avoid duplicate terms in numerator and denominator.
+    """Routine to decode a "key" as implemented in generate_features.
 
-        Parameters
-        ----------
-        p : list
-            The list of input features provided by the user.
-        key : string
-            A string containing a composite term, where each original feature
-            in p is represented by its index.
+    These keys are used to avoid duplicate terms in numerator and denominator.
 
-            Example:
-            The term given by p[0]*p[1]*p[1]*p[4] would have the key "0*1*1*4"
+    Parameters
+    ----------
+    p : list
+        The list of input features provided by the user.
+    key : string
+        A string containing a composite term, where each original feature in p
+        is represented by its index.
 
-        Returns
-        -------
-        p_prime : string
-            A string containing the composite term as a function of the
-            original input features.
+        Example:
+        The term given by p[0]*p[1]*p[1]*p[4] would have the key "0*1*1*4"
+
+    Returns
+    -------
+    p_prime : string
+        A string containing the composite term as a function of the original
+        input features.
     """
     p = [str(i) for i in p]
     elements = key.split('*')
@@ -266,35 +297,34 @@ def _decode_key(p, key):
 
 
 def generate_positive_features(p, N, exclude=False, s=False):
-    """ Routine to generate a list of polynomial combinations of variables in
-        list p up to order N.
+    """Generate list of polynomial combinations in list p up to order N.
 
-        Example:
-        p = (a,b,c) ; N = 3
+    Example:
+    p = (a,b,c) ; N = 3
 
-        returns (order not preserved)
-        [a*a*a, a*a*b, a*a*c, a*b*b, a*b*c, a*c*c, b*b*b, b*b*c, b*c*c,
-        c*c*c, a*a, a*b, a*c, b*b, b*c, c*c, a, b, c]
+    returns (order not preserved)
+    [a*a*a, a*a*b, a*a*c, a*b*b, a*b*c, a*c*c, b*b*b, b*b*c, b*c*c, c*c*c, a*a,
+    a*b, a*c, b*b, b*c, c*c, a, b, c]
 
-        Parameters
-        ----------
-        p : list
-            Features to be combined.
-        N : integer
-            The maximum polynomial coefficient for combinations. Must be
-            non-negative.
-        exclude : bool
-            Set True to avoid returning 1 to represent the zeroth power.
-            Default is False.
-        s : bool
-            Set True to return a list of strings and False to evaluate each
-            element in the list. Default is False.
+    Parameters
+    ----------
+    p : list
+        Features to be combined.
+    N : integer
+        The maximum polynomial coefficient for combinations. Must be
+        non-negative.
+    exclude : bool
+        Set True to avoid returning 1 to represent the zeroth power. Default is
+        False.
+    s : bool
+        Set True to return a list of strings and False to evaluate each element
+        in the list. Default is False.
 
-        Returns
-        -------
-        all_powers : list
-            A list of combinations of the input features to meet the required
-            specifications.
+    Returns
+    -------
+    all_powers : list
+        A list of combinations of the input features to meet the required
+        specifications.
     """
     if N == 0 and s:
         return ['1']
@@ -328,41 +358,40 @@ def generate_positive_features(p, N, exclude=False, s=False):
 
 def generate_features(p, max_num=2, max_den=1, log=False, sqrt=False,
                       exclude=False, s=False):
-    """ A routine to generate composite features from a combination of
-        user-provided input features.
+    """Generate composite features from a combination of input features.
 
-        developer note: This is currently scales *quite slowly* with max_den.
-        There's surely a better way to do this, but it's apparently currently
-        functional.
+    developer note: This is currently scales *quite slowly* with max_den.
+    There's surely a better way to do this, but it's apparently currently
+    functional.
 
-        Parameters
-        ----------
-        p : list
-            User-provided list of physical features to be combined.
-        max_num : integer
-            The maximum order of the polynomial in the numerator of the
-            composite features. Must be non-negative.
-        max_den : integer
-            The maximum order of the polynomial in the denominator of the
-            composite features. Must be non-negative.
-        log : boolean (not currently supported)
-            Set to True to include terms involving the logarithm of the input
-            features. Default is False.
-        sqrt : boolean (not currently supported)
-            Set to True to include terms involving the square root of the input
-            features. Default is False.
-        exclude : bool
-            Set exclude=True to avoid returning 1 to represent the zeroth
-            power. Default is False.
-        s: bool
-            Set True to return a list of strings and False to evaluate each
-            element in the list. Default is False.
+    Parameters
+    ----------
+    p : list
+        User-provided list of physical features to be combined.
+    max_num : integer
+        The maximum order of the polynomial in the numerator of the composite
+        features. Must be non-negative.
+    max_den : integer
+        The maximum order of the polynomial in the denominator of the composite
+        features. Must be non-negative.
+    log : boolean (not currently supported)
+        Set to True to include terms involving the logarithm of the input
+        features. Default is False.
+    sqrt : boolean (not currently supported)
+        Set to True to include terms involving the square root of the input
+        features. Default is False.
+    exclude : bool
+        Set exclude=True to avoid returning 1 to represent the zeroth power.
+        Default is False.
+    s: bool
+        Set True to return a list of strings and False to evaluate each element
+        in the list. Default is False.
 
-        Returns
-        -------
-        features : list
-            A list of combinations of the input features to meet the
-            required specifications.
+    Returns
+    -------
+    features : list
+        A list of combinations of the input features to meet the required
+        specifications.
     """
     if max_den == 0:
         return generate_positive_features(p, max_num, exclude=exclude, s=s)
