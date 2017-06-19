@@ -1,4 +1,4 @@
-""" Data generation functions to interact with ASE atoms objects. """
+"""Data generation functions to interact with ASE atoms objects."""
 from __future__ import absolute_import
 from __future__ import division
 
@@ -9,18 +9,17 @@ from .output import write_data_setup
 
 
 def get_unique(atoms, size, key, writeout=False):
-    """ Returns a unique test dataset in the form of a integer list, to track
-        selected candidates, and a list of atoms objects making up the set.
+    """Return a unique test dataset.
 
-        Parameters
-        ----------
-        atoms : list
-            A list of ASE atoms objects.
-        size : int
-            Size of unique dataset to be returned.
-        key : string
-            Property on which to base the predictions stored in the atoms
-            object as atoms.info['key_value_pairs'][key].
+    Parameters
+    ----------
+    atoms : list
+        A list of ASE atoms objects.
+    size : int
+        Size of unique dataset to be returned.
+    key : string
+        Property on which to base the predictions stored in the atoms object as
+        atoms.info['key_value_pairs'][key].
     """
     dataset = defaultdict(list)
     # Get order of candidates.
@@ -43,21 +42,19 @@ def get_unique(atoms, size, key, writeout=False):
 
 
 def get_train(atoms, key, size=None, taken=None, writeout=False):
-    """ Returns a training dataset in the form of a list of atoms objects
-        making up the set and a list of the target values. The list is in a
-        random order. If the original order is required, use the 'order' list.
+    """Return a training dataset.
 
-        Parameters
-        ----------
-        atoms : list
-            A list of ASE atoms objects.
-        size : int
-            Size of training dataset.
-        taken : list
-            List of candidates that have been used in unique dataset.
-        key : string
-            Property on which to base the predictions stored in the atoms
-            object as atoms.info['key_value_pairs'][key].
+    Parameters
+    ----------
+    atoms : list
+        A list of ASE atoms objects.
+    size : int
+        Size of training dataset.
+    taken : list
+        List of candidates that have been used in unique dataset.
+    key : string
+        Property on which to base the predictions stored in the atoms object as
+        atoms.info['key_value_pairs'][key].
     """
     dataset = defaultdict(list)
     orderlist = list(enumerate(atoms))
