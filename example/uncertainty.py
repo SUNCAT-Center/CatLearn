@@ -14,7 +14,7 @@ from atoml.particle_fingerprint import ParticleFingerprintGenerator
 from atoml.feature_preprocess import normalize
 from atoml.predict import GaussianProcess, target_standardize
 
-db = DataConnection('gadb.db')
+db = DataConnection('../data/gadb.db')
 
 # Get all relaxed candidates from the db file.
 all_cand = db.get_all_relaxed_candidates(use_extinct=False)

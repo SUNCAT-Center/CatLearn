@@ -6,7 +6,7 @@ from ase.ga.data import DataConnection
 from atoml.data_setup import get_unique, get_train
 from atoml.utilities import remove_outliers
 
-db = DataConnection('gadb.db')
+db = DataConnection('../data/gadb.db')
 
 # Get all relaxed candidates from the db file.
 all_cand = db.get_all_relaxed_candidates(use_extinct=False)
