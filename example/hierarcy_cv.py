@@ -4,7 +4,8 @@ from atoml.cross_validation import HierarchyValidation
 from atoml.ridge_regression import find_optimal_regularization, RR
 
 # Define the hierarchey cv class method.
-hv = HierarchyValidation(db_name='train_db.sqlite', table='FingerVector',
+hv = HierarchyValidation(db_name='../data/train_db.sqlite',
+                         table='FingerVector',
                          file_name='split')
 # Split the data into subsets.
 hv.split_index(min_split=50, max_split=2000)
