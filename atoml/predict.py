@@ -173,9 +173,10 @@ class GaussianProcess(object):
         if uncertainty:
             kxx = get_covariance(kernel_dict=self.kernel_dict,
                                  matrix1=test_fp)
-            data['uncertainty'] = [(kxx[0][0] - np.dot(np.dot(kt, cinv),
-                                                       np.transpose(kt)))
-                                   ** 0.5 for kt in ktb]
+            data['uncertainty'] = [(self.regularization + kxx[kt][kt] -
+                                    np.dot(np.dot(ktb[kt], cinv),
+                                           np.transpose(ktb[kt])))
+                                   ** 0.5 for kt in range(len(ktb))]
 
         if basis is not None:
             data['basis_analysis'] = self.fixed_basis(train_fp=train_fp,
