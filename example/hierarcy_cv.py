@@ -4,7 +4,8 @@ from atoml.cross_validation import HierarchyValidation
 from atoml.ridge_regression import find_optimal_regularization, RR
 
 # Define the hierarchey cv class method.
-hv = HierarchyValidation(db_name='train_db.sqlite', table='FingerVector',
+hv = HierarchyValidation(db_name='../data/train_db.sqlite',
+                         table='FingerVector',
                          file_name='split')
 # Split the data into subsets.
 hv.split_index(min_split=50, max_split=2000)
@@ -12,9 +13,16 @@ hv.split_index(min_split=50, max_split=2000)
 ind = hv.load_split()
 
 
-def predict(train_features, train_targets, test_features, test_targets):
+def predict(train_features, train_targets, test_features, test_targets,
+            features):
     """Function to perform the prediction."""
     data = {}
+
+    # Set how many features to include in the model.
+    train_features = train_features[:, :features]
+    test_features = test_features[:, :features]
+
+    # Set up the ridge regression function.
     b = find_optimal_regularization(X=train_features, Y=train_targets, p=0,
                                     Ns=100)
     coef = RR(X=train_features, Y=train_targets, p=0, omega2=b, W2=None,
@@ -32,7 +40,7 @@ def predict(train_features, train_targets, test_features, test_targets):
 
 
 # Make the predictions for each subset.
-res = hv.split_predict(index_split=ind, predict=predict)
+res = hv.split_predict(index_split=ind, predict=predict, features=200)
 # Print out the errors.
 for i in res:
     print(i[0], i[1])

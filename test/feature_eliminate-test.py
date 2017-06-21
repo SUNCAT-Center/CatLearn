@@ -11,7 +11,7 @@ from atoml.feature_elimination import FeatureScreening
 from atoml.particle_fingerprint import ParticleFingerprintGenerator
 from atoml.standard_fingerprint import StandardFingerprintGenerator
 
-db = DataConnection('gadb.db')
+db = DataConnection('../data/gadb.db')
 
 # Get all relaxed candidates from the db file.
 all_cand = db.get_all_relaxed_candidates(use_extinct=False)

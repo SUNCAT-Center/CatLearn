@@ -102,7 +102,7 @@ class HierarchyValidation(object):
 
         return data
 
-    def split_predict(self, index_split, predict):
+    def split_predict(self, index_split, predict, **kwargs):
         """Function to make predictions looping over all subsets of data.
 
         Parameters
@@ -135,7 +135,7 @@ class HierarchyValidation(object):
             pred = predict(train_features=train_features,
                            train_targets=train_targets,
                            test_features=test_features,
-                           test_targets=test_targets)
+                           test_targets=test_targets, **kwargs)
             result.append(pred['result'])
 
         return result
