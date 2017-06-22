@@ -16,7 +16,7 @@ absolute = True  # Take the absolute values for the correlation.
 clean = False  # Clean zero-varience features
 expand = False
 
-mask = None
+correlation = 'pearson'
 
 # Define the hierarchey cv class method.
 hv = HierarchyValidation(db_name='../data/train_db.sqlite',
@@ -37,10 +37,11 @@ for i in ind:
     d = pd.DataFrame(data)
 
     # Compute the correlation matrix
-    corr = d.corr(method='pearson')
+    corr = d.corr(method=correlation)
     if absolute:
         corr = corr.abs()
 
+    mask = None
     if triangle:
         # Generate a mask for the upper triangle
         mask = np.zeros_like(corr, dtype=np.bool)
@@ -56,5 +57,8 @@ for i in ind:
     # Draw the heatmap
     sns.heatmap(corr, cmap=cmap, mask=mask, square=True, xticklabels=20,
                 yticklabels=20)
+    plt.title(correlation)
+    plt.xlabel('Feature No.')
+    plt.ylabel('Feature No.')
     plt.show()
     exit()
