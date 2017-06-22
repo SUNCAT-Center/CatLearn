@@ -10,7 +10,7 @@ from atoml.cross_validation import HierarchyValidation
 from atoml.feature_engineering import single_transform
 from atoml.utilities import clean_variance
 
-triangle = False  # Plot only the bottom half of the matrix
+triangle = True  # Plot only the bottom half of the matrix
 divergent = False  # Plot with a diverging color palette.
 absolute = True  # Take the absolute values for the correlation.
 clean = False  # Clean zero-varience features
@@ -54,6 +54,7 @@ for i in ind:
         cmap = sns.diverging_palette(220, 10, as_cmap=True)
 
     # Draw the heatmap
-    sns.heatmap(corr, cmap=cmap, square=True, xticklabels=20, yticklabels=20)
+    sns.heatmap(corr, cmap=cmap, mask=mask, square=True, xticklabels=20,
+                yticklabels=20)
     plt.show()
     exit()
