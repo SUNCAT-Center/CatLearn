@@ -7,21 +7,21 @@ from keras.models import Sequential
 from keras.layers import Dense, Activation, Dropout
 from keras.layers.normalization import BatchNormalization as BatchNorm
 from keras.optimizers import RMSprop, Adam
-from sklearn.preprocessing import scale
+from sklearn.preprocessing import robust_scale
 import matplotlib.pyplot as plt
 
 # load and set up data
 shuffle = False  # whether to randomize the order of data
 stack_data = 100  # stack training data with itself
 data = pd.read_csv('VetoGA_147PtAu_Hull.csv')
-data = data.sort('index', ascending=True)
+data = data.sort_values('index', ascending=True)
 N = data.shape[0]
 if(shuffle):
     data = data.sample(N)
 
 # PREPROCESSING
 
-X = scale(np.array(data.iloc[:, :-2]))
+X = robust_scale(np.array(data.iloc[:, :-2]))
 Y = np.array(data.iloc[:, -2])
 idxs = np.array(data.iloc[:, -1])
 
@@ -71,10 +71,10 @@ optimizer = Adam(lr=0.01)
 model.compile(optimizer=optimizer, loss='mse')
 
 # Workaround for bug in current version of keras, needed with BatchNorm layers
-keras.backend.get_session().run(tf.initialize_all_variables())
+keras.backend.get_session().run(tf.global_variables_initializer())
 
 # train the model
-model.fit(X_train, Y_train, nb_epoch=20, verbose=1, batch_size=1024)
+model.fit(X_train, Y_train, epochs=20, verbose=1, batch_size=1024)
 
 # EVALUATE
 

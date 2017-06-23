@@ -7,9 +7,9 @@ import numpy as np
 from math import log
 
 from .database_functions import DescriptorDatabase
-from .feature_expansion import (get_order_2, get_order_2ab, get_ablog,
-                                get_div_order_2, get_labels_order_2,
-                                get_labels_order_2ab, get_labels_ablog)
+from .feature_engineering import (get_order_2, get_order_2ab, get_ablog,
+                                  get_div_order_2, get_labels_order_2,
+                                  get_labels_order_2ab, get_labels_ablog)
 from .feature_elimination import iterative_screening
 from .feature_elimination import robust_rank_correlation_screening as rr_screen
 from .feature_elimination import sure_independence_screening as sure_screen
@@ -19,7 +19,7 @@ from .regression import lasso
 from .feature_preprocess import standardize
 from .predict import GaussianProcess
 
-from .fit_funcs import find_optimal_regularization, RR
+from .ridge_regression import find_optimal_regularization, RR
 
 
 class ModelBuilder(object):

@@ -1,3 +1,4 @@
+"""Example to get predictive uncertainty."""
 from __future__ import print_function
 from __future__ import absolute_import
 
@@ -7,33 +8,34 @@ import matplotlib.pyplot as plt
 
 from ase.ga.data import DataConnection
 from atoml.data_setup import get_unique, get_train
-from atoml.fingerprint_setup import normalize, return_fpv
+from atoml.fingerprint_setup import return_fpv
 from atoml.standard_fingerprint import StandardFingerprintGenerator
 from atoml.particle_fingerprint import ParticleFingerprintGenerator
+from atoml.feature_preprocess import normalize
 from atoml.predict import GaussianProcess, target_standardize
 
-db = DataConnection('gadb.db')
+db = DataConnection('../data/gadb.db')
 
 # Get all relaxed candidates from the db file.
 all_cand = db.get_all_relaxed_candidates(use_extinct=False)
 
 # Setup the test and training datasets.
-testset = get_unique(candidates=all_cand, testsize=500, key='raw_score')
-trainset = get_train(candidates=all_cand, trainsize=500,
-                     taken_cand=testset['taken'], key='raw_score')
+testset = get_unique(atoms=all_cand, size=500, key='raw_score')
+trainset = get_train(atoms=all_cand, size=500, taken=testset['taken'],
+                     key='raw_score')
 
 # Define fingerprint parameters.
 sfpv = StandardFingerprintGenerator()
 pfpv = ParticleFingerprintGenerator(get_nl=False, max_bonds=13)
 
 # Get the list of fingerprint vectors and normalize them.
-test_fp = return_fpv(testset['candidates'], [sfpv.eigenspectrum_fpv,
-                                             pfpv.nearestneighbour_fpv],
+test_fp = return_fpv(testset['atoms'], [sfpv.eigenspectrum_fpv,
+                                        pfpv.nearestneighbour_fpv],
                      use_prior=False)
-train_fp = return_fpv(trainset['candidates'], [sfpv.eigenspectrum_fpv,
-                                               pfpv.nearestneighbour_fpv],
+train_fp = return_fpv(trainset['atoms'], [sfpv.eigenspectrum_fpv,
+                                          pfpv.nearestneighbour_fpv],
                       use_prior=False)
-nfp = normalize(train=train_fp, test=test_fp)
+nfp = normalize(train_matrix=train_fp, test_matrix=test_fp)
 
 # Set up the prediction routine.
 kdict = {'k1': {'type': 'gaussian', 'width': 0.5}}
@@ -41,6 +43,7 @@ gp = GaussianProcess(kernel_dict=kdict, regularization=0.001)
 
 
 def basis(descriptors):
+    """Define simple linear basis."""
     return descriptors * ([1] * len(descriptors))
 
 

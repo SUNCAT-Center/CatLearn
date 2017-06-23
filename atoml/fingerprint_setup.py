@@ -1,4 +1,4 @@
-""" Functions to setup fingerprint vectors. """
+"""Functions to setup fingerprint vectors."""
 from __future__ import print_function
 from __future__ import absolute_import
 from __future__ import division
@@ -20,16 +20,16 @@ except ImportError:
 
 def db_sel2fp(calctype, fname, selection, moldb=None, bulkdb=None,
               slabref=None):
-    """ Function to return an array of fingerprints from ase.db files and
-        selection.
+    """Return array of fingerprints from ase.db files and selection.
 
-        Inputs:
-            calctype: str
-            fname: str
-            selection: list
-            moldb: str
-            bulkdb: str
-            DFT_parameters: dict
+    Parameters
+    ----------
+    calctype : str
+    fname : str
+    selection : list
+    moldb : str
+    bulkdb : str
+    DFT_parameters : dict
     """
     keys = {}
     c = ase.db.connect(fname)
@@ -78,13 +78,12 @@ def db_sel2fp(calctype, fname, selection, moldb=None, bulkdb=None,
 
 
 def get_combined_descriptors(fpv_list):
-    """ Function to sequentially combine feature label vectors and return them
-        for a list of atoms objects. Analogous to return_fpv function.
+    """Sequentially combine feature label vectors.
 
-        Input:  atoms object
-                functions that return fingerprints
-
-        Output:  list
+    Parameters
+    ----------
+    fpv_list : list
+        Functions that return fingerprints.
     """
     # Check that there are at least two fingerprint descriptors to combine.
     msg = "This functions combines various fingerprint"
@@ -98,6 +97,7 @@ def get_combined_descriptors(fpv_list):
 
 
 def get_keyvaluepair(c=[], fpv_name='None'):
+    """Get a list of the key_value_pairs target names/values."""
     if len(c) == 0:
         return ['kvp_'+fpv_name]
     else:
@@ -109,9 +109,7 @@ def get_keyvaluepair(c=[], fpv_name='None'):
 
 
 def return_fpv(candidates, fpv_name, use_prior=True, writeout=False):
-    """ Function to sequentially combine fingerprint vectors and return them
-        for a list of atoms objects.
-    """
+    """Sequentially combine fingerprint vectors."""
     # Put fpv_name in a list, if it is not already.
     if not isinstance(fpv_name, list):
         fpv_name = [fpv_name]
@@ -129,18 +127,19 @@ def return_fpv(candidates, fpv_name, use_prior=True, writeout=False):
     if type(candidates) is defaultdict or type(candidates) is list:
         list_fp = []
         for c in candidates:
-            list_fp.append(get_fpv(c, fpv_name, use_prior))
+            list_fp.append(_get_fpv(c, fpv_name, use_prior))
         return np.asarray(list_fp)
     # Do the same but for a single atoms object.
     else:
         c = candidates
-        return np.asarray([get_fpv(c, fpv_name, use_prior)])
+        return np.asarray([_get_fpv(c, fpv_name, use_prior)])
 
 
-def get_fpv(c, fpv_name, use_prior):
-    """ Get the fingerprint vector as an array from a single Atoms object.
-        If a fingerprint vector is saved in info['data']['fpv'] it is returned
-        otherwise saved in the data dictionary.
+def _get_fpv(c, fpv_name, use_prior):
+    """Get the fingerprint vector as an array.
+
+    If a fingerprint vector is saved in info['data']['fpv'] it is returned
+    otherwise saved in the data dictionary.
     """
     if len(fpv_name) == 1:
         if not use_prior:
@@ -151,16 +150,16 @@ def get_fpv(c, fpv_name, use_prior):
             c.info['data']['fpv'] = fpv_name[0](atoms=c)
         return c.info['data']['fpv']
     if not use_prior:
-        return concatenate_fpv(c, fpv_name)
+        return _concatenate_fpv(c, fpv_name)
     if 'data' not in c.info:
-        c.info['data'] = {'fpv': concatenate_fpv(c, fpv_name)}
+        c.info['data'] = {'fpv': _concatenate_fpv(c, fpv_name)}
     elif 'fpv' not in c.info['data']:
-        c.info['data']['fpv'] = concatenate_fpv(c, fpv_name)
+        c.info['data']['fpv'] = _concatenate_fpv(c, fpv_name)
     return c.info['data']['fpv']
 
 
-def concatenate_fpv(c, fpv_name):
-    """ Simple function to join multiple fingerprint vectors. """
+def _concatenate_fpv(c, fpv_name):
+    """Join multiple fingerprint vectors."""
     fpv = fpv_name[0](atoms=c)
     for i in fpv_name[1:]:
         fpv = np.concatenate((i(atoms=c), fpv))

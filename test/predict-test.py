@@ -1,5 +1,6 @@
-""" Script to test the prediction functions. """
+"""Script to test the prediction functions."""
 from __future__ import print_function
+from __future__ import absolute_import
 
 from ase.ga.data import DataConnection
 from atoml.data_setup import get_unique, get_train
@@ -9,7 +10,7 @@ from atoml.particle_fingerprint import ParticleFingerprintGenerator
 from atoml.predict import GaussianProcess
 
 
-db = DataConnection('gadb.db')
+db = DataConnection('../data/gadb.db')
 
 # Get all relaxed candidates from the db file.
 all_cand = db.get_all_relaxed_candidates(use_extinct=False)

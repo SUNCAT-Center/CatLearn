@@ -5,6 +5,7 @@ import yaml
 import pickle
 import numpy as np
 from random import shuffle
+from collections import OrderedDict
 
 
 class HierarchyValidation(object):
@@ -50,7 +51,7 @@ class HierarchyValidation(object):
         all_index : list
             List of indices in the feature database.
         """
-        data = {}
+        data = OrderedDict()
         if all_index is None:
             all_index = self._get_index()
 
@@ -101,7 +102,7 @@ class HierarchyValidation(object):
 
         return data
 
-    def split_predict(self, index_split, predict):
+    def split_predict(self, index_split, predict, **kwargs):
         """Function to make predictions looping over all subsets of data.
 
         Parameters
@@ -112,7 +113,7 @@ class HierarchyValidation(object):
             The prediction function. Must return dict with 'result' in it.
         """
         result = []
-        for i in index_split:
+        for i in reversed(index_split):
             j, k = i.split('_')
             train_data = self._compile_split(index_split[j + '_' + k])
             train_features = np.array(train_data[:, 1:-1], np.float64)
@@ -134,7 +135,7 @@ class HierarchyValidation(object):
             pred = predict(train_features=train_features,
                            train_targets=train_targets,
                            test_features=test_features,
-                           test_targets=test_targets)
+                           test_targets=test_targets, **kwargs)
             result.append(pred['result'])
 
         return result

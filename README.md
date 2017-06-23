@@ -26,10 +26,9 @@ interesting problems.
     -   neighborhood_matrix.py
 *   Database functions to store the feature matrix from a given dataset.
     -   database_functions.py
-*   Feature matrix preprocessing, manipulation to expand in combinatorial
-manner and selection elimination and extraction methods.
+*   Feature preprocessing, engineering, elimination and extraction methods.
     -   feature_preprocess.py
-    -   feature_expansion.py
+    -   feature_engineering.py
     -   feature_elimination.py
     -   feature_extraction.py
 *   Gaussian processes predictions with hyperparameter optimization.

@@ -1,6 +1,4 @@
-""" Standard fingerprint functions generating sets of features with a physical
-    meaning.
-"""
+"""Standard fingerprint functions."""
 from __future__ import absolute_import
 from __future__ import division
 
@@ -14,22 +12,25 @@ except ImportError:
 
 
 class StandardFingerprintGenerator(object):
+    """Function to build a fingerprint vector based on an atoms object."""
+
     def __init__(self, atom_types=None):
-        """ atom_types: list
-                List of all unique atomic types in the systems under
-                consideration. Should always be defined if elemental makeup
-                varies between candidates to preserve a constant ordering.
+        """Standard fingerprint generator setup.
+
+        Parameters
+        ----------
+        atom_types : list
+            Unique atomic types in the systems.
         """
         self.atom_types = atom_types
 
     def mass_fpv(self, atoms):
-        """ Function that takes a list of atoms objects and returns the mass.
-        """
+        """Function that takes a list of atoms objects and returns the mass."""
         # Return the summed mass of the atoms object.
         return np.array([sum(atoms.get_masses())])
 
     def composition_fpv(self, atoms):
-        """ Basic function to take atoms object and return the composition. """
+        """Basic function to take atoms object and return the composition."""
         # Generate a list of atom types if not supplied.
         if self.atom_types is None:
             self.atom_types = frozenset(atoms.get_chemical_symbols())
@@ -44,11 +45,8 @@ class StandardFingerprintGenerator(object):
             fp.append(count)
         return np.array(fp)
 
-    def get_coulomb(self, atoms):
-        """ Function to generate the coulomb matrix.
-
-        Returns a numpy array.
-        """
+    def _get_coulomb(self, atoms):
+        """Function to generate the coulomb matrix."""
         # Get distances
         dm = atoms.get_all_distances()
         np.fill_diagonal(dm, 1.)
@@ -63,23 +61,16 @@ class StandardFingerprintGenerator(object):
         return coulomb
 
     def eigenspectrum_fpv(self, atoms):
-        """ Function that takes a list of atoms objects and returns a list of
-            fingerprint vectors in the form of the sorted eigenspectrum of the
-            Coulomb matrix as defined in J. Chem. Theory Comput. 2013, 9,
-            3404-3419.
-        """
+        """Sorted eigenspectrum of the Coulomb matrix."""
         # Get the Coulomb matrix.
-        coulomb = self.get_coulomb(atoms)
+        coulomb = self._get_coulomb(atoms)
         # Get eigenvalues and vectors
         w, v = np.linalg.eig((np.array(coulomb)))
         # Return sort eigenvalues from largest to smallest
         return np.sort(w)[::-1]
 
     def distance_fpv(self, atoms):
-        """ Function to calculate the averaged distance between e.g. A-A atomic
-            pairs. The distance measure can be useful to describe how close
-            atoms preferentially sit in the system.
-        """
+        """Averaged distance between e.g. A-A atomic pairs."""
         fp = []
         an = atoms.get_atomic_numbers()
         pos = atoms.get_positions()
@@ -102,12 +93,7 @@ class StandardFingerprintGenerator(object):
         return fp
 
     def ptm_structure_fpv(self, atoms):
-        """ Function that uses the Polyhedral Template Matching routine in ASAP
-            to assess the structure and return a list with the crystal
-            structure environment of each atom. Greater detail can be found at
-            the following:
-            https://wiki.fysik.dtu.dk/asap/Local%20crystalline%20order
-        """
+        """Polyhedral Template Matching wrapper for ASAP."""
         msg = "ASAP must be installed to use this function:"
         msg += " https://wiki.fysik.dtu.dk/asap"
         assert not no_asap, msg
@@ -115,10 +101,7 @@ class StandardFingerprintGenerator(object):
         return ptmdata['structure']
 
     def ptm_alloy_fpv(self, atoms):
-        """ Function that uses the Polyhedral Template Matching routine in ASAP
-            to assess the structure and return a list with the alloy structure
-            environment of each atom.
-        """
+        """Polyhedral Template Matching wrapper for ASAP."""
         msg = "ASAP must be installed to use this function:"
         msg += " https://wiki.fysik.dtu.dk/asap"
         assert not no_asap, msg
