@@ -1,4 +1,4 @@
-"""f(x) = 1/20 (x + 4)(x + 2)(x + 1)(x − 1)(x − 3)+ 2"""
+"""Toy model to test out prediction routines."""
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -7,6 +7,7 @@ from atoml.predict import GaussianProcess
 
 
 def afunc(x):
+    """Define some polynomial function."""
     y = x - 50
     p = (y + 4) * (y + 4) * (y + 1) * (y - 1) * (y - 3.5) * (y - 2) * (y - 1)
     p += 40 * y + 80 * np.sin(10 * x)
@@ -28,8 +29,6 @@ target += np.array(nt)
 
 stdx = np.std(train)
 stdy = np.std(target)
-
-print(np.mean(target), np.std(target))
 tstd = np.std(target, axis=1)
 
 linex = 8 * np.random.random_sample((1, test_points)) - 4.5 + 50
@@ -140,6 +139,7 @@ ax.plot(test[0], np.array(over['uncertainty'] * tstd), '-', lw=1,
         color='red')
 ax.plot(test[0], np.array(optp['uncertainty'] * tstd), '-', lw=1,
         color='green')
+plt.title('Uncertainty Profile')
 plt.xlabel('feature')
 plt.ylabel('uncertainty')
 plt.axis('tight')

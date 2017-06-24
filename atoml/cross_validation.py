@@ -59,7 +59,7 @@ class HierarchyValidation(object):
         shuffle(all_index)
 
         if max_split is not None:
-            assert len(all_index) > max_split
+            assert len(all_index) > max_split and max_split >= 2 * min_split
             # Cut off the list of indices.
             all_index = all_index[:max_split]
 
