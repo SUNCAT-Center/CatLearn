@@ -2,11 +2,13 @@
 import numpy as np
 from atoml.cross_validation import HierarchyValidation
 from atoml.ridge_regression import find_optimal_regularization, RR
+from atoml.feature_preprocess import standardize
+from atoml.predict import target_standardize
 
 # Define the hierarchey cv class method.
 hv = HierarchyValidation(db_name='../data/train_db.sqlite',
                          table='FingerVector',
-                         file_name='split')
+                         file_name='hierarchy')
 # Split the data into subsets.
 hv.split_index(min_split=50, max_split=2000)
 # Load data back in from save file.
@@ -22,6 +24,13 @@ def predict(train_features, train_targets, test_features, test_targets,
     train_features = train_features[:, :features]
     test_features = test_features[:, :features]
 
+    std = standardize(train_matrix=train_features, test_matrix=test_features)
+    train_features = std['train']
+    test_features = std['test']
+
+    ts = target_standardize(train_targets)
+    train_targets = ts['target']
+
     # Set up the ridge regression function.
     b = find_optimal_regularization(X=train_features, Y=train_targets, p=0,
                                     Ns=100)
@@ -31,7 +40,8 @@ def predict(train_features, train_targets, test_features, test_targets,
     # Test the model.
     sumd = 0.
     for tf, tt in zip(test_features, test_targets):
-        sumd += (np.dot(coef, tf) - tt) ** 2
+        p = (np.dot(coef, tf) * ts['std']) + ts['mean']
+        sumd += (p - tt) ** 2
     error = (sumd / len(test_features)) ** 0.5
 
     data['result'] = len(test_targets), error
