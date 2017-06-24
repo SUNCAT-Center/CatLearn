@@ -47,7 +47,7 @@ std = standardize(train_matrix=np.reshape(train, (np.shape(train)[1], 1)),
 # Prediction parameters
 sdt1 = np.sqrt(0.2)
 w1 = 0.142
-sdt2 = np.sqrt(0.00001)
+sdt2 = np.sqrt(1e-5)
 w2 = 0.142
 
 # Set up the prediction routine.
