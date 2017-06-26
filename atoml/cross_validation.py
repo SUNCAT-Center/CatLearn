@@ -77,7 +77,7 @@ class HierarchyValidation(object):
                 current_split = data[str(i) + '_' + str(j)]
                 shuffle(current_split)
                 new_split = int(len(current_split) / 2)
-                if new_split > min_split:
+                if new_split >= min_split:
                     first_name, sn = str(i+1) + '_' + str(sn), sn + 1
                     second_name, sn = str(i+1) + '_' + str(sn), sn + 1
                     data[first_name] = current_split[:new_split]
