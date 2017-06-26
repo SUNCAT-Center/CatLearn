@@ -22,8 +22,9 @@ new_data = True
 expand = False
 plot = True
 pm = False
+test_train = True
 stack_data = 100  # stack training data with itself
-size = 30000
+size = 10000
 
 # Define the hierarchey cv class method.
 hv = HierarchyValidation(db_name='../data/train_db.sqlite',
@@ -113,8 +114,9 @@ pres25 = []
 nres25 = []
 
 # predictions on test set
-# X_test = X_train
-# Y_test = Y_train
+if test_train:
+    X_test = X_train
+    Y_test = Y_train
 base = model.evaluate(X_test, Y_test)
 print('TF Model error:', base)
 
@@ -127,6 +129,34 @@ def sensitivity(val, res):
         score = model.evaluate(X_now, Y_test)
         res.append(np.sqrt(score) - np.sqrt(base))
 
+
+# predictions on test set
+res_list = [pres1, nres1]
+res_val = [1., -1.]
+
+for i, j in zip(res_list, res_val):
+    sensitivity(val=j, res=i)
+
+fig = plt.figure()
+ax1 = fig.add_subplot(111)
+
+ave = (np.array(pres1) + np.array(nres1))
+ave /= 2
+
+# Print out a subset of the best features.
+print('\n', np.argsort(ave)[-20:])
+
+
+if plot:
+    ax1.scatter(x=feat, y=pres1, label='+1.00', alpha=0.1)
+    ax1.scatter(x=feat, y=nres1, label='-1.00', alpha=0.1)
+    ax1.scatter(x=feat, y=ave, label='average', alpha=0.8)
+    plt.xlabel('feature')
+    plt.ylabel('response')
+    plt.legend(loc='upper left')
+    plt.show()
+
+exit()
 
 # predictions on test set
 res_list = [pres1, nres1, pres5, nres5, pres25, nres25]
