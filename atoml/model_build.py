@@ -1,4 +1,4 @@
-""" Functions to build a baseline model. """
+"""Functions to build a baseline model."""
 from __future__ import print_function
 from __future__ import absolute_import
 from __future__ import division
@@ -10,10 +10,8 @@ from .database_functions import DescriptorDatabase
 from .feature_engineering import (get_order_2, get_order_2ab, get_ablog,
                                   get_div_order_2, get_labels_order_2,
                                   get_labels_order_2ab, get_labels_ablog)
-from .feature_elimination import iterative_screening
-from .feature_elimination import robust_rank_correlation_screening as rr_screen
-from .feature_elimination import sure_independence_screening as sure_screen
-from .feature_extraction import home_pca as pca
+from .feature_elimination import FeatureScreening
+from .feature_extraction import pca
 from .utilities import clean_variance
 from .regression import lasso
 from .feature_preprocess import standardize
@@ -23,46 +21,47 @@ from .ridge_regression import find_optimal_regularization, RR
 
 
 class ModelBuilder(object):
+    """Function to make a best guess of a good GP model."""
+
     def __init__(self, update_train_db=True, update_test_db=True,
                  db_name='fpv_store.sqlite', screening_method='rrcs',
                  screening_correlation='kendall', initial_prediction=True,
                  clean_features=True, expand=True, optimize=True, size=None,
                  width=0.5, regularization=0.001):
-        """ Function to make a best guess for a GP model that will give
-            reasonable results.
+        """Setup for model building function.
 
-            Parameters
-            ----------
-            update_train_db : boolean
-                Set whether to write out the training feature matrix to a
-                database. Default is True.
-            update_test_db : boolean
-                Set whether to write out the test feature matrix to a database.
-                Default is False.
-            db_name : string
-                Name of database file.
-            screening_method : string
-                Method to reduce the number of features when features is
-                greater than number of data points. Default is robust rank
-                correlation screening.
-            screening_correlation : string
-                Correlation used in screening routine. Only required for rrcs.
-                Default is Kendall.
-            initial_prediction : boolean
-                Set True to make prediction on the model first proposed, all
-                original features suggested. Default is True.
-            clean_features : boolean
-                Remove zero distribution features if True. Default is True.
-            optimize : boolean
-                Allow the function to try and predict the ideal size of the
-                feature matrix. Default is True.
-            size : int
-                If optimize is False, set the number of features to be
-                returned. Will return the n best.
-            width : float or list
-                Starting guess for the kernel weights.
-            regularization : float
-                Starting guess for the noise parameter.
+        Parameters
+        ----------
+        update_train_db : boolean
+            Set whether to write out the training feature matrix to a database.
+            Default is True.
+        update_test_db : boolean
+            Set whether to write out the test feature matrix to a database.
+            Default is False.
+        db_name : string
+            Name of database file.
+        screening_method : string
+            Method to reduce the number of features when features is greater
+            than number of data points. Default is robust rank correlation
+            screening.
+        screening_correlation : string
+            Correlation used in screening routine. Only required for rrcs.
+            Default is Kendall.
+        initial_prediction : boolean
+            Set True to make prediction on the model first proposed, all
+            original features suggested. Default is True.
+        clean_features : boolean
+            Remove zero distribution features if True. Default is True.
+        optimize : boolean
+            Allow the function to try and predict the ideal size of the feature
+            matrix. Default is True.
+        size : int
+            If optimize is False, set the number of features to be returned.
+            Will return the n best.
+        width : float or list
+            Starting guess for the kernel weights.
+        regularization : float
+            Starting guess for the noise parameter.
         """
         self.update_train_db = update_train_db
         self.update_test_db = update_test_db
@@ -79,28 +78,27 @@ class ModelBuilder(object):
 
     def from_atoms(self, train_atoms, fpv_function, train_target, build=True,
                    test_atoms=None, test_target=None, feature_names=None):
-        """ Build model from a set of atoms objects.
+        """Build model from a set of atoms objects.
 
-            Parameters
-            ----------
-            train_atoms : list
-                List of atoms objects on which to train the GP model.
-            fpv_function : functions
-                Function to take the list of atoms objects and return a set of
-                features.
-            train_target : list
-                List of target values corresponding to the training data.
-            build : boolean
-                Decide whether to try and generate a best-guess model. Default
-                is True.
-            test_atoms : list
-                List of atoms objects on which to make predictions.
-            test_target : list
-                List of target values corresponding to the test data if
-                avaliable.
-            feature_names : list
-                List of names corresponding to each feature generated by the
-                fpv_function.
+        Parameters
+        ----------
+        train_atoms : list
+            List of atoms objects on which to train the GP model.
+        fpv_function : functions
+            Function to take the list of atoms objects and return a set of
+            features.
+        train_target : list
+            List of target values corresponding to the training data.
+        build : boolean
+            Decide whether to try and generate a best-guess model. Default is
+            True.
+        test_atoms : list
+            List of atoms objects on which to make predictions.
+        test_target : list
+            List of target values corresponding to the test data if avaliable.
+        feature_names : list
+            List of names corresponding to each feature generated by the
+            fpv_function.
         """
         # Generate the training feature matrix from atoms objects.
         train_matrix = fpv_function(train_atoms)
@@ -121,22 +119,22 @@ class ModelBuilder(object):
     def from_matrix(self, train_matrix, train_target, feature_names=None,
                     train_id=None, test_matrix=None, test_id=None,
                     test_target=None, build=True):
-        """ Build a model from a pre-generated feature matrix.
+        """Build a model from a pre-generated feature matrix.
 
-            Parameters
-            ----------
-            train_matrix : matrix
-                Matrix containing all the features for all candidates in the
-                training dataset.
-            train_id : list
-                List of uuids corresponding to the atoms objects in the
-                training dataset.
-            test_matrix : matrix
-                Matrix containing all the features for all candidates in the
-                test dataset.
-            test_id : list
-                List of uuids corresponding to the atoms objects in the
-                test dataset.
+        Parameters
+        ----------
+        train_matrix : matrix
+            Matrix containing all the features for all candidates in the
+            training dataset.
+        train_id : list
+            List of uuids corresponding to the atoms objects in the training
+            dataset.
+        test_matrix : matrix
+            Matrix containing all the features for all candidates in the test
+            dataset.
+        test_id : list
+            List of uuids corresponding to the atoms objects in the test
+            dataset.
         """
         # Generate standard feature neames for basic tracking.
         if feature_names is None:
@@ -161,12 +159,11 @@ class ModelBuilder(object):
             if np.shape(train_matrix)[1] < limit:
                 print('Initial model will rank all features')
                 limit = np.shape(train_matrix)[1]
-            im = self.build_model(train_matrix=train_matrix,
-                                  feature_names=feature_names,
-                                  train_id=train_id, train_target=train_target,
-                                  test_matrix=test_matrix, test_id=test_id,
-                                  test_target=test_target,
-                                  limit=limit)
+            self.build_model(train_matrix=train_matrix,
+                             feature_names=feature_names,
+                             train_id=train_id, train_target=train_target,
+                             test_matrix=test_matrix, test_id=test_id,
+                             test_target=test_target, limit=limit)
 
         if self.expand:
             train_matrix, feature_names = self.expand_matrix(train_matrix,
@@ -190,19 +187,19 @@ class ModelBuilder(object):
                                   table='ExpandedFeatureSpace')
 
                 if build:
-                    return self.build_model(train_matrix=train_matrix,
-                                            feature_names=feature_names,
-                                            train_id=train_id,
-                                            train_target=train_target,
-                                            test_matrix=test_matrix,
-                                            test_id=test_id,
-                                            test_target=test_target,
-                                            limit=np.shape(train_matrix)[0])
+                    self.build_model(train_matrix=train_matrix,
+                                     feature_names=feature_names,
+                                     train_id=train_id,
+                                     train_target=train_target,
+                                     test_matrix=test_matrix,
+                                     test_id=test_id,
+                                     test_target=test_target,
+                                     limit=np.shape(train_matrix)[0])
 
     def build_model(self, train_matrix, train_target, feature_names=None,
                     train_id=None, test_matrix=None, test_id=None,
                     test_target=None, limit=None):
-        """ Build a model from a pre-generated feature matrix. """
+        """Build a model from a pre-generated feature matrix."""
         # Remove features with zero varience.
         c = clean_variance(train=train_matrix, test=test_matrix)
         test_matrix = c['test']
@@ -236,12 +233,12 @@ class ModelBuilder(object):
 
     def make_prediction(self, train_matrix, test_matrix, train_target,
                         test_target=None, opt_h=False):
-        """ Function to make predictions for a given model.
+        """Function to make predictions for a given model.
 
-            Parameters
-            ----------
-            opt_h : boolean
-                Set whether to optimize the hyperparameters. Default is False.
+        Parameters
+        ----------
+        opt_h : boolean
+            Set whether to optimize the hyperparameters. Default is False.
         """
         kdict = {'k1': {'type': 'gaussian', 'width': self.width}}
         predict = GaussianProcess(kernel_dict=kdict,
@@ -258,13 +255,13 @@ class ModelBuilder(object):
                                        optimize_hyperparameters=opt_h)
 
     def basis(self, descriptors):
-        """ Simple linear basis. """
+        """Simple linear basis."""
         linear = descriptors * ([1] * len(descriptors))
         return linear
 
     def expand_matrix(self, feature_matrix, feature_names=None,
                       return_names=True):
-        """ Expand the feature matrix by combing original features. """
+        """Expand the feature matrix by combing original features."""
         # Extend the feature matrix combinatorially.
         order_2 = get_order_2(feature_matrix)
         div_order_2 = get_div_order_2(feature_matrix)
@@ -286,7 +283,7 @@ class ModelBuilder(object):
 
     def reduce_matrix(self, train_matrix, train_target, feature_names,
                       test_matrix=None, test_target=None, limit=None):
-        """ Function to reduce the feature space. """
+        """Function to reduce the feature space."""
         # Check to see if there are more features than data points.
         n = np.shape(train_matrix)[0]
         d = np.shape(train_matrix)[1]
@@ -308,8 +305,7 @@ class ModelBuilder(object):
                                        test_matrix=test_matrix,
                                        test_target=test_target,
                                        feature_names=feature_names)
-        coefs, linear_error = linear[0][0], linear[1]
-        order, feature_names = linear[0][1], linear[0][2]
+        linear_error = linear[1], linear[0][2]
 
         ml, mf, mo = self.lasso_opt(size=d, train_target=train_target,
                                     train_matrix=train_matrix,
@@ -361,9 +357,10 @@ class ModelBuilder(object):
 
     def screening(self, train_matrix, train_target, feature_names,
                   test_matrix=None, test_target=None):
-        """ Function to perform the sure screening. If the number of features
-            is greater than twize the size of data, the iterative function is
-            used.
+        """Function to perform the sure screening.
+
+        If the number of features is greater than twize the size of data, the
+        iterative function is used.
         """
         # Use correlation screening to reduce features down to number
         # of data.
@@ -406,12 +403,12 @@ class ModelBuilder(object):
 
     def pca_opt(self, max_comp, train_matrix, test_matrix, train_target,
                 test_target):
-        """ Function to do the PCA optimization.
+        """Function to do the PCA optimization.
 
-            Parameters
-            ----------
-            max_comp : int
-                Limit of components to include.
+        Parameters
+        ----------
+        max_comp : int
+            Limit of components to include.
         """
         best_pca = float('inf')
         # Loop over the number of components to be considered.
@@ -433,8 +430,9 @@ class ModelBuilder(object):
 
     def ridge_regression(self, train_matrix, train_target, feature_names,
                          test_matrix=None, test_target=None):
-        """ Function to trean a linear ridge regression model. The importance
-            of features is calculated from the coefficients.
+        """Function to trean a linear ridge regression model.
+
+        The importance of features is calculated from the coefficients.
         """
         # Ridge regression to get ordering of features.
         target = np.asarray(train_target)
@@ -459,21 +457,20 @@ class ModelBuilder(object):
     def lasso_opt(self, size, train_target, train_matrix, steps=None,
                   min_alpha=1.e-8, max_alpha=1.e-1, max_iter=1e5,
                   test_matrix=None, test_target=None):
-        """ Function to perform lasso selection of features.
+        """Function to perform lasso selection of features.
 
-            Parameters
-            ----------
-            size : int
-                Number of features that should be returned.
-            steps : int
-                Number of steps to be taken in the penalty function.
-            min_alpha : float
-                Starting penalty when searching over range. Default is 1.e-8.
-            max_alpha : float
-                Final penalty when searching over range. Default is 1.e-1.
-            max_iter : float
-                Maximum number of iterations taken minimizing the lasso
-                function.
+        Parameters
+        ----------
+        size : int
+            Number of features that should be returned.
+        steps : int
+            Number of steps to be taken in the penalty function.
+        min_alpha : float
+            Starting penalty when searching over range. Default is 1.e-8.
+        max_alpha : float
+            Final penalty when searching over range. Default is 1.e-1.
+        max_iter : float
+            Maximum number of iterations taken minimizing the lasso function.
         """
         las = lasso(size=size, target=train_target, train_matrix=train_matrix,
                     test_matrix=test_matrix, min_alpha=min_alpha,
@@ -487,23 +484,23 @@ class ModelBuilder(object):
 
     def db_store(self, type, atoms_id, feature_matrix, target,
                  feature_names, table):
-        """ Function to automatically store feature matrix.
+        """Function to automatically store feature matrix.
 
-            Parameters
-            ----------
-            type : string
-                Set the name of the data to be stored, e.g. train.
-            atoms_id : list
-                The UUIDs for the corresponding atoms objects.
-            feature_matrix : array
-                An n x d array containing all of the numeric feature values.
-            target : list
-                A list of all the target values.
-            feature_names : list
-                A list of all the feature names.
-            table : string
-                The table name that data should be added to. Different tables
-                are used to store the original and extended feature sets.
+        Parameters
+        ----------
+        type : string
+            Set the name of the data to be stored, e.g. train.
+        atoms_id : list
+            The UUIDs for the corresponding atoms objects.
+        feature_matrix : array
+            An n x d array containing all of the numeric feature values.
+        target : list
+            A list of all the target values.
+        feature_names : list
+            A list of all the feature names.
+        table : string
+            The table name that data should be added to. Different tables are
+            used to store the original and extended feature sets.
         """
         # Add on the id and target values.
         atoms_id = [[i] for i in atoms_id]
