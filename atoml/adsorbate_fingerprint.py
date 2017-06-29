@@ -13,7 +13,7 @@ import warnings
 import numpy as np
 
 import ase.db
-# from ase.atoms import string2symbols
+from ase.atoms import string2symbols
 from ase.data import ground_state_magnetic_moments, covalent_radii
 from ase.data import chemical_symbols
 
@@ -208,12 +208,34 @@ class AdsorbateFingerprintGenerator(object):
                 dbskew = float(self.dbskew[name])
                 dbkurt = float(self.dbkurt[name])
             except KeyError:
-                dbcenter = np.NaN
-                dbfilling = np.NaN
-                dbwidth = np.NaN
-                dbskew = np.NaN
-                dbkurt = np.NaN
-                warnings.warn(name+' has no d-band info.')
+                try:
+                    bulkcomp = string2symbols(name)
+                    ldbcenter = []
+                    ldbfilling = []
+                    ldbwidth = []
+                    ldbskew = []
+                    ldbkurt = []
+                    for nam in bulkcomp:
+                        try:
+                            ldbkurt.append(float(self.dbkurt[nam]))
+                            ldbfilling.append(float(self.dbfilling[nam]))
+                            ldbwidth.append(float(self.dbwidth[nam]))
+                            ldbskew.append(float(self.dbskew[nam]))
+                            ldbkurt.append(float(self.dbkurt[nam]))
+                        except KeyError:
+                            continue
+                    dbcenter = np.average(ldbcenter)
+                    dbfilling = np.average(ldbfilling)
+                    dbwidth = np.average(ldbwidth)
+                    dbskew = np.average(ldbskew)
+                    dbkurt = np.average(ldbkurt)
+                except KeyError:
+                    dbcenter = np.NaN
+                    dbfilling = np.NaN
+                    dbwidth = np.NaN
+                    dbskew = np.NaN
+                    dbkurt = np.NaN
+                    warnings.warn(name+' has no d-band info.')
             return [
                 float(self.rho[name]),
                 len(atoms.numbers) / A,
@@ -432,7 +454,10 @@ class AdsorbateFingerprintGenerator(object):
                     ]
         else:
             add_atoms = atoms.info['add_atoms']
-            atoms = atoms.repeat([1, 2, 1])
+            if atoms.info['key_value_pairs']['supercell'] == '1x1':
+                atoms = atoms.repeat([2, 2, 1])
+            elif atoms.info['key_value_pairs']['supercell'] == '3x2':
+                atoms = atoms.repeat([1, 2, 1])
             surf_atoms = [a.index for a in atoms if a.index not in add_atoms]
             liste = []
             for m in surf_atoms:
@@ -604,6 +629,6 @@ class AdsorbateFingerprintGenerator(object):
         if atoms is None:
             return ['kvp_'+field_name]
         else:
-            field_value = float(atoms['key_value_pairs'][field_name])
+            field_value = float(atoms.info['key_value_pairs'][field_name])
             [field_value]
             return
