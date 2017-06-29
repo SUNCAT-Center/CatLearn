@@ -111,14 +111,18 @@ pred = gp.get_predictions(train_fp=nfp['train'],
 assert len(pred['prediction']) == 10
 print('laplacian prediction:', pred['validation_rmse']['average'])
 
-# Test prediction routine with AA kernel.
+# Prepare discrete data
+discrete_train = np.digitize(nfp['train'], np.linspace(-1, 1, 8))
+discrete_test = np.digitize(nfp['test'], np.linspace(-1, 1, 8))
+# Prepare hyperparameters for AA kernel
 cAA = []
-for column in range(len(np.shape(nfp['train'][1]))):
-    cAA.append(len(np.unique(nfp['train'][:, column])))
+for column in range(np.shape(discrete_train)[1]):
+    cAA.append(len(np.unique(discrete_train[:, column])))
+# Test prediction routine with AA kernel.
 kdict = {'k1': {'type': 'AA', 'theta': [.75] + cAA}}
 gp = GaussianProcess(kernel_dict=kdict, regularization=0.001)
-pred = gp.get_predictions(train_fp=nfp['train'],
-                          test_fp=nfp['test'],
+pred = gp.get_predictions(train_fp=discrete_train,
+                          test_fp=discrete_test,
                           cinv=None,
                           train_target=trainset['target'],
                           test_target=testset['target'],
