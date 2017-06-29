@@ -159,6 +159,31 @@ def gaussian_kernel(theta, m1, m2=None):
         return np.exp(-.5 * k)
 
 
+def AA_kernel(theta, m1, m2=None):
+    """ Returns the covariance matrix between datasets m1 and m2
+        with an Aichinson & Aitken kernel.
+
+        Parameters
+        ----------
+        theta : list
+            [l, n, c]
+        m1 : list
+            A list of the training fingerprint vectors.
+        m2 : list
+            A list of the training fingerprint vectors.
+    """
+    if m2 is None:
+        m2 = m1
+    l = theta[0]
+    c = np.vstack(theta[1:])
+    n = np.shape(m1)[1]
+    q = (1 - l)/(c - l)
+    return distance.cdist(m1, m2, lambda u, v:
+                          (l ** (n - np.sqrt(((u - v) ** 2))) *
+                           (q ** np.sqrt((u - v) ** 2))).sum()
+                          )
+
+
 def linear_kernel(theta, m1, m2=None):
     """ Returns the covariance matrix between datasets m1 and m2
         with a linear kernel.
