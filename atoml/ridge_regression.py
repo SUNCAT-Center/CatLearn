@@ -2,7 +2,7 @@
 import numpy as np
 
 
-def find_optimal_regularization(X, Y, p=0, Ns=100, wsteps=15, W2=None,
+def find_optimal_regularization(X, Y, p=0., Ns=100, wsteps=15, W2=None,
                                 Vh=None):
     """Find optimal omega2=w value for the fitting.
 
@@ -20,8 +20,8 @@ def find_optimal_regularization(X, Y, p=0, Ns=100, wsteps=15, W2=None,
         Feature matrix for the training data.
     Y : list
         Target data for the training sample.
-    p : ???
-        Define the prior function.
+    p : float
+        Define the prior function. Default is zero.
     Ns : int
         Number of boostrap samples to use
     W2 : array
@@ -177,7 +177,6 @@ def bootstrap_master(X, Y, p, omega2_l, Ns=100, X2_W=None, X2_Vh=None):
             EPE_l = np.hstack((EPE_l, EPE))
             coefs_samples_l = np.vstack((coefs_samples_l, coefs_samples))
 
-        print('omega2', omega2, 'epe', EPE)
     return err_l, ERR_l, EPE_l, coefs_samples_l
 
 
