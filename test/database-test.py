@@ -2,7 +2,6 @@
 from __future__ import print_function
 from __future__ import absolute_import
 
-from os import remove
 from random import random
 
 from ase.ga.data import DataConnection
@@ -12,9 +11,9 @@ from atoml.database_functions import DescriptorDatabase
 
 # Define variables for database to store system descriptors.
 db_name = 'fpv_store.sqlite'
-names = ['AA', 'AB', 'BA', 'BB', 'Energy']
 descriptors = ['AA', 'AB', 'BA', 'BB']
 targets = ['Energy']
+names = descriptors + targets
 
 # Set up the database to save system descriptors.
 dd = DescriptorDatabase(db_name=db_name, table='FingerVector')
@@ -42,18 +41,17 @@ dd.fill_db(descriptor_names=names, data=new_data)
 
 train_fingerprint = dd.query_db(names=descriptors)
 train_target = dd.query_db(names=targets)
-print(train_fingerprint, train_target)
+print('\nfeature data for candidates:\n', train_fingerprint,
+      '\ntarget data for candidates:\n', train_target)
 
 cand_data = dd.query_db(unique_id='7a216711c2eae02decc04da588c9e592')
-print(cand_data)
+print('\ndata for random candidate:\n', cand_data)
 
 all_id = dd.query_db(names=['uuid'])
 dd.create_column(new_column=['random'])
 for i in all_id:
     dd.update_descriptor(descriptor='random', new_data=random(),
                          unique_id=i[0])
-print(dd.query_db(names=['random']))
+print('\nretrieve random vars:\n', dd.query_db(names=['random']))
 
-print(dd.get_column_names())
-
-remove(db_name)
+print('\nretrieved column names:\n', dd.get_column_names())
