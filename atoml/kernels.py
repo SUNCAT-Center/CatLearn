@@ -17,7 +17,8 @@ def kdict2list(kdict, N_D=None):
             A kernel dictionary containing the keys 'type' and optional
             keys containing the hyperparameters of the kernel.
         N_D : none or int
-            ????
+            The number of descriptors if not specified in the kernel dict,
+            by the lenght of the lists of hyperparameters.
     """
     # Get the kernel type.
     ktype = str(kdict['type'])
@@ -47,6 +48,9 @@ def kdict2list(kdict, N_D=None):
     # Linear kernels have no hyperparameters
     elif ktype == 'linear':
         theta = [kdict['const']]
+
+    elif ktype == 'AA':
+        theta = [kdict['smoothing']]
 
     # Default hyperparameter keys for other kernels
     elif 'hyperparameters' in kdict:
@@ -79,7 +83,8 @@ def kdicts2list(kernel_dict, N_D=None):
         kernel_dict : dict
             A dictionary containing kernel dictionaries.
         N_D : int
-            ????
+            The number of descriptors if not specified in the kernel dict,
+            by the lenght of the lists of hyperparameters.
     """
     theta = []
     for kernel_key in kernel_dict:
