@@ -1,13 +1,16 @@
-"""Script to test the database functions."""
+"""Script to test data generation functions."""
 from __future__ import print_function
 from __future__ import absolute_import
 
 from random import random
 
 from ase.ga.data import DataConnection
+
+from atoml.data_setup import get_unique, get_train
 from atoml.fingerprint_setup import return_fpv
 from atoml.particle_fingerprint import ParticleFingerprintGenerator
 from atoml.database_functions import DescriptorDatabase
+from atoml.utilities import remove_outliers
 
 # Define variables for database to store system descriptors.
 db_name = 'fpv_store.sqlite'
@@ -25,9 +28,23 @@ gadb = DataConnection('../data/gadb.db')
 # Get all relaxed candidates from the db file.
 print('Getting candidates from the database')
 all_cand = gadb.get_all_relaxed_candidates(use_extinct=False)
+prune = remove_outliers(all_cand, key='raw_score')
+assert len(all_cand) != len(prune)
+
+# Setup the test and training datasets.
+testset = get_unique(atoms=all_cand, size=10, key='raw_score')
+assert len(testset['atoms']) == 10
+assert len(testset['taken']) == 10
+
+trainset = get_train(atoms=all_cand, size=50, taken=testset['taken'],
+                     key='raw_score')
+assert len(trainset['atoms']) == 50
+assert len(trainset['target']) == 50
 
 fpv = ParticleFingerprintGenerator(get_nl=False, max_bonds=13)
-data = return_fpv(all_cand, [fpv.nearestneighbour_fpv])
+data = return_fpv(trainset['atoms'], [fpv.nearestneighbour_fpv])
+
+# Put data in correct format to be inserted into database.
 new_data = []
 for i, a in zip(data, all_cand):
     d = []
@@ -37,8 +54,10 @@ for i, a in zip(data, all_cand):
     d.append(a.info['key_value_pairs']['raw_score'])
     new_data.append(d)
 
+# Fill the database with the data.
 dd.fill_db(descriptor_names=names, data=new_data)
 
+# Test out the database functions.
 train_fingerprint = dd.query_db(names=descriptors)
 train_target = dd.query_db(names=targets)
 print('\nfeature data for candidates:\n', train_fingerprint,
