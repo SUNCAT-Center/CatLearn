@@ -49,9 +49,6 @@ def kdict2list(kdict, N_D=None):
     elif ktype == 'linear':
         theta = [kdict['const']]
 
-    elif ktype == 'AA':
-        theta = [kdict['smoothing']]
-
     # Default hyperparameter keys for other kernels
     elif 'hyperparameters' in kdict:
         theta = kdict['hyperparameters']
