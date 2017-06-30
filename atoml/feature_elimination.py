@@ -282,8 +282,8 @@ class FeatureScreening(object):
                            method=self.regression)
 
         order = rf.feature_select(size=size, iterations=1e5, steps=steps,
-                                  line_search=True, spacing='linear',
-                                  min_alpha=1.e-8, max_alpha=1.e-1, eps=1e-3)
+                                  line_search=True, min_alpha=1.e-8,
+                                  max_alpha=1.e-1, eps=1e-3)
 
         return order['accepted']
 
