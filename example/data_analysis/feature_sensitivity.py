@@ -27,7 +27,7 @@ stack_data = 100  # stack training data with itself
 size = 10000
 
 # Define the hierarchey cv class method.
-hv = HierarchyValidation(db_name='../data/train_db.sqlite',
+hv = HierarchyValidation(db_name='../../data/train_db.sqlite',
                          table='FingerVector',
                          file_name='sensitivity_data')
 
