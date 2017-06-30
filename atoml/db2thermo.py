@@ -14,6 +14,8 @@ Input:
 import numpy as np
 import ase.db
 from ase.atoms import string2symbols
+from ase.data import covalent_radii
+# from ase.data import chemical_symbols
 
 
 def metal_index(atoms):
@@ -32,8 +34,10 @@ def info2primary_index(atoms):
     surf_atoms = atoms.info['surf_atoms']
     add_atoms = atoms.info['add_atoms']
     for m in surf_atoms:
+        dM = covalent_radii[atoms.numbers[m]]
         for a in add_atoms:
-            d = atoms.get_distance(m, a, mic=True, vector=False)
+            dA = covalent_radii[atoms.numbers[a]]
+            d = atoms.get_distance(m, a, mic=True, vector=False)-dM-dA
             liste.append([a, m, d])
     L = np.array(liste)
     i = np.argmin(L[:, 2])
