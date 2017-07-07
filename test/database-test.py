@@ -9,6 +9,7 @@ from ase.ga.data import DataConnection
 from atoml.data_setup import get_unique, get_train
 from atoml.fingerprint_setup import return_fpv
 from atoml.particle_fingerprint import ParticleFingerprintGenerator
+from atoml.standard_fingerprint import StandardFingerprintGenerator
 from atoml.database_functions import DescriptorDatabase
 from atoml.utilities import remove_outliers
 
@@ -41,8 +42,19 @@ trainset = get_train(atoms=all_cand, size=50, taken=testset['taken'],
 assert len(trainset['atoms']) == 50
 assert len(trainset['target']) == 50
 
-fpv = ParticleFingerprintGenerator(get_nl=False, max_bonds=13)
-data = return_fpv(trainset['atoms'], [fpv.nearestneighbour_fpv])
+# Clear out some old saved data.
+for i in trainset['atoms']:
+    del i.info['data']['nnmat']
+
+# Initiate the fingerprint generators with relevant input variables.
+pfpv = ParticleFingerprintGenerator(atom_numbers=[78, 79], max_bonds=13,
+                                    get_nl=False, dx=0.2, cell_size=50.,
+                                    nbin=4)
+sfpv = StandardFingerprintGenerator(atom_types=[78, 79])
+
+data = return_fpv(trainset['atoms'], [pfpv.nearestneighbour_fpv],
+                  use_prior=False)
+assert len(data) == 50
 
 # Put data in correct format to be inserted into database.
 new_data = []

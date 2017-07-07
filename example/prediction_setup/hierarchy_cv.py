@@ -6,7 +6,7 @@ from atoml.feature_preprocess import standardize
 from atoml.predict import target_standardize
 
 # Define the hierarchey cv class method.
-hv = HierarchyValidation(db_name='../data/train_db.sqlite',
+hv = HierarchyValidation(db_name='../../data/train_db.sqlite',
                          table='FingerVector',
                          file_name='hierarchy')
 # Split the data into subsets.
@@ -32,9 +32,9 @@ def predict(train_features, train_targets, test_features, test_targets,
     train_targets = ts['target']
 
     # Set up the ridge regression function.
-    b = find_optimal_regularization(X=train_features, Y=train_targets, p=0,
+    b = find_optimal_regularization(X=train_features, Y=train_targets,
                                     Ns=100)
-    coef = RR(X=train_features, Y=train_targets, p=0, omega2=b, W2=None,
+    coef = RR(X=train_features, Y=train_targets, omega2=b, W2=None,
               Vh=None)[0]
 
     # Test the model.
