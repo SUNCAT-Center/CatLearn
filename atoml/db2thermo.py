@@ -37,6 +37,7 @@ def info2primary_index(atoms):
         dM = covalent_radii[atoms.numbers[m]]
         for a in add_atoms:
             dA = covalent_radii[atoms.numbers[a]]
+            # Covalent radii are subtracted in distance comparison.
             d = atoms.get_distance(m, a, mic=True, vector=False)-dM-dA
             liste.append([a, m, d])
     L = np.array(liste)
