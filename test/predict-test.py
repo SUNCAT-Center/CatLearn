@@ -2,7 +2,6 @@
 from __future__ import print_function
 from __future__ import absolute_import
 
-import numpy as np
 from ase.ga.data import DataConnection
 from atoml.data_setup import get_unique, get_train
 from atoml.fingerprint_setup import return_fpv
@@ -110,27 +109,6 @@ pred = gp.get_predictions(train_fp=nfp['train'],
                           optimize_hyperparameters=True)
 assert len(pred['prediction']) == 10
 print('laplacian prediction:', pred['validation_rmse']['average'])
-
-# Prepare discrete data
-discrete_train = np.digitize(nfp['train'], np.linspace(-1, 1, 8))
-discrete_test = np.digitize(nfp['test'], np.linspace(-1, 1, 8))
-# Prepare hyperparameters for AA kernel
-cAA = []
-for column in range(np.shape(discrete_train)[1]):
-    cAA.append(len(np.unique(discrete_train[:, column])))
-# Test prediction routine with AA kernel.
-kdict = {'k1': {'type': 'AA', 'theta': [.75] + cAA}}
-gp = GaussianProcess(kernel_dict=kdict, regularization=0.001)
-pred = gp.get_predictions(train_fp=discrete_train,
-                          test_fp=discrete_test,
-                          cinv=None,
-                          train_target=trainset['target'],
-                          test_target=testset['target'],
-                          get_validation_error=True,
-                          get_training_error=True,
-                          optimize_hyperparameters=False)
-assert len(pred['prediction']) == 10
-print('AA prediction:', pred['validation_rmse']['average'])
 
 # Test prediction routine with addative linear and gaussian kernel.
 kdict = {'k1': {'type': 'linear', 'features': [0, 1], 'const': 0.},
