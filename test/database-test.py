@@ -2,6 +2,7 @@
 from __future__ import print_function
 from __future__ import absolute_import
 
+import numpy as np
 from random import random
 
 from ase.ga.data import DataConnection
@@ -15,7 +16,7 @@ from atoml.utilities import remove_outliers
 
 # Define variables for database to store system descriptors.
 db_name = 'fpv_store.sqlite'
-descriptors = ['AA', 'AB', 'BA', 'BB']
+descriptors = ['f' + str(i) for i in range(241)]
 targets = ['Energy']
 names = descriptors + targets
 
@@ -54,7 +55,60 @@ sfpv = StandardFingerprintGenerator(atom_types=[78, 79])
 
 data = return_fpv(trainset['atoms'], [pfpv.nearestneighbour_fpv],
                   use_prior=False)
-assert len(data) == 50
+n, d = np.shape(data)
+assert n == 50, d == 4
+
+train_fp = return_fpv(trainset['atoms'], [pfpv.bond_count_fpv],
+                      use_prior=False)
+n, d = np.shape(train_fp)
+data = np.concatenate((data, train_fp), axis=1)
+assert n == 50, d == 52
+
+train_fp = return_fpv(trainset['atoms'], [pfpv.distribution_fpv],
+                      use_prior=False)
+n, d = np.shape(train_fp)
+data = np.concatenate((data, train_fp), axis=1)
+assert n == 50, d == 8
+
+train_fp = return_fpv(trainset['atoms'], [pfpv.connections_fpv],
+                      use_prior=False)
+n, d = np.shape(train_fp)
+assert n == 50, d == 26
+
+train_fp = return_fpv(trainset['atoms'], [pfpv.rdf_fpv], use_prior=False)
+n, d = np.shape(train_fp)
+data = np.concatenate((data, train_fp), axis=1)
+assert n == 50, d == 20
+
+# Start testing the standard fingerprint vector generators.
+train_fp = return_fpv(trainset['atoms'], [sfpv.mass_fpv], use_prior=False)
+n, d = np.shape(train_fp)
+data = np.concatenate((data, train_fp), axis=1)
+assert n == 50, d == 1
+
+train_fp = return_fpv(trainset['atoms'], [sfpv.composition_fpv],
+                      use_prior=False)
+n, d = np.shape(train_fp)
+assert n == 50, d == 2
+
+train_fp = return_fpv(trainset['atoms'], [sfpv.eigenspectrum_fpv],
+                      use_prior=False)
+n, d = np.shape(train_fp)
+data = np.concatenate((data, train_fp), axis=1)
+assert n == 50, d == 147
+
+train_fp = return_fpv(trainset['atoms'], [sfpv.distance_fpv],
+                      use_prior=False)
+n, d = np.shape(train_fp)
+data = np.concatenate((data, train_fp), axis=1)
+assert n == 50, d == 2
+
+train_fp = return_fpv(trainset['atoms'], [pfpv.nearestneighbour_fpv,
+                                          sfpv.mass_fpv,
+                                          sfpv.composition_fpv])
+n, d = np.shape(train_fp)
+data = np.concatenate((data, train_fp), axis=1)
+assert n == 50, d == 7
 
 # Put data in correct format to be inserted into database.
 new_data = []
