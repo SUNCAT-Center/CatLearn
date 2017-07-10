@@ -11,7 +11,6 @@ python_2_7_tests:
     - cd test/
     - python --version
     - python database-test.py
-    - python fingerprint-test.py
     - python feature_eliminate-test.py
     - python predict-test.py
     - rm *.sqlite
@@ -29,7 +28,6 @@ python_3_tests:
     - cd test/
     - python3 --version
     - python3 database-test.py
-    - python3 fingerprint-test.py
     - python3 feature_eliminate-test.py
     - python3 predict-test.py
     - rm *.sqlite
