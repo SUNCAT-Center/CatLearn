@@ -48,7 +48,7 @@ class RidgeRegression(object):
         epe_list = []
 
         # Find initial spread of omega2.
-        if self.W2 is None and self.Vh is None:
+        if self.W2 is None or self.Vh is None:
             V, W2, Vh = np.linalg.svd(np.dot(X.T, X), full_matrices=True)
         whigh, wlow = np.log(W2[0] * 2.), np.log(W2[-1] * 0.5)
         basesearchwidth = whigh-wlow
@@ -117,7 +117,7 @@ class RidgeRegression(object):
         neff : number of effective parameters
         """
         # Calculating SVD
-        if self.W2 is None and self.Vh is None:
+        if self.W2 is None or self.Vh is None:
             V, W2, Vh = np.linalg.svd(np.dot(X.T, X))
 
         R2 = np.ones(len(W2)) * omega2
@@ -260,14 +260,13 @@ class RidgeRegression(object):
 
         return W2_samples, Vh_samples
 
-
-    def LOOCV_l(X, Y, p, omega2_l):
+    def LOOCV_l(self, X, Y, p, omega2_l):
         """Leave one out estimator for a list of regularization strengths."""
-        XtX = np.dot(X.T, X)
-        V, W2, Vh = np.linalg.svd(XtX)
+        if self.W2 is None or self.Vh is None:
+            V, W2, Vh = np.linalg.svd(np.dot(X.T, X), full_matrices=True)
 
         for i, omega2 in enumerate(omega2_l):
-            LOOCV_EPE = LOOCV(X, Y, p, omega2, W2=W2, Vh=Vh)
+            LOOCV_EPE = self.LOOCV(X, Y, p, omega2, W2=W2, Vh=Vh)
             if i == 0:
                 LOOCV_EPE_l = LOOCV_EPE
             else:
@@ -275,20 +274,15 @@ class RidgeRegression(object):
                     LOOCV_EPE_l, LOOCV_EPE))
         return LOOCV_EPE_l
 
-
-    def LOOCV(X, Y, p, omega2, W2=None, Vh=None):
+    def LOOCV(self, X, Y, p, omega2):
         """Leave one out estimator.
 
         Implementation of http://www.anc.ed.ac.uk/rbf/intro/node43.html
         """
         Y_ = Y-np.dot(X, p)
 
-        if W2 is None or Vh is None:
-            XtX = np.dot(X.T, X)
-            V, W2, Vh = np.linalg.svd(XtX)
-
-        inv_W2_reg = (W2 + omega2)**(-1)
-        XtX_reg_inv = np.dot(np.dot(Vh.T, np.diag(inv_W2_reg)), Vh)
+        inv_W2_reg = (self.W2 + omega2)**(-1)
+        XtX_reg_inv = np.dot(np.dot(self.Vh.T, np.diag(inv_W2_reg)), self.Vh)
 
         P = np.diag(np.ones(len(Y_))) - np.dot(X, np.dot(XtX_reg_inv, X.T))
 
