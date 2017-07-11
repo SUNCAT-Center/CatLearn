@@ -164,13 +164,34 @@ def do_predict(train, test, train_target, test_target, hopt=False):
 # reform the training target values
 Y_train = np.reshape(train_target, (np.shape(train_target)[0],))
 
-width = None
-w = 0.5
+w = 1.
+width = [w] * np.shape(X_train)[1]
 reg = 1e-4
+# build training and test sets
+X_train = data[:size, :]
+X_test = data[-size:, :]
+
+print(np.shape(X_train), np.shape(X_test), np.shape(Y_train), np.shape(Y_test))
+
+# Try with hyperparameter optimization.
+kdict = {'k1': {'type': 'gaussian', 'width': width}}
+gp = GaussianProcess(kernel_dict=kdict, regularization=reg)
+
+print('Optimized all parameters')
+a = do_predict(train=X_train, test=X_test, train_target=Y_train,
+               test_target=Y_test, hopt=True)
+
+print(list(a['optimized_kernels']['k1']['width']),
+      a['optimized_regularization'])
+print(list(np.max(X_train, axis=0) - np.min(X_train, axis=0)))
+
+# Print the error associated with the predictions.
+print('GP full model error:', a['validation_rmse']['average'])
 
 for i in range(2, 20):
-    if width is None:
-        width = [w] * i
+    # if width is None:
+    width = [w] * i
+    reg = 1e-4
     # build training and test sets
     X_train = data[:size, :]
     X_test = data[-size:, :]
@@ -189,11 +210,9 @@ for i in range(2, 20):
     a = do_predict(train=X_train, test=X_test, train_target=Y_train,
                    test_target=Y_test, hopt=True)
 
-    width = list(a['optimized_kernels']['k1']['width'])
-    reg = a['optimized_regularization']
-    print(width, reg)
-    print(np.max(X_train, axis=0) - np.min(X_train, axis=0))
-    width += [w]
+    print(list(a['optimized_kernels']['k1']['width']),
+          a['optimized_regularization'])
+    print(list(np.max(X_train, axis=0) - np.min(X_train, axis=0)))
 
     # Print the error associated with the predictions.
     print('GP Model error:', a['validation_rmse']['average'])
