@@ -14,6 +14,8 @@ Input:
 import numpy as np
 import ase.db
 from ase.atoms import string2symbols
+from ase.data import covalent_radii
+# from ase.data import chemical_symbols
 
 
 def metal_index(atoms):
@@ -32,8 +34,11 @@ def info2primary_index(atoms):
     surf_atoms = atoms.info['surf_atoms']
     add_atoms = atoms.info['add_atoms']
     for m in surf_atoms:
+        dM = covalent_radii[atoms.numbers[m]]
         for a in add_atoms:
-            d = atoms.get_distance(m, a, mic=True, vector=False)
+            dA = covalent_radii[atoms.numbers[a]]
+            # Covalent radii are subtracted in distance comparison.
+            d = atoms.get_distance(m, a, mic=True, vector=False)-dM-dA
             liste.append([a, m, d])
     L = np.array(liste)
     i = np.argmin(L[:, 2])
@@ -52,13 +57,17 @@ def db2surf(fname, selection=[]):
     # Get slabs and adsorbates from .db.
     for d in ssurf:
         cat = str(d.name)+'_'+str(d.phase)
-        site_name = str(d.facet)
+        #facet = str(d.facet)
+        lattice = str(d.surf_lattice)
         abinitio_energy = float(d.enrgy)
         # composition=str(d.formula)
         if str(d.series) == 'slab':
-            series = str(d.series)
+            series = ''
+            site = 'slab'
         else:
+            site = str(d.site)
             series = str(d.adsorbate)
+        site_name = lattice + '_' + site
         if series+'_'+cat+'_'+site_name not in abinitio_energies:
             abinitio_energies[series+'_'+cat+'_'+site_name] = abinitio_energy
             dbids[series+'_'+cat+'_'+site_name] = int(d.id)
@@ -102,9 +111,9 @@ def get_refs(energy_dict, mol_dict):
     ref_dict = mol_dict
     for key in energy_dict.keys():
         if 'slab' in key:
-            ser, cat, pha, fac = key.split('_')
+            ser, cat, pha, fac, site = key.split('_')
             Eref = energy_dict[key]
-            name = cat + '_' + pha + '_' + fac
+            name = '_' + cat + '_' + pha + '_' + fac + '_slab'
             ref_dict[name] = Eref
     return ref_dict
 
@@ -148,25 +157,25 @@ def get_formation_energies(energy_dict, ref_dict):  # adapted from CATMAP wiki
     for key in energy_dict.keys():
         E0 = 0
         if 'gas' in key:
-            name, site = key.split('_')
+            ser, site_name = key.split('_')
         else:
             try:
-                name, cat, pha, fac = key.split('_')
+                ser, cat, pha, fac, site = key.split('_')
             except ValueError as err:
                 err.message += 'key='+key
                 raise
-            site = cat+'_'+pha+'_'+fac
+            site_name = '_'+cat+'_'+pha+'_'+fac+'_slab'
             try:
-                E0 -= ref_dict[site]
+                E0 -= ref_dict[site_name]
             except KeyError:
-                print('no slab reference '+site)
+                print('no slab reference '+site_name)
                 continue
-        if name != 'slab':
+        if 'slab' not in key:
             try:
-                composition = string2symbols(name)
+                composition = string2symbols(ser)
             except ValueError:
-                name = name[:-2]
-                composition = string2symbols(name)
+                ser = ser[:-2]
+                composition = string2symbols(ser)
             E0 += energy_dict[key]
             for atom in composition:
                 E0 -= ref_dict[atom]

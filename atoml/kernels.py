@@ -17,7 +17,8 @@ def kdict2list(kdict, N_D=None):
             A kernel dictionary containing the keys 'type' and optional
             keys containing the hyperparameters of the kernel.
         N_D : none or int
-            ????
+            The number of descriptors if not specified in the kernel dict,
+            by the lenght of the lists of hyperparameters.
     """
     # Get the kernel type.
     ktype = str(kdict['type'])
@@ -79,7 +80,8 @@ def kdicts2list(kernel_dict, N_D=None):
         kernel_dict : dict
             A dictionary containing kernel dictionaries.
         N_D : int
-            ????
+            The number of descriptors if not specified in the kernel dict,
+            by the lenght of the lists of hyperparameters.
     """
     theta = []
     for kernel_key in kernel_dict:
@@ -157,6 +159,31 @@ def gaussian_kernel(theta, m1, m2=None):
         k = distance.cdist(m1 / kwidth, m2 / kwidth,
                            metric='sqeuclidean')
         return np.exp(-.5 * k)
+
+
+def AA_kernel(theta, m1, m2=None):
+    """ Returns the covariance matrix between datasets m1 and m2
+        with an Aichinson & Aitken kernel.
+
+        Parameters
+        ----------
+        theta : list
+            [l, n, c]
+        m1 : list
+            A list of the training fingerprint vectors.
+        m2 : list
+            A list of the training fingerprint vectors.
+    """
+    if m2 is None:
+        m2 = m1
+    l = theta[0]
+    c = np.vstack(theta[1:])
+    n = np.shape(m1)[1]
+    q = (1 - l)/(c - l)
+    return distance.cdist(m1, m2, lambda u, v:
+                          (l ** (n - np.sqrt(((u - v) ** 2))) *
+                           (q ** np.sqrt((u - v) ** 2))).sum()
+                          )
 
 
 def linear_kernel(theta, m1, m2=None):
