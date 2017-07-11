@@ -59,7 +59,7 @@ class HierarchyValidation(object):
         shuffle(all_index)
 
         if max_split is not None:
-            assert len(all_index) > max_split
+            assert len(all_index) > max_split and max_split >= 2 * min_split
             # Cut off the list of indices.
             all_index = all_index[:max_split]
 
@@ -77,7 +77,7 @@ class HierarchyValidation(object):
                 current_split = data[str(i) + '_' + str(j)]
                 shuffle(current_split)
                 new_split = int(len(current_split) / 2)
-                if new_split > min_split:
+                if new_split >= min_split:
                     first_name, sn = str(i+1) + '_' + str(sn), sn + 1
                     second_name, sn = str(i+1) + '_' + str(sn), sn + 1
                     data[first_name] = current_split[:new_split]

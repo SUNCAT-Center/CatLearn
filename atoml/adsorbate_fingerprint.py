@@ -372,16 +372,18 @@ class AdsorbateFingerprintGenerator(object):
             return ['nn_num_C', 'nn_num_H', 'nn_num_M']
         else:
             addsyms = ['H', 'C', 'O', 'N']
-            surf_atoms = atoms.info['surf_atoms']
-            add_atoms = atoms.info['add_atoms']
-            liste = []
-            for m in surf_atoms:
-                for a in add_atoms:
-                    d = atoms.get_distance(m, a, mic=True, vector=False)
-                    liste.append([a, d])
-            L = np.array(liste)
-            i = np.argmin(L[:, 1])
-            primary_add = int(L[i, 0])
+            # surf_atoms = atoms.info['surf_atoms']
+            # add_atoms = atoms.info['add_atoms']
+            # liste = []
+            # for m in surf_atoms:
+            #     for a in add_atoms:
+            #         d = atoms.get_distance(m, a, mic=True, vector=False)
+            #         liste.append([a, d])
+            primary_add = int(atoms.info['i_add1'])
+            Z_surf1 = int(atoms.info['Z_surf1'])
+            Z_add1 = int(atoms.info['Z_add1'])
+            dM = covalent_radii[Z_surf1]
+            dadd = covalent_radii[Z_add1]
             nH1 = len([a.index for a in atoms if a.symbol == 'H' and
                        atoms.get_distance(primary_add, a.index, mic=True) <
                        1.3 and a.index != primary_add])
@@ -390,7 +392,7 @@ class AdsorbateFingerprintGenerator(object):
                        1.3 and a.index != primary_add])
             nM = len([a.index for a in atoms if a.symbol not in addsyms and
                       atoms.get_distance(primary_add, a.index, mic=True) <
-                      2.35])
+                      (dM+dadd)*1.3])
             return [nC1, nH1, nM]  # , nN, nH]
 
     def secondary_adds_nn(self, atoms=None):

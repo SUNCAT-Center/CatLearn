@@ -96,9 +96,11 @@ class GaussianProcess(object):
         epsilon : float
             Threshold for insensitive error calculation.
         """
+        # Get the shape of the training dataset.
         N_train, N_D = np.shape(train_fp)
-        # Kernel dictionary should contain hyperparameters in lists:
+        # Hyperparameters given as floats are converted to lists.
         self.prepare_kernels(N_D)
+        # Standardize target values.
         self.standardize_target = standardize_target
 
         error_train = train_target
@@ -106,12 +108,13 @@ class GaussianProcess(object):
             self.standardize_data = target_standardize(train_target)
             train_target = self.standardize_data['target']
 
+        # Store input data.
         data = defaultdict(list)
         data['input_kernels'] = self.kernel_dict
         data['input_regularization'] = self.regularization
         # Optimize hyperparameters.
         if optimize_hyperparameters:
-            # Loop through kernels
+            # Create a list of all hyperparameters.
             theta = kdicts2list(self.kernel_dict, N_D=N_D)
             if self.regularization is not None:
                 theta = np.append(theta, self.regularization)
@@ -124,10 +127,11 @@ class GaussianProcess(object):
             self.theta_opt = minimize(log_marginal_likelihood, theta,
                                       args=args,
                                       bounds=bounds)  # , jac=gradient_log_p)
-            # Update kernel_dict and regularization
+            # Update kernel_dict and regularization with optimized values.
             self.kernel_dict = list2kdict(self.theta_opt['x'][:-1],
                                           self.kernel_dict)
             self.regularization = self.theta_opt['x'][-1]
+            # Store kernels with optimized hyperparameters.
             data['optimized_kernels'] = self.kernel_dict
             data['optimized_regularization'] = self.regularization
 
@@ -175,8 +179,8 @@ class GaussianProcess(object):
                                  matrix1=test_fp)
             data['uncertainty'] = [(self.regularization + kxx[kt][kt] -
                                     np.dot(np.dot(ktb[kt], cinv),
-                                           np.transpose(ktb[kt])))
-                                   ** 0.5 for kt in range(len(ktb))]
+                                           np.transpose(ktb[kt]))) **
+                                   0.5 for kt in range(len(ktb))]
 
         if basis is not None:
             data['basis_analysis'] = self.fixed_basis(train_fp=train_fp,

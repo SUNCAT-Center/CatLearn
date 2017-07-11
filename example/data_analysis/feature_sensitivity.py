@@ -18,17 +18,18 @@ from atoml.cross_validation import HierarchyValidation
 from atoml.feature_engineering import single_transform
 from atoml.feature_preprocess import normalize
 
-new_data = False
+new_data = True
 expand = False
-plot = False
+plot = True
 pm = False
+test_train = True
 stack_data = 100  # stack training data with itself
 size = 10000
 
 # Define the hierarchey cv class method.
-hv = HierarchyValidation(db_name='../data/train_db.sqlite',
+hv = HierarchyValidation(db_name='../../data/train_db.sqlite',
                          table='FingerVector',
-                         file_name='split')
+                         file_name='sensitivity_data')
 
 # Split the data into subsets.
 if new_data:
@@ -45,8 +46,7 @@ data = np.concatenate((train_data, test_data), axis=0)
 data = robust_scale(data)
 if expand:
     # Expand feature space to add single variable transforms.
-    data = np.concatenate((data, single_transform(data)),
-                          axis=1)[:, :100]
+    data = np.concatenate((data, single_transform(data)), axis=1)
     data = robust_scale(data)
 
 feat = np.array(range(np.shape(data)[1]))
@@ -57,9 +57,6 @@ data = np.concatenate((ti, data), axis=0)
 
 feat = np.reshape(data[:1, :], (np.shape(feat)[0],))
 data = data[1:, :]
-
-print(np.amax(data, axis=0))
-print(np.amin(data, axis=0))
 
 # build training and test sets
 X_train = data[:size, :]
@@ -84,13 +81,11 @@ if stack_data > 1:
 
 # initialize the model
 model = Sequential()
-
 # add dense hidden layers
-model.add(Dense(48, input_dim=X_train.shape[1],
-                kernel_regularizer=regularizers.l2(0.01)))
+model.add(Dense(48, input_dim=X_train.shape[1],))
+# kernel_regularizer=regularizers.l2(0.01)))
 model.add(BatchNorm())
 model.add(Activation('relu'))
-
 # add output layer
 model.add(Dense(1))
 
@@ -119,7 +114,11 @@ pres25 = []
 nres25 = []
 
 # predictions on test set
+if test_train:
+    X_test = X_train
+    Y_test = Y_train
 base = model.evaluate(X_test, Y_test)
+print('TF Model error:', base)
 
 
 def sensitivity(val, res):
@@ -128,8 +127,36 @@ def sensitivity(val, res):
         X_now = np.copy(X_test)
         X_now[:, i-1:i] = val
         score = model.evaluate(X_now, Y_test)
-        res.append(np.abs(np.sqrt(score) - np.sqrt(base)))
+        res.append(np.sqrt(score) - np.sqrt(base))
 
+
+# predictions on test set
+res_list = [pres1, nres1]
+res_val = [1., -1.]
+
+for i, j in zip(res_list, res_val):
+    sensitivity(val=j, res=i)
+
+fig = plt.figure()
+ax1 = fig.add_subplot(111)
+
+ave = (np.array(pres1) + np.array(nres1))
+ave /= 2
+
+# Print out a subset of the best features.
+print('\n', np.argsort(ave)[-20:])
+
+
+if plot:
+    ax1.scatter(x=feat, y=pres1, label='+1.00', alpha=0.1)
+    ax1.scatter(x=feat, y=nres1, label='-1.00', alpha=0.1)
+    ax1.scatter(x=feat, y=ave, label='average', alpha=0.8)
+    plt.xlabel('feature')
+    plt.ylabel('response')
+    plt.legend(loc='upper left')
+    plt.show()
+
+exit()
 
 # predictions on test set
 res_list = [pres1, nres1, pres5, nres5, pres25, nres25]
@@ -145,8 +172,8 @@ ave = (np.array(pres1) + np.array(nres1) + np.array(pres5) + np.array(nres5)
        + np.array(pres25) + np.array(nres25))
 ave /= 6
 
-print('')
-print(np.argsort(ave)[-20:])
+# Print out a subset of the best features.
+print('\n', np.argsort(ave)[-20:])
 
 
 if plot:
@@ -162,7 +189,6 @@ if plot:
     plt.legend(loc='upper left')
     plt.show()
 
-print('TF Model error:', base)
 exit()
 
 

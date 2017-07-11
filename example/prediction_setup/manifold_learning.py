@@ -7,16 +7,13 @@ import matplotlib.pyplot as plt
 from matplotlib.ticker import NullFormatter
 from sklearn.decomposition import PCA
 from sklearn import manifold
-from sklearn.preprocessing import scale, StandardScaler, robust_scale
 
 from atoml.utilities import clean_variance
 from atoml.cross_validation import HierarchyValidation
+from atoml.feature_preprocess import standardize
 from atoml.feature_engineering import single_transform
 from atoml.predict import GaussianProcess
 
-triangle = False  # Plot only the bottom half of the matrix
-divergent = False  # Plot with a diverging color palette.
-absolute = True  # Take the absolute values for the correlation.
 clean = True  # Clean zero-varience features
 expand = False
 new_data = True
@@ -28,8 +25,9 @@ w = 1.
 
 def do_predict(train, test, train_target, test_target, hopt=False):
     """Function to make predictions."""
-    pred = gp.get_predictions(train_fp=scale(train),
-                              test_fp=scale(test),
+    std = standardize(train_matrix=train, test_matrix=test)
+    pred = gp.get_predictions(train_fp=std['train'],
+                              test_fp=std['test'],
                               train_target=train_target,
                               test_target=test_target,
                               get_validation_error=True,
@@ -40,7 +38,7 @@ def do_predict(train, test, train_target, test_target, hopt=False):
 
 
 # Define the hierarchey cv class method.
-hv = HierarchyValidation(db_name='../data/train_db.sqlite',
+hv = HierarchyValidation(db_name='../../data/train_db.sqlite',
                          table='FingerVector',
                          file_name='split')
 # Split the data into subsets.
@@ -63,10 +61,6 @@ if expand:
     # Expand feature space to add single variable transforms.
     train_data = np.concatenate((data, single_transform(data)),
                                 axis=1)
-# scaler = StandardScaler().fit(data)
-# data = scaler.transform(data)
-
-data = scale(data)
 
 ax = fig.add_subplot(151)
 pca = PCA(n_components=nc)
@@ -161,27 +155,27 @@ a = do_predict(train=Y_data[:d, :], test=Y_data[d:, :],
 print('Training error:', a['training_rmse']['average'])
 print('Model error:', a['validation_rmse']['average'])
 
-# ax = fig.add_subplot(155)
-# tsne = manifold.TSNE(n_components=nc, init='pca', random_state=0)
-# fitted = tsne.fit(data[:d, :])
-# Y_data = fitted.fit_transform(data)
-# plt.scatter(Y_data[:d, 0], Y_data[:d, 1], c=train_target, cmap=plt.cm.Spectral,
-#             alpha=0.5)
-# plt.title("t-SNE")
-# ax.xaxis.set_major_formatter(NullFormatter())
-# ax.yaxis.set_major_formatter(NullFormatter())
-# plt.axis('tight')
+ax = fig.add_subplot(155)
+tsne = manifold.TSNE(n_components=nc, init='pca', random_state=0)
+fitted = tsne.fit(data[:d, :])
+Y_data = fitted.fit_transform(data)
+plt.scatter(Y_data[:d, 0], Y_data[:d, 1], c=train_target, cmap=plt.cm.Spectral,
+            alpha=0.5)
+plt.title("t-SNE")
+ax.xaxis.set_major_formatter(NullFormatter())
+ax.yaxis.set_major_formatter(NullFormatter())
+plt.axis('tight')
 
 # Set up the prediction routine.
-# kdict = {'k1': {'type': 'gaussian', 'width': w}}
-# gp = GaussianProcess(kernel_dict=kdict, regularization=reg)
+kdict = {'k1': {'type': 'gaussian', 'width': w}}
+gp = GaussianProcess(kernel_dict=kdict, regularization=reg)
 
-# print('t-SNE')
-# a = do_predict(train=Y_data[:d, :], test=Y_data[d:, :],
-#                train_target=train_target, test_target=test_target, hopt=True)
+print('t-SNE')
+a = do_predict(train=Y_data[:d, :], test=Y_data[d:, :],
+               train_target=train_target, test_target=test_target, hopt=True)
 
 # Print the error associated with the predictions.
-# print('Training error:', a['training_rmse']['average'])
-# print('Model error:', a['validation_rmse']['average'])
+print('Training error:', a['training_rmse']['average'])
+print('Model error:', a['validation_rmse']['average'])
 
 plt.show()
