@@ -130,8 +130,9 @@ class RegressionFit(object):
                 alpha_list = np.geomspace(self.max_alpha, self.min_alpha,
                                           self.steps)
             except AttributeError:
-                alpha_list = np.linspace(self.max_alpha, self.min_alpha,
-                                         self.steps)
+                alpha_list = np.exp(np.linspace(np.log(self.max_alpha),
+                                                np.log(self.min_alpha),
+                                                self.steps))
             for alpha in alpha_list:
                 regr = Lasso(alpha=alpha, max_iter=self.iter,
                              fit_intercept=True, normalize=True,
