@@ -48,7 +48,7 @@ ind = list(range(len(corr)))
 # Plot the figure.
 fig = plt.figure(figsize=(10, 10))
 ax = fig.add_subplot(111)
-ax.plot(ind, np.abs(corr), '-', color='black', lw=1)
+ax.plot(ind, np.abs(corr), '-', color='black', lw=0.1)
 ax.axis([0, len(ind), 0, 1])
 plt.title(correlation)
 plt.xlabel('Feature No.')
