@@ -5,6 +5,8 @@ from scipy.stats import pearsonr, spearmanr, kendalltau
 
 from atoml.cross_validation import HierarchyValidation
 from atoml.feature_preprocess import standardize
+from atoml.feature_engineering import get_order_2, single_transform
+from atoml.utilities import clean_variance
 
 correlation = 'pearson'
 
@@ -22,8 +24,15 @@ train_data = np.array(hv._compile_split(ind['1_1'])[:, 1:-1], np.float64)
 train_target = np.array(hv._compile_split(ind['1_1'])[:, -1:], np.float64)
 
 # Scale and shape the data.
+train_data = clean_variance(train_data)['train']
 train_data = standardize(train_matrix=train_data)['train']
 train_target = train_target.reshape(len(train_target), )
+
+# Engineer new features.
+data1 = single_transform(train_data)
+data2 = get_order_2(train_data)
+train_data = np.concatenate((train_data, data1), axis=1)
+train_data = np.concatenate((train_data, data2), axis=1)
 
 # Find the correlation.
 corr = []
