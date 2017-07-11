@@ -5,16 +5,22 @@ import numpy as np
 class RidgeRegression(object):
     """Ridge regression class."""
 
-    def __init__(self, W2=None, Vh=None):
+    def __init__(self, W2=None, Vh=None, cv='bootstrap'):
         """Ridge regression setup.
 
         Parameters
         ----------
         W2 : list
+            Singular values from the SVD.
         Vh : array
+            The right unitary matrix form SVD.
+        cv : string
+            Define the type to CV used to find penalty term, can be 'bootstrap'
+            or 'loocv'. Default is bootstrap.
         """
         self.W2 = W2
         self.Vh = Vh
+        self.cv = cv
 
     def find_optimal_regularization(self, X, Y, p=0., Ns=100, wsteps=15):
         """Find optimal omega2=w value for the fitting.
@@ -59,8 +65,11 @@ class RidgeRegression(object):
 
         # Find best value by successively reducing seach area for omega2.
         # Range of omega2 to search for min epe
-        BS_res = self._bootstrap_master(X, Y, p, omega2_range, Ns, W2, Vh)
-        _, _, epe_list_i, _ = BS_res
+        if self.cv is 'bootstrap':
+            BS_res = self._bootstrap_master(X, Y, p, omega2_range, Ns, W2, Vh)
+            _, _, epe_list_i, _ = BS_res
+        if self.cv is 'loocv':
+            epe_list_i = self._LOOCV_l(X, Y, p, omega2_range)
 
         omega2_list += omega2_range
         epe_list += epe_list_i.tolist()
@@ -80,8 +89,11 @@ class RidgeRegression(object):
         for pp in np.linspace(wlow, whigh, wsteps):
             omega2_range.append(np.exp(pp))
 
-        BS_res = self._bootstrap_master(X, Y, p, omega2_range, Ns, W2, Vh)
-        _, _, epe_list_i, _ = BS_res
+        if self.cv is 'bootstrap':
+            BS_res = self._bootstrap_master(X, Y, p, omega2_range, Ns, W2, Vh)
+            _, _, epe_list_i, _ = BS_res
+        if self.cv is 'loocv':
+            epe_list_i = self._LOOCV_l(X, Y, p, omega2_range)
 
         omega2_list += omega2_range
         epe_list += epe_list_i.tolist()
