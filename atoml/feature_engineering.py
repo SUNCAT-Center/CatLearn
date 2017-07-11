@@ -77,9 +77,10 @@ def get_div_order_2(A):
     new_features = np.zeros([shapeA[0], shapeA[1]**2])
     for f1 in range(shapeA[1]):
         for f2 in range(shapeA[1]):
-            new_feature = np.true_divide(A[:, f1], A[:, f2])
-            new_features[:, nfi] = new_feature
-            nfi += 1
+            if f1 != f2:
+                new_feature = np.true_divide(A[:, f1], A[:, f2])
+                new_features[:, nfi] = new_feature
+                nfi += 1
     return new_features
 
 
