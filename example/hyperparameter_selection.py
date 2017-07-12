@@ -11,7 +11,7 @@
 import numpy as np
 from scipy.optimize import minimize
 from matplotlib import pyplot as plt
-from atoml.feature_preprocessing import normalize
+from atoml.feature_preprocess import normalize
 from atoml.model_selection import log_marginal_likelihood
 import time
 
@@ -29,7 +29,7 @@ n, m = np.shape(fpm_train)
 print(n, 'training examples', m, 'features')
 
 # Standardize data
-nfp = np.array(normalize(train=fpm_train)['train'])
+nfp = np.array(normalize(train_matrix=fpm_train)['train'])
 
 # Hyperparameter starting guesses.
 sigma = np.ones(m)

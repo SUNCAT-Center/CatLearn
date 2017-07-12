@@ -14,7 +14,7 @@ import numpy as np
 from atoml.predict import GaussianProcess
 from atoml.feature_preprocess import matrix_split, standardize, normalize
 
-nsplit = 5
+nsplit = 3
 
 fpm_y = np.genfromtxt('pure_metals.txt')
 split = matrix_split(fpm_y, nsplit)
@@ -52,21 +52,18 @@ for i in range(nsplit):
         teste.append(e)
     for v in split_fpv[i]:
         test_fp.append(v)
-    regularization = .1
+    regularization = .3
     m = np.shape(reduced_fpv)[1]
     if sigma is None:
         sigma = np.ones(m)
-        sigma *= 0.3
+        sigma *= 3.
         kdict = {
-                 'lk': {'type': 'linear',
-                        'const': 1.,
-                        'features': [0]},
+                 # 'lk': {'type': 'linear',
+                 #       'const': 1.,
+                 #       'features': [0]},
                  'gk': {'type': 'gaussian',
-                        'width': .00001,
-                        'features': [1],
-                        # 'operation': 'multiplication'
-                        }
-                 }
+                        'width': sigma}}
+                        # 'operation': 'multiplication'}
     if True:
         # Get the list of fingerprint vectors and standardize them.
         nfp = standardize(train_matrix=train_fp, test_matrix=test_fp)
@@ -86,8 +83,10 @@ for i in range(nsplit):
                               test_target=teste,
                               optimize_hyperparameters=True)
     # Print the error associated with the predictions.
-    train_rmse = pred['training_rmse']['average']
-    val_rmse = pred['validation_rmse']['average']
-    print('Training error:', train_rmse)
-    print('Validation error:', val_rmse)
+    train_rmse = pred['training_error']['absolute_average']
+    val_rmse = pred['validation_error']['absolute_average']
+    print('Training MAE:', train_rmse)
+    print('Validation MAE:', val_rmse)
     print(pred['optimized_kernels'], pred['optimized_regularization'])
+
+

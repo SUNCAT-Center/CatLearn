@@ -40,7 +40,7 @@ pred = gp.get_predictions(train_fp=nfp['train'],
                           get_training_error=True,
                           optimize_hyperparameters=False)
 assert len(pred['prediction']) == 10
-print('linear prediction:', pred['validation_rmse']['average'])
+print('linear prediction:', pred['validation_error']['rmse_average'])
 
 # Test prediction routine with polynomial kernel.
 kdict = {'k1': {'type': 'polynomial', 'slope': 0.5, 'degree': 2., 'const': 0.}}
@@ -54,7 +54,7 @@ pred = gp.get_predictions(train_fp=nfp['train'],
                           get_training_error=True,
                           optimize_hyperparameters=False)
 assert len(pred['prediction']) == 10
-print('polynomial prediction:', pred['validation_rmse']['average'])
+print('polynomial prediction:', pred['validation_error']['rmse_average'])
 
 # Test prediction routine with gaussian kernel.
 kdict = {'k1': {'type': 'gaussian', 'width': 0.5}}
@@ -67,34 +67,18 @@ pred = gp.get_predictions(train_fp=nfp['train'],
                           get_validation_error=True,
                           get_training_error=True,
                           uncertainty=True,
-                          cost='squared')
+                          epsilon=0.1)
 assert len(pred['prediction']) == 10
-print('gaussian prediction:', pred['validation_rmse']['average'])
+print('gaussian prediction (rmse):', pred['validation_error']['rmse_average'])
 for i, j, k, in zip(pred['prediction'],
                     pred['uncertainty'],
-                    pred['validation_rmse']['all']):
+                    pred['validation_error']['rmse_all']):
     print(i, j, k)
 
-pred = gp.get_predictions(train_fp=nfp['train'],
-                          test_fp=nfp['test'],
-                          cinv=None,
-                          train_target=trainset['target'],
-                          test_target=testset['target'],
-                          get_validation_error=True,
-                          get_training_error=True,
-                          cost='absolute')
-print('gaussian prediction (abs):', pred['validation_rmse']['average'])
-
-pred = gp.get_predictions(train_fp=nfp['train'],
-                          test_fp=nfp['test'],
-                          cinv=None,
-                          train_target=trainset['target'],
-                          test_target=testset['target'],
-                          get_validation_error=True,
-                          get_training_error=True,
-                          cost='insensitive',
-                          epsilon=0.1)
-print('gaussian prediction (ins):', pred['validation_rmse']['average'])
+print('gaussian prediction (ins):',
+      pred['validation_error']['insensitive_average'])
+print('gaussian prediction (abs):',
+      pred['validation_error']['absolute_average'])
 
 # Test prediction routine with laplacian kernel.
 kdict = {'k1': {'type': 'laplacian', 'width': 0.5}}
@@ -108,7 +92,7 @@ pred = gp.get_predictions(train_fp=nfp['train'],
                           get_training_error=True,
                           optimize_hyperparameters=True)
 assert len(pred['prediction']) == 10
-print('laplacian prediction:', pred['validation_rmse']['average'])
+print('laplacian prediction:', pred['validation_error']['rmse_average'])
 
 # Test prediction routine with addative linear and gaussian kernel.
 kdict = {'k1': {'type': 'linear', 'features': [0, 1], 'const': 0.},
@@ -123,7 +107,7 @@ pred = gp.get_predictions(train_fp=nfp['train'],
                           get_training_error=True,
                           optimize_hyperparameters=True)
 assert len(pred['prediction']) == 10
-print('addition prediction:', pred['validation_rmse']['average'])
+print('addition prediction:', pred['validation_error']['rmse_average'])
 
 # Test prediction routine with multiplication of linear and gaussian kernel.
 kdict = {'k1': {'type': 'linear', 'features': [0, 1], 'const': 0.},
@@ -139,4 +123,4 @@ pred = gp.get_predictions(train_fp=nfp['train'],
                           get_training_error=True,
                           optimize_hyperparameters=True)
 assert len(pred['prediction']) == 10
-print('multiplication prediction:', pred['validation_rmse']['average'])
+print('multiplication prediction:', pred['validation_error']['rmse_average'])

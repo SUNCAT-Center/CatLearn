@@ -11,34 +11,37 @@ from __future__ import print_function
 
 import numpy as np
 
-from atoml.fingerprint_setup import normalize
+from atoml.feature_preprocess import normalize
 # from adsorbate_fingerprint_mhh import AdsorbateFingerprintGenerator
-from atoml.predict import FitnessPrediction
+from atoml.predict import GaussianProcess
 
 fpm_raw = np.genfromtxt('fpm.txt')
-fpm_train0 = fpm_raw[:, :-1]
-targets = fpm_raw[:, -1]
+fpm_train0 = fpm_raw[:, :-2]
+targets = fpm_raw[:, -2]
 
-fpm_predict0 = np.genfromtxt('fpm_predict.txt')
+fpm_predict0 = np.genfromtxt('fpm_predict.txt')[:-2]
 
 indexes = [6, 7, 16, 11]  # feature indexes
 
 fpm_train = fpm_train0[:, indexes]
 fpm_predict = fpm_predict0[:, indexes]
 
+# Set up the kernel.
+kdict = {
+         # 'lk': {'type': 'linear',
+         #       'const': 1.,
+         #       'features': [0]},
+         'gk': {'type': 'gaussian',
+                'width': .3}}
+
 # Set up the prediction routine.
-krr = FitnessPrediction(ktype='gaussian',
-                        kwidth=0.5,
-                        regularization=0.001)
+gp = GaussianProcess(kernel_dict=kdict,
+                     regularization=0.001)
 # Get the list of fingerprint vectors and normalize them.
-nfp = normalize(train=fpm_train, test=fpm_predict)
-# Do the training.
-cvm = krr.get_covariance(train_matrix=nfp['train'])
-cinv = np.linalg.inv(cvm)
+nfp = normalize(train_matrix=fpm_train, test_matrix=fpm_predict)
 # Do the prediction
-output = krr.get_predictions(train_fp=nfp['train'],
+output = gp.get_predictions(train_fp=nfp['train'],
                              test_fp=nfp['test'],
-                             cinv=cvm,
                              train_target=targets,
                              get_validation_error=False,
                              get_training_error=False)
