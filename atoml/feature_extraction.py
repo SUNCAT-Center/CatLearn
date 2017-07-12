@@ -1,3 +1,4 @@
+"""Some feature extraction routines."""
 import numpy as np
 from collections import defaultdict
 
@@ -10,7 +11,7 @@ from .output import write_feature_select
 
 
 def pls(components, train_matrix, target, test_matrix):
-    """ Projection of latent structure routine. """
+    """Projection of latent structure routine."""
     pls = PLSRegression(n_components=components)
     model = pls.fit(X=train_matrix, Y=target)
     new_train = model.transform(train_matrix)
@@ -20,7 +21,7 @@ def pls(components, train_matrix, target, test_matrix):
 
 
 def pca(components, train_matrix, test_matrix):
-    """ Principal component analysis routine. """
+    """Principal component analysis routine."""
     pca = PCA(n_components=components)
     model = pca.fit(X=train_matrix)
     new_train = model.transform(train_matrix)
@@ -30,7 +31,7 @@ def pca(components, train_matrix, test_matrix):
 
 
 def spca(components, train_matrix, test_matrix):
-    """ Sparse principal component analysis routine. """
+    """Sparse principal component analysis routine."""
     pca = SparsePCA(n_components=components)
     model = pca.fit(X=train_matrix)
     new_train = model.transform(train_matrix)
@@ -41,15 +42,14 @@ def spca(components, train_matrix, test_matrix):
 
 def home_pca(components, train_fpv, test_fpv=None, cleanup=False, scale=False,
              writeout=False):
-    """ Principal component analysis varient that doesn't require scikit-learn.
-        The results are not the same!
+    """Principal component analysis varient that doesn't require scikit-learn.
 
-        Parameters
-        ----------
-        components : int
-            Number of principal components to transform the feature set by.
-        test_fpv : array
-            The feature matrix for the testing data.
+    Parameters
+    ----------
+    components : int
+        Number of principal components to transform the feature set by.
+    test_fpv : array
+        The feature matrix for the testing data.
     """
     data = defaultdict(list)
     data['components'] = components
