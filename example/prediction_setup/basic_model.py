@@ -11,8 +11,7 @@ from atoml.cross_validation import HierarchyValidation
 from atoml.feature_preprocess import standardize
 from atoml.predict import GaussianProcess
 
-# Decide whether to remove output and print graph.
-cleanup = True
+# Set some parameters.
 plot = False
 ds = 500
 
