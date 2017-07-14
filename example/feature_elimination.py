@@ -3,10 +3,13 @@ from __future__ import print_function
 from __future__ import absolute_import
 
 import numpy as np
+import time
 
 from atoml.cross_validation import HierarchyValidation
 from atoml.feature_preprocess import standardize
-from atoml.feature_engineering import single_transform
+from atoml.feature_engineering import (single_transform, get_order_2,
+                                       get_order_2ab, get_ablog,
+                                       get_div_order_2)
 from atoml.feature_elimination import FeatureScreening
 from atoml.predict import GaussianProcess
 
@@ -38,8 +41,27 @@ train_target = train_target.reshape(len(train_target), )
 test_target = test_target.reshape(len(test_target), )
 
 # Expand feature space to add single variable transforms.
-test_data = np.concatenate((test_data, single_transform(test_data)), axis=1)
-train_data = np.concatenate((train_data, single_transform(train_data)), axis=1)
+test_data1 = single_transform(test_data)
+train_data1 = single_transform(train_data)
+test_data2 = get_order_2(test_data)
+train_data2 = get_order_2(train_data)
+# test_data3 = get_div_order_2(test_data)
+# train_data3 = get_div_order_2(train_data)
+# test_data4 = get_order_2ab(test_data, 2, 3)
+# train_data4 = get_order_2ab(train_data, 2, 3)
+# test_data5 = get_ablog(test_data, 2, 3)
+# train_data5 = get_ablog(train_data, 2, 3)
+
+test_data = np.concatenate((test_data, test_data1), axis=1)
+train_data = np.concatenate((train_data, train_data1), axis=1)
+test_data = np.concatenate((test_data, test_data2), axis=1)
+train_data = np.concatenate((train_data, train_data2), axis=1)
+# test_data = np.concatenate((test_data, test_data3), axis=1)
+# train_data = np.concatenate((train_data, train_data3), axis=1)
+# test_data = np.concatenate((test_data, test_data4), axis=1)
+# train_data = np.concatenate((train_data, train_data4), axis=1)
+# test_data = np.concatenate((test_data, test_data5), axis=1)
+# train_data = np.concatenate((train_data, train_data5), axis=1)
 
 
 def do_pred(train, test):
@@ -73,10 +95,12 @@ for c in corr:
     gp = GaussianProcess(kernel_dict=kdict, regularization=0.001)
 
     screen = FeatureScreening(correlation=c, iterative=False)
+    st = time.time()
     features = screen.eliminate_features(target=train_target,
                                          train_features=train_data,
                                          test_features=test_data,
                                          size=d, step=None, order=None)
+    print('screening took:', time.time() - st, 'for', np.shape(train_data))
     reduced_train = features[0]
     reduced_test = features[1]
     do_pred(train=reduced_train, test=reduced_test)
@@ -87,10 +111,12 @@ for c in corr:
 
     screen = FeatureScreening(correlation=c, iterative=True,
                               regression='lasso')
+    st = time.time()
     features = screen.eliminate_features(target=train_target,
                                          train_features=train_data,
                                          test_features=test_data,
                                          size=d, step=None, order=None)
+    print('iterative took:', time.time() - st, 'for', np.shape(train_data))
     reduced_train = features[0]
     reduced_test = features[1]
     do_pred(train=reduced_train, test=reduced_test)
