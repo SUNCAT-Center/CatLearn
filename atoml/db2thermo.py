@@ -117,7 +117,6 @@ def get_refs(energy_dict, mol_dict):
             Eref = energy_dict[key]
             name = ser + '_' + cat + '_' + pha + '_' + lattice + '_' + fac \
                 + '_slab'
-            print(name)
             ref_dict[name] = Eref
     return ref_dict
 

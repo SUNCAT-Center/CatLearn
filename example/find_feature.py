@@ -9,7 +9,7 @@ import numpy as np
 from atoml.fingerprint_setup import get_combined_descriptors
 from atoml.adsorbate_fingerprint import AdsorbateFingerprintGenerator
 
-train_gen = AdsorbateFingerprintGenerator(bulkdb='ref_bulks_k24.db')
+train_gen = AdsorbateFingerprintGenerator(bulkdb='../data/ref_bulks_k24.db')
 train_fpv = [
     train_gen.get_dbid,
     #train_gen.randomfpv,

@@ -14,10 +14,10 @@ from atoml.feature_preprocess import standardize
 import matplotlib.pyplot as plt
 
 if 'pure_metals.txt' not in listdir('.'):
-    fname = 'pure_metals.db'
+    fname = '../data/pure_metals.db'
 
     # Get dictionaries containing ab initio energies
-    abinitio_energies, mol_dbids = db2mol('mol.db', ['fmaxout<0.1',
+    abinitio_energies, mol_dbids = db2mol('../data/mol.db', ['fmaxout<0.1',
                                                      'pw=500',
                                                      'vacuum=8',
                                                      'psp=gbrv1.5pbe'])
@@ -37,7 +37,7 @@ if 'pure_metals.txt' not in listdir('.'):
     print(len(train_cand), 'training examples.')
 
     # Get the adsorbate fingerprint class.
-    fpv_train = AdsorbateFingerprintGenerator(bulkdb='ref_bulks_k24.db')
+    fpv_train = AdsorbateFingerprintGenerator(bulkdb='../data/ref_bulks_k24.db')
 
     # Choose fingerprints.
     train_fpv = [
@@ -99,7 +99,7 @@ nfp = standardize(train_matrix=fpm, test_matrix=fpm_test)
 kdict = {
          'lk1': {'type': 'linear',
                  'const': .1,
-                 'features': [0],
+                 #'features': [0],
                  },
          #'gk': {'type': 'gaussian',
          #       'width': 1.0,

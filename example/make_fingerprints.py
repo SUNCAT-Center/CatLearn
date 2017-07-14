@@ -14,8 +14,8 @@ from atoml.db2thermo import (db2mol, db2surf, mol2ref, get_refs, db2surf_info,
 from atoml.adsorbate_fingerprint import AdsorbateFingerprintGenerator
 from atoml.utilities import clean_variance
 
-fname = 'example.db'
-abinitio_energies, mol_dbids = db2mol('mol.db', ['fmaxout<0.1',
+fname = '../data/example.db'
+abinitio_energies, mol_dbids = db2mol('../data/mol.db', ['fmaxout<0.1',
                                                  'pw=500',
                                                  'vacuum=8',
                                                  'psp=gbrv1.5pbe'])
@@ -34,7 +34,7 @@ print('Getting atoms objects.')
 train_atoms = db2surf_info(fname, id_dict, formation_energies)
 print(len(train_atoms), 'Training examples.')
 
-train_gen = AdsorbateFingerprintGenerator(bulkdb='ref_bulks_k24.db')
+train_gen = AdsorbateFingerprintGenerator(bulkdb='../data/ref_bulks_k24.db')
 train_fpv = [
     train_gen.get_dbid,
     #train_gen.randomfpv,
@@ -63,7 +63,7 @@ if unlabeled:
     # Making a dataset without taget values. This is not a test set.
     print('Making an unlabeled data set.')
     predict_gen = AdsorbateFingerprintGenerator(bulkdb='ref_bulks_k24.db')
-    predict_atoms = db2atoms_info('predict.db', selection=['series!=slab'])
+    predict_atoms = db2atoms_info('../data/predict.db', selection=['series!=slab'])
     predict_raw = return_fpv(predict_atoms, train_fpv)
     n0_predict, d0_predict = np.shape(predict_raw)
     assert int(d0_predict) == int(d0_train)
