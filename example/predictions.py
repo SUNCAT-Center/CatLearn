@@ -15,16 +15,15 @@ from atoml.feature_preprocess import normalize
 # from adsorbate_fingerprint_mhh import AdsorbateFingerprintGenerator
 from atoml.predict import GaussianProcess
 
-fpm_raw = np.genfromtxt('fpm.txt')
-fpm_train0 = fpm_raw[:, :-2]
-targets = fpm_raw[:, -2]
+data = np.genfromtxt('fpm.txt')
+fpm_train = data[:, :-2]
+dbids = data[:, -2]
+targets = data[:, -1]
 
-fpm_predict0 = np.genfromtxt('fpm_predict.txt')[:-2]
 
-indexes = [6, 7, 16, 11]  # feature indexes
-
-fpm_train = fpm_train0[:, indexes]
-fpm_predict = fpm_predict0[:, indexes]
+predict_data = np.genfromtxt('fpm_predict.txt')
+predict_dbids = predict_data[-1]
+fpm_predict = predict_data[:, :-1]
 
 # Set up the kernel.
 kdict = {
@@ -44,8 +43,9 @@ output = gp.get_predictions(train_fp=nfp['train'],
                              test_fp=nfp['test'],
                              train_target=targets,
                              get_validation_error=False,
-                             get_training_error=False)
+                             get_training_error=False,
+                             optimize_hyperparameters=True)
 y = output['prediction']
-
-predicted_fpm = np.hstack([fpm_predict0, np.vstack(y)])
+uncertainty = output['uncertainty']
+predicted_fpm = np.hstack([predict_data, np.vstack(y)])
 np.savetxt('prediction.txt', predicted_fpm)

@@ -51,7 +51,6 @@ print(len(L_F), 'Original descriptors:', L_F)
 
 print('Getting training target values.')
 targets = return_fpv(train_atoms, train_gen.info2Ef, use_prior=False)
-print(targets)
 train_dbid = return_fpv(train_atoms, train_gen.get_dbid, use_prior=False)
 
 print('Getting fingerprint vectors.')
@@ -62,7 +61,6 @@ unlabeled = True
 if unlabeled:
     # Making a dataset without taget values. This is not a test set.
     print('Making an unlabeled data set.')
-    predict_gen = AdsorbateFingerprintGenerator(bulkdb='ref_bulks_k24.db')
     predict_atoms = db2atoms_info('../data/predict.db', selection=['series!=slab'])
     predict_raw = return_fpv(predict_atoms, train_fpv)
     n0_predict, d0_predict = np.shape(predict_raw)
