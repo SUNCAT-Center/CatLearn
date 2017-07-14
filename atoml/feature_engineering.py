@@ -113,7 +113,7 @@ def get_labels_order_2(l, div=False):
 
 
 def get_order_2ab(A, a, b):
-    """Get all combinations x_ij = x_i*a * x_j*b, where x_i,j are features.
+    """Get all combinations x_ij = x_i**a * x_j**b, where x_i,j are features.
 
     The sorting order in dimension 0 is preserved.
 
