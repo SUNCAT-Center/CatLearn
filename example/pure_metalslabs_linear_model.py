@@ -97,15 +97,15 @@ fpm_test = np.hstack([np.vstack(3 * list(np.linspace(d0min, d0max, 9))),
 
 nfp = standardize(train_matrix=fpm, test_matrix=fpm_test)
 kdict = {
-         #'lk1': {'type': 'linear',
-         #        'const': .1,
-         #        'features': [0],
-         #        },
+         'lk1': {'type': 'linear',
+                 'const': .1,
+                 'features': [0],
+                 },
          #'gk': {'type': 'gaussian',
          #       'width': 1.0,
          #       'features': [1],
          #        'operation': 'multiplication'
-                }
+         #       }
          }
 # Run a Gaussian Process with a linear kernel
 
@@ -126,7 +126,8 @@ print(prediction['optimized_kernels'], prediction['optimized_regularization'])
 
 plt.imshow(prediction['prediction'].reshape(3, 9),
            cmap='hot', interpolation='nearest', extent=[d0min,d0max,d1min,d1max])
-plt.gcf().text(0.2, 0.8, 'RMSE = '+str(round(prediction['training_rmse']['average'], 3)))
+plt.gcf().text(0.2, 0.8, 'RMSE = ' +
+               str(round(prediction['training_error']['absolute_average'], 3)))
 plt.colorbar()
 plt.savefig(gp_name+'.pdf', format='pdf')
 plt.show()
