@@ -16,18 +16,17 @@ from atoml.feature_preprocess import matrix_split, standardize, normalize
 
 nsplit = 3
 
-fpm_y = np.genfromtxt('pure_metals.txt')
+fpm_y = np.genfromtxt('fpm.txt')
 split = matrix_split(fpm_y, nsplit)
-indexes = [3, 8]
 
 
 split_energy = []
 split_fpv = []
 # Subset of the fingerprint vector.
 for i in range(nsplit):
-    split_energy.append(split[i][:, -2])
+    split_energy.append(split[i][:, -1])
     fpm = split[i][:, :-2]
-    reduced_fpv = fpm[:, indexes]
+    reduced_fpv = fpm
     split_fpv.append(reduced_fpv)
     print(np.shape(reduced_fpv))
 
@@ -52,11 +51,11 @@ for i in range(nsplit):
         teste.append(e)
     for v in split_fpv[i]:
         test_fp.append(v)
-    regularization = .3
+    regularization = .01
     m = np.shape(reduced_fpv)[1]
     if sigma is None:
         sigma = np.ones(m)
-        sigma *= 3.
+        sigma *= .1
         kdict = {
                  # 'lk': {'type': 'linear',
                  #       'const': 1.,

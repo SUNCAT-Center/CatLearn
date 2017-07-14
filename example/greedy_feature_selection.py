@@ -4,114 +4,202 @@ Created on Fri Nov 18 14:30:20 2016
 
 @author: mhangaard
 
-
-
 """
-
-from atoml.fingerprint_setup import normalize, standardize
-#from adsorbate_fingerprint_mhh import AdsorbateFingerprintGenerator
-from atoml.model_selection import negative_logp
-from scipy.optimize import minimize
-from atoml.predict import FitnessPrediction
+from atoml.feature_preprocess import normalize, standardize, matrix_split
+from atoml.predict import GaussianProcess
 import numpy as np
 from matplotlib import pyplot as plt
-#import random
+import random
 
-nsplit = 2
+nsplit = 3
 
+data = np.genfromtxt('fpm.txt')
+
+# Then we create the k-fold split
 split_fpv_0 = []
 split_energy = []
+print('Creating', nsplit, '-fold split on survivors.')
+split = matrix_split(data, nsplit)
 for i in range(nsplit):
-    fpm = np.genfromtxt('fpm_'+str(i)+'.txt')
-    split_fpv_0.append(fpm[:,:-2])
-    split_energy.append(fpm[:,-2])
+    split_fpv_0.append(split[i][:, :-2])
+    split_energy.append(split[i][:, -1])
 
 
 split_fpv = list(split_fpv_0)
 
 shape = np.shape(split_fpv_0[0])
+print(shape)
 
-#select feature combinations to test
-FEATURES = range(1,shape[1])#forward greedy
-#start = [53,9,19,36,39,48] #random.randint(0,shape[1])  #forward greedy
-start = [0] #forward greedy
+forward = False
+W = False
+S = True
+gk = True
+lineark = False
 
-#FEATURES = start #backward greedy
+plt.rc('text', usetex=False)
+font = {'family': 'sans-serif',
+        # 'sans-serif':, 'Helvetica',
+        'style': 'normal',
+        'stretch': 'normal'}
+plt.rc('font', **font)
+plt.rc('axes', linewidth=2)
+plt.rc('figure')
+plt.rc('lines', markeredgewidth=0, markersize=8, linewidth=2)
+ticksize = 16
+plt.rc('xtick', labelsize=ticksize+2)
+plt.rc('ytick.major', size=4, width=1)
+plt.rc('ytick.minor', size=4, width=1)
+plt.rc('ytick', labelsize=ticksize+2)
+plt.rc('ytick.major', size=4, width=1)
+plt.rc('ytick.minor', size=4, width=1)
 
+if forward:
+    start = []
+else:
+    start = range(shape[1])
 
-TRAIN_RMSE = []
-VAL_RMSE = []
-for fs in FEATURES:
-    sigma = None
-    #indexes = list(FEATURES)    #backward greedy
-    #indexes.remove(fs)          #backward greedy
-    indexes = start + [fs]        #forward greedy
-    print(indexes)
-    #subset of the fingerprint vector
-    for i in range(nsplit):
-        fpm = list(split_fpv_0)[i]
-        shape = np.shape(fpm)
-        reduced_fpv = split_fpv_0[i][:,indexes]
-        split_fpv[i] = reduced_fpv
-    #print('Make predictions based in k-fold samples')
-    train_rmse = []
-    val_rmse = []
-    for i in range(nsplit):
-        # Setup the test, training and fingerprint datasets.
-        traine = []
-        train_fp = []
-        testc = []
-        teste = []
-        test_fp = []
-        for j in range(nsplit):
-            if i != j:
-                for e in split_energy[j]:
-                    traine.append(e)
-                for v in split_fpv[j]:
-                    train_fp.append(v)
-        for e in split_energy[i]:
-            teste.append(e)
-        for v in split_fpv[i]:
-            test_fp.append(v)
-        # Get the list of fingerprint vectors and normalize them.
-        nfp = normalize(train=train_fp, test=test_fp)
-        # Do the training.
-        # Optimize hyperparameters
-        m = np.shape(nfp['train'])[1]
-        if sigma == None:
+X = []
+TRAIN_RMSE_trend = []
+U_trend = []
+TEST_trend = []
+order = []
+next_feature = random.randint(0, shape[1])  # random greedy start
+for l in range(shape[1]):
+    if forward:                                     # forward greedy
+        start += [next_feature]
+        FEATURES = range(shape[1])
+        backward = False
+        print(start)
+    elif l == 0:
+        FEATURES = range(1, shape[1])                # backward greedy
+        backward = True
+    elif l > 0:
+        FEATURES.remove(next_feature)
+    TRAIN_RMSE = []
+    VAL_RMSE = []
+    U = []
+    for fs in FEATURES:
+        if forward:
+            indexes = start + [fs]      # forward greedy
+        elif backward:
+            indexes = list(FEATURES)    # backward greedy
+            indexes.remove(fs)          # backward greedy
+        # Subset of the fingerprint vector
+        for i in range(nsplit):
+            fpm = list(split_fpv_0)[i]
+            shape = np.shape(fpm)
+            reduced_fpv = split_fpv_0[i][:, indexes]
+            split_fpv[i] = reduced_fpv
+        # print('Make predictions based in k-fold samples')
+        train_rmse = []
+        val_rmse = []
+        uncertainty = []
+        for i in range(nsplit):
+            # Setup the test, training and fingerprint datasets.
+            traine = []
+            train_fp = []
+            testc = []
+            teste = []
+            test_fp = []
+            for j in range(nsplit):
+                if i != j:
+                    for e in split_energy[j]:
+                        traine.append(e)
+                    for v in split_fpv[j]:
+                        train_fp.append(v)
+            for e in split_energy[i]:
+                teste.append(e)
+            for v in split_fpv[i]:
+                test_fp.append(v)
+            # Get the list of fingerprint vectors and normalize them.
+            if S:
+                nfp = standardize(train_matrix=train_fp, test_matrix=test_fp)
+            else:
+                nfp = normalize(train_matrix=train_fp, test_matrix=test_fp)
+            # Do the training.
+            # Optimize hyperparameters
+            m = np.shape(nfp['train'])[1]
             sigma = np.ones(m)
-            sigma *= 0.5
-        regularization=.001
-        theta = np.append(sigma,regularization)
-        if True:
-            a=(np.array(nfp['train']), traine)
-            #Hyper parameter bounds.
-            b=((1E-12,None),)*(m+1)
-            popt = minimize(negative_logp, theta, args=a, bounds=b)#, options={'disp': True})
-            sigma = popt['x'][:-1]
-            regularization = popt['x'][-1]
-        # Set up the prediction routine.
-        krr = FitnessPrediction(ktype='gaussian',
-                                kwidth=sigma,
-                                regularization=regularization)
-        cvm = krr.get_covariance(train_matrix=nfp['train'])
-        cinv = np.linalg.inv(cvm)
-        # Do the prediction
-        pred = krr.get_predictions(train_fp=nfp['train'],
-                               test_fp=nfp['test'],
-                               cinv=cinv,
-                               train_target=traine,
-                               get_validation_error=True,
-                               get_training_error=True,
-                               test_target=teste)
-        # Print the error associated with the predictions.
-        train_rmse.append(pred['training_rmse']['average'])
-        val_rmse.append(pred['validation_rmse']['average'])
-    TRAIN_RMSE.append(train_rmse[0])
-    VAL_RMSE.append(np.mean(val_rmse))
-
-plt.scatter(FEATURES, TRAIN_RMSE, c='r')
-plt.scatter(FEATURES, VAL_RMSE, c='b')
-print('Training error:', min(TRAIN_RMSE), '+/-', np.std(train_rmse))
-print('Average Validation error:', min(VAL_RMSE), '+/-', np.std(val_rmse))
+            sigma *= .3
+            regularization = .1
+            theta = np.append(sigma, regularization)
+            # Set up the prediction routine.
+            kdict = {}
+            if gk:
+                kdict.update({'k1': {'type': 'gaussian', 'width': sigma}})
+            if lineark:
+                kdict.update({'k2': {'type': 'linear',
+                                     # 'operation': 'multiplication'}})
+                                     'const': 1.,
+                                     }
+                              })
+            gp = GaussianProcess(kernel_dict=kdict,
+                                 regularization=regularization)
+            # Do the prediction
+            pred = gp.get_predictions(train_fp=nfp['train'],
+                                      test_fp=nfp['test'],
+                                      train_target=traine,
+                                      get_validation_error=True,
+                                      get_training_error=True,
+                                      uncertainty=True,
+                                      test_target=teste,
+                                      optimize_hyperparameters=W)
+            # Print the error associated with the predictions.
+            uncertainty.append(np.mean(pred['uncertainty']))
+            train_rmse.append(pred['training_error']['absolute_average'])
+            val_rmse.append(pred['validation_error']['absolute_average'])
+        U.append(np.mean(uncertainty))
+        TRAIN_RMSE.append(np.mean(train_rmse))
+        VAL_RMSE.append(np.mean(val_rmse))
+    # plt.scatter(FEATURES, U, c='r')
+    # plt.scatter(FEATURES, TRAIN_RMSE, c='k')
+    # plt.scatter(FEATURES, VAL_RMSE, c='b')
+    if len(TRAIN_RMSE) == 0 and not forward:
+        print(order)
+        break
+    min_train = np.argmin(TRAIN_RMSE)
+    next_feature = FEATURES[min_train]
+    lf = len(FEATURES)
+    print('Min k-averaged training error:', TRAIN_RMSE[min_train])
+    print('k-averaged uncertainty at best fit:', U[min_train])
+    print('k-averaged validation at best fit:', VAL_RMSE[min_train])
+    print('Best next feature:', next_feature, 'of', lf, 'features.')
+    if lf < 30:
+        print(FEATURES)
+    TRAIN_RMSE_trend.append(TRAIN_RMSE[min_train])
+    U_trend.append(U[min_train])
+    TEST_trend.append(VAL_RMSE[min_train])
+    if forward:
+        X.append(l+1)
+        if next_feature in indexes:
+            print(indexes)
+            print(sigma, regularization)
+            break
+    else:
+        X.append(lf)
+plt.plot(X, U_trend, c='r', marker='o', markersize=12,
+         alpha=0.8, linewidth=3)
+plt.plot(X, TRAIN_RMSE_trend, marker='o', c='k', markersize=12,
+         alpha=0.8, linewidth=3)
+plt.plot(X, TEST_trend, marker='o', c='b', markersize=12,
+         alpha=0.8, linewidth=3)
+plt.xlabel('Number of descriptors', fontsize=ticksize+2)
+plt.ylabel('MAE (eV)', fontsize=ticksize+2)
+fname = 'error_vs_ND'
+if S:
+    print('Standardized data.')
+    fname += '_standardized'
+else:
+    print('Normalized data')
+    fname += '_normalized'
+if forward:
+    fname += '_forward'
+else:
+    fname += '_backward'
+if gk:
+    fname += '_gaussk'
+if lineark:
+    fname += '_lineark'
+plt.tight_layout(pad=0.6)
+#plt.savefig(fname+'.pdf')
 plt.show()

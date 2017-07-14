@@ -621,11 +621,11 @@ class AdsorbateFingerprintGenerator(object):
         else:
             return [float(atoms.info['Ef'])]
 
-    def get_dbid(self, atoms):
+    def get_dbid(self, atoms=None):
         if atoms is None:
-            ['dbid']
+            return ['dbid']
         else:
-            return int(atoms.info['dbid'])
+            return [int(atoms.info['dbid'])]
 
     def get_keyvaluepair(self, atoms=None, field_name='None'):
         if atoms is None:

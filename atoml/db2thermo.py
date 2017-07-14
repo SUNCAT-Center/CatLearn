@@ -56,24 +56,26 @@ def db2surf(fname, selection=[]):
     dbids = {}
     # Get slabs and adsorbates from .db.
     for d in ssurf:
-        cat = str(d.name)+'_'+str(d.phase)
-        #facet = str(d.facet)
+        cat = str(d.name) + '_' + str(d.phase)
+        facet = str(d.facet)
         lattice = str(d.surf_lattice)
         abinitio_energy = float(d.enrgy)
-        # composition=str(d.formula)
-        if str(d.series) == 'slab':
-            series = ''
+        series = str(d.series)
+        adsorbate = str(d.adsorbate)
+        if series == 'slab':
+            ser = ''
             site = 'slab'
         else:
+            ser = adsorbate
             site = str(d.site)
-            series = str(d.adsorbate)
-        site_name = lattice + '_' + site
-        if series+'_'+cat+'_'+site_name not in abinitio_energies:
-            abinitio_energies[series+'_'+cat+'_'+site_name] = abinitio_energy
-            dbids[series+'_'+cat+'_'+site_name] = int(d.id)
-        elif abinitio_energies[series+'_'+cat+'_'+site_name] > abinitio_energy:
-            abinitio_energies[series+'_'+cat+'_'+site_name] = abinitio_energy
-            dbids[series+'_'+cat+'_'+site_name] = int(d.id)
+        site_name = lattice + '_' + facet + '_' + site
+        key = ser + '_' + cat + '_' + site_name
+        if key not in abinitio_energies:
+            abinitio_energies[key] = abinitio_energy
+            dbids[key] = int(d.id)
+        elif abinitio_energies[key] > abinitio_energy:
+            abinitio_energies[key] = abinitio_energy
+            dbids[key] = int(d.id)
     return abinitio_energies, dbids
 
 
@@ -111,9 +113,11 @@ def get_refs(energy_dict, mol_dict):
     ref_dict = mol_dict
     for key in energy_dict.keys():
         if 'slab' in key:
-            ser, cat, pha, fac, site = key.split('_')
+            ser, cat, pha, lattice, fac, site = key.split('_')
             Eref = energy_dict[key]
-            name = '_' + cat + '_' + pha + '_' + fac + '_slab'
+            name = ser + '_' + cat + '_' + pha + '_' + lattice + '_' + fac \
+                + '_slab'
+            print(name)
             ref_dict[name] = Eref
     return ref_dict
 
@@ -159,15 +163,12 @@ def get_formation_energies(energy_dict, ref_dict):  # adapted from CATMAP wiki
         if 'gas' in key:
             ser, site_name = key.split('_')
         else:
-            try:
-                ser, cat, pha, fac, site = key.split('_')
-            except ValueError as err:
-                err.message += 'key='+key
-                raise
-            site_name = '_'+cat+'_'+pha+'_'+fac+'_slab'
-            try:
+            ser, cat, pha, lattice, fac, site = key.split('_')
+            site_name = '_' + cat + '_' + pha+'_' + lattice + '_' + fac + \
+                '_slab'
+            if site_name in ref_dict:
                 E0 -= ref_dict[site_name]
-            except KeyError:
+            else:
                 print('no slab reference '+site_name)
                 continue
         if 'slab' not in key:

@@ -57,6 +57,7 @@ start = time.time()
 popt = minimize(log_marginal_likelihood,
                 theta, args=a, bounds=b)
 end = time.time()
+print(popt)
 print('Optimized widths = ', popt['x'][:-1])
 print('Optimized regularization = ', popt['x'][-1])
 print(end - start, 'seconds')
