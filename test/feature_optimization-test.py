@@ -5,6 +5,9 @@ from __future__ import absolute_import
 import numpy as np
 
 from atoml.database_functions import DescriptorDatabase
+from atoml.feature_engineering import (single_transform, get_order_2,
+                                       get_div_order_2, get_order_2ab,
+                                       get_ablog)
 from atoml.feature_elimination import FeatureScreening
 
 # Attach the database.
@@ -21,6 +24,22 @@ target_data = np.reshape(dd.query_db(names=targets),
 train_features, train_targets = feature_data[:35, :], target_data[:35]
 test_features, test_targets = feature_data[35:, :], target_data[35:]
 d, f = np.shape(train_features)
+
+# Perform feature engineering.
+extend = single_transform(train_features)
+assert np.shape(extend) == (d, f * 3)
+
+extend = get_order_2(train_features)
+assert np.shape(extend) == (d, 29403)
+
+extend = get_div_order_2(train_features)
+assert np.shape(extend) == (d, 58564)
+
+extend = get_order_2ab(train_features, a=2, b=4)
+assert np.shape(extend) == (d, 29403)
+
+extend = get_ablog(train_features, a=2, b=4)
+assert np.shape(extend) == (d, 29403)
 
 # Get descriptor correlation
 corr = ['pearson', 'spearman', 'kendall']
