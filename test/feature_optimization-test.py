@@ -8,6 +8,7 @@ from atoml.database_functions import DescriptorDatabase
 from atoml.feature_engineering import (single_transform, get_order_2,
                                        get_div_order_2, get_order_2ab,
                                        get_ablog)
+from atoml.feature_extraction import pls, pca, spca, home_pca
 from atoml.feature_elimination import FeatureScreening
 
 # Attach the database.
@@ -24,6 +25,7 @@ target_data = np.reshape(dd.query_db(names=targets),
 train_features, train_targets = feature_data[:35, :], target_data[:35]
 test_features, test_targets = feature_data[35:, :], target_data[35:]
 d, f = np.shape(train_features)
+td, tf = np.shape(test_features)
 
 # Perform feature engineering.
 extend = single_transform(train_features)
@@ -40,6 +42,22 @@ assert np.shape(extend) == (d, 29403)
 
 extend = get_ablog(train_features, a=2, b=4)
 assert np.shape(extend) == (d, 29403)
+
+ext = pls(components=4, train_matrix=train_features, target=train_targets,
+          test_matrix=test_features)
+assert np.shape(ext[0]) == (td, 4) and np.shape(ext[1]) == (d, 4)
+
+ext = pca(components=4, train_matrix=train_features, test_matrix=test_features)
+assert np.shape(ext[0]) == (td, 4) and np.shape(ext[1]) == (d, 4)
+
+ext = spca(components=4, train_matrix=train_features,
+           test_matrix=test_features)
+assert np.shape(ext[0]) == (td, 4) and np.shape(ext[1]) == (d, 4)
+
+ext = home_pca(components=4, train_fpv=train_features, test_fpv=test_features,
+               cleanup=True, scale=True)
+assert np.shape(ext['test_fpv']) == (td, 4) and \
+  np.shape(ext['train_fpv']) == (d, 4)
 
 # Get descriptor correlation
 corr = ['pearson', 'spearman', 'kendall']

@@ -58,7 +58,7 @@ def home_pca(components, train_fpv, test_fpv=None, cleanup=False, scale=False,
         test_fpv = c['test']
         train_fpv = c['train']
     if scale:
-        std = standardize(train=train_fpv, test=test_fpv)
+        std = standardize(train_matrix=train_fpv, test_matrix=test_fpv)
         test_fpv = std['test']
         train_fpv = std['train']
 
