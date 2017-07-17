@@ -1,7 +1,7 @@
 """A simple example for the hierarchy CV function."""
 import numpy as np
 from atoml.cross_validation import HierarchyValidation
-from atoml.ridge_regression import find_optimal_regularization, RR
+from atoml.ridge_regression import RidgeRegression
 from atoml.feature_preprocess import standardize
 from atoml.predict import target_standardize
 
@@ -32,10 +32,10 @@ def predict(train_features, train_targets, test_features, test_targets,
     train_targets = ts['target']
 
     # Set up the ridge regression function.
-    b = find_optimal_regularization(X=train_features, Y=train_targets,
-                                    Ns=100)
-    coef = RR(X=train_features, Y=train_targets, omega2=b, W2=None,
-              Vh=None)[0]
+    rr = RidgeRegression(W2=None, Vh=None, cv='loocv')
+    b = rr.find_optimal_regularization(X=train_features, Y=train_targets,
+                                       Ns=100)
+    coef = rr.RR(X=train_features, Y=train_targets, omega2=b)[0]
 
     # Test the model.
     sumd = 0.
