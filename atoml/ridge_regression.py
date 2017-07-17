@@ -275,7 +275,7 @@ class RidgeRegression(object):
 
         Implementation of http://www.anc.ed.ac.uk/rbf/intro/node43.html
         """
-        Y_ = Y-np.dot(X, p)
+        Y_ = Y-np.dot(X, [p] * np.shape(X)[1])
 
         inv_W2_reg = (self.W2 + omega2)**(-1)
         XtX_reg_inv = np.dot(np.dot(self.Vh.T, np.diag(inv_W2_reg)), self.Vh)
