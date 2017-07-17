@@ -71,7 +71,7 @@ class HierarchyValidation(object):
         no_split = int(min(len(data['1_1']), len(data['1_2'])) / min_split)
 
         for i in range(1, no_split+1):
-            subsplit = i * 2
+            subsplit = 2 ** i
             sn = 1
             for j in range(1, subsplit+1):
                 current_split = data[str(i) + '_' + str(j)]
