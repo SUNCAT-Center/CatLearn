@@ -9,82 +9,84 @@ from __future__ import print_function
 import numpy as np
 
 from atoml.fingerprint_setup import return_fpv, get_combined_descriptors
+from atoml.db2thermo import (db2mol, db2surf, mol2ref, get_refs, db2surf_info,
+                             db2atoms_info, get_formation_energies)
 from atoml.adsorbate_fingerprint import AdsorbateFingerprintGenerator
-from atoml.fpm_operations import get_order_2, get_labels_order_2, do_sis, fpmatrix_split
+from atoml.utilities import clean_variance
 
-fpv_train = AdsorbateFingerprintGenerator(moldb='mol.db',
-                                          bulkdb='ref_bulks_k24.db',
-                                          slabs='example.db')
+fname = '../data/example.db'
+abinitio_energies, mol_dbids = db2mol('../data/mol.db', ['fmaxout<0.1',
+                                                 'pw=500',
+                                                 'vacuum=8',
+                                                 'psp=gbrv1.5pbe'])
+# Prepare atoms objects from database.
+e_dict_slabs, id_dict_slabs = db2surf(fname, selection=['series=slab'])
+abinitio_energies.update(e_dict_slabs)
+print('done slabs')
+e_dict, id_dict = db2surf(fname, selection=['series!=slab'])
+abinitio_energies.update(e_dict)
+mol_dict = mol2ref(abinitio_energies)
+ref_dict = get_refs(abinitio_energies, mol_dict)
+formation_energies = get_formation_energies(abinitio_energies, ref_dict)
 
 # Training and validation data.
-train_cand = fpv_train.db2surf_info(selection=['series!=slab'])
-print(len(train_cand), 'training examples.')
+print('Getting atoms objects.')
+train_atoms = db2surf_info(fname, id_dict, formation_energies)
+print(len(train_atoms), 'Training examples.')
 
+train_gen = AdsorbateFingerprintGenerator(bulkdb='../data/ref_bulks_k24.db')
 train_fpv = [
-    #fpv_train.randomfpv,
-    #fpv_train.primary_addatom,
-    #fpv_train.primary_adds_nn,
-    #fpv_train.Z_add,
-    #fpv_train.adds_sum,
-    fpv_train.primary_surfatom,
-    fpv_train.primary_surf_nn,
-    fpv_train.elemental_dft_properties,
+    train_gen.get_dbid,
+    #train_gen.randomfpv,
+    #train_gen.primary_addatom,
+    #train_gen.primary_adds_nn,
+    #train_gen.Z_add,
+    #train_gen.adds_sum,
+    train_gen.primary_surfatom,
+    train_gen.primary_surf_nn,
     ]
 
 L_F = get_combined_descriptors(train_fpv)
 print(len(L_F), 'Original descriptors:', L_F)
 
-print('Getting fingerprint vectors.')
-cfpv = return_fpv(train_cand, train_fpv)
-print('Getting training taget values.')
-Ef = return_fpv(train_cand, fpv_train.get_Ef, use_prior=False)
-dbid = return_fpv(train_cand, fpv_train.get_dbid, use_prior=False)
-print(np.shape(Ef))
-assert np.isclose(len(L_F),np.shape(cfpv)[1])
-print('Removing any training examples with NaN in the target value field')
-fpm0 = np.hstack([cfpv, np.vstack(Ef), np.vstack(dbid)])
-fpm_y = fpm0[~np.isnan(fpm0).any(axis=1)]
-print('Saving original',np.shape(fpm_y), 'matrix. Last column is the ase.db id. Second last column is the target value.')
-np.savetxt('fpm.txt', fpm_y)
-fpm = fpm_y[:,:-2]
-y = Ef[~np.isnan(fpm0).any(axis=1)]
-asedbid=dbid[~np.isnan(fpm0).any(axis=1)]
+print('Getting training target values.')
+targets = return_fpv(train_atoms, train_gen.info2Ef, use_prior=False)
+train_dbid = return_fpv(train_atoms, train_gen.get_dbid, use_prior=False)
 
-if True:
-    print('Creating combinatorial descriptors.')
-    order2 = get_order_2(fpm)
-    L_F2 = get_labels_order_2(L_F)
-    fpm_c = np.hstack([fpm,order2])
-    L = np.hstack([L_F,L_F2])
-    assert np.isclose(len(L),np.shape(fpm_c)[1])
-    
-    print('Perfoming ISIS on '+str(np.shape(fpm_c))+' combinatorial fp matrix.')
-    survivors=do_sis(fpm_c, y, size=None, increment=10)
-    print(survivors)
-    fmd_final=fpm_c[:,survivors]
-    l=L[survivors]
-    print(len(l), 'surviving descriptors:', l)
-    np.savetxt('fpm_sel.txt', fmd_final)
-    
-    nsplit = 2
-    print('Creating', nsplit, '-fold split on survivors.')
-    fpm_final_y = np.hstack([fmd_final, np.vstack(y), np.vstack(asedbid)])
-    split = fpmatrix_split(fpm_final_y, nsplit)
-    for i in range(nsplit):
-        np.savetxt('fpm_'+str(i)+'.txt', split[i])
-    
+print('Getting fingerprint vectors.')
+train_raw = return_fpv(train_atoms, train_fpv)
+n0_train, d0_train = np.shape(train_raw)
+
+unlabeled = True
+if unlabeled:
     # Making a dataset without taget values. This is not a test set.
-    print('Making a new predict-set with the surviving descriptors, without target values.')
-    fpv_predict = AdsorbateFingerprintGenerator(moldb='mol.db',
-                                                bulkdb='ref_bulks_k24.db',
-                                                slabs='predict.db')
-    predict_cand = fpv_predict.db2atoms_info('predict.db', selection=['series!=slab'])
-    print(len(predict_cand), 'candidates.')
-    cfpv_new = return_fpv(predict_cand, train_fpv)
-    print('Generating combinatiorial descriptors, and selecting the surviving subset.')
-    order2_new = get_order_2(cfpv_new)
-    fpm_sel_new = np.hstack([cfpv_new,order2_new])
-    fpm_predict = fpm_sel_new[:,survivors]
-    np.savetxt('fpm_predict.txt', fpm_predict)
+    print('Making an unlabeled data set.')
+    predict_atoms = db2atoms_info('../data/predict.db', selection=['series!=slab'])
+    predict_raw = return_fpv(predict_atoms, train_fpv)
+    n0_predict, d0_predict = np.shape(predict_raw)
+    assert int(d0_predict) == int(d0_train)
+else:
+    cfpv_predict = None
+
+print('Removing features with zero variance.')
+data_dict1 = clean_variance(train_raw, predict_raw, L_F)
+n1_train, d1_train = np.shape(data_dict1['train'])
+print(d1_train, 'features remain.')
+print(np.shape(data_dict1['train']))
+train1 = np.hstack([data_dict1['train']])
+train1y = np.hstack([data_dict1['train'], np.vstack(targets)])
+predict1 = np.hstack([data_dict1['test']])
+print('Removing data points with nan values.')
+train2y = train1y[np.isfinite(train1y).all(axis=1),:]
+predict2 = predict1[np.isfinite(predict1).all(axis=1),:]
+
+print('Saving original',np.shape(train2y), ' training data matrix. ' +
+      'Last column is the target value. ' +
+      'Second last column is the database id.')
+np.savetxt('fpm.txt', train2y)
+print('Saving unlabeled',np.shape(predict2), ' data matrix. ' +
+      'Last column is the target value. ' +
+      'Second last column is the database id.')
+np.savetxt('fpm_predict.txt', predict1)
 
 

@@ -31,7 +31,7 @@ def kdict2list(kdict, N_D=None):
         elif N_D is None:
             N_D = len(kdict['width'])
         if type(theta) is float:
-            theta = np.zeros(N_D,) + theta
+            theta = [theta]*N_D
 
     # Polynomials have pairs of hyperparamters kfree, kdegree
     elif ktype == 'polynomial':
@@ -57,7 +57,7 @@ def kdict2list(kdict, N_D=None):
         elif N_D is None:
             N_D = len(theta)
         if type(theta) is float:
-            theta = np.zeros(N_D,) + theta
+            theta = [theta]*N_D
 
     elif 'theta' in kdict:
         theta = kdict['theta']
@@ -66,7 +66,7 @@ def kdict2list(kdict, N_D=None):
         elif N_D is None:
             N_D = len(theta)
         if type(theta) is float:
-            theta = np.zeros(N_D,) + theta
+            theta = [theta]*N_D
     return theta
 
 
@@ -81,7 +81,7 @@ def kdicts2list(kernel_dict, N_D=None):
             A dictionary containing kernel dictionaries.
         N_D : int
             The number of descriptors if not specified in the kernel dict,
-            by the lenght of the lists of hyperparameters.
+            by the length of the lists of hyperparameters.
     """
     theta = []
     for kernel_key in kernel_dict:
@@ -100,7 +100,8 @@ def list2kdict(hyperparameters, kernel_dict):
         Parameters
         ----------
         hyperparameters : list
-            ????
+            All hyperparameters listed in the order they are specified
+            in the kernel dictionary.
         kernel_dict : dict
             A dictionary containing kernel dictionaries.
     """
@@ -193,7 +194,7 @@ def linear_kernel(theta, m1, m2=None):
         Parameters
         ----------
         theta : list
-            Will always be None. Probably needs removing.
+            A list containing constant offset.
         m1 : list
             A list of the training fingerprint vectors.
         m2 : list or None
