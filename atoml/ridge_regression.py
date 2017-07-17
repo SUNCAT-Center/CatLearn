@@ -55,8 +55,9 @@ class RidgeRegression(object):
 
         # Find initial spread of omega2.
         if self.W2 is None or self.Vh is None:
-            V, W2, Vh = np.linalg.svd(np.dot(X.T, X), full_matrices=True)
-        whigh, wlow = np.log(W2[0] * 2.), np.log(W2[-1] * 0.5)
+            V, self.W2, self.Vh = np.linalg.svd(np.dot(X.T, X),
+                                                full_matrices=True)
+        whigh, wlow = np.log(self.W2[0] * 2.), np.log(self.W2[-1] * 0.5)
         basesearchwidth = whigh-wlow
         omega2_range = [1e-6*np.exp(wlow)]
         for pp in np.linspace(wlow, whigh, wsteps):
@@ -66,7 +67,7 @@ class RidgeRegression(object):
         # Find best value by successively reducing seach area for omega2.
         # Range of omega2 to search for min epe
         if self.cv is 'bootstrap':
-            BS_res = self._bootstrap_master(X, Y, p, omega2_range, Ns, W2, Vh)
+            BS_res = self._bootstrap_master(X, Y, p, omega2_range, Ns)
             _, _, epe_list_i, _ = BS_res
         if self.cv is 'loocv':
             epe_list_i = self._LOOCV_l(X, Y, p, omega2_range)
@@ -90,7 +91,7 @@ class RidgeRegression(object):
             omega2_range.append(np.exp(pp))
 
         if self.cv is 'bootstrap':
-            BS_res = self._bootstrap_master(X, Y, p, omega2_range, Ns, W2, Vh)
+            BS_res = self._bootstrap_master(X, Y, p, omega2_range, Ns)
             _, _, epe_list_i, _ = BS_res
         if self.cv is 'loocv':
             epe_list_i = self._LOOCV_l(X, Y, p, omega2_range)
@@ -130,17 +131,17 @@ class RidgeRegression(object):
         """
         # Calculating SVD
         if self.W2 is None or self.Vh is None:
-            V, W2, Vh = np.linalg.svd(np.dot(X.T, X))
+            V, self.W2, self.Vh = np.linalg.svd(np.dot(X.T, X))
 
-        R2 = np.ones(len(W2)) * omega2
-        inv_W2_reg = (W2 + R2) ** -1
-        XtX_reg_inv = np.dot(np.dot(Vh.T, np.diag(inv_W2_reg)), Vh)
+        R2 = np.ones(len(self.W2)) * omega2
+        inv_W2_reg = (self.W2 + R2) ** -1
+        XtX_reg_inv = np.dot(np.dot(self.Vh.T, np.diag(inv_W2_reg)), self.Vh)
         coefs = np.dot(XtX_reg_inv, (np.dot(X.T, Y.T) + omega2 * p))
-        Neff = np.sum(W2 * inv_W2_reg)
+        Neff = np.sum(self.W2 * inv_W2_reg)
 
         return coefs, Neff
 
-    def _RR_preSVD(self, X, Y, p, omega2):
+    def _RR_preSVD(self, X, Y, p, omega2, W2, Vh):
         """Ridge Regression (RR) solver.
 
         Cost is (Xa-y)**2 + omega2*(a-p)**2 SVD of X.T X, where T is the
@@ -159,28 +160,23 @@ class RidgeRegression(object):
         -------
         coefs : optimal coefficients
         """
-        R2 = np.ones(len(self.W2)) * omega2
-        inv_W2_reg = (self.W2 + R2) ** -1
-        XtX_reg_inv = np.dot(np.dot(self.Vh.T, np.diag(inv_W2_reg)), self.Vh)
+        R2 = np.ones(len(W2)) * omega2
+        inv_W2_reg = (W2 + R2) ** -1
+        XtX_reg_inv = np.dot(np.dot(Vh.T, np.diag(inv_W2_reg)), Vh)
         coefs = np.dot(XtX_reg_inv, np.dot(X.T, Y.T) + omega2 * p)
 
         return coefs
 
-    def _bootstrap_master(self, X, Y, p, omega2_l, Ns=100, X2_W=None,
-                          X2_Vh=None):
+    def _bootstrap_master(self, X, Y, p, omega2_l, Ns=100):
         """Function to perform the bootstrapping."""
         assert len(np.shape(omega2_l)) == 1
         samples = self._get_bootstrap_samples(len(Y), Ns)
         assert len(np.shape(samples)) == 2
 
-        # Make full SVD on all samples one time for all
-        if X2_W is None and X2_Vh is None:
-            X2_U, X2_W, X2_Vh = np.linalg.svd(np.dot(X.T, X),
-                                              full_matrices=True)
         W2_samples, Vh_samples = self._get_samples_svd(X, samples)
         for i, omega2 in enumerate(omega2_l):
-            res = self.bootstrap_calc(X, Y, p, omega2, samples, X2_W=X2_W,
-                                      X2_Vh=X2_Vh, W2_samples=W2_samples,
+            res = self.bootstrap_calc(X, Y, p, omega2, samples,
+                                      W2_samples=W2_samples,
                                       Vh_samples=Vh_samples)
             (err, ERR, EPE, coefs_samples) = res
 
@@ -207,17 +203,9 @@ class RidgeRegression(object):
         np.random.seed(seed)
         return np.random.random_integers(0, Nd-1, (Ns, Nd))
 
-    def bootstrap_calc(self, X, Y, p, omega2, samples, X2_W=None, X2_Vh=None,
-                       W2_samples=None, Vh_samples=None):
+    def bootstrap_calc(self, X, Y, p, omega2, samples, W2_samples, Vh_samples):
         """Calculate optimal omega2 from bootstrap."""
-        if X2_W is None or X2_Vh is None:
-            X2_U, X2_W, X2_Vh = np.linalg.svd(np.dot(X.T, X),
-                                              full_matrices=True)
-
-        if W2_samples is None or Vh_samples is None:
-            W2_samples, Vh_samples = self._get_samples_svd(X, samples)
-
-        coefs = self._RR_preSVD(X, Y, p, omega2, X2_W, X2_Vh)
+        coefs = self._RR_preSVD(X, Y, p, omega2, self.W2, self.Vh)
         err = np.sum((np.dot(X, coefs.T)-Y)**2/len(Y))
 
         error_samples = []
@@ -274,16 +262,12 @@ class RidgeRegression(object):
 
     def _LOOCV_l(self, X, Y, p, omega2_l):
         """Leave one out estimator for a list of regularization strengths."""
-        if self.W2 is None or self.Vh is None:
-            V, W2, Vh = np.linalg.svd(np.dot(X.T, X), full_matrices=True)
-
         for i, omega2 in enumerate(omega2_l):
-            LOOCV_EPE = self._LOOCV(X, Y, p, omega2, W2=W2, Vh=Vh)
+            LOOCV_EPE = self._LOOCV(X, Y, p, omega2)
             if i == 0:
                 LOOCV_EPE_l = LOOCV_EPE
             else:
-                LOOCV_EPE_l = np.hstack((
-                    LOOCV_EPE_l, LOOCV_EPE))
+                LOOCV_EPE_l = np.hstack((LOOCV_EPE_l, LOOCV_EPE))
         return LOOCV_EPE_l
 
     def _LOOCV(self, X, Y, p, omega2):
