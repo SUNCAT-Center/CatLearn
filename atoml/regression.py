@@ -37,8 +37,8 @@ class RegressionFit(object):
         self.predict = predict
 
     def feature_select(self, size=None, iterations=1e5, steps=None,
-                       line_search=False, spacing=None, min_alpha=1.e-8,
-                       max_alpha=1.e-1, eps=1e-3):
+                       line_search=False, min_alpha=1.e-8, max_alpha=1.e-1,
+                       eps=1e-3):
         """Find index of important featurs.
 
         Parameters
@@ -60,7 +60,6 @@ class RegressionFit(object):
         if self.method is 'lasso':
             self.steps = steps
             self.line_search = line_search
-            self.spacing = spacing
             self.min_alpha = min_alpha
             self.max_alpha = max_alpha
             self.eps = eps
@@ -127,12 +126,13 @@ class RegressionFit(object):
         """Order features according to their corresponding coefficients."""
         if self.line_search:
             pred = None
-            if self.spacing is 'linear':
-                alpha_list = np.linspace(self.max_alpha, self.min_alpha,
-                                         self.steps)
-            else:
+            try:
                 alpha_list = np.geomspace(self.max_alpha, self.min_alpha,
                                           self.steps)
+            except AttributeError:
+                alpha_list = np.exp(np.linspace(np.log(self.max_alpha),
+                                                np.log(self.min_alpha),
+                                                self.steps))
             for alpha in alpha_list:
                 regr = Lasso(alpha=alpha, max_iter=self.iter,
                              fit_intercept=True, normalize=True,
