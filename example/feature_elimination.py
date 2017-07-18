@@ -75,8 +75,8 @@ def do_pred(train, test):
                               optimize_hyperparameters=True)
 
     # Print the error associated with the predictions.
-    print('Training error:', pred['training_rmse']['average'])
-    print('Model error:', pred['validation_rmse']['average'])
+    print('Training error:', pred['training_error']['rmse_average'])
+    print('Model error:', pred['validation_error']['rmse_average'])
 
 
 # Get base predictions.

@@ -186,7 +186,7 @@ print(list(a['optimized_kernels']['k1']['width']),
 print(list(np.max(X_train, axis=0) - np.min(X_train, axis=0)))
 
 # Print the error associated with the predictions.
-print('GP full model error:', a['validation_rmse']['average'])
+print('GP full model error:', a['validation_error']['rmse_average'])
 
 for i in range(2, 20):
     # if width is None:
@@ -215,7 +215,7 @@ for i in range(2, 20):
     print(list(np.max(X_train, axis=0) - np.min(X_train, axis=0)))
 
     # Print the error associated with the predictions.
-    print('GP Model error:', a['validation_rmse']['average'])
+    print('GP Model error:', a['validation_error']['rmse_average'])
 
 if plot:
     ax1.scatter(x=feat, y=pres1, label='+1.00', alpha=0.1)

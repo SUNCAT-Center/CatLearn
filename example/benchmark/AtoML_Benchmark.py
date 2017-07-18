@@ -1,3 +1,4 @@
+"""AtoML benchmarking script."""
 import numpy as np
 import pandas as pd
 from sklearn.preprocessing import scale
@@ -46,4 +47,4 @@ pred = gp.get_predictions(train_fp=X_train,
                           uncertainty=False,
                           cost='squared')
 
-print('gaussian prediction:', pred['validation_rmse']['average'])
+print('gaussian prediction:', pred['validation_error']['rmse_average'])
