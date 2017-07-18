@@ -2,73 +2,70 @@
 from __future__ import print_function
 from __future__ import absolute_import
 
-from ase.ga.data import DataConnection
-from atoml.data_setup import get_unique, get_train
-from atoml.fingerprint_setup import return_fpv
-from atoml.feature_preprocess import normalize
-from atoml.particle_fingerprint import ParticleFingerprintGenerator
+import numpy as np
+
+from atoml.database_functions import DescriptorDatabase
+from atoml.feature_preprocess import standardize, normalize
 from atoml.predict import GaussianProcess
 
+# Attach the database.
+dd = DescriptorDatabase(db_name='fpv_store.sqlite', table='FingerVector')
 
-db = DataConnection('../data/gadb.db')
+# Pull the features and targets from the database.
+names = dd.get_column_names()
+features, targets = names[1:-1], names[-1:]
+feature_data = dd.query_db(names=features)
+target_data = np.reshape(dd.query_db(names=targets),
+                         (np.shape(feature_data)[0], ))
 
-# Get all relaxed candidates from the db file.
-all_cand = db.get_all_relaxed_candidates(use_extinct=False)
+# Split the data into so test and training sets.
+train_features, train_targets = feature_data[:35, :], target_data[:35]
+test_features, test_targets = feature_data[35:, :], target_data[35:]
 
-# Setup the test and training datasets.
-testset = get_unique(atoms=all_cand, size=10, key='raw_score')
-trainset = get_train(atoms=all_cand, size=50, taken=testset['taken'],
-                     key='raw_score')
-
-# Define fingerprint parameters.
-fpv = ParticleFingerprintGenerator(get_nl=False, max_bonds=13)
-
-# Get the list of fingerprint vectors and normalize them.
-test_fp = return_fpv(testset['atoms'], [fpv.nearestneighbour_fpv])
-train_fp = return_fpv(trainset['atoms'], [fpv.nearestneighbour_fpv])
-nfp = normalize(train_matrix=train_fp, test_matrix=test_fp)
+sfp = standardize(train_matrix=train_features, test_matrix=test_features)
+nfp = normalize(train_matrix=train_features, test_matrix=test_features)
 
 # Test prediction routine with linear kernel.
 kdict = {'k1': {'type': 'linear', 'const': 0.}}
 gp = GaussianProcess(kernel_dict=kdict)
-pred = gp.get_predictions(train_fp=nfp['train'],
-                          test_fp=nfp['test'],
+pred = gp.get_predictions(train_fp=sfp['train'],
+                          test_fp=sfp['test'],
                           cinv=None,
-                          train_target=trainset['target'],
-                          test_target=testset['target'],
+                          train_target=train_targets,
+                          test_target=test_targets,
                           get_validation_error=True,
                           get_training_error=True,
                           optimize_hyperparameters=False)
-assert len(pred['prediction']) == 10
+assert len(pred['prediction']) == 15
 print('linear prediction:', pred['validation_error']['rmse_average'])
 
 # Test prediction routine with polynomial kernel.
 kdict = {'k1': {'type': 'polynomial', 'slope': 0.5, 'degree': 2., 'const': 0.}}
 gp = GaussianProcess(kernel_dict=kdict)
-pred = gp.get_predictions(train_fp=nfp['train'],
-                          test_fp=nfp['test'],
+pred = gp.get_predictions(train_fp=sfp['train'],
+                          test_fp=sfp['test'],
                           cinv=None,
-                          train_target=trainset['target'],
-                          test_target=testset['target'],
+                          train_target=train_targets,
+                          test_target=test_targets,
                           get_validation_error=True,
                           get_training_error=True,
                           optimize_hyperparameters=False)
-assert len(pred['prediction']) == 10
+assert len(pred['prediction']) == 15
 print('polynomial prediction:', pred['validation_error']['rmse_average'])
 
 # Test prediction routine with gaussian kernel.
 kdict = {'k1': {'type': 'gaussian', 'width': 0.5}}
 gp = GaussianProcess(kernel_dict=kdict, regularization=0.001)
-pred = gp.get_predictions(train_fp=nfp['train'],
-                          test_fp=nfp['test'],
+pred = gp.get_predictions(train_fp=sfp['train'],
+                          test_fp=sfp['test'],
                           cinv=None,
-                          train_target=trainset['target'],
-                          test_target=testset['target'],
+                          train_target=train_targets,
+                          test_target=test_targets,
                           get_validation_error=True,
                           get_training_error=True,
                           uncertainty=True,
                           epsilon=0.1)
-assert len(pred['prediction']) == 10
+assert len(pred['prediction']) == 15
 print('gaussian prediction (rmse):', pred['validation_error']['rmse_average'])
 for i, j, k, in zip(pred['prediction'],
                     pred['uncertainty'],
@@ -83,30 +80,30 @@ print('gaussian prediction (abs):',
 # Test prediction routine with laplacian kernel.
 kdict = {'k1': {'type': 'laplacian', 'width': 0.5}}
 gp = GaussianProcess(kernel_dict=kdict, regularization=0.001)
-pred = gp.get_predictions(train_fp=nfp['train'],
-                          test_fp=nfp['test'],
+pred = gp.get_predictions(train_fp=sfp['train'],
+                          test_fp=sfp['test'],
                           cinv=None,
-                          train_target=trainset['target'],
-                          test_target=testset['target'],
+                          train_target=train_targets,
+                          test_target=test_targets,
                           get_validation_error=True,
                           get_training_error=True,
                           optimize_hyperparameters=True)
-assert len(pred['prediction']) == 10
+assert len(pred['prediction']) == 15
 print('laplacian prediction:', pred['validation_error']['rmse_average'])
 
 # Test prediction routine with addative linear and gaussian kernel.
 kdict = {'k1': {'type': 'linear', 'features': [0, 1], 'const': 0.},
          'k2': {'type': 'gaussian', 'features': [2, 3], 'width': 0.5}}
 gp = GaussianProcess(kernel_dict=kdict, regularization=0.001)
-pred = gp.get_predictions(train_fp=nfp['train'],
-                          test_fp=nfp['test'],
+pred = gp.get_predictions(train_fp=sfp['train'],
+                          test_fp=sfp['test'],
                           cinv=None,
-                          train_target=trainset['target'],
-                          test_target=testset['target'],
+                          train_target=train_targets,
+                          test_target=test_targets,
                           get_validation_error=True,
                           get_training_error=True,
                           optimize_hyperparameters=True)
-assert len(pred['prediction']) == 10
+assert len(pred['prediction']) == 15
 print('addition prediction:', pred['validation_error']['rmse_average'])
 
 # Test prediction routine with multiplication of linear and gaussian kernel.
@@ -114,13 +111,13 @@ kdict = {'k1': {'type': 'linear', 'features': [0, 1], 'const': 0.},
          'k2': {'type': 'gaussian', 'features': [2, 3], 'width': 0.5,
                 'operation': 'multiplication'}}
 gp = GaussianProcess(kernel_dict=kdict, regularization=0.001)
-pred = gp.get_predictions(train_fp=nfp['train'],
-                          test_fp=nfp['test'],
+pred = gp.get_predictions(train_fp=sfp['train'],
+                          test_fp=sfp['test'],
                           cinv=None,
-                          train_target=trainset['target'],
-                          test_target=testset['target'],
+                          train_target=train_targets,
+                          test_target=test_targets,
                           get_validation_error=True,
                           get_training_error=True,
                           optimize_hyperparameters=True)
-assert len(pred['prediction']) == 10
+assert len(pred['prediction']) == 15
 print('multiplication prediction:', pred['validation_error']['rmse_average'])

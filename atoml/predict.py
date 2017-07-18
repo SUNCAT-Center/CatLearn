@@ -154,8 +154,8 @@ class GaussianProcess(object):
         # Calculate error associated with predictions on the test data.
         if get_validation_error:
             data['validation_error'] = get_error(prediction=data['prediction'],
-                                                target=test_target,
-                                                epsilon=epsilon)
+                                                 target=test_target,
+                                                 epsilon=epsilon)
 
         # Calculate error associated with predictions on the training data.
         if get_training_error:
@@ -171,7 +171,7 @@ class GaussianProcess(object):
             # Calculated the error for the prediction on the training data.
             data['training_error'] = get_error(
                 prediction=data['train_prediction'], target=error_train,
-                                              epsilon=epsilon)
+                epsilon=epsilon)
 
         # Calculate uncertainty associated with prediction on test data.
         if uncertainty:
@@ -264,8 +264,8 @@ class GaussianProcess(object):
         # Calculated the error for the residual prediction on the test data.
         if test_target is not None:
             data['validation_error'] = get_error(prediction=data['gX'],
-                                                target=test_target,
-                                                epsilon=epsilon)
+                                                 target=test_target,
+                                                 epsilon=epsilon)
 
         return data
 

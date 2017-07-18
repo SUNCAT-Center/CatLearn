@@ -58,37 +58,35 @@ pred = gp.get_predictions(train_fp=nfp['train'],
                           basis=basis,
                           optimize_hyperparameters=False)
 
-print('GP:', pred['validation_rmse']['average'], 'Residual:',
-      pred['basis_analysis']['validation_rmse']['average'])
+print('GP:', pred['validation_error']['rmse_average'], 'Residual:',
+      pred['basis_analysis']['validation_error']['rmse_average'])
 
 pe = []
 st = target_standardize(testset['target'])
 st = st['target']
 sp = target_standardize(pred['prediction'])
 sp = sp['target']
-for i, j, l, m, k in zip(pred['prediction'],
-                         pred['uncertainty'],
-                         pred['validation_rmse']['all'],
-                         st, sp):
+for i, j, l, m, k in zip(pred['prediction'], pred['uncertainty'],
+                         pred['validation_error']['rmse_all'], st, sp):
     e = (k - m) / j
     pe.append(e)
 x = pd.Series(pe, name="Rel. Uncertainty")
 
 pred['Prediction'] = pred['prediction']
 pred['Actual'] = testset['target']
-pred['Error'] = pred['validation_rmse']['all']
+pred['Error'] = pred['validation_error']['rmse_all']
 pred['Uncertainty'] = pred['uncertainty']
 index = [i for i in range(len(test_fp))]
 df = pd.DataFrame(data=pred, index=index)
 with sns.axes_style("white"):
     plt.subplot(311)
     plt.title('Validation RMSE: {0:.3f}'.format(
-        pred['validation_rmse']['average']))
+        pred['validation_error']['rmse_average']))
     sns.regplot(x='Actual', y='Prediction', data=df)
     plt.subplot(312)
     ax = sns.regplot(x='Uncertainty', y='Error', data=df, fit_reg=False)
-    ax.set_ylim([min(pred['validation_rmse']['all']),
-                 max(pred['validation_rmse']['all'])])
+    ax.set_ylim([min(pred['validation_error']['rmse_all']),
+                 max(pred['validation_error']['rmse_all'])])
     ax.set_yscale('log')
     plt.subplot(313)
     sns.distplot(x, bins=50, kde=False)
