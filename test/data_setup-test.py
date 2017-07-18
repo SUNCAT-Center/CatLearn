@@ -48,6 +48,7 @@ for i in trainset['atoms']:
     del i.info['data']['nnmat']
 
 # Initiate the fingerprint generators with relevant input variables.
+print('Getting the fingerprints')
 pfpv = ParticleFingerprintGenerator(atom_numbers=[78, 79], max_bonds=13,
                                     get_nl=False, dx=0.2, cell_size=50.,
                                     nbin=4)
@@ -111,6 +112,7 @@ data = np.concatenate((data, train_fp), axis=1)
 assert n == 50, d == 7
 
 # Put data in correct format to be inserted into database.
+print('Generate the database')
 new_data = []
 for i, a in zip(data, all_cand):
     d = []
