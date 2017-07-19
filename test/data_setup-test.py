@@ -112,6 +112,16 @@ data = np.concatenate((data, no_prop), axis=1)
 data = np.concatenate((data, an_prop), axis=1)
 assert np.shape(no_prop) == (50, 15) and np.shape(an_prop) == (50, 30)
 
+# Define variables for database to store system descriptors.
+db_name = 'fpv_store.sqlite'
+descriptors = ['f' + str(i) for i in range(np.shape(data)[1])]
+targets = ['Energy']
+names = descriptors + targets
+
+# Set up the database to save system descriptors.
+dd = DescriptorDatabase(db_name=db_name, table='FingerVector')
+dd.create_db(names=names)
+
 # Put data in correct format to be inserted into database.
 print('Generate the database')
 new_data = []
@@ -122,16 +132,6 @@ for i, a in zip(data, all_cand):
         d.append(j)
     d.append(a.info['key_value_pairs']['raw_score'])
     new_data.append(d)
-
-# Define variables for database to store system descriptors.
-db_name = 'fpv_store.sqlite'
-descriptors = ['f' + str(i) for i in np.shape(new_data)[1]]
-targets = ['Energy']
-names = descriptors + targets
-
-# Set up the database to save system descriptors.
-dd = DescriptorDatabase(db_name=db_name, table='FingerVector')
-dd.create_db(names=names)
 
 # Fill the database with the data.
 dd.fill_db(descriptor_names=names, data=new_data)
