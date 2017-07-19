@@ -11,6 +11,7 @@ from atoml.data_setup import get_unique, get_train
 from atoml.fingerprint_setup import return_fpv
 from atoml.particle_fingerprint import ParticleFingerprintGenerator
 from atoml.standard_fingerprint import StandardFingerprintGenerator
+from atoml.neighbor_matrix import base_f
 from atoml.database_functions import DescriptorDatabase
 from atoml.utilities import remove_outliers
 
@@ -110,6 +111,16 @@ train_fp = return_fpv(trainset['atoms'], [pfpv.nearestneighbour_fpv,
 n, d = np.shape(train_fp)
 data = np.concatenate((data, train_fp), axis=1)
 assert n == 50, d == 7
+
+# Do basic check for atomic porperties.
+no_prop = []
+an_prop = []
+for atoms in trainset['atoms']:
+    no_prop.append(base_f(atoms=atoms))
+    an_prop.append(base_f(atoms=atoms, property=['atomic_number']))
+data = np.concatenate((data, no_prop), axis=1)
+data = np.concatenate((data, an_prop), axis=1)
+assert np.shape(no_prop) == (50, 15) and np.shape(an_prop) == (50, 30)
 
 # Put data in correct format to be inserted into database.
 print('Generate the database')

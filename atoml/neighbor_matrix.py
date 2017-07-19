@@ -1,36 +1,36 @@
-""" Functions to build a neighbor matrix feature representation of descrete
-    systems.
-"""
+"""Functions to build a neighbor matrix feature representation."""
 from __future__ import absolute_import
 from __future__ import division
 
 import numpy as np
+from collections import defaultdict
 from mendeleev import element
 
 from ase.data import covalent_radii
+from ase.ga.utilities import get_mic_distance
 
 
 def get_neighborlist(atoms, dx=0.2, neighbor_number=1):
-    """ Make dict of neighboring atoms. Possible to return neighbors from
-        defined neighbor shell e.g. 1st, 2nd, 3rd.
+    """Make dict of neighboring atoms for discrete system.
 
-        Parameters
-        ----------
-        atoms : object
-            Target ase atoms object on which to get neighbor list.
-        dx : float
-            Buffer to calculate nearest neighbor pairs.
-        neighbor_number : int
-            NOT IMPLEMENTED YET.
+    Possible to return neighbors from defined neighbor shell e.g. 1st, 2nd,
+    3rd by changing the neighbor number.
+
+    Parameters
+    ----------
+    atoms : object
+        Target ase atoms object on which to get neighbor list.
+    dx : float
+        Buffer to calculate nearest neighbor pairs.
+    neighbor_number : int
+        Neighbor shell.
     """
-    conn = {}
+    conn = defaultdict(list)
     for a1 in atoms:
-        conn_this_atom = []
         for a2 in atoms:
             if a1.index != a2.index:
-                p1 = np.asarray(a1.position)
-                p2 = np.asarray(a2.position)
-                d = np.linalg.norm(p1 - p2)
+                d = np.linalg.norm(np.asarray(a1.position)
+                                   - np.asarray(a2.position))
                 r1 = covalent_radii[a1.number]
                 r2 = covalent_radii[a2.number]
                 if neighbor_number == 1:
@@ -39,20 +39,57 @@ def get_neighborlist(atoms, dx=0.2, neighbor_number=1):
                     d_max1 = ((neighbor_number - 1) * (r2 + r1)) + dx
                 d_max2 = (neighbor_number * (r2 + r1)) + dx
                 if d > d_max1 and d < d_max2:
-                    conn_this_atom.append(a2.index)
-        conn[a1.index] = conn_this_atom
+                    conn[a1.index].append(a2.index)
+    return conn
+
+
+def get_periodic_neighborlist(atoms, dx=0.2, neighbor_number=1):
+    """Make dict of neighboring atoms for periodic system.
+
+    Possible to return neighbors from defined neighbor shell e.g. 1st, 2nd,
+    3rd by changing the neighbor number.
+
+    Parameters
+    ----------
+    atoms : object
+        Target ase atoms object on which to get neighbor list.
+    dx : float
+        Buffer to calculate nearest neighbor pairs.
+    neighbor_number : int
+        Neighbor shell.
+    """
+    cell = atoms.get_cell()
+    pbc = atoms.get_pbc()
+
+    conn = defaultdict(list)
+    for atomi in atoms:
+        for atomj in atoms:
+            if atomi.index != atomj.index:
+                d = get_mic_distance(atomi.position,
+                                     atomj.position,
+                                     cell,
+                                     pbc)
+                cri = covalent_radii[atomi.number]
+                crj = covalent_radii[atomj.number]
+                if neighbor_number == 1:
+                    d_max1 = 0.
+                else:
+                    d_max1 = ((neighbor_number - 1) * (crj + cri)) + dx
+                d_max2 = (neighbor_number * (crj + cri)) + dx
+                if d > d_max1 and d < d_max2:
+                    conn[atomi.index].append(atomj.index)
     return conn
 
 
 def connection_matrix(atoms, dx=0.2):
-    """ Helper function to generate a connections matrix from an atoms object.
+    """Helper function to generate a connections matrix from an atoms object.
 
-        Parameters
-        ----------
-        atoms : object
-            Target ase atoms object on which to build the connections matrix.
-        dx : float
-            Buffer to calculate nearest neighbor pairs.
+    Parameters
+    ----------
+    atoms : object
+        Target ase atoms object on which to build the connections matrix.
+    dx : float
+        Buffer to calculate nearest neighbor pairs.
     """
     # Use ase.ga neighbor list generator.
     if 'neighborlist' in atoms.info['key_value_pairs']:
@@ -76,15 +113,14 @@ def connection_matrix(atoms, dx=0.2):
 
 
 def element_list(an, no):
-    """ Function to transform list of atom numbers into binary list with one
-        for given type, zero for all others. Maps homoatomic interactions.
+    """Binary mapping of homoatomic interactions.
 
-        Parameters
-        ----------
-        an : list
-            List of atom numbers.
-        no : int
-            Select atom number.
+    Parameters
+    ----------
+    an : list
+        List of atom numbers.
+    no : int
+        Select atom number.
     """
     binary_inter = []
     for n in an:
@@ -97,16 +133,14 @@ def element_list(an, no):
 
 
 def heteroatomic_matrix(an, el):
-    """ Function to transform list of atom numbers into binary list with one
-        for interactions between two different types, zero for all others. Maps
-        heteroatomic interactions.
+    """Binary mapping of heteroatomic interactions.
 
-        Parameters
-        ----------
-        an : list
-            List of atom numbers.
-        el : list
-            List of two atom numbers on which to map interactions.
+    Parameters
+    ----------
+    an : list
+        List of atom numbers.
+    el : list
+        List of two atom numbers on which to map interactions.
     """
     binary_inter = []
     for i in an:
@@ -125,12 +159,12 @@ def heteroatomic_matrix(an, el):
 
 
 def generalized_matrix(conn_mat):
-    """ Get the generalized coordination matrix.
+    """Get the generalized coordination matrix.
 
-        Parameters
-        ----------
-        cm : array
-            The connections matrix.
+    Parameters
+    ----------
+    cm : array
+        The connections matrix.
     """
     gen_mat = []
     for i in conn_mat:
@@ -144,14 +178,14 @@ def generalized_matrix(conn_mat):
 
 
 def property_matrix(atoms, property):
-    """ Generate a property matrix based on the atomic types.
+    """Generate a property matrix based on the atomic types.
 
-        Parameters
-        ----------
-        atoms : object
-            The target ase atoms opject.
-        property : str
-            The target property from mendeleev.
+    Parameters
+    ----------
+    atoms : object
+        The target ase atoms opject.
+    property : str
+        The target property from mendeleev.
     """
     symb = atoms.get_chemical_symbols()
     atomic_prop = {}
@@ -167,18 +201,18 @@ def property_matrix(atoms, property):
 
 
 def get_features(an, conn_mat, sum_cm, gen_mat):
-    """ Function to generate the actual feature vector.
+    """Function to generate the actual feature vector.
 
-        Parameters
-        ----------
-        an : list
-            Ordered list of atomic numbers.
-        cm : array
-            The coordination matrix.
-        sum_cm : list
-            The summed vectors of the coordination matrix.
-        gen_cm : array
-            The generalized coordination matrix.
+    Parameters
+    ----------
+    an : list
+        Ordered list of atomic numbers.
+    cm : array
+        The coordination matrix.
+    sum_cm : list
+        The summed vectors of the coordination matrix.
+    gen_cm : array
+        The generalized coordination matrix.
     """
     feature = []
     # Get level one fingerprint. Sum of coordination for each atom type.
@@ -212,14 +246,14 @@ def get_features(an, conn_mat, sum_cm, gen_mat):
 
 
 def base_f(atoms, property=None):
-    """ Function to generate features from atoms objects.
+    """Function to generate features from atoms objects.
 
-        Parameters
-        ----------
-        atoms : object
-            The target ase atoms object.
-        property : list
-            List of the target properties from mendeleev.
+    Parameters
+    ----------
+    atoms : object
+        The target ase atoms object.
+    property : list
+        List of the target properties from mendeleev.
     """
     features = []
 
