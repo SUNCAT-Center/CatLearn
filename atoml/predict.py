@@ -60,7 +60,7 @@ class GaussianProcess(object):
     def get_predictions(self, train_fp, test_fp, train_target, cinv=None,
                         test_target=None, uncertainty=False, basis=None,
                         get_validation_error=False, get_training_error=False,
-                        standardize_target=True, cost='squared', epsilon=None,
+                        standardize_target=True, epsilon=None,
                         writeout=False, optimize_hyperparameters=False):
         """Function to perform the prediction on some training and test data.
 
@@ -96,9 +96,11 @@ class GaussianProcess(object):
         epsilon : float
             Threshold for insensitive error calculation.
         """
+        # Get the shape of the training dataset.
         N_train, N_D = np.shape(train_fp)
-        # Kernel dictionary should contain hyperparameters in lists:
+        # Hyperparameters given as floats are converted to lists.
         self.prepare_kernels(N_D)
+        # Standardize target values.
         self.standardize_target = standardize_target
 
         error_train = train_target
@@ -106,12 +108,13 @@ class GaussianProcess(object):
             self.standardize_data = target_standardize(train_target)
             train_target = self.standardize_data['target']
 
+        # Store input data.
         data = defaultdict(list)
         data['input_kernels'] = self.kernel_dict
         data['input_regularization'] = self.regularization
         # Optimize hyperparameters.
         if optimize_hyperparameters:
-            # Loop through kernels
+            # Create a list of all hyperparameters.
             theta = kdicts2list(self.kernel_dict, N_D=N_D)
             if self.regularization is not None:
                 theta = np.append(theta, self.regularization)
@@ -124,10 +127,11 @@ class GaussianProcess(object):
             self.theta_opt = minimize(log_marginal_likelihood, theta,
                                       args=args,
                                       bounds=bounds)  # , jac=gradient_log_p)
-            # Update kernel_dict and regularization
+            # Update kernel_dict and regularization with optimized values.
             self.kernel_dict = list2kdict(self.theta_opt['x'][:-1],
                                           self.kernel_dict)
             self.regularization = self.theta_opt['x'][-1]
+            # Store kernels with optimized hyperparameters.
             data['optimized_kernels'] = self.kernel_dict
             data['optimized_regularization'] = self.regularization
 
@@ -149,9 +153,9 @@ class GaussianProcess(object):
 
         # Calculate error associated with predictions on the test data.
         if get_validation_error:
-            data['validation_rmse'] = get_error(prediction=data['prediction'],
-                                                target=test_target, cost=cost,
-                                                epsilon=epsilon)
+            data['validation_error'] = get_error(prediction=data['prediction'],
+                                                 target=test_target,
+                                                 epsilon=epsilon)
 
         # Calculate error associated with predictions on the training data.
         if get_training_error:
@@ -165,9 +169,9 @@ class GaussianProcess(object):
                                                           target=train_target)
 
             # Calculated the error for the prediction on the training data.
-            data['training_rmse'] = get_error(
+            data['training_error'] = get_error(
                 prediction=data['train_prediction'], target=error_train,
-                cost=cost, epsilon=epsilon)
+                epsilon=epsilon)
 
         # Calculate uncertainty associated with prediction on test data.
         if uncertainty:
@@ -175,8 +179,8 @@ class GaussianProcess(object):
                                  matrix1=test_fp)
             data['uncertainty'] = [(self.regularization + kxx[kt][kt] -
                                     np.dot(np.dot(ktb[kt], cinv),
-                                           np.transpose(ktb[kt])))
-                                   ** 0.5 for kt in range(len(ktb))]
+                                           np.transpose(ktb[kt]))) **
+                                   0.5 for kt in range(len(ktb))]
 
         if basis is not None:
             data['basis_analysis'] = self.fixed_basis(train_fp=train_fp,
@@ -184,7 +188,7 @@ class GaussianProcess(object):
                                                       ktb=ktb, cinv=cinv,
                                                       target=train_target,
                                                       test_target=test_target,
-                                                      basis=basis, cost=cost,
+                                                      basis=basis,
                                                       epsilon=epsilon)
 
         if writeout:
@@ -224,7 +228,7 @@ class GaussianProcess(object):
         return pred
 
     def fixed_basis(self, test_fp, train_fp, basis, ktb, cinv, target,
-                    test_target, cost, epsilon):
+                    test_target, epsilon):
         """Function to apply fixed basis.
 
         Returns
@@ -259,9 +263,9 @@ class GaussianProcess(object):
 
         # Calculated the error for the residual prediction on the test data.
         if test_target is not None:
-            data['validation_rmse'] = get_error(prediction=data['gX'],
-                                                target=test_target, cost=cost,
-                                                epsilon=epsilon)
+            data['validation_error'] = get_error(prediction=data['gX'],
+                                                 target=test_target,
+                                                 epsilon=epsilon)
 
         return data
 
@@ -287,7 +291,7 @@ def target_standardize(target, writeout=False):
     return data
 
 
-def get_error(prediction, target, cost='squared', epsilon=None):
+def get_error(prediction, target, epsilon=None):
     """Return error for predicted data.
 
     Discussed in: Rosasco et al, Neural Computation, (2004), 16, 1063-1076.
@@ -310,23 +314,26 @@ def get_error(prediction, target, cost='squared', epsilon=None):
     prediction = np.asarray(prediction)
     target = np.asarray(target)
 
-    if cost is 'squared':
-        # Root mean squared error function.
-        e = np.square(prediction - target)
-        error['all'] = np.sqrt(e)
-        error['average'] = np.sqrt(np.sum(e)/len(e))
+    # Residuals
+    res = prediction - target
+    error['residuals'] = res
+    error['signed_average'] = np.average(res)
 
-    elif cost is 'absolute':
-        # Absolute error function.
-        e = np.abs(prediction - target)
-        error['all'] = e
-        error['average'] = np.sum(e)/len(e)
+    # Root mean squared error function.
+    e_sq = np.square(res)
+    error['rmse_all'] = np.sqrt(e_sq)
+    error['rmse_average'] = np.sqrt(np.sum(e_sq)/len(e_sq))
 
-    elif cost is 'insensitive':
-        # Epsilon-insensitive error function.
-        e = np.abs(prediction - target) - epsilon
-        np.place(e, e < 0, 0)
-        error['all'] = e
-        error['average'] = np.sum(e)/len(e)
+    # Absolute error function.
+    e_abs = np.abs(res)
+    error['absolute_all'] = e_abs
+    error['absolute_average'] = np.sum(e_abs)/len(e_abs)
+
+    # Epsilon-insensitive error function.
+    if epsilon is not None:
+        e_epsilon = np.abs(res) - epsilon
+        np.place(e_epsilon, e_epsilon < 0, 0)
+        error['insensitive_all'] = e_epsilon
+        error['insensitive_average'] = np.sum(e_epsilon)/len(e_epsilon)
 
     return error

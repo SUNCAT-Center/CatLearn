@@ -1,54 +1,101 @@
 # -*- coding: utf-8 -*-
-"""
-Created on Fri Nov 18 14:30:20 2016
+""" This example script optimizes the log marginal likelihood and plots
+    how the log marginal likelihoodd varies near the optimum.
 
-@author: mhangaard
-
-This example script requires that the make_fingerprints.py has already been run
-or that the user has generated a feature matrix in fpm.txt.
+    Requirements
+    ------------
+        data.txt : txt file
+            Must contain data where the columns contain descriptors and
+            the rows are fingerprints of data points.
 """
 import numpy as np
 from scipy.optimize import minimize
-from atoml.fingerprint_setup import standardize
+from matplotlib import pyplot as plt
+from atoml.feature_preprocess import normalize
 from atoml.model_selection import log_marginal_likelihood
 import time
 
-# Get the list of fingerprint vectors and normalize them.
-fpm_raw = np.genfromtxt('fpm.txt')
-fpm_train0 = fpm_raw[:, :-1]
-fpm_train = fpm_train0[:, :10]  # [6,7,8,10,11,13,20]]
-targets = fpm_raw[:, -1]
+# Get the list of fingerprint vectors.
+raw_data = np.genfromtxt('data.txt')
 
-m = np.shape(fpm_train)[1]
-n = len(targets)
-nfp = np.array(standardize(train=fpm_train)['train'])
+# The last column is selected as target value.
+targets = raw_data[:, -1]
+fingerprints = raw_data[:, :-1]
 
-print(n, 'training examples')
+# Select a few features
+features = [1, 2, 3, 4, 5]
+fpm_train = fingerprints[:, features]
+n, m = np.shape(fpm_train)
+print(n, 'training examples', m, 'features')
 
-# Hyper parameter starting guesses.
+# Standardize data
+nfp = np.array(normalize(train_matrix=fpm_train)['train'])
+
+# Hyperparameter starting guesses.
 sigma = np.ones(m)
 sigma *= 0.3
-regularization = 0.03
+regularization = .03
 theta = np.append(sigma, regularization)
 
-kernel_dict = {'kernel': {'type': 'gaussian', 'width': list(sigma)}, 'k2': {'type': 'linear', 'operation': 'multiplication'}}
+# Select one or more kernels
+kernel_dict = {'k1': {'type': 'gaussian', 'width': list(sigma)}}
 
+# Constant arguments for the log marginal likelihood function
 a = (nfp, targets, kernel_dict)
 
 # Hyper parameter bounds.
-b = ((1E-9, None), ) * (m+1)
-#print('initial logp=', -negative_logp(theta, nfp, targets))
-#print('initial dlogp=', -negative_dlogp(theta, nfp, targets))
+b = ((1E-9, 1000), ) * (m+1)
+print('initial log marginal likelihood =',
+      -log_marginal_likelihood(theta,
+                               nfp,
+                               targets,
+                               kernel_dict))
+
+# Optimize hyperparameters
 print('Optimizing hyperparameters')
 start = time.time()
-popt = minimize(log_marginal_likelihood, theta,# jac=gradient_log_p,
-                                 args=a, bounds=b)
-#popt = minimize(negative_logp, theta, args=a, bounds=b, options={'disp': True})
-#popt = minimize(negative_logp, theta, args=a, bounds=b, jac=negative_dlogp, options={'disp': True})
-#popt = minimize(negative_logp, theta, args=a, jac=negative_dlogp, options={'disp': True}, method='TNC')
+popt = minimize(log_marginal_likelihood,
+                theta, args=a, bounds=b)
 end = time.time()
-print('Widths aka characteristic lengths = ', popt['x'])
+print(popt)
+print('Optimized widths = ', popt['x'][:-1])
+print('Optimized regularization = ', popt['x'][-1])
 print(end - start, 'seconds')
-#print('final logp=', -negative_logp(popt['x'], nfp, targets))
-#print('final dlogp=', -negative_dlogp(popt['x'], nfp, targets))
-#print(popt)
+
+# Plot the log marginal likelihood versus each hyperparameter.
+fig, ax = plt.subplots(3, 2)
+fname = 'log_marginal_likelihood'
+for j in range(m+1):
+    axx = j/2
+    axy = j % 2
+    # Create a space for descriptor j around the optimum.
+    thetaspace = np.geomspace(popt['x'][j]/100., popt['x'][j]*100., 65)
+    Y = []
+    X = []
+    theta_copy = popt['x'].copy()
+    # Get the log marginal likelihood
+    for x in thetaspace:
+        X.append(x)
+        theta_copy[j] = x
+        Y.append(-log_marginal_likelihood(theta_copy,
+                                          nfp,
+                                          targets,
+                                          kernel_dict)
+                 )
+    # Make the plots.
+    ax[axx, axy].plot(X, Y, marker='o')
+    # Plot a vertical line at the optimum.
+    ax[axx, axy].axvline(popt['x'][j])
+    ax[axx, axy].set_xscale('log')
+    if j == -1:
+        hyperparameter = 'regularization'
+    else:
+        hyperparameter = 'width_'+str(j)
+    ax[axx, axy].set_xlabel(hyperparameter)
+    ax[axx, axy].set_ylabel('log marginal likelihood')
+# fig.subplots_adjust(hspace=0.5)
+fig.tight_layout()
+if False:
+    fig.savefig(fname+'.pdf', format='pdf')
+if True:
+    plt.show()

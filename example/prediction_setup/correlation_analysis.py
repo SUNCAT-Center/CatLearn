@@ -99,8 +99,8 @@ lasso_pred = gp.get_predictions(train_fp=traind,
                                 get_training_error=True,
                                 optimize_hyperparameters=True)
 # Print the error associated with the predictions.
-print('Training error:', lasso_pred['training_rmse']['average'])
-print('Model error:', lasso_pred['validation_rmse']['average'])
+print('Training error:', lasso_pred['training_error']['rmse_average'])
+print('Model error:', lasso_pred['validation_error']['rmse_average'])
 print('width:', lasso_pred['optimized_kernels']['k1']['width'], 'reg:',
       lasso_pred['optimized_regularization'])
 
@@ -119,8 +119,8 @@ ridge_pred = gp.get_predictions(train_fp=traind,
                                 get_training_error=True,
                                 optimize_hyperparameters=True)
 # Print the error associated with the predictions.
-print('Training error:', ridge_pred['training_rmse']['average'])
-print('Model error:', ridge_pred['validation_rmse']['average'])
+print('Training error:', ridge_pred['training_error']['rmse_average'])
+print('Model error:', ridge_pred['validation_error']['rmse_average'])
 print('width:', ridge_pred['optimized_kernels']['k1']['width'], 'reg:',
       ridge_pred['optimized_regularization'])
 
@@ -139,8 +139,8 @@ elast_pred = gp.get_predictions(train_fp=traind,
                                 get_training_error=True,
                                 optimize_hyperparameters=True)
 # Print the error associated with the predictions.
-print('Training error:', elast_pred['training_rmse']['average'])
-print('Model error:', elast_pred['validation_rmse']['average'])
+print('Training error:', elast_pred['training_error']['rmse_average'])
+print('Model error:', elast_pred['validation_error']['rmse_average'])
 print('width:', elast_pred['optimized_kernels']['k1']['width'], 'reg:',
       elast_pred['optimized_regularization'])
 
@@ -165,7 +165,7 @@ ax = fig.add_subplot(142)
 ax.plot(test_target, lasso_pred['prediction'], 'o', color='magenta', alpha=0.2)
 ax.plot(test_target, lasso_func, 'o', color='blue', alpha=0.2)
 plt.title('Func RMSE: {0:.3f}, GP RMSE: {1:.3f}'.format(
-    lasso_err['average'], lasso_pred['validation_rmse']['average']))
+    lasso_err['rmse_average'], lasso_pred['validation_error']['rmse_average']))
 plt.xlabel('Actual (eV)')
 plt.ylabel('Prediction (eV)')
 
@@ -173,7 +173,7 @@ ax = fig.add_subplot(143)
 ax.plot(test_target, ridge_pred['prediction'], 'o', color='magenta', alpha=0.2)
 ax.plot(test_target, ridge_func, 'o', color='red', alpha=0.2)
 plt.title('Func RMSE: {0:.3f}, GP RMSE: {1:.3f}'.format(
-    ridge_err['average'], ridge_pred['validation_rmse']['average']))
+    ridge_err['rmse_average'], ridge_pred['validation_error']['rmse_average']))
 plt.xlabel('Actual (eV)')
 plt.ylabel('Prediction (eV)')
 
@@ -181,7 +181,7 @@ ax = fig.add_subplot(144)
 ax.plot(test_target, elast_pred['prediction'], 'o', color='magenta', alpha=0.2)
 ax.plot(test_target, elast_func, 'o', color='green', alpha=0.2)
 plt.title('Func RMSE: {0:.3f}, GP RMSE: {1:.3f}'.format(
-    elast_err['average'], elast_pred['validation_rmse']['average']))
+    elast_err['rmse_average'], elast_pred['validation_error']['rmse_average']))
 plt.xlabel('Actual (eV)')
 plt.ylabel('Prediction (eV)')
 

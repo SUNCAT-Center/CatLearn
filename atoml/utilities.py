@@ -61,7 +61,7 @@ def remove_outliers(candidates, key, con=1.4826, dev=3., constraint=None,
     return dataset
 
 
-def clean_variance(train, test=None):
+def clean_variance(train, test=None, labels=None):
     """Remove features that contribute nothing to the model.
 
     Parameters
@@ -69,7 +69,7 @@ def clean_variance(train, test=None):
     train : array
         Feature matrix for the traing data.
     test : array
-        Feature matrix for the test data.
+        Optional feature matrix for the test data.
     """
     clean = defaultdict(list)
     m = train.T
@@ -82,7 +82,44 @@ def clean_variance(train, test=None):
         train = np.delete(m, clean['index'], axis=0).T
         if test is not None:
             test = np.delete(test.T, clean['index'], axis=0).T
+        if labels is not None:
+            labels = np.delete(labels, clean['index'])
     clean['train'] = train
     clean['test'] = test
+    clean['labels'] = labels
+
+    return clean
+
+def clean_infinite(train, test=None, labels=None):
+    """Remove features that have non finite values in the training data.
+        Optionally removes datapoints in test data with non fininte values.
+        Returns a dictionary with the clean 'train', 'test' and 'index' that
+            were removed from the original data.
+
+    Parameters
+    ----------
+    train : array
+        Feature matrix for the traing data.
+    test : array
+        Optional feature matrix for the test data.
+    """
+    clean = defaultdict(list)
+    # Find features that have only finite values.
+    l = np.isfinite(train).all(axis=0)
+    # Save the indices of columns that contain non-finite values.
+    clean['index'] = list(np.where(~l)[0])
+    # Save a cleaned training data matrix.
+    clean['train'] = train[:,l]
+    # If a test matrix is given, save a cleaned test data matrix.
+    if test is not None:
+        assert int(np.shape(test)[1]) == int(np.shape(train)[1])
+        clean['test'] = test[:,l]
+    else:
+        clean['test'] = test
+    if labels is not None:
+        assert len(labels) == int(np.shape(train)[1])
+        clean['labels'] = np.array(labels)[l]
+    else:
+        clean['labels'] = list(labels)
 
     return clean

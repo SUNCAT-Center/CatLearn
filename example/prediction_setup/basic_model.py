@@ -54,7 +54,7 @@ def do_predict(train, test, train_target, test_target, hopt=False):
         with sns.axes_style("white"):
             sns.regplot(x='actual', y='prediction', data=df)
         plt.title('Validation RMSE: {0:.3f}'.format(
-            pred['validation_rmse']['average']))
+            pred['validation_error']['rmse_average']))
         plt.show()
 
     return pred
@@ -69,8 +69,8 @@ a = do_predict(train=train_data, test=test_data, train_target=train_target,
                test_target=test_target, hopt=False)
 
 # Print the error associated with the predictions.
-print('Training error:', a['training_rmse']['average'])
-print('Model error:', a['validation_rmse']['average'])
+print('Training error:', a['training_error']['rmse_average'])
+print('Model error:', a['validation_error']['rmse_average'])
 
 # Try with hyperparameter optimization.
 kdict = {'k1': {'type': 'gaussian', 'width': 10.}}
@@ -81,5 +81,5 @@ a = do_predict(train=train_data, test=test_data, train_target=train_target,
                test_target=test_target, hopt=True)
 
 # Print the error associated with the predictions.
-print('Training error:', a['training_rmse']['average'])
-print('Model error:', a['validation_rmse']['average'])
+print('Training error:', a['training_error']['rmse_average'])
+print('Model error:', a['validation_error']['rmse_average'])

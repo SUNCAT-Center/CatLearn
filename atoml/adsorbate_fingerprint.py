@@ -22,6 +22,7 @@ try:
 except ImportError:
     print('mendeleev not imported')
 
+
 def n_outer(mnlv):
     econf = mnlv.econf.split(' ')[1:]
     n_tot = 0
@@ -45,6 +46,7 @@ def n_outer(mnlv):
         elif 'f' in shell:
             nf += n_shell
     return n_tot, ns, np, nd, nf
+
 
 def info2primary_index(atoms):
     liste = []
@@ -206,12 +208,34 @@ class AdsorbateFingerprintGenerator(object):
                 dbskew = float(self.dbskew[name])
                 dbkurt = float(self.dbkurt[name])
             except KeyError:
-                dbcenter = np.NaN
-                dbfilling = np.NaN
-                dbwidth = np.NaN
-                dbskew = np.NaN
-                dbkurt = np.NaN
-                warnings.warn(name+' has no d-band info.')
+                try:
+                    bulkcomp = string2symbols(name)
+                    ldbcenter = []
+                    ldbfilling = []
+                    ldbwidth = []
+                    ldbskew = []
+                    ldbkurt = []
+                    for nam in bulkcomp:
+                        try:
+                            ldbkurt.append(float(self.dbkurt[nam]))
+                            ldbfilling.append(float(self.dbfilling[nam]))
+                            ldbwidth.append(float(self.dbwidth[nam]))
+                            ldbskew.append(float(self.dbskew[nam]))
+                            ldbkurt.append(float(self.dbkurt[nam]))
+                        except KeyError:
+                            continue
+                    dbcenter = np.average(ldbcenter)
+                    dbfilling = np.average(ldbfilling)
+                    dbwidth = np.average(ldbwidth)
+                    dbskew = np.average(ldbskew)
+                    dbkurt = np.average(ldbkurt)
+                except KeyError:
+                    dbcenter = np.NaN
+                    dbfilling = np.NaN
+                    dbwidth = np.NaN
+                    dbskew = np.NaN
+                    dbkurt = np.NaN
+                    warnings.warn(name+' has no d-band info.')
             return [
                 float(self.rho[name]),
                 len(atoms.numbers) / A,
@@ -258,7 +282,7 @@ class AdsorbateFingerprintGenerator(object):
         """
         if atoms is None:
             return ['Z', 'period_surf1', 'group_id_surf1',
-                    'electron_affinity_surf1',
+                    # 'electron_affinity_surf1',
                     'dipole_polarizability_surf1',
                     'heat_of_formationsurf1',
                     'melting_point_surf1',
@@ -300,7 +324,7 @@ class AdsorbateFingerprintGenerator(object):
             return [Z0,
                     int(mnlv.period),
                     int(mnlv.group_id),
-                    float(mnlv.electron_affinity),
+                    # float(mnlv.electron_affinity),
                     float(mnlv.dipole_polarizability),
                     float(mnlv.heat_of_formation),
                     float(mnlv.melting_point),
@@ -348,16 +372,18 @@ class AdsorbateFingerprintGenerator(object):
             return ['nn_num_C', 'nn_num_H', 'nn_num_M']
         else:
             addsyms = ['H', 'C', 'O', 'N']
-            surf_atoms = atoms.info['surf_atoms']
-            add_atoms = atoms.info['add_atoms']
-            liste = []
-            for m in surf_atoms:
-                for a in add_atoms:
-                    d = atoms.get_distance(m, a, mic=True, vector=False)
-                    liste.append([a, d])
-            L = np.array(liste)
-            i = np.argmin(L[:, 1])
-            primary_add = int(L[i, 0])
+            # surf_atoms = atoms.info['surf_atoms']
+            # add_atoms = atoms.info['add_atoms']
+            # liste = []
+            # for m in surf_atoms:
+            #     for a in add_atoms:
+            #         d = atoms.get_distance(m, a, mic=True, vector=False)
+            #         liste.append([a, d])
+            primary_add = int(atoms.info['i_add1'])
+            Z_surf1 = int(atoms.info['Z_surf1'])
+            Z_add1 = int(atoms.info['Z_add1'])
+            dM = covalent_radii[Z_surf1]
+            dadd = covalent_radii[Z_add1]
             nH1 = len([a.index for a in atoms if a.symbol == 'H' and
                        atoms.get_distance(primary_add, a.index, mic=True) <
                        1.3 and a.index != primary_add])
@@ -366,7 +392,7 @@ class AdsorbateFingerprintGenerator(object):
                        1.3 and a.index != primary_add])
             nM = len([a.index for a in atoms if a.symbol not in addsyms and
                       atoms.get_distance(primary_add, a.index, mic=True) <
-                      2.35])
+                      (dM+dadd)*1.3])
             return [nC1, nH1, nM]  # , nN, nH]
 
     def secondary_adds_nn(self, atoms=None):
@@ -430,7 +456,10 @@ class AdsorbateFingerprintGenerator(object):
                     ]
         else:
             add_atoms = atoms.info['add_atoms']
-            atoms = atoms.repeat([1, 2, 1])
+            if atoms.info['key_value_pairs']['supercell'] == '1x1':
+                atoms = atoms.repeat([2, 2, 1])
+            elif atoms.info['key_value_pairs']['supercell'] == '3x2':
+                atoms = atoms.repeat([1, 2, 1])
             surf_atoms = [a.index for a in atoms if a.index not in add_atoms]
             liste = []
             for m in surf_atoms:
@@ -592,16 +621,16 @@ class AdsorbateFingerprintGenerator(object):
         else:
             return [float(atoms.info['Ef'])]
 
-    def get_dbid(self, atoms):
+    def get_dbid(self, atoms=None):
         if atoms is None:
-            ['dbid']
+            return ['dbid']
         else:
-            return int(atoms.info['dbid'])
+            return [int(atoms.info['dbid'])]
 
     def get_keyvaluepair(self, atoms=None, field_name='None'):
         if atoms is None:
             return ['kvp_'+field_name]
         else:
-            field_value = float(atoms['key_value_pairs'][field_name])
+            field_value = float(atoms.info['key_value_pairs'][field_name])
             [field_value]
             return

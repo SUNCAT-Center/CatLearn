@@ -82,8 +82,8 @@ a = do_predict(train=Y_data[:d, :], test=Y_data[d:, :],
                train_target=train_target, test_target=test_target, hopt=True)
 
 # Print the error associated with the predictions.
-print('Training error:', a['training_rmse']['average'])
-print('Model error:', a['validation_rmse']['average'])
+print('Training error:', a['training_error']['rmse_average'])
+print('Model error:', a['validation_error']['rmse_average'])
 
 
 ax = fig.add_subplot(152)
@@ -106,8 +106,8 @@ a = do_predict(train=Y_data[:d, :], test=Y_data[d:, :],
                train_target=train_target, test_target=test_target, hopt=True)
 
 # Print the error associated with the predictions.
-print('Training error:', a['training_rmse']['average'])
-print('Model error:', a['validation_rmse']['average'])
+print('Training error:', a['training_error']['rmse_average'])
+print('Model error:', a['validation_error']['rmse_average'])
 
 ax = fig.add_subplot(153)
 mds = manifold.MDS(n_components=nc)
@@ -129,8 +129,8 @@ a = do_predict(train=Y_data[:d, :], test=Y_data[d:, :],
                train_target=train_target, test_target=test_target, hopt=True)
 
 # Print the error associated with the predictions.
-print('Training error:', a['training_rmse']['average'])
-print('Model error:', a['validation_rmse']['average'])
+print('Training error:', a['training_error']['rmse_average'])
+print('Model error:', a['validation_error']['rmse_average'])
 
 ax = fig.add_subplot(154)
 se = manifold.SpectralEmbedding(n_components=nc, n_neighbors=20)
@@ -152,8 +152,8 @@ a = do_predict(train=Y_data[:d, :], test=Y_data[d:, :],
                train_target=train_target, test_target=test_target, hopt=True)
 
 # Print the error associated with the predictions.
-print('Training error:', a['training_rmse']['average'])
-print('Model error:', a['validation_rmse']['average'])
+print('Training error:', a['training_error']['rmse_average'])
+print('Model error:', a['validation_error']['rmse_average'])
 
 ax = fig.add_subplot(155)
 tsne = manifold.TSNE(n_components=nc, init='pca', random_state=0)
@@ -175,7 +175,7 @@ a = do_predict(train=Y_data[:d, :], test=Y_data[d:, :],
                train_target=train_target, test_target=test_target, hopt=True)
 
 # Print the error associated with the predictions.
-print('Training error:', a['training_rmse']['average'])
-print('Model error:', a['validation_rmse']['average'])
+print('Training error:', a['training_error']['rmse_average'])
+print('Model error:', a['validation_error']['rmse_average'])
 
 plt.show()
