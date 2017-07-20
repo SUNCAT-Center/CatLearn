@@ -70,7 +70,8 @@ class RidgeRegression(object):
             BS_res = self._bootstrap_master(X, Y, p, omega2_range, Ns)
             _, _, epe_list_i, _ = BS_res
         if self.cv is 'loocv':
-            epe_list_i = self._LOOCV_l(X, Y, p, omega2_range)
+            U, W, Vh = np.linalg.svd(X, full_matrices=False)
+            epe_list_i = self._LOOCV_l(X, Y, p, omega2_range, U, W)
 
         omega2_list += omega2_range
         epe_list += epe_list_i.tolist()
@@ -94,7 +95,7 @@ class RidgeRegression(object):
             BS_res = self._bootstrap_master(X, Y, p, omega2_range, Ns)
             _, _, epe_list_i, _ = BS_res
         if self.cv is 'loocv':
-            epe_list_i = self._LOOCV_l(X, Y, p, omega2_range)
+            epe_list_i = self._LOOCV_l(X, Y, p, omega2_range, U, W)
 
         omega2_list += omega2_range
         epe_list += epe_list_i.tolist()
@@ -260,17 +261,29 @@ class RidgeRegression(object):
 
         return W2_samples, Vh_samples
 
-    def _LOOCV_l(self, X, Y, p, omega2_l):
+    def _LOOCV_l(self, X, Y, p, omega2_l, U, W):
         """Leave one out estimator for a list of regularization strengths."""
         for i, omega2 in enumerate(omega2_l):
-            LOOCV_EPE = self._LOOCV(X, Y, p, omega2)
+            LOOCV_EPE = self._LOOCV(X, Y, p, omega2, U, W)
             if i == 0:
                 LOOCV_EPE_l = LOOCV_EPE
             else:
                 LOOCV_EPE_l = np.hstack((LOOCV_EPE_l, LOOCV_EPE))
         return LOOCV_EPE_l
 
-    def _LOOCV(self, X, Y, p, omega2):
+    def _LOOCV(self, X, Y, p, omega2, U, W):
+        """Leave one out estimator."""
+        Y_ = Y-np.dot(X, [p] * np.shape(X)[1])
+
+        dig1 = ((W**2 + omega2)**(-1)) * W
+        XtX_reg_inv2 = np.dot(np.dot(U, np.diag(dig1)), U.T)
+        P = np.diag(np.ones(len(Y_))) - XtX_reg_inv2
+        LOOCV_EPE = len(Y_)**-1 * np.dot(np.dot(np.dot(
+            np.dot(Y_.T, P), np.diag(np.diag(P)**-2)), P), Y_)
+
+        return np.sqrt(LOOCV_EPE)
+
+    def _LOOCV_old(self, X, Y, p, omega2):
         """Leave one out estimator.
 
         Implementation of http://www.anc.ed.ac.uk/rbf/intro/node43.html
