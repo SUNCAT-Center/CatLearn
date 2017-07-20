@@ -1,6 +1,7 @@
 """Plot feature distribution sorted by correlation with target."""
 import matplotlib.pyplot as plt
-from sklearn.cluster import KMeans, AffinityPropagation, MeanShift, AgglomerativeClustering
+from sklearn.cluster import (KMeans, AffinityPropagation, MeanShift,
+                             AgglomerativeClustering)
 
 from ase.ga.data import DataConnection
 from atoml.data_setup import get_unique, get_train
