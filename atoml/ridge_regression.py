@@ -275,7 +275,7 @@ class RidgeRegression(object):
         """Leave one out estimator."""
         Y_ = Y-np.dot(X, [p] * np.shape(X)[1])
 
-        dig1 = ((W**2 + omega2)**(-1)) * W
+        dig1 = ((W**2 + omega2)**(-1)) * W**2
         XtX_reg_inv2 = np.dot(np.dot(U, np.diag(dig1)), U.T)
         P = np.diag(np.ones(len(Y_))) - XtX_reg_inv2
         LOOCV_EPE = len(Y_)**-1 * np.dot(np.dot(np.dot(
