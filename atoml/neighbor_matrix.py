@@ -88,8 +88,13 @@ def connection_matrix(atoms, periodic, dx, neighbor_number):
     ----------
     atoms : object
         Target ase atoms object on which to build the connections matrix.
+    periodic : boolean
+        Specify whether to use the periodic neighborlist generator. None
+        periodic method is faster and used by default.
     dx : float
         Buffer to calculate nearest neighbor pairs.
+    neighbor_number : int
+        Neighbor shell.
     """
     # Use ase.ga neighbor list generator.
     if 'neighborlist' in atoms.info['key_value_pairs']:
@@ -114,7 +119,7 @@ def connection_matrix(atoms, periodic, dx, neighbor_number):
     return np.asarray(conn_mat)
 
 
-def element_list(an, no):
+def _element_list(an, no):
     """Binary mapping of homoatomic interactions.
 
     Parameters
@@ -134,7 +139,7 @@ def element_list(an, no):
     return binary_inter
 
 
-def heteroatomic_matrix(an, el):
+def _heteroatomic_matrix(an, el):
     """Binary mapping of heteroatomic interactions.
 
     Parameters
@@ -160,7 +165,7 @@ def heteroatomic_matrix(an, el):
     return np.asarray(binary_inter)
 
 
-def generalized_matrix(conn_mat):
+def _generalized_matrix(conn_mat):
     """Get the generalized coordination matrix.
 
     Parameters
@@ -202,7 +207,7 @@ def property_matrix(atoms, property):
     return np.asarray(np.float64(prop_mat))
 
 
-def get_features(an, conn_mat, sum_cm, gen_mat):
+def _get_features(an, conn_mat, sum_cm, gen_mat):
     """Function to generate the actual feature vector.
 
     Parameters
@@ -220,7 +225,7 @@ def get_features(an, conn_mat, sum_cm, gen_mat):
     # Get level one fingerprint. Sum of coordination for each atom type.
     done = []
     for e in set(an):
-        el = element_list(an, e)
+        el = _element_list(an, e)
         x = np.array(sum_cm) * np.array(el)
         feature.append(np.sum(x))
         feature.append(np.sum(x ** 2))
@@ -234,7 +239,7 @@ def get_features(an, conn_mat, sum_cm, gen_mat):
             done.append(e)
         for eo in set(an):
             if eo not in done:
-                hm = heteroatomic_matrix(an, [e, eo])
+                hm = _heteroatomic_matrix(an, [e, eo])
                 feature.append(np.sum(np.sum(np.array(hm) * np.array(conn_mat),
                                              axis=1)))
 
@@ -247,7 +252,8 @@ def get_features(an, conn_mat, sum_cm, gen_mat):
     return feature
 
 
-def base_f(atoms, property=None, periodic=False, dx=0.2, neighbor_number=1):
+def neighbor_features(atoms, property=None, periodic=False, dx=0.2,
+                      neighbor_number=1):
     """Function to generate features from atoms objects.
 
     Parameters
@@ -256,6 +262,13 @@ def base_f(atoms, property=None, periodic=False, dx=0.2, neighbor_number=1):
         The target ase atoms object.
     property : list
         List of the target properties from mendeleev.
+    periodic : boolean
+        Specify whether to use the periodic neighborlist generator. None
+        periodic method is faster and used by default.
+    dx : float
+        Buffer to calculate nearest neighbor pairs.
+    neighbor_number : int
+        Neighbor shell.
     """
     features = []
 
@@ -264,19 +277,19 @@ def base_f(atoms, property=None, periodic=False, dx=0.2, neighbor_number=1):
     conn_mat_store = connection_matrix(atoms=atoms, periodic=periodic, dx=dx,
                                        neighbor_number=neighbor_number)
     sum_conn_mat = np.sum(conn_mat_store, axis=1)
-    gen_mat = generalized_matrix(conn_mat_store)
+    gen_mat = _generalized_matrix(conn_mat_store)
 
-    features += get_features(an=an, conn_mat=conn_mat_store,
-                             sum_cm=sum_conn_mat, gen_mat=gen_mat)
+    features += _get_features(an=an, conn_mat=conn_mat_store,
+                              sum_cm=sum_conn_mat, gen_mat=gen_mat)
 
     if property is not None:
         for p in property:
             prop_mat = property_matrix(atoms=atoms, property=p)
             conn_mat = conn_mat_store * prop_mat
             sum_cm = np.sum(conn_mat, axis=1)
-            gen_cm = generalized_matrix(conn_mat)
+            gen_cm = _generalized_matrix(conn_mat)
 
-            features += get_features(an=an, conn_mat=conn_mat, sum_cm=sum_cm,
-                                     gen_mat=gen_cm)
+            features += _get_features(an=an, conn_mat=conn_mat, sum_cm=sum_cm,
+                                      gen_mat=gen_cm)
 
     return np.asarray(features)
