@@ -10,7 +10,50 @@ from ase.data import covalent_radii
 from ase.ga.utilities import get_mic_distance
 
 
-def connection_matrix(atoms, periodic, dx, neighbor_number):
+def neighbor_features(atoms, property=None, periodic=False, dx=0.2,
+                      neighbor_number=1):
+    """Function to generate features from atoms objects.
+
+    Parameters
+    ----------
+    atoms : object
+        The target ase atoms object.
+    property : list
+        List of the target properties from mendeleev.
+    periodic : boolean
+        Specify whether to use the periodic neighborlist generator. None
+        periodic method is faster and used by default.
+    dx : float
+        Buffer to calculate nearest neighbor pairs.
+    neighbor_number : int
+        Neighbor shell.
+    """
+    features = []
+
+    # Generate the required data from atoms object.
+    an = atoms.get_atomic_numbers()
+    conn_mat_store = connection_matrix(atoms=atoms, periodic=periodic, dx=dx,
+                                       neighbor_number=neighbor_number)
+    sum_conn_mat = np.sum(conn_mat_store, axis=1)
+    gen_mat = _generalized_matrix(conn_mat_store)
+
+    features += _get_features(an=an, conn_mat=conn_mat_store,
+                              sum_cm=sum_conn_mat, gen_mat=gen_mat)
+
+    if property is not None:
+        for p in property:
+            prop_mat = property_matrix(atoms=atoms, property=p)
+            conn_mat = conn_mat_store * prop_mat
+            sum_cm = np.sum(conn_mat, axis=1)
+            gen_cm = _generalized_matrix(conn_mat)
+
+            features += _get_features(an=an, conn_mat=conn_mat, sum_cm=sum_cm,
+                                      gen_mat=gen_cm)
+
+    return np.asarray(features)
+
+
+def connection_matrix(atoms, periodic=False, dx=0.2, neighbor_number=1):
     """Helper function to generate a connections matrix from an atoms object.
 
     Parameters
@@ -69,49 +112,6 @@ def property_matrix(atoms, property):
     prop_mat = [prop_x] * len(atoms)
 
     return np.asarray(np.float64(prop_mat))
-
-
-def neighbor_features(atoms, property=None, periodic=False, dx=0.2,
-                      neighbor_number=1):
-    """Function to generate features from atoms objects.
-
-    Parameters
-    ----------
-    atoms : object
-        The target ase atoms object.
-    property : list
-        List of the target properties from mendeleev.
-    periodic : boolean
-        Specify whether to use the periodic neighborlist generator. None
-        periodic method is faster and used by default.
-    dx : float
-        Buffer to calculate nearest neighbor pairs.
-    neighbor_number : int
-        Neighbor shell.
-    """
-    features = []
-
-    # Generate the required data from atoms object.
-    an = atoms.get_atomic_numbers()
-    conn_mat_store = connection_matrix(atoms=atoms, periodic=periodic, dx=dx,
-                                       neighbor_number=neighbor_number)
-    sum_conn_mat = np.sum(conn_mat_store, axis=1)
-    gen_mat = _generalized_matrix(conn_mat_store)
-
-    features += _get_features(an=an, conn_mat=conn_mat_store,
-                              sum_cm=sum_conn_mat, gen_mat=gen_mat)
-
-    if property is not None:
-        for p in property:
-            prop_mat = property_matrix(atoms=atoms, property=p)
-            conn_mat = conn_mat_store * prop_mat
-            sum_cm = np.sum(conn_mat, axis=1)
-            gen_cm = _generalized_matrix(conn_mat)
-
-            features += _get_features(an=an, conn_mat=conn_mat, sum_cm=sum_cm,
-                                      gen_mat=gen_cm)
-
-    return np.asarray(features)
 
 
 def _get_neighborlist(atoms, dx=0.2, neighbor_number=1):
