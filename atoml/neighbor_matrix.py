@@ -11,8 +11,8 @@ from ase.ga.utilities import get_mic_distance
 
 
 def neighbor_features(atoms, property=None, periodic=False, dx=0.2,
-                      neighbor_number=1):
-    """Function to generate features from atoms objects.
+                      neighbor_number=1, reuse_nl=False):
+    """Generate predefined features from atoms objects.
 
     Parameters
     ----------
@@ -27,13 +27,16 @@ def neighbor_features(atoms, property=None, periodic=False, dx=0.2,
         Buffer to calculate nearest neighbor pairs.
     neighbor_number : int
         Neighbor shell.
+    reuse_nl : boolean
+        Whether to reuse a previously stored neighborlist if available.
     """
     features = []
 
     # Generate the required data from atoms object.
     an = atoms.get_atomic_numbers()
     conn_mat_store = connection_matrix(atoms=atoms, periodic=periodic, dx=dx,
-                                       neighbor_number=neighbor_number)
+                                       neighbor_number=neighbor_number,
+                                       reuse_nl=reuse_nl)
     sum_conn_mat = np.sum(conn_mat_store, axis=1)
     gen_mat = _generalized_matrix(conn_mat_store)
 
@@ -53,8 +56,9 @@ def neighbor_features(atoms, property=None, periodic=False, dx=0.2,
     return np.asarray(features)
 
 
-def connection_matrix(atoms, periodic=False, dx=0.2, neighbor_number=1):
-    """Helper function to generate a connections matrix from an atoms object.
+def connection_matrix(atoms, periodic=False, dx=0.2, neighbor_number=1,
+                      reuse_nl=False):
+    """Generate a connections matrix from an atoms object.
 
     Parameters
     ----------
@@ -67,9 +71,11 @@ def connection_matrix(atoms, periodic=False, dx=0.2, neighbor_number=1):
         Buffer to calculate nearest neighbor pairs.
     neighbor_number : int
         Neighbor shell.
+    reuse_nl : boolean
+        Whether to reuse a previously stored neighborlist if available.
     """
     # Use ase.ga neighbor list generator.
-    if 'neighborlist' in atoms.info['key_value_pairs']:
+    if reuse_nl and 'neighborlist' in atoms.info['key_value_pairs']:
         nl = atoms.info['key_value_pairs']['neighborlist']
     elif periodic:
         nl = _get_periodic_neighborlist(atoms, dx=dx)
@@ -89,6 +95,41 @@ def connection_matrix(atoms, periodic=False, dx=0.2, neighbor_number=1):
         conn_mat.append(conn_x)
 
     return np.asarray(conn_mat)
+
+
+def connection_dict(atoms, periodic=False, dx=0.2, neighbor_number=1,
+                    reuse_nl=False):
+    """Generate a dict of atom connections.
+
+    Parameters
+    ----------
+    atoms : object
+        Target ase atoms object on which to build the connections matrix.
+    periodic : boolean
+        Specify whether to use the periodic neighborlist generator. None
+        periodic method is faster and used by default.
+    dx : float
+        Buffer to calculate nearest neighbor pairs.
+    neighbor_number : int
+        Neighbor shell.
+    reuse_nl : boolean
+        Whether to reuse a previously stored neighborlist if available.
+    """
+    # Use ase.ga neighbor list generator.
+    if reuse_nl and 'neighborlist' in atoms.info['key_value_pairs']:
+        nl = atoms.info['key_value_pairs']['neighborlist']
+    elif periodic:
+        nl = _get_periodic_neighborlist(atoms, dx=dx)
+    else:
+        nl = _get_neighborlist(atoms, dx=dx)
+
+    # Pad neighborlist with negative one.
+    mlen = max([len(n) for n in nl.values()])
+    for i in nl:
+        if len(nl[i]) < mlen:
+            nl[i] += [-1] * (mlen - len(nl[i]))
+
+    return nl
 
 
 def property_matrix(atoms, property):
