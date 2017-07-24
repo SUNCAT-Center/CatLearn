@@ -10,7 +10,7 @@ from ase.data import covalent_radii
 from ase.ga.utilities import get_mic_distance
 
 
-def get_neighborlist(atoms, dx=0.2, neighbor_number=1):
+def _get_neighborlist(atoms, dx=0.2, neighbor_number=1):
     """Make dict of neighboring atoms for discrete system.
 
     Possible to return neighbors from defined neighbor shell e.g. 1st, 2nd,
@@ -43,7 +43,7 @@ def get_neighborlist(atoms, dx=0.2, neighbor_number=1):
     return conn
 
 
-def get_periodic_neighborlist(atoms, dx=0.2, neighbor_number=1):
+def _get_periodic_neighborlist(atoms, dx=0.2, neighbor_number=1):
     """Make dict of neighboring atoms for periodic system.
 
     Possible to return neighbors from defined neighbor shell e.g. 1st, 2nd,
@@ -81,7 +81,7 @@ def get_periodic_neighborlist(atoms, dx=0.2, neighbor_number=1):
     return conn
 
 
-def connection_matrix(atoms, dx=0.2):
+def connection_matrix(atoms, periodic, dx, neighbor_number):
     """Helper function to generate a connections matrix from an atoms object.
 
     Parameters
@@ -94,8 +94,10 @@ def connection_matrix(atoms, dx=0.2):
     # Use ase.ga neighbor list generator.
     if 'neighborlist' in atoms.info['key_value_pairs']:
         nl = atoms.info['key_value_pairs']['neighborlist']
+    elif periodic:
+        nl = _get_periodic_neighborlist(atoms, dx=dx)
     else:
-        nl = get_neighborlist(atoms, dx=dx)
+        nl = _get_neighborlist(atoms, dx=dx)
 
     conn_mat = []
     index = range(len(atoms))
@@ -245,7 +247,7 @@ def get_features(an, conn_mat, sum_cm, gen_mat):
     return feature
 
 
-def base_f(atoms, property=None):
+def base_f(atoms, property=None, periodic=False, dx=0.2, neighbor_number=1):
     """Function to generate features from atoms objects.
 
     Parameters
@@ -259,7 +261,8 @@ def base_f(atoms, property=None):
 
     # Generate the required data from atoms object.
     an = atoms.get_atomic_numbers()
-    conn_mat_store = connection_matrix(atoms, dx=0.2)
+    conn_mat_store = connection_matrix(atoms=atoms, periodic=periodic, dx=dx,
+                                       neighbor_number=neighbor_number)
     sum_conn_mat = np.sum(conn_mat_store, axis=1)
     gen_mat = generalized_matrix(conn_mat_store)
 
