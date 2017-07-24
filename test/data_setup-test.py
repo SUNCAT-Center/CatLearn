@@ -11,7 +11,7 @@ from atoml.data_setup import get_unique, get_train
 from atoml.fingerprint_setup import return_fpv
 from atoml.particle_fingerprint import ParticleFingerprintGenerator
 from atoml.standard_fingerprint import StandardFingerprintGenerator
-from atoml.neighbor_matrix import base_f
+from atoml.neighbor_matrix import neighbor_features
 from atoml.database_functions import DescriptorDatabase
 from atoml.utilities import remove_outliers
 
@@ -108,8 +108,8 @@ assert n == 50, d == 7
 no_prop = []
 an_prop = []
 for atoms in trainset['atoms']:
-    no_prop.append(base_f(atoms=atoms))
-    an_prop.append(base_f(atoms=atoms, property=['atomic_number']))
+    no_prop.append(neighbor_features(atoms=atoms))
+    an_prop.append(neighbor_features(atoms=atoms, property=['atomic_number']))
 data = np.concatenate((data, no_prop), axis=1)
 data = np.concatenate((data, an_prop), axis=1)
 assert np.shape(no_prop) == (50, 15) and np.shape(an_prop) == (50, 30)
