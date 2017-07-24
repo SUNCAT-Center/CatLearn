@@ -5,7 +5,7 @@ import numpy as np
 class RidgeRegression(object):
     """Ridge regression class."""
 
-    def __init__(self, W2=None, Vh=None, cv='bootstrap'):
+    def __init__(self, W2=None, Vh=None, cv='loocv'):
         """Ridge regression setup.
 
         Parameters
@@ -278,23 +278,6 @@ class RidgeRegression(object):
         dig1 = ((W**2 + omega2)**(-1)) * W**2
         XtX_reg_inv2 = np.dot(np.dot(U, np.diag(dig1)), U.T)
         P = np.diag(np.ones(len(Y_))) - XtX_reg_inv2
-        LOOCV_EPE = len(Y_)**-1 * np.dot(np.dot(np.dot(
-            np.dot(Y_.T, P), np.diag(np.diag(P)**-2)), P), Y_)
-
-        return np.sqrt(LOOCV_EPE)
-
-    def _LOOCV_old(self, X, Y, p, omega2):
-        """Leave one out estimator.
-
-        Implementation of http://www.anc.ed.ac.uk/rbf/intro/node43.html
-        """
-        Y_ = Y-np.dot(X, [p] * np.shape(X)[1])
-
-        inv_W2_reg = (self.W2 + omega2)**(-1)
-        XtX_reg_inv = np.dot(np.dot(self.Vh.T, np.diag(inv_W2_reg)), self.Vh)
-
-        P = np.diag(np.ones(len(Y_))) - np.dot(X, np.dot(XtX_reg_inv, X.T))
-
         LOOCV_EPE = len(Y_)**-1 * np.dot(np.dot(np.dot(
             np.dot(Y_.T, P), np.diag(np.diag(P)**-2)), P), Y_)
 
