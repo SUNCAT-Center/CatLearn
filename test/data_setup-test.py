@@ -65,6 +65,7 @@ assert n == 50, d == 8
 train_fp = return_fpv(trainset['atoms'], [pfpv.connections_fpv],
                       use_prior=False)
 n, d = np.shape(train_fp)
+data = np.concatenate((data, train_fp), axis=1)
 assert n == 50, d == 26
 
 train_fp = return_fpv(trainset['atoms'], [pfpv.rdf_fpv], use_prior=False)
@@ -81,6 +82,7 @@ assert n == 50, d == 1
 train_fp = return_fpv(trainset['atoms'], [sfpv.composition_fpv],
                       use_prior=False)
 n, d = np.shape(train_fp)
+data = np.concatenate((data, train_fp), axis=1)
 assert n == 50, d == 2
 
 train_fp = return_fpv(trainset['atoms'], [sfpv.eigenspectrum_fpv],

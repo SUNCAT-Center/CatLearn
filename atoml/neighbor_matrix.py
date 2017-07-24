@@ -190,7 +190,7 @@ def property_matrix(atoms, property):
     symb = atoms.get_chemical_symbols()
     atomic_prop = {}
     for s in set(symb):
-        atomic_prop[s] = eval('element("' + s + '").' + property)
+        atomic_prop[s] = getattr(element(s), property)
 
     prop_x = []
     for s in symb:
