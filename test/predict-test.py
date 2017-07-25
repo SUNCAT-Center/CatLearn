@@ -26,7 +26,7 @@ test_features, test_targets = feature_data[35:, :], target_data[35:]
 # Test ridge regression predictions.
 rr = RidgeRegression()
 reg = rr.find_optimal_regularization(X=train_features, Y=train_targets)
-coef = rr.RR(X=train_features, Y=train_targets, omega2=reg)
+coef = rr.RR(X=train_features, Y=train_targets, omega2=reg)[0]
 
 # Test the model.
 sumd = 0.
