@@ -1,4 +1,5 @@
 asap3==3.10.6
+ase==3.14.1
 matplotlib==2.0.2
 mendeleev==0.3.4
 numpy==1.13.1
