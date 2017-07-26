@@ -28,7 +28,7 @@ class RidgeRegression(object):
         self.cv = cv
 
     def find_optimal_regularization(self, X, Y, p=0., Ns=100, wsteps=15,
-                                    search_len=3):
+                                    rsteps=3):
         """Find regualization value to minimize Expected Prediction Error.
 
         Parameters
@@ -43,6 +43,8 @@ class RidgeRegression(object):
             Number of boostrap samples to use.
         wsteps : int
             Steps in omega2 search linespacing.
+        rsteps : int
+            Number of refinement steps.
 
         Returns
         -------
@@ -71,8 +73,7 @@ class RidgeRegression(object):
         omega2_range.append(1e6*np.exp(whigh))
 
         # Find best value by successively reducing seach area for omega2.
-        for i in range(search_len):
-            print(i)
+        for s in range(rsteps):
             if self.cv is 'bootstrap':
                 BS_res = self._bootstrap_master(X, Y, p, omega2_range, Ns)
                 _, _, epe_list_i, _ = BS_res
@@ -84,7 +85,7 @@ class RidgeRegression(object):
 
             epe_ind = np.argmin(epe_list)
             omega2_min = omega2_list[epe_ind]
-            if i is 0 and epe_ind is 0 or epe_ind is len(omega2_list)-1:
+            if s is 0 and epe_ind is 0 or epe_ind is len(omega2_list)-1:
                 return omega2_min
 
             # Update search range
