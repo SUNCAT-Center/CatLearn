@@ -33,8 +33,7 @@ def predict(train_features, train_targets, test_features, test_targets,
 
     # Set up the ridge regression function.
     rr = RidgeRegression(W2=None, Vh=None, cv='loocv')
-    b = rr.find_optimal_regularization(X=train_features, Y=train_targets,
-                                       Ns=100)
+    b = rr.find_optimal_regularization(X=train_features, Y=train_targets)
     coef = rr.RR(X=train_features, Y=train_targets, omega2=b)[0]
 
     # Test the model.
