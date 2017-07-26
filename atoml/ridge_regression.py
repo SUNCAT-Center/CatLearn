@@ -27,7 +27,8 @@ class RidgeRegression(object):
         self.Vh = Vh
         self.cv = cv
 
-    def find_optimal_regularization(self, X, Y, p=0., Ns=100, wsteps=15):
+    def find_optimal_regularization(self, X, Y, p=0., Ns=100, wsteps=15,
+                                    rsteps=3):
         """Find regualization value to minimize Expected Prediction Error.
 
         Parameters
@@ -42,6 +43,13 @@ class RidgeRegression(object):
             Number of boostrap samples to use.
         wsteps : int
             Steps in omega2 search linespacing.
+        rsteps : int
+            Number of refinement steps.
+
+        Returns
+        -------
+        omega2_min : float
+            Regularization corresponding to the minimum EPE.
         """
         # The minimum regaluzation value
         omega2_min = float('inf')
@@ -52,6 +60,11 @@ class RidgeRegression(object):
         if self.W2 is None or self.Vh is None:
             V, self.W2, self.Vh = np.linalg.svd(np.dot(X.T, X),
                                                 full_matrices=True)
+        # Calculate SVD for loocv.
+        if self.cv is 'loocv':
+            U, W, Vh = np.linalg.svd(X, full_matrices=False)
+
+        # Set initial regularization search space.
         whigh, wlow = np.log(self.W2[0] * 2.), np.log(self.W2[-1] * 0.5)
         basesearchwidth = whigh-wlow
         omega2_range = [1e-6*np.exp(wlow)]
@@ -60,42 +73,30 @@ class RidgeRegression(object):
         omega2_range.append(1e6*np.exp(whigh))
 
         # Find best value by successively reducing seach area for omega2.
-        # Range of omega2 to search for min epe
-        if self.cv is 'bootstrap':
-            BS_res = self._bootstrap_master(X, Y, p, omega2_range, Ns)
-            _, _, epe_list_i, _ = BS_res
-        if self.cv is 'loocv':
-            U, W, Vh = np.linalg.svd(X, full_matrices=False)
-            epe_list_i = self._LOOCV_l(X, Y, p, omega2_range, U, W)
+        for s in range(rsteps):
+            if self.cv is 'bootstrap':
+                BS_res = self._bootstrap_master(X, Y, p, omega2_range, Ns)
+                _, _, epe_list_i, _ = BS_res
+            if self.cv is 'loocv':
+                epe_list_i = self._LOOCV_l(X, Y, p, omega2_range, U, W)
 
-        omega2_list += omega2_range
-        epe_list += epe_list_i.tolist()
+            omega2_list += omega2_range
+            epe_list += epe_list_i.tolist()
 
-        epe_ind = np.argmin(epe_list)
-        omega2_min = omega2_list[epe_ind]
-        if epe_ind is 0 or epe_ind is len(omega2_list)-1:
-            return omega2_min
+            epe_ind = np.argmin(epe_list)
+            omega2_min = omega2_list[epe_ind]
+            if s is 0 and epe_ind is 0 or epe_ind is len(omega2_list)-1:
+                return omega2_min
 
-        # Update search range
-        logmin_epe = np.log(omega2_min)
-        basesearchwidth = 2*basesearchwidth/(wsteps-1)
-        wlow = logmin_epe - basesearchwidth*0.5
-        whigh = logmin_epe + basesearchwidth*0.5
+            # Update search range
+            logmin_epe = np.log(omega2_min)
+            basesearchwidth = 2*basesearchwidth/(wsteps-1)
+            wlow = logmin_epe - basesearchwidth*0.5
+            whigh = logmin_epe + basesearchwidth*0.5
 
-        omega2_range = []
-        for pp in np.linspace(wlow, whigh, wsteps):
-            omega2_range.append(np.exp(pp))
-
-        if self.cv is 'bootstrap':
-            BS_res = self._bootstrap_master(X, Y, p, omega2_range, Ns)
-            _, _, epe_list_i, _ = BS_res
-        if self.cv is 'loocv':
-            epe_list_i = self._LOOCV_l(X, Y, p, omega2_range, U, W)
-
-        omega2_list += omega2_range
-        epe_list += epe_list_i.tolist()
-
-        omega2_min = omega2_list[np.argmin(epe_list)]
+            omega2_range = []
+            for pp in np.linspace(wlow, whigh, wsteps):
+                omega2_range.append(np.exp(pp))
 
         return omega2_min
 
@@ -118,12 +119,15 @@ class RidgeRegression(object):
 
         Returns
         -------
-        coefs : optimal coefficients
-        neff : number of effective parameters
+        coefs : list
+            Optimal coefficients.
+        neff : float
+            Number of effective parameters.
         """
         # Calculating SVD
         if self.W2 is None or self.Vh is None:
-            V, self.W2, self.Vh = np.linalg.svd(np.dot(X.T, X))
+            V, self.W2, self.Vh = np.linalg.svd(np.dot(X.T, X),
+                                                full_matrices=True)
 
         R2 = np.ones(len(self.W2)) * omega2
         inv_W2_reg = (self.W2 + R2) ** -1
@@ -153,10 +157,6 @@ class RidgeRegression(object):
             Sigular values.
         Vh : array
             Right hand side of sigular matrix for X.
-
-        Returns
-        -------
-        coefs : optimal coefficients
         """
         R2 = np.ones(len(W2)) * omega2
         inv_W2_reg = (W2 + R2) ** -1
