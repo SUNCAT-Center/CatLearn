@@ -42,11 +42,9 @@ class RidgeRegression(object):
         p : float
             Define the prior function. Default is zero.
         Ns : int
-            Number of boostrap samples to use
-        W2 : array
-            Sigular values
-        Vh : array
-            Right hand side of sigular matrix for X
+            Number of boostrap samples to use.
+        wsteps : int
+            Steps in omega2 search linespacing.
         """
         # The minimum regaluzation value
         omega2_min = float('inf')
@@ -120,10 +118,6 @@ class RidgeRegression(object):
             Define the prior function.
         omega2 : float
             Regularization strength.
-        W2 : array
-            Sigular values
-        Vh : array
-            Right hand side of sigular matrix for X
 
         Returns
         -------
@@ -150,12 +144,18 @@ class RidgeRegression(object):
 
         Parameters
         ----------
-        X : datamatrix
-        Y : target vector
-        p : prior function
-        omega2 : regularization strength
-        W2 : Sigular values
-        Vh : right hand side of sigular matrix for X
+        X : array
+            Feature matrix for the training data.
+        Y : list
+            Target data for the training sample.
+        p : float
+            Define the prior function.
+        omega2 : float
+            Regularization strength.
+        W2 : array
+            Sigular values.
+        Vh : array
+            Right hand side of sigular matrix for X.
 
         Returns
         -------
@@ -168,8 +168,22 @@ class RidgeRegression(object):
 
         return coefs
 
-    def _bootstrap_master(self, X, Y, p, omega2_l, Ns=100):
-        """Function to perform the bootstrapping."""
+    def _bootstrap_master(self, X, Y, p, omega2_l, Ns):
+        """Function to perform the bootstrapping.
+
+        Parameters
+        ----------
+        X : array
+            Feature matrix for the training data.
+        Y : list
+            Target data for the training sample.
+        p : float
+            Define the prior function.
+        omega2_l : list
+            List of regularization strengths to test.
+        Ns : int
+            Number of boostrap samples to use.
+        """
         assert len(np.shape(omega2_l)) == 1
         samples = self._get_bootstrap_samples(len(Y), Ns)
         assert len(np.shape(samples)) == 2
@@ -198,14 +212,36 @@ class RidgeRegression(object):
     def _get_bootstrap_samples(self, Nd, Ns=200, seed=15):
         """Break dataset into subsets.
 
-        Nd : number of datapoints
-        Ns : number of bootstrap samples
+        Parameters
+        ----------
+        Nd : int
+            Number of datapoints.
+        Ns : int
+            Number of bootstrap samples.
         """
         np.random.seed(seed)
         return np.random.random_integers(0, Nd-1, (Ns, Nd))
 
     def bootstrap_calc(self, X, Y, p, omega2, samples, W2_samples, Vh_samples):
-        """Calculate optimal omega2 from bootstrap."""
+        """Calculate optimal omega2 from bootstrap.
+
+        Parameters
+        ----------
+        X : array
+            Feature matrix for the training data.
+        Y : list
+            Target data for the training sample.
+        p : float
+            Define the prior function.
+        omega2 : float
+            Regularization strength.
+        samples : list
+            Sample index for bootstrap.
+        W2_samples : array
+            Sigular values for samples.
+        Vh_samples : array
+            Right hand side of sigular matrix for samples.
+        """
         coefs = self._RR_preSVD(X, Y, p, omega2, self.W2, self.Vh)
         err = np.sum((np.dot(X, coefs.T)-Y)**2/len(Y))
 
@@ -232,7 +268,15 @@ class RidgeRegression(object):
         return err, ERR, EPE, a_samples
 
     def _bootstrap_ERR(self, error_samples, samples):
-        """Calculate error from bootstrap."""
+        """Calculate error from bootstrap.
+
+        Parameters
+        ----------
+        error_samples : array
+            Calculated error for samples.
+        samples : list
+            Sample index for bootstrap.
+        """
         Nd = np.shape(error_samples)[1]
         Ns = len(samples)
         ERRi_list = np.zeros(Nd)
@@ -246,7 +290,15 @@ class RidgeRegression(object):
         return ERR
 
     def _get_samples_svd(self, X, samples):
-        """Get SVD for given sample in bootstrap."""
+        """Get SVD for given sample in bootstrap.
+
+        Parameters
+        ----------
+        X : array
+            Feature matrix for the training data.
+        samples : list
+            Sample index for bootstrap.
+        """
         # Optimize to make loop be directly in the third dimension!
         for i, sample in enumerate(samples):
             X_si = X.take(sample.flatten(), axis=0)
@@ -262,7 +314,23 @@ class RidgeRegression(object):
         return W2_samples, Vh_samples
 
     def _LOOCV_l(self, X, Y, p, omega2_l, U, W):
-        """Leave one out estimator for a list of regularization strengths."""
+        """Leave one out estimator for a list of regularization strengths.
+
+        Parameters
+        ----------
+        X : array
+            Feature matrix for the training data.
+        Y : list
+            Target data for the training sample.
+        p : float
+            Define the prior function.
+        omega2_l : list
+            List of regularization strengths to test.
+        U : array
+            Left hand side of sigular matrix for X (not form XtX).
+        W : array
+            Sigular values for X (not form XtX).
+        """
         for i, omega2 in enumerate(omega2_l):
             LOOCV_EPE = self._LOOCV(X, Y, p, omega2, U, W)
             if i == 0:
@@ -272,7 +340,23 @@ class RidgeRegression(object):
         return LOOCV_EPE_l
 
     def _LOOCV(self, X, Y, p, omega2, U, W):
-        """Leave one out estimator."""
+        """Leave one out error estimator.
+
+        Parameters
+        ----------
+        X : array
+            Feature matrix for the training data.
+        Y : list
+            Target data for the training sample.
+        p : float
+            Define the prior function.
+        omega2 : list
+            Regularization strength.
+        U : array
+            Left hand side of sigular matrix for X (not form XtX).
+        W : array
+            Sigular values for X (not form XtX).
+        """
         Y_ = Y-np.dot(X, [p] * np.shape(X)[1])
 
         dig1 = ((W**2 + omega2)**(-1)) * W**2
