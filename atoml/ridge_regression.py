@@ -3,7 +3,12 @@ import numpy as np
 
 
 class RidgeRegression(object):
-    """Ridge regression class."""
+    """Ridge regression class to find an optimal model.
+
+    Regualization fitting can be performed with wither the loocv or
+    bootstrap.632 method. The loocv method is faseter, but it is better to use
+    bootstrap when there is highly correlated training data.
+    """
 
     def __init__(self, W2=None, Vh=None, cv='loocv'):
         """Ridge regression setup.
@@ -23,15 +28,7 @@ class RidgeRegression(object):
         self.cv = cv
 
     def find_optimal_regularization(self, X, Y, p=0., Ns=100, wsteps=15):
-        """Find optimal omega2=w value for the fitting.
-
-        For each w2 value find the Expected Prediction Error value, which means
-        to solve for the coefficients for each specific w2 value for each data
-        point (leaving one data point out at the time).
-
-        The epe is the combined difference from the solutions when leaving one
-        data point out. Finally find which omega2-regualization corresponds to
-        the minimum epe.
+        """Find regualization value to minimize Expected Prediction Error.
 
         Parameters
         ----------
