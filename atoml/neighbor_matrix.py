@@ -150,7 +150,6 @@ def property_matrix(atoms, property):
     atomic_prop = {}
     for a in set(an):
         atomic_prop[a] = data[str(a)].get(property)
-        # atomic_prop[s] = getattr(element(s), property)
 
     prop_x = []
     for a in an:
