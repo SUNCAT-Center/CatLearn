@@ -78,17 +78,19 @@ pred['Error'] = pred['validation_error']['rmse_all']
 pred['Uncertainty'] = pred['uncertainty']
 index = [i for i in range(len(test_fp))]
 df = pd.DataFrame(data=pred, index=index)
-with sns.axes_style("white"):
-    plt.subplot(311)
-    plt.title('Validation RMSE: {0:.3f}'.format(
-        pred['validation_error']['rmse_average']))
-    sns.regplot(x='Actual', y='Prediction', data=df)
-    plt.subplot(312)
-    ax = sns.regplot(x='Uncertainty', y='Error', data=df, fit_reg=False)
-    ax.set_ylim([min(pred['validation_error']['rmse_all']),
-                 max(pred['validation_error']['rmse_all'])])
-    ax.set_yscale('log')
-    plt.subplot(313)
-    sns.distplot(x, bins=50, kde=False)
+
+sns.axes_style('dark')
+sns.set_style('ticks')
+plt.subplot(311)
+plt.title('Validation RMSE: {0:.3f}'.format(
+    pred['validation_error']['rmse_average']))
+sns.regplot(x='Actual', y='Prediction', data=df)
+plt.subplot(312)
+ax = sns.regplot(x='Uncertainty', y='Error', data=df, fit_reg=False)
+ax.set_ylim([min(pred['validation_error']['rmse_all']),
+             max(pred['validation_error']['rmse_all'])])
+ax.set_yscale('log')
+plt.subplot(313)
+sns.distplot(x, bins=50, kde=False)
 
 plt.show()

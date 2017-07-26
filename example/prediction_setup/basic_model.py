@@ -12,8 +12,8 @@ from atoml.feature_preprocess import standardize
 from atoml.predict import GaussianProcess
 
 # Set some parameters.
-plot = False
-ds = 500
+plot = True
+ds = 100
 
 # Define the hierarchey cv class method.
 hv = HierarchyValidation(db_name='../../data/train_db.sqlite',
@@ -46,17 +46,6 @@ def do_predict(train, test, train_target, test_target, hopt=False):
                               get_validation_error=True,
                               get_training_error=True,
                               optimize_hyperparameters=hopt)
-
-    if plot:
-        pred['actual'] = test_target
-        index = [i for i in range(len(test_data))]
-        df = pd.DataFrame(data=pred, index=index)
-        with sns.axes_style("white"):
-            sns.regplot(x='actual', y='prediction', data=df)
-        plt.title('Validation RMSE: {0:.3f}'.format(
-            pred['validation_error']['rmse_average']))
-        plt.show()
-
     return pred
 
 
@@ -65,21 +54,45 @@ kdict = {'k1': {'type': 'gaussian', 'width': 10.}}
 gp = GaussianProcess(kernel_dict=kdict, regularization=0.001)
 
 print('Original parameters')
-a = do_predict(train=train_data, test=test_data, train_target=train_target,
-               test_target=test_target, hopt=False)
+opt = do_predict(train=train_data, test=test_data, train_target=train_target,
+                 test_target=test_target, hopt=False)
 
 # Print the error associated with the predictions.
-print('Training error:', a['training_error']['rmse_average'])
-print('Model error:', a['validation_error']['rmse_average'])
+print('Training error:', opt['training_error']['rmse_average'])
+print('Model error:', opt['validation_error']['rmse_average'])
 
 # Try with hyperparameter optimization.
 kdict = {'k1': {'type': 'gaussian', 'width': 10.}}
 gp = GaussianProcess(kernel_dict=kdict, regularization=0.001)
 
 print('Optimized parameters')
-a = do_predict(train=train_data, test=test_data, train_target=train_target,
-               test_target=test_target, hopt=True)
+nopt = do_predict(train=train_data, test=test_data, train_target=train_target,
+                  test_target=test_target, hopt=True)
 
 # Print the error associated with the predictions.
-print('Training error:', a['training_error']['rmse_average'])
-print('Model error:', a['validation_error']['rmse_average'])
+print('Training error:', nopt['training_error']['rmse_average'])
+print('Model error:', nopt['validation_error']['rmse_average'])
+
+if plot:
+    fig = plt.figure(figsize=(15, 8))
+    sns.axes_style('dark')
+    sns.set_style('ticks')
+
+    # Setup pandas dataframes.
+    opt['actual'] = test_target
+    index = [i for i in range(len(test_data))]
+    opt_df = pd.DataFrame(data=opt, index=index)
+    nopt['actual'] = test_target
+    nopt_df = pd.DataFrame(data=nopt, index=index)
+
+    ax = fig.add_subplot(121)
+    sns.regplot(x='actual', y='prediction', data=opt_df)
+    plt.title('Validation RMSE: {0:.3f}'.format(
+        opt['validation_error']['rmse_average']))
+
+    ax = fig.add_subplot(122)
+    sns.regplot(x='actual', y='prediction', data=nopt_df)
+    plt.title('Validation RMSE: {0:.3f}'.format(
+        nopt['validation_error']['rmse_average']))
+
+    plt.show()
