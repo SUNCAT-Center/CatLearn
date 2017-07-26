@@ -32,16 +32,16 @@ extend = single_transform(train_features)
 assert np.shape(extend) == (d, f * 3)
 
 extend = get_order_2(train_features)
-assert np.shape(extend) == (d, 29403)
+assert np.shape(extend) == (d, f*(f+1)/2)
 
 extend = get_div_order_2(train_features)
-assert np.shape(extend) == (d, 58564)
+assert np.shape(extend) == (d, f**2)
 
 extend = get_order_2ab(train_features, a=2, b=4)
-assert np.shape(extend) == (d, 29403)
+assert np.shape(extend) == (d, f*(f+1)/2)
 
 extend = get_ablog(train_features, a=2, b=4)
-assert np.shape(extend) == (d, 29403)
+assert np.shape(extend) == (d, f*(f+1)/2)
 
 ext = pls(components=4, train_matrix=train_features, target=train_targets,
           test_matrix=test_features)
