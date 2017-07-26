@@ -11,12 +11,6 @@ from .particle_fingerprint import ParticleFingerprintGenerator
 from .adsorbate_fingerprint import AdsorbateFingerprintGenerator
 from .output import write_fingerprint_setup
 
-no_mendeleev = False
-try:
-    from mendeleev import element
-except ImportError:
-    no_mendeleev = True
-
 
 def db_sel2fp(calctype, fname, selection, moldb=None, bulkdb=None,
               slabref=None):
@@ -51,18 +45,14 @@ def db_sel2fp(calctype, fname, selection, moldb=None, bulkdb=None,
         else:
             fpv_gen = AdsorbateFingerprintGenerator(moldb=moldb, bulkdb=bulkdb)
             cand = fpv_gen.db2adds_info(fname=fname, selection=selection)
-        fpv += [fpv_gen.Z_add]
-        if not no_mendeleev:
-            fpv += [fpv_gen.primary_addatom,
-                    fpv_gen.primary_adds_nn,
-                    fpv_gen.adds_sum,
-                    fpv_gen.primary_surfatom]
-            if bulkdb is not None:
-                fpv += [fpv_gen.primary_surf_nn]
-        else:
-            print('Mendeleev not imported. Certain fingerprints excluded.')
+        fpv += [fpv_gen.Z_add,
+                fpv_gen.primary_addatom,
+                fpv_gen.primary_adds_nn,
+                fpv_gen.adds_sum,
+                fpv_gen.primary_surfatom]
         if bulkdb is not None:
-            fpv += [fpv_gen.elemental_dft_properties]
+            fpv += [fpv_gen.primary_surf_nn,
+                    fpv_gen.elemental_dft_properties]
         cfpv = return_fpv(cand, fpv)
     elif calctype == 'nanoparticle':
         fpv_gen = ParticleFingerprintGenerator()

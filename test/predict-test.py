@@ -6,6 +6,7 @@ import numpy as np
 
 from atoml.database_functions import DescriptorDatabase
 from atoml.feature_preprocess import standardize, normalize
+from atoml.ridge_regression import RidgeRegression
 from atoml.predict import GaussianProcess
 
 # Attach the database.
@@ -21,6 +22,18 @@ target_data = np.reshape(dd.query_db(names=targets),
 # Split the data into so test and training sets.
 train_features, train_targets = feature_data[:35, :], target_data[:35]
 test_features, test_targets = feature_data[35:, :], target_data[35:]
+
+# Test ridge regression predictions.
+rr = RidgeRegression()
+reg = rr.find_optimal_regularization(X=train_features, Y=train_targets)
+coef = rr.RR(X=train_features, Y=train_targets, omega2=reg)[0]
+
+# Test the model.
+sumd = 0.
+for tf, tt in zip(test_features, test_targets):
+    p = (np.dot(coef, tf))
+    sumd += (p - tt) ** 2
+print('Ridge regression prediction:', (sumd / len(test_features)) ** 0.5)
 
 sfp = standardize(train_matrix=train_features, test_matrix=test_features)
 nfp = normalize(train_matrix=train_features, test_matrix=test_features)
