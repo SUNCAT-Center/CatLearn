@@ -2,9 +2,9 @@
 from __future__ import absolute_import
 from __future__ import division
 
+import json
 import numpy as np
 from collections import defaultdict
-from mendeleev import element
 
 from ase.data import covalent_radii
 from ase.ga.utilities import get_mic_distance
@@ -142,14 +142,19 @@ def property_matrix(atoms, property):
     property : str
         The target property from mendeleev.
     """
-    symb = atoms.get_chemical_symbols()
+    # Load the Mendeleev parameter data into memory
+    with open('../data/proxy-mendeleev.json') as f:
+        data = json.load(f)
+
+    an = atoms.get_atomic_numbers()
     atomic_prop = {}
-    for s in set(symb):
-        atomic_prop[s] = getattr(element(s), property)
+    for a in set(an):
+        atomic_prop[a] = data[str(a)].get(property)
+        # atomic_prop[s] = getattr(element(s), property)
 
     prop_x = []
-    for s in symb:
-        prop_x.append(atomic_prop[s])
+    for a in an:
+        prop_x.append(atomic_prop[a])
     prop_mat = [prop_x] * len(atoms)
 
     return np.asarray(np.float64(prop_mat))
