@@ -90,11 +90,13 @@ def clean_variance(train, test=None, labels=None):
 
     return clean
 
+
 def clean_infinite(train, test=None, labels=None):
     """Remove features that have non finite values in the training data.
-        Optionally removes datapoints in test data with non fininte values.
-        Returns a dictionary with the clean 'train', 'test' and 'index' that
-            were removed from the original data.
+
+    Optionally removes features in test data with non fininte values. Returns
+    a dictionary with the clean 'train', 'test' and 'index' that were removed
+    from the original data.
 
     Parameters
     ----------
@@ -105,21 +107,19 @@ def clean_infinite(train, test=None, labels=None):
     """
     clean = defaultdict(list)
     # Find features that have only finite values.
-    l = np.isfinite(train).all(axis=0)
+    bool_test = np.isfinite(train).all(axis=0)
     # Save the indices of columns that contain non-finite values.
-    clean['index'] = list(np.where(~l)[0])
+    clean['index'] = list(np.where(~bool_test)[0])
     # Save a cleaned training data matrix.
-    clean['train'] = train[:,l]
+    clean['train'] = train[:, bool_test]
     # If a test matrix is given, save a cleaned test data matrix.
     if test is not None:
         assert int(np.shape(test)[1]) == int(np.shape(train)[1])
-        clean['test'] = test[:,l]
-    else:
-        clean['test'] = test
+        test = test[:, bool_test]
+    clean['test'] = test
     if labels is not None:
         assert len(labels) == int(np.shape(train)[1])
-        clean['labels'] = np.array(labels)[l]
-    else:
-        clean['labels'] = list(labels)
+        labels = list(np.array(labels)[bool_test])
+    clean['labels'] = labels
 
     return clean
