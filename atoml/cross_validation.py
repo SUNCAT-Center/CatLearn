@@ -7,6 +7,8 @@ import numpy as np
 from random import shuffle
 from collections import OrderedDict
 
+from atoml.feature_preprocess import standardize, normalize
+
 
 class HierarchyValidation(object):
     """Class to form hierarchy crossvalidation setup.
@@ -57,7 +59,6 @@ class HierarchyValidation(object):
 
         # Randomize the indices and remove any remainder from first split.
         shuffle(all_index)
-
         if max_split is not None:
             assert len(all_index) > max_split and max_split >= 2 * min_split
             # Cut off the list of indices.
@@ -102,43 +103,73 @@ class HierarchyValidation(object):
 
         return data
 
-    def split_predict(self, index_split, predict, **kwargs):
-        """Function to make predictions looping over all subsets of data.
+    def global_scale_data(self, index_split, scale='standardize'):
+        """Make an array with all data.
 
         Parameters
         ----------
-        index_split : dict
-            All data for the split.
-        predict : function
-            The prediction function. Must return dict with 'result' in it.
+        index_split : array
+            Array with the index data.
+        scale : string
+            Method of scaling, can be either 'standardize' or 'normalize'.
         """
-        result = []
-        for i in reversed(index_split):
-            j, k = i.split('_')
-            train_data = self._compile_split(index_split[j + '_' + k])
-            train_features = np.array(train_data[:, 1:-1], np.float64)
-            train_targets = np.array(train_data[:, -1:], np.float64)
-            d1, d2 = np.shape(train_targets)
-            train_targets = train_targets.reshape(d2, d1)[0]
+        global_data1 = self._compile_split(index_split['1_1'])
+        global_data2 = self._compile_split(index_split['1_2'])
+        global_feat1 = np.array(global_data1[:, 1:-1], np.float64)
+        global_feat2 = np.array(global_data2[:, 1:-1], np.float64)
+        globaldata = np.concatenate((global_feat1, global_feat2), axis=0)
 
-            if int(k) % 2 == 1:
-                test_data = self._compile_split(index_split[j + '_' +
-                                                            str(int(k)+1)])
-            else:
-                test_data = self._compile_split(index_split[j + '_' +
-                                                            str(int(k)-1)])
-            test_features = np.array(test_data[:, 1:-1], np.float64)
-            test_targets = np.array(test_data[:, -1:], np.float64)
-            d1, d2 = np.shape(test_targets)
-            test_targets = test_targets.reshape(d2, d1)[0]
+        if scale is 'standardize':
+            s = standardize(train_matrix=globaldata)
+            mean, scalar = s['mean'], s['std']
+        if scale is 'normalize':
+            s = normalize(train_matrix=globaldata)
+            mean, scalar = s['mean'], s['dif']
 
-            pred = predict(train_features=train_features,
-                           train_targets=train_targets,
-                           test_features=test_features,
-                           test_targets=test_targets, **kwargs)
-            result.append(pred['result'])
+        return mean, scalar
 
-        return result
+    def get_train_data(self, index_split, indicies):
+        """Make array with training data according to index.
+
+        Parameters
+        ----------
+        index_split : array
+            Array with the index data.
+        indicies : array
+            Index used to generate data.
+        """
+        index1, index2 = indicies.split('_')
+
+        train_data = self._compile_split(index_split[index1 + '_' + index2])
+
+        train_features = np.array(train_data[:, 1:-1], np.float64)
+        train_targets = np.array(train_data[:, -1:], np.float64)
+
+        d1, d2 = np.shape(train_targets)
+        train_targets = train_targets.reshape(d2, d1)[0]
+
+        return train_targets, train_features, index1, index2
+
+    def get_test_data(self, index_split, index1, split):
+        """Make array with test data according to data.
+
+        Parameters
+        ----------
+        index_split : array
+            Array with the index data.
+        index1 : int
+            The first number in the data index.
+        split : int
+            The second number in the data index.
+        """
+        test_data = self._compile_split(index_split[index1 + '_' +
+                                                    str(split)])
+        test_features = np.array(test_data[:, 1:-1], np.float64)
+        test_targets = np.array(test_data[:, -1:], np.float64)
+        d1, d2 = np.shape(test_targets)
+        test_targets = test_targets.reshape(d2, d1)[0]
+
+        return test_features, test_targets
 
     def _get_index(self):
         """Function to get the list of possible indices."""

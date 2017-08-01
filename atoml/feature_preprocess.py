@@ -29,7 +29,8 @@ def matrix_split(X, nsplit, fix_size=None):
     return np.array_split(X, nsplit)
 
 
-def standardize(train_matrix, test_matrix=None, writeout=False):
+def standardize(train_matrix, test_matrix=None, mean=None, std=None,
+                writeout=False):
     """Standardize each feature relative to the mean and standard deviation.
 
     If test data is supplied it is standardized relative to the training
@@ -41,25 +42,34 @@ def standardize(train_matrix, test_matrix=None, writeout=False):
         Feature matrix for the training dataset.
     test_matrix : list
         Feature matrix for the test dataset.
+    mean : list
+        List of mean values for each feature.
+    std : list
+        List of standard deviation values for each feature.
     """
-    std = defaultdict(list)
-    std['mean'] = np.mean(train_matrix, axis=0)
-    std['std'] = np.std(train_matrix, axis=0)
-    np.place(std['std'], std['std'] == 0., [1.])  # Replace 0 with 1.
+    scale = defaultdict(list)
+    if mean is None:
+        mean = np.mean(train_matrix, axis=0)
+    scale['mean'] = mean
+    if std is None:
+        std = np.std(train_matrix, axis=0)
+    scale['std'] = std
+    np.place(scale['std'], scale['std'] == 0., [1.])  # Replace 0 with 1.
 
-    std['train'] = (train_matrix - std['mean']) / std['std']
+    scale['train'] = (train_matrix - scale['mean']) / scale['std']
 
     if test_matrix is not None:
-        test_matrix = (test_matrix - std['mean']) / std['std']
-    std['test'] = test_matrix
+        test_matrix = (test_matrix - scale['mean']) / scale['std']
+    scale['test'] = test_matrix
 
     if writeout:
-        write_fingerprint_setup(function='standardize', data=std)
+        write_fingerprint_setup(function='standardize', data=scale)
 
-    return std
+    return scale
 
 
-def normalize(train_matrix, test_matrix=None, writeout=False):
+def normalize(train_matrix, test_matrix=None, mean=None, dif=None,
+              writeout=False):
     """Normalize each feature relative to mean and min/max variance.
 
     If test data is supplied it is standardized relative to the training
@@ -71,22 +81,30 @@ def normalize(train_matrix, test_matrix=None, writeout=False):
         Feature matrix for the training dataset.
     test_matrix : list
         Feature matrix for the test dataset.
+    mean : list
+        List of mean values for each feature.
+    dif : list
+        List of max-min values for each feature.
     """
-    norm = defaultdict(list)
-    norm['mean'] = np.mean(train_matrix, axis=0)
-    norm['dif'] = np.max(train_matrix, axis=0) - np.min(train_matrix, axis=0)
-    np.place(norm['dif'], norm['dif'] == 0., [1.])  # Replace 0 with 1.
+    scale = defaultdict(list)
+    if mean is None:
+        mean = np.mean(train_matrix, axis=0)
+    scale['mean'] = mean
+    if dif is None:
+        dif = np.max(train_matrix, axis=0) - np.min(train_matrix, axis=0)
+    scale['dif'] = dif
+    np.place(scale['dif'], scale['dif'] == 0., [1.])  # Replace 0 with 1.
 
-    norm['train'] = (train_matrix - norm['mean']) / norm['dif']
+    scale['train'] = (train_matrix - scale['mean']) / scale['dif']
 
     if test_matrix is not None:
-        test_matrix = (test_matrix - norm['mean']) / norm['dif']
-    norm['test'] = test_matrix
+        test_matrix = (test_matrix - scale['mean']) / scale['dif']
+    scale['test'] = test_matrix
 
     if writeout:
-        write_fingerprint_setup(function='normalize', data=norm)
+        write_fingerprint_setup(function='normalize', data=scale)
 
-    return norm
+    return scale
 
 
 def cluster_features(train_matrix, train_target, k=2, test_matrix=None,

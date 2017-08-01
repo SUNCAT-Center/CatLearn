@@ -281,12 +281,30 @@ def target_standardize(target, writeout=False):
     target = np.asarray(target)
 
     data = defaultdict(list)
-    data['mean'] = np.mean(target)
-    data['std'] = np.std(target)
+    data['mean'] = np.mean(target, axis=0)
+    data['std'] = np.std(target, axis=0)
     data['target'] = (target - data['mean']) / data['std']
 
     if writeout:
         write_predict(function='target_standardize', data=data)
+
+    return data
+
+
+def target_normalize(target):
+    """Return a list of normalized target values.
+
+    Parameters
+    ----------
+    target : list
+        A list of the target values.
+    """
+    target = np.asarray(target)
+
+    data = defaultdict(list)
+    data['mean'] = np.mean(target, axis=0)
+    data['dif'] = np.max(target, axis=0) - np.min(target, axis=0)
+    data['target'] = (target - data['mean']) / data['dif']
 
     return data
 

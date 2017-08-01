@@ -1,5 +1,6 @@
-"""Ridge regression function from Keld Lundgaard."""
+"""Modified ridge regression function from Keld Lundgaard."""
 import numpy as np
+from collections import defaultdict
 
 
 class RidgeRegression(object):
@@ -26,6 +27,40 @@ class RidgeRegression(object):
         self.W2 = W2
         self.Vh = Vh
         self.cv = cv
+
+    def get_coefficients(self, train_targets, train_features, reg, p=0.,
+                         Ns=100, wsteps=15, rsteps=3):
+        """Generate the omgea2 and coef value's.
+
+        Parameters
+        ----------
+        train_targets : array
+            Dependent data used for training.
+        train_features : array
+            Independent data used for training.
+        reg : float
+            Precomputed optimal regaluzation.
+        p : float
+            Define the prior function. Default is zero.
+        Ns : int
+            Number of boostrap samples to use.
+        wsteps : int
+            Steps in omega2 search linespacing.
+        rsteps : int
+            Number of refinement steps.
+        """
+        data = defaultdict(list)
+
+        if reg is None:
+            data['reg'] = self.find_optimal_regularization(train_features,
+                                                           train_targets, p=p,
+                                                           Ns=Ns,
+                                                           wsteps=wsteps,
+                                                           rsteps=rsteps)
+        data['coef'] = self.RR(train_features, train_targets, p=p,
+                               omega2=data['reg'])[0]
+
+        return data
 
     def find_optimal_regularization(self, X, Y, p=0., Ns=100, wsteps=15,
                                     rsteps=3):
