@@ -296,9 +296,10 @@ class FeatureScreening(object):
             Array to eliminate features from.
         """
         response = []
+        nv = np.linalg.norm(np.transpose(reduced_matrix), axis=1)
         for d in np.transpose(train_matrix):
-            for a in np.transpose(reduced_matrix):
-                r = (d - np.dot(a, np.dot(d, a))) / (np.linalg.norm(a) ** 2)
+            for a, n in zip(np.transpose(reduced_matrix), nv):
+                r = (d - np.dot(a, np.dot(d, a))) / (n ** 2)
             response.append(r)
 
         return np.transpose(response)
