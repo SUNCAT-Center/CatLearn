@@ -69,25 +69,26 @@ train_data = np.concatenate((train_data, train_data1), axis=1)
 # test_data = np.concatenate((test_data, test_data5), axis=1)
 # train_data = np.concatenate((train_data, train_data5), axis=1)
 
-fig = plt.figure(figsize=(10, 10))
+if plot:
+    # Get descriptor correlation
+    corrt = []
+    for cd in np.transpose(train_data):
+        if c is 'pearson':
+            corrt.append(pearsonr(cd, train_target)[0])
+        elif c is 'spearman':
+            corrt.append(spearmanr(cd, train_target)[0])
+        elif c is 'kendall':
+            corrt.append(kendalltau(cd, train_target)[0])
+    ind = list(range(len(corrt)))
 
-# Get descriptor correlation
-corrt = []
-for cd in np.transpose(train_data):
-    if c is 'pearson':
-        corrt.append(pearsonr(cd, train_target)[0])
-    elif c is 'spearman':
-        corrt.append(spearmanr(cd, train_target)[0])
-    elif c is 'kendall':
-        corrt.append(kendalltau(cd, train_target)[0])
-ind = list(range(len(corrt)))
+    fig = plt.figure(figsize=(10, 10))
 
-ax = fig.add_subplot(131)
-ax.plot(ind, np.abs(corrt), '-', color='black', lw=0.5)
-ax.axis([0, len(ind), 0, 1])
-plt.title('Original Features')
-plt.xlabel('Feature No.')
-plt.ylabel('Correlation')
+    ax = fig.add_subplot(131)
+    ax.plot(ind, np.abs(corrt), '-', color='black', lw=0.5)
+    ax.axis([0, len(ind), 0, 1])
+    plt.title('Original Features')
+    plt.xlabel('Feature No.')
+    plt.ylabel('Correlation')
 
 print('\nElimination based on %s correlation\n' % c)
 screen = FeatureScreening(correlation=c, iterative=False)
@@ -98,22 +99,23 @@ features = screen.eliminate_features(target=train_target,
                                      size=d, step=None, order=None)
 print('screening took:', time.time() - st, 'for', np.shape(train_data))
 
-corrt = []
-for cd in np.transpose(features[0]):
-    if c is 'pearson':
-        corrt.append(pearsonr(cd, train_target)[0])
-    elif c is 'spearman':
-        corrt.append(spearmanr(cd, train_target)[0])
-    elif c is 'kendall':
-        corrt.append(kendalltau(cd, train_target)[0])
-ind = list(range(len(corrt)))
+if plot:
+    corrt = []
+    for cd in np.transpose(features[0]):
+        if c is 'pearson':
+            corrt.append(pearsonr(cd, train_target)[0])
+        elif c is 'spearman':
+            corrt.append(spearmanr(cd, train_target)[0])
+        elif c is 'kendall':
+            corrt.append(kendalltau(cd, train_target)[0])
+    ind = list(range(len(corrt)))
 
-ax = fig.add_subplot(132)
-ax.plot(ind, np.abs(corrt), '-', color='black', lw=0.5)
-ax.axis([0, len(ind), 0, 1])
-plt.title('Screening Features')
-plt.xlabel('Feature No.')
-plt.ylabel('Correlation')
+    ax = fig.add_subplot(132)
+    ax.plot(ind, np.abs(corrt), '-', color='black', lw=0.5)
+    ax.axis([0, len(ind), 0, 1])
+    plt.title('Screening Features')
+    plt.xlabel('Feature No.')
+    plt.ylabel('Correlation')
 
 screen = FeatureScreening(correlation=c, iterative=True,
                           regression='ridge')
@@ -124,21 +126,22 @@ features = screen.eliminate_features(target=train_target,
                                      size=d, step=None, order=None)
 print('iterative took:', time.time() - st, 'for', np.shape(train_data))
 
-corrt = []
-for cd in np.transpose(features[0]):
-    if c is 'pearson':
-        corrt.append(pearsonr(cd, train_target)[0])
-    elif c is 'spearman':
-        corrt.append(spearmanr(cd, train_target)[0])
-    elif c is 'kendall':
-        corrt.append(kendalltau(cd, train_target)[0])
-ind = list(range(len(corrt)))
+if plot:
+    corrt = []
+    for cd in np.transpose(features[0]):
+        if c is 'pearson':
+            corrt.append(pearsonr(cd, train_target)[0])
+        elif c is 'spearman':
+            corrt.append(spearmanr(cd, train_target)[0])
+        elif c is 'kendall':
+            corrt.append(kendalltau(cd, train_target)[0])
+    ind = list(range(len(corrt)))
 
-ax = fig.add_subplot(133)
-ax.plot(ind, np.abs(corrt), '-', color='black', lw=0.5)
-ax.axis([0, len(ind), 0, 1])
-plt.title('Iterative Features')
-plt.xlabel('Feature No.')
-plt.ylabel('Correlation')
+    ax = fig.add_subplot(133)
+    ax.plot(ind, np.abs(corrt), '-', color='black', lw=0.5)
+    ax.axis([0, len(ind), 0, 1])
+    plt.title('Iterative Features')
+    plt.xlabel('Feature No.')
+    plt.ylabel('Correlation')
 
-plt.show()
+    plt.show()
