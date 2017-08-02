@@ -112,16 +112,14 @@ kdict = {
 gp_name += '_SE'
 #gp_name += '_LK'
 
-gp = GaussianProcess(kernel_dict=kdict,
-                     regularization=1.)
+gp = GaussianProcess(train_fp=nfp['train'], train_target=y,
+                     kernel_dict=kdict,
+                     regularization=1.,
+                     optimize_hyperparameters=True)
 # Do the training.
-prediction = gp.get_predictions(train_fp=nfp['train'],
-                                test_fp=nfp['test'],
-                                train_target=y,
+prediction = gp.get_predictions(test_fp=nfp['test'],
                                 get_validation_error=False,
-                                get_training_error=True,
-                                optimize_hyperparameters=True
-                                )
+                                get_training_error=True)
 print(prediction['optimized_kernels'], prediction['optimized_regularization'])
 
 plt.imshow(prediction['prediction'].reshape(3, 9),
