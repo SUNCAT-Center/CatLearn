@@ -39,19 +39,17 @@ test_target = test_target.reshape(len(test_target), )
 
 def do_predict(train, test, train_target, test_target, hopt=False):
     """Function to make predictions."""
-    pred = gp.get_predictions(train_fp=train,
-                              test_fp=test,
-                              train_target=train_target,
+    kdict = {'k1': {'type': 'gaussian', 'width': 10.}}
+    gp = GaussianProcess(train_fp=train, train_target=train_target,
+                         kernel_dict=kdict, regularization=0.001,
+                         optimize_hyperparameters=hopt)
+
+    pred = gp.get_predictions(test_fp=test,
                               test_target=test_target,
                               get_validation_error=True,
-                              get_training_error=True,
-                              optimize_hyperparameters=hopt)
+                              get_training_error=True)
     return pred
 
-
-# Set up the prediction routine.
-kdict = {'k1': {'type': 'gaussian', 'width': 10.}}
-gp = GaussianProcess(kernel_dict=kdict, regularization=0.001)
 
 print('Original parameters')
 opt = do_predict(train=train_data, test=test_data, train_target=train_target,
@@ -60,10 +58,6 @@ opt = do_predict(train=train_data, test=test_data, train_target=train_target,
 # Print the error associated with the predictions.
 print('Training error:', opt['training_error']['rmse_average'])
 print('Model error:', opt['validation_error']['rmse_average'])
-
-# Try with hyperparameter optimization.
-kdict = {'k1': {'type': 'gaussian', 'width': 10.}}
-gp = GaussianProcess(kernel_dict=kdict, regularization=0.001)
 
 print('Optimized parameters')
 nopt = do_predict(train=train_data, test=test_data, train_target=train_target,
