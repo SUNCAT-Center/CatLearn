@@ -133,17 +133,16 @@ for l in range(shape[1]):
                                      'const': 1.,
                                      }
                               })
-            gp = GaussianProcess(kernel_dict=kdict,
-                                 regularization=regularization)
+            gp = GaussianProcess(train_fp=nfp['train'], train_target=traine,
+                                 kernel_dict=kdict,
+                                 regularization=regularization,
+                                 optimize_hyperparameters=W)
             # Do the prediction
-            pred = gp.get_predictions(train_fp=nfp['train'],
-                                      test_fp=nfp['test'],
-                                      train_target=traine,
+            pred = gp.get_predictions(test_fp=nfp['test'],
                                       get_validation_error=True,
                                       get_training_error=True,
                                       uncertainty=True,
-                                      test_target=teste,
-                                      optimize_hyperparameters=W)
+                                      test_target=teste)
             # Print the error associated with the predictions.
             uncertainty.append(np.mean(pred['uncertainty']))
             train_rmse.append(pred['training_error']['absolute_average'])

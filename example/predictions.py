@@ -33,18 +33,18 @@ kdict = {
          'gk': {'type': 'gaussian',
                 'width': .3}}
 
-# Set up the prediction routine.
-gp = GaussianProcess(kernel_dict=kdict,
-                     regularization=0.001)
 # Get the list of fingerprint vectors and normalize them.
 nfp = normalize(train_matrix=fpm_train, test_matrix=fpm_predict)
+
+# Set up the GP.
+gp = GaussianProcess(train_fp=nfp['train'], train_target=targets,
+                     kernel_dict=kdict,
+                     regularization=0.001,
+                     optimize_hyperparameters=True)
 # Do the prediction
-output = gp.get_predictions(train_fp=nfp['train'],
-                             test_fp=nfp['test'],
-                             train_target=targets,
-                             get_validation_error=False,
-                             get_training_error=False,
-                             optimize_hyperparameters=True)
+output = gp.get_predictions(test_fp=nfp['test'],
+                            get_validation_error=False,
+                            get_training_error=False)
 y = output['prediction']
 uncertainty = output['uncertainty']
 predicted_fpm = np.hstack([predict_data, np.vstack(y)])

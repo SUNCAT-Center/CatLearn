@@ -16,7 +16,8 @@ from .kernels import kdicts2list, list2kdict
 class GaussianProcess(object):
     """Gaussian processes functions for the machine learning."""
 
-    def __init__(self, kernel_dict, regularization=None):
+    def __init__(self, train_fp, train_target, kernel_dict,
+                 regularization=None, optimize_hyperparameters=False):
         """Gaussian processes setup.
 
         Parameters
@@ -30,38 +31,85 @@ class GaussianProcess(object):
             The regularization strength (smoothing function) applied to the
             kernel matrix.
         """
-        self.kernel_dict = kernel_dict
+        self.N_train, self.N_D = np.shape(train_fp)
         self.regularization = regularization
+        self.prepare_kernels(kernel_dict)
+        self.update_data(train_fp, train_target)
+        if optimize_hyperparameters:
+            self.optimize_hyperparameters()
 
-    def prepare_kernels(self, N_D):
-        """Format the kernel_dict."""
-        kdict = self.kernel_dict
+    def update_data(self, train_fp, train_target, cinv=None):
+        self.train_fp = train_fp
+        self.train_target = train_target
+        # Get the shape of the training dataset.
+        self.N_train, self.N_D = np.shape(train_fp)
+        # Get the Gram matrix on-the-fly if none is suppiled.
+        if cinv is None:
+            cvm = get_covariance(kernel_dict=self.kernel_dict,
+                                 matrix1=train_fp,
+                                 regularization=self.regularization)
+            # Invert the covariance matrix.
+            self.cinv = np.linalg.inv(cvm)
+        else:
+            self.cinv = cinv
+
+    def prepare_kernels(self, kernel_dict):
+        """Formats the kernel_dict."""
+        kdict = kernel_dict
         for key in kdict:
             if 'features' in kdict[key]:
-                N_D = len(kdict[key]['features'])
+                self.N_D = len(kdict[key]['features'])
             # ktype = kdict[key]['type']
             if 'width' in kdict[key]:
                 theta = kdict[key]['width']
                 if type(theta) is float:
-                    self.kernel_dict[key]['width'] = np.zeros(N_D,) + theta
+                    kernel_dict[key]['width'] = np.zeros(self.N_D,) + \
+                                                     theta
 
             elif 'hyperparameters' in kdict[key]:
                 theta = kdict[key]['hyperparameters']
                 if type(theta) is float:
-                    self.kernel_dict[key]['hyperparameters'] = (
-                        np.zeros(N_D,) + theta)
+                    kernel_dict[key]['hyperparameters'] = (
+                        np.zeros(self.N_D,) + theta)
 
             elif 'theta' in kdict[key]:
                 theta = kdict[key]['theta']
                 if type(theta) is float:
-                    self.kernel_dict[key]['hyperparameters'] = (
-                        np.zeros(N_D,) + theta)
+                    kernel_dict[key]['hyperparameters'] = (
+                        np.zeros(self.N_D,) + theta)
+        self.kernel_dict = kernel_dict
 
-    def get_predictions(self, train_fp, test_fp, train_target, cinv=None,
-                        test_target=None, uncertainty=False, basis=None,
-                        get_validation_error=False, get_training_error=False,
+    def optimize_hyperparameters(self):
+        # Create a list of all hyperparameters.
+        theta = kdicts2list(self.kernel_dict, N_D=self.N_D)
+        if self.regularization is not None:
+            theta = np.append(theta, self.regularization)
+
+        # Define fixed arguments for log_marginal_likelihood
+        args = (np.array(self.train_fp), np.array(self.train_target),
+                self.kernel_dict)
+
+        # Set bounds for hyperparameters
+        bounds = ((1E-6, 1e3),)*(len(theta))
+
+        # Optimize
+        self.theta_opt = minimize(log_marginal_likelihood, theta,
+                                  args=args,
+                                  bounds=bounds)
+
+        # Update kernel_dict and regularization with optimized values.
+        self.kernel_dict = list2kdict(self.theta_opt['x'][:-1],
+                                      self.kernel_dict)
+        self.regularization = self.theta_opt['x'][-1]
+
+        # Make a new covariance matrix with the optimized hyperparameters.
+        self.update_data(self.train_fp, self.train_target)
+
+    def get_predictions(self, test_fp, test_target=None, uncertainty=False,
+                        basis=None, get_validation_error=False,
+                        get_training_error=False,
                         standardize_target=True, epsilon=None,
-                        writeout=False, optimize_hyperparameters=False):
+                        writeout=False):
         """Function to perform the prediction on some training and test data.
 
         Parameters
@@ -96,59 +144,23 @@ class GaussianProcess(object):
         epsilon : float
             Threshold for insensitive error calculation.
         """
-        # Get the shape of the training dataset.
-        N_train, N_D = np.shape(train_fp)
-        # Hyperparameters given as floats are converted to lists.
-        self.prepare_kernels(N_D)
         # Standardize target values.
         self.standardize_target = standardize_target
 
-        error_train = train_target
+        error_train = self.train_target
         if standardize_target:
-            self.standardize_data = target_standardize(train_target)
+            self.standardize_data = target_standardize(self.train_target)
             train_target = self.standardize_data['target']
 
         # Store input data.
         data = defaultdict(list)
-        data['input_kernels'] = self.kernel_dict
-        data['input_regularization'] = self.regularization
-        # Optimize hyperparameters.
-        if optimize_hyperparameters:
-            # Create a list of all hyperparameters.
-            theta = kdicts2list(self.kernel_dict, N_D=N_D)
-            if self.regularization is not None:
-                theta = np.append(theta, self.regularization)
-
-            # Define fixed arguments for log_marginal_likelihood
-            args = (np.array(train_fp), train_target, self.kernel_dict)
-            # Set bounds for hyperparameters
-            bounds = ((1E-6, 1e3),)*(len(theta))
-            # Optimize
-            self.theta_opt = minimize(log_marginal_likelihood, theta,
-                                      args=args,
-                                      bounds=bounds)  # , jac=gradient_log_p)
-            # Update kernel_dict and regularization with optimized values.
-            self.kernel_dict = list2kdict(self.theta_opt['x'][:-1],
-                                          self.kernel_dict)
-            self.regularization = self.theta_opt['x'][-1]
-            # Store kernels with optimized hyperparameters.
-            data['optimized_kernels'] = self.kernel_dict
-            data['optimized_regularization'] = self.regularization
-
-        # Get the Gram matrix on-the-fly if none is suppiled.
-        if cinv is None:
-            cvm = get_covariance(kernel_dict=self.kernel_dict,
-                                 matrix1=train_fp,
-                                 regularization=self.regularization)
-            # Invert the covariance matrix.
-            cinv = np.linalg.inv(cvm)
 
         # Calculate the covariance between the test and training datasets.
         ktb = get_covariance(kernel_dict=self.kernel_dict, matrix1=test_fp,
-                             matrix2=train_fp, regularization=None)
+                             matrix2=self.train_fp, regularization=None)
 
         # Build the list of predictions.
-        data['prediction'] = self.do_prediction(ktb=ktb, cinv=cinv,
+        data['prediction'] = self.do_prediction(ktb=ktb, cinv=self.cinv,
                                                 target=train_target)
 
         # Calculate error associated with predictions on the test data.
@@ -161,11 +173,12 @@ class GaussianProcess(object):
         if get_training_error:
             # Calculate the covariance between the training dataset.
             kt_train = get_covariance(kernel_dict=self.kernel_dict,
-                                      matrix1=train_fp, regularization=None)
+                                      matrix1=self.train_fp,
+                                      regularization=None)
 
             # Calculate predictions for the training data.
             data['train_prediction'] = self.do_prediction(ktb=kt_train,
-                                                          cinv=cinv,
+                                                          cinv=self.cinv,
                                                           target=train_target)
 
             # Calculated the error for the prediction on the training data.
@@ -178,14 +191,14 @@ class GaussianProcess(object):
             kxx = get_covariance(kernel_dict=self.kernel_dict,
                                  matrix1=test_fp)
             data['uncertainty'] = [(self.regularization + kxx[kt][kt] -
-                                    np.dot(np.dot(ktb[kt], cinv),
+                                    np.dot(np.dot(ktb[kt], self.cinv),
                                            np.transpose(ktb[kt]))) **
                                    0.5 for kt in range(len(ktb))]
 
         if basis is not None:
-            data['basis_analysis'] = self.fixed_basis(train_fp=train_fp,
+            data['basis_analysis'] = self.fixed_basis(train_fp=self.train_fp,
                                                       test_fp=test_fp,
-                                                      ktb=ktb, cinv=cinv,
+                                                      ktb=ktb, cinv=self.cinv,
                                                       target=train_target,
                                                       test_target=test_target,
                                                       basis=basis,
