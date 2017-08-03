@@ -3,7 +3,7 @@ import numpy as np
 from scipy import cluster
 from collections import defaultdict
 
-from .output import write_fingerprint_setup
+from output import write_fingerprint_setup
 
 
 def matrix_split(X, nsplit, fix_size=None):

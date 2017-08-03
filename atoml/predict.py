@@ -7,10 +7,10 @@ from scipy.optimize import minimize
 from collections import defaultdict
 import functools
 
-from .model_selection import log_marginal_likelihood
-from .output import write_predict
-from .covariance import get_covariance
-from .kernels import kdicts2list, list2kdict
+#from model_selection import log_marginal_likelihood
+#from output import write_predict
+#from covariance import get_covariance
+#from kernels import kdicts2list, list2kdict
 
 
 class GaussianProcess(object):
@@ -270,7 +270,7 @@ class GaussianProcess(object):
         return data
 
 
-def target_standardize(target, writeout=False):
+def target_standardize(target):
     """Return a list of standardized target values.
 
     Parameters
@@ -284,10 +284,6 @@ def target_standardize(target, writeout=False):
     data['mean'] = np.mean(target, axis=0)
     data['std'] = np.std(target, axis=0)
     data['target'] = (target - data['mean']) / data['std']
-
-    if writeout:
-        write_predict(function='target_standardize', data=data)
-
     return data
 
 
@@ -305,7 +301,6 @@ def target_normalize(target):
     data['mean'] = np.mean(target, axis=0)
     data['dif'] = np.max(target, axis=0) - np.min(target, axis=0)
     data['target'] = (target - data['mean']) / data['dif']
-
     return data
 
 
