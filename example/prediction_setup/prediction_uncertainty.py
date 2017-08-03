@@ -53,7 +53,6 @@ pred = gp.get_predictions(test_fp=nfp['test'],
                           test_target=testset['target'],
                           get_validation_error=True,
                           get_training_error=True,
-                          standardize_target=True,
                           uncertainty=True,
                           basis=basis)
 
