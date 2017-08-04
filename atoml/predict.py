@@ -38,59 +38,81 @@ class GaussianProcess(object):
         if optimize_hyperparameters:
             self.optimize_hyperparameters()
 
-    def update_data(self, train_fp, train_target, cinv=None):
-        self.train_fp = train_fp
-        self.train_target = train_target
+    def update_data(self, train_fp, train_target, standardize_target=True):
+        """Updates the training fingerprint matrix, the training targets,
+           and the covariance matrix for the Gaussian Process.
+
+        Parameters
+        ----------
+        train_fp : list
+            A list of training fingerprint vectors.
+        train_target : list
+            A list of training targets used to generate the predictions.
+        cinv : matrix
+            Covariance matrix for training dataset. Calculated on-the-fly or
+            defined to utilize a model numerous times.
+        """
         # Get the shape of the training dataset.
         self.N_train, self.N_D = np.shape(train_fp)
-        # Get the Gram matrix on-the-fly if none is suppiled.
-        if cinv is None:
-            cvm = get_covariance(kernel_dict=self.kernel_dict,
-                                 matrix1=train_fp,
-                                 regularization=self.regularization)
-            # Invert the covariance matrix.
-            self.cinv = np.linalg.inv(cvm)
+        # Store the training data in the GP
+        self.train_fp = train_fp
+        # Store standardized target values by default.
+        self.standardize_target = standardize_target
+        if self.standardize_target:
+            self.standardize_data = target_standardize(train_target)
+            self.train_target = self.standardize_data['target']
         else:
-            self.cinv = cinv
+            self.train_target = train_target
+        # Get the Gram matrix on-the-fly if none is suppiled.
+        cvm = get_covariance(kernel_dict=self.kernel_dict,
+                             matrix1=self.train_fp,
+                             regularization=self.regularization)
+        # Invert the covariance matrix.
+        self.cinv = np.linalg.inv(cvm)
 
     def prepare_kernels(self, kernel_dict):
-        """Formats the kernel_dict."""
+        """Formats the kernel_dictionary."""
         kdict = kernel_dict
         for key in kdict:
             if 'features' in kdict[key]:
-                self.N_D = len(kdict[key]['features'])
-            # ktype = kdict[key]['type']
+                N_D = len(kdict[key]['features'])
+            else:
+                N_D = self.N_D
             if 'width' in kdict[key]:
                 theta = kdict[key]['width']
                 if type(theta) is float:
-                    kernel_dict[key]['width'] = np.zeros(self.N_D,) + \
+                    kernel_dict[key]['width'] = np.zeros(N_D,) + \
                                                      theta
 
             elif 'hyperparameters' in kdict[key]:
                 theta = kdict[key]['hyperparameters']
                 if type(theta) is float:
                     kernel_dict[key]['hyperparameters'] = (
-                        np.zeros(self.N_D,) + theta)
+                        np.zeros(N_D,) + theta)
 
             elif 'theta' in kdict[key]:
                 theta = kdict[key]['theta']
                 if type(theta) is float:
                     kernel_dict[key]['hyperparameters'] = (
-                        np.zeros(self.N_D,) + theta)
+                        np.zeros(N_D,) + theta)
         self.kernel_dict = kernel_dict
 
     def optimize_hyperparameters(self):
+        """Optimizes the hyperparameters of the Gaussian Process with respect
+        tp the log marginal likelihood. Optimized hyperparameters are saved in
+        the kernel dictionary. Finally, the covariance matrix is updated.
+        """
         # Create a list of all hyperparameters.
         theta = kdicts2list(self.kernel_dict, N_D=self.N_D)
         if self.regularization is not None:
             theta = np.append(theta, self.regularization)
 
         # Define fixed arguments for log_marginal_likelihood
-        args = (np.array(self.train_fp), np.array(self.train_target),
+        args = (np.array(self.train_fp), self.train_target,
                 self.kernel_dict)
 
         # Set bounds for hyperparameters
-        bounds = ((1E-6, 1e3),)*(len(theta))
+        bounds = ((1E-6, 1e3),) * (len(theta))
 
         # Optimize
         self.theta_opt = minimize(log_marginal_likelihood, theta,
@@ -98,31 +120,31 @@ class GaussianProcess(object):
                                   bounds=bounds)
 
         # Update kernel_dict and regularization with optimized values.
-        self.kernel_dict = list2kdict(self.theta_opt['x'][:-1],
-                                      self.kernel_dict)
-        self.regularization = self.theta_opt['x'][-1]
-
+        if self.regularization is not None:
+            self.kernel_dict = list2kdict(self.theta_opt['x'][:-1],
+                                          self.kernel_dict)
+            self.regularization = self.theta_opt['x'][-1]
+        else:
+            self.kernel_dict = list2kdict(self.theta_opt['x'],
+                                          self.kernel_dict)
         # Make a new covariance matrix with the optimized hyperparameters.
-        self.update_data(self.train_fp, self.train_target)
+        cvm = get_covariance(kernel_dict=self.kernel_dict,
+                             matrix1=self.train_fp,
+                             regularization=self.regularization)
+        # Invert the covariance matrix.
+        self.cinv = np.linalg.inv(cvm)
 
     def get_predictions(self, test_fp, test_target=None, uncertainty=False,
                         basis=None, get_validation_error=False,
                         get_training_error=False,
-                        standardize_target=True, epsilon=None,
+                        epsilon=None,
                         writeout=False):
         """Function to perform the prediction on some training and test data.
 
         Parameters
         ----------
-        train_fp : list
-            A list of training fingerprint vectors.
         test_fp : list
             A list of testing fingerprint vectors.
-        train_target : list
-            A list of training targets used to generate the predictions.
-        cinv : matrix
-            Covariance matrix for training dataset. Calculated on-the-fly or
-            defined to utilize a model numerous times.
         test_target : list
             A list of the the test targets used to generate the prediction
             errors.
@@ -138,20 +160,9 @@ class GaussianProcess(object):
         get_training_error : boolean
             Return the error associated with the prediction on the training set
             of data if True. Default is False.
-        cost : str
-            Define the way the cost function is calculated. Default is root
-            mean squared error.
         epsilon : float
             Threshold for insensitive error calculation.
         """
-        # Standardize target values.
-        self.standardize_target = standardize_target
-
-        error_train = self.train_target
-        if standardize_target:
-            self.standardize_data = target_standardize(self.train_target)
-            train_target = self.standardize_data['target']
-
         # Store input data.
         data = defaultdict(list)
 
@@ -161,7 +172,7 @@ class GaussianProcess(object):
 
         # Build the list of predictions.
         data['prediction'] = self.do_prediction(ktb=ktb, cinv=self.cinv,
-                                                target=train_target)
+                                                target=self.train_target)
 
         # Calculate error associated with predictions on the test data.
         if get_validation_error:
@@ -177,14 +188,15 @@ class GaussianProcess(object):
                                       regularization=None)
 
             # Calculate predictions for the training data.
-            data['train_prediction'] = self.do_prediction(ktb=kt_train,
-                                                          cinv=self.cinv,
-                                                          target=train_target)
+            data['train_prediction'] = \
+                self.do_prediction(ktb=kt_train, cinv=self.cinv,
+                                   target=self.train_target)
 
             # Calculated the error for the prediction on the training data.
-            data['training_error'] = get_error(
-                prediction=data['train_prediction'], target=error_train,
-                epsilon=epsilon)
+            data['training_error'] = \
+                get_error(prediction=data['train_prediction'],
+                          target=self.train_target,
+                          epsilon=epsilon)
 
         # Calculate uncertainty associated with prediction on test data.
         if uncertainty:
@@ -199,7 +211,7 @@ class GaussianProcess(object):
             data['basis_analysis'] = self.fixed_basis(train_fp=self.train_fp,
                                                       test_fp=test_fp,
                                                       ktb=ktb, cinv=self.cinv,
-                                                      target=train_target,
+                                                      target=self.train_target,
                                                       test_target=test_target,
                                                       basis=basis,
                                                       epsilon=epsilon)
@@ -217,7 +229,7 @@ class GaussianProcess(object):
         ktb : array
             Covariance matrix between test and training data.
         cinv : array
-            Inverted Gramm matrix, covariance between training data.
+            Inverted Gram matrix, covariance between training data.
         target : list
             The target values for the training data.
 
