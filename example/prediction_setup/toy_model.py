@@ -52,28 +52,26 @@ w2 = 0.142
 
 # Set up the prediction routine.
 kdict = {'k1': {'type': 'gaussian', 'width': w1}}
-gp = GaussianProcess(kernel_dict=kdict, regularization=sdt1**2)
+gp = GaussianProcess(kernel_dict=kdict, regularization=sdt1**2,
+                     train_fp=std['train'], train_target=target[0],
+                     optimize_hyperparameters=False)
 
 # Do the predictions.
-pred = gp.get_predictions(train_fp=std['train'],
-                          test_fp=std['test'],
-                          train_target=target[0],
-                          uncertainty=True,
-                          optimize_hyperparameters=False)
+pred = gp.get_predictions(test_fp=std['test'],
+                          uncertainty=True)
 
 upper = np.array(pred['prediction']) + (np.array(pred['uncertainty'] * tstd))
 lower = np.array(pred['prediction']) - (np.array(pred['uncertainty'] * tstd))
 
 # Set up the prediction routine.
 kdict = {'k1': {'type': 'gaussian', 'width': w2}}
-gp = GaussianProcess(kernel_dict=kdict, regularization=sdt2**2)
+gp = GaussianProcess(kernel_dict=kdict, regularization=sdt2**2,
+                     train_fp=std['train'], train_target=target[0],
+                     optimize_hyperparameters=False)
 
 # Do the predictions.
-over = gp.get_predictions(train_fp=std['train'],
-                          test_fp=std['test'],
-                          train_target=target[0],
-                          uncertainty=True,
-                          optimize_hyperparameters=False)
+over = gp.get_predictions(test_fp=std['test'],
+                          uncertainty=True)
 
 over_upper = np.array(over['prediction']) + \
  (np.array(over['uncertainty'] * tstd))
@@ -82,14 +80,13 @@ over_lower = np.array(over['prediction']) - \
 
 # Set up the prediction routine.
 kdict = {'k1': {'type': 'gaussian', 'width': [w1]}}
-gp = GaussianProcess(kernel_dict=kdict, regularization=sdt1**2)
+gp = GaussianProcess(kernel_dict=kdict, regularization=sdt1**2,
+                     train_fp=std['train'], train_target=target[0],
+                     optimize_hyperparameters=True)
 
 # Do the predictions.
-optp = gp.get_predictions(train_fp=std['train'],
-                          test_fp=std['test'],
-                          train_target=target[0],
-                          uncertainty=True,
-                          optimize_hyperparameters=True)
+optp = gp.get_predictions(test_fp=std['test'],
+                          uncertainty=True)
 
 opt_upper = np.array(optp['prediction']) + \
  (np.array(optp['uncertainty'] * tstd))
@@ -126,8 +123,8 @@ ax.plot(train[0], target[0], 'o', alpha=0.2, color='black')
 ax.plot(test[0], optp['prediction'], 'g-', lw=1, alpha=0.4)
 ax.fill_between(test[0], opt_upper, opt_lower, interpolate=True, color='green',
                 alpha=0.2)
-plt.title('w:' + str(optp['optimized_kernels']['k1']['width'][0] * stdx) +
-          ', r:' + str(np.sqrt(optp['optimized_regularization'])*stdy))
+plt.title('w:' + str(gp.kernel_dict['k1']['width'][0] * stdx) +
+          ', r:' + str(np.sqrt(gp.regularization)*stdy))
 plt.xlabel('feature')
 plt.ylabel('response')
 plt.axis('tight')
