@@ -193,9 +193,15 @@ class GaussianProcess(object):
                                    target=self.train_target)
 
             # Calculated the error for the prediction on the training data.
+            if self.standardize_target:
+                train_target = self.train_target * \
+                    self.standardize_data['std'] + \
+                    self.standardize_data['mean']
+            else:
+                train_target = self.train_target
             data['training_error'] = \
                 get_error(prediction=data['train_prediction'],
-                          target=self.train_target,
+                          target=train_target,
                           epsilon=epsilon)
 
         # Calculate uncertainty associated with prediction on test data.
