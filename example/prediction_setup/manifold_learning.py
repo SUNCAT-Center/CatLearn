@@ -19,20 +19,21 @@ expand = False
 new_data = True
 
 nc = 5
-reg = 1e-6
-w = 1.
 
 
 def do_predict(train, test, train_target, test_target, hopt=False):
     """Function to make predictions."""
     std = standardize(train_matrix=train, test_matrix=test)
-    pred = gp.get_predictions(train_fp=std['train'],
-                              test_fp=std['test'],
-                              train_target=train_target,
+
+    kdict = {'k1': {'type': 'gaussian', 'width': 1.}}
+    gp = GaussianProcess(train_fp=std['train'], train_target=train_target,
+                         kernel_dict=kdict, regularization=1e-6,
+                         optimize_hyperparameters=hopt)
+
+    pred = gp.get_predictions(test_fp=std['test'],
                               test_target=test_target,
                               get_validation_error=True,
-                              get_training_error=True,
-                              optimize_hyperparameters=hopt)
+                              get_training_error=True)
 
     return pred
 
@@ -73,10 +74,6 @@ ax.xaxis.set_major_formatter(NullFormatter())
 ax.yaxis.set_major_formatter(NullFormatter())
 plt.axis('tight')
 
-# Set up the prediction routine.
-kdict = {'k1': {'type': 'gaussian', 'width': w}}
-gp = GaussianProcess(kernel_dict=kdict, regularization=reg)
-
 print('PCA')
 a = do_predict(train=Y_data[:d, :], test=Y_data[d:, :],
                train_target=train_target, test_target=test_target, hopt=True)
@@ -97,10 +94,6 @@ ax.xaxis.set_major_formatter(NullFormatter())
 ax.yaxis.set_major_formatter(NullFormatter())
 plt.axis('tight')
 
-# Set up the prediction routine.
-kdict = {'k1': {'type': 'gaussian', 'width': w}}
-gp = GaussianProcess(kernel_dict=kdict, regularization=reg)
-
 print('Isomap')
 a = do_predict(train=Y_data[:d, :], test=Y_data[d:, :],
                train_target=train_target, test_target=test_target, hopt=True)
@@ -119,10 +112,6 @@ plt.title("MDS")
 ax.xaxis.set_major_formatter(NullFormatter())
 ax.yaxis.set_major_formatter(NullFormatter())
 plt.axis('tight')
-
-# Set up the prediction routine.
-kdict = {'k1': {'type': 'gaussian', 'width': w}}
-gp = GaussianProcess(kernel_dict=kdict, regularization=reg)
 
 print('MDS')
 a = do_predict(train=Y_data[:d, :], test=Y_data[d:, :],
@@ -143,10 +132,6 @@ ax.xaxis.set_major_formatter(NullFormatter())
 ax.yaxis.set_major_formatter(NullFormatter())
 plt.axis('tight')
 
-# Set up the prediction routine.
-kdict = {'k1': {'type': 'gaussian', 'width': w}}
-gp = GaussianProcess(kernel_dict=kdict, regularization=reg)
-
 print('SpectralEmbedding')
 a = do_predict(train=Y_data[:d, :], test=Y_data[d:, :],
                train_target=train_target, test_target=test_target, hopt=True)
@@ -165,10 +150,6 @@ plt.title("t-SNE")
 ax.xaxis.set_major_formatter(NullFormatter())
 ax.yaxis.set_major_formatter(NullFormatter())
 plt.axis('tight')
-
-# Set up the prediction routine.
-kdict = {'k1': {'type': 'gaussian', 'width': w}}
-gp = GaussianProcess(kernel_dict=kdict, regularization=reg)
 
 print('t-SNE')
 a = do_predict(train=Y_data[:d, :], test=Y_data[d:, :],
