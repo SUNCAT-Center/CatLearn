@@ -2,14 +2,12 @@
 from __future__ import division
 import numpy as np
 from scipy.stats import pearsonr
-from cross_validation import HierarchyValidation
 from feature_preprocess import standardize
 from feature_preprocess import normalize
 from predict import target_standardize
 from predict import target_normalize
 import seaborn as sns
 import matplotlib.pyplot as plt
-from sklearn.linear_model import LassoCV
 
 
 class data_process(object):
@@ -286,3 +284,30 @@ class data_process(object):
             corrected_std.append((summa/(len(listy)-1))**0.5)
 
         return Y_mean, X_mean, corrected_std
+
+    def featselect_featvar_plot(self, p_error_select, number_feat):
+        """Create learning curve with data size and prediction error.
+
+        Parameters
+        ----------
+        data_size : list
+            Data_size for where the prediction were made.
+        p_error : list
+            Error for where the prediction were made.
+        data_size_mean : list
+            Mean of the data size in a sub-set.
+        p_error_mean : list
+            The mean error for the sub-set.
+        corrected_std : array
+            The standard deaviation for the sub-set of data.
+        """
+        print(p_error_select)
+        print(number_feat)
+        fig = plt.figure()
+        fig.add_subplot(111)
+        sns.violinplot(x=number_feat, y=p_error_select, scale="count")
+        sns.pointplot(x=number_feat, y=p_error_select)
+        plt.legend(loc='upper right')
+        plt.ylabel('Prediction error')
+        plt.xlabel('Data size')
+        plt.show()
