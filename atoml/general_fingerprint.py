@@ -16,9 +16,9 @@ def get_mendeleev_params(atomic_number, index=None, extra_params=[]):
     index : int
         The atom index whose parameters to return.
     extra_params: list of str
-	Extra Mendaleev parameters to be returned in
-        the list. For a full list see here:
-	http://nbviewer.jupyter.org/url/bitbucket.org/lukaszmentel/mendeleev/raw/tip/docs/ipynb/tables.ipynb
+        Extra Mendaleev parameters to be returned in the list.
+        For a full list see here:
+        http://nbviewer.jupyter.org/url/bitbucket.org/lukaszmentel/mendeleev/raw/tip/docs/ipynb/tables.ipynb
 
     Returns
     -------
@@ -46,10 +46,10 @@ def get_mendeleev_params(atomic_number, index=None, extra_params=[]):
         'atomic_weight']
 
     if extra_params:
-	params += extra_params
+        params += extra_params
 
     var = []
     for _ in params:
-	var += [data[str(atomic_number)].get(_)]
+        var += [data[str(atomic_number)].get(_)]
 
     return var
