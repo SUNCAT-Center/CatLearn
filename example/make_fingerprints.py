@@ -16,9 +16,9 @@ from atoml.utilities import clean_variance, clean_infinite
 
 fname = '../data/example.db'
 abinitio_energies, mol_dbids = db2mol('../data/mol.db', ['fmaxout<0.1',
-                                                 'pw=500',
-                                                 'vacuum=8',
-                                                 'psp=gbrv1.5pbe'])
+                                                         'pw=500',
+                                                         'vacuum=8',
+                                                         'psp=gbrv1.5pbe'])
 # Prepare atoms objects from database.
 e_dict_slabs, id_dict_slabs = db2surf(fname, selection=['series=slab'])
 abinitio_energies.update(e_dict_slabs)
@@ -38,6 +38,7 @@ train_gen = AdsorbateFingerprintGenerator(bulkdb='../data/ref_bulks_k24.db')
 train_fpv = [
     train_gen.get_dbid,
     # train_gen.randomfpv,
+    train_gen.ads_nbonds,
     train_gen.primary_addatom,
     train_gen.primary_adds_nn,
     train_gen.Z_add,
