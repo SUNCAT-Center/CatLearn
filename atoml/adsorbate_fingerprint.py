@@ -17,6 +17,7 @@ from ase.atoms import string2symbols
 from ase.data import ground_state_magnetic_moments, covalent_radii
 from ase.data import chemical_symbols
 from .general_fingerprint import get_mendeleev_params
+from .db2thermo import layers_info
 
 
 def n_outer(econf):
@@ -452,9 +453,9 @@ class AdsorbateFingerprintGenerator(object):
                 atoms = atoms.repeat([2, 2, 1])
             elif atoms.info['key_value_pairs']['supercell'] == '3x2':
                 atoms = atoms.repeat([1, 2, 1])
-            surf_atoms = [a.index for a in atoms if a.index not in add_atoms]
+            bulk_atoms, top_atoms = layers_info(atoms)
             liste = []
-            for m in surf_atoms:
+            for m in top_atoms:
                 for a in add_atoms:
                     d = atoms.get_distance(m, a, mic=True, vector=False)
                     liste.append([m, d])
@@ -467,7 +468,7 @@ class AdsorbateFingerprintGenerator(object):
             Z0 = numbers[primary_surf]
             r_bond = covalent_radii[Z0]
             ai = []
-            for nni in surf_atoms:
+            for nni in top_atoms:
                 d_nn = atoms.get_distance(primary_surf, nni, mic=True,
                                           vector=False)
                 ai.append([nni, d_nn])

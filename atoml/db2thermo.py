@@ -15,6 +15,7 @@ import numpy as np
 import ase.db
 from ase.atoms import string2symbols
 from ase.data import covalent_radii
+from ase.geometry import get_layers
 # from ase.data import chemical_symbols
 
 
@@ -47,6 +48,17 @@ def info2primary_index(atoms):
     Z_add1 = atoms.numbers[int(i_add1)]
     Z_surf1 = atoms.numbers[int(i_surf1)]
     return i_add1, i_surf1, Z_add1, Z_surf1
+
+
+def layers_info(atoms):
+    il, z = get_layers(atoms, (0, 0, 1),
+                       tolerance=covalent_radii[atoms.info['Z_surf1']])
+    layers = atoms.info['key_value_pairs']['layers']
+    bulk_atoms = [a.index for a in atoms
+                  if il[a.index] < layers-2]
+    top_atoms = [a.index for a in atoms
+                 if il[a.index] > layers-3]
+    return bulk_atoms, top_atoms
 
 
 def db2surf(fname, selection=[]):
@@ -198,7 +210,7 @@ def db2surf_info(fname, id_dict, formation_energies=None):
         atoms.info['key_value_pairs'] = d.key_value_pairs
         atoms.info['dbid'] = dbid
         atoms.info['add_atoms'] = adds_index(atoms)
-        atoms.info['surf_atoms'] = metal_index(atoms)
+        atoms.info['surf_atoms'] = metal_index(atoms)  # Modify if O/C/Nitrides
         i_add1, i_surf1, Z_add1, Z_surf1 = info2primary_index(atoms)
         atoms.info['i_add1'] = i_add1
         atoms.info['i_surf1'] = i_surf1
