@@ -57,7 +57,8 @@ def layers_info(atoms):
     bulk_atoms = [a.index for a in atoms
                   if il[a.index] < layers-2]
     top_atoms = [a.index for a in atoms
-                 if il[a.index] > layers-3]
+                 if il[a.index] > layers-3 and
+                 a.index not in atoms.info['add_atoms']]
     return bulk_atoms, top_atoms
 
 
