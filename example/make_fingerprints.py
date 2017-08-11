@@ -34,7 +34,7 @@ print('Getting atoms objects.')
 train_atoms = db2surf_info(fname, id_dict, formation_energies)
 print(len(train_atoms), 'Training examples.')
 
-train_gen = AdsorbateFingerprintGenerator(bulkdb='../data/ref_bulks_k24.db')
+train_gen = AdsorbateFingerprintGenerator()
 train_fpv = [
     train_gen.get_dbid,
     # train_gen.randomfpv,
