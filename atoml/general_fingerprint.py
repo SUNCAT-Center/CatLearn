@@ -1,7 +1,9 @@
 import json
+from atoml import __path__ as atoml_path
 
 # Load the Mendeleev parameter data into memory
-with open('../data/proxy-mendeleev.json') as f:
+with open('/'.join(atoml_path[0].split('/')[:-1]) +
+          '/data/proxy-mendeleev.json') as f:
     data = json.load(f)
 
 
