@@ -32,23 +32,24 @@ def get_error(prediction, target, epsilon=None):
     # Residuals
     res = prediction - target
     error['residuals'] = res
-    error['signed_average'] = np.average(res)
+    error['signed_mean'] = np.mean(res)
+    error['signed_median'] = np.median(res)
 
     # Root mean squared error function.
     e_sq = np.square(res)
     error['rmse_all'] = np.sqrt(e_sq)
-    error['rmse_average'] = np.sqrt(np.sum(e_sq)/len(e_sq))
+    error['rmse_average'] = np.sqrt(np.mean(e_sq))
 
     # Absolute error function.
     e_abs = np.abs(res)
     error['absolute_all'] = e_abs
-    error['absolute_average'] = np.sum(e_abs)/len(e_abs)
+    error['absolute_average'] = np.mean(e_abs)
 
     # Epsilon-insensitive error function.
     if epsilon is not None:
         e_epsilon = np.abs(res) - epsilon
         np.place(e_epsilon, e_epsilon < 0, 0)
         error['insensitive_all'] = e_epsilon
-        error['insensitive_average'] = np.sum(e_epsilon)/len(e_epsilon)
+        error['insensitive_average'] = np.mean(e_epsilon)
 
     return error
