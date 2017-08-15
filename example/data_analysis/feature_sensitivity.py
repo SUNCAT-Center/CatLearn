@@ -16,7 +16,7 @@ from atoml.cross_validation import HierarchyValidation
 from atoml.feature_engineering import single_transform
 from atoml.feature_preprocess import standardize
 
-new_data = True
+new_data = False
 expand = False
 plot = True
 pm = False
@@ -136,9 +136,6 @@ res_val = [1., -1., .5, -.5, .25, -.25]
 for i, j in zip(res_list, res_val):
     sensitivity(val=j, res=i)
 
-fig = plt.figure()
-ax1 = fig.add_subplot(111)
-
 ave = (np.array(pres1) + np.array(nres1) + np.array(pres5) + np.array(nres5)
        + np.array(pres25) + np.array(nres25))
 ave /= 6
@@ -147,24 +144,27 @@ ave /= 6
 print('\n', np.argsort(ave)[-20:])
 
 
-def do_predict(train, test, train_target, test_target, hopt=False):
+def do_predict(train, test, train_target, test_target, width, reg, hopt=False):
     """Function to make predictions."""
+    kdict = {'k1': {'type': 'gaussian', 'width': width}}
+    gp = GaussianProcess(train_fp=train, train_target=train_target,
+                         kernel_dict=kdict, regularization=reg,
+                         optimize_hyperparameters=hopt)
     # Do the predictions.
-    pred = gp.get_predictions(train_fp=train,
-                              test_fp=test,
-                              train_target=train_target,
+    pred = gp.get_predictions(test_fp=test,
                               test_target=test_target,
                               get_validation_error=True,
-                              get_training_error=True,
-                              optimize_hyperparameters=hopt)
+                              get_training_error=True)
+    w = gp.kernel_dict['k1']['width']
+    r = gp.regularization
 
-    return pred
+    return pred, w, r
 
 
 # reform the training target values
 Y_train = np.reshape(train_target, (np.shape(train_target)[0],))
 
-w = 1.
+w = 10.
 width = [w] * np.shape(X_train)[1]
 reg = 1e-4
 # build training and test sets
@@ -173,22 +173,19 @@ X_test = data[-size:, :]
 
 print(np.shape(X_train), np.shape(X_test), np.shape(Y_train), np.shape(Y_test))
 
-# Try with hyperparameter optimization.
-kdict = {'k1': {'type': 'gaussian', 'width': width}}
-gp = GaussianProcess(kernel_dict=kdict, regularization=reg)
-
 print('Optimized all parameters')
 a = do_predict(train=X_train, test=X_test, train_target=Y_train,
-               test_target=Y_test, hopt=True)
+               test_target=Y_test, hopt=True, width=width, reg=reg)
+be = a[0]['validation_error']['rmse_average']
 
-print(list(a['optimized_kernels']['k1']['width']),
-      a['optimized_regularization'])
-print(list(np.max(X_train, axis=0) - np.min(X_train, axis=0)))
+print(list(a[1]), a[2])
 
 # Print the error associated with the predictions.
-print('GP full model error:', a['validation_error']['rmse_average'])
+print('\nGP full model error:', a[0]['validation_error']['rmse_average'], '\n')
 
-for i in range(2, 20):
+err = []
+
+for i in range(100, 110):
     # if width is None:
     width = [w] * i
     reg = 1e-4
@@ -202,22 +199,26 @@ for i in range(2, 20):
     print(np.shape(X_train), np.shape(X_test), np.shape(Y_train),
           np.shape(Y_test))
 
-    # Try with hyperparameter optimization.
-    kdict = {'k1': {'type': 'gaussian', 'width': width}}
-    gp = GaussianProcess(kernel_dict=kdict, regularization=reg)
-
     print('Optimized parameters')
     a = do_predict(train=X_train, test=X_test, train_target=Y_train,
-                   test_target=Y_test, hopt=True)
+                   test_target=Y_test, hopt=True, width=width, reg=reg)
+    err.append(a[0]['validation_error']['rmse_average'] - be)
 
-    print(list(a['optimized_kernels']['k1']['width']),
-          a['optimized_regularization'])
-    print(list(np.max(X_train, axis=0) - np.min(X_train, axis=0)))
+    print(list(a[1]), a[2])
 
     # Print the error associated with the predictions.
-    print('GP Model error:', a['validation_error']['rmse_average'])
+    print('\nGP Model error:', a[0]['validation_error']['rmse_average'], '\n')
+
+ind = [i for i in range(len(err))]
 
 if plot:
+    fig = plt.figure(figsize=(10, 10))
+    ax = fig.add_subplot(121)
+    ax.scatter(ind, err)
+    plt.xlabel('feature')
+    plt.ylabel('response')
+
+    ax1 = fig.add_subplot(122)
     ax1.scatter(x=feat, y=pres1, label='+1.00', alpha=0.1)
     ax1.scatter(x=feat, y=pres5, label='+0.50', alpha=0.1)
     ax1.scatter(x=feat, y=pres25, label='+0.25', alpha=0.1)
