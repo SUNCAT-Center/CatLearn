@@ -178,8 +178,8 @@ def _get_neighborlist(atoms, dx=0.2, neighbor_number=1):
     for a1 in atoms:
         for a2 in atoms:
             if a1.index != a2.index:
-                d = np.linalg.norm(np.asarray(a1.position)
-                                   - np.asarray(a2.position))
+                d = np.linalg.norm(np.asarray(a1.position) -
+                                   np.asarray(a2.position))
                 r1 = covalent_radii[a1.number]
                 r2 = covalent_radii[a2.number]
                 if neighbor_number == 1:
