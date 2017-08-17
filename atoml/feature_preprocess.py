@@ -3,8 +3,6 @@ import numpy as np
 from scipy import cluster
 from collections import defaultdict
 
-from .output import write_fingerprint_setup
-
 
 def matrix_split(X, nsplit, fix_size=None):
     """Routine to split feature matrix and return sublists.
@@ -29,7 +27,7 @@ def matrix_split(X, nsplit, fix_size=None):
     return np.array_split(X, nsplit)
 
 
-def standardize(train_matrix, test_matrix=None, writeout=False):
+def standardize(train_matrix, test_matrix=None):
     """Standardize each feature relative to the mean and standard deviation.
 
     If test data is supplied it is standardized relative to the training
@@ -53,13 +51,10 @@ def standardize(train_matrix, test_matrix=None, writeout=False):
         test_matrix = (test_matrix - std['mean']) / std['std']
     std['test'] = test_matrix
 
-    if writeout:
-        write_fingerprint_setup(function='standardize', data=std)
-
     return std
 
 
-def normalize(train_matrix, test_matrix=None, writeout=False):
+def normalize(train_matrix, test_matrix=None):
     """Normalize each feature relative to mean and min/max variance.
 
     If test data is supplied it is standardized relative to the training
@@ -82,9 +77,6 @@ def normalize(train_matrix, test_matrix=None, writeout=False):
     if test_matrix is not None:
         test_matrix = (test_matrix - norm['mean']) / norm['dif']
     norm['test'] = test_matrix
-
-    if writeout:
-        write_fingerprint_setup(function='normalize', data=norm)
 
     return norm
 

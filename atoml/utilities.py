@@ -2,11 +2,8 @@
 import numpy as np
 from collections import defaultdict
 
-from .output import write_data_setup
 
-
-def remove_outliers(candidates, key, con=1.4826, dev=3., constraint=None,
-                    writeout=False):
+def remove_outliers(candidates, key, con=1.4826, dev=3., constraint=None):
     """Preprocessing routine to remove outliers by median absolute deviation.
 
     Parameters
@@ -54,9 +51,6 @@ def remove_outliers(candidates, key, con=1.4826, dev=3., constraint=None,
                 dataset['processed'].append(c)
             else:
                 dataset['removed'].append(o)
-
-    if writeout:
-        write_data_setup(function='remove_outliers', data=dataset)
 
     return dataset
 

@@ -7,7 +7,6 @@ from sklearn.decomposition import PCA, SparsePCA
 
 from .feature_preprocess import standardize
 from .utilities import clean_variance
-from .output import write_feature_select
 
 
 def pls(components, train_matrix, target, test_matrix):
@@ -40,8 +39,7 @@ def spca(components, train_matrix, test_matrix):
     return new_test, new_train
 
 
-def home_pca(components, train_fpv, test_fpv=None, cleanup=False, scale=False,
-             writeout=False):
+def home_pca(components, train_fpv, test_fpv=None, cleanup=False, scale=False):
     """Principal component analysis varient that doesn't require scikit-learn.
 
     Parameters
@@ -81,8 +79,5 @@ def home_pca(components, train_fpv, test_fpv=None, cleanup=False, scale=False,
     data['train_fpv'] = train_fpv.dot(pm)
     if train_fpv is not None:
         data['test_fpv'] = np.asarray(test_fpv).dot(pm)
-
-    if writeout:
-        write_feature_select(function='pca', data=data)
 
     return data
