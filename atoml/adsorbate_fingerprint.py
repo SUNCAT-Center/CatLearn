@@ -278,8 +278,12 @@ class AdsorbateFingerprintGenerator(object):
                                                          'block',
                                                          'econf',
                                                          'ionenergies'])
-            term = atoms.info['key_value_pairs']['term']
-            r0 = covalent_radii[atomic_numbers[term]]
+            bulk = atoms.info['key_value_pairs']['bulk']
+            bulkcomp = string2symbols(bulk)
+            r = []
+            for bulk in bulkcomp:
+                r.append(covalent_radii[atomic_numbers[bulk]])
+            r0 = np.average(r)
             strain = (covalent_radii[Z0] - r0) / r0
             result = dat[:-3] + [block2number[dat[-3]]] + \
                 list(n_outer(dat[-2])) + [dat[-1]['1']] + [strain] + \
@@ -416,7 +420,12 @@ class AdsorbateFingerprintGenerator(object):
                     d = atoms.get_distance(m, a, mic=True, vector=False)
                     liste.append([m, d])
             L = np.array(liste)
-            i = np.argmin(L[:, 1])
+            try:
+                i = np.argmin(L[:, 1])
+            except IndexError:
+                print(atoms.info)
+                print(top_atoms)
+                raise
             primary_surf = int(L[i, 0])
             symbols = atoms.get_chemical_symbols()
             numbers = atoms.numbers
@@ -450,7 +459,7 @@ class AdsorbateFingerprintGenerator(object):
                 r_bond_nn = covalent_radii[Znn]
                 if q != primary_surf and 1.15*(r_bond_nn+r_bond) > nn[1]:
                     sym = symbols[q]
-                    mnlv = get_mendeleev_params(q, extra_params=[
+                    mnlv = get_mendeleev_params(Znn, extra_params=[
                                                  'heat_of_formation',
                                                  'dft_bulk_modulus',
                                                  'dft_density',
