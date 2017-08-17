@@ -4,7 +4,7 @@ from collections import defaultdict
 
 from sklearn.linear_model import RidgeCV, Lasso, LassoCV, ElasticNetCV
 
-from .predict import get_error
+from .cost_function import get_error
 
 
 class RegressionFit(object):
