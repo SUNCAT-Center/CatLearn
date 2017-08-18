@@ -8,7 +8,6 @@ from collections import defaultdict
 import functools
 
 from .model_selection import log_marginal_likelihood
-from .output import write_predict
 from .covariance import get_covariance
 from .kernels import kdicts2list, list2kdict
 from .cost_function import get_error
@@ -145,8 +144,7 @@ class GaussianProcess(object):
     def get_predictions(self, test_fp, test_target=None, uncertainty=False,
                         basis=None, get_validation_error=False,
                         get_training_error=False,
-                        epsilon=None,
-                        writeout=False):
+                        epsilon=None):
         """Function to perform the prediction on some training and test data.
 
         Parameters
@@ -230,9 +228,6 @@ class GaussianProcess(object):
                                                       basis=basis,
                                                       epsilon=epsilon)
 
-        if writeout:
-            write_predict(function='get_predictions', data=data)
-
         return data
 
     def do_prediction(self, ktb, cinv, target):
@@ -309,7 +304,7 @@ class GaussianProcess(object):
         return data
 
 
-def target_standardize(target, writeout=False):
+def target_standardize(target):
     """Return a list of standardized target values.
 
     Parameters
@@ -323,8 +318,5 @@ def target_standardize(target, writeout=False):
     data['mean'] = np.mean(target)
     data['std'] = np.std(target)
     data['target'] = (target - data['mean']) / data['std']
-
-    if writeout:
-        write_predict(function='target_standardize', data=data)
 
     return data
