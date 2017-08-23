@@ -193,7 +193,7 @@ class FingerprintDB():
         """
 
         self.con.commit()
-	self.con.close()
+        self.con.close()
 
 
     def create_table(self):
