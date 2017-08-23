@@ -362,12 +362,12 @@ class FingerprintDB():
 
 
     def get_fingerprint(self, ase_id, psel=None):
-        """ Get the array of values 
+        """ Get the array of values associated with the provided parameters.
 
         Args:
             ase_id (int): The ase ID associated with an atoms object in
             the database.
-            psel (list): List of symbols in parameters table to be
+            psel (list): List of symbols or int in parameters table to be
             selected.
 
         Returns:
@@ -375,12 +375,15 @@ class FingerprintDB():
             parameters (a fingerprint).
         """
 
-        params = self.get_parameters(selection=psel)
-        psel = ','.join(params.astype(str))
+        if not list(psel) or isinstance(psel[0], str):
+            params = self.get_parameters(selection=psel)
+            psel = ','.join(params.astype(str))
+        elif isinstance(psel[0], int):
+            psel = ','.join(np.array(psel).astype(str))
 
         cmd = """SELECT value FROM fingerprints 
         JOIN images on fingerprints.image_id = images.iid
         WHERE param_id IN ({}) AND ase_id = {}""".format(psel, int(ase_id))
 
         self.c.execute(cmd)
-        return np.array(self.c.fetchall()).T
+        return np.array(self.c.fetchall()).T[0]
