@@ -2,6 +2,12 @@
 import sqlite3
 from sqlite3 import IntegrityError
 import numpy as np
+try:
+    # A geometry hashing function
+    from qeio import geometry_hash
+    jbhash = True
+except(ImportError):
+    jbhash = False
 
 
 class DescriptorDatabase(object):
