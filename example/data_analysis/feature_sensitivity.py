@@ -16,7 +16,7 @@ from atoml.cross_validation import HierarchyValidation
 from atoml.feature_engineering import single_transform
 from atoml.feature_preprocess import standardize
 
-new_data = False
+new_data = True
 expand = False
 plot = True
 pm = False
@@ -185,7 +185,7 @@ print('\nGP full model error:', a[0]['validation_error']['rmse_average'], '\n')
 
 err = []
 
-for i in range(100, 110):
+for i in range(2, 10):
     # if width is None:
     width = [w] * i
     reg = 1e-4
@@ -215,8 +215,8 @@ if plot:
     fig = plt.figure(figsize=(10, 10))
     ax = fig.add_subplot(121)
     ax.scatter(ind, err)
-    plt.xlabel('feature')
-    plt.ylabel('response')
+    plt.xlabel('No. Features')
+    plt.ylabel('Error')
 
     ax1 = fig.add_subplot(122)
     ax1.scatter(x=feat, y=pres1, label='+1.00', alpha=0.1)
@@ -226,7 +226,7 @@ if plot:
     ax1.scatter(x=feat, y=nres5, label='-0.50', alpha=0.1)
     ax1.scatter(x=feat, y=nres1, label='-1.00', alpha=0.1)
     ax1.scatter(x=feat, y=ave, label='average', alpha=0.8)
-    plt.xlabel('feature')
-    plt.ylabel('response')
+    plt.xlabel('Feature')
+    plt.ylabel('Response')
     plt.legend(loc='upper left')
     plt.show()
