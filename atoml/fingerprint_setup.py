@@ -9,7 +9,6 @@ from collections import defaultdict
 import ase.db
 from .particle_fingerprint import ParticleFingerprintGenerator
 from .adsorbate_fingerprint import AdsorbateFingerprintGenerator
-from .output import write_fingerprint_setup
 
 
 def db_sel2fp(calctype, fname, selection, moldb=None, bulkdb=None,
@@ -98,19 +97,11 @@ def get_keyvaluepair(c=[], fpv_name='None'):
         return out
 
 
-def return_fpv(candidates, fpv_name, use_prior=True, writeout=False):
+def return_fpv(candidates, fpv_name, use_prior=True):
     """Sequentially combine fingerprint vectors."""
     # Put fpv_name in a list, if it is not already.
     if not isinstance(fpv_name, list):
         fpv_name = [fpv_name]
-
-    # Write out variables.
-    if writeout:
-        var = defaultdict(list)
-        # TODO: Sort out the names.
-        var['name'].append(fpv_name)
-        var['prior'].append(use_prior)
-        write_fingerprint_setup(function='return_fpv', data=var)
 
     # Check to see if we are dealing with a list of candidates or a single
     # atoms object.

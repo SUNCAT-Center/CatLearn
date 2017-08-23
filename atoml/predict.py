@@ -8,9 +8,10 @@ from collections import defaultdict
 import functools
 
 from .model_selection import log_marginal_likelihood
-from .output import write_predict
 from .covariance import get_covariance
 from .kernels import kdicts2list, list2kdict
+from .uncertainty import get_uncertainty
+from .cost_function import get_error
 
 
 class GaussianProcess(object):
@@ -39,8 +40,7 @@ class GaussianProcess(object):
             self.optimize_hyperparameters()
 
     def update_data(self, train_fp, train_target, standardize_target=True):
-        """Updates the training fingerprint matrix, the training targets,
-           and the covariance matrix for the Gaussian Process.
+        """Update the training matrix, targets and covariance matrix.
 
         Parameters
         ----------
@@ -71,7 +71,13 @@ class GaussianProcess(object):
         self.cinv = np.linalg.inv(cvm)
 
     def prepare_kernels(self, kernel_dict):
-        """Formats the kernel_dictionary."""
+        """Format the kernel_dictionary.
+
+        Parameters
+        ----------
+        kernel_dict : dict
+            Dictionary containing all information for the kernels.
+        """
         kdict = kernel_dict
         for key in kdict:
             if 'features' in kdict[key]:
@@ -98,9 +104,11 @@ class GaussianProcess(object):
         self.kernel_dict = kernel_dict
 
     def optimize_hyperparameters(self):
-        """Optimizes the hyperparameters of the Gaussian Process with respect
-        tp the log marginal likelihood. Optimized hyperparameters are saved in
-        the kernel dictionary. Finally, the covariance matrix is updated.
+        """Optimize hyperparameters of the Gaussian Process.
+
+        Performed with respect to the log marginal likelihood. Optimized
+        hyperparameters are saved in the kernel dictionary. Finally, the
+        covariance matrix is updated.
         """
         # Create a list of all hyperparameters.
         theta = kdicts2list(self.kernel_dict, N_D=self.N_D)
@@ -137,8 +145,7 @@ class GaussianProcess(object):
     def get_predictions(self, test_fp, test_target=None, uncertainty=False,
                         basis=None, get_validation_error=False,
                         get_training_error=False,
-                        epsilon=None,
-                        writeout=False):
+                        epsilon=None):
         """Function to perform the prediction on some training and test data.
 
         Parameters
@@ -206,12 +213,10 @@ class GaussianProcess(object):
 
         # Calculate uncertainty associated with prediction on test data.
         if uncertainty:
-            kxx = get_covariance(kernel_dict=self.kernel_dict,
-                                 matrix1=test_fp)
-            data['uncertainty'] = [(self.regularization + kxx[kt][kt] -
-                                    np.dot(np.dot(ktb[kt], self.cinv),
-                                           np.transpose(ktb[kt]))) **
-                                   0.5 for kt in range(len(ktb))]
+            data['uncertainty'] = get_uncertainty(kernel_dict=self.kernel_dict,
+                                                  test_fp=test_fp,
+                                                  reg=self.regularization,
+                                                  ktb=ktb, cinv=self.cinv)
 
         if basis is not None:
             data['basis_analysis'] = self.fixed_basis(train_fp=self.train_fp,
@@ -221,9 +226,6 @@ class GaussianProcess(object):
                                                       test_target=test_target,
                                                       basis=basis,
                                                       epsilon=epsilon)
-
-        if writeout:
-            write_predict(function='get_predictions', data=data)
 
         return data
 
@@ -301,7 +303,7 @@ class GaussianProcess(object):
         return data
 
 
-def target_standardize(target, writeout=False):
+def target_standardize(target):
     """Return a list of standardized target values.
 
     Parameters
@@ -316,55 +318,4 @@ def target_standardize(target, writeout=False):
     data['std'] = np.std(target)
     data['target'] = (target - data['mean']) / data['std']
 
-    if writeout:
-        write_predict(function='target_standardize', data=data)
-
     return data
-
-
-def get_error(prediction, target, epsilon=None):
-    """Return error for predicted data.
-
-    Discussed in: Rosasco et al, Neural Computation, (2004), 16, 1063-1076.
-
-    Parameters
-    ----------
-    prediction : list
-        A list of predicted values.
-    target : list
-        A list of target values.
-    """
-    msg = 'Something has gone wrong and there are '
-    if len(prediction) < len(target):
-        msg += 'more targets than predictions.'
-    elif len(prediction) > len(target):
-        msg += 'fewer targets than predictions.'
-    assert len(prediction) == len(target), msg
-
-    error = defaultdict(list)
-    prediction = np.asarray(prediction)
-    target = np.asarray(target)
-
-    # Residuals
-    res = prediction - target
-    error['residuals'] = res
-    error['signed_average'] = np.average(res)
-
-    # Root mean squared error function.
-    e_sq = np.square(res)
-    error['rmse_all'] = np.sqrt(e_sq)
-    error['rmse_average'] = np.sqrt(np.sum(e_sq)/len(e_sq))
-
-    # Absolute error function.
-    e_abs = np.abs(res)
-    error['absolute_all'] = e_abs
-    error['absolute_average'] = np.sum(e_abs)/len(e_abs)
-
-    # Epsilon-insensitive error function.
-    if epsilon is not None:
-        e_epsilon = np.abs(res) - epsilon
-        np.place(e_epsilon, e_epsilon < 0, 0)
-        error['insensitive_all'] = e_epsilon
-        error['insensitive_average'] = np.sum(e_epsilon)/len(e_epsilon)
-
-    return error
