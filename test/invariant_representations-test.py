@@ -34,8 +34,10 @@ for i in range(5):
         same = np.allclose(res_store[1], c1)
         if not same:
             same_base = same
-        assert np.allclose(res_store[0], r1)
+        msg = "Results should be the same but aren't."
+        assert np.allclose(res_store[0], r1), msg
     res_store = [r1, c1]
+msg = "Something went wrong and all atoms objects were identical."
 assert not same_base
 
 os.remove('test_shuffle.xyz')
