@@ -78,9 +78,10 @@ def connection_matrix(atoms, periodic=False, dx=0.2, neighbor_number=1,
     if reuse_nl and 'neighborlist' in atoms.info['key_value_pairs']:
         nl = atoms.info['key_value_pairs']['neighborlist']
     elif periodic:
-        nl = _get_periodic_neighborlist(atoms, dx=dx)
+        nl = _get_periodic_neighborlist(atoms, dx=dx,
+                                        neighbor_number=neighbor_number)
     else:
-        nl = _get_neighborlist(atoms, dx=dx)
+        nl = _get_neighborlist(atoms, dx=dx, neighbor_number=neighbor_number)
 
     conn_mat = []
     index = range(len(atoms))
