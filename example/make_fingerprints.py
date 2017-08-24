@@ -38,6 +38,8 @@ train_gen = AdsorbateFingerprintGenerator()
 train_fpv = [
     train_gen.get_dbid,
     # train_gen.randomfpv,
+    train_gen.bulk,
+    train_gen.term,
     train_gen.ads_nbonds,
     train_gen.primary_addatom,
     train_gen.primary_adds_nn,

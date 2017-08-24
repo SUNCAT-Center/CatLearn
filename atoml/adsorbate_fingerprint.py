@@ -99,7 +99,7 @@ class AdsorbateFingerprintGenerator(object):
                     'dbfilling_term',
                     'dbwidth_term',
                     'dbskew_term',
-                    'dbkurtosis_term'
+                    'dbkurtosis_term',
                     'ne_outer_term',
                     'ne_s_term',
                     'ne_p_term',
@@ -146,6 +146,7 @@ class AdsorbateFingerprintGenerator(object):
                     'en_allen_bulk',
                     'atomic_weight_bulk',
                     'heat_of_formation_bulk',
+                    'block_bulk',
                     'dft_bulk_modulus_bulk',
                     'dft_rhodensity_bulk',
                     'dbcenter_bulk',
@@ -153,7 +154,6 @@ class AdsorbateFingerprintGenerator(object):
                     'dbwidth_bulk',
                     'dbskew_bulk',
                     'dbkurtosis_bulk',
-                    'block_bulk',
                     'ne_outer_bulk',
                     'ne_s_bulk',
                     'ne_p_bulk',
@@ -166,7 +166,8 @@ class AdsorbateFingerprintGenerator(object):
             bulkcomp = string2symbols(name)
             dat = []
             # np.unique could be used.
-            for Z in bulkcomp:
+            for symb in bulkcomp:
+                Z = atomic_numbers[symb]
                 mnlv = get_mendeleev_params(Z,
                                             extra_params=['heat_of_formation',
                                                           'dft_bulk_modulus',
@@ -181,7 +182,7 @@ class AdsorbateFingerprintGenerator(object):
                                                           'ionenergies'])
                 dat.append(mnlv[:-3] + [float(block2number[mnlv[-3]])] +
                            list(n_outer(mnlv[-2])) +
-                           [dat[-1]['1']] +
+                           [mnlv[-1]['1']] +
                            [float(ground_state_magnetic_moments[Z])])
             return list(np.nanmean(dat, axis=0, dtype=float))
 
