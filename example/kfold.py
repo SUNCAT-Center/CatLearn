@@ -13,19 +13,19 @@ import numpy as np
 
 from atoml.predict import GaussianProcess
 from atoml.feature_preprocess import matrix_split, standardize, normalize
+import time
 
 nsplit = 3
 
 fpm_y = np.genfromtxt('fpm.txt')
-split = matrix_split(fpm_y, nsplit)
-
 
 split_energy = []
 split_fpv = []
 # Subset of the fingerprint vector.
 for i in range(nsplit):
-    split_energy.append(split[i][:, -1])
-    fpm = split[i][:, :-2]
+    fpm_y = np.genfromtxt('fpm_' + str(i) + '.txt')
+    split_energy.append(fpm_y[:, -1])
+    fpm = fpm_y[:, :-2]
     reduced_fpv = fpm
     split_fpv.append(reduced_fpv)
     print(np.shape(reduced_fpv))
@@ -33,6 +33,7 @@ for i in range(nsplit):
 print('Make predictions based in k-fold samples')
 train_rmse = []
 val_rmse = []
+start = time.time()
 for i in range(nsplit):
     # Setup the test, training and fingerprint datasets.
     traine = []
@@ -57,21 +58,20 @@ for i in range(nsplit):
         # Get the list of fingerprint vectors and normalize them.
         nfp = normalize(train_matrix=train_fp, test_matrix=test_fp)
     m = np.shape(reduced_fpv)[1]
-    sigma = 0.1
+    sigma = 0.3
     kdict = {
              # 'lk': {'type': 'linear',
              #       'const': 1.,
              #       'features': [0]},
-             'gk': {'type': 'gaussian',
-                    'width': sigma}}  # 'operation': 'multiplication'}
-    regularization = .01
+             'gk': {'type': 'sqe',
+                    'width': sigma}}  # , 'scaling': 1.}}
+    regularization = .003
     # Set up a fresh GP.
     gp = GaussianProcess(train_fp=nfp['train'],
                          train_target=traine,
                          kernel_dict=kdict,
                          regularization=regularization,
-                         optimize_hyperparameters=False)
-    gp.optimize_hyperparameters()
+                         optimize_hyperparameters=True)
     # Do the training.
     pred = gp.get_predictions(test_fp=nfp['test'],
                               get_validation_error=True,
@@ -83,3 +83,5 @@ for i in range(nsplit):
     print('Training MAE:', train_rmse)
     print('Validation MAE:', val_rmse)
     print(gp.kernel_dict, gp.regularization)
+end = time.time()
+print(end - start, 'seconds.')

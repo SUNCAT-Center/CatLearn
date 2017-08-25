@@ -70,7 +70,7 @@ class GaussianProcess(object):
         # Invert the covariance matrix.
         self.cinv = np.linalg.inv(cvm)
 
-    def prepare_kernels(self, kernel_dict):
+    def prepare_kernels(self, kernel_dict, bounds=None):
         """Format the kernel_dictionary.
 
         Parameters
@@ -84,24 +84,25 @@ class GaussianProcess(object):
                 N_D = len(kdict[key]['features'])
             else:
                 N_D = self.N_D
+            # if 'scaling' not in kdict[key]:
+            #     kernel_dict[key]['scaling'] = 1
             if 'width' in kdict[key]:
                 theta = kdict[key]['width']
-                if type(theta) is float:
-                    kernel_dict[key]['width'] = np.zeros(N_D,) + \
-                                                     theta
-
+                if type(theta) is float or type(theta) is int:
+                    kernel_dict[key]['width'] = np.zeros(N_D,) + theta
             elif 'hyperparameters' in kdict[key]:
                 theta = kdict[key]['hyperparameters']
-                if type(theta) is float:
-                    kernel_dict[key]['hyperparameters'] = (
-                        np.zeros(N_D,) + theta)
-
+                if type(theta) is float or type(theta) is int:
+                    kernel_dict[key]['hyperparameters'] = (np.zeros(N_D,) +
+                                                           theta)
             elif 'theta' in kdict[key]:
                 theta = kdict[key]['theta']
-                if type(theta) is float:
-                    kernel_dict[key]['hyperparameters'] = (
-                        np.zeros(N_D,) + theta)
+                if type(theta) is float or type(theta) is int:
+                    kernel_dict[key]['hyperparameters'] = (np.zeros(N_D,) +
+                                                           theta)
         self.kernel_dict = kernel_dict
+        self.bounds = bounds
+        self.hyperparameters = kdicts2list(self.kernel_dict, N_D=N_D)
 
     def optimize_hyperparameters(self):
         """Optimize hyperparameters of the Gaussian Process.
@@ -120,7 +121,10 @@ class GaussianProcess(object):
                 self.kernel_dict)
 
         # Set bounds for hyperparameters
-        bounds = ((1E-6, 1e3),) * (len(theta))
+        # if self.bounds is not None:
+        #     bounds = self.bounds
+        # else:
+        bounds = ((1E-6, 1e6),) * (len(theta))
 
         # Optimize
         self.theta_opt = minimize(log_marginal_likelihood, theta,

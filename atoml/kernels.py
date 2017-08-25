@@ -24,8 +24,10 @@ def kdict2list(kdict, N_D=None):
     ktype = str(kdict['type'])
 
     # Store hyperparameters in single list theta
-    if (ktype == 'gaussian' or ktype == 'laplacian') and 'width' in kdict:
-        theta = kdict['width']
+    if (ktype == 'gaussian' or ktype == 'sqe' or ktype == 'laplacian') and \
+            'width' in kdict:
+        # theta = [kdict['scaling']] + list(kdict['width'])
+        theta = list(kdict['width'])
         if 'features' in kdict:
             N_D = len(kdict['features'])
         elif N_D is None:
@@ -67,7 +69,19 @@ def kdict2list(kdict, N_D=None):
             N_D = len(theta)
         if type(theta) is float:
             theta = [theta]*N_D
-    return theta
+
+    if 'constrained' in kdict:
+        constrained = kdict['constrained']
+        if 'features' in kdict:
+            N_D = len(kdict['constrained'])
+        elif N_D is None:
+            N_D = len(constrained)
+        if type(theta) is float:
+            constrained = [constrained]*N_D
+    else:
+        constrained = []
+
+    return theta  # , constrained
 
 
 def kdicts2list(kernel_dict, N_D=None):
@@ -109,8 +123,11 @@ def list2kdict(hyperparameters, kernel_dict):
     for key in kernel_dict:
         ktype = kernel_dict[key]['type']
         # Retreive hyperparameters from a single list theta
-        if (ktype == 'gaussian' or ktype == 'laplacian'):
+        if (ktype == 'gaussian' or ktype == 'sqe' or ktype == 'laplacian'):
             N_D = len(kernel_dict[key]['width'])
+            # scaling = hyperparameters[ki]
+            # kernel_dict[key]['scaling'] = scaling
+            # theta = hyperparameters[ki+1:ki+1+N_D]
             theta = hyperparameters[ki:ki+N_D]
             kernel_dict[key]['width'] = theta
             ki += N_D
@@ -150,16 +167,47 @@ def gaussian_kernel(theta, m1, m2=None):
         m2 : list
             A list of the training fingerprint vectors.
     """
-    kwidth = theta
+    # scaling = theta[0]
+    kwidth = theta  # [1:]
     if m2 is None:
         k = distance.pdist(m1 / kwidth, metric='sqeuclidean')
         k = distance.squareform(np.exp(-.5 * k))
         np.fill_diagonal(k, 1)
         return k
+        # return scaling * k
     else:
         k = distance.cdist(m1 / kwidth, m2 / kwidth,
                            metric='sqeuclidean')
         return np.exp(-.5 * k)
+        # return scaling * np.exp(-.5 * k)
+
+
+def sqe_kernel(theta, m1, m2=None):
+    """ Returns the covariance matrix between datasets m1 and m2
+        with a gaussian kernel.
+
+        Parameters
+        ----------
+        theta : list
+            A list of widths for each feature.
+        m1 : list
+            A list of the training fingerprint vectors.
+        m2 : list
+            A list of the training fingerprint vectors.
+    """
+    # scaling = theta[0]
+    kwidth = theta  # [1:]
+    if m2 is None:
+        k = distance.pdist(m1, metric='seuclidean', V=kwidth)
+        k = distance.squareform(np.exp(-.5 * k))
+        np.fill_diagonal(k, 1)
+        # return scaling * k
+        return k
+    else:
+        k = distance.cdist(m1, m2,
+                           metric='seuclidean', V=kwidth)
+        return np.exp(-.5 * k)
+        # return scaling * np.exp(-.5 * k)
 
 
 def AA_kernel(theta, m1, m2=None):
@@ -183,8 +231,7 @@ def AA_kernel(theta, m1, m2=None):
     q = (1 - l)/(c - l)
     return distance.cdist(m1, m2, lambda u, v:
                           (l ** (n - np.sqrt(((u - v) ** 2))) *
-                           (q ** np.sqrt((u - v) ** 2))).sum()
-                          )
+                           (q ** np.sqrt((u - v) ** 2))).sum())
 
 
 def linear_kernel(theta, m1, m2=None):
