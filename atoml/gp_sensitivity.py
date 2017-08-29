@@ -62,6 +62,7 @@ class SensitivityAnalysis(object):
         data['original'], dlist = r, r['sorted_index']
         data['original']['abs_index'] = original_index
 
+        # Set up the selection range.
         select1 = 1
         if selection is None:
             select2 = np.shape(self.train_matrix)[1]
@@ -72,6 +73,8 @@ class SensitivityAnalysis(object):
 
         pi = list(reversed(range(select1, select2)))
         dlist = data['original']['sorted_index']
+
+        # Loop through features in reverse, eliminating one at a time.
         for i in pi:
             self.train_matrix = np.delete(self.train_matrix, dlist[i:], 1)
             self.test_matrix = np.delete(self.test_matrix, dlist[i:], 1)
@@ -161,12 +164,11 @@ class SensitivityAnalysis(object):
         ----------
         gp : object
             The optimized GP model.
-        test_targets : list
-            A list of target values for the test data if avaliable.
         """
         ve = False
         if self.test_targets is not None:
             ve = True
+        # Test data.
         pred = gp.get_predictions(test_fp=self.test_matrix,
                                   test_target=self.test_targets,
                                   get_validation_error=ve,
