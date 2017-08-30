@@ -5,7 +5,7 @@ from __future__ import absolute_import
 import numpy as np
 
 from atoml.database_functions import DescriptorDatabase
-from atoml.feature_preprocess import standardize, normalize
+from atoml.feature_preprocess import standardize, normalize, min_max
 from atoml.ridge_regression import RidgeRegression
 from atoml.predict import GaussianProcess
 
@@ -37,7 +37,19 @@ for tf, tt in zip(test_features, test_targets):
 print('Ridge regression prediction:', (sumd / len(test_features)) ** 0.5)
 
 sfp = standardize(train_matrix=train_features, test_matrix=test_features)
+sfpg = standardize(train_matrix=train_features, test_matrix=test_features,
+                   local=False)
+assert not np.allclose(sfp['train'], sfpg['train'])
+
 nfp = normalize(train_matrix=train_features, test_matrix=test_features)
+nfpg = normalize(train_matrix=train_features, test_matrix=test_features,
+                 local=False)
+assert not np.allclose(nfp['train'], nfpg['train'])
+
+mmfp = min_max(train_matrix=train_features, test_matrix=test_features)
+mmfpg = min_max(train_matrix=train_features, test_matrix=test_features,
+                local=False)
+assert not np.allclose(mmfp['train'], mmfpg['train'])
 
 # Test prediction routine with linear kernel.
 kdict = {'k1': {'type': 'linear', 'const': 0.}}
