@@ -129,7 +129,7 @@ def list2kdict(hyperparameters, kernel_dict):
             # kernel_dict[key]['scaling'] = scaling
             # theta = hyperparameters[ki+1:ki+1+N_D]
             theta = hyperparameters[ki:ki+N_D]
-            kernel_dict[key]['width'] = theta
+            kernel_dict[key]['width'] = list(theta)
             ki += N_D
 
         # Polynomials have pairs of hyperparamters kfree, kdegree
@@ -150,7 +150,7 @@ def list2kdict(hyperparameters, kernel_dict):
         else:
             N_D = len(kernel_dict[key]['hyperparameters'])
             theta = hyperparameters[ki:ki+N_D]
-            kernel_dict[key]['hyperparameters'] = theta
+            kernel_dict[key]['hyperparameters'] = list(theta)
     return kernel_dict
 
 
