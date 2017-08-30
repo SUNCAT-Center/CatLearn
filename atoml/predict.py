@@ -10,6 +10,7 @@ import functools
 from .model_selection import log_marginal_likelihood
 from .covariance import get_covariance
 from .kernels import kdicts2list, list2kdict
+from .uncertainty import get_uncertainty
 from .cost_function import get_error
 
 
@@ -212,12 +213,10 @@ class GaussianProcess(object):
 
         # Calculate uncertainty associated with prediction on test data.
         if uncertainty:
-            kxx = get_covariance(kernel_dict=self.kernel_dict,
-                                 matrix1=test_fp)
-            data['uncertainty'] = [(self.regularization + kxx[kt][kt] -
-                                    np.dot(np.dot(ktb[kt], self.cinv),
-                                           np.transpose(ktb[kt]))) **
-                                   0.5 for kt in range(len(ktb))]
+            data['uncertainty'] = get_uncertainty(kernel_dict=self.kernel_dict,
+                                                  test_fp=test_fp,
+                                                  reg=self.regularization,
+                                                  ktb=ktb, cinv=self.cinv)
 
         if basis is not None:
             data['basis_analysis'] = self.fixed_basis(train_fp=self.train_fp,
