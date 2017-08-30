@@ -35,6 +35,10 @@ def get_covariance(kernel_dict, matrix1, matrix2=None, regularization=None):
     for key in kernel_dict:
         matrix1, matrix2 = store1, store2
         ktype = kernel_dict[key]['type']
+        if 'scaling' in kernel_dict[key]:
+            scaling = kernel_dict[key]['scaling']
+        else:
+            scaling = 1
 
         # Select a subset of features for the kernel
         if 'features' in kernel_dict[key]:
@@ -46,10 +50,10 @@ def get_covariance(kernel_dict, matrix1, matrix2=None, regularization=None):
         # Get the covariance matrix
         if 'operation' in kernel_dict[key] and \
            kernel_dict[key]['operation'] == 'multiplication':
-            cov *= eval('ak.'+str(ktype) +
+            cov *= scaling * eval('ak.'+str(ktype) +
                         '_kernel(m1=matrix1, m2=matrix2, theta=theta)')
         else:
-            cov += eval('ak.' + str(ktype) +
+            cov += scaling * eval('ak.' + str(ktype) +
                         '_kernel(m1=matrix1, m2=matrix2, theta=theta)')
     if regularization is not None:
         cov += regularization * np.identity(len(cov))

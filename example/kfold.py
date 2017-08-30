@@ -60,9 +60,10 @@ for i in range(nsplit):
     m = np.shape(reduced_fpv)[1]
     sigma = 0.3
     kdict = {
-             # 'lk': {'type': 'linear',
-             #       'const': 1.,
-             #       'features': [0]},
+             'lk': {'type': 'linear',
+                    'scaling': 0.1,
+                    'const': 1.,
+                    'features': [0]},
              'gk': {'type': 'sqe',
                     'width': sigma}}  # , 'scaling': 1.}}
     regularization = .003
