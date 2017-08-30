@@ -57,17 +57,29 @@ sel = sen.backward_selection(predict=True, test_targets=test_targets,
 # Plot the figures.
 fig = plt.figure(figsize=(10, 10))
 ax = fig.add_subplot(121)
-norms = (100. / np.sum(sel['original']['sensitivity'])) \
-    * sel['original']['sensitivity']
-x, y = sel['original']['abs_index'], sel['original']['sensitivity']
-ax.plot(x, norms, 'o', color='black')
+x = range(np.shape(train_features)[1])
+
+# Plot for all calculated feature sizes.
 for i in sel:
     if i is not 'original':
-        norms = (100. / np.sum(sel[i]['sensitivity'])) * sel[i]['sensitivity']
-        x, y = sel[i]['abs_index'], sel[i]['sensitivity']
-        ax.plot(x, norms, 'o', alpha=0.5)
+        y = []
+        for j in x:
+            if j in sel[i]['abs_index']:
+                k = np.argwhere(np.asarray(sel[i]['abs_index']) == j)[0][0]
+                norms = (100. / np.sum(sel[i]['sensitivity'])) \
+                    * sel[i]['sensitivity'][k]
+                y.append(norms)
+            else:
+                y.append(0.)
+        ax.plot(x, y, '.-', alpha=0.5)
+    # Plot original feature space.
+    if i is 'original':
+        norms = (100. / np.sum(sel['original']['sensitivity'])) \
+            * sel['original']['sensitivity']
+        ax.plot(x, norms, '.-', color='black')
+
 plt.xlabel('Feature No.')
-plt.ylabel('Sensitivity')
+plt.ylabel('Sensitivity (%)')
 
 ax = fig.add_subplot(122)
 pi, p = [], []
@@ -77,6 +89,6 @@ for i in sel:
         p.append(sel[i]['prediction']['validation_error']['rmse_average'])
 ax.plot(pi, p, 'o', color='black')
 plt.xlabel('Feature Size')
-plt.ylabel('Error')
+plt.ylabel('Error (eV)')
 
 plt.show()
