@@ -117,6 +117,35 @@ def min_max(train_matrix, test_matrix=None, local=True):
     return norm
 
 
+def unit_length(train_matrix, test_matrix=None, local=True):
+    """Normalize each feature relative to the Euclidean length.
+
+    Parameters
+    ----------
+    train_matrix : list
+        Feature matrix for the training dataset.
+    test_matrix : list
+        Feature matrix for the test dataset.
+    local : boolean
+        Define whether to scale locally or globally.
+    """
+    norm = defaultdict(list)
+    if test_matrix is not None and not local:
+        data = np.concatenate((train_matrix, test_matrix), axis=0)
+    else:
+        data = train_matrix
+    norm['length'] = np.linalg.norm(data, axis=0)
+    np.place(norm['length'], norm['length'] == 0., [1.])  # Replace 0 with 1.
+
+    norm['train'] = train_matrix / norm['length']
+
+    if test_matrix is not None:
+        test_matrix = test_matrix / norm['length']
+    norm['test'] = test_matrix
+
+    return norm
+
+
 def cluster_features(train_matrix, train_target, k=2, test_matrix=None,
                      test_target=None):
     """Function to perform k-means clustering in the feature space.

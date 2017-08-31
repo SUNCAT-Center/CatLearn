@@ -5,7 +5,8 @@ from __future__ import absolute_import
 import numpy as np
 
 from atoml.database_functions import DescriptorDatabase
-from atoml.feature_preprocess import standardize, normalize, min_max
+from atoml.feature_preprocess import (standardize, normalize, min_max,
+                                      unit_length)
 from atoml.ridge_regression import RidgeRegression
 from atoml.predict import GaussianProcess
 
@@ -51,6 +52,11 @@ mmfpg = min_max(train_matrix=train_features, test_matrix=test_features,
                 local=False)
 assert not np.allclose(mmfp['train'], mmfpg['train'])
 
+ulfp = unit_length(train_matrix=train_features, test_matrix=test_features)
+ulfpg = unit_length(train_matrix=train_features, test_matrix=test_features,
+                    local=False)
+assert not np.allclose(ulfp['train'], ulfpg['train'])
+
 # Test prediction routine with linear kernel.
 kdict = {'k1': {'type': 'linear', 'const': 0.}}
 gp = GaussianProcess(train_fp=sfp['train'], train_target=train_targets,
@@ -88,15 +94,28 @@ pred = gp.get_predictions(test_fp=sfp['test'],
                           epsilon=0.1)
 assert len(pred['prediction']) == len(sfp['test'])
 print('gaussian prediction (rmse):', pred['validation_error']['rmse_average'])
-for i, j, k, in zip(pred['prediction'],
-                    pred['uncertainty'],
-                    pred['validation_error']['rmse_all']):
-    print(i, j, k)
-
 print('gaussian prediction (ins):',
       pred['validation_error']['insensitive_average'])
 print('gaussian prediction (abs):',
       pred['validation_error']['absolute_average'])
+
+# Test prediction routine with different scaling.
+scale = [sfp, sfpg, nfp, nfpg, mmfp, mmfpg, ulfp, ulfpg]
+name = ['standardize local', 'standardize global', 'normalize local',
+        'normalize global', 'min max local', 'min max global',
+        'unit length local', 'unit length global']
+for s, n in zip(scale, name):
+    kdict = {'k1': {'type': 'gaussian', 'width': 10.}}
+    gp = GaussianProcess(train_fp=s['train'], train_target=train_targets,
+                         kernel_dict=kdict, regularization=0.001,
+                         optimize_hyperparameters=True)
+    pred = gp.get_predictions(test_fp=s['test'],
+                              test_target=test_targets,
+                              get_validation_error=True,
+                              get_training_error=True)
+    assert len(pred['prediction']) == len(sfp['test'])
+    print('gaussian prediction ({0}):'.format(n),
+          pred['validation_error']['rmse_average'])
 
 # Test prediction routine with laplacian kernel.
 kdict = {'k1': {'type': 'laplacian', 'width': 0.5}}
