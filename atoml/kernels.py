@@ -22,6 +22,10 @@ def kdict2list(kdict, N_D=None):
     """
     # Get the kernel type.
     ktype = str(kdict['type'])
+    if 'scaling' in kdict:
+        scaling = [kdict['scaling']]
+    else:
+        scaling = []
 
     # Store hyperparameters in single list theta
     if (ktype == 'gaussian' or ktype == 'sqe' or ktype == 'laplacian') and \
@@ -81,7 +85,7 @@ def kdict2list(kdict, N_D=None):
     else:
         constrained = []
 
-    return theta  # , constrained
+    return scaling, theta  # , constrained
 
 
 def kdicts2list(kernel_dict, N_D=None):
@@ -97,10 +101,11 @@ def kdicts2list(kernel_dict, N_D=None):
             The number of descriptors if not specified in the kernel dict,
             by the length of the lists of hyperparameters.
     """
-    theta = []
+    hyperparameters = []
     for kernel_key in kernel_dict:
-        theta.append(kdict2list(kernel_dict[kernel_key], N_D=N_D))
-    hyperparameters = np.concatenate(theta)
+        theta = kdict2list(kernel_dict[kernel_key], N_D=N_D)
+        hyperparameters.append(theta[0] + theta[1])
+    hyperparameters = np.concatenate(hyperparameters)
     return hyperparameters
 
 
@@ -122,6 +127,10 @@ def list2kdict(hyperparameters, kernel_dict):
     ki = 0
     for key in kernel_dict:
         ktype = kernel_dict[key]['type']
+        if 'scaling' in kernel_dict[key]:
+            kernel_dict[key]['scaling'] = hyperparameters[ki]
+            ki += 1
+
         # Retreive hyperparameters from a single list theta
         if (ktype == 'gaussian' or ktype == 'sqe' or ktype == 'laplacian'):
             N_D = len(kernel_dict[key]['width'])

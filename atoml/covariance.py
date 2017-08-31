@@ -35,10 +35,6 @@ def get_covariance(kernel_dict, matrix1, matrix2=None, regularization=None):
     for key in kernel_dict:
         matrix1, matrix2 = store1, store2
         ktype = kernel_dict[key]['type']
-        if 'scaling' in kernel_dict[key]:
-            scaling = kernel_dict[key]['scaling']
-        else:
-            scaling = 1
 
         # Select a subset of features for the kernel
         if 'features' in kernel_dict[key]:
@@ -46,15 +42,22 @@ def get_covariance(kernel_dict, matrix1, matrix2=None, regularization=None):
             if matrix2 is not None:
                 matrix2 = matrix2[:, kernel_dict[key]['features']]
         theta = ak.kdict2list(kernel_dict[key], n1_D)
+        hyperparameters = theta[1]
+        if len(theta[0]) == 0:
+            scaling = 1
+        else:
+            scaling = theta[0]
 
         # Get the covariance matrix
         if 'operation' in kernel_dict[key] and \
            kernel_dict[key]['operation'] == 'multiplication':
-            cov *= scaling * eval('ak.'+str(ktype) +
-                        '_kernel(m1=matrix1, m2=matrix2, theta=theta)')
+            cov *= scaling * eval('ak.' + str(ktype) +
+                                  '_kernel(m1=matrix1, m2=matrix2,' +
+                                  ' theta=hyperparameters)')
         else:
             cov += scaling * eval('ak.' + str(ktype) +
-                        '_kernel(m1=matrix1, m2=matrix2, theta=theta)')
+                                  '_kernel(m1=matrix1, m2=matrix2,' +
+                                  ' theta=hyperparameters)')
     if regularization is not None:
         cov += regularization * np.identity(len(cov))
     return cov
