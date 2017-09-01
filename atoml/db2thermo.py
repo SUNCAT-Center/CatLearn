@@ -17,18 +17,21 @@ from ase.geometry import get_layers
 # from ase.data import chemical_symbols
 
 
+addsyms = ['H', 'C', 'O', 'N']
+
+
 def metal_index(atoms):
     metal_atoms = [a.index for a in atoms if a.symbol not in
-                   ['H', 'C', 'O', 'N']]
+                   addsyms]
     return metal_atoms
 
 
 def adds_index(atoms):
-    add_atoms = [a.index for a in atoms if a.symbol in ['H', 'C', 'O', 'N']]
+    add_atoms = [a.index for a in atoms if a.symbol in addsyms]
     return add_atoms
 
 
-def info2primary_index(atoms):
+def info2primary_index(atoms, rtol=1.2):
     liste = []
     surf_atoms = atoms.info['surf_atoms']
     add_atoms = atoms.info['add_atoms']
@@ -41,11 +44,19 @@ def info2primary_index(atoms):
             liste.append([a, m, d])
     L = np.array(liste)
     i = np.argmin(L[:, 2])
+    # dmin = L[i, 2]
     i_add1 = L[i, 0]
     i_surf1 = L[i, 1]
     Z_add1 = atoms.numbers[int(i_add1)]
     Z_surf1 = atoms.numbers[int(i_surf1)]
-    return i_add1, i_surf1, Z_add1, Z_surf1
+    dadd = covalent_radii[Z_add1]
+    # i_surfnn = [a.index for a in atoms if a.symbol not in addsyms and
+    #            atoms.get_distance(int(i_add1),
+    #                               int(a.index), mic=True) < dmin * rtol]
+    i_surfnn = [a.index for a in atoms if a.symbol not in addsyms and
+                atoms.get_distance(int(i_add1), int(a.index), mic=True) <
+                (covalent_radii[a.number]+dadd) * rtol]
+    return i_add1, i_surf1, Z_add1, Z_surf1, i_surfnn
 
 
 def layers_info(atoms):
@@ -214,11 +225,12 @@ def db2surf_info(fname, id_dict, formation_energies=None):
         atoms.info['dbid'] = dbid
         atoms.info['add_atoms'] = adds_index(atoms)
         atoms.info['surf_atoms'] = metal_index(atoms)  # Modify if O/C/Nitrides
-        i_add1, i_surf1, Z_add1, Z_surf1 = info2primary_index(atoms)
+        i_add1, i_surf1, Z_add1, Z_surf1, i_surfnn = info2primary_index(atoms)
         atoms.info['i_add1'] = i_add1
         atoms.info['i_surf1'] = i_surf1
         atoms.info['Z_add1'] = Z_add1
         atoms.info['Z_surf1'] = Z_surf1
+        atoms.info['i_surfnn'] = i_surfnn
         if formation_energies is not None:
             try:
                 atoms.info['Ef'] = formation_energies[key]
@@ -230,7 +242,8 @@ def db2surf_info(fname, id_dict, formation_energies=None):
 
 
 def db2atoms_info(fname, selection=[]):
-    """ Returns a list of atoms objects. Attaches
+    """ Returns a list of atoms objects.
+        Attaches the required atoms.info to adsorbate states.
     """
     c = ase.db.connect(fname)
     s = c.select(selection)
@@ -242,10 +255,11 @@ def db2atoms_info(fname, selection=[]):
         atoms.info['dbid'] = int(d.id)
         atoms.info['add_atoms'] = adds_index(atoms)
         atoms.info['surf_atoms'] = metal_index(atoms)  # Modify if O/C/Nitrides
-        i_add1, i_surf1, Z_add1, Z_surf1 = info2primary_index(atoms)
+        i_add1, i_surf1, Z_add1, Z_surf1, i_surfnn = info2primary_index(atoms)
         atoms.info['i_add1'] = i_add1
         atoms.info['i_surf1'] = i_surf1
         atoms.info['Z_add1'] = Z_add1
         atoms.info['Z_surf1'] = Z_surf1
+        atoms.info['i_surfnn'] = i_surfnn
         traj.append(atoms)
     return traj

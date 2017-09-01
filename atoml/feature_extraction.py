@@ -77,7 +77,7 @@ def home_pca(components, train_fpv, test_fpv=None, cleanup=False, scale=False):
 
     # Form feature matrix based on principal components.
     data['train_fpv'] = train_fpv.dot(pm)
-    if train_fpv is not None:
+    if test_fpv is not None:
         data['test_fpv'] = np.asarray(test_fpv).dot(pm)
 
     return data

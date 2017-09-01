@@ -11,7 +11,8 @@
 import numpy as np
 from scipy.optimize import minimize
 from matplotlib import pyplot as plt
-from atoml.feature_preprocess import normalize
+from atoml.feature_preprocess import standardize
+from atoml.feature_extraction import home_pca
 from atoml.model_selection import log_marginal_likelihood
 import time
 
@@ -29,25 +30,32 @@ n, m = np.shape(fpm_train)
 print(n, 'training examples', m, 'features')
 
 # Standardize data
-nfp = np.array(normalize(train_matrix=fpm_train)['train'])
+sfp = np.array(standardize(train_matrix=fpm_train)['train'])
 
-# Hyperparameter starting guesses.
-sigma = np.ones(m)
-sigma *= 0.3
-regularization = .03
-theta = np.append(sigma, regularization)
+if False:
+    train_matrix = home_pca(5, sfp)['train_fpv']
+    n, m = np.shape(train_matrix)
+    print(n, 'rows', m, 'principle components')
+else:
+    train_matrix = sfp
 
 # Select one or more kernels
-kernel_dict = {'k1': {'type': 'gaussian', 'width': list(sigma)}}
+# kernel_dict = {'k1': {'type': 'gaussian', 'width': [.3] * m}}
+kernel_dict = {'k1': {'type': 'sqe', 'width': [.3] * m}}
 
 # Constant arguments for the log marginal likelihood function
-a = (nfp, targets, kernel_dict)
+a = (train_matrix, targets, kernel_dict)
+
+# Hyperparameter starting guesses.
+sigma = np.ones(m) * kernel_dict['k1']['width']
+regularization = .003
+theta = np.append(sigma, regularization)
 
 # Hyper parameter bounds.
-b = ((1E-9, 1000), ) * (m+1)
+b = ((1E-9, 1e6), ) * (m+1)
 print('initial log marginal likelihood =',
       -log_marginal_likelihood(theta,
-                               nfp,
+                               train_matrix,
                                targets,
                                kernel_dict))
 
@@ -78,7 +86,7 @@ for j in range(m+1):
         X.append(x)
         theta_copy[j] = x
         Y.append(-log_marginal_likelihood(theta_copy,
-                                          nfp,
+                                          train_matrix,
                                           targets,
                                           kernel_dict)
                  )
