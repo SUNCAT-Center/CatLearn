@@ -231,7 +231,7 @@ class FingerprintDB():
         )""")
 
 
-    def image_entry(self, d, identity=None):
+    def image_entry(self, asedb_entry=None, identity=None):
         """ Enters a single ase-db image into the fingerprint database.
 
         This table can be expanded to contain atoms objects in the future.
@@ -244,16 +244,16 @@ class FingerprintDB():
             int: The ase ID colleted for the ase-db object.
         """
 
-        atoms = d.toatoms()
+        atoms = asedb_entry.toatoms()
 
         # ase-db ID with identity must be unique. If not, it will be skipped.
         try:
             self.c.execute("""INSERT INTO images (ase_id, identity)
-            VALUES(?, ?)""", (d.unique_id, identity))
+            VALUES(?, ?)""", (asedb_entry.unique_id, identity))
         except(IntegrityError):
             if self.verbose:
                 print('ASE ID with identifier already defined: {} {}'.format(
-                    d.id,
+                    asedb_entry.id,
                     identity))
 
         return d.id
@@ -354,7 +354,8 @@ class FingerprintDB():
             VALUES(?, ?, ?)""", (str(image_id), int(param_id), float(value)))
         except(IntegrityError):
             if self.verbose:
-                print('Symbol already defined: {}'.format(symbol))
+                print('Fingerprint already defined: {}, {}, {}'.format(
+                    image_id, param_id, value))
 
 
     def get_fingerprints(self, ase_ids, params=[]):
