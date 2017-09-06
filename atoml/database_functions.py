@@ -2,12 +2,7 @@
 import sqlite3
 from sqlite3 import IntegrityError
 import numpy as np
-try:
-    # A geometry hashing function
-    from qeio import geometry_hash
-    jbhash = True
-except(ImportError):
-    jbhash = False
+
 
 
 class DescriptorDatabase(object):
@@ -157,7 +152,7 @@ class FingerprintDB():
     with FingerprintDB() as fpdb:
         (Perform operation here)
 
-    This syntax wil automatically construct the temporary database,
+    This syntax will automatically construct the temporary database,
     or access an existing one. Upon exiting the indentation, the
     changes to the database will be automatically commited. 
     """
@@ -201,7 +196,7 @@ class FingerprintDB():
         This includes 3 tables: images, parameters, and fingerprints.
 
         The images table currently stores ase_id information and
-        a unqiue hash. This can be adapted in the future to support
+        a unqiue string. This can be adapted in the future to support
         atoms objects.
 
         The parameters table stores a symbol (10 character maximum)
@@ -213,8 +208,8 @@ class FingerprintDB():
 
         self.c.execute("""CREATE TABLE IF NOT EXISTS images(
         iid INTEGER PRIMARY KEY AUTOINCREMENT,
-        ase_id INT UNIQUE NOT NULL,
-        geometry_hash TEXT
+        ase_id CHAR(32) UNIQUE NOT NULL,
+        identity TEXT
         )""")
 
         self.c.execute("""CREATE TABLE IF NOT EXISTS parameters(
@@ -232,18 +227,18 @@ class FingerprintDB():
         ON DELETE CASCADE ON UPDATE CASCADE,
         FOREIGN KEY(param_id) REFERENCES parameters(param_id)
         ON DELETE CASCADE ON UPDATE CASCADE,
-	UNIQUE(image_id, param_id)
+        UNIQUE(image_id, param_id)
         )""")
 
 
-    def image_entry(self, d, ghash=None):
+    def image_entry(self, d, identity=None):
         """ Enters a single ase-db image into the fingerprint database.
 
         This table can be expanded to contain atoms objects in the future.
 
         Args:
             d (object): An ase-db object which can be parsed.
-            ghash (str): A hash for reference to the entry.
+            identity (str): An identifier of the users choice.
 
         Returns:
             int: The ase ID colleted for the ase-db object.
@@ -251,18 +246,15 @@ class FingerprintDB():
 
         atoms = d.toatoms()
 
-        # Temporary automation of hashing for convenience.
-        # Requires personal code.
-        if jbhash and not ghash:
-            ghash = geometry_hash(atoms)
-
-        # ase-db ID must be unique. If not, it will be skipped.
+        # ase-db ID with identity must be unique. If not, it will be skipped.
         try:
-            self.c.execute("""INSERT INTO images (ase_id, geometry_hash)
-            VALUES(?, ?)""", (d.id, ghash))
+            self.c.execute("""INSERT INTO images (ase_id, identity)
+            VALUES(?, ?)""", (d.unique_id, identity))
         except(IntegrityError):
             if self.verbose:
-                print('ASE database ID already defined: {}'.format(d.id))
+                print('ASE ID with identifier already defined: {} {}'.format(
+                    d.id,
+                    identity))
 
         return d.id
 
@@ -318,7 +310,7 @@ class FingerprintDB():
             res = []
             for i, s in enumerate(selection):
                 self.c.execute("""SELECT pid, symbol, description 
-                FROM parameters WHERE symbol = '{}'""".format(s))
+                FROM parameters WHERE symbol = ?""", (s,))
                 res += [self.c.fetchone()]
 
         if display:
@@ -335,8 +327,8 @@ class FingerprintDB():
         given ase and parameter ID.
 
         Args:
-            ase_id (int): The ase ID associated with an atoms object in
-            the database.
+            ase_id (int): The ase unique ID associated with an atoms object
+            in the database.
             param_id (int or str): The parameter ID or symbol associated
             with and entry in the paramters table.
             value (float): The value of the parameter for the atoms object.
@@ -345,7 +337,7 @@ class FingerprintDB():
         # If parameter symbol is given, get the ID
         if isinstance(param_id, str):
             self.c.execute("""SELECT pid FROM parameters
-            WHERE symbol = '{}'""".format(symbol))
+            WHERE symbol = ?""", (param_id,))
             param_id = self.c.fetchone()
 
             if param_id:
@@ -354,36 +346,54 @@ class FingerprintDB():
                 raise(KeyError, 'parameter symbol not found')
 
         self.c.execute("""SELECT iid FROM images
-        WHERE ase_id = {}""".format(ase_id))
+        WHERE ase_id = ?""", (ase_id,))
         image_id = self.c.fetchone()[0]
 
-        self.c.execute("""INSERT INTO fingerprints (image_id, param_id, value)
-        VALUES(?, ?, ?)""", (int(image_id), int(param_id), float(value)))
+        try:
+            self.c.execute("""INSERT INTO fingerprints (image_id, param_id, value)
+            VALUES(?, ?, ?)""", (str(image_id), int(param_id), float(value)))
+        except(IntegrityError):
+            if self.verbose:
+                print('Symbol already defined: {}'.format(symbol))
 
 
-    def get_fingerprint(self, ase_id, psel=None):
-        """ Get the array of values associated with the provided parameters.
+    def get_fingerprints(self, ase_ids, params=[]):
+        """ Get the array of values associated with the provided parameters
+        for each ase_id provided.
 
         Args:
-            ase_id (int): The ase ID associated with an atoms object in
+            ase_id (list): The ase ID(s) associated with an atoms object in
             the database.
-            psel (list): List of symbols or int in parameters table to be
+            params (list): List of symbols or int in parameters table to be
             selected.
 
         Returns:
-            1-d array: An array of values associated with the given
-            parameters (a fingerprint).
+            n-d array: An array of values associated with the given
+            parameters (a fingerprint) for each ase_id.
         """
 
-        if not list(psel) or isinstance(psel[0], str):
-            params = self.get_parameters(selection=psel)
+        if isinstance(params, np.ndarray):
+            params = params.tolist()
+
+        if not params or isinstance(params[0], str):
+            params = self.get_parameters(selection=params)
             psel = ','.join(params.astype(str))
-        elif isinstance(psel[0], int):
-            psel = ','.join(np.array(psel).astype(str))
+        elif isinstance(params[0], int):
+            psel = ','.join(np.array(params).astype(str))
 
-        cmd = """SELECT value FROM fingerprints 
+        if isinstance(ase_ids, np.ndarray):
+            ase_ids = ase_ids.tolist()
+
+        asel = tuple(np.array(ase_ids).astype(str))
+
+        self.c.execute("""SELECT GROUP_CONCAT(value) FROM fingerprints 
         JOIN images on fingerprints.image_id = images.iid
-        WHERE param_id IN ({}) AND ase_id = {}""".format(psel, int(ase_id))
+        WHERE param_id IN ({}) AND ase_id IN {}
+        GROUP BY ase_id""".format(psel, asel))
+        fetch = self.c.fetchall()
 
-        self.c.execute(cmd)
-        return np.array(self.c.fetchall()).T[0]
+        fingerprint = np.zeros((len(ase_ids), len(params)))
+        for i, f in enumerate(fetch):
+            fingerprint[i] = f[0].split(',')
+
+        return fingerprint
