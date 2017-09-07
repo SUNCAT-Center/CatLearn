@@ -27,11 +27,8 @@ def matrix_split(X, nsplit, fix_size=None):
     return np.array_split(X, nsplit)
 
 
-def standardize(train_matrix, test_matrix=None):
+def standardize(train_matrix, test_matrix=None, local=True):
     """Standardize each feature relative to the mean and standard deviation.
-
-    If test data is supplied it is standardized relative to the training
-    dataset.
 
     Parameters
     ----------
@@ -39,10 +36,16 @@ def standardize(train_matrix, test_matrix=None):
         Feature matrix for the training dataset.
     test_matrix : list
         Feature matrix for the test dataset.
+    local : boolean
+        Define whether to scale locally or globally.
     """
     std = defaultdict(list)
-    std['mean'] = np.mean(train_matrix, axis=0)
-    std['std'] = np.std(train_matrix, axis=0)
+    if test_matrix is not None and not local:
+        data = np.concatenate((train_matrix, test_matrix), axis=0)
+    else:
+        data = train_matrix
+    std['mean'] = np.mean(data, axis=0)
+    std['std'] = np.std(data, axis=0)
     np.place(std['std'], std['std'] == 0., [1.])  # Replace 0 with 1.
 
     std['train'] = (train_matrix - std['mean']) / std['std']
@@ -54,11 +57,8 @@ def standardize(train_matrix, test_matrix=None):
     return std
 
 
-def normalize(train_matrix, test_matrix=None):
+def normalize(train_matrix, test_matrix=None, local=True):
     """Normalize each feature relative to mean and min/max variance.
-
-    If test data is supplied it is standardized relative to the training
-    dataset.
 
     Parameters
     ----------
@@ -66,16 +66,81 @@ def normalize(train_matrix, test_matrix=None):
         Feature matrix for the training dataset.
     test_matrix : list
         Feature matrix for the test dataset.
+    local : boolean
+        Define whether to scale locally or globally.
     """
     norm = defaultdict(list)
-    norm['mean'] = np.mean(train_matrix, axis=0)
-    norm['dif'] = np.max(train_matrix, axis=0) - np.min(train_matrix, axis=0)
+    if test_matrix is not None and not local:
+        data = np.concatenate((train_matrix, test_matrix), axis=0)
+    else:
+        data = train_matrix
+    norm['mean'] = np.mean(data, axis=0)
+    norm['dif'] = np.max(data, axis=0) - np.min(data, axis=0)
     np.place(norm['dif'], norm['dif'] == 0., [1.])  # Replace 0 with 1.
 
     norm['train'] = (train_matrix - norm['mean']) / norm['dif']
 
     if test_matrix is not None:
         test_matrix = (test_matrix - norm['mean']) / norm['dif']
+    norm['test'] = test_matrix
+
+    return norm
+
+
+def min_max(train_matrix, test_matrix=None, local=True):
+    """Normalize each feature relative to the min and max.
+
+    Parameters
+    ----------
+    train_matrix : list
+        Feature matrix for the training dataset.
+    test_matrix : list
+        Feature matrix for the test dataset.
+    local : boolean
+        Define whether to scale locally or globally.
+    """
+    norm = defaultdict(list)
+    if test_matrix is not None and not local:
+        data = np.concatenate((train_matrix, test_matrix), axis=0)
+    else:
+        data = train_matrix
+    norm['min'] = np.min(data, axis=0)
+    norm['dif'] = np.max(data, axis=0) - norm['min']
+    np.place(norm['dif'], norm['dif'] == 0., [1.])  # Replace 0 with 1.
+
+    norm['train'] = (train_matrix - norm['min']) / norm['dif']
+
+    if test_matrix is not None:
+        test_matrix = (test_matrix - norm['min']) / norm['dif']
+    norm['test'] = test_matrix
+
+    return norm
+
+
+def unit_length(train_matrix, test_matrix=None, local=True):
+    """Normalize each feature relative to the Euclidean length.
+
+    Parameters
+    ----------
+    train_matrix : list
+        Feature matrix for the training dataset.
+    test_matrix : list
+        Feature matrix for the test dataset.
+    local : boolean
+        Define whether to scale locally or globally.
+    """
+    norm = defaultdict(list)
+    if test_matrix is not None and not local:
+        data = np.concatenate((train_matrix, test_matrix), axis=0)
+    else:
+        data = train_matrix
+    norm['length'] = np.linalg.norm(data, axis=0)
+    np.place(norm['length'], norm['length'] == 0., [1.])  # Replace 0 with 1.
+
+    norm['train'] = train_matrix / norm['length']
+
+    if test_matrix is not None:
+        test_matrix = test_matrix / norm['length']
     norm['test'] = test_matrix
 
     return norm
