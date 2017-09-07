@@ -99,7 +99,7 @@ nfp = standardize(train_matrix=fpm, test_matrix=fpm_test)
 kdict = {
          'lk1': {'type': 'linear',
                  'const': .1,
-                 #'features': [0],
+                 'features': [0],
                  },
          #'gk': {'type': 'gaussian',
          #       'width': 1.0,
@@ -120,7 +120,7 @@ gp = GaussianProcess(train_fp=nfp['train'], train_target=y,
 prediction = gp.get_predictions(test_fp=nfp['test'],
                                 get_validation_error=False,
                                 get_training_error=True)
-print(prediction['optimized_kernels'], prediction['optimized_regularization'])
+print(gp.kernel_dict, gp.regularization)
 
 plt.imshow(prediction['prediction'].reshape(3, 9),
            cmap='hot', interpolation='nearest', extent=[d0min,d0max,d1min,d1max])
