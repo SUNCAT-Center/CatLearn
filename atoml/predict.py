@@ -18,11 +18,16 @@ class GaussianProcess(object):
     """Gaussian processes functions for the machine learning."""
 
     def __init__(self, train_fp, train_target, kernel_dict,
-                 regularization=None, optimize_hyperparameters=False):
+                 regularization=None, regularization_bounds=(1e-12, None),
+                 optimize_hyperparameters=False):
         """Gaussian processes setup.
 
         Parameters
         ----------
+        train_fp : list
+            A list of training fingerprint vectors.
+        train_target : list
+            A list of training targets used to generate the predictions.
         kernel_dict : dict of dicts
             Each dict in kernel_dict contains information on a kernel.
             The 'type' key is required to contain the name of kernel function:
@@ -31,10 +36,15 @@ class GaussianProcess(object):
         regularization : float
             The regularization strength (smoothing function) applied to the
             kernel matrix.
+        regularization_bounds : tuple
+            Optional to change the bounds for the regularization.
+        optimize_hyperparameters : boolean
+            Optional flag to optimize the hyperparameters.
         """
         self.N_train, self.N_D = np.shape(train_fp)
         self.regularization = regularization
-        self.prepare_kernels(kernel_dict)
+        self.prepare_kernels(kernel_dict,
+                             regularization_bounds=regularization_bounds)
         self.update_data(train_fp, train_target)
         if optimize_hyperparameters:
             self.optimize_hyperparameters()
@@ -48,9 +58,6 @@ class GaussianProcess(object):
             A list of training fingerprint vectors.
         train_target : list
             A list of training targets used to generate the predictions.
-        cinv : matrix
-            Covariance matrix for training dataset. Calculated on-the-fly or
-            defined to utilize a model numerous times.
         """
         # Get the shape of the training dataset.
         self.N_train, self.N_D = np.shape(train_fp)
@@ -70,39 +77,74 @@ class GaussianProcess(object):
         # Invert the covariance matrix.
         self.cinv = np.linalg.inv(cvm)
 
-    def prepare_kernels(self, kernel_dict, bounds=None):
-        """Format the kernel_dictionary.
+    def prepare_kernels(self, kernel_dict,
+                        regularization_bounds=(1e-12, None)):
+        """Formats the kernel_dictionary and stores the bounds
+        for hyperparameter optimization.
 
         Parameters
         ----------
         kernel_dict : dict
             Dictionary containing all information for the kernels.
+        regularization_bounds : tuple
+            Optional to change the bounds for the regularization.
         """
         kdict = kernel_dict
+        bounds = ()
         for key in kdict:
             if 'features' in kdict[key]:
                 N_D = len(kdict[key]['features'])
             else:
                 N_D = self.N_D
-            # if 'scaling' not in kdict[key]:
-            #     kernel_dict[key]['scaling'] = 1
+            if 'scaling' in kdict[key]:
+                if 'scaling_bounds' in kdict[key]:
+                    bounds += kdict[key]['scaling_bounds']
+                else:
+                    bounds += ((0, None),)
+            if 'd_scaling' in kdict[key]:
+                d_scaling = kdict[key]['d_scaling']
+                if type(d_scaling) is float or type(d_scaling) is int:
+                    kernel_dict[key]['d_scaling'] = np.zeros(N_D,) + d_scaling
+                if 'bounds' in kdict[key]:
+                    bounds += kdict[key]['bounds']
+                else:
+                    bounds += ((0, None),) * N_D
             if 'width' in kdict[key]:
                 theta = kdict[key]['width']
                 if type(theta) is float or type(theta) is int:
                     kernel_dict[key]['width'] = np.zeros(N_D,) + theta
+                if 'bounds' in kdict[key]:
+                    bounds += kdict[key]['bounds']
+                else:
+                    bounds += ((1e-12, 1e12),) * N_D
             elif 'hyperparameters' in kdict[key]:
                 theta = kdict[key]['hyperparameters']
                 if type(theta) is float or type(theta) is int:
                     kernel_dict[key]['hyperparameters'] = (np.zeros(N_D,) +
                                                            theta)
+                if 'bounds' in kdict[key]:
+                    bounds += kdict[key]['bounds']
+                else:
+                    bounds += ((1e-12, 1e12),) * N_D
             elif 'theta' in kdict[key]:
                 theta = kdict[key]['theta']
                 if type(theta) is float or type(theta) is int:
                     kernel_dict[key]['hyperparameters'] = (np.zeros(N_D,) +
                                                            theta)
+                if 'bounds' in kdict[key]:
+                    bounds += kdict[key]['bounds']
+                else:
+                    bounds += ((1e-12, 1e12),) * N_D
+            elif 'bounds' in kdict[key]:
+                bounds += kdict[key]['bounds']
+            elif kdict[key]['type'] == 'linear':
+                bounds += ((0, None),)
+            elif kdict[key]['type'] == 'polynomial':
+                bounds += ((None, None), (1, None), (0, None),)
         self.kernel_dict = kernel_dict
+        # Bounds for the regularization
+        bounds += (regularization_bounds,)
         self.bounds = bounds
-        self.hyperparameters = kdicts2list(self.kernel_dict, N_D=N_D)
 
     def optimize_hyperparameters(self):
         """Optimize hyperparameters of the Gaussian Process.
@@ -120,16 +162,10 @@ class GaussianProcess(object):
         args = (np.array(self.train_fp), self.train_target,
                 self.kernel_dict)
 
-        # Set bounds for hyperparameters
-        # if self.bounds is not None:
-        #     bounds = self.bounds
-        # else:
-        bounds = ((1E-6, 1e6),) * (len(theta))
-
         # Optimize
         self.theta_opt = minimize(log_marginal_likelihood, theta,
                                   args=args,
-                                  bounds=bounds)
+                                  bounds=self.bounds)
 
         # Update kernel_dict and regularization with optimized values.
         if self.regularization is not None:
@@ -323,3 +359,41 @@ def target_standardize(target):
     data['target'] = (target - data['mean']) / data['std']
 
     return data
+
+
+def test_data_limited(gp, testx, testy, step=1, min_data=0,
+                      optimize_interval=None):
+    if min_data == 0:
+        min_data += step
+    trainx = (gp.train_fp).copy()
+    trainy = (gp.train_target).copy()
+    print(np.shape(trainx))
+    rmse = []
+    mae = []
+    signed_mean = []
+    Ndata = []
+    for low in xrange(min_data, len(trainx), step):
+        # Update the training data
+        print('Updating training data', np.shape(trainx[:low]))
+        gp.update_data(train_fp=trainx[:low],
+                       train_target=trainy[:low])
+        if optimize_interval is not None and low % optimize_interval == 0:
+            print('Step', low, 'Optimizing hyperparameters.')
+            print(gp.kernel_dict, gp.regularization)
+            gp.optimize_hyperparameters()
+        # Do the prediction
+        pred = gp.get_predictions(test_fp=testx,
+                                  get_validation_error=True,
+                                  get_training_error=True,
+                                  uncertainty=True,
+                                  test_target=testy)
+        # Store the error associated with the predictions in lists.
+        Ndata.append(len(trainy[:low]))
+        rmse.append(pred['validation_error']['rmse_average'])
+        mae.append(pred['validation_error']['absolute_average'])
+        signed_mean.append(pred['validation_error']['signed_mean'])
+        output = {'N_data': Ndata,
+                  'rmse_average': rmse,
+                  'absolute_average': mae,
+                  'signed_mean': signed_mean}
+    return output
