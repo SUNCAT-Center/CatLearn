@@ -117,3 +117,42 @@ def clean_infinite(train, test=None, labels=None):
     clean['labels'] = labels
 
     return clean
+
+
+def test_data_limited(gp, testx, testy, step=1, min_data=0,
+                      optimize_interval=None):
+    if min_data == 0:
+        min_data += step
+    # Retrieve the full training data and training targets from gp.
+    trainx = (gp.train_fp).copy()
+    # If the targets are standardized, convert back to the raw targets.
+    trainy = (gp.train_target).copy() * \
+        gp.standardize_data['std'] + \
+        gp.standardize_data['mean']
+    rmse = []
+    mae = []
+    signed_mean = []
+    Ndata = []
+    for low in xrange(min_data, len(trainx)+1, step):
+        # Update the training data in the gp. Targets are standardized again.
+        gp.update_data(train_fp=trainx[:low, :],
+                       train_target=trainy[:low],
+                       standardize_target=True)
+        if optimize_interval is not None and low % optimize_interval == 0:
+            gp.optimize_hyperparameters()
+        # Do the prediction
+        pred = gp.get_predictions(test_fp=testx,
+                                  get_validation_error=True,
+                                  get_training_error=False,
+                                  uncertainty=True,
+                                  test_target=testy)
+        # Store the error associated with the predictions in lists.
+        Ndata.append(len(trainy[:low]))
+        rmse.append(pred['validation_error']['rmse_average'])
+        mae.append(pred['validation_error']['absolute_average'])
+        signed_mean.append(pred['validation_error']['signed_mean'])
+    output = {'N_data': Ndata,
+              'rmse_average': rmse,
+              'absolute_average': mae,
+              'signed_mean': signed_mean}
+    return output

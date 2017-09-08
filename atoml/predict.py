@@ -155,8 +155,7 @@ class GaussianProcess(object):
         """
         # Create a list of all hyperparameters.
         theta = kdicts2list(self.kernel_dict, N_D=self.N_D)
-        if self.regularization is not None:
-            theta = np.append(theta, self.regularization)
+        theta = np.append(theta, self.regularization)
 
         # Define fixed arguments for log_marginal_likelihood
         args = (np.array(self.train_fp), self.train_target,
@@ -168,13 +167,9 @@ class GaussianProcess(object):
                                   bounds=self.bounds)
 
         # Update kernel_dict and regularization with optimized values.
-        if self.regularization is not None:
-            self.kernel_dict = list2kdict(self.theta_opt['x'][:-1],
-                                          self.kernel_dict)
-            self.regularization = self.theta_opt['x'][-1]
-        else:
-            self.kernel_dict = list2kdict(self.theta_opt['x'],
-                                          self.kernel_dict)
+        self.kernel_dict = list2kdict(self.theta_opt['x'][:-1],
+                                      self.kernel_dict)
+        self.regularization = self.theta_opt['x'][-1]
         # Make a new covariance matrix with the optimized hyperparameters.
         cvm = get_covariance(kernel_dict=self.kernel_dict,
                              matrix1=self.train_fp,
@@ -361,39 +356,4 @@ def target_standardize(target):
     return data
 
 
-def test_data_limited(gp, testx, testy, step=1, min_data=0,
-                      optimize_interval=None):
-    if min_data == 0:
-        min_data += step
-    trainx = (gp.train_fp).copy()
-    trainy = (gp.train_target).copy()
-    print(np.shape(trainx))
-    rmse = []
-    mae = []
-    signed_mean = []
-    Ndata = []
-    for low in xrange(min_data, len(trainx), step):
-        # Update the training data
-        print('Updating training data', np.shape(trainx[:low]))
-        gp.update_data(train_fp=trainx[:low],
-                       train_target=trainy[:low])
-        if optimize_interval is not None and low % optimize_interval == 0:
-            print('Step', low, 'Optimizing hyperparameters.')
-            print(gp.kernel_dict, gp.regularization)
-            gp.optimize_hyperparameters()
-        # Do the prediction
-        pred = gp.get_predictions(test_fp=testx,
-                                  get_validation_error=True,
-                                  get_training_error=True,
-                                  uncertainty=True,
-                                  test_target=testy)
-        # Store the error associated with the predictions in lists.
-        Ndata.append(len(trainy[:low]))
-        rmse.append(pred['validation_error']['rmse_average'])
-        mae.append(pred['validation_error']['absolute_average'])
-        signed_mean.append(pred['validation_error']['signed_mean'])
-        output = {'N_data': Ndata,
-                  'rmse_average': rmse,
-                  'absolute_average': mae,
-                  'signed_mean': signed_mean}
-    return output
+
