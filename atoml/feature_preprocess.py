@@ -3,8 +3,6 @@ import numpy as np
 from scipy import cluster
 from collections import defaultdict
 
-from output import write_fingerprint_setup
-
 
 def matrix_split(X, nsplit, fix_size=None):
     """Routine to split feature matrix and return sublists.
@@ -30,11 +28,8 @@ def matrix_split(X, nsplit, fix_size=None):
 
 
 def standardize(train_matrix, test_matrix=None, mean=None, std=None,
-                writeout=False):
+                local=True):
     """Standardize each feature relative to the mean and standard deviation.
-
-    If test data is supplied it is standardized relative to the training
-    dataset.
 
     Parameters
     ----------
@@ -46,13 +41,20 @@ def standardize(train_matrix, test_matrix=None, mean=None, std=None,
         List of mean values for each feature.
     std : list
         List of standard deviation values for each feature.
+    local : boolean
+        Define whether to scale locally or globally.
     """
     scale = defaultdict(list)
+    if test_matrix is not None and not local:
+        data = np.concatenate((train_matrix, test_matrix), axis=0)
+    else:
+        data = train_matrix
+
     if mean is None:
-        mean = np.mean(train_matrix, axis=0)
+        mean = np.mean(data, axis=0)
     scale['mean'] = mean
     if std is None:
-        std = np.std(train_matrix, axis=0)
+        std = np.std(data, axis=0)
     scale['std'] = std
     np.place(scale['std'], scale['std'] == 0., [1.])  # Replace 0 with 1.
 
@@ -62,18 +64,11 @@ def standardize(train_matrix, test_matrix=None, mean=None, std=None,
         test_matrix = (test_matrix - scale['mean']) / scale['std']
     scale['test'] = test_matrix
 
-    if writeout:
-        write_fingerprint_setup(function='standardize', data=scale)
-
     return scale
 
 
-def normalize(train_matrix, test_matrix=None, mean=None, dif=None,
-              writeout=False):
+def normalize(train_matrix, test_matrix=None, mean=None, dif=None, local=True):
     """Normalize each feature relative to mean and min/max variance.
-
-    If test data is supplied it is standardized relative to the training
-    dataset.
 
     Parameters
     ----------
@@ -81,17 +76,24 @@ def normalize(train_matrix, test_matrix=None, mean=None, dif=None,
         Feature matrix for the training dataset.
     test_matrix : list
         Feature matrix for the test dataset.
+    local : boolean
+        Define whether to scale locally or globally.
     mean : list
         List of mean values for each feature.
     dif : list
         List of max-min values for each feature.
     """
     scale = defaultdict(list)
+    if test_matrix is not None and not local:
+        data = np.concatenate((train_matrix, test_matrix), axis=0)
+    else:
+        data = train_matrix
+
     if mean is None:
-        mean = np.mean(train_matrix, axis=0)
+        mean = np.mean(data, axis=0)
     scale['mean'] = mean
     if dif is None:
-        dif = np.max(train_matrix, axis=0) - np.min(train_matrix, axis=0)
+        dif = np.max(data, axis=0) - np.min(data, axis=0)
     scale['dif'] = dif
     np.place(scale['dif'], scale['dif'] == 0., [1.])  # Replace 0 with 1.
 
@@ -101,8 +103,64 @@ def normalize(train_matrix, test_matrix=None, mean=None, dif=None,
         test_matrix = (test_matrix - scale['mean']) / scale['dif']
     scale['test'] = test_matrix
 
-    if writeout:
-        write_fingerprint_setup(function='normalize', data=scale)
+    return scale
+
+
+def min_max(train_matrix, test_matrix=None, local=True):
+    """Normalize each feature relative to the min and max.
+
+    Parameters
+    ----------
+    train_matrix : list
+        Feature matrix for the training dataset.
+    test_matrix : list
+        Feature matrix for the test dataset.
+    local : boolean
+        Define whether to scale locally or globally.
+    """
+    norm = defaultdict(list)
+    if test_matrix is not None and not local:
+        data = np.concatenate((train_matrix, test_matrix), axis=0)
+    else:
+        data = train_matrix
+    norm['min'] = np.min(data, axis=0)
+    norm['dif'] = np.max(data, axis=0) - norm['min']
+    np.place(norm['dif'], norm['dif'] == 0., [1.])  # Replace 0 with 1.
+
+    norm['train'] = (train_matrix - norm['min']) / norm['dif']
+
+    if test_matrix is not None:
+        test_matrix = (test_matrix - norm['min']) / norm['dif']
+    norm['test'] = test_matrix
+
+    return norm
+
+
+def unit_length(train_matrix, test_matrix=None, local=True):
+    """Normalize each feature relative to the Euclidean length.
+
+    Parameters
+    ----------
+    train_matrix : list
+        Feature matrix for the training dataset.
+    test_matrix : list
+        Feature matrix for the test dataset.
+    local : boolean
+        Define whether to scale locally or globally.
+    """
+    norm = defaultdict(list)
+    if test_matrix is not None and not local:
+        data = np.concatenate((train_matrix, test_matrix), axis=0)
+    else:
+        data = train_matrix
+    norm['length'] = np.linalg.norm(data, axis=0)
+    np.place(norm['length'], norm['length'] == 0., [1.])  # Replace 0 with 1.
+
+    norm['train'] = train_matrix / norm['length']
+
+    if test_matrix is not None:
+        test_matrix = test_matrix / norm['length']
+    norm['test'] = test_matrix
 
     return scale
 

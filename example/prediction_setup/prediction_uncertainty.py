@@ -39,7 +39,9 @@ nfp = normalize(train_matrix=train_fp, test_matrix=test_fp)
 
 # Set up the prediction routine.
 kdict = {'k1': {'type': 'gaussian', 'width': 0.5}}
-gp = GaussianProcess(kernel_dict=kdict, regularization=0.001)
+gp = GaussianProcess(train_fp=nfp['train'], train_target=trainset['target'],
+                     kernel_dict=kdict, regularization=0.001,
+                     optimize_hyperparameters=True)
 
 
 def basis(descriptors):
@@ -47,16 +49,12 @@ def basis(descriptors):
     return descriptors * ([1] * len(descriptors))
 
 
-pred = gp.get_predictions(train_fp=nfp['train'],
-                          test_fp=nfp['test'],
-                          train_target=trainset['target'],
+pred = gp.get_predictions(test_fp=nfp['test'],
                           test_target=testset['target'],
                           get_validation_error=True,
                           get_training_error=True,
-                          standardize_target=True,
                           uncertainty=True,
-                          basis=basis,
-                          optimize_hyperparameters=False)
+                          basis=basis)
 
 print('GP:', pred['validation_error']['rmse_average'], 'Residual:',
       pred['basis_analysis']['validation_error']['rmse_average'])

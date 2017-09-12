@@ -89,60 +89,54 @@ traind = np.delete(train_data, delf, axis=1)
 testd = np.delete(test_data, delf, axis=1)
 # Set up the prediction routine.
 kdict = {'k1': {'type': 'gaussian', 'width': 5.}}
-gp = GaussianProcess(kernel_dict=kdict, regularization=0.001)
+gp = GaussianProcess(train_fp=traind, train_target=train_target,
+                     kernel_dict=kdict, regularization=0.001,
+                     optimize_hyperparameters=True)
 # Do the predictions.
-lasso_pred = gp.get_predictions(train_fp=traind,
-                                test_fp=testd,
-                                train_target=train_target,
+lasso_pred = gp.get_predictions(test_fp=testd,
                                 test_target=test_target,
                                 get_validation_error=True,
-                                get_training_error=True,
-                                optimize_hyperparameters=True)
+                                get_training_error=True)
 # Print the error associated with the predictions.
 print('Training error:', lasso_pred['training_error']['rmse_average'])
 print('Model error:', lasso_pred['validation_error']['rmse_average'])
-print('width:', lasso_pred['optimized_kernels']['k1']['width'], 'reg:',
-      lasso_pred['optimized_regularization'])
+print('width:', gp.kernel_dict['k1']['width'], 'reg:', gp.regularization)
 
 delf = sort_list_ridge[1][nz_lasso:]
 traind = np.delete(train_data, delf, axis=1)
 testd = np.delete(test_data, delf, axis=1)
 # Set up the prediction routine.
 kdict = {'k1': {'type': 'gaussian', 'width': 5.}}
-gp = GaussianProcess(kernel_dict=kdict, regularization=0.001)
+gp = GaussianProcess(train_fp=traind, train_target=train_target,
+                     kernel_dict=kdict, regularization=0.001,
+                     optimize_hyperparameters=True)
 # Do the predictions.
-ridge_pred = gp.get_predictions(train_fp=traind,
-                                test_fp=testd,
-                                train_target=train_target,
+ridge_pred = gp.get_predictions(test_fp=testd,
                                 test_target=test_target,
                                 get_validation_error=True,
-                                get_training_error=True,
-                                optimize_hyperparameters=True)
+                                get_training_error=True)
 # Print the error associated with the predictions.
 print('Training error:', ridge_pred['training_error']['rmse_average'])
 print('Model error:', ridge_pred['validation_error']['rmse_average'])
-print('width:', ridge_pred['optimized_kernels']['k1']['width'], 'reg:',
-      ridge_pred['optimized_regularization'])
+print('width:', gp.kernel_dict['k1']['width'], 'reg:', gp.regularization)
 
 delf = sort_list_elast[1][nz_lasso:]
 traind = np.delete(train_data, delf, axis=1)
 testd = np.delete(test_data, delf, axis=1)
 # Set up the prediction routine.
 kdict = {'k1': {'type': 'gaussian', 'width': 5.}}
-gp = GaussianProcess(kernel_dict=kdict, regularization=0.001)
+gp = GaussianProcess(train_fp=traind, train_target=train_target,
+                     kernel_dict=kdict, regularization=0.001,
+                     optimize_hyperparameters=True)
 # Do the predictions.
-elast_pred = gp.get_predictions(train_fp=traind,
-                                test_fp=testd,
-                                train_target=train_target,
+elast_pred = gp.get_predictions(test_fp=testd,
                                 test_target=test_target,
                                 get_validation_error=True,
-                                get_training_error=True,
-                                optimize_hyperparameters=True)
+                                get_training_error=True)
 # Print the error associated with the predictions.
 print('Training error:', elast_pred['training_error']['rmse_average'])
 print('Model error:', elast_pred['validation_error']['rmse_average'])
-print('width:', elast_pred['optimized_kernels']['k1']['width'], 'reg:',
-      elast_pred['optimized_regularization'])
+print('width:', gp.kernel_dict['k1']['width'], 'reg:', gp.regularization)
 
 fig = plt.figure(figsize=(15, 8))
 ax = fig.add_subplot(141)

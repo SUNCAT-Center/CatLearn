@@ -5,10 +5,8 @@ from __future__ import division
 from random import shuffle
 from collections import defaultdict
 
-from .output import write_data_setup
 
-
-def get_unique(atoms, size, key, writeout=False):
+def get_unique(atoms, size, key):
     """Return a unique test dataset.
 
     Parameters
@@ -35,13 +33,10 @@ def get_unique(atoms, size, key, writeout=False):
         else:
             break
 
-    if writeout:
-        write_data_setup(function='get_unique', data=dataset)
-
     return dataset
 
 
-def get_train(atoms, key, size=None, taken=None, writeout=False):
+def get_train(atoms, key, size=None, taken=None):
     """Return a training dataset.
 
     Parameters
@@ -68,8 +63,5 @@ def get_train(atoms, key, size=None, taken=None, writeout=False):
                 dataset['order'].append(a[0])
         elif size is not None and len(dataset['atoms']) == size:
             break
-
-    if writeout:
-        write_data_setup(function='get_train', data=dataset)
 
     return dataset

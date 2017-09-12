@@ -9,6 +9,8 @@ from collections import defaultdict
 from ase.data import covalent_radii
 from ase.ga.utilities import get_mic_distance
 
+from atoml import __path__ as atoml_path
+
 
 def neighbor_features(atoms, property=None, periodic=False, dx=0.2,
                       neighbor_number=1, reuse_nl=False):
@@ -78,9 +80,10 @@ def connection_matrix(atoms, periodic=False, dx=0.2, neighbor_number=1,
     if reuse_nl and 'neighborlist' in atoms.info['key_value_pairs']:
         nl = atoms.info['key_value_pairs']['neighborlist']
     elif periodic:
-        nl = _get_periodic_neighborlist(atoms, dx=dx)
+        nl = _get_periodic_neighborlist(atoms, dx=dx,
+                                        neighbor_number=neighbor_number)
     else:
-        nl = _get_neighborlist(atoms, dx=dx)
+        nl = _get_neighborlist(atoms, dx=dx, neighbor_number=neighbor_number)
 
     conn_mat = []
     index = range(len(atoms))
@@ -143,7 +146,8 @@ def property_matrix(atoms, property):
         The target property from mendeleev.
     """
     # Load the Mendeleev parameter data into memory
-    with open('../data/proxy-mendeleev.json') as f:
+    with open('/'.join(atoml_path[0].split('/')[:-1]) +
+              '/data/proxy-mendeleev.json') as f:
         data = json.load(f)
 
     an = atoms.get_atomic_numbers()
@@ -178,8 +182,8 @@ def _get_neighborlist(atoms, dx=0.2, neighbor_number=1):
     for a1 in atoms:
         for a2 in atoms:
             if a1.index != a2.index:
-                d = np.linalg.norm(np.asarray(a1.position)
-                                   - np.asarray(a2.position))
+                d = np.linalg.norm(np.asarray(a1.position) -
+                                   np.asarray(a2.position))
                 r1 = covalent_radii[a1.number]
                 r2 = covalent_radii[a2.number]
                 if neighbor_number == 1:
