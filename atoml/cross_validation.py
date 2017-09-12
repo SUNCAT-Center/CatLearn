@@ -113,6 +113,8 @@ class HierarchyValidation(object):
             Array with the index data.
         scale : string
             Method of scaling, can be either 'standardize' or 'normalize'.
+        features : int
+            Number of features to be scaled. Default is all.
         """
         if features is None:
             features = -1
