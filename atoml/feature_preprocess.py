@@ -13,7 +13,7 @@ def matrix_split(X, nsplit, fix_size=None):
         The number of bins that data should be devided into.
     fix_size : int
         Define a fixed sample size, e.g. nsplit=5 fix_size=100, generates
-        5 x 100 data split. Default is None, all avaliable data is divided
+        5 x 100 data split. Default is None, all available data is divided
         nsplit times.
     """
     np.random.shuffle(X)  # Shuffle ordering of the array along 0 axis.
