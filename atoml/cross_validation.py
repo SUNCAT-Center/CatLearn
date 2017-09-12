@@ -103,8 +103,9 @@ class HierarchyValidation(object):
 
         return data
 
-    def global_scale_data(self, index_split, features, scale='standardize'):
-        """Make an array with all data.
+    def global_scale_data(self, index_split, scale='standardize',
+                          features=None,):
+        """Find scaling for all available data.
 
         Parameters
         ----------
@@ -113,18 +114,18 @@ class HierarchyValidation(object):
         scale : string
             Method of scaling, can be either 'standardize' or 'normalize'.
         """
-        global_data1 = self._compile_split(index_split['1_1'])
-        global_data2 = self._compile_split(index_split['1_2'])
-        global_feat1 = np.array(global_data1[:, 1:-1], np.float64)
-        global_feat2 = np.array(global_data2[:, 1:-1], np.float64)
-        globaldata = np.concatenate((global_feat1, global_feat2), axis=0)
-        g_data = globaldata[:, :features]
+        if features is None:
+            features = -1
+        data1 = self._compile_split(index_split['1_1'])
+        data2 = self._compile_split(index_split['1_2'])
+        feat1 = np.array(data1[:, 1:features], np.float64)
+        feat2 = np.array(data2[:, 1:features], np.float64)
 
         if scale is 'standardize':
-            s = standardize(train_matrix=g_data)
+            s = standardize(train_matrix=feat1, test_matrix=feat2, local=False)
             mean, scalar = s['mean'], s['std']
         if scale is 'normalize':
-            s = normalize(train_matrix=g_data)
+            s = normalize(train_matrix=feat1, test_matrix=feat2, local=False)
             mean, scalar = s['mean'], s['dif']
 
         return scalar, mean
