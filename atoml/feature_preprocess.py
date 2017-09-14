@@ -162,7 +162,7 @@ def unit_length(train_matrix, test_matrix=None, local=True):
         test_matrix = test_matrix / norm['length']
     norm['test'] = test_matrix
 
-    return scale
+    return norm
 
 
 def cluster_features(train_matrix, train_target, k=2, test_matrix=None,
