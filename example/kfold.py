@@ -12,7 +12,8 @@ from __future__ import print_function
 import numpy as np
 
 from atoml.predict import GaussianProcess
-from atoml.feature_preprocess import matrix_split, standardize, normalize
+from atoml.feature_preprocess import standardize, normalize
+from atoml.cross_validation import k_fold
 import time
 
 nsplit = 3
