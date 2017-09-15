@@ -1,4 +1,4 @@
 """Cross validation functions."""
 
-from .hierarchy import Hierarchy
-from .k_fold import k_fold
+from .hierarchy_cv import Hierarchy
+from .k_fold_cv import k_fold
