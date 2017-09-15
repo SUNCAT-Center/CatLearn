@@ -38,7 +38,7 @@ def do_predict(train, test, train_target, test_target, hopt=False):
     return pred
 
 
-# Define the hierarchey cv class method.
+# Define the hierarchy cv class method.
 hv = HierarchyValidation(db_name='../../data/train_db.sqlite',
                          table='FingerVector',
                          file_name='split')

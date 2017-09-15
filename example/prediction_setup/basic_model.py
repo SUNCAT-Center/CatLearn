@@ -19,7 +19,7 @@ np.set_string_function(lambda x:  ', '.join(map(lambda y: '%.3f' % y, x)),
 plot = True
 ds = 500
 
-# Define the hierarchey cv class method.
+# Define the hierarchy cv class method.
 hv = HierarchyValidation(db_name='../../data/train_db.sqlite',
                          table='FingerVector',
                          file_name='split')

@@ -11,7 +11,7 @@ from atoml.predict import GaussianProcess, get_error
 
 correlation = 'pearson'
 
-# Define the hierarchey cv class method.
+# Define the hierarchy cv class method.
 hv = HierarchyValidation(db_name='../../data/train_db.sqlite',
                          table='FingerVector',
                          file_name='split')
