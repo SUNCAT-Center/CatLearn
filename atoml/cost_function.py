@@ -79,7 +79,6 @@ def _get_percentiles(residuals):
     percentiles = [99, 95, 75, 25, 5, 1]
 
     for p in percentiles:
-        data['{0}'.format(p)] = np.percentile(residuals, p,
-                                              interpolation='linear')
+        data['{0}'.format(p)] = np.percentile(residuals, p)
 
     return data
