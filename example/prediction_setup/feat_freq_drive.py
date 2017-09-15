@@ -23,32 +23,26 @@ for i in range(20, 25):
     data2 = np.empty(1,)
     hit1, hit2 = 0, 0
     for k in range(1, 10):
-        selected_features1 = feature_frequency(hv,
-                            370, 3, 8, new_data=True, ridge=True,
-                            scale=True, globalscale=True,
-                            normalization=True,
-                            featselect_featvar=False,
-                            featselect_featconst=True,
-                            select_limit=select_limit, feat_sub=i)
-        selected_features2 = feature_frequency(hv,
-                            370, 3, 8, smallest=True,
-                            new_data=False, ridge=True,
-                            scale=True, globalscale=True,
-                            normalization=True,
-                            featselect_featvar=False,
-                            featselect_featconst=True,
-                            select_limit=select_limit, feat_sub=i)
+        selected_features1 = feature_frequency(
+            hv, 370, 3, 8, new_data=True, ridge=True, scale=True,
+            globalscale=True, normalization=True, featselect_featvar=False,
+            featselect_featconst=True, select_limit=select_limit, feat_sub=i)
+        selected_features2 = feature_frequency(
+            hv, 370, 3, 8, smallest=True, new_data=False, ridge=True,
+            scale=True, globalscale=True, normalization=True,
+            featselect_featvar=False, featselect_featconst=True,
+            select_limit=select_limit, feat_sub=i)
         if bool(selected_features1):
             hit1 += 1
         if bool(selected_features2):
             hit2 += 1
         if bool(selected_features1) and bool(selected_features2):
-            data1 = np.concatenate((data1,
-                                   (list(selected_features1.items())[0])[1][0][:]
-                                    ), axis=0)
-            data2 = np.concatenate((data2,
-                                   (list(selected_features2.items())[0])[1][0][:]
-                                    ), axis=0)
+            data1 = np.concatenate(
+                (data1, (list(selected_features1.items())[0])[1][0][:]),
+                axis=0)
+            data2 = np.concatenate(
+                (data2, (list(selected_features2.items())[0])[1][0][:]),
+                axis=0)
     data1 = np.delete(data1, 0)
     data2 = np.delete(data2, 0)
     print(data1, data2)

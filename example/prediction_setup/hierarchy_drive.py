@@ -27,12 +27,12 @@ else:
     # For which fetureset inspection is made. (Varying of data size)
     select_limit = [i-1, i+1]
 while i < lim:
-    set_size, p_error, result, PC = hierarchy(hv,
-       370, 10, 50, new_data=True,
-       ridge=True, scale=True, globalscale=True, normalization=True,
-       featselect_featvar=featselect_featvar,
-       featselect_featconst=featselect_featconst,
-       select_limit=select_limit, feat_sub=i)
+    set_size, p_error, result, PC = hierarchy(
+        hv, 370, 10, 50, new_data=True, ridge=True, scale=True,
+        globalscale=True, normalization=True,
+        featselect_featvar=featselect_featvar,
+        featselect_featconst=featselect_featconst, select_limit=select_limit,
+        feat_sub=i)
     if not (set_size and p_error) == [] and not featselect_featvar:
         for data in result:
             print('data size:', data[0], 'prediction error:',
