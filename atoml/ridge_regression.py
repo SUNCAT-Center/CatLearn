@@ -147,7 +147,31 @@ class RidgeRegression(object):
 
         return omega2_min
 
-    def RR(self, X, Y, omega2, p=0.):
+    def regularization(self, train_targets, train_features, coef=None,
+                       featselect_featvar=False):
+        """Generate the omgea2 and coef value's.
+
+        Parameters
+        ----------
+         train_targets : array
+            Dependent data used for training.
+        train_features : array
+            Independent data used for training.
+        coef : int
+        List of indices in the feature database.
+        """
+        reg_data = {'result': None}
+
+        if coef is None:
+            b = self.find_optimal_regularization(train_features,
+                                                 train_targets)
+            coef = self.RR(train_features, train_targets, omega2=b,
+                           featselect_featvar=featselect_featvar)[0]
+
+            reg_data['result'] = coef, b
+        return reg_data
+
+    def RR(self, X, Y, omega2, p=0., featselect_featvar=False):
         """Ridge Regression (RR) solver.
 
         Cost is (Xa-y)**2 + omega2*(a-p)**2, SVD of X.T X, where T is the
@@ -181,6 +205,8 @@ class RidgeRegression(object):
         XtX_reg_inv = np.dot(np.dot(self.Vh.T, np.diag(inv_W2_reg)), self.Vh)
         coefs = np.dot(XtX_reg_inv, (np.dot(X.T, Y.T) + omega2 * p))
         Neff = np.sum(self.W2 * inv_W2_reg)
+        if featselect_featvar:
+            self.W2 = None
 
         return coefs, Neff
 
