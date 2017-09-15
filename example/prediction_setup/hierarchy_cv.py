@@ -9,7 +9,7 @@ from atoml.ridge_regression import RidgeRegression
 from atoml.feature_preprocess import standardize
 from atoml.predict import target_standardize
 
-# Define the hierarchey cv class method.
+# Define the hierarchy cv class method.
 hv = HierarchyValidation(db_name='../../data/train_db.sqlite',
                          table='FingerVector',
                          file_name='hierarchy')
