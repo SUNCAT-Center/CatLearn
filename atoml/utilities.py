@@ -117,3 +117,47 @@ def clean_infinite(train, test=None, labels=None):
     clean['labels'] = labels
 
     return clean
+
+
+def geometry_hash(atoms):
+    """ A hash based strictly on the geometry features of
+    an atoms object: positions, cell, and symbols.
+
+    This is intended for planewave basis set calculations,
+    so pbc is not considered.
+
+    Each element is sorted in the algorithem to help prevent
+    new hashs for identical geometries.
+    """
+
+    atoms.wrap()
+
+    pos = atoms.get_positions()
+
+    # Sort the cell array by magnitude of z, y, x coordinates, in that order
+    cell = np.array(sorted(atoms.get_cell(),
+                           key=lambda x: (x[2], x[1], x[0])))
+
+    # Flatten the array and return a string of numbers only
+    # We only consider position changes up to 3 decimal places
+    cell_hash = np.array_str(np.ndarray.flatten(cell.round(3)))
+    cell_hash = ''.join(cell_hash.strip('[]').split()).replace('.', '')
+
+    # Sort the atoms positions similarly, but store the sorting order
+    pos = atoms.get_positions()
+    srt = [i for i, _ in sorted(enumerate(pos),
+                                key=lambda x: (x[1][2], x[1][1], x[1][0]))]
+    pos_hash = np.array_str(np.ndarray.flatten(pos[srt].round(3)))
+    pos_hash = ''.join(pos_hash.strip('[]').split()).replace('.', '')
+
+    # Create a symbols hash in the same fashion conserving position sort order
+    sym = np.array(atoms.get_atomic_numbers())[srt]
+    sym_hash = np.array_str(np.ndarray.flatten(sym))
+    sym_hash = ''.join(sym_hash.strip('[]').split())
+
+    # Assemble a master hash and convert it through an md5
+    master_hash = cell_hash + pos_hash + sym_hash
+    md5 = hashlib.md5(master_hash)
+    _hash = md5.hexdigest()
+
+    return _hash
