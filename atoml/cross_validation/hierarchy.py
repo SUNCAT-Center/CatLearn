@@ -10,7 +10,7 @@ from collections import OrderedDict
 from atoml.feature_preprocess import standardize, normalize
 
 
-class HierarchyValidation(object):
+class Hierarchy(object):
     """Class to form hierarchy crossvalidation setup.
 
     This class is used to cross-validate with respect to data size. The initial
@@ -130,7 +130,28 @@ class HierarchyValidation(object):
             s = normalize(train_matrix=feat1, test_matrix=feat2, local=False)
             mean, scalar = s['mean'], s['dif']
 
-        return scalar, mean
+        return mean, scalar
+
+    def globalscaledata(self, index_split):
+        """Make an array with all data.
+
+        Parameters
+        ----------
+        index_split : array
+            Array with the index data.
+        """
+        global_data1 = self._compile_split(index_split["1" + '_' + "1"])
+        global_data2 = self._compile_split(index_split["1" + '_' + "2"])
+        global_feat1 = np.array(global_data1[:, 1:-1], np.float64)
+        global_tar1 = np.array(global_data1[:, -1:], np.float64)
+        d1, d2 = np.shape(global_tar1)
+        global_tar1 = global_tar1.reshape(d2, d1)[0]
+        global_feat2 = np.array(global_data2[:, 1:-1], np.float64)
+        global_tar2 = np.array(global_data2[:, -1:], np.float64)
+        d1, d2 = np.shape(global_tar2)
+        global_tar2 = global_tar2.reshape(d2, d1)[0]
+        globaldata = np.concatenate((global_feat1, global_feat2), axis=0)
+        return globaldata, global_feat1, global_tar1
 
     def get_subset_data(self, index_split, indicies, split=None):
         """Make array with training data according to index.
@@ -140,7 +161,7 @@ class HierarchyValidation(object):
         index_split : array
             Array with the index data.
         indicies : array
-        Index used to generate data.
+            Index used to generate data.
         """
         index1, index2 = indicies.split('_')
         if split is None:
@@ -222,99 +243,3 @@ class HierarchyValidation(object):
         self.cursor.execute(query, id_list)
 
         return self.cursor.fetchall()
-
-    def hierarcy(self, features, min_split, max_split, new_data=True,
-                 ridge=True, scale=True, globalscale=True, normalization=True,
-                 feature_selection=False):
-        """Function to extract raw data from the database.
-
-        Parameters
-        ----------
-        id_list : list
-            The uuids to pull data.
-        """
-        from data_process import data_process
-        from feature_selection import feature_selection
-        from atoml.ridge_regression import RidgeRegression
-
-        result = []
-        data_size = []
-        p_error = []
-        PC = data_process(features, min_split, max_split, scale=scale,
-                          ridge=ridge, normalization=normalization)
-
-        if new_data:
-            # Split the data into subsets.
-            self.split_index(min_split=min_split, max_split=max_split)
-            # Load data back in from save file.
-        index_split = self.load_split()
-
-        if globalscale:
-            s_feat, m_feat = self.global_scale_data(index_split, features)
-        for indicies in reversed(index_split):
-            if not globalscale:
-                s_feat, m_feat = None, None
-
-            s_tar, m_tar = None, None
-            train_targets, train_features, index1, index2 =\
-                self.get_subset_data(index_split=index_split,
-                                     indicies=indicies)
-            coef = None
-
-            for split in range(1, 2**int(index1)+1):
-                reg_data = {'result': None}
-                if split != int(index2):
-                    _, train_features, _, _ = self.get_subset_data(
-                                                    index_split=index_split,
-                                                    indicies=indicies)
-                    test_targets, test_features, _, _ =\
-                        self.get_subset_data(index_split, indicies,
-                                             split=split)
-                    ridge = RidgeRegression()
-                    (s_tar, m_tar, s_feat, m_feat,
-                     train_targets, train_features,
-                     test_features) = \
-                        PC.scaling_data(train_features=train_features,
-                                        train_targets=train_targets,
-                                        test_features=test_features,
-                                        s_tar=s_tar, m_tar=m_tar,
-                                        s_feat=s_feat, m_feat=m_feat)
-                    #if feature_selection:
-                        #FS = feature_selection(train_features=train_features,
-                                               #train_targets=train_targets)
-                        #selected_features = FS.selection()
-                    if coef is None:
-                        reg_data = ridge.regularization(train_targets,
-                                                        train_features,
-                                                        coef)
-
-                    if reg_data['result'] is not None:
-                        reg_store = reg_data['result']
-                        coef = reg_data['result'][0]
-
-                    data = PC.prediction_error(test_features, test_targets,
-                                               coef, s_tar, m_tar)
-
-                    if reg_data['result'] is not None:
-
-                        data['result'] += reg_data['result']
-
-                    else:
-
-                        data['result'] += reg_store
-
-                    result.append(data['result'])
-                    print('data size:', data['result'][0], 'prediction error:',
-                          data['result'][1], 'Omega:', data['result'][5],
-                          'Euclidean length:', data['result'][2],
-                          'Pearson correlation:', data['result'][3])
-
-                    data_size.append(data['result'][0])
-                    p_error.append(data['result'][1])
-
-        p_error_mean_list, data_size_mean_list, corrected_std =\
-            PC.get_statistic(data_size, p_error)
-        PC.learning_curve(data_size, p_error,
-                          data_size_mean=data_size_mean_list,
-                          p_error_mean=p_error_mean_list,
-                          corrected_std=corrected_std)
