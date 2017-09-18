@@ -12,7 +12,7 @@ from keras.optimizers import Adam
 from keras.utils import plot_model
 
 from atoml.predict import GaussianProcess
-from atoml.cross_validation import HierarchyValidation
+from atoml.cross_validation import Hierarchy
 from atoml.feature_engineering import single_transform
 from atoml.feature_preprocess import standardize
 
@@ -26,9 +26,8 @@ size = 500
 reg = 0.01
 
 # Define the hierarchey cv class method.
-hv = HierarchyValidation(db_name='../../data/train_db.sqlite',
-                         table='FingerVector',
-                         file_name='sensitivity_data')
+hv = Hierarchy(db_name='../../data/train_db.sqlite', table='FingerVector',
+               file_name='sensitivity_data')
 
 # Split the data into subsets.
 if new_data:

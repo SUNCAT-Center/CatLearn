@@ -1,5 +1,6 @@
-"""Ridge regression function from Keld Lundgaard."""
+"""Modified ridge regression function from Keld Lundgaard."""
 import numpy as np
+from collections import defaultdict
 
 
 class RidgeRegression(object):
@@ -10,7 +11,8 @@ class RidgeRegression(object):
     bootstrap when there is highly correlated training data.
     """
 
-    def __init__(self, W2=None, Vh=None, cv='loocv'):
+    def __init__(self, W2=None, Vh=None, cv='loocv', Ns=100, wsteps=15,
+                 rsteps=3):
         """Ridge regression setup.
 
         Parameters
@@ -22,13 +24,64 @@ class RidgeRegression(object):
         cv : string
             Define the type to CV used to find penalty term, can be 'bootstrap'
             or 'loocv'. Default is bootstrap.
+        Ns : int
+            Number of boostrap samples to use.
+        wsteps : int
+            Steps in omega2 search linespacing.
+        rsteps : int
+            Number of refinement steps.
         """
         self.W2 = W2
         self.Vh = Vh
         self.cv = cv
+        self.Ns = Ns
+        self.wsteps = wsteps
+        self.rsteps = rsteps
 
-    def find_optimal_regularization(self, X, Y, p=0., Ns=100, wsteps=15,
-                                    rsteps=3):
+    def predict(self, train_matrix, train_targets, test_matrix,
+                test_targets=None, coefficients=None, reg=None, p=0.):
+        """Function to do ridge regression predictions."""
+        if coefficients is None:
+            coefficients = self.get_coefficients(train_targets=train_targets,
+                                                 train_features=train_matrix,
+                                                 reg=reg, p=p)
+        validation = []
+        prediction = []
+        for vec in train_matrix:
+            validation.append(np.dot(coefficients, vec))
+        for vec in test_matrix:
+            prediction.append(np.dot(coefficients, vec))
+
+        return validation, prediction
+
+    def get_coefficients(self, train_targets, train_features, reg=None, p=0.):
+        """Generate the omgea2 and coef value's.
+
+        Parameters
+        ----------
+        train_targets : array
+            Dependent data used for training.
+        train_features : array
+            Independent data used for training.
+        reg : float
+            Precomputed optimal regaluzation.
+        p : float
+            Define the prior function. Default is zero.
+        """
+        data = defaultdict(list)
+
+        if reg is None:
+            data['reg'] = self.find_optimal_regularization(train_features,
+                                                           train_targets, p=p,
+                                                           Ns=self.Ns,
+                                                           wsteps=self.wsteps,
+                                                           rsteps=self.rsteps)
+        data['coef'] = self.RR(train_features, train_targets, p=p,
+                               omega2=data['reg'])[0]
+
+        return data
+
+    def find_optimal_regularization(self, X, Y, p=0.):
         """Find regualization value to minimize Expected Prediction Error.
 
         Parameters
@@ -39,12 +92,6 @@ class RidgeRegression(object):
             Target data for the training sample.
         p : float
             Define the prior function. Default is zero.
-        Ns : int
-            Number of boostrap samples to use.
-        wsteps : int
-            Steps in omega2 search linespacing.
-        rsteps : int
-            Number of refinement steps.
 
         Returns
         -------
@@ -68,14 +115,14 @@ class RidgeRegression(object):
         whigh, wlow = np.log(self.W2[0] * 2.), np.log(self.W2[-1] * 0.5)
         basesearchwidth = whigh-wlow
         omega2_range = [1e-6*np.exp(wlow)]
-        for pp in np.linspace(wlow, whigh, wsteps):
+        for pp in np.linspace(wlow, whigh, self.wsteps):
             omega2_range.append(np.exp(pp))
         omega2_range.append(1e6*np.exp(whigh))
 
         # Find best value by successively reducing seach area for omega2.
-        for s in range(rsteps):
+        for s in range(self.rsteps):
             if self.cv is 'bootstrap':
-                BS_res = self._bootstrap_master(X, Y, p, omega2_range, Ns)
+                BS_res = self._bootstrap_master(X, Y, p, omega2_range, self.Ns)
                 _, _, epe_list_i, _ = BS_res
             if self.cv is 'loocv':
                 epe_list_i = self._LOOCV_l(X, Y, p, omega2_range, U, W)
@@ -90,17 +137,41 @@ class RidgeRegression(object):
 
             # Update search range
             logmin_epe = np.log(omega2_min)
-            basesearchwidth = 2*basesearchwidth/(wsteps-1)
+            basesearchwidth = 2*basesearchwidth/(self.wsteps-1)
             wlow = logmin_epe - basesearchwidth*0.5
             whigh = logmin_epe + basesearchwidth*0.5
 
             omega2_range = []
-            for pp in np.linspace(wlow, whigh, wsteps):
+            for pp in np.linspace(wlow, whigh, self.wsteps):
                 omega2_range.append(np.exp(pp))
 
         return omega2_min
 
-    def RR(self, X, Y, omega2, p=0.):
+    def regularization(self, train_targets, train_features, coef=None,
+                       featselect_featvar=False):
+        """Generate the omgea2 and coef value's.
+
+        Parameters
+        ----------
+         train_targets : array
+            Dependent data used for training.
+        train_features : array
+            Independent data used for training.
+        coef : int
+        List of indices in the feature database.
+        """
+        reg_data = {'result': None}
+
+        if coef is None:
+            b = self.find_optimal_regularization(train_features,
+                                                 train_targets)
+            coef = self.RR(train_features, train_targets, omega2=b,
+                           featselect_featvar=featselect_featvar)[0]
+
+            reg_data['result'] = coef, b
+        return reg_data
+
+    def RR(self, X, Y, omega2, p=0., featselect_featvar=False):
         """Ridge Regression (RR) solver.
 
         Cost is (Xa-y)**2 + omega2*(a-p)**2, SVD of X.T X, where T is the
@@ -134,6 +205,8 @@ class RidgeRegression(object):
         XtX_reg_inv = np.dot(np.dot(self.Vh.T, np.diag(inv_W2_reg)), self.Vh)
         coefs = np.dot(XtX_reg_inv, (np.dot(X.T, Y.T) + omega2 * p))
         Neff = np.sum(self.W2 * inv_W2_reg)
+        if featselect_featvar:
+            self.W2 = None
 
         return coefs, Neff
 

@@ -18,7 +18,8 @@ class GaussianProcess(object):
     """Gaussian processes functions for the machine learning."""
 
     def __init__(self, train_fp, train_target, kernel_dict,
-                 regularization=None, optimize_hyperparameters=False):
+                 regularization=None, optimize_hyperparameters=False,
+                 standardize_target=True, normalize_target=False):
         """Gaussian processes setup.
 
         Parameters
@@ -32,14 +33,21 @@ class GaussianProcess(object):
             The regularization strength (smoothing function) applied to the
             kernel matrix.
         """
+        msg = 'Cannot standardize and normalize the targets. Pick only one.'
+        assert standardize_target is not normalize_target, msg
+
+        self.standardize_target = standardize_target
+        self.normalize_target = normalize_target
         self.N_train, self.N_D = np.shape(train_fp)
         self.regularization = regularization
         self.prepare_kernels(kernel_dict)
-        self.update_data(train_fp, train_target)
+        self.update_data(train_fp, train_target, standardize_target,
+                         normalize_target)
         if optimize_hyperparameters:
             self.optimize_hyperparameters()
 
-    def update_data(self, train_fp, train_target, standardize_target=True):
+    def update_data(self, train_fp, train_target, standardize_target,
+                    normalize_target):
         """Update the training matrix, targets and covariance matrix.
 
         Parameters
@@ -61,6 +69,9 @@ class GaussianProcess(object):
         if self.standardize_target:
             self.standardize_data = target_standardize(train_target)
             self.train_target = self.standardize_data['target']
+        elif self.normalize_target:
+            self.normalize_data = target_normalize(train_target)
+            self.train_target = self.normalize_data['target']
         else:
             self.train_target = train_target
         # Get the Gram matrix on-the-fly if none is suppiled.
@@ -208,6 +219,10 @@ class GaussianProcess(object):
                 train_target = self.train_target * \
                     self.standardize_data['std'] + \
                     self.standardize_data['mean']
+            if self.normalize_target:
+                train_target = self.train_target * \
+                    self.normalize_data['dif'] + \
+                    self.normalize_data['mean']
             else:
                 train_target = self.train_target
             data['training_error'] = \
@@ -261,6 +276,10 @@ class GaussianProcess(object):
         if self.standardize_target:
             pred = (np.asarray(pred) * self.standardize_data['std']) + \
              self.standardize_data['mean']
+
+        if self.normalize_target:
+            pred = (np.asarray(pred) * self.normalize_data['dif']) + \
+             self.normalize_data['mean']
 
         return pred
 
@@ -318,8 +337,25 @@ def target_standardize(target):
     target = np.asarray(target)
 
     data = defaultdict(list)
-    data['mean'] = np.mean(target)
-    data['std'] = np.std(target)
+    data['mean'] = np.mean(target, axis=0)
+    data['std'] = np.std(target, axis=0)
     data['target'] = (target - data['mean']) / data['std']
+    return data
+
+
+def target_normalize(target):
+    """Return a list of normalized target values.
+
+    Parameters
+    ----------
+    target : list
+        A list of the target values.
+    """
+    target = np.asarray(target)
+
+    data = defaultdict(list)
+    data['mean'] = np.mean(target, axis=0)
+    data['dif'] = np.max(target, axis=0) - np.min(target, axis=0)
+    data['target'] = (target - data['mean']) / data['dif']
 
     return data

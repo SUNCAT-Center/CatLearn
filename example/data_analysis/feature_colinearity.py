@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 
 from sklearn.preprocessing import robust_scale
 
-from atoml.cross_validation import HierarchyValidation
+from atoml.cross_validation import Hierarchy
 from atoml.feature_engineering import single_transform
 from atoml.utilities import clean_variance
 
@@ -19,9 +19,8 @@ expand = False
 correlation = 'pearson'
 
 # Define the hierarchey cv class method.
-hv = HierarchyValidation(db_name='../../data/train_db.sqlite',
-                         table='FingerVector',
-                         file_name='split')
+hv = Hierarchy(db_name='../../data/train_db.sqlite', table='FingerVector',
+               file_name='split')
 # Split the data into subsets.
 hv.split_index(min_split=500, max_split=3000)
 # Load data back in from save file.

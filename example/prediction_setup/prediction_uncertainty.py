@@ -41,7 +41,7 @@ nfp = normalize(train_matrix=train_fp, test_matrix=test_fp)
 kdict = {'k1': {'type': 'gaussian', 'width': 0.5}}
 gp = GaussianProcess(train_fp=nfp['train'], train_target=trainset['target'],
                      kernel_dict=kdict, regularization=0.001,
-                     optimize_hyperparameters=False)
+                     optimize_hyperparameters=True)
 
 
 def basis(descriptors):

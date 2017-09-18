@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 
 from sklearn import linear_model
 
-from atoml.cross_validation import HierarchyValidation
+from atoml.cross_validation import Hierarchy
 from atoml.feature_preprocess import standardize
 from atoml.predict import get_error
 from atoml.gp_sensitivity import SensitivityAnalysis
@@ -15,9 +15,8 @@ from atoml.gp_sensitivity import SensitivityAnalysis
 ds = 500  # data size
 
 # Define the hierarchey cv class method.
-hv = HierarchyValidation(db_name='../../data/train_db.sqlite',
-                         table='FingerVector',
-                         file_name='split')
+hv = Hierarchy(db_name='../../data/train_db.sqlite', table='FingerVector',
+               file_name='split')
 # Split the data into subsets.
 hv.split_index(min_split=ds, max_split=ds*2)
 # Load data back in from save file.
