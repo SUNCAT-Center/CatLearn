@@ -15,7 +15,7 @@ def afunc(x):
 
 
 train_points = 30
-test_points = 5000
+test_points = 50
 
 train = 7.6 * np.random.random_sample((1, train_points)) - 4.2 + 50
 target = []
@@ -31,7 +31,7 @@ stdx = np.std(train)
 stdy = np.std(target)
 tstd = np.std(target, axis=1)
 
-linex = 8 * np.random.random_sample((1, test_points)) - 4.5 + 50
+linex = 8 * np.random.random_sample((1, 5000)) - 4.5 + 50
 linex = np.sort(linex)
 liney = []
 for i in linex:
@@ -56,12 +56,13 @@ gp = GaussianProcess(kernel_dict=kdict, regularization=sdt1**2,
                      train_fp=std['train'], train_target=target[0],
                      optimize_hyperparameters=False)
 
-# Do the predictions.
-pred = gp.get_predictions(test_fp=std['test'],
-                          uncertainty=True)
+# Do the under-fitted predictions.
+under_fit = gp.get_predictions(test_fp=std['test'], uncertainty=True)
 
-upper = np.array(pred['prediction']) + (np.array(pred['uncertainty'] * tstd))
-lower = np.array(pred['prediction']) - (np.array(pred['uncertainty'] * tstd))
+upper = np.array(under_fit['prediction']) + \
+ (np.array(under_fit['uncertainty'] * tstd))
+lower = np.array(under_fit['prediction']) - \
+ (np.array(under_fit['uncertainty'] * tstd))
 
 # Set up the prediction routine.
 kdict = {'k1': {'type': 'gaussian', 'width': w2}}
@@ -69,14 +70,13 @@ gp = GaussianProcess(kernel_dict=kdict, regularization=sdt2**2,
                      train_fp=std['train'], train_target=target[0],
                      optimize_hyperparameters=False)
 
-# Do the predictions.
-over = gp.get_predictions(test_fp=std['test'],
-                          uncertainty=True)
+# Do the over-fitted predictions.
+over_fit = gp.get_predictions(test_fp=std['test'], uncertainty=True)
 
-over_upper = np.array(over['prediction']) + \
- (np.array(over['uncertainty'] * tstd))
-over_lower = np.array(over['prediction']) - \
- (np.array(over['uncertainty'] * tstd))
+over_upper = np.array(over_fit['prediction']) + \
+ (np.array(over_fit['uncertainty'] * tstd))
+over_lower = np.array(over_fit['prediction']) - \
+ (np.array(over_fit['uncertainty'] * tstd))
 
 # Set up the prediction routine.
 kdict = {'k1': {'type': 'gaussian', 'width': [w1]}}
@@ -84,21 +84,20 @@ gp = GaussianProcess(kernel_dict=kdict, regularization=sdt1**2,
                      train_fp=std['train'], train_target=target[0],
                      optimize_hyperparameters=True)
 
-# Do the predictions.
-optp = gp.get_predictions(test_fp=std['test'],
-                          uncertainty=True)
+# Do the optimized predictions.
+optimized = gp.get_predictions(test_fp=std['test'], uncertainty=True)
 
-opt_upper = np.array(optp['prediction']) + \
- (np.array(optp['uncertainty'] * tstd))
-opt_lower = np.array(optp['prediction']) - \
- (np.array(optp['uncertainty'] * tstd))
+opt_upper = np.array(optimized['prediction']) + \
+ (np.array(optimized['uncertainty'] * tstd))
+opt_lower = np.array(optimized['prediction']) - \
+ (np.array(optimized['uncertainty'] * tstd))
 
 fig = plt.figure(figsize=(15, 8))
 
 ax = fig.add_subplot(141)
 ax.plot(linex[0], liney[0], '-', lw=1, color='black')
 ax.plot(train[0], target[0], 'o', alpha=0.2, color='black')
-ax.plot(test[0], pred['prediction'], 'b-', lw=1, alpha=0.4)
+ax.plot(test[0], under_fit['prediction'], 'b-', lw=1, alpha=0.4)
 ax.fill_between(test[0], upper, lower, interpolate=True, color='blue',
                 alpha=0.2)
 plt.title('w: {0:.3f}, r: {1:.3f}'.format(w1 * stdx, sdt1 * stdy))
@@ -109,7 +108,7 @@ plt.axis('tight')
 ax = fig.add_subplot(142)
 ax.plot(linex[0], liney[0], '-', lw=1, color='black')
 ax.plot(train[0], target[0], 'o', alpha=0.2, color='black')
-ax.plot(test[0], over['prediction'], 'r-', lw=1, alpha=0.4)
+ax.plot(test[0], over_fit['prediction'], 'r-', lw=1, alpha=0.4)
 ax.fill_between(test[0], over_upper, over_lower, interpolate=True, color='red',
                 alpha=0.2)
 plt.title('w: {0:.3f}, r: {1:.3f}'.format(w2 * stdx, sdt2 * stdy))
@@ -120,7 +119,7 @@ plt.axis('tight')
 ax = fig.add_subplot(143)
 ax.plot(linex[0], liney[0], '-', lw=1, color='black')
 ax.plot(train[0], target[0], 'o', alpha=0.2, color='black')
-ax.plot(test[0], optp['prediction'], 'g-', lw=1, alpha=0.4)
+ax.plot(test[0], optimized['prediction'], 'g-', lw=1, alpha=0.4)
 ax.fill_between(test[0], opt_upper, opt_lower, interpolate=True, color='green',
                 alpha=0.2)
 plt.title('w: {0:.3f}, r: {1:.3f}'.format(
@@ -130,11 +129,11 @@ plt.ylabel('response')
 plt.axis('tight')
 
 ax = fig.add_subplot(144)
-ax.plot(test[0], np.array(pred['uncertainty'] * tstd), '-', lw=1,
+ax.plot(test[0], np.array(under_fit['uncertainty'] * tstd), '-', lw=1,
         color='blue')
-ax.plot(test[0], np.array(over['uncertainty'] * tstd), '-', lw=1,
+ax.plot(test[0], np.array(over_fit['uncertainty'] * tstd), '-', lw=1,
         color='red')
-ax.plot(test[0], np.array(optp['uncertainty'] * tstd), '-', lw=1,
+ax.plot(test[0], np.array(optimized['uncertainty'] * tstd), '-', lw=1,
         color='green')
 plt.title('Uncertainty Profile')
 plt.xlabel('feature')
