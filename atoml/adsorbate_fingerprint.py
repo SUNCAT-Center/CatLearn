@@ -16,6 +16,7 @@ import ase.db
 from ase.atoms import string2symbols
 from ase.data import ground_state_magnetic_moments, covalent_radii
 from ase.data import chemical_symbols, atomic_numbers
+from ase.visualize import view
 from .general_fingerprint import get_mendeleev_params
 from .db2thermo import layers_info
 from .neighbor_matrix import connection_matrix
@@ -318,7 +319,7 @@ class AdsorbateFingerprintGenerator(object):
             nH = len([a.index for a in atoms if a.symbol == 'H'])
             return [nC, nH]  # , nN, nO]
 
-    def primary_adds_nn(self, atoms=None):
+    def primary_adds_nn(self, atoms=None, rtol=1.15):
         """ Function that takes an atoms objects and returns a fingerprint
             vector containing the count of C, O, H, N and also metal atoms,
             that are neighbors to the binding atom.
@@ -343,10 +344,10 @@ class AdsorbateFingerprintGenerator(object):
             dadd = covalent_radii[Z_add1]
             nH1 = len([a.index for a in atoms if a.symbol == 'H' and
                        atoms.get_distance(primary_add, a.index, mic=True) <
-                       (dH+dadd)*1.15 and a.index != primary_add])
+                       (dH+dadd)*rtol and a.index != primary_add])
             nC1 = len([a.index for a in atoms if a.symbol == 'C' and
                        atoms.get_distance(primary_add, a.index, mic=True) <
-                       (dC+dadd)*1.15 and a.index != primary_add])
+                       (dC+dadd)*rtol and a.index != primary_add])
             nM = len(atoms.info['i_surfnn'])
             # nM = len([a.index for a in atoms if a.symbol not in addsyms and
             #          atoms.get_distance(primary_add, a.index, mic=True) <
@@ -365,7 +366,7 @@ class AdsorbateFingerprintGenerator(object):
             return ['num_C_add2nn', 'num_H_add2nn', 'num_M_add2nn']
         else:
             surf_atoms = atoms.info['surf_atoms']
-            add_atoms = ['add_atoms']
+            add_atoms = atoms.info['add_atoms']
             liste = []
             for m in surf_atoms:
                 for a in add_atoms:
@@ -385,7 +386,7 @@ class AdsorbateFingerprintGenerator(object):
                      2.35])
             return [nC1, nH1, nM]  # , nN, nH]
 
-    def primary_surf_nn(self, atoms=None):
+    def primary_surf_nn(self, atoms=None, rtol=1.3):
         """ Function that takes an atoms objects and returns a fingerprint
             vector containing the count of nearest neighbors and properties of
             the nearest neighbors.
@@ -423,56 +424,48 @@ class AdsorbateFingerprintGenerator(object):
                     'ionenergy_surf2',
                     'ground_state_magmom_surf2']
         else:
-            add_atoms = atoms.info['add_atoms']
-            if atoms.info['key_value_pairs']['supercell'] == '1x1':
-                atoms = atoms.repeat([2, 2, 1])
-            elif atoms.info['key_value_pairs']['supercell'] == '3x2':
-                atoms = atoms.repeat([1, 2, 1])
+            atoms = atoms.repeat([2, 2, 1])
             bulk_atoms, top_atoms = layers_info(atoms)
-            liste = []
-            for m in top_atoms:
-                for a in add_atoms:
-                    d = atoms.get_distance(m, a, mic=True, vector=False)
-                    liste.append([m, d])
-            L = np.array(liste)
-            try:
-                i = np.argmin(L[:, 1])
-            except IndexError:
-                print(atoms.info)
-                print(top_atoms)
-                raise
-            primary_surf = int(L[i, 0])
             symbols = atoms.get_chemical_symbols()
             numbers = atoms.numbers
-            name = symbols[primary_surf]
-            Z0 = numbers[primary_surf]
-            r_bond = covalent_radii[Z0]
+            # Get a list of neighbors of binding surface atom(s).
+            # Loop over binding surface atoms.
             ai = []
-            for nni in top_atoms:
-                d_nn = atoms.get_distance(primary_surf, nni, mic=True,
-                                          vector=False)
-                ai.append([nni, d_nn])
-            mnlv0 = get_mendeleev_params(Z0, extra_params=['heat_of_formation',
-                                                           'dft_bulk_modulus',
-                                                           'dft_density',
-                                                           'dbcenter',
-                                                           'dbfilling',
-                                                           'dbwidth',
-                                                           'dbskew',
-                                                           'dbkurt',
-                                                           'block',
-                                                           'econf',
-                                                           'ionenergies'])
-            dat = [mnlv0[:-3] + [float(block2number[mnlv0[-3]])] +
-                   list(n_outer(mnlv0[-2])) + [mnlv0[-1]['1']] +
-                   [float(ground_state_magnetic_moments[Z0])]]
+            adatoms = ['H', 'C', 'N', 'O']
+            for primary_surf in atoms.info['i_surfnn']:
+                name = symbols[primary_surf]
+                Z0 = numbers[primary_surf]
+                r_bond = covalent_radii[Z0]
+                # Loop over top atoms.
+                for nni in top_atoms:
+                    if nni == primary_surf or atoms[nni].symbol in adatoms:
+                        continue
+                    assert nni not in atoms.info['add_atoms']
+                    # Get pair distance and append to list.
+                    d_nn = atoms.get_distance(primary_surf, nni, mic=True,
+                                              vector=False)
+                    ai.append([nni, d_nn])
+            # mnlv0= get_mendeleev_params(Z0,extra_params=['heat_of_formation',
+            #                                               'dft_bulk_modulus',
+            #                                               'dft_density',
+            #                                               'dbcenter',
+            #                                               'dbfilling',
+            #                                               'dbwidth',
+            #                                               'dbskew',
+            #                                               'dbkurt',
+            #                                               'block',
+            #                                               'econf',
+            #                                               'ionenergies'])
+            dat = []  # [mnlv0[:-3] + [float(block2number[mnlv0[-3]])] +
+            #       list(n_outer(mnlv0[-2])) + [mnlv0[-1]['1']] +
+            #       [float(ground_state_magnetic_moments[Z0])]]
             n = 0
             q_self = []
             for nn in ai:
                 q = nn[0]
                 Znn = numbers[q]
                 r_bond_nn = covalent_radii[Znn]
-                if q != primary_surf and 1.15*(r_bond_nn+r_bond) > nn[1]:
+                if q != primary_surf and nn[1] < rtol * (r_bond_nn+r_bond):
                     sym = symbols[q]
                     mnlv = get_mendeleev_params(Znn, extra_params=[
                                                  'heat_of_formation',
@@ -489,10 +482,13 @@ class AdsorbateFingerprintGenerator(object):
                     n += 1
                     dat.append(mnlv[:-3] + [float(block2number[mnlv[-3]])] +
                                list(n_outer(mnlv[-2])) + [mnlv[-1]['1']] +
-                               [float(ground_state_magnetic_moments[q])])
+                               [float(ground_state_magnetic_moments[Znn])])
                     if sym == name:
                         q_self.append(q)
             n_self = len(q_self)
+            if len(dat) == 0:
+                raise ValueError("atoms.info['i_surf'] is not correct" +
+                                 " for dbid " + str(atoms.info['dbid']))
             return [n, n_self] + list(np.nanmean(dat, axis=0, dtype=float))
 
     def ads_nbonds(self, atoms=None):
