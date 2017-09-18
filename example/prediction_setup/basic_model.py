@@ -7,7 +7,7 @@ import seaborn as sns
 import pandas as pd
 import matplotlib.pyplot as plt
 
-from atoml.cross_validation import HierarchyValidation
+from atoml.cross_validation import Hierarchy
 from atoml.feature_preprocess import standardize
 from atoml.predict import GaussianProcess
 
@@ -20,9 +20,8 @@ plot = True
 ds = 500
 
 # Define the hierarchy cv class method.
-hv = HierarchyValidation(db_name='../../data/train_db.sqlite',
-                         table='FingerVector',
-                         file_name='split')
+hv = Hierarchy(db_name='../../data/train_db.sqlite', table='FingerVector',
+               file_name='split')
 # Split the data into subsets.
 hv.split_index(min_split=ds, max_split=ds*2)
 # Load data back in from save file.

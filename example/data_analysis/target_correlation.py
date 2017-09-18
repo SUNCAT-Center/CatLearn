@@ -3,7 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy.stats import pearsonr, spearmanr, kendalltau
 
-from atoml.cross_validation import HierarchyValidation
+from atoml.cross_validation import Hierarchy
 from atoml.feature_preprocess import standardize
 from atoml.feature_engineering import get_order_2, single_transform
 from atoml.utilities import clean_variance
@@ -11,9 +11,8 @@ from atoml.utilities import clean_variance
 correlation = 'pearson'
 
 # Define the hierarchey cv class method.
-hv = HierarchyValidation(db_name='../../data/train_db.sqlite',
-                         table='FingerVector',
-                         file_name='split')
+hv = Hierarchy(db_name='../../data/train_db.sqlite', table='FingerVector',
+               file_name='split')
 # Split the data into subsets.
 hv.split_index(min_split=50, max_split=2000)
 # Load data back in from save file.

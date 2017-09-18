@@ -4,15 +4,14 @@ import matplotlib.pyplot as plt
 
 from sklearn.cluster import AffinityPropagation
 
-from atoml.cross_validation import HierarchyValidation
+from atoml.cross_validation import Hierarchy
 from atoml.ridge_regression import RidgeRegression
 from atoml.feature_preprocess import standardize
 from atoml.predict import target_standardize
 
 # Define the hierarchy cv class method.
-hv = HierarchyValidation(db_name='../../data/train_db.sqlite',
-                         table='FingerVector',
-                         file_name='hierarchy')
+hv = Hierarchy(db_name='../../data/train_db.sqlite', table='FingerVector',
+               file_name='hierarchy')
 # Split the data into subsets.
 hv.split_index(min_split=1000, max_split=8000)
 # Load data back in from save file.
