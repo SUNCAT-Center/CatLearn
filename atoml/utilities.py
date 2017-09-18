@@ -119,10 +119,35 @@ def clean_infinite(train, test=None, labels=None):
     return clean
 
 
-def test_data_limited(gp, testx, testy, step=1, min_data=0,
+def test_data_limited(gp, testx, testy, step=1, min_data=2,
                       optimize_interval=None):
-    if min_data == 0:
-        min_data += step
+    """Evaluate validation error versus training data size.
+
+    Returns a dictionary containing the lists:
+    -------
+    N_data : training data size
+    rmse_average : Root mean square validation error.
+    absolute_average : mean absolute validation error.
+    signed_mean : signed mean validation error.
+
+    Parameters
+    ----------
+    gp : GaussianProcess class
+        create it from atoml.GaussianProcess
+    testx : array
+        Feature matrix for the test data.
+    testy : list
+        A list of the the test targets used to generate the prediction
+        errors.
+    step : integer
+        Number of datapoints per prediction iteration.
+    min_data : integer
+        Number of datapoints in first prediction iteration.
+    optimize_interval : integer or None
+        Reoptimize the hyperparameters every this many datapoints.
+    """
+    if min_data < 2:
+        raise ValueError("min_data must be at least 2.")
     # Retrieve the full training data and training targets from gp.
     trainx = (gp.train_fp).copy()
     # If the targets are standardized, convert back to the raw targets.
