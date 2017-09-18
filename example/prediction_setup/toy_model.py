@@ -14,7 +14,7 @@ def afunc(x):
     return 1 / 20 * p + 500
 
 
-train_points = 1000
+train_points = 30
 test_points = 5000
 
 train = 7.6 * np.random.random_sample((1, train_points)) - 4.2 + 50
@@ -45,8 +45,8 @@ std = standardize(train_matrix=np.reshape(train, (np.shape(train)[1], 1)),
                   test_matrix=np.reshape(test, (np.shape(test)[1], 1)))
 
 # Prediction parameters
-sdt1 = np.sqrt(0.2)
-w1 = 0.142
+sdt1 = np.sqrt(1e-1)
+w1 = 0.95
 sdt2 = np.sqrt(1e-5)
 w2 = 0.142
 
@@ -101,7 +101,7 @@ ax.plot(train[0], target[0], 'o', alpha=0.2, color='black')
 ax.plot(test[0], pred['prediction'], 'b-', lw=1, alpha=0.4)
 ax.fill_between(test[0], upper, lower, interpolate=True, color='blue',
                 alpha=0.2)
-plt.title('w:' + str(w1 * stdx)+', r:' + str(sdt1 * stdy))
+plt.title('w: {0:.3f}, r: {1:.3f}'.format(w1 * stdx, sdt1 * stdy))
 plt.xlabel('feature')
 plt.ylabel('response')
 plt.axis('tight')
@@ -112,7 +112,7 @@ ax.plot(train[0], target[0], 'o', alpha=0.2, color='black')
 ax.plot(test[0], over['prediction'], 'r-', lw=1, alpha=0.4)
 ax.fill_between(test[0], over_upper, over_lower, interpolate=True, color='red',
                 alpha=0.2)
-plt.title('w:' + str(w2 * stdx)+', r:' + str(sdt2 * stdy))
+plt.title('w: {0:.3f}, r: {1:.3f}'.format(w2 * stdx, sdt2 * stdy))
 plt.xlabel('feature')
 plt.ylabel('response')
 plt.axis('tight')
@@ -123,8 +123,8 @@ ax.plot(train[0], target[0], 'o', alpha=0.2, color='black')
 ax.plot(test[0], optp['prediction'], 'g-', lw=1, alpha=0.4)
 ax.fill_between(test[0], opt_upper, opt_lower, interpolate=True, color='green',
                 alpha=0.2)
-plt.title('w:' + str(gp.kernel_dict['k1']['width'][0] * stdx) +
-          ', r:' + str(np.sqrt(gp.regularization)*stdy))
+plt.title('w: {0:.3f}, r: {1:.3f}'.format(
+    gp.kernel_dict['k1']['width'][0]*stdx, np.sqrt(gp.regularization)*stdy))
 plt.xlabel('feature')
 plt.ylabel('response')
 plt.axis('tight')
