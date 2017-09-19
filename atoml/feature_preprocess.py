@@ -4,30 +4,8 @@ from scipy import cluster
 from collections import defaultdict
 
 
-def matrix_split(X, nsplit, fix_size=None):
-    """Routine to split feature matrix and return sublists.
-
-    Parameters
-    ----------
-    nsplit : int
-        The number of bins that data should be devided into.
-    fix_size : int
-        Define a fixed sample size, e.g. nsplit=5 fix_size=100, generates
-        5 x 100 data split. Default is None, all avaliable data is divided
-        nsplit times.
-    """
-    np.random.shuffle(X)  # Shuffle ordering of the array along 0 axis.
-    if fix_size is not None:
-        msg = 'Cannot divide dataset in this way, number of candidates is '
-        msg += 'too small'
-        assert np.shape(X)[0] >= nsplit * fix_size, msg
-
-        X = X[:nsplit * fix_size, :]
-
-    return np.array_split(X, nsplit)
-
-
-def standardize(train_matrix, test_matrix=None, local=True):
+def standardize(train_matrix, test_matrix=None, mean=None, std=None,
+                local=True):
     """Standardize each feature relative to the mean and standard deviation.
 
     Parameters
@@ -36,28 +14,37 @@ def standardize(train_matrix, test_matrix=None, local=True):
         Feature matrix for the training dataset.
     test_matrix : list
         Feature matrix for the test dataset.
+    mean : list
+        List of mean values for each feature.
+    std : list
+        List of standard deviation values for each feature.
     local : boolean
         Define whether to scale locally or globally.
     """
-    std = defaultdict(list)
+    scale = defaultdict(list)
     if test_matrix is not None and not local:
         data = np.concatenate((train_matrix, test_matrix), axis=0)
     else:
         data = train_matrix
-    std['mean'] = np.mean(data, axis=0)
-    std['std'] = np.std(data, axis=0)
-    np.place(std['std'], std['std'] == 0., [1.])  # Replace 0 with 1.
 
-    std['train'] = (train_matrix - std['mean']) / std['std']
+    if mean is None:
+        mean = np.mean(data, axis=0)
+    scale['mean'] = mean
+    if std is None:
+        std = np.std(data, axis=0)
+    scale['std'] = std
+    np.place(scale['std'], scale['std'] == 0., [1.])  # Replace 0 with 1.
+
+    scale['train'] = (train_matrix - scale['mean']) / scale['std']
 
     if test_matrix is not None:
-        test_matrix = (test_matrix - std['mean']) / std['std']
-    std['test'] = test_matrix
+        test_matrix = (test_matrix - scale['mean']) / scale['std']
+    scale['test'] = test_matrix
 
-    return std
+    return scale
 
 
-def normalize(train_matrix, test_matrix=None, local=True):
+def normalize(train_matrix, test_matrix=None, mean=None, dif=None, local=True):
     """Normalize each feature relative to mean and min/max variance.
 
     Parameters
@@ -68,23 +55,32 @@ def normalize(train_matrix, test_matrix=None, local=True):
         Feature matrix for the test dataset.
     local : boolean
         Define whether to scale locally or globally.
+    mean : list
+        List of mean values for each feature.
+    dif : list
+        List of max-min values for each feature.
     """
-    norm = defaultdict(list)
+    scale = defaultdict(list)
     if test_matrix is not None and not local:
         data = np.concatenate((train_matrix, test_matrix), axis=0)
     else:
         data = train_matrix
-    norm['mean'] = np.mean(data, axis=0)
-    norm['dif'] = np.max(data, axis=0) - np.min(data, axis=0)
-    np.place(norm['dif'], norm['dif'] == 0., [1.])  # Replace 0 with 1.
 
-    norm['train'] = (train_matrix - norm['mean']) / norm['dif']
+    if mean is None:
+        mean = np.mean(data, axis=0)
+    scale['mean'] = mean
+    if dif is None:
+        dif = np.max(data, axis=0) - np.min(data, axis=0)
+    scale['dif'] = dif
+    np.place(scale['dif'], scale['dif'] == 0., [1.])  # Replace 0 with 1.
+
+    scale['train'] = (train_matrix - scale['mean']) / scale['dif']
 
     if test_matrix is not None:
-        test_matrix = (test_matrix - norm['mean']) / norm['dif']
-    norm['test'] = test_matrix
+        test_matrix = (test_matrix - scale['mean']) / scale['dif']
+    scale['test'] = test_matrix
 
-    return norm
+    return scale
 
 
 def min_max(train_matrix, test_matrix=None, local=True):

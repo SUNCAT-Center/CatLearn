@@ -39,11 +39,11 @@ if False:
 else:
     train_matrix = sfp
 
-# Select one or more kernels
-# kernel_dict = {'k1': {'type': 'gaussian', 'width': [.3] * m}}
-kernel_dict = {'k1': {'type': 'sqe', 'width': [.3] * m}}
+# Select one or a combination of kernel functions.
+kernel_dict = {'k1': {'type': 'sqe', 'width': [.3] * m,
+                      'bounds': ((1E-6, None), ) * m}}
 
-# Constant arguments for the log marginal likelihood function
+# Constant arguments for the log marginal likelihood function.
 a = (train_matrix, targets, kernel_dict)
 
 # Hyperparameter starting guesses.
@@ -52,7 +52,8 @@ regularization = .003
 theta = np.append(sigma, regularization)
 
 # Hyper parameter bounds.
-b = ((1E-9, 1e6), ) * (m+1)
+regularization_bounds = ((1e-12, None),)
+b = kernel_dict['k1']['bounds'] + regularization_bounds
 print('initial log marginal likelihood =',
       -log_marginal_likelihood(theta,
                                train_matrix,

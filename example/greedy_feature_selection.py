@@ -5,7 +5,8 @@ Created on Fri Nov 18 14:30:20 2016
 @author: mhangaard
 
 """
-from atoml.feature_preprocess import normalize, standardize, matrix_split
+from atoml.feature_preprocess import normalize, standardize
+from atoml.cross_validation import k_fold
 from atoml.predict import GaussianProcess
 import numpy as np
 from matplotlib import pyplot as plt
@@ -19,7 +20,7 @@ data = np.genfromtxt('fpm.txt')
 split_fpv_0 = []
 split_energy = []
 print('Creating', nsplit, '-fold split on survivors.')
-split = matrix_split(data, nsplit)
+split = k_fold(data, nsplit)
 for i in range(nsplit):
     split_fpv_0.append(split[i][:, :-2])
     split_energy.append(split[i][:, -1])

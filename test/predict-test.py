@@ -99,6 +99,21 @@ print('gaussian prediction (ins):',
 print('gaussian prediction (abs):',
       pred['validation_error']['absolute_average'])
 
+# Test prediction routine with gaussian kernel.
+kdict = {'k1': {'type': 'gaussian', 'width': 0.5}}
+gp = GaussianProcess(train_fp=sfp['train'], train_target=train_targets,
+                     kernel_dict=kdict, regularization=0.001,
+                     optimize_hyperparameters=False, standardize_target=False,
+                     normalize_target=True)
+pred = gp.get_predictions(test_fp=sfp['test'],
+                          test_target=test_targets,
+                          get_validation_error=True,
+                          get_training_error=True,
+                          uncertainty=True,
+                          epsilon=0.1)
+assert len(pred['prediction']) == len(sfp['test'])
+print('Normalized target (rmse):', pred['validation_error']['rmse_average'])
+
 # Test prediction routine with different scaling.
 scale = [sfp, sfpg, nfp, nfpg, mmfp, mmfpg, ulfp, ulfpg]
 name = ['standardize local', 'standardize global', 'normalize local',
