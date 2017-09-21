@@ -31,7 +31,24 @@ def adds_index(atoms):
     return add_atoms
 
 
-def info2primary_index(atoms, rtol=1.2):
+def layers_info(atoms):
+    il, z = get_layers(atoms, (0, 0, 1),
+                       tolerance=covalent_radii[atoms.info['Z_surf1']])
+    layers = atoms.info['key_value_pairs']['layers']
+    if len(z) < layers or len(z) > layers * 2:
+        top_atoms = atoms.info['surf_atoms']
+        bulk_atoms = atoms.info['surf_atoms']
+    else:
+        bulk_atoms = [a.index for a in atoms
+                      if il[a.index] < layers-2]
+        top_atoms = [a.index for a in atoms
+                     if il[a.index] > layers-3 and
+                     a.index not in atoms.info['add_atoms']]
+    assert len(bulk_atoms) > 0 and len(top_atoms) > 0
+    return bulk_atoms, top_atoms
+
+
+def info2primary_index(atoms, rtol=1.3):
     liste = []
     surf_atoms = atoms.info['surf_atoms']
     add_atoms = atoms.info['add_atoms']
@@ -57,22 +74,6 @@ def info2primary_index(atoms, rtol=1.2):
                 atoms.get_distance(int(i_add1), int(a.index), mic=True) <
                 (covalent_radii[a.number]+dadd) * rtol]
     return i_add1, i_surf1, Z_add1, Z_surf1, i_surfnn
-
-
-def layers_info(atoms):
-    il, z = get_layers(atoms, (0, 0, 1),
-                       tolerance=covalent_radii[atoms.info['Z_surf1']])
-    layers = atoms.info['key_value_pairs']['layers']
-    if len(z) < layers or len(z) > layers * 2:
-        top_atoms = atoms.info['surf_atoms']
-        bulk_atoms = atoms.info['surf_atoms']
-    else:
-        bulk_atoms = [a.index for a in atoms
-                      if il[a.index] < layers-2]
-        top_atoms = [a.index for a in atoms
-                     if il[a.index] > layers-3 and
-                     a.index not in atoms.info['add_atoms']]
-    return bulk_atoms, top_atoms
 
 
 def db2surf(fname, selection=[]):
