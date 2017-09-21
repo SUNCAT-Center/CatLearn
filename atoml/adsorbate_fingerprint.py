@@ -9,14 +9,10 @@ Created on Tue Dec  6 14:09:29 2016
 """
 from __future__ import print_function
 
-import warnings
 import numpy as np
-
-import ase.db
 from ase.atoms import string2symbols
 from ase.data import ground_state_magnetic_moments, covalent_radii
-from ase.data import chemical_symbols, atomic_numbers
-from ase.visualize import view
+from ase.data import atomic_numbers
 from .general_fingerprint import get_mendeleev_params
 from .db2thermo import layers_info
 from .neighbor_matrix import connection_matrix

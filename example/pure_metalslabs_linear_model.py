@@ -18,11 +18,13 @@ if 'pure_metals.txt' not in listdir('.'):
 
     # Get dictionaries containing ab initio energies
     abinitio_energies, mol_dbids = db2mol('../data/mol.db', ['fmaxout<0.1',
-                                                     'pw=500',
-                                                     'vacuum=8',
-                                                     'psp=gbrv1.5pbe'])
-    abinitio_energies01, cand_dbids = db2surf(fname, ['series!=slab', 'phase=fcc'])
-    abinitio_energies02, cand_dbids2 = db2surf(fname, ['series=slab', 'phase=fcc'])
+                                                             'pw=500',
+                                                             'vacuum=8',
+                                                             'psp=gbrv1.5pbe'])
+    abinitio_energies01, cand_dbids = db2surf(fname,
+                                              ['series!=slab', 'phase=fcc'])
+    abinitio_energies02, cand_dbids2 = db2surf(fname,
+                                               ['series=slab', 'phase=fcc'])
     abinitio_energies.update(abinitio_energies01)
     abinitio_energies.update(abinitio_energies02)
 
@@ -37,7 +39,8 @@ if 'pure_metals.txt' not in listdir('.'):
     print(len(train_cand), 'training examples.')
 
     # Get the adsorbate fingerprint class.
-    fpv_train = AdsorbateFingerprintGenerator(bulkdb='../data/ref_bulks_k24.db')
+    bulkbath = '../data/ref_bulks_k24.db'
+    fpv_train = AdsorbateFingerprintGenerator()
 
     # Choose fingerprints.
     train_fpv = [
@@ -101,7 +104,7 @@ kdict = {
                  'const': .1,
                  'features': [0],
                  },
-         #'gk': {'type': 'gaussian',
+         # 'gk': {'type': 'gaussian',
          #       'width': 1.0,
          #       'features': [1],
          #        'operation': 'multiplication'
@@ -110,7 +113,7 @@ kdict = {
 # Run a Gaussian Process with a linear kernel
 
 gp_name += '_SE'
-#gp_name += '_LK'
+# gp_name += '_LK'
 
 gp = GaussianProcess(train_fp=nfp['train'], train_target=y,
                      kernel_dict=kdict,
@@ -123,7 +126,8 @@ prediction = gp.get_predictions(test_fp=nfp['test'],
 print(gp.kernel_dict, gp.regularization)
 
 plt.imshow(prediction['prediction'].reshape(3, 9),
-           cmap='hot', interpolation='nearest', extent=[d0min,d0max,d1min,d1max])
+           cmap='hot', interpolation='nearest',
+           extent=[d0min, d0max, d1min, d1max])
 plt.gcf().text(0.2, 0.8, 'RMSE = ' +
                str(round(prediction['training_error']['absolute_average'], 3)))
 plt.colorbar()
