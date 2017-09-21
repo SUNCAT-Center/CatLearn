@@ -30,28 +30,23 @@ def kdict2list(kdict, N_D=None):
     # Store hyperparameters in single list theta
     if (ktype == 'gaussian' or ktype == 'sqe' or ktype == 'laplacian') and \
             'width' in kdict:
-        # theta = [kdict['scaling']] + list(kdict['width'])
         theta = list(kdict['width'])
         if 'features' in kdict:
             N_D = len(kdict['features'])
         elif N_D is None:
             N_D = len(kdict['width'])
         if type(theta) is float:
-            theta = [theta]*N_D
+            theta = [theta] * N_D
+
+    # Store hyperparameters in single list theta
+    if ktype == 'scaled_sqe':
+        theta = list(kdict['d_scaling']) + list(kdict['width'])
 
     # Polynomials have pairs of hyperparamters kfree, kdegree
     elif ktype == 'polynomial':
-        # kfree = kernel_dict[key]['kfree']
-        # kdegree = kernel_dict[key]['kdegree']
         theta = [kdict['slope'], kdict['degree'], kdict['const']]
-        # if type(kfree) is float:
-        #    kfree = np.zeros(N_D,) + kfree
-        # if type(kdegree) is float:
-        #    kdegree = np.zeros(N_D,) + kdegree
-        # zipped_theta = zip(kfree,kdegree)
-        # Pass them in order [kfree1, kdegree1, kfree2, kdegree2,...]
-        # theta = [hp for k in zipped_theta for hp in k]
-    # Linear kernels have no hyperparameters
+
+    # Linear kernels have only one hyperparameter
     elif ktype == 'linear':
         theta = [kdict['const']]
 
@@ -63,7 +58,7 @@ def kdict2list(kdict, N_D=None):
         elif N_D is None:
             N_D = len(theta)
         if type(theta) is float:
-            theta = [theta]*N_D
+            theta = [theta] * N_D
 
     elif 'theta' in kdict:
         theta = kdict['theta']
@@ -127,6 +122,8 @@ def list2kdict(hyperparameters, kernel_dict):
     ki = 0
     for key in kernel_dict:
         ktype = kernel_dict[key]['type']
+
+        # Retrieve the scaling factor if it is defined.
         if 'scaling' in kernel_dict[key]:
             kernel_dict[key]['scaling'] = hyperparameters[ki]
             ki += 1
@@ -140,6 +137,12 @@ def list2kdict(hyperparameters, kernel_dict):
             theta = hyperparameters[ki:ki+N_D]
             kernel_dict[key]['width'] = list(theta)
             ki += N_D
+
+        elif (ktype == 'scaled_sqe'):
+            N_D = len(kernel_dict[key]['width'])
+            kernel_dict[key]['d_scaling'] = list(hyperparameters[ki:ki+N_D])
+            kernel_dict[key]['width'] = list(hyperparameters[ki+N_D:ki+2*N_D])
+            ki += 2 * N_D
 
         # Polynomials have pairs of hyperparamters kfree, kdegree
         elif ktype == 'polynomial':
@@ -217,6 +220,29 @@ def sqe_kernel(theta, m1, m2=None):
                            metric='seuclidean', V=kwidth)
         return np.exp(-.5 * k)
         # return scaling * np.exp(-.5 * k)
+
+
+def scaled_sqe_kernel(theta, m1, m2=None):
+    """ Returns the covariance matrix between datasets m1 and m2
+        with a gaussian kernel.
+
+        Parameters
+        ----------
+        theta : list
+            A list of hyperparameters.
+        m1 : list
+            A list of the training fingerprint vectors.
+        m2 : list
+            A list of the training fingerprint vectors.
+    """
+    N_D = len(theta) / 2
+    scaling = np.vstack(theta[:N_D])
+    kwidth = np.vstack(theta[N_D:])
+    if m2 is None:
+        m2 = m1
+    return distance.cdist(m1, m2,
+                          lambda u, v: scaling * np.exp(np.sqrt((u - v)**2 /
+                                                                kwidth)))
 
 
 def AA_kernel(theta, m1, m2=None):

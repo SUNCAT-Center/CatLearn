@@ -119,6 +119,70 @@ def clean_infinite(train, test=None, labels=None):
     return clean
 
 
+def test_data_limited(gp, testx, testy, step=1, min_data=2,
+                      optimize_interval=None):
+    """Evaluate validation error versus training data size.
+
+    Returns a dictionary containing the lists:
+    -------
+    N_data : training data size
+    rmse_average : Root mean square validation error.
+    absolute_average : mean absolute validation error.
+    signed_mean : signed mean validation error.
+
+    Parameters
+    ----------
+    gp : GaussianProcess class
+        create it from atoml.GaussianProcess
+    testx : array
+        Feature matrix for the test data.
+    testy : list
+        A list of the the test targets used to generate the prediction
+        errors.
+    step : integer
+        Number of datapoints per prediction iteration.
+    min_data : integer
+        Number of datapoints in first prediction iteration.
+    optimize_interval : integer or None
+        Reoptimize the hyperparameters every this many datapoints.
+    """
+    if min_data < 2:
+        raise ValueError("min_data must be at least 2.")
+    # Retrieve the full training data and training targets from gp.
+    trainx = (gp.train_fp).copy()
+    # If the targets are standardized, convert back to the raw targets.
+    trainy = (gp.train_target).copy() * \
+        gp.standardize_data['std'] + \
+        gp.standardize_data['mean']
+    rmse = []
+    mae = []
+    signed_mean = []
+    Ndata = []
+    for low in range(min_data, len(trainx)+1, step):
+        # Update the training data in the gp. Targets are standardized again.
+        gp.update_data(train_fp=trainx[:low, :],
+                       train_target=trainy[:low],
+                       standardize_target=True)
+        if optimize_interval is not None and low % optimize_interval == 0:
+            gp.optimize_hyperparameters()
+        # Do the prediction
+        pred = gp.get_predictions(test_fp=testx,
+                                  get_validation_error=True,
+                                  get_training_error=False,
+                                  uncertainty=True,
+                                  test_target=testy)
+        # Store the error associated with the predictions in lists.
+        Ndata.append(len(trainy[:low]))
+        rmse.append(pred['validation_error']['rmse_average'])
+        mae.append(pred['validation_error']['absolute_average'])
+        signed_mean.append(pred['validation_error']['signed_mean'])
+    output = {'N_data': Ndata,
+              'rmse_average': rmse,
+              'absolute_average': mae,
+              'signed_mean': signed_mean}
+    return output
+
+
 def geometry_hash(atoms):
     """ A hash based strictly on the geometry features of
     an atoms object: positions, cell, and symbols.

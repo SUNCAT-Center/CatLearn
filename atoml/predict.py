@@ -18,12 +18,17 @@ class GaussianProcess(object):
     """Gaussian processes functions for the machine learning."""
 
     def __init__(self, train_fp, train_target, kernel_dict,
-                 regularization=None, optimize_hyperparameters=False,
-                 standardize_target=True, normalize_target=False):
+                 standardize_target=True, normalize_target=False,
+                 regularization=None, regularization_bounds=(1e-12, None),
+                 optimize_hyperparameters=False):
         """Gaussian processes setup.
 
         Parameters
         ----------
+        train_fp : list
+            A list of training fingerprint vectors.
+        train_target : list
+            A list of training targets used to generate the predictions.
         kernel_dict : dict of dicts
             Each dict in kernel_dict contains information on a kernel.
             The 'type' key is required to contain the name of kernel function:
@@ -32,6 +37,10 @@ class GaussianProcess(object):
         regularization : float
             The regularization strength (smoothing function) applied to the
             kernel matrix.
+        regularization_bounds : tuple
+            Optional to change the bounds for the regularization.
+        optimize_hyperparameters : boolean
+            Optional flag to optimize the hyperparameters.
         """
         msg = 'Cannot standardize and normalize the targets. Pick only one.'
         assert standardize_target is not normalize_target, msg
@@ -40,7 +49,8 @@ class GaussianProcess(object):
         self.normalize_target = normalize_target
         self.N_train, self.N_D = np.shape(train_fp)
         self.regularization = regularization
-        self.prepare_kernels(kernel_dict)
+        self.prepare_kernels(kernel_dict,
+                             regularization_bounds=regularization_bounds)
         self.update_data(train_fp, train_target, standardize_target,
                          normalize_target)
         if optimize_hyperparameters:
@@ -56,9 +66,6 @@ class GaussianProcess(object):
             A list of training fingerprint vectors.
         train_target : list
             A list of training targets used to generate the predictions.
-        cinv : matrix
-            Covariance matrix for training dataset. Calculated on-the-fly or
-            defined to utilize a model numerous times.
         """
         # Get the shape of the training dataset.
         self.N_train, self.N_D = np.shape(train_fp)
@@ -81,39 +88,74 @@ class GaussianProcess(object):
         # Invert the covariance matrix.
         self.cinv = np.linalg.inv(cvm)
 
-    def prepare_kernels(self, kernel_dict, bounds=None):
-        """Format the kernel_dictionary.
+    def prepare_kernels(self, kernel_dict,
+                        regularization_bounds=(1e-12, None)):
+        """Formats the kernel_dictionary and stores the bounds
+        for hyperparameter optimization.
 
         Parameters
         ----------
         kernel_dict : dict
             Dictionary containing all information for the kernels.
+        regularization_bounds : tuple
+            Optional to change the bounds for the regularization.
         """
         kdict = kernel_dict
+        bounds = ()
         for key in kdict:
             if 'features' in kdict[key]:
                 N_D = len(kdict[key]['features'])
             else:
                 N_D = self.N_D
-            # if 'scaling' not in kdict[key]:
-            #     kernel_dict[key]['scaling'] = 1
+            if 'scaling' in kdict[key]:
+                if 'scaling_bounds' in kdict[key]:
+                    bounds += kdict[key]['scaling_bounds']
+                else:
+                    bounds += ((0, None),)
+            if 'd_scaling' in kdict[key]:
+                d_scaling = kdict[key]['d_scaling']
+                if type(d_scaling) is float or type(d_scaling) is int:
+                    kernel_dict[key]['d_scaling'] = np.zeros(N_D,) + d_scaling
+                if 'bounds' in kdict[key]:
+                    bounds += kdict[key]['bounds']
+                else:
+                    bounds += ((0, None),) * N_D
             if 'width' in kdict[key]:
                 theta = kdict[key]['width']
                 if type(theta) is float or type(theta) is int:
                     kernel_dict[key]['width'] = np.zeros(N_D,) + theta
+                if 'bounds' in kdict[key]:
+                    bounds += kdict[key]['bounds']
+                else:
+                    bounds += ((1e-12, 1e12),) * N_D
             elif 'hyperparameters' in kdict[key]:
                 theta = kdict[key]['hyperparameters']
                 if type(theta) is float or type(theta) is int:
                     kernel_dict[key]['hyperparameters'] = (np.zeros(N_D,) +
                                                            theta)
+                if 'bounds' in kdict[key]:
+                    bounds += kdict[key]['bounds']
+                else:
+                    bounds += ((1e-12, 1e12),) * N_D
             elif 'theta' in kdict[key]:
                 theta = kdict[key]['theta']
                 if type(theta) is float or type(theta) is int:
                     kernel_dict[key]['hyperparameters'] = (np.zeros(N_D,) +
                                                            theta)
+                if 'bounds' in kdict[key]:
+                    bounds += kdict[key]['bounds']
+                else:
+                    bounds += ((1e-12, 1e12),) * N_D
+            elif 'bounds' in kdict[key]:
+                bounds += kdict[key]['bounds']
+            elif kdict[key]['type'] == 'linear':
+                bounds += ((0, None),)
+            elif kdict[key]['type'] == 'polynomial':
+                bounds += ((None, None), (1, None), (0, None),)
         self.kernel_dict = kernel_dict
+        # Bounds for the regularization
+        bounds += (regularization_bounds,)
         self.bounds = bounds
-        self.hyperparameters = kdicts2list(self.kernel_dict, N_D=N_D)
 
     def optimize_hyperparameters(self):
         """Optimize hyperparameters of the Gaussian Process.
@@ -124,32 +166,21 @@ class GaussianProcess(object):
         """
         # Create a list of all hyperparameters.
         theta = kdicts2list(self.kernel_dict, N_D=self.N_D)
-        if self.regularization is not None:
-            theta = np.append(theta, self.regularization)
+        theta = np.append(theta, self.regularization)
 
         # Define fixed arguments for log_marginal_likelihood
         args = (np.array(self.train_fp), self.train_target,
                 self.kernel_dict)
 
-        # Set bounds for hyperparameters
-        # if self.bounds is not None:
-        #     bounds = self.bounds
-        # else:
-        bounds = ((1E-6, 1e6),) * (len(theta))
-
         # Optimize
         self.theta_opt = minimize(log_marginal_likelihood, theta,
                                   args=args,
-                                  bounds=bounds)
+                                  bounds=self.bounds)
 
         # Update kernel_dict and regularization with optimized values.
-        if self.regularization is not None:
-            self.kernel_dict = list2kdict(self.theta_opt['x'][:-1],
-                                          self.kernel_dict)
-            self.regularization = self.theta_opt['x'][-1]
-        else:
-            self.kernel_dict = list2kdict(self.theta_opt['x'],
-                                          self.kernel_dict)
+        self.kernel_dict = list2kdict(self.theta_opt['x'][:-1],
+                                      self.kernel_dict)
+        self.regularization = self.theta_opt['x'][-1]
         # Make a new covariance matrix with the optimized hyperparameters.
         cvm = get_covariance(kernel_dict=self.kernel_dict,
                              matrix1=self.train_fp,
