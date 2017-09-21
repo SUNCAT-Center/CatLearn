@@ -11,7 +11,7 @@ from atoml.preprocess.feature_engineering import (single_transform,
                                                   get_order_2ab,
                                                   get_ablog)
 from atoml.preprocess.feature_extraction import pls, pca, spca, home_pca
-from atoml.preprocess.feature_elimination import FeatureScreening
+from atoml.preprocess import FeatureScreening
 
 # Attach the database.
 dd = DescriptorDatabase(db_name='fpv_store.sqlite', table='FingerVector')
