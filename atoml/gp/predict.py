@@ -11,7 +11,7 @@ from .model_selection import log_marginal_likelihood
 from .covariance import get_covariance
 from .kernels import kdicts2list, list2kdict
 from .uncertainty import get_uncertainty
-from .cost_function import get_error
+from atoml.utilities.cost_function import get_error
 
 
 class GaussianProcess(object):

@@ -4,11 +4,11 @@ from __future__ import absolute_import
 
 import numpy as np
 
-from atoml.database_functions import DescriptorDatabase
-from atoml.feature_preprocess import (standardize, normalize, min_max,
-                                      unit_length)
-from atoml.ridge_regression import RidgeRegression
-from atoml.predict import GaussianProcess
+from atoml.utilities import DescriptorDatabase
+from atoml.preprocess.feature_preprocess import (standardize, normalize,
+                                                 min_max, unit_length)
+from atoml.linear import RidgeRegression
+from atoml.gp import GaussianProcess
 
 # Attach the database.
 dd = DescriptorDatabase(db_name='fpv_store.sqlite',
