@@ -1,6 +1,7 @@
 """Some useful utilities."""
 import numpy as np
 from collections import defaultdict
+import hashlib
 
 
 def remove_outliers(candidates, key, con=1.4826, dev=3., constraint=None):

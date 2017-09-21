@@ -4,12 +4,14 @@ from __future__ import absolute_import
 
 import numpy as np
 
-from atoml.database_functions import DescriptorDatabase
-from atoml.feature_engineering import (single_transform, get_order_2,
-                                       get_div_order_2, get_order_2ab,
-                                       get_ablog)
-from atoml.feature_extraction import pls, pca, spca, home_pca
-from atoml.feature_elimination import FeatureScreening
+from atoml.utilities import DescriptorDatabase
+from atoml.preprocess.feature_engineering import (single_transform,
+                                                  get_order_2,
+                                                  get_div_order_2,
+                                                  get_order_2ab,
+                                                  get_ablog)
+from atoml.preprocess.feature_extraction import pls, pca, spca, home_pca
+from atoml.preprocess.feature_elimination import FeatureScreening
 
 # Attach the database.
 dd = DescriptorDatabase(db_name='fpv_store.sqlite', table='FingerVector')

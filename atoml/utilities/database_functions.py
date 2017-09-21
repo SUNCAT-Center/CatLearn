@@ -4,7 +4,6 @@ from sqlite3 import IntegrityError
 import numpy as np
 
 
-
 class DescriptorDatabase(object):
     """Store sets of descriptors for a given atoms object assigned a unique ID.
 
@@ -154,7 +153,7 @@ class FingerprintDB():
 
     This syntax will automatically construct the temporary database,
     or access an existing one. Upon exiting the indentation, the
-    changes to the database will be automatically commited. 
+    changes to the database will be automatically commited.
     """
 
     def __init__(self, db_name='fingerprints.db', verbose=False):
@@ -303,13 +302,13 @@ class FingerprintDB():
 
         # If no selection is made, return all parameters.
         if not selection:
-            self.c.execute("""SELECT pid, symbol, description 
+            self.c.execute("""SELECT pid, symbol, description
             FROM parameters""")
             res = self.c.fetchall()
         else:
             res = []
             for i, s in enumerate(selection):
-                self.c.execute("""SELECT pid, symbol, description 
+                self.c.execute("""SELECT pid, symbol, description
                 FROM parameters WHERE symbol = ?""", (s,))
                 res += [self.c.fetchone()]
 
@@ -387,7 +386,7 @@ class FingerprintDB():
 
         asel = tuple(np.array(ase_ids).astype(str))
 
-        self.c.execute("""SELECT GROUP_CONCAT(value) FROM fingerprints 
+        self.c.execute("""SELECT GROUP_CONCAT(value) FROM fingerprints
         JOIN images on fingerprints.image_id = images.iid
         WHERE param_id IN ({}) AND ase_id IN {}
         GROUP BY ase_id""".format(psel, asel))
