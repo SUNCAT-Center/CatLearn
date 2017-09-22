@@ -7,7 +7,7 @@ import numpy as np
 from random import shuffle
 from collections import OrderedDict
 
-from atoml.feature_preprocess import standardize, normalize
+from atoml.preprocess.feature_preprocess import standardize, normalize
 
 
 class Hierarchy(object):
@@ -243,3 +243,42 @@ class Hierarchy(object):
         self.cursor.execute(query, id_list)
 
         return self.cursor.fetchall()
+
+    def split_predict(self, index_split, predict, **kwargs):
+        """Function to make predictions looping over all subsets of data.
+
+        Parameters
+        ----------
+        index_split : dict
+            All data for the split.
+        predict : function
+            The prediction function. Must return dict with 'result' in it.
+
+        """
+        result = []
+        for i in reversed(index_split):
+            j, k = i.split('_')
+            train_data = self._compile_split(index_split[j + '_' + k])
+            train_features = np.array(train_data[:, 1:-1], np.float64)
+            train_targets = np.array(train_data[:, -1:], np.float64)
+            d1, d2 = np.shape(train_targets)
+            train_targets = train_targets.reshape(d2, d1)[0]
+
+            if int(k) % 2 == 1:
+                test_data = self._compile_split(index_split[j + '_' +
+                                                            str(int(k)+1)])
+            else:
+                test_data = self._compile_split(index_split[j + '_' +
+                                                            str(int(k)-1)])
+            test_features = np.array(test_data[:, 1:-1], np.float64)
+            test_targets = np.array(test_data[:, -1:], np.float64)
+            d1, d2 = np.shape(test_targets)
+            test_targets = test_targets.reshape(d2, d1)[0]
+
+            pred = predict(train_features=train_features,
+                           train_targets=train_targets,
+                           test_features=test_features,
+                           test_targets=test_targets, **kwargs)
+            result.append(pred['result'])
+
+        return result
