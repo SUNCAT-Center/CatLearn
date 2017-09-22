@@ -7,10 +7,10 @@ from scipy.optimize import minimize
 from collections import defaultdict
 import functools
 
-from .model_selection import log_marginal_likelihood
-from .covariance import get_covariance
-from .kernels import kdicts2list, list2kdict
-from .uncertainty import get_uncertainty
+from .gpfunctions.log_marginal_likelihood import log_marginal_likelihood
+from .gpfunctions.covariance import get_covariance
+from .gpfunctions.kernels import kdicts2list, list2kdict
+from .gpfunctions.uncertainty import get_uncertainty
 from atoml.utilities.cost_function import get_error
 
 
