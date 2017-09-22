@@ -147,7 +147,7 @@ def property_matrix(atoms, property):
     """
     # Load the Mendeleev parameter data into memory
     with open('/'.join(atoml_path[0].split('/')[:-1]) +
-              '/data/proxy-mendeleev.json') as f:
+              'atoml/data/proxy-mendeleev.json') as f:
         data = json.load(f)
 
     an = atoms.get_atomic_numbers()
