@@ -2,7 +2,7 @@
 from __future__ import absolute_import
 
 import numpy as np
-from atoml.gp.gpfunctions import kernels as ak
+from atoml.regression.gpfunctions import kernels as ak
 
 
 def get_covariance(kernel_dict, matrix1, matrix2=None, regularization=None):

@@ -8,7 +8,7 @@ from scipy.stats import pearsonr, spearmanr, kendalltau
 from collections import defaultdict
 from math import log
 
-from atoml.linear.regression import RegressionFit
+from atoml.regression.regression import RegressionFit
 
 
 class FeatureScreening(object):
