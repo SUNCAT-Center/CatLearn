@@ -1,1 +1,1 @@
-from .predict import GaussianProcess
+from .gaussian_process import GaussianProcess
