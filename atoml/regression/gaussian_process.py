@@ -90,8 +90,7 @@ class GaussianProcess(object):
 
     def prepare_kernels(self, kernel_dict,
                         regularization_bounds=(1e-12, None)):
-        """Formats the kernel_dictionary and stores the bounds
-        for hyperparameter optimization.
+        """Formats kernel_dictionary and stores bounds for optimization.
 
         Parameters
         ----------
