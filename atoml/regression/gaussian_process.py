@@ -12,6 +12,7 @@ from .gpfunctions.covariance import get_covariance
 from .gpfunctions.kernels import kdicts2list, list2kdict
 from .gpfunctions.uncertainty import get_uncertainty
 from atoml.utilities.cost_function import get_error
+from atoml.preprocess.scale_target import target_standardize, target_normalize
 
 
 class GaussianProcess(object):
@@ -49,12 +50,101 @@ class GaussianProcess(object):
         self.normalize_target = normalize_target
         self.N_train, self.N_D = np.shape(train_fp)
         self.regularization = regularization
-        self.prepare_kernels(kernel_dict,
-                             regularization_bounds=regularization_bounds)
+        self._prepare_kernels(kernel_dict,
+                              regularization_bounds=regularization_bounds)
         self.update_data(train_fp, train_target, standardize_target,
                          normalize_target)
         if optimize_hyperparameters:
-            self.optimize_hyperparameters()
+            self._optimize_hyperparameters()
+
+    def predict(self, test_fp, test_target=None, uncertainty=False, basis=None,
+                get_validation_error=False, get_training_error=False,
+                epsilon=None):
+        """Function to perform the prediction on some training and test data.
+
+        Parameters
+        ----------
+        test_fp : list
+            A list of testing fingerprint vectors.
+        test_target : list
+            A list of the the test targets used to generate the prediction
+            errors.
+        uncertainty : boolean
+            Return data on the predicted uncertainty if True. Default is False.
+        basis : function
+            Basis functions to assess the reliability of the uncertainty
+            predictions. Must be a callable function that takes a list of
+            descriptors and returns another list.
+        get_validation_error : boolean
+            Return the error associated with the prediction on the test set of
+            data if True. Default is False.
+        get_training_error : boolean
+            Return the error associated with the prediction on the training set
+            of data if True. Default is False.
+        epsilon : float
+            Threshold for insensitive error calculation.
+        """
+        # Store input data.
+        data = defaultdict(list)
+
+        # Calculate the covariance between the test and training datasets.
+        ktb = get_covariance(kernel_dict=self.kernel_dict, matrix1=test_fp,
+                             matrix2=self.train_fp, regularization=None)
+
+        # Build the list of predictions.
+        data['prediction'] = self._make_prediction(ktb=ktb, cinv=self.cinv,
+                                                   target=self.train_target)
+
+        # Calculate error associated with predictions on the test data.
+        if get_validation_error:
+            data['validation_error'] = get_error(prediction=data['prediction'],
+                                                 target=test_target,
+                                                 epsilon=epsilon)
+
+        # Calculate error associated with predictions on the training data.
+        if get_training_error:
+            # Calculate the covariance between the training dataset.
+            kt_train = get_covariance(kernel_dict=self.kernel_dict,
+                                      matrix1=self.train_fp,
+                                      regularization=None)
+
+            # Calculate predictions for the training data.
+            data['train_prediction'] = \
+                self._make_prediction(ktb=kt_train, cinv=self.cinv,
+                                      target=self.train_target)
+
+            # Calculated the error for the prediction on the training data.
+            if self.standardize_target:
+                train_target = self.train_target * \
+                    self.standardize_data['std'] + \
+                    self.standardize_data['mean']
+            if self.normalize_target:
+                train_target = self.train_target * \
+                    self.normalize_data['dif'] + \
+                    self.normalize_data['mean']
+            else:
+                train_target = self.train_target
+            data['training_error'] = \
+                get_error(prediction=data['train_prediction'],
+                          target=train_target,
+                          epsilon=epsilon)
+
+        # Calculate uncertainty associated with prediction on test data.
+        if uncertainty:
+            data['uncertainty'] = get_uncertainty(kernel_dict=self.kernel_dict,
+                                                  test_fp=test_fp,
+                                                  reg=self.regularization,
+                                                  ktb=ktb, cinv=self.cinv)
+
+        if basis is not None:
+            data['basis'] = self._fixed_basis(train=self.train_fp,
+                                              test=test_fp,
+                                              ktb=ktb, cinv=self.cinv,
+                                              target=self.train_target,
+                                              test_target=test_target,
+                                              basis=basis, epsilon=epsilon)
+
+        return data
 
     def update_data(self, train_fp, train_target, standardize_target,
                     normalize_target):
@@ -88,9 +178,8 @@ class GaussianProcess(object):
         # Invert the covariance matrix.
         self.cinv = np.linalg.inv(cvm)
 
-    def prepare_kernels(self, kernel_dict,
-                        regularization_bounds=(1e-12, None)):
-        """Formats kernel_dictionary and stores bounds for optimization.
+    def _prepare_kernels(self, kernel_dict, regularization_bounds):
+        """Format kernel_dictionary and stores bounds for optimization.
 
         Parameters
         ----------
@@ -156,7 +245,7 @@ class GaussianProcess(object):
         bounds += (regularization_bounds,)
         self.bounds = bounds
 
-    def optimize_hyperparameters(self):
+    def _optimize_hyperparameters(self):
         """Optimize hyperparameters of the Gaussian Process.
 
         Performed with respect to the log marginal likelihood. Optimized
@@ -187,98 +276,7 @@ class GaussianProcess(object):
         # Invert the covariance matrix.
         self.cinv = np.linalg.inv(cvm)
 
-    def get_predictions(self, test_fp, test_target=None, uncertainty=False,
-                        basis=None, get_validation_error=False,
-                        get_training_error=False,
-                        epsilon=None):
-        """Function to perform the prediction on some training and test data.
-
-        Parameters
-        ----------
-        test_fp : list
-            A list of testing fingerprint vectors.
-        test_target : list
-            A list of the the test targets used to generate the prediction
-            errors.
-        uncertainty : boolean
-            Return data on the predicted uncertainty if True. Default is False.
-        basis : function
-            Basis functions to assess the reliability of the uncertainty
-            predictions. Must be a callable function that takes a list of
-            descriptors and returns another list.
-        get_validation_error : boolean
-            Return the error associated with the prediction on the test set of
-            data if True. Default is False.
-        get_training_error : boolean
-            Return the error associated with the prediction on the training set
-            of data if True. Default is False.
-        epsilon : float
-            Threshold for insensitive error calculation.
-        """
-        # Store input data.
-        data = defaultdict(list)
-
-        # Calculate the covariance between the test and training datasets.
-        ktb = get_covariance(kernel_dict=self.kernel_dict, matrix1=test_fp,
-                             matrix2=self.train_fp, regularization=None)
-
-        # Build the list of predictions.
-        data['prediction'] = self.do_prediction(ktb=ktb, cinv=self.cinv,
-                                                target=self.train_target)
-
-        # Calculate error associated with predictions on the test data.
-        if get_validation_error:
-            data['validation_error'] = get_error(prediction=data['prediction'],
-                                                 target=test_target,
-                                                 epsilon=epsilon)
-
-        # Calculate error associated with predictions on the training data.
-        if get_training_error:
-            # Calculate the covariance between the training dataset.
-            kt_train = get_covariance(kernel_dict=self.kernel_dict,
-                                      matrix1=self.train_fp,
-                                      regularization=None)
-
-            # Calculate predictions for the training data.
-            data['train_prediction'] = \
-                self.do_prediction(ktb=kt_train, cinv=self.cinv,
-                                   target=self.train_target)
-
-            # Calculated the error for the prediction on the training data.
-            if self.standardize_target:
-                train_target = self.train_target * \
-                    self.standardize_data['std'] + \
-                    self.standardize_data['mean']
-            if self.normalize_target:
-                train_target = self.train_target * \
-                    self.normalize_data['dif'] + \
-                    self.normalize_data['mean']
-            else:
-                train_target = self.train_target
-            data['training_error'] = \
-                get_error(prediction=data['train_prediction'],
-                          target=train_target,
-                          epsilon=epsilon)
-
-        # Calculate uncertainty associated with prediction on test data.
-        if uncertainty:
-            data['uncertainty'] = get_uncertainty(kernel_dict=self.kernel_dict,
-                                                  test_fp=test_fp,
-                                                  reg=self.regularization,
-                                                  ktb=ktb, cinv=self.cinv)
-
-        if basis is not None:
-            data['basis_analysis'] = self.fixed_basis(train_fp=self.train_fp,
-                                                      test_fp=test_fp,
-                                                      ktb=ktb, cinv=self.cinv,
-                                                      target=self.train_target,
-                                                      test_target=test_target,
-                                                      basis=basis,
-                                                      epsilon=epsilon)
-
-        return data
-
-    def do_prediction(self, ktb, cinv, target):
+    def _make_prediction(self, ktb, cinv, target):
         """Function to make the prediction.
 
         Parameters
@@ -313,8 +311,8 @@ class GaussianProcess(object):
 
         return pred
 
-    def fixed_basis(self, test_fp, train_fp, basis, ktb, cinv, target,
-                    test_target, epsilon):
+    def _fixed_basis(self, test, train, basis, ktb, cinv, target, test_target,
+                     epsilon):
         """Function to apply fixed basis.
 
         Returns
@@ -323,12 +321,12 @@ class GaussianProcess(object):
         """
         data = defaultdict(list)
         # Calculate the K(X*,X*) covariance matrix.
-        ktest = get_covariance(kernel_dict=self.kernel_dict, matrix1=test_fp,
+        ktest = get_covariance(kernel_dict=self.kernel_dict, matrix1=test,
                                regularization=None)
 
         # Form H and H* matrix, multiplying X by basis.
-        train_matrix = np.asarray([basis(i) for i in train_fp])
-        test_matrix = np.asarray([basis(i) for i in test_fp])
+        train_matrix = np.asarray([basis(i) for i in train])
+        test_matrix = np.asarray([basis(i) for i in test])
 
         # Calculate R.
         r = test_matrix - ktb.dot(cinv.dot(train_matrix))
@@ -344,8 +342,8 @@ class GaussianProcess(object):
         data['g_cov'] = covf + r.dot(np.linalg.inv(gca).dot(r.T))
 
         # Do prediction accounting for basis.
-        data['gX'] = self.do_prediction(ktb=ktb, cinv=cinv, target=target) + \
-            beta.dot(r.T)
+        data['gX'] = self._make_prediction(ktb=ktb, cinv=cinv, target=target) \
+            + beta.dot(r.T)
 
         # Calculated the error for the residual prediction on the test data.
         if test_target is not None:
@@ -354,38 +352,3 @@ class GaussianProcess(object):
                                                  epsilon=epsilon)
 
         return data
-
-
-def target_standardize(target):
-    """Return a list of standardized target values.
-
-    Parameters
-    ----------
-    target : list
-        A list of the target values.
-    """
-    target = np.asarray(target)
-
-    data = defaultdict(list)
-    data['mean'] = np.mean(target, axis=0)
-    data['std'] = np.std(target, axis=0)
-    data['target'] = (target - data['mean']) / data['std']
-    return data
-
-
-def target_normalize(target):
-    """Return a list of normalized target values.
-
-    Parameters
-    ----------
-    target : list
-        A list of the target values.
-    """
-    target = np.asarray(target)
-
-    data = defaultdict(list)
-    data['mean'] = np.mean(target, axis=0)
-    data['dif'] = np.max(target, axis=0) - np.min(target, axis=0)
-    data['target'] = (target - data['mean']) / data['dif']
-
-    return data

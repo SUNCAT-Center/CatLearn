@@ -61,10 +61,10 @@ kdict = {'k1': {'type': 'linear', 'const': 0.}}
 gp = GaussianProcess(train_fp=sfp['train'], train_target=train_targets,
                      kernel_dict=kdict, regularization=0.001,
                      optimize_hyperparameters=False)
-pred = gp.get_predictions(test_fp=sfp['test'],
-                          test_target=test_targets,
-                          get_validation_error=True,
-                          get_training_error=True)
+pred = gp.predict(test_fp=sfp['test'],
+                  test_target=test_targets,
+                  get_validation_error=True,
+                  get_training_error=True)
 assert len(pred['prediction']) == len(sfp['test'])
 print('linear prediction:', pred['validation_error']['rmse_average'])
 
@@ -73,10 +73,10 @@ kdict = {'k1': {'type': 'polynomial', 'slope': 0.5, 'degree': 2., 'const': 0.}}
 gp = GaussianProcess(train_fp=sfp['train'], train_target=train_targets,
                      kernel_dict=kdict, regularization=0.001,
                      optimize_hyperparameters=False)
-pred = gp.get_predictions(test_fp=sfp['test'],
-                          test_target=test_targets,
-                          get_validation_error=True,
-                          get_training_error=True)
+pred = gp.predict(test_fp=sfp['test'],
+                  test_target=test_targets,
+                  get_validation_error=True,
+                  get_training_error=True)
 assert len(pred['prediction']) == len(sfp['test'])
 print('polynomial prediction:', pred['validation_error']['rmse_average'])
 
@@ -85,12 +85,12 @@ kdict = {'k1': {'type': 'gaussian', 'width': 0.5}}
 gp = GaussianProcess(train_fp=sfp['train'], train_target=train_targets,
                      kernel_dict=kdict, regularization=0.001,
                      optimize_hyperparameters=False)
-pred = gp.get_predictions(test_fp=sfp['test'],
-                          test_target=test_targets,
-                          get_validation_error=True,
-                          get_training_error=True,
-                          uncertainty=True,
-                          epsilon=0.1)
+pred = gp.predict(test_fp=sfp['test'],
+                  test_target=test_targets,
+                  get_validation_error=True,
+                  get_training_error=True,
+                  uncertainty=True,
+                  epsilon=0.1)
 assert len(pred['prediction']) == len(sfp['test'])
 print('gaussian prediction (rmse):', pred['validation_error']['rmse_average'])
 print('gaussian prediction (ins):',
@@ -104,12 +104,12 @@ gp = GaussianProcess(train_fp=sfp['train'], train_target=train_targets,
                      kernel_dict=kdict, regularization=0.001,
                      optimize_hyperparameters=False, standardize_target=False,
                      normalize_target=True)
-pred = gp.get_predictions(test_fp=sfp['test'],
-                          test_target=test_targets,
-                          get_validation_error=True,
-                          get_training_error=True,
-                          uncertainty=True,
-                          epsilon=0.1)
+pred = gp.predict(test_fp=sfp['test'],
+                  test_target=test_targets,
+                  get_validation_error=True,
+                  get_training_error=True,
+                  uncertainty=True,
+                  epsilon=0.1)
 assert len(pred['prediction']) == len(sfp['test'])
 print('Normalized target (rmse):', pred['validation_error']['rmse_average'])
 
@@ -123,10 +123,10 @@ for s, n in zip(scale, name):
     gp = GaussianProcess(train_fp=s['train'], train_target=train_targets,
                          kernel_dict=kdict, regularization=0.001,
                          optimize_hyperparameters=True)
-    pred = gp.get_predictions(test_fp=s['test'],
-                              test_target=test_targets,
-                              get_validation_error=True,
-                              get_training_error=True)
+    pred = gp.predict(test_fp=s['test'],
+                      test_target=test_targets,
+                      get_validation_error=True,
+                      get_training_error=True)
     assert len(pred['prediction']) == len(sfp['test'])
     print('gaussian prediction ({0}):'.format(n),
           pred['validation_error']['rmse_average'])
@@ -136,10 +136,10 @@ kdict = {'k1': {'type': 'laplacian', 'width': 0.5}}
 gp = GaussianProcess(train_fp=sfp['train'], train_target=train_targets,
                      kernel_dict=kdict, regularization=0.001,
                      optimize_hyperparameters=True)
-pred = gp.get_predictions(test_fp=sfp['test'],
-                          test_target=test_targets,
-                          get_validation_error=True,
-                          get_training_error=True)
+pred = gp.predict(test_fp=sfp['test'],
+                  test_target=test_targets,
+                  get_validation_error=True,
+                  get_training_error=True)
 assert len(pred['prediction']) == len(sfp['test'])
 print('laplacian prediction:', pred['validation_error']['rmse_average'])
 
@@ -149,10 +149,10 @@ kdict = {'k1': {'type': 'linear', 'features': [0, 1], 'const': 0.},
 gp = GaussianProcess(train_fp=sfp['train'], train_target=train_targets,
                      kernel_dict=kdict, regularization=0.001,
                      optimize_hyperparameters=True)
-pred = gp.get_predictions(test_fp=sfp['test'],
-                          test_target=test_targets,
-                          get_validation_error=True,
-                          get_training_error=True)
+pred = gp.predict(test_fp=sfp['test'],
+                  test_target=test_targets,
+                  get_validation_error=True,
+                  get_training_error=True)
 assert len(pred['prediction']) == len(sfp['test'])
 print('addition prediction:', pred['validation_error']['rmse_average'])
 
@@ -163,9 +163,9 @@ kdict = {'k1': {'type': 'linear', 'features': [0, 1], 'const': 0.},
 gp = GaussianProcess(train_fp=sfp['train'], train_target=train_targets,
                      kernel_dict=kdict, regularization=0.001,
                      optimize_hyperparameters=True)
-pred = gp.get_predictions(test_fp=sfp['test'],
-                          test_target=test_targets,
-                          get_validation_error=True,
-                          get_training_error=True)
+pred = gp.predict(test_fp=sfp['test'],
+                  test_target=test_targets,
+                  get_validation_error=True,
+                  get_training_error=True)
 assert len(pred['prediction']) == len(sfp['test'])
 print('multiplication prediction:', pred['validation_error']['rmse_average'])
