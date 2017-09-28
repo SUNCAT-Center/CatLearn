@@ -120,8 +120,8 @@ def clean_infinite(train, test=None, labels=None):
     return clean
 
 
-def test_data_limited(gp, testx, testy, step=1, min_data=2,
-                      optimize_interval=None):
+def simple_learning_curve(gp, testx, testy, step=1, min_data=2,
+                          optimize_interval=None):
     """Evaluate validation error versus training data size.
 
     Returns a dictionary containing the lists:
@@ -185,16 +185,16 @@ def test_data_limited(gp, testx, testy, step=1, min_data=2,
 
 
 def geometry_hash(atoms):
-    """ A hash based strictly on the geometry features of
-    an atoms object: positions, cell, and symbols.
+    """A hash based strictly on the geometry features of an atoms object.
 
-    This is intended for planewave basis set calculations,
-    so pbc is not considered.
+    Uses positions, cell, and symbols.
 
-    Each element is sorted in the algorithem to help prevent
-    new hashs for identical geometries.
+    This is intended for planewave basis set calculations, so pbc is not
+    considered.
+
+    Each element is sorted in the algorithem to help prevent new hashs for
+    identical geometries.
     """
-
     atoms.wrap()
 
     pos = atoms.get_positions()

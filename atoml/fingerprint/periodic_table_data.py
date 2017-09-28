@@ -1,3 +1,4 @@
+"""Function pulling atomic data for elements."""
 import json
 from atoml import __path__ as atoml_path
 
@@ -8,8 +9,7 @@ with open('/'.join(atoml_path[0].split('/')[:-1]) +
 
 
 def get_mendeleev_params(atomic_number, index=None, extra_params=[]):
-    """ Return a list of generic parameters about
-    an indexed atom from an ase-database entry.
+    """Return a list of generic parameters about an indexed atom.
 
     Parameters
     ----------
@@ -19,8 +19,7 @@ def get_mendeleev_params(atomic_number, index=None, extra_params=[]):
         The atom index whose parameters to return.
     extra_params: list of str
         Extra Mendaleev parameters to be returned in the list.
-        For a full list see here:
-        http://nbviewer.jupyter.org/url/bitbucket.org/lukaszmentel/mendeleev/raw/tip/docs/ipynb/tables.ipynb
+        For a full list see here - https://goo.gl/G4eTvu
 
     Returns
     -------
@@ -29,7 +28,6 @@ def get_mendeleev_params(atomic_number, index=None, extra_params=[]):
         params list.
 
     """
-
     # Parameters which typically do not contain None
     params = [
         'atomic_number',
