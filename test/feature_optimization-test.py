@@ -10,7 +10,7 @@ from atoml.preprocess.feature_engineering import (single_transform,
                                                   get_div_order_2,
                                                   get_order_2ab,
                                                   get_ablog)
-from atoml.preprocess.feature_extraction import pls, pca, spca, home_pca
+from atoml.preprocess.feature_extraction import pls, pca, spca, atoml_pca
 from atoml.preprocess import FeatureScreening
 
 # Attach the database.
