@@ -44,7 +44,7 @@ class GaussianProcess(object):
             Optional flag to optimize the hyperparameters.
         """
         msg = 'Cannot standardize and normalize the targets. Pick only one.'
-        assert standardize_target is not normalize_target, msg
+        assert (standardize_target and normalize_target) is not True, msg
 
         self.standardize_target = standardize_target
         self.normalize_target = normalize_target

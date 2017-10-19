@@ -47,7 +47,9 @@ class ParticleFingerprintGenerator(object):
 
     def nearestneighbour_fpv(self, atoms):
         """Nearest neighbour average, Topics in Catalysis, 2014, 57, 33."""
-        return get_nnmat(atoms)
+        if 'data' not in atoms.info or 'nnmat' not in atoms.info['data']:
+            atoms.info['data']['nnmat'] = get_nnmat(atoms)
+        return atoms.info['data']['nnmat']
 
     def bond_count_fpv(self, atoms):
         """Bond counting with a distribution measure for coordination."""
