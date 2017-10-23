@@ -81,19 +81,19 @@ def db2surf(fname, selection=[]):
     ssurf = csurf.select(selection)
     abinitio_energies = {}
     dbids = {}
-    # Get slabs and adsorbates from .db.
+    # Get slabs and speciess from .db.
     for d in ssurf:
         cat = str(d.name) + '_' + str(d.phase)
         facet = str(d.facet)
         lattice = str(d.surf_lattice)
-        abinitio_energy = float(d.enrgy)
-        series = str(d.series)
-        adsorbate = str(d.adsorbate)
-        if series == 'slab':
+        abinitio_energy = float(d.epot)
+        ads = str(d.ads)
+        species = str(d.species)
+        if ads == 'slab':
             ser = ''
             site = 'slab'
         else:
-            ser = adsorbate
+            ser = species
             site = str(d.site)
         site_name = lattice + '_' + facet + '_' + site
         key = ser + '_' + cat + '_' + site_name
@@ -115,7 +115,7 @@ def db2mol(fname, selection=[]):
     dbids = {}
     # Get molecules from mol.db.
     for d in smol:
-        abinitio_energy = float(d.enrgy)
+        abinitio_energy = float(d.epot)
         species_name = str(d.formula)
         if species_name+'_gas' not in abinitio_energies:
             abinitio_energies[species_name+'_gas'] = abinitio_energy
@@ -153,9 +153,9 @@ def db2dict(fname, selection=[]):
     ssurf = csurf.select(selection)
     abinitio_energies = {}
     dbids = {}
-    # Get slabs and adsorbates from .db.
+    # Get slabs and speciess from .db.
     for d in ssurf:
-        abinitio_energy = float(d.enrgy)  # float(d.ab_initio_energy)
+        abinitio_energy = float(d.epot)  # float(d.ab_initio_energy)
         # Is row a molecule?
         if 'mol' in d:
             mol = str(d.mol)
@@ -169,16 +169,16 @@ def db2dict(fname, selection=[]):
             cat = str(d.name) + '_' + str(d.phase)
             site_name = str(d.facet)
             # composition = str(d.formula)
-            series = str(d.series)
-            if series + '_' + cat + '_' + site_name not in abinitio_energies:
-                abinitio_energies[series + '_' + cat + '_' +
+            ads = str(d.ads)
+            if ads + '_' + cat + '_' + site_name not in abinitio_energies:
+                abinitio_energies[ads + '_' + cat + '_' +
                                   site_name] = abinitio_energy
-                dbids[series + '_' + cat + '_' + site_name] = int(d.id)
-            elif abinitio_energies[series + '_' + cat + '_' +
+                dbids[ads + '_' + cat + '_' + site_name] = int(d.id)
+            elif abinitio_energies[ads + '_' + cat + '_' +
                                    site_name] > abinitio_energy:
-                abinitio_energies[series + '_' + cat + '_' +
+                abinitio_energies[ads + '_' + cat + '_' +
                                   site_name] = abinitio_energy
-                dbids[series + '_' + cat + '_' + site_name] = int(d.id)
+                dbids[ads + '_' + cat + '_' + site_name] = int(d.id)
     return abinitio_energies, dbids
 
 
@@ -212,9 +212,9 @@ def get_formation_energies(energy_dict, ref_dict):  # adapted from CATMAP wiki
 
 def db2surf_info(fname, id_dict, formation_energies=None):
     """ Returns a list of atoms objects including only the most stable
-        adsorbate state for each key in the dict self.dbids.
+        species state for each key in the dict self.dbids.
 
-        Also attaches the required atoms.info to adsorbate states.
+        Also attaches the required atoms.info to species states.
     """
     c = ase.db.connect(fname)
     traj = []
@@ -244,7 +244,7 @@ def db2surf_info(fname, id_dict, formation_energies=None):
 
 def db2atoms_info(fname, selection=[]):
     """ Returns a list of atoms objects.
-        Attaches the required atoms.info to adsorbate states.
+        Attaches the required atoms.info to species states.
     """
     c = ase.db.connect(fname)
     s = c.select(selection)

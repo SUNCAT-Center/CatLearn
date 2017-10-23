@@ -32,16 +32,16 @@ def n_outer(econf):
     nf = 0
     for shell in econf.split(' ')[1:]:
         n_shell = 0
-        if shell[-1].isalpha:
+        if shell[-1].isalpha():
             n_shell = 1
         else:
             n_shell = int(shell[-1])
         n_tot += n_shell
         if 's' in shell:
             ns += n_shell
-        if 'p' in shell:
+        elif 'p' in shell:
             ns += n_shell
-        if 'd' in shell:
+        elif 'd' in shell:
             nd += n_shell
         elif 'f' in shell:
             nf += n_shell
@@ -259,7 +259,7 @@ class AdsorbateFingerprintGenerator(object):
                     'dbfilling_surf1',
                     'dbwidth_surf1',
                     'dbskew_surf1',
-                    'dbkurtosis_surf1',
+                    #'dbkurtosis_surf1',
                     'block_surf1',
                     'ne_outer_surf1',
                     'ne_s_surf1',
@@ -288,7 +288,7 @@ class AdsorbateFingerprintGenerator(object):
                                                           'dbfilling',
                                                           'dbwidth',
                                                           'dbskew',
-                                                          'dbkurt',
+                                                          #'dbkurt',
                                                           'block',
                                                           'econf',
                                                           'ionenergies'])

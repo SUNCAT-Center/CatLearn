@@ -4,8 +4,8 @@ from __future__ import division
 
 import numpy as np
 
-from .predict import GaussianProcess
-from .covariance import get_covariance
+from atoml.regression import GaussianProcess
+from atoml.covariance import get_covariance
 
 
 class SensitivityAnalysis(object):
@@ -169,9 +169,9 @@ class SensitivityAnalysis(object):
         if self.test_targets is not None:
             ve = True
         # Test data.
-        pred = gp.get_predictions(test_fp=self.test_matrix,
-                                  test_target=self.test_targets,
-                                  get_validation_error=ve,
-                                  get_training_error=True)
+        pred = gp.predict(test_fp=self.test_matrix,
+                          test_target=self.test_targets,
+                          get_validation_error=ve,
+                          get_training_error=True)
 
         return pred
