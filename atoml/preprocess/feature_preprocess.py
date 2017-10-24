@@ -95,22 +95,22 @@ def min_max(train_matrix, test_matrix=None, local=True):
     local : boolean
         Define whether to scale locally or globally.
     """
-    norm = defaultdict(list)
+    scale = defaultdict(list)
     if test_matrix is not None and not local:
         data = np.concatenate((train_matrix, test_matrix), axis=0)
     else:
         data = train_matrix
-    norm['min'] = np.min(data, axis=0)
-    norm['dif'] = np.max(data, axis=0) - norm['min']
-    np.place(norm['dif'], norm['dif'] == 0., [1.])  # Replace 0 with 1.
+    scale['min'] = np.min(data, axis=0)
+    scale['dif'] = np.max(data, axis=0) - scale['min']
+    np.place(scale['dif'], scale['dif'] == 0., [1.])  # Replace 0 with 1.
 
-    norm['train'] = (train_matrix - norm['min']) / norm['dif']
+    scale['train'] = (train_matrix - scale['min']) / scale['dif']
 
     if test_matrix is not None:
-        test_matrix = (test_matrix - norm['min']) / norm['dif']
-    norm['test'] = test_matrix
+        test_matrix = (test_matrix - scale['min']) / scale['dif']
+    scale['test'] = test_matrix
 
-    return norm
+    return scale
 
 
 def unit_length(train_matrix, test_matrix=None, local=True):
