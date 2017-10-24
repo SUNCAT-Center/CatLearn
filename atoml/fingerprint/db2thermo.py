@@ -89,6 +89,8 @@ def db2surf(fname, selection=[]):
         abinitio_energy = float(d.epot)
         ads = str(d.ads)
         species = str(d.species)
+        if '-' in species:
+            continue
         if ads == 'slab':
             ser = ''
             site = 'slab'
@@ -201,8 +203,8 @@ def get_formation_energies(energy_dict, ref_dict):  # adapted from CATMAP wiki
             try:
                 composition = string2symbols(ser)
             except ValueError:
-                ser = ser[:-2]
-                composition = string2symbols(ser)
+                print(ser, cat, pha, lattice, fac, site)
+                raise
             E0 += energy_dict[key]
             for atom in composition:
                 E0 -= ref_dict[atom]
