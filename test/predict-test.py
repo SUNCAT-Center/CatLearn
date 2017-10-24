@@ -54,7 +54,7 @@ assert not np.allclose(mmfp['train'], mmfpg['train'])
 ulfp = unit_length(train_matrix=train_features, test_matrix=test_features)
 ulfpg = unit_length(train_matrix=train_features, test_matrix=test_features,
                     local=False)
-assert not np.allclose(ulfp['train'], ulfpg['train'])
+assert np.allclose(ulfp['train'], ulfpg['train'])
 
 # Test prediction routine with linear kernel.
 kdict = {'k1': {'type': 'linear', 'const': 0.}}
