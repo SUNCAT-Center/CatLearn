@@ -1,5 +1,7 @@
 import numpy as np
 
+# Exponential gaussian kernel:
+
 # Gaussian kernel for k:
 def gaussian_kernel_k(scaling, l, xm, xn):
     d = xm - xn
