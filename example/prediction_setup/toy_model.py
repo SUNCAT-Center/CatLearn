@@ -2,22 +2,22 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-from atoml.feature_preprocess import standardize
-from atoml.predict import GaussianProcess
+from atoml.preprocess.feature_preprocess import standardize
+from atoml.regression import GaussianProcess
 
 
 def afunc(x):
     """Define some polynomial function."""
-    y = x - 50
-    p = (y + 4) * (y + 4) * (y + 1) * (y - 1) * (y - 3.5) * (y - 2) * (y - 1)
-    p += 40 * y + 80 * np.sin(10 * x)
-    return 1 / 20 * p + 500
+    y = x - 50.
+    p = (y + 4.)*(y + 4.)*(y + 1.)*(y - 1.)*(y - 3.5)*(y - 2.)*(y - 1.)
+    p += 40. * y + 80. * np.sin(10. * x)
+    return 1. / 20. * p + 500.
 
 
 train_points = 30
-test_points = 50
+test_points = 5000
 
-train = 7.6 * np.random.random_sample((1, train_points)) - 4.2 + 50
+train = 7.6 * np.random.random_sample((1, train_points)) - 4.2 + 50.
 target = []
 for i in train:
     target.append(afunc(i))
@@ -31,13 +31,13 @@ stdx = np.std(train)
 stdy = np.std(target)
 tstd = np.std(target, axis=1)
 
-linex = 8 * np.random.random_sample((1, 5000)) - 4.5 + 50
+linex = 8. * np.random.random_sample((1, 5000)) - 4.5 + 50.
 linex = np.sort(linex)
 liney = []
 for i in linex:
     liney.append(afunc(i))
 
-test = 8 * np.random.random_sample((1, test_points)) - 4.5 + 50
+test = 8. * np.random.random_sample((1, test_points)) - 4.5 + 50.
 test = np.sort(test)
 
 # Scale the input.
@@ -57,7 +57,7 @@ gp = GaussianProcess(kernel_dict=kdict, regularization=sdt1**2,
                      optimize_hyperparameters=False)
 
 # Do the under-fitted predictions.
-under_fit = gp.get_predictions(test_fp=std['test'], uncertainty=True)
+under_fit = gp.predict(test_fp=std['test'], uncertainty=True)
 
 upper = np.array(under_fit['prediction']) + \
  (np.array(under_fit['uncertainty'] * tstd))
@@ -71,7 +71,7 @@ gp = GaussianProcess(kernel_dict=kdict, regularization=sdt2**2,
                      optimize_hyperparameters=False)
 
 # Do the over-fitted predictions.
-over_fit = gp.get_predictions(test_fp=std['test'], uncertainty=True)
+over_fit = gp.predict(test_fp=std['test'], uncertainty=True)
 
 over_upper = np.array(over_fit['prediction']) + \
  (np.array(over_fit['uncertainty'] * tstd))
@@ -79,13 +79,13 @@ over_lower = np.array(over_fit['prediction']) - \
  (np.array(over_fit['uncertainty'] * tstd))
 
 # Set up the prediction routine.
-kdict = {'k1': {'type': 'gaussian', 'width': [w1]}}
+kdict = {'k1': {'type': 'gaussian', 'width': w1}}
 gp = GaussianProcess(kernel_dict=kdict, regularization=sdt1**2,
                      train_fp=std['train'], train_target=target[0],
                      optimize_hyperparameters=True)
 
 # Do the optimized predictions.
-optimized = gp.get_predictions(test_fp=std['test'], uncertainty=True)
+optimized = gp.predict(test_fp=std['test'], uncertainty=True)
 
 opt_upper = np.array(optimized['prediction']) + \
  (np.array(optimized['uncertainty'] * tstd))

@@ -5,7 +5,7 @@ from __future__ import division
 import numpy as np
 
 from atoml.regression import GaussianProcess
-from atoml.covariance import get_covariance
+from atoml.regression.gpfunctions.covariance import get_covariance
 
 
 class SensitivityAnalysis(object):
@@ -173,5 +173,9 @@ class SensitivityAnalysis(object):
                           test_target=self.test_targets,
                           get_validation_error=ve,
                           get_training_error=True)
+
+        print('{1} feature prediction ({0:.3f}):'.format(
+            pred['validation_error']['rmse_average'],
+            np.shape(self.test_matrix)[1]))
 
         return pred
