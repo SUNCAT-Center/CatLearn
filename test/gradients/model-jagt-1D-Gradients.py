@@ -63,9 +63,6 @@ bigK = gkernels.bigk(scaling, l,train)
 if gradients == True:
     bigK = gkernels.bigk_tilde(scaling, l,train)
 
-print(np.shape(k_little))
-print(np.shape(bigK))
-
 if gradients == True:
    gradients_plot = True
 if gradients == False:
