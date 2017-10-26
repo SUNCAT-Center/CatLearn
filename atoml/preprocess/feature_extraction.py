@@ -39,7 +39,8 @@ def spca(components, train_matrix, test_matrix):
     return new_test, new_train
 
 
-def home_pca(components, train_fpv, test_fpv=None, cleanup=False, scale=False):
+def atoml_pca(components, train_fpv, test_fpv=None, cleanup=False,
+              scale=False):
     """Principal component analysis varient that doesn't require scikit-learn.
 
     Parameters
