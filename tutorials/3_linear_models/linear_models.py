@@ -35,7 +35,7 @@ target = afunc(train)
 # Add random noise from a normal distribution to the target values.
 nt = []
 for i in range(train_points):
-    nt.append(3.0*np.random.normal())
+    nt.append(0.1*np.random.normal())
 target += np.array(nt)
 target = np.reshape(target, (len(target), 1))
 
@@ -62,13 +62,16 @@ if False:
     # Test ridge regression predictions.
     target_std = target_standardize(target)
     rr = RidgeRegression()
-    reg = rr.find_optimal_regularization(X=std['train'], Y=target_std['target'])
+    reg = rr.find_optimal_regularization(X=std['train'],
+                                         Y=target_std['target'])
     coef = rr.RR(X=std['train'], Y=target_std['target'], omega2=reg)[0]
     
     # Test the model.
     sumd = 0.
+    rr_predictions = []
     for tf, tt in zip(test, afunc(test)):
         p = (np.dot(coef, tf))
+        rr_predictions.append(p)
         sumd += (p - tt) ** 2
     print('Ridge regression prediction:', (sumd / len(test)) ** 0.5)
 
@@ -108,18 +111,20 @@ opt_lower = np.array(optimized['prediction']) - \
 linex1 = np.linspace(np.min(train), np.max(train), test_points)
 liney = afunc(np.hstack([np.vstack(linex1), np.vstack(linex1)]))
 
-# Example 1
 plt3d = plt.figure().gca(projection='3d')
-# plt3d.plot_surface(test_x1, test_x2, z, alpha=0.2)
-plt3d.plot_surface(test_x1, test_x2, afunc(test), alpha=0.2)
-plt.scatter(train[:, 0], train[:, 1], target,  color='green')
-plt.xlabel('Descriptor')
-plt.ylabel('Response')
+plt3d.scatter(train[:, 0], train[:, 1], target,  color='green')
+
+# Example 1 - Ridge regression.
+plt3d.plot_surface(test_x1, test_x2, afunc(test), alpha=0.2, color='r')
+plt3d.plot_surface(test_x1, test_x2, linear['prediction'], alpha=0.2, color='b')
+plt.xlabel('Descriptor 0')
+plt.ylabel('Descriptor 1')
+#plt.zlabel('Response')
 plt.axis('tight')
 plt.show()
 
 # Example 2
-# fig = plt.figure(figsize=(15, 8))
+fig = plt.figure(figsize=(15, 8))
 #ax = fig.add_subplot(223)
 #ax.plot(linex, liney, '-', lw=1, color='black')
 #ax.plot(train[0], target[0], 'o', alpha=0.2, color='black')
