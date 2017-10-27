@@ -1,7 +1,8 @@
 """ Contains kernel functions and gradients of kernels. """
 import numpy as np
 from scipy.spatial import distance
-
+from atoml.regression.gpfunctions import gaussian_gradients_kernel as \
+gradientskernels
 
 def kdict2list(kdict, N_D=None):
     """ Returns ordered list of hyperparameters, given a dictionary containing
@@ -28,7 +29,10 @@ def kdict2list(kdict, N_D=None):
         scaling = []
 
     # Store hyperparameters in single list theta
-    if (ktype == 'gaussian' or ktype == 'sqe' or ktype == 'laplacian') and \
+    if (ktype == 'gaussian' or ktype == 'gaussian_gradients' or ktype ==
+    'sqe' or \
+    ktype \
+    == 'laplacian') and \
             'width' in kdict:
         theta = list(kdict['width'])
         if 'features' in kdict:
@@ -129,7 +133,8 @@ def list2kdict(hyperparameters, kernel_dict):
             ki += 1
 
         # Retreive hyperparameters from a single list theta
-        if (ktype == 'gaussian' or ktype == 'sqe' or ktype == 'laplacian'):
+        if (ktype == 'gaussian' or ktype == 'gaussian_gradients' or ktype ==
+        'sqe' or ktype == 'laplacian'):
             N_D = len(kernel_dict[key]['width'])
             # scaling = hyperparameters[ki]
             # kernel_dict[key]['scaling'] = scaling
@@ -164,6 +169,28 @@ def list2kdict(hyperparameters, kernel_dict):
             theta = hyperparameters[ki:ki+N_D]
             kernel_dict[key]['hyperparameters'] = list(theta)
     return kernel_dict
+
+
+def gaussian_gradients_kernel(theta,m1,m2=None):
+    """ Returns the covariance matrix between datasets m1 and m2
+        with a gaussian kernel (gradients).
+
+        Parameters
+        ----------
+        theta : list
+            A list of widths for each feature.
+        m1 : list
+            A list of the test fingerprint vectors.
+        m2 : list
+            A list of the train fingerprint vectors.
+    """
+    kwidth = theta  # [1:]
+    if m2 is None:
+        k = gradientskernels.bigk_tilde(kwidth, m1)
+        return k
+    else:
+        k = gradientskernels.k_tilde(kwidth, m1, m2)
+        return k.T
 
 
 def gaussian_kernel(theta, m1, m2=None):
