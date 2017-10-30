@@ -570,6 +570,12 @@ class AdsorbateFingerprintGenerator(object):
         else:
             return [int(atoms.info['dbid'])]
 
+    def get_ctime(self, atoms=None):
+        if atoms is None:
+            return ['ctime']
+        else:
+            return [int(atoms.info['key_value_pairs']['ctime'])]
+
     def get_keyvaluepair(self, atoms=None, field_name='None'):
         if atoms is None:
             return ['kvp_'+field_name]
