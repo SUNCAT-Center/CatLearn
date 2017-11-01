@@ -49,6 +49,7 @@ print(np.shape(target))
 # Store standard deviations of the training data and targets.
 stdx = np.std(train)
 stdy = np.std(target)
+tstd = 2.
 sdt1 = np.sqrt(1e-6)
 
 # Standardize the training and test data on the same scale.
@@ -66,29 +67,8 @@ plt3d.plot_surface(test_x1, test_x2,
                    afunc(test).reshape(np.shape(test_x1)),
                    alpha=0.3, color='b')
 
-# Model example 1 - Ridge regression.
 if True:
-    # Test ridge regression predictions.
-    target_std = target_standardize(target)
-    rr = RidgeRegression()
-    reg = rr.find_optimal_regularization(X=std['train'],
-                                         Y=target_std['target'])
-    coef = rr.RR(X=std['train'], Y=target_std['target'], omega2=reg)[0]
-    # Test the model.
-    sumd = 0.
-    rr_predictions = []
-    for tf, tt in zip(std['test'], afunc(test)):
-        p = ((np.dot(coef, tf)) * target_std['std']) + target_std['mean']
-        rr_predictions.append(p)
-        sumd += (p - tt) ** 2
-    print('Ridge regression prediction:', (sumd / len(test)) ** 0.5)
-    # Plot the prediction.
-    plt3d.plot_surface(test_x1, test_x2,
-                       np.array(rr_predictions).reshape(np.shape(test_x1)),
-                       alpha=0.3, color='r')
-
-if True:
-    # Model example 2 - Gausian linear kernel regression.
+    # Model example 1 - Gausian linear kernel regression.
     # Define prediction parameters
     kdict = {'k1': {'type': 'linear', 'scaling': 1., 'const': 0}}
     # Set up the prediction routine.
@@ -98,14 +78,20 @@ if True:
     # Do predictions.
     linear = gp1.predict(test_fp=std['test'], uncertainty=True)
     # Get confidence interval on predictions.
-    # Plot the prediction.
+    over_upper = np.array(linear['prediction']) + \
+        (np.array(linear['uncertainty']) * tstd)
+    over_lower = np.array(linear['prediction']) - \
+        (np.array(linear['uncertainty']) * tstd)
+    # Plot the uncertainties upper and lower bounds.
     plt3d.plot_surface(test_x1, test_x2,
-                       linear['prediction'].reshape(np.shape(test_x1)),
-                       alpha=0.3, color='g')
-
+                       over_upper.reshape(np.shape(test_x1)),
+                       alpha=0.3, color='r')
+    plt3d.plot_surface(test_x1, test_x2,
+                       over_lower.reshape(np.shape(test_x1)),
+                       alpha=0.3, color='r')
 
 if True:
-    # Model example 3 - Gaussian Process with sqe kernel.
+    # Model example 2 - Gaussian Process with sqe kernel.
     # Set up the prediction routine and optimize hyperparameters.
     kdict = {'k1': {'type': 'gaussian', 'width': [0.3, 3.]}}
     gp2 = GaussianProcess(kernel_dict=kdict, regularization=sdt1**2,
@@ -114,9 +100,16 @@ if True:
     # Do the optimized predictions.
     optimized = gp2.predict(test_fp=std['test'], uncertainty=True)
     # Get confidence interval on predictions.
+    opt_upper = np.array(optimized['prediction']) + \
+        (np.array(optimized['uncertainty']) * tstd)
+    opt_lower = np.array(optimized['prediction']) - \
+        (np.array(optimized['uncertainty']) * tstd)
     # Plot the prediction.
     plt3d.plot_surface(test_x1, test_x2,
-                       optimized['prediction'].reshape(np.shape(test_x1)),
+                       opt_upper.reshape(np.shape(test_x1)),
+                       alpha=0.3, color='g')
+    plt3d.plot_surface(test_x1, test_x2,
+                       opt_lower.reshape(np.shape(test_x1)),
                        alpha=0.3, color='g')
 
 plt.xlabel('Descriptor 0')
