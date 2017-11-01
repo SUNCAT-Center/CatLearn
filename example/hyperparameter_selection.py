@@ -12,7 +12,7 @@ import numpy as np
 from scipy.optimize import minimize
 from matplotlib import pyplot as plt
 from atoml.feature_preprocess import standardize
-from atoml.feature_extraction import home_pca
+#from atoml.feature_extraction import home_pca
 from atoml.model_selection import log_marginal_likelihood
 import time
 
@@ -20,7 +20,8 @@ import time
 raw_data = np.genfromtxt('data.txt')
 
 # The last column is selected as target value.
-targets = raw_data[:, -1]
+raw_targets = raw_data[:, -1]
+targets = (raw_targets - np.mean(raw_targets)) / np.std(raw_targets)
 fingerprints = raw_data[:, :-1]
 
 # Select a few features
@@ -47,12 +48,13 @@ kernel_dict = {'k1': {'type': 'sqe', 'width': [.3] * m,
 a = (train_matrix, targets, kernel_dict)
 
 # Hyperparameter starting guesses.
-sigma = np.ones(m) * kernel_dict['k1']['width']
-regularization = .003
+sigma = np.array([2.70913273e+11, 5.79818582e+09, 9.03138314e-02,
+                  6.52599906e-02, 1.52487019e-02])#np.ones(m) * kernel_dict['k1']['width']
+regularization = .03
 theta = np.append(sigma, regularization)
 
 # Hyper parameter bounds.
-regularization_bounds = ((1e-12, None),)
+regularization_bounds = ((1e-15, None),)
 b = kernel_dict['k1']['bounds'] + regularization_bounds
 print('initial log marginal likelihood =',
       -log_marginal_likelihood(theta,
@@ -101,10 +103,10 @@ for j in range(m+1):
     else:
         hyperparameter = 'width_'+str(j)
     ax[axx, axy].set_xlabel(hyperparameter)
-    ax[axx, axy].set_ylabel('log marginal likelihood')
+    ax[axx, axy].set_ylabel('log P')
 # fig.subplots_adjust(hspace=0.5)
 fig.tight_layout()
-if False:
+if True:
     fig.savefig(fname+'.pdf', format='pdf')
 if True:
     plt.show()

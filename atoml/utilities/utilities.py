@@ -163,15 +163,15 @@ def simple_learning_curve(gp, testx, testy, step=1, min_data=2,
         # Update the training data in the gp. Targets are standardized again.
         gp.update_data(train_fp=trainx[:low, :],
                        train_target=trainy[:low],
-                       standardize_target=True)
+                       standardize_target=True, normalize_target=False)
         if optimize_interval is not None and low % optimize_interval == 0:
-            gp.optimize_hyperparameters()
+            gp._optimize_hyperparameters()
         # Do the prediction
-        pred = gp.get_predictions(test_fp=testx,
-                                  get_validation_error=True,
-                                  get_training_error=False,
-                                  uncertainty=True,
-                                  test_target=testy)
+        pred = gp.predict(test_fp=testx,
+                          get_validation_error=True,
+                          get_training_error=False,
+                          uncertainty=True,
+                          test_target=testy)
         # Store the error associated with the predictions in lists.
         Ndata.append(len(trainy[:low]))
         rmse.append(pred['validation_error']['rmse_average'])
