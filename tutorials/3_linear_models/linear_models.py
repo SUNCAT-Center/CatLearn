@@ -20,7 +20,7 @@ def afunc(x):
 
 # Setting up data.
 # A number of training points in x.
-train_points = 30
+train_points = 10
 
 # Randomly generate the training datapoints x.
 train_d1 = 2 * (np.random.random_sample(train_points) - 0.5)
@@ -37,7 +37,7 @@ for i in range(train_points):
     target[i] += 0.3*np.random.normal()
 
 # Generate test datapoints x.
-test_points = 11
+test_points = 33
 test1d = np.vstack(np.linspace(-1.3, 1.3, test_points))
 test_x1, test_x2 = np.meshgrid(test1d, test1d)
 test = np.hstack([np.vstack(test_x1.ravel()), np.vstack(test_x2.ravel())])
@@ -50,9 +50,22 @@ print(np.shape(target))
 stdx = np.std(train)
 stdy = np.std(target)
 tstd = 1
+sdt1 = np.sqrt(1e-6)
+
 # Standardize the training and test data on the same scale.
 std = standardize(train_matrix=train,
                   test_matrix=test)
+
+# Plotting.
+plt3d = plt.figure().gca(projection='3d')
+
+# Plot training data.
+plt3d.scatter(train[:, 0], train[:, 1], target,  color='b')
+
+# Plot exact function.
+plt3d.plot_surface(test_x1, test_x2,
+                   afunc(test).reshape(np.shape(test_x1)),
+                   alpha=0.3, color='b')
 
 # Model example 1 - Ridge regression.
 if True:
@@ -65,12 +78,15 @@ if True:
     # Test the model.
     sumd = 0.
     rr_predictions = []
-    for tf, tt in zip(test, afunc(test)):
+    for tf, tt in zip(std['test'], afunc(test)):
         p = ((np.dot(coef, tf)) * target_std['std']) + target_std['mean']
         rr_predictions.append(p)
         sumd += (p - tt) ** 2
     print('Ridge regression prediction:', (sumd / len(test)) ** 0.5)
-sdt1 = np.sqrt(1e-6)
+    # Plot the prediction.
+    plt3d.plot_surface(test_x1, test_x2,
+                       np.array(rr_predictions).reshape(np.shape(test_x1)),
+                       alpha=0.3, color='r')
 
 if True:
     # Model example 2 - Gausian linear kernel regression.
@@ -83,10 +99,11 @@ if True:
     # Do predictions.
     linear = gp1.predict(test_fp=std['test'], uncertainty=True)
     # Get confidence interval on predictions.
-    over_upper = np.array(linear['prediction']) + \
-     (np.array(linear['uncertainty'] * tstd))
-    over_lower = np.array(linear['prediction']) - \
-     (np.array(linear['uncertainty'] * tstd))
+    # Plot the prediction.
+    plt3d.plot_surface(test_x1, test_x2,
+                       linear['prediction'].reshape(np.shape(test_x1)),
+                       alpha=0.3, color='g')
+
 
 if True:
     # Model example 3 - Gaussian Process with sqe kernel.
@@ -98,31 +115,11 @@ if True:
     # Do the optimized predictions.
     optimized = gp2.predict(test_fp=std['test'], uncertainty=True)
     # Get confidence interval on predictions.
-    opt_upper = np.array(optimized['prediction']) + \
-     (np.array(optimized['uncertainty'] * tstd))
-    opt_lower = np.array(optimized['prediction']) - \
-     (np.array(optimized['uncertainty'] * tstd))
+    # Plot the prediction.
+    plt3d.plot_surface(test_x1, test_x2,
+                       optimized['prediction'].reshape(np.shape(test_x1)),
+                       alpha=0.3, color='g')
 
-# Plotting.
-# Store the known underlying function for plotting.
-#linex1 = np.linspace(np.min(train), np.max(train), test_points)
-#liney = afunc(np.hstack([np.vstack(linex1), np.vstack(linex1)]))
-
-plt3d = plt.figure().gca(projection='3d')
-plt3d.scatter(train[:, 0], train[:, 1], target,  color='green')
-
-# Example 1 - Ridge regression.
-plt3d.plot_surface(test_x1, test_x2,
-                   np.array(rr_predictions).reshape(np.shape(test_x1)),
-                   alpha=0.3, color='r')
-# Example 2 - Gaussian linear regression.
-plt3d.plot_surface(test_x1, test_x2,
-                   afunc(test).reshape(np.shape(test_x1)),
-                   alpha=0.3, color='b')
-# Example 3 - Gaussian squared exponential regression.
-plt3d.plot_surface(test_x1, test_x2,
-                   linear['prediction'].reshape(np.shape(test_x1)),
-                   alpha=0.3, color='g')
 plt.xlabel('Descriptor 0')
 plt.ylabel('Descriptor 1')
 plt.axis('tight')
