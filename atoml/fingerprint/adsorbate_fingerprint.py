@@ -32,16 +32,18 @@ def n_outer(econf):
     nf = 0
     for shell in econf.split(' ')[1:]:
         n_shell = 0
-        if shell[-1].isalpha:
+        if shell[-1].isalpha():
             n_shell = 1
-        else:
+        elif len(shell) == 3:
             n_shell = int(shell[-1])
+        elif len(shell) == 4:
+            n_shell = int(shell[-2:])            
         n_tot += n_shell
         if 's' in shell:
             ns += n_shell
-        if 'p' in shell:
-            ns += n_shell
-        if 'd' in shell:
+        elif 'p' in shell:
+            np += n_shell
+        elif 'd' in shell:
             nd += n_shell
         elif 'f' in shell:
             nf += n_shell
@@ -259,7 +261,7 @@ class AdsorbateFingerprintGenerator(object):
                     'dbfilling_surf1',
                     'dbwidth_surf1',
                     'dbskew_surf1',
-                    'dbkurtosis_surf1',
+                    #'dbkurtosis_surf1',
                     'block_surf1',
                     'ne_outer_surf1',
                     'ne_s_surf1',
@@ -288,7 +290,7 @@ class AdsorbateFingerprintGenerator(object):
                                                           'dbfilling',
                                                           'dbwidth',
                                                           'dbskew',
-                                                          'dbkurt',
+                                                          #'dbkurt',
                                                           'block',
                                                           'econf',
                                                           'ionenergies'])
@@ -306,14 +308,14 @@ class AdsorbateFingerprintGenerator(object):
         """
         if atoms is None:
             return ['total_num_C',
-                    # 'total_num_O' , 'total_num_N',
+                    'total_num_O' ,# 'total_num_N',
                     'total_num_H']
         else:
             nC = len([a.index for a in atoms if a.symbol == 'C'])
-            # nO = len([a.index for a in atoms if a.symbol == 'O'])
+            nO = len([a.index for a in atoms if a.symbol == 'O'])
             # nN = len([a.index for a in atoms if a.symbol == 'N'])
             nH = len([a.index for a in atoms if a.symbol == 'H'])
-            return [nC, nH]  # , nN, nO]
+            return [nC, nO, nH]  # , nN, nO]
 
     def primary_adds_nn(self, atoms=None, rtol=1.15):
         """ Function that takes an atoms objects and returns a fingerprint
@@ -494,18 +496,24 @@ class AdsorbateFingerprintGenerator(object):
             atoms.info['add_atoms']
         """
         if atoms is None:
-            return ['nC-C', 'nC-H']
+            return ['nC-C', 'ndouble', 'nC-H', 'nO-H']
         else:
             add_atoms = atoms[atoms.info['add_atoms']]
             A = connection_matrix(add_atoms, periodic=True, dx=0.2)
             Hindex = [a.index for a in add_atoms if a.symbol == 'H']
             Cindex = [a.index for a in add_atoms if a.symbol == 'C']
+            Oindex = [a.index for a in add_atoms if a.symbol == 'O']
             nCC = 0
             nCH = 0
+            nC2 = 0
+            nOH = 0
+            for o in Oindex:
+                nOH += np.sum(A[Hindex, o])
             for a in Cindex:
                 nCC += np.sum(A[Cindex, a])
                 nCH += np.sum(A[Hindex, a])
-            return [nCC/2, nCH]
+                nC2 += 4 - (nCC + nCH)
+            return [nCC, nC2, nCH, nOH]
 
     def adds_av(self, atoms=None):
         """ Function that takes an atoms objects and returns a fingerprint
@@ -561,6 +569,12 @@ class AdsorbateFingerprintGenerator(object):
             return ['dbid']
         else:
             return [int(atoms.info['dbid'])]
+
+    def get_ctime(self, atoms=None):
+        if atoms is None:
+            return ['ctime']
+        else:
+            return [int(atoms.info['key_value_pairs']['ctime'])]
 
     def get_keyvaluepair(self, atoms=None, field_name='None'):
         if atoms is None:

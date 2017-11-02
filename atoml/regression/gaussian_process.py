@@ -12,7 +12,8 @@ from .gpfunctions.covariance import get_covariance
 from .gpfunctions.kernels import kdicts2list, list2kdict
 from .gpfunctions.uncertainty import get_uncertainty
 from atoml.utilities.cost_function import get_error
-from atoml.preprocess.scale_target import target_standardize, target_normalize
+from atoml.preprocess.scale_target import target_standardize, \
+    target_normalize, target_center
 
 
 class GaussianProcess(object):
@@ -20,6 +21,7 @@ class GaussianProcess(object):
 
     def __init__(self, train_fp, train_target, kernel_dict,
                  standardize_target=True, normalize_target=False,
+                 center_target=False,
                  regularization=None, regularization_bounds=(1e-12, None),
                  optimize_hyperparameters=False):
         """Gaussian processes setup.
@@ -43,17 +45,19 @@ class GaussianProcess(object):
         optimize_hyperparameters : boolean
             Optional flag to optimize the hyperparameters.
         """
-        msg = 'Cannot standardize and normalize the targets. Pick only one.'
-        assert (standardize_target and normalize_target) is not True, msg
+        msg = 'Cannot standardize, normalize and center the targets. Pick only one.'
+        assert not (standardize_target and normalize_target), msg
+        assert not (standardize_target and center_target), msg
+        assert not (normalize_target and center_target), msg
 
-        self.standardize_target = standardize_target
-        self.normalize_target = normalize_target
         self.N_train, self.N_D = np.shape(train_fp)
         self.regularization = regularization
         self._prepare_kernels(kernel_dict,
                               regularization_bounds=regularization_bounds)
-        self.update_data(train_fp, train_target, standardize_target,
-                         normalize_target)
+        self.update_data(train_fp, train_target,
+                         standardize_target=standardize_target,
+                         normalize_target=normalize_target,
+                         center_target=center_target)
         if optimize_hyperparameters:
             self._optimize_hyperparameters()
 
@@ -114,11 +118,13 @@ class GaussianProcess(object):
                                       target=self.train_target)
 
             # Calculated the error for the prediction on the training data.
-            if self.standardize_target:
+            if self.center_target:
+                train_target = self.train_target + self.center_data['mean']
+            elif self.standardize_target:
                 train_target = self.train_target * \
                     self.standardize_data['std'] + \
                     self.standardize_data['mean']
-            if self.normalize_target:
+            elif self.normalize_target:
                 train_target = self.train_target * \
                     self.normalize_data['dif'] + \
                     self.normalize_data['mean']
@@ -146,8 +152,8 @@ class GaussianProcess(object):
 
         return data
 
-    def update_data(self, train_fp, train_target, standardize_target,
-                    normalize_target):
+    def update_data(self, train_fp, train_target, standardize_target=True,
+                    normalize_target=False, center_target=False):
         """Update the training matrix, targets and covariance matrix.
 
         Parameters
@@ -163,12 +169,17 @@ class GaussianProcess(object):
         self.train_fp = train_fp
         # Store standardized target values by default.
         self.standardize_target = standardize_target
+        self.normalize_target = normalize_target
+        self.center_target = center_target
         if self.standardize_target:
             self.standardize_data = target_standardize(train_target)
             self.train_target = self.standardize_data['target']
         elif self.normalize_target:
             self.normalize_data = target_normalize(train_target)
             self.train_target = self.normalize_data['target']
+        elif self.center_target:
+            self.center_data = target_center(train_target)
+            self.train_target = self.center_data['target']
         else:
             self.train_target = train_target
         # Get the Gram matrix on-the-fly if none is suppiled.
@@ -257,7 +268,7 @@ class GaussianProcess(object):
         theta = np.append(theta, self.regularization)
 
         # Define fixed arguments for log_marginal_likelihood
-        args = (np.array(self.train_fp), self.train_target,
+        args = (np.array(self.train_fp), np.array(self.train_target),
                 self.kernel_dict)
 
         # Optimize
@@ -294,18 +305,19 @@ class GaussianProcess(object):
             The rescaled predictions for the test data.
         """
         train_mean = np.mean(target)
-        target_values = target - train_mean
+        target_values = target
         alpha = np.dot(cinv, target_values)
 
         # Form list of the actual predictions.
-        pred = functools.reduce(np.dot, (ktb, alpha)) + train_mean
+        pred = functools.reduce(np.dot, (ktb, alpha))
 
-        # Rescalse the predictions if targets were previously standardized.
-        if self.standardize_target:
+        # Rescale the predictions if targets were previously standardized.
+        if self.center_target:
+            pred = np.asarray(pred) + self.center_data['mean']
+        elif self.standardize_target:
             pred = (np.asarray(pred) * self.standardize_data['std']) + \
              self.standardize_data['mean']
-
-        if self.normalize_target:
+        elif self.normalize_target:
             pred = (np.asarray(pred) * self.normalize_data['dif']) + \
              self.normalize_data['mean']
 
