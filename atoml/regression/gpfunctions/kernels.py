@@ -1,25 +1,26 @@
 """ Contains kernel functions and gradients of kernels. """
 import numpy as np
 from scipy.spatial import distance
-from atoml.regression.gpfunctions import gaussian_gradients_kernel as \
-gradientskernels
+
 
 def kdict2list(kdict, N_D=None):
-    """ Returns ordered list of hyperparameters, given a dictionary containing
-        properties of a single kernel. The dictionary must contain either the
-        key 'hyperparameters' or 'theta' containing a list of hyperparameters
-        or the keys 'type' containing the type name in a string and 'width' in
-        the case of a 'gaussian' or 'laplacian' type or the keys 'kdegree' and
-        'kfree' in the case of a 'polynomial' type.
+    """Return ordered list of hyperparameters.
 
-        Parameters
-        ----------
-        kdict : dict
-            A kernel dictionary containing the keys 'type' and optional
-            keys containing the hyperparameters of the kernel.
-        N_D : none or int
-            The number of descriptors if not specified in the kernel dict,
-            by the lenght of the lists of hyperparameters.
+    Assumes function is given a dictionary containing properties of a single
+    kernel. The dictionary must contain either the key 'hyperparameters' or
+    'theta' containing a list of hyperparameters or the keys 'type' containing
+    the type name in a string and 'width' in the case of a 'gaussian' or
+    'laplacian' type or the keys 'kdegree' and 'kfree' in the case of a
+    'polynomial' type.
+
+    Parameters
+    ----------
+    kdict : dict
+        A kernel dictionary containing the keys 'type' and optional keys
+        containing the hyperparameters of the kernel.
+    N_D : none or int
+        The number of descriptors if not specified in the kernel dict, by the
+        lenght of the lists of hyperparameters.
     """
     # Get the kernel type.
     ktype = str(kdict['type'])
@@ -29,10 +30,7 @@ def kdict2list(kdict, N_D=None):
         scaling = []
 
     # Store hyperparameters in single list theta
-    if (ktype == 'gaussian' or ktype == 'gaussian_gradients' or ktype ==
-    'sqe' or \
-    ktype \
-    == 'laplacian') and \
+    if ktype == 'gaussian' or ktype == 'sqe' or ktype == 'laplacian' and \
             'width' in kdict:
         theta = list(kdict['width'])
         if 'features' in kdict:
@@ -88,17 +86,18 @@ def kdict2list(kdict, N_D=None):
 
 
 def kdicts2list(kernel_dict, N_D=None):
-    """ Returns an ordered list of hyperparameters given the kernel dictionary.
-        The kernel dictionary must contain one or more dictionaries, each
-        specifying the type and hyperparameters.
+    """Return ordered list of hyperparameters given the kernel dictionary.
 
-        Parameters
-        ----------
-        kernel_dict : dict
-            A dictionary containing kernel dictionaries.
-        N_D : int
-            The number of descriptors if not specified in the kernel dict,
-            by the length of the lists of hyperparameters.
+    The kernel dictionary must contain one or more dictionaries, each
+    specifying the type and hyperparameters.
+
+    Parameters
+    ----------
+    kernel_dict : dict
+        A dictionary containing kernel dictionaries.
+    N_D : int
+        The number of descriptors if not specified in the kernel dict, by the
+        length of the lists of hyperparameters.
     """
     hyperparameters = []
     for kernel_key in kernel_dict:
@@ -109,19 +108,20 @@ def kdicts2list(kernel_dict, N_D=None):
 
 
 def list2kdict(hyperparameters, kernel_dict):
-    """ Returns a updated kernel dictionary with updated hyperparameters,
-        given an ordered list of hyperparametersthe and the previous kernel
-        dictionary. The kernel dictionary must contain a dictionary for each
-        kernel type in the same order as their respective hyperparameters
-        in the list hyperparameters.
+    """Return updated kernel dictionary with updated hyperparameters from list.
 
-        Parameters
-        ----------
-        hyperparameters : list
-            All hyperparameters listed in the order they are specified
-            in the kernel dictionary.
-        kernel_dict : dict
-            A dictionary containing kernel dictionaries.
+    Assumed an ordered list of hyperparametersthe and the previous kernel
+    dictionary. The kernel dictionary must contain a dictionary for each kernel
+    type in the same order as their respective hyperparameters in the list
+    hyperparameters.
+
+    Parameters
+    ----------
+    hyperparameters : list
+        All hyperparameters listed in the order they are specified in the
+        kernel dictionary.
+    kernel_dict : dict
+        A dictionary containing kernel dictionaries.
     """
     ki = 0
     for key in kernel_dict:
@@ -133,8 +133,7 @@ def list2kdict(hyperparameters, kernel_dict):
             ki += 1
 
         # Retreive hyperparameters from a single list theta
-        if (ktype == 'gaussian' or ktype == 'gaussian_gradients' or ktype ==
-        'sqe' or ktype == 'laplacian'):
+        if ktype == 'gaussian' or ktype == 'sqe' or ktype == 'laplacian':
             N_D = len(kernel_dict[key]['width'])
             # scaling = hyperparameters[ki]
             # kernel_dict[key]['scaling'] = scaling
@@ -171,40 +170,17 @@ def list2kdict(hyperparameters, kernel_dict):
     return kernel_dict
 
 
-def gaussian_gradients_kernel(theta,m1,m2=None):
-    """ Returns the covariance matrix between datasets m1 and m2
-        with a gaussian kernel (gradients).
-
-        Parameters
-        ----------
-        theta : list
-            A list of widths for each feature.
-        m1 : list
-            A list of the test fingerprint vectors.
-        m2 : list
-            A list of the train fingerprint vectors.
-    """
-    kwidth = theta  # [1:]
-    if m2 is None:
-        k = gradientskernels.bigk_tilde(kwidth, m1)
-        return k
-    else:
-        k = gradientskernels.k_tilde(kwidth, m1, m2)
-        return k.T
-
-
 def gaussian_kernel(theta, m1, m2=None):
-    """ Returns the covariance matrix between datasets m1 and m2
-        with a gaussian kernel.
+    """Return covariance between data m1 & m2 with a gaussian kernel.
 
-        Parameters
-        ----------
-        theta : list
-            A list of widths for each feature.
-        m1 : list
-            A list of the training fingerprint vectors.
-        m2 : list
-            A list of the training fingerprint vectors.
+    Parameters
+    ----------
+    theta : list
+        A list of widths for each feature.
+    m1 : list
+        A list of the training fingerprint vectors.
+    m2 : list
+        A list of the training fingerprint vectors.
     """
     # scaling = theta[0]
     kwidth = theta  # [1:]
@@ -222,17 +198,16 @@ def gaussian_kernel(theta, m1, m2=None):
 
 
 def sqe_kernel(theta, m1, m2=None):
-    """ Returns the covariance matrix between datasets m1 and m2
-        with a gaussian kernel.
+    """Return covariance between data m1 & m2 with a gaussian kernel.
 
-        Parameters
-        ----------
-        theta : list
-            A list of widths for each feature.
-        m1 : list
-            A list of the training fingerprint vectors.
-        m2 : list
-            A list of the training fingerprint vectors.
+    Parameters
+    ----------
+    theta : list
+        A list of widths for each feature.
+    m1 : list
+        A list of the training fingerprint vectors.
+    m2 : list
+        A list of the training fingerprint vectors.
     """
     # scaling = theta[0]
     kwidth = theta  # [1:]
@@ -250,17 +225,16 @@ def sqe_kernel(theta, m1, m2=None):
 
 
 def scaled_sqe_kernel(theta, m1, m2=None):
-    """ Returns the covariance matrix between datasets m1 and m2
-        with a gaussian kernel.
+    """Return covariance between data m1 & m2 with a gaussian kernel.
 
-        Parameters
-        ----------
-        theta : list
-            A list of hyperparameters.
-        m1 : list
-            A list of the training fingerprint vectors.
-        m2 : list
-            A list of the training fingerprint vectors.
+    Parameters
+    ----------
+    theta : list
+        A list of hyperparameters.
+    m1 : list
+        A list of the training fingerprint vectors.
+    m2 : list
+        A list of the training fingerprint vectors.
     """
     N_D = len(theta) / 2
     scaling = np.vstack(theta[:N_D])
@@ -273,17 +247,16 @@ def scaled_sqe_kernel(theta, m1, m2=None):
 
 
 def AA_kernel(theta, m1, m2=None):
-    """ Returns the covariance matrix between datasets m1 and m2
-        with an Aichinson & Aitken kernel.
+    """Return covariance between data m1 & m2 with Aichinson & Aitken kernel.
 
-        Parameters
-        ----------
-        theta : list
-            [l, n, c]
-        m1 : list
-            A list of the training fingerprint vectors.
-        m2 : list
-            A list of the training fingerprint vectors.
+    Parameters
+    ----------
+    theta : list
+        [l, n, c]
+    m1 : list
+        A list of the training fingerprint vectors.
+    m2 : list
+        A list of the training fingerprint vectors.
     """
     if m2 is None:
         m2 = m1
@@ -297,17 +270,16 @@ def AA_kernel(theta, m1, m2=None):
 
 
 def linear_kernel(theta, m1, m2=None):
-    """ Returns the covariance matrix between datasets m1 and m2
-        with a linear kernel.
+    """Return covariance between data m1 & m2 with a linear kernel.
 
-        Parameters
-        ----------
-        theta : list
-            A list containing constant offset.
-        m1 : list
-            A list of the training fingerprint vectors.
-        m2 : list or None
-            A list of the training fingerprint vectors.
+    Parameters
+    ----------
+    theta : list
+        A list containing constant offset.
+    m1 : list
+        A list of the training fingerprint vectors.
+    m2 : list or None
+        A list of the training fingerprint vectors.
     """
     if m2 is None:
         m2 = m1
@@ -316,17 +288,16 @@ def linear_kernel(theta, m1, m2=None):
 
 
 def polynomial_kernel(theta, m1, m2=None):
-    """ Returns the covariance matrix between datasets m1 and m2
-        with a polynomial kernel.
+    """Return covariance between data m1 & m2 with a polynomial kernel.
 
-        Parameters
-        ----------
-        theta : list
-            A list containing constant, slope and degree for polynomial.
-        m1 : list
-            A list of the training fingerprint vectors.
-        m2 : list or None
-            A list of the training fingerprint vectors.
+    Parameters
+    ----------
+    theta : list
+        A list containing constant, slope and degree for polynomial.
+    m1 : list
+        A list of the training fingerprint vectors.
+    m2 : list or None
+        A list of the training fingerprint vectors.
     """
     slope = theta[0]
     degree = theta[1]
@@ -337,17 +308,16 @@ def polynomial_kernel(theta, m1, m2=None):
 
 
 def laplacian_kernel(theta, m1, m2=None):
-    """ Returns the covariance matrix between datasets m1 and m2
-        with a laplacian kernel.
+    """Return covariance between data m1 & m2 with a laplacian kernel.
 
-        Parameters
-        ----------
-        theta : list
-            A list of widths for each feature.
-        m1 : list
-            A list of the training fingerprint vectors.
-        m2 : list or None
-            A list of the training fingerprint vectors.
+    Parameters
+    ----------
+    theta : list
+        A list of widths for each feature.
+    m1 : list
+        A list of the training fingerprint vectors.
+    m2 : list or None
+        A list of the training fingerprint vectors.
     """
     if m2 is None:
         k = distance.pdist(m1 / theta, metric='cityblock')

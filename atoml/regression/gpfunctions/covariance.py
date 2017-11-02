@@ -19,34 +19,16 @@ def get_covariance(kernel_dict, matrix1, matrix2=None, regularization=None):
     regularization : None or float
         Smoothing parameter for the Gramm matrix.
     """
-    # if gradients:
-    #     return covariance_gradients()
-
-
     n1, n1_D = np.shape(matrix1)
-
     if matrix2 is not None:
-        n2, n2_D = np.shape(matrix2)
-        assert n1_D == n2_D
-    else:
-        n2 = n1
-    # Initialize covariance matrix
-
+        assert n1_D == np.shape(matrix2)[1]
+    cov = None
 
     # Keep copies of original matrices.
     store1, store2 = matrix1, matrix2
 
     # Loop over kernels in kernel_dict
-    cov = None
     for key in kernel_dict:
-        theta = ak.kdict2list(kernel_dict[key], n1_D)
-        hyperparameters = theta[1]
-        ktype = kernel_dict[key]['type']
-        k = eval('ak.' + str(ktype) +
-                                  '_kernel(m1=matrix1, m2=matrix2,' +
-                                  ' theta=hyperparameters)')
-        if cov is None:
-            cov = np.zeros(np.shape(k))
         matrix1, matrix2 = store1, store2
         ktype = kernel_dict[key]['type']
 
@@ -62,18 +44,23 @@ def get_covariance(kernel_dict, matrix1, matrix2=None, regularization=None):
         else:
             scaling = theta[0]
 
-        # Get the covariance matrix
+        # Get mapping from kernel functions.
+        k = eval('ak.{}_kernel(m1=matrix1, m2=matrix2, \
+                 theta=hyperparameters)'.format(ktype))
+
+        # Initialize covariance matrix
+        if cov is None:
+            cov = np.zeros(np.shape(k))
+
+        # Generate the covariance matrix
         if 'operation' in kernel_dict[key] and \
            kernel_dict[key]['operation'] == 'multiplication':
-            cov *= scaling * eval('ak.' + str(ktype) +
-                                  '_kernel(m1=matrix1, m2=matrix2,' +
-                                  ' theta=hyperparameters)')
+            cov *= scaling * k
         else:
-            cov += scaling * eval('ak.' + str(ktype) +
-                                  '_kernel(m1=matrix1, m2=matrix2,' +
-                                  ' theta=hyperparameters)')
+            cov += scaling * k
+
+    # Apply noise parameter.
     if regularization is not None:
         cov += regularization * np.identity(len(cov))
-    return cov
 
-# def covariance_function:
+    return cov

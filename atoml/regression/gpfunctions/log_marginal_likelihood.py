@@ -15,19 +15,20 @@ from .kernels import list2kdict
 
 
 def log_marginal_likelihood(theta, train_matrix, targets, kernel_dict):
-    """ Return the log marginal likelyhood.
-        (Equation 5.8 in C. E. Rasmussen and C. K. I. Williams, 2006)
+    """Return the log marginal likelyhood.
 
-        Parameters
-        ----------
-        theta : list
-            A list containing the hyperparameters.
-        train_matrix : list
-            A list of the test fingerprint vectors.
-        targets : list
-            A list of target values
-        kernel_dict: dict
-            A dictionary of kernel dictionaries
+    Equation 5.8 in C. E. Rasmussen and C. K. I. Williams, 2006
+
+    Parameters
+    ----------
+    theta : list
+        A list containing the hyperparameters.
+    train_matrix : list
+        A list of the test fingerprint vectors.
+    targets : list
+        A list of target values
+    kernel_dict: dict
+        A dictionary of kernel dictionaries
     """
     # Get the covariance matrix.
     kernel_dict = list2kdict(theta, kernel_dict)
