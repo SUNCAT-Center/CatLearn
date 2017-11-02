@@ -7,7 +7,7 @@ Gaussian process with the usual squared exponential kernel.
 """
 import numpy as np
 import matplotlib.pyplot as plt
-from atoml.feature_preprocess import standardize
+from atoml.preprocess.feature_preprocess import standardize
 from atoml.preprocess.scale_target import target_standardize
 from atoml.regression import GaussianProcess, RidgeRegression
 from mpl_toolkits.mplot3d import Axes3D
