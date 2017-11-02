@@ -305,11 +305,11 @@ class GaussianProcess(object):
             The rescaled predictions for the test data.
         """
         train_mean = np.mean(target)
-        target_values = target - train_mean
+        target_values = target
         alpha = np.dot(cinv, target_values)
 
         # Form list of the actual predictions.
-        pred = functools.reduce(np.dot, (ktb, alpha)) + train_mean
+        pred = functools.reduce(np.dot, (ktb, alpha))
 
         # Rescale the predictions if targets were previously standardized.
         if self.center_target:

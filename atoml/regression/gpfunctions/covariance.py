@@ -19,20 +19,34 @@ def get_covariance(kernel_dict, matrix1, matrix2=None, regularization=None):
     regularization : None or float
         Smoothing parameter for the Gramm matrix.
     """
+    # if gradients:
+    #     return covariance_gradients()
+
+
     n1, n1_D = np.shape(matrix1)
+
     if matrix2 is not None:
         n2, n2_D = np.shape(matrix2)
         assert n1_D == n2_D
     else:
         n2 = n1
     # Initialize covariance matrix
-    cov = np.zeros([n1, n2])
+
 
     # Keep copies of original matrices.
     store1, store2 = matrix1, matrix2
 
     # Loop over kernels in kernel_dict
+    cov = None
     for key in kernel_dict:
+        theta = ak.kdict2list(kernel_dict[key], n1_D)
+        hyperparameters = theta[1]
+        ktype = kernel_dict[key]['type']
+        k = eval('ak.' + str(ktype) +
+                                  '_kernel(m1=matrix1, m2=matrix2,' +
+                                  ' theta=hyperparameters)')
+        if cov is None:
+            cov = np.zeros(np.shape(k))
         matrix1, matrix2 = store1, store2
         ktype = kernel_dict[key]['type']
 
@@ -61,3 +75,5 @@ def get_covariance(kernel_dict, matrix1, matrix2=None, regularization=None):
     if regularization is not None:
         cov += regularization * np.identity(len(cov))
     return cov
+
+# def covariance_function:
