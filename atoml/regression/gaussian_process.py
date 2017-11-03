@@ -23,7 +23,7 @@ class GaussianProcess(object):
                  standardize_target=True, normalize_target=False,
                  center_target=False, regularization=None,
                  regularization_bounds=(1e-12, None),
-                 optimize_hyperparameters=False, scale_optimizer=True):
+                 optimize_hyperparameters=False, scale_optimizer=False):
         """Gaussian processes setup.
 
         Parameters
@@ -331,10 +331,8 @@ class GaussianProcess(object):
         pred : list
             The rescaled predictions for the test data.
         """
-        target_values = target
-        alpha = np.dot(cinv, target_values)
-
         # Form list of the actual predictions.
+        alpha = functools.reduce(np.dot, (cinv, target))
         pred = functools.reduce(np.dot, (ktb, alpha))
 
         # Rescale the predictions if targets were previously standardized.
