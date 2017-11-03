@@ -21,9 +21,9 @@ class GaussianProcess(object):
 
     def __init__(self, train_fp, train_target, kernel_dict,
                  standardize_target=True, normalize_target=False,
-                 center_target=False,
-                 regularization=None, regularization_bounds=(1e-12, None),
-                 optimize_hyperparameters=False):
+                 center_target=False, regularization=None,
+                 regularization_bounds=(1e-12, None),
+                 optimize_hyperparameters=False, scale_optimizer=False):
         """Gaussian processes setup.
 
         Parameters
@@ -32,32 +32,48 @@ class GaussianProcess(object):
             A list of training fingerprint vectors.
         train_target : list
             A list of training targets used to generate the predictions.
-        kernel_dict : dict of dicts
-            Each dict in kernel_dict contains information on a kernel.
-            The 'type' key is required to contain the name of kernel function:
-            'linear', 'polynomial', 'gaussian' or 'laplacian'.
-            The hyperparameters 'width', 'kfree'
+        kernel_dict : dict
+            This dict can contain many other dictionarys, each one containing
+            parameters for separate kernels.
+            Each kernel dict contains information on a kernel such as:
+            -   The 'type' key containing the name of kernel function.
+            -   The hyperparameters, e.g. 'scaling', 'lengthscale', etc.
+        standardize_target : boolean
+            Flag to scale the targets by standardizing them. Default is True.
+        normalize_target : boolean
+            Flag to scale the targets by normalizing them. Default is False.
+        center_target : boolean
+            Flag to center the targets around the mean. Default is False.
         regularization : float
             The regularization strength (smoothing function) applied to the
-            kernel matrix.
+            covariance matrix.
         regularization_bounds : tuple
             Optional to change the bounds for the regularization.
         optimize_hyperparameters : boolean
             Optional flag to optimize the hyperparameters.
+        scale_optimizer : boolean
+            Flag to define if the hyperparameters are log scale for
+            optimization.
         """
-        msg = 'Cannot standardize, normalize and center the targets. Pick only one.'
+        msg = 'Cannot standardize, normalize and center the targets. Pick only'
+        msg += ' one.'
         assert not (standardize_target and normalize_target), msg
         assert not (standardize_target and center_target), msg
         assert not (normalize_target and center_target), msg
 
         self.N_train, self.N_D = np.shape(train_fp)
         self.regularization = regularization
+        self.scale_optimizer = scale_optimizer
+
         self._prepare_kernels(kernel_dict,
                               regularization_bounds=regularization_bounds)
+
         self.update_data(train_fp, train_target,
                          standardize_target=standardize_target,
                          normalize_target=normalize_target,
-                         center_target=center_target)
+                         center_target=center_target,
+                         scale_optimizer=scale_optimizer)
+
         if optimize_hyperparameters:
             self._optimize_hyperparameters()
 
@@ -93,7 +109,8 @@ class GaussianProcess(object):
 
         # Calculate the covariance between the test and training datasets.
         ktb = get_covariance(kernel_dict=self.kernel_dict, matrix1=test_fp,
-                             matrix2=self.train_fp, regularization=None)
+                             matrix2=self.train_fp, regularization=None,
+                             log_scale=self.scale_optimizer)
 
         # Build the list of predictions.
         data['prediction'] = self._make_prediction(ktb=ktb, cinv=self.cinv,
@@ -108,9 +125,10 @@ class GaussianProcess(object):
         # Calculate error associated with predictions on the training data.
         if get_training_error:
             # Calculate the covariance between the training dataset.
-            kt_train = get_covariance(kernel_dict=self.kernel_dict,
-                                      matrix1=self.train_fp,
-                                      regularization=None)
+            kt_train = get_covariance(
+                kernel_dict=self.kernel_dict, matrix1=self.train_fp,
+                regularization=None, log_scale=self.scale_optimizer
+                )
 
             # Calculate predictions for the training data.
             data['train_prediction'] = \
@@ -130,30 +148,31 @@ class GaussianProcess(object):
                     self.normalize_data['mean']
             else:
                 train_target = self.train_target
-            data['training_error'] = \
-                get_error(prediction=data['train_prediction'],
-                          target=train_target,
-                          epsilon=epsilon)
+            data['training_error'] = get_error(
+                prediction=data['train_prediction'], target=train_target,
+                epsilon=epsilon
+                )
 
         # Calculate uncertainty associated with prediction on test data.
         if uncertainty:
-            data['uncertainty'] = get_uncertainty(kernel_dict=self.kernel_dict,
-                                                  test_fp=test_fp,
-                                                  reg=self.regularization,
-                                                  ktb=ktb, cinv=self.cinv)
+            data['uncertainty'] = get_uncertainty(
+                kernel_dict=self.kernel_dict, test_fp=test_fp,
+                reg=self.regularization, ktb=ktb, cinv=self.cinv,
+                log_scale=self.scale_optimizer
+                )
 
         if basis is not None:
-            data['basis'] = self._fixed_basis(train=self.train_fp,
-                                              test=test_fp,
-                                              ktb=ktb, cinv=self.cinv,
-                                              target=self.train_target,
-                                              test_target=test_target,
-                                              basis=basis, epsilon=epsilon)
+            data['basis'] = self._fixed_basis(
+                train=self.train_fp, test=test_fp, ktb=ktb, cinv=self.cinv,
+                target=self.train_target, test_target=test_target, basis=basis,
+                epsilon=epsilon
+                )
 
         return data
 
     def update_data(self, train_fp, train_target, standardize_target=True,
-                    normalize_target=False, center_target=False):
+                    normalize_target=False, center_target=False,
+                    scale_optimizer=False):
         """Update the training matrix, targets and covariance matrix.
 
         Parameters
@@ -162,6 +181,12 @@ class GaussianProcess(object):
             A list of training fingerprint vectors.
         train_target : list
             A list of training targets used to generate the predictions.
+        standardize_target : boolean
+            Flag to scale the targets by standardizing them. Default is True.
+        normalize_target : boolean
+            Flag to scale the targets by normalizing them. Default is False.
+        center_target : boolean
+            Flag to center the targets around the mean. Default is False.
         """
         # Get the shape of the training dataset.
         self.N_train, self.N_D = np.shape(train_fp)
@@ -185,7 +210,8 @@ class GaussianProcess(object):
         # Get the Gram matrix on-the-fly if none is suppiled.
         cvm = get_covariance(kernel_dict=self.kernel_dict,
                              matrix1=self.train_fp,
-                             regularization=self.regularization)
+                             regularization=self.regularization,
+                             log_scale=scale_optimizer)
         # Invert the covariance matrix.
         self.cinv = np.linalg.inv(cvm)
 
@@ -249,8 +275,8 @@ class GaussianProcess(object):
                 bounds += kdict[key]['bounds']
             elif kdict[key]['type'] == 'linear':
                 bounds += ((0, None),)
-            elif kdict[key]['type'] == 'polynomial':
-                bounds += ((None, None), (1, None), (0, None),)
+            elif kdict[key]['type'] == 'quadratic':
+                bounds += ((1, None), (0, None),)
         self.kernel_dict = kernel_dict
         # Bounds for the regularization
         bounds += (regularization_bounds,)
@@ -269,11 +295,11 @@ class GaussianProcess(object):
 
         # Define fixed arguments for log_marginal_likelihood
         args = (np.array(self.train_fp), np.array(self.train_target),
-                self.kernel_dict)
+                self.kernel_dict, self.scale_optimizer)
 
         # Optimize
         self.theta_opt = minimize(log_marginal_likelihood, theta,
-                                  args=args,
+                                  args=args,  # method='Nelder-Mead',
                                   bounds=self.bounds)
 
         # Update kernel_dict and regularization with optimized values.
@@ -283,7 +309,8 @@ class GaussianProcess(object):
         # Make a new covariance matrix with the optimized hyperparameters.
         cvm = get_covariance(kernel_dict=self.kernel_dict,
                              matrix1=self.train_fp,
-                             regularization=self.regularization)
+                             regularization=self.regularization,
+                             log_scale=self.scale_optimizer)
         # Invert the covariance matrix.
         self.cinv = np.linalg.inv(cvm)
 
@@ -304,11 +331,8 @@ class GaussianProcess(object):
         pred : list
             The rescaled predictions for the test data.
         """
-        train_mean = np.mean(target)
-        target_values = target
-        alpha = np.dot(cinv, target_values)
-
         # Form list of the actual predictions.
+        alpha = functools.reduce(np.dot, (cinv, target))
         pred = functools.reduce(np.dot, (ktb, alpha))
 
         # Rescale the predictions if targets were previously standardized.
@@ -334,7 +358,8 @@ class GaussianProcess(object):
         data = defaultdict(list)
         # Calculate the K(X*,X*) covariance matrix.
         ktest = get_covariance(kernel_dict=self.kernel_dict, matrix1=test,
-                               regularization=None)
+                               regularization=None,
+                               log_scale=self.scale_optimizer)
 
         # Form H and H* matrix, multiplying X by basis.
         train_matrix = np.asarray([basis(i) for i in train])

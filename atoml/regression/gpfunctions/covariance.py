@@ -5,48 +5,33 @@ import numpy as np
 from atoml.regression.gpfunctions import kernels as ak
 
 
-def get_covariance(kernel_dict, matrix1, matrix2=None, regularization=None):
+def get_covariance(kernel_dict, log_scale, matrix1, matrix2=None,
+                   regularization=None):
     """Return the covariance matrix of training dataset.
 
     Parameters
     ----------
+    kernel_dict : dict of dicts
+        A dict containing all data for the kernel functions.
+    log_scale:
+        Flag to define if the hyperparameters are log scale.
     train_matrix : list
         A list of the training fingerprint vectors.
     test_matrix : list
         A list of the test fingerprint vectors.
-    kernel_dict : dict of dicts
-        A dict containing all data for the kernel functions.
     regularization : None or float
         Smoothing parameter for the Gramm matrix.
     """
-    # if gradients:
-    #     return covariance_gradients()
-
-
     n1, n1_D = np.shape(matrix1)
-
     if matrix2 is not None:
-        n2, n2_D = np.shape(matrix2)
-        assert n1_D == n2_D
-    else:
-        n2 = n1
-    # Initialize covariance matrix
-
+        assert n1_D == np.shape(matrix2)[1]
+    cov = None
 
     # Keep copies of original matrices.
     store1, store2 = matrix1, matrix2
 
     # Loop over kernels in kernel_dict
-    cov = None
     for key in kernel_dict:
-        theta = ak.kdict2list(kernel_dict[key], n1_D)
-        hyperparameters = theta[1]
-        ktype = kernel_dict[key]['type']
-        k = eval('ak.' + str(ktype) +
-                                  '_kernel(m1=matrix1, m2=matrix2,' +
-                                  ' theta=hyperparameters)')
-        if cov is None:
-            cov = np.zeros(np.shape(k))
         matrix1, matrix2 = store1, store2
         ktype = kernel_dict[key]['type']
 
@@ -58,22 +43,29 @@ def get_covariance(kernel_dict, matrix1, matrix2=None, regularization=None):
         theta = ak.kdict2list(kernel_dict[key], n1_D)
         hyperparameters = theta[1]
         if len(theta[0]) == 0:
-            scaling = 1
+            scaling = 1.
         else:
             scaling = theta[0]
+        if log_scale:
+            scaling = np.exp(scaling)
 
-        # Get the covariance matrix
+        # Get mapping from kernel functions.
+        k = eval('ak.{}_kernel(m1=matrix1, m2=matrix2, \
+                 theta=hyperparameters, log_scale=log_scale)'.format(ktype))
+
+        # Initialize covariance matrix
+        if cov is None:
+            cov = np.zeros(np.shape(k))
+
+        # Generate the covariance matrix
         if 'operation' in kernel_dict[key] and \
            kernel_dict[key]['operation'] == 'multiplication':
-            cov *= scaling * eval('ak.' + str(ktype) +
-                                  '_kernel(m1=matrix1, m2=matrix2,' +
-                                  ' theta=hyperparameters)')
+            cov *= scaling * k
         else:
-            cov += scaling * eval('ak.' + str(ktype) +
-                                  '_kernel(m1=matrix1, m2=matrix2,' +
-                                  ' theta=hyperparameters)')
-    if regularization is not None:
-        cov += regularization * np.identity(len(cov))
-    return cov
+            cov += scaling * k
 
-# def covariance_function:
+    # Apply noise parameter.
+    if regularization is not None:
+        cov += np.exp(regularization) * np.identity(len(cov))
+
+    return cov

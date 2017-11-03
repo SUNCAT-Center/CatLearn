@@ -8,8 +8,8 @@ benchmark those predictions against the known underlying function.
 """
 import numpy as np
 import matplotlib.pyplot as plt
-from atoml.feature_preprocess import standardize
-from atoml.predict import GaussianProcess
+from atoml.preprocess.feature_preprocess import standardize
+from atoml.regression import GaussianProcess
 
 
 # A known underlying function in one dimension.
@@ -58,7 +58,7 @@ gp = GaussianProcess(kernel_dict=kdict, regularization=sdt1**2,
                      train_fp=std['train'], train_target=target[0],
                      optimize_hyperparameters=False)
 # Do predictions.
-under_fit = gp.get_predictions(test_fp=std['test'], uncertainty=True)
+under_fit = gp.predict(test_fp=std['test'], uncertainty=True)
 # Get confidence interval on predictions.
 upper = np.array(under_fit['prediction']) + \
  (np.array(under_fit['uncertainty'] * tstd))
@@ -75,7 +75,7 @@ gp = GaussianProcess(kernel_dict=kdict, regularization=sdt2**2,
                      train_fp=std['train'], train_target=target[0],
                      optimize_hyperparameters=False)
 # Do predictions.
-over_fit = gp.get_predictions(test_fp=std['test'], uncertainty=True)
+over_fit = gp.predict(test_fp=std['test'], uncertainty=True)
 # Get confidence interval on predictions.
 over_upper = np.array(over_fit['prediction']) + \
  (np.array(over_fit['uncertainty'] * tstd))
@@ -89,7 +89,7 @@ gp = GaussianProcess(kernel_dict=kdict, regularization=sdt1**2,
                      train_fp=std['train'], train_target=target[0],
                      optimize_hyperparameters=True)
 # Do the optimized predictions.
-optimized = gp.get_predictions(test_fp=std['test'], uncertainty=True)
+optimized = gp.predict(test_fp=std['test'], uncertainty=True)
 # Get confidence interval on predictions.
 opt_upper = np.array(optimized['prediction']) + \
  (np.array(optimized['uncertainty'] * tstd))

@@ -95,26 +95,26 @@ def min_max(train_matrix, test_matrix=None, local=True):
     local : boolean
         Define whether to scale locally or globally.
     """
-    norm = defaultdict(list)
+    scale = defaultdict(list)
     if test_matrix is not None and not local:
         data = np.concatenate((train_matrix, test_matrix), axis=0)
     else:
         data = train_matrix
-    norm['min'] = np.min(data, axis=0)
-    norm['dif'] = np.max(data, axis=0) - norm['min']
-    np.place(norm['dif'], norm['dif'] == 0., [1.])  # Replace 0 with 1.
+    scale['min'] = np.min(data, axis=0)
+    scale['dif'] = np.max(data, axis=0) - scale['min']
+    np.place(scale['dif'], scale['dif'] == 0., [1.])  # Replace 0 with 1.
 
-    norm['train'] = (train_matrix - norm['min']) / norm['dif']
+    scale['train'] = (train_matrix - scale['min']) / scale['dif']
 
     if test_matrix is not None:
-        test_matrix = (test_matrix - norm['min']) / norm['dif']
-    norm['test'] = test_matrix
+        test_matrix = (test_matrix - scale['min']) / scale['dif']
+    scale['test'] = test_matrix
 
-    return norm
+    return scale
 
 
 def unit_length(train_matrix, test_matrix=None, local=True):
-    """Normalize each feature relative to the Euclidean length.
+    """Normalize each feature vector relative to the Euclidean length.
 
     Parameters
     ----------
@@ -125,21 +125,23 @@ def unit_length(train_matrix, test_matrix=None, local=True):
     local : boolean
         Define whether to scale locally or globally.
     """
-    norm = defaultdict(list)
-    if test_matrix is not None and not local:
-        data = np.concatenate((train_matrix, test_matrix), axis=0)
-    else:
-        data = train_matrix
-    norm['length'] = np.linalg.norm(data, axis=0)
-    np.place(norm['length'], norm['length'] == 0., [1.])  # Replace 0 with 1.
+    train_matrix = np.transpose(train_matrix)
+    if test_matrix is not None:
+        test_matrix = np.transpose(test_matrix)
 
-    norm['train'] = train_matrix / norm['length']
+    scale = defaultdict(list)
+
+    scale['length_train'] = np.linalg.norm(train_matrix, axis=0)
+    np.place(scale['length_train'], scale['length_train'] == 0., [1.])
+    scale['train'] = np.transpose(train_matrix / scale['length_train'])
 
     if test_matrix is not None:
-        test_matrix = test_matrix / norm['length']
-    norm['test'] = test_matrix
+        scale['length_test'] = np.linalg.norm(test_matrix, axis=0)
+        np.place(scale['length_test'], scale['length_test'] == 0., [1.])
+        test_matrix = np.transpose(test_matrix / scale['length_test'])
+    scale['test'] = test_matrix
 
-    return norm
+    return scale
 
 
 def cluster_features(train_matrix, train_target, k=2, test_matrix=None,

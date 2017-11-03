@@ -44,7 +44,7 @@ class RidgeRegression(object):
         if coefficients is None:
             coefficients = self.get_coefficients(train_targets=train_targets,
                                                  train_features=train_matrix,
-                                                 reg=reg, p=p)
+                                                 reg=reg, p=p)['coef']
         validation = []
         prediction = []
         for vec in train_matrix:
@@ -72,10 +72,7 @@ class RidgeRegression(object):
 
         if reg is None:
             data['reg'] = self.find_optimal_regularization(train_features,
-                                                           train_targets, p=p,
-                                                           Ns=self.Ns,
-                                                           wsteps=self.wsteps,
-                                                           rsteps=self.rsteps)
+                                                           train_targets, p=p)
         data['coef'] = self.RR(train_features, train_targets, p=p,
                                omega2=data['reg'])[0]
 
