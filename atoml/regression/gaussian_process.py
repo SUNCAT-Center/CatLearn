@@ -21,8 +21,8 @@ class GaussianProcess(object):
 
     def __init__(self, train_fp, train_target, kernel_dict,
                  standardize_target=True, normalize_target=False,
-                 center_target=False,
-                 regularization=None, regularization_bounds=(1e-12, None),
+                 center_target=False, regularization=None,
+                 regularization_bounds=(1e-12, None),
                  optimize_hyperparameters=False):
         """Gaussian processes setup.
 
@@ -32,32 +32,43 @@ class GaussianProcess(object):
             A list of training fingerprint vectors.
         train_target : list
             A list of training targets used to generate the predictions.
-        kernel_dict : dict of dicts
-            Each dict in kernel_dict contains information on a kernel.
-            The 'type' key is required to contain the name of kernel function:
-            'linear', 'polynomial', 'gaussian' or 'laplacian'.
-            The hyperparameters 'width', 'kfree'
+        kernel_dict : dict
+            This dict can contain many other dictionarys, each one containing
+            parameters for separate kernels.
+            Each kernel dict contains information on a kernel such as:
+            -   The 'type' key containing the name of kernel function.
+            -   The hyperparameters, e.g. 'scaling', 'lengthscale', etc.
+        standardize_target : boolean
+            Flag to scale the targets by standardizing them. Default is True.
+        normalize_target : boolean
+            Flag to scale the targets by normalizing them. Default is False.
+        center_target : boolean
+            Flag to center the targets around the mean. Default is False.
         regularization : float
             The regularization strength (smoothing function) applied to the
-            kernel matrix.
+            covariance matrix.
         regularization_bounds : tuple
             Optional to change the bounds for the regularization.
         optimize_hyperparameters : boolean
             Optional flag to optimize the hyperparameters.
         """
-        msg = 'Cannot standardize, normalize and center the targets. Pick only one.'
+        msg = 'Cannot standardize, normalize and center the targets. Pick only'
+        msg += ' one.'
         assert not (standardize_target and normalize_target), msg
         assert not (standardize_target and center_target), msg
         assert not (normalize_target and center_target), msg
 
         self.N_train, self.N_D = np.shape(train_fp)
         self.regularization = regularization
+
         self._prepare_kernels(kernel_dict,
                               regularization_bounds=regularization_bounds)
+
         self.update_data(train_fp, train_target,
                          standardize_target=standardize_target,
                          normalize_target=normalize_target,
                          center_target=center_target)
+
         if optimize_hyperparameters:
             self._optimize_hyperparameters()
 
@@ -162,6 +173,12 @@ class GaussianProcess(object):
             A list of training fingerprint vectors.
         train_target : list
             A list of training targets used to generate the predictions.
+        standardize_target : boolean
+            Flag to scale the targets by standardizing them. Default is True.
+        normalize_target : boolean
+            Flag to scale the targets by normalizing them. Default is False.
+        center_target : boolean
+            Flag to center the targets around the mean. Default is False.
         """
         # Get the shape of the training dataset.
         self.N_train, self.N_D = np.shape(train_fp)
@@ -273,7 +290,7 @@ class GaussianProcess(object):
 
         # Optimize
         self.theta_opt = minimize(log_marginal_likelihood, theta,
-                                  args=args,
+                                  args=args, method='Nelder-Mead',
                                   bounds=self.bounds)
 
         # Update kernel_dict and regularization with optimized values.
@@ -304,7 +321,6 @@ class GaussianProcess(object):
         pred : list
             The rescaled predictions for the test data.
         """
-        train_mean = np.mean(target)
         target_values = target
         alpha = np.dot(cinv, target_values)
 
