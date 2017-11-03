@@ -8,7 +8,7 @@ from scipy.special import erf
 from .covariance import get_covariance
 
 
-def get_uncertainty(kernel_dict, test_fp, reg, ktb, cinv):
+def get_uncertainty(kernel_dict, test_fp, reg, ktb, cinv, log_scale):
     """Function to calculate uncertainty.
 
     Parameters
@@ -23,10 +23,12 @@ def get_uncertainty(kernel_dict, test_fp, reg, ktb, cinv):
         Covariance matrix for test and training data.
     cinv : array
         Covariance matrix for training dataset.
+    log_scale : boolean
+        Flag to define if the hyperparameters are log scale.
     """
     # Generate the test covariance matrix.
     kxx = get_covariance(kernel_dict=kernel_dict,
-                         matrix1=test_fp)
+                         matrix1=test_fp, log_scale=log_scale)
     # Calculate the prediction variance for test data.
     u = [(reg + kxx[kt][kt] - np.dot(np.dot(ktb[kt], cinv),
                                      np.transpose(ktb[kt]))) **

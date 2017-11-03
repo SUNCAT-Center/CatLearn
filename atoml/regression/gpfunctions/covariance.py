@@ -5,17 +5,20 @@ import numpy as np
 from atoml.regression.gpfunctions import kernels as ak
 
 
-def get_covariance(kernel_dict, matrix1, matrix2=None, regularization=None):
+def get_covariance(kernel_dict, log_scale, matrix1, matrix2=None,
+                   regularization=None):
     """Return the covariance matrix of training dataset.
 
     Parameters
     ----------
+    kernel_dict : dict of dicts
+        A dict containing all data for the kernel functions.
+    log_scale:
+        Flag to define if the hyperparameters are log scale.
     train_matrix : list
         A list of the training fingerprint vectors.
     test_matrix : list
         A list of the test fingerprint vectors.
-    kernel_dict : dict of dicts
-        A dict containing all data for the kernel functions.
     regularization : None or float
         Smoothing parameter for the Gramm matrix.
     """
@@ -40,13 +43,15 @@ def get_covariance(kernel_dict, matrix1, matrix2=None, regularization=None):
         theta = ak.kdict2list(kernel_dict[key], n1_D)
         hyperparameters = theta[1]
         if len(theta[0]) == 0:
-            scaling = 1
+            scaling = 1.
         else:
-            scaling = np.exp(theta[0])
+            scaling = theta[0]
+        if log_scale:
+            scaling = np.exp(scaling)
 
         # Get mapping from kernel functions.
         k = eval('ak.{}_kernel(m1=matrix1, m2=matrix2, \
-                 theta=hyperparameters)'.format(ktype))
+                 theta=hyperparameters, log_scale=log_scale)'.format(ktype))
 
         # Initialize covariance matrix
         if cov is None:

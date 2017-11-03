@@ -169,75 +169,86 @@ def list2kdict(hyperparameters, kernel_dict):
     return kernel_dict
 
 
-def gaussian_kernel(theta, m1, m2=None):
+def gaussian_kernel(theta, log_scale, m1, m2=None):
     """Return covariance between data m1 & m2 with a gaussian kernel.
 
     Parameters
     ----------
     theta : list
         A list of widths for each feature.
+    log_scale : boolean
+        Scaling hyperparameters in kernel can be useful for optimization.
     m1 : list
         A list of the training fingerprint vectors.
     m2 : list
         A list of the training fingerprint vectors.
     """
-    # scaling = theta[0]
-    kwidth = np.exp(theta)
+    kwidth = theta
+    if log_scale:
+        kwidth = np.exp(kwidth)
+
     if m2 is None:
         k = distance.pdist(m1 / kwidth, metric='sqeuclidean')
         k = distance.squareform(np.exp(-.5 * k))
         np.fill_diagonal(k, 1)
         return k
-        # return scaling * k
+
     else:
         k = distance.cdist(m1 / kwidth, m2 / kwidth,
                            metric='sqeuclidean')
         return np.exp(-.5 * k)
-        # return scaling * np.exp(-.5 * k)
 
 
-def sqe_kernel(theta, m1, m2=None):
+def sqe_kernel(theta, log_scale, m1, m2=None):
     """Return covariance between data m1 & m2 with a gaussian kernel.
 
     Parameters
     ----------
     theta : list
         A list of widths for each feature.
+    log_scale : boolean
+        Scaling hyperparameters in kernel can be useful for optimization.
     m1 : list
         A list of the training fingerprint vectors.
     m2 : list
         A list of the training fingerprint vectors.
     """
-    # scaling = theta[0]
-    kwidth = np.exp(theta)
+    kwidth = theta
+    if log_scale:
+        kwidth = np.exp(kwidth)
+
     if m2 is None:
         k = distance.pdist(m1, metric='seuclidean', V=kwidth)
         k = distance.squareform(np.exp(-.5 * k))
         np.fill_diagonal(k, 1)
-        # return scaling * k
         return k
+
     else:
         k = distance.cdist(m1, m2,
                            metric='seuclidean', V=kwidth)
         return np.exp(-.5 * k)
-        # return scaling * np.exp(-.5 * k)
 
 
-def scaled_sqe_kernel(theta, m1, m2=None):
+def scaled_sqe_kernel(theta, log_scale, m1, m2=None):
     """Return covariance between data m1 & m2 with a gaussian kernel.
 
     Parameters
     ----------
     theta : list
         A list of hyperparameters.
+    log_scale : boolean
+        Scaling hyperparameters in kernel can be useful for optimization.
     m1 : list
         A list of the training fingerprint vectors.
     m2 : list
         A list of the training fingerprint vectors.
     """
     N_D = len(theta) / 2
-    scaling = np.exp(np.vstack(theta[:N_D]))
-    kwidth = np.exp(np.vstack(theta[N_D:]))
+    scaling = np.vstack(theta[:N_D])
+    kwidth = np.vstack(theta[N_D:])
+    if log_scale:
+        scaling, kwidth = np.exp(scaling), np.exp(kwidth)
+
     if m2 is None:
         m2 = m1
     return distance.cdist(m1, m2,
@@ -245,91 +256,114 @@ def scaled_sqe_kernel(theta, m1, m2=None):
                                                                 kwidth)))
 
 
-def AA_kernel(theta, m1, m2=None):
+def AA_kernel(theta, log_scale, m1, m2=None):
     """Return covariance between data m1 & m2 with Aichinson & Aitken kernel.
 
     Parameters
     ----------
     theta : list
         [l, n, c]
+    log_scale : boolean
+        Scaling hyperparameters in kernel can be useful for optimization.
     m1 : list
         A list of the training fingerprint vectors.
     m2 : list
         A list of the training fingerprint vectors.
     """
-    if m2 is None:
-        m2 = m1
     l = theta[0]
     c = np.vstack(theta[1:])
+    if log_scale:
+        l, c = np.exp(l), np.exp(c)
     n = np.shape(m1)[1]
     q = (1 - l)/(c - l)
+
+    if m2 is None:
+        m2 = m1
+
     return distance.cdist(m1, m2, lambda u, v:
                           (l ** (n - np.sqrt(((u - v) ** 2))) *
                            (q ** np.sqrt((u - v) ** 2))).sum())
 
 
-def linear_kernel(theta, m1, m2=None):
+def linear_kernel(theta, log_scale, m1, m2=None):
     """Return covariance between data m1 & m2 with a linear kernel.
 
     Parameters
     ----------
     theta : list
         A list containing constant offset.
+    log_scale : boolean
+        Scaling hyperparameters in kernel can be useful for optimization.
     m1 : list
         A list of the training fingerprint vectors.
     m2 : list or None
         A list of the training fingerprint vectors.
     """
+    if log_scale:
+        theta = np.exp(theta)
+
     if m2 is None:
         m2 = m1
-    c = np.zeros([len(m1), len(m2)]) + np.exp(theta)
+
+    c = np.zeros([len(m1), len(m2)]) + theta
+
     return np.inner(m1, m2) + c
 
 
-def quadratic_kernel(theta, m1, m2=None):
+def quadratic_kernel(theta, log_scale, m1, m2=None):
     """Return covariance between data m1 & m2 with a quadratic kernel.
 
     Parameters
     ----------
     theta : list
         A list containing slope and degree for quadratic.
+    log_scale : boolean
+        Scaling hyperparameters in kernel can be useful for optimization.
     m1 : list
         A list of the training fingerprint vectors.
     m2 : list or None
         A list of the training fingerprint vectors.
     """
-    slope = np.exp(theta[0])
-    degree = np.exp(theta[1])
+    slope = theta[0]
+    degree = theta[1]
+    if log_scale:
+        slope, degree = np.exp(slope), np.exp(degree)
 
     if m2 is None:
         k = distance.pdist(m1 / slope*degree, metric='sqeuclidean')
         k = distance.squareform((1. + .5*k)**-degree)
         np.fill_diagonal(k, 1)
         return k
+
     else:
         k = distance.cdist(m1 / slope*degree, m2 / slope*degree,
                            metric='sqeuclidean')
         return (1. + .5*k)**-degree
 
 
-def laplacian_kernel(theta, m1, m2=None):
+def laplacian_kernel(theta, log_scale, m1, m2=None):
     """Return covariance between data m1 & m2 with a laplacian kernel.
 
     Parameters
     ----------
     theta : list
         A list of widths for each feature.
+    log_scale : boolean
+        Scaling hyperparameters in kernel can be useful for optimization.
     m1 : list
         A list of the training fingerprint vectors.
     m2 : list or None
         A list of the training fingerprint vectors.
     """
-    theta = np.exp(theta)
+    if log_scale:
+        theta = np.exp(theta)
+
     if m2 is None:
         k = distance.pdist(m1 / theta, metric='cityblock')
         k = distance.squareform(np.exp(-k))
         np.fill_diagonal(k, 1)
         return k
+
     else:
         k = distance.cdist(m1 / theta, m2 / theta, metric='cityblock')
         return np.exp(-k)
