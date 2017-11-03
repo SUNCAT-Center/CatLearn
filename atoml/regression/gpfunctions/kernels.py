@@ -10,8 +10,8 @@ def kdict2list(kdict, N_D=None):
     kernel. The dictionary must contain either the key 'hyperparameters' or
     'theta' containing a list of hyperparameters or the keys 'type' containing
     the type name in a string and 'width' in the case of a 'gaussian' or
-    'laplacian' type or the keys 'kdegree' and 'kfree' in the case of a
-    'polynomial' type.
+    'laplacian' type or the keys 'degree' and 'slope' in the case of a
+    'quadratic' type.
 
     Parameters
     ----------
@@ -45,8 +45,8 @@ def kdict2list(kdict, N_D=None):
         theta = list(kdict['d_scaling']) + list(kdict['width'])
 
     # Polynomials have pairs of hyperparamters kfree, kdegree
-    elif ktype == 'polynomial':
-        theta = [kdict['slope'], kdict['degree'], kdict['const']]
+    elif ktype == 'quadratic':
+        theta = [kdict['slope'], kdict['degree']]
 
     # Linear kernels have only one hyperparameter
     elif ktype == 'linear':
@@ -149,12 +149,11 @@ def list2kdict(hyperparameters, kernel_dict):
             ki += 2 * N_D
 
         # Polynomials have pairs of hyperparamters kfree, kdegree
-        elif ktype == 'polynomial':
-            theta = hyperparameters[ki:ki+3]
+        elif ktype == 'quadratic':
+            theta = hyperparameters[ki:ki+2]
             kernel_dict[key]['slope'] = theta[0]
             kernel_dict[key]['degree'] = theta[1]
-            kernel_dict[key]['const'] = theta[2]
-            ki += 3
+            ki += 2
 
         # Linear kernels have no hyperparameters
         elif ktype == 'linear':
@@ -183,7 +182,7 @@ def gaussian_kernel(theta, m1, m2=None):
         A list of the training fingerprint vectors.
     """
     # scaling = theta[0]
-    kwidth = theta  # [1:]
+    kwidth = np.exp(theta)
     if m2 is None:
         k = distance.pdist(m1 / kwidth, metric='sqeuclidean')
         k = distance.squareform(np.exp(-.5 * k))
@@ -210,7 +209,7 @@ def sqe_kernel(theta, m1, m2=None):
         A list of the training fingerprint vectors.
     """
     # scaling = theta[0]
-    kwidth = theta  # [1:]
+    kwidth = np.exp(theta)
     if m2 is None:
         k = distance.pdist(m1, metric='seuclidean', V=kwidth)
         k = distance.squareform(np.exp(-.5 * k))
@@ -237,8 +236,8 @@ def scaled_sqe_kernel(theta, m1, m2=None):
         A list of the training fingerprint vectors.
     """
     N_D = len(theta) / 2
-    scaling = np.vstack(theta[:N_D])
-    kwidth = np.vstack(theta[N_D:])
+    scaling = np.exp(np.vstack(theta[:N_D]))
+    kwidth = np.exp(np.vstack(theta[N_D:]))
     if m2 is None:
         m2 = m1
     return distance.cdist(m1, m2,
@@ -283,28 +282,34 @@ def linear_kernel(theta, m1, m2=None):
     """
     if m2 is None:
         m2 = m1
-    c = np.zeros([len(m1), len(m2)]) + theta
+    c = np.zeros([len(m1), len(m2)]) + np.exp(theta)
     return np.inner(m1, m2) + c
 
 
-def polynomial_kernel(theta, m1, m2=None):
-    """Return covariance between data m1 & m2 with a polynomial kernel.
+def quadratic_kernel(theta, m1, m2=None):
+    """Return covariance between data m1 & m2 with a quadratic kernel.
 
     Parameters
     ----------
     theta : list
-        A list containing constant, slope and degree for polynomial.
+        A list containing slope and degree for quadratic.
     m1 : list
         A list of the training fingerprint vectors.
     m2 : list or None
         A list of the training fingerprint vectors.
     """
-    slope = theta[0]
-    degree = theta[1]
-    const = theta[2]
+    slope = np.exp(theta[0])
+    degree = np.exp(theta[1])
+
     if m2 is None:
-        m2 = m1
-    return (const + np.dot(m1, np.transpose(m2)) * slope) ** degree
+        k = distance.pdist(m1 / slope*degree, metric='sqeuclidean')
+        k = distance.squareform((1. + .5*k)**-degree)
+        np.fill_diagonal(k, 1)
+        return k
+    else:
+        k = distance.cdist(m1 / slope*degree, m2 / slope*degree,
+                           metric='sqeuclidean')
+        return (1. + .5*k)**-degree
 
 
 def laplacian_kernel(theta, m1, m2=None):
@@ -319,6 +324,7 @@ def laplacian_kernel(theta, m1, m2=None):
     m2 : list or None
         A list of the training fingerprint vectors.
     """
+    theta = np.exp(theta)
     if m2 is None:
         k = distance.pdist(m1 / theta, metric='cityblock')
         k = distance.squareform(np.exp(-k))

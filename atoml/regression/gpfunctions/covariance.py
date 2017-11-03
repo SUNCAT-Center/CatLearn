@@ -42,7 +42,7 @@ def get_covariance(kernel_dict, matrix1, matrix2=None, regularization=None):
         if len(theta[0]) == 0:
             scaling = 1
         else:
-            scaling = theta[0]
+            scaling = np.exp(theta[0])
 
         # Get mapping from kernel functions.
         k = eval('ak.{}_kernel(m1=matrix1, m2=matrix2, \
@@ -61,6 +61,6 @@ def get_covariance(kernel_dict, matrix1, matrix2=None, regularization=None):
 
     # Apply noise parameter.
     if regularization is not None:
-        cov += regularization * np.identity(len(cov))
+        cov += np.exp(regularization) * np.identity(len(cov))
 
     return cov
