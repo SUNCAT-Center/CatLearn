@@ -15,7 +15,7 @@ from .kernels import list2kdict
 
 
 def log_marginal_likelihood(theta, train_matrix, targets, kernel_dict):
-    """Return the log marginal likelyhood.
+    """Return the negative of the log marginal likelyhood.
 
     Equation 5.8 in C. E. Rasmussen and C. K. I. Williams, 2006
 
@@ -34,14 +34,18 @@ def log_marginal_likelihood(theta, train_matrix, targets, kernel_dict):
     kernel_dict = list2kdict(theta, kernel_dict)
     K = get_covariance(kernel_dict=kernel_dict, matrix1=train_matrix,
                        regularization=theta[-1])
+    # Setup the data.
     n = len(targets)
     y = targets.reshape([n, 1])
-    # print(np.shape(K), np.max(K), np.min(K))
+
+    # Calculate the various terms in likelyhood.
     L = cholesky(K, lower=True)
     a = cho_solve((L, True), y)
     datafit = -.5*np.dot(y.T, a)
     complexity = -np.log(np.diag(L)).sum()  # (A.18) in R. & W.
     normalization = -.5*n*np.log(2*np.pi)
+
+    # Get the log marginal likelihood.
     p = (datafit + complexity + normalization).sum()
 
     return -p
