@@ -2,6 +2,7 @@
 from __future__ import print_function
 from __future__ import absolute_import
 
+import os
 import numpy as np
 
 from atoml.utilities import DescriptorDatabase
@@ -9,10 +10,12 @@ from atoml.preprocess.feature_preprocess import (standardize, normalize,
                                                  min_max, unit_length)
 from atoml.regression import RidgeRegression, GaussianProcess
 
+wkdir = os.getcwd()
+
 
 def scale_test():
     # Attach the database.
-    dd = DescriptorDatabase(db_name='fpv_store.sqlite',
+    dd = DescriptorDatabase(db_name='{}/fpv_store.sqlite'.format(wkdir),
                             table='FingerVector')
 
     # Pull the features and targets from the database.

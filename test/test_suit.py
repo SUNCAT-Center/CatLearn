@@ -8,6 +8,8 @@ from test_feature_optimization import feature_test
 from test_predict import predict_test
 from test_predict_scale import scale_test
 
+wkdir = os.getcwd()
+
 
 class ConfigTestCase(unittest.TestCase):
     def test_data_clean_func(self):
@@ -26,4 +28,4 @@ class ConfigTestCase(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
-    os.remove('fpv_store.sqlite')
+    os.remove('{}/fpv_store.sqlite'.format(wkdir))

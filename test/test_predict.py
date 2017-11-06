@@ -2,15 +2,18 @@
 from __future__ import print_function
 from __future__ import absolute_import
 
+import os
 import numpy as np
 
 from atoml.utilities import DescriptorDatabase
 from atoml.regression import RidgeRegression, GaussianProcess
 
+wkdir = os.getcwd()
+
 
 def predict_test():
     # Attach the database.
-    dd = DescriptorDatabase(db_name='fpv_store.sqlite',
+    dd = DescriptorDatabase(db_name='{}/fpv_store.sqlite'.format(wkdir),
                             table='FingerVector')
 
     # Pull the features and targets from the database.

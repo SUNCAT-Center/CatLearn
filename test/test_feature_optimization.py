@@ -2,6 +2,7 @@
 from __future__ import print_function
 from __future__ import absolute_import
 
+import os
 import numpy as np
 
 from atoml.utilities import DescriptorDatabase
@@ -13,10 +14,13 @@ from atoml.preprocess.feature_engineering import (single_transform,
 from atoml.preprocess.feature_extraction import pls, pca, spca, atoml_pca
 from atoml.preprocess import FeatureScreening
 
+wkdir = os.getcwd()
+
 
 def feature_test():
     # Attach the database.
-    dd = DescriptorDatabase(db_name='fpv_store.sqlite', table='FingerVector')
+    dd = DescriptorDatabase(db_name='{}/fpv_store.sqlite'.format(wkdir),
+                            table='FingerVector')
 
     # Pull the features and targets from the database.
     names = dd.get_column_names()
