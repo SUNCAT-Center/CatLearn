@@ -1,5 +1,6 @@
 # AtoML
-![Build Status](https://gitlab.com/atoML/AtoML/badges/master/build.svg)
+[![pipeline status](https://gitlab.com/atoML/AtoML/badges/master/pipeline.svg)](https://gitlab.com/atoML/AtoML/commits/master)
+[![coverage report](https://gitlab.com/atoML/AtoML/badges/master/coverage.svg)](https://gitlab.com/atoML/AtoML/commits/master)
 
 Utilities for building and testing Atomic Machine Learning (AtoML) models.
 Gaussian Processes (GP) regression machine learning routines are implemented.
