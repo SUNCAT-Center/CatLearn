@@ -6,7 +6,7 @@ from sklearn.cross_decomposition import PLSRegression
 from sklearn.decomposition import PCA, SparsePCA
 
 from .feature_preprocess import standardize
-from atoml.utilities.utilities import clean_variance
+from atoml.utilities.clean_data import clean_variance
 
 
 def pls(components, train_matrix, target, test_matrix):
