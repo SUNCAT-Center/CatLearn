@@ -3,6 +3,7 @@ python_2_7_tests:
     - apt-get update -qy
     - apt-get install -qy python-pip python-numpy python-scipy
     - pip install --upgrade scikit-learn
+    - pip install --upgrade coverage
     - git clone https://gitlab.com/ase/ase.git
     - pwd
     - export PYTHONPATH=$PWD/ase:$PYTHONPATH
@@ -10,13 +11,14 @@ python_2_7_tests:
     - export PYTHONPATH=$PWD/:$PYTHONPATH
     - cd test/
     - python --version
-    - python __init__.py
+    - coverage run test_suit.py
 
 python_3_tests:
   script:
     - apt-get update -qy
     - apt-get install -qy python3-pip python3-numpy python3-scipy
     - pip3 install --upgrade scikit-learn
+    - pip3 install --upgrade coverage
     - git clone https://gitlab.com/ase/ase.git
     - pwd
     - export PYTHONPATH=$PWD/ase:$PYTHONPATH
@@ -24,4 +26,4 @@ python_3_tests:
     - export PYTHONPATH=$PWD/:$PYTHONPATH
     - cd test/
     - python3 --version
-    - python3 __init__.py
+    - coverage run test_suit.py
