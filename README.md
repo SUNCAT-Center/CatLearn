@@ -71,7 +71,9 @@ examples and test scripts are present for most features.
 [(Back to top)](#table-of-contents)
 
 Anyone is welcome to contribute to the project. Please see the contribution
-guide for help setting up a local copy of the code.
+guide for help setting up a local copy of the code. There are some `TODO` items
+in the README files for the various modules that give suggestions on parts of
+the code that could be improved.
 
 ## Authors
 [(Back to top)](#table-of-contents)
