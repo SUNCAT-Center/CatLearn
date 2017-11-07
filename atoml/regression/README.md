@@ -2,11 +2,12 @@
 
 The folder contains base regression functions.
 
--   Gaussian processes regression
--   Ridge regression
--   Wrapper for scikit-learn regression
+-   [Gaussian processes regression](#gaussian-processes-regression)
+-   [Ridge regression](#ridge-regression)
+-   [Wrapper for scikit-learn regression](#wrapper)
 
 ## Gaussian processes regression
+[(Back to top)](#regression-functions)
 
 Base Gaussian processes regression class. The class is initialized with some
 training data (features and targets), then a model is generated based on some
@@ -44,6 +45,7 @@ in any way, even if input features are scaled.
     p['prediction']
 
 ## Ridge regression
+[(Back to top)](#regression-functions)
 
 Base ridge regression class. The class can be initialized taking only the
 default setup.
@@ -58,6 +60,7 @@ predictions returned.
     rr.predict(train_features, train_target, test_features)
 
 ## Wrapper
+[(Back to top)](#regression-functions)
 
 This just provides a wrapper for some scikit-learn regression functions that
 are used in some of the preprocessing steps. This probably shouldn't be used
