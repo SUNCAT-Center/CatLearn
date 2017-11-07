@@ -15,7 +15,7 @@ class FeatureScreening(object):
     """Class for feature elimination based on correlation screening."""
 
     def __init__(self, correlation='pearson', iterative=True,
-                 regression='ridge'):
+                 regression='ridge', random_check=False):
         """Screening setup.
 
         Parameters
@@ -29,10 +29,14 @@ class FeatureScreening(object):
         regression : str
             Define regression method for ordering features. Can be ridge,
             elastic or lasso. Default is ridge regression.
+        random_check : boolean
+            Exit routine early if there is greater correlation with random
+            features than real features.
         """
         self.correlation = correlation
         self.iterative = iterative
         self.regression = regression
+        self.random_check = random_check
 
     def screen(self, target, feature_matrix):
         """Feature selection based on SIS.
@@ -90,10 +94,17 @@ class FeatureScreening(object):
         index : list
             The ordered list of feature indices, top index[:size] will be
             indices for best features.
+        size : int
+            Number of accepted features.
         """
+        if self.random_check:
+            feature_matrix, r = self._random_extend(feature_matrix)
         n, f = np.shape(feature_matrix)
-        select = defaultdict(list)
-        accepted, rejected = [], list(range(f))
+        if not self.random_check:
+            r = f
+
+        index = list(range(f))
+        accepted, rejected, randf = [], index[:-r], index[-r:]
         keep_train = feature_matrix
 
         # Assign default values and/or perform sanity checks.
@@ -110,7 +121,14 @@ class FeatureScreening(object):
                                          size=step, steps=500)
 
         # Sort all new ordering of accepted and rejected features.
-        sis_accept = [rscreen['accepted'][i] for i in regr]
+        not_converged = True
+        sis_accept = []
+        for i in regr:
+            if rscreen['accepted'][i] in randf:
+                not_converged = False
+            else:
+                sis_accept.append(rscreen['accepted'][i])
+        # sis_accept = [rscreen['accepted'][i] for i in regr]
         for i in sorted(sis_accept, reverse=True):
             accepted.append(rejected[i])
             del rejected[i]
@@ -120,7 +138,7 @@ class FeatureScreening(object):
         feature_reduced = np.delete(keep_train, rejected, axis=1)
 
         # Iteratively reduce the remaining number of features by the step size.
-        while np.shape(feature_reduced)[1] < size:
+        while np.shape(feature_reduced)[1] < size and not_converged:
             # Calculate step/size remainder if necessary.
             if size - np.shape(feature_reduced)[1] < step:
                 step = size - np.shape(feature_reduced)[1]
@@ -140,7 +158,13 @@ class FeatureScreening(object):
                                              size=step, steps=500)
 
             # Sort all new ordering of accepted and rejected features.
-            sis_accept = [rscreen['accepted'][i] for i in regr]
+            sis_accept = []
+            for i in regr:
+                if rscreen['accepted'][i] in randf:
+                    not_converged = False
+                    break
+                sis_accept.append(rscreen['accepted'][i])
+            # sis_accept = [rscreen['accepted'][i] for i in regr]
             for i in sorted(sis_accept, reverse=True):
                 accepted.append(rejected[i])
                 del rejected[i]
@@ -149,9 +173,7 @@ class FeatureScreening(object):
             feature_train = np.delete(keep_train, accepted, axis=1)
             feature_reduced = np.delete(keep_train, rejected, axis=1)
 
-        select['index'] = list(accepted) + list(rejected)
-
-        return select
+        return list(accepted) + list(rejected), len(list(accepted))
 
     def eliminate_features(self, target, train_features, test_features,
                            size=None, step=None, order=None):
@@ -181,9 +203,9 @@ class FeatureScreening(object):
         """
         if order is None:
             if self.iterative:
-                order = self.iterative_screen(target=target,
-                                              feature_matrix=train_features,
-                                              size=size, step=step)['index']
+                order, size = self.iterative_screen(
+                    target=target, feature_matrix=train_features, size=size,
+                    step=step)
             else:
                 order = self.screen(target=target,
                                     feature_matrix=train_features)['index']
@@ -303,3 +325,21 @@ class FeatureScreening(object):
             response.append(r)
 
         return np.transpose(response)
+
+    def _random_extend(self, features):
+        """Function to extend feature space with random noise.
+
+        Parameters
+        ----------
+        features : array
+            Original feature space to be extended.
+        """
+        # Find the current dimensions.
+        n, f = np.shape(features)
+
+        # Add 10% random features.
+        r = int(f * 0.1)
+        new = np.random.random_sample((n, r))
+        features = np.concatenate((features, new), axis=1)
+
+        return features, r

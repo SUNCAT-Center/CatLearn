@@ -17,7 +17,8 @@ from atoml.preprocess import FeatureScreening
 wkdir = os.getcwd()
 
 
-def feature_test():
+def test_extend():
+    """Generate an extended feature space."""
     # Attach the database.
     dd = DescriptorDatabase(db_name='{}/fpv_store.sqlite'.format(wkdir),
                             table='FingerVector')
@@ -31,7 +32,7 @@ def feature_test():
 
     # Split the data into so test and training sets.
     train_features, train_targets = feature_data[:35, :], target_data[:35]
-    test_features, test_targets = feature_data[35:, :], target_data[35:]
+    test_features = feature_data[35:, :]
     d, f = np.shape(train_features)
     td, tf = np.shape(test_features)
 
@@ -51,6 +52,12 @@ def feature_test():
     extend = get_ablog(train_features, a=2, b=4)
     assert np.shape(extend) == (d, f*(f+1)/2)
 
+    return train_features, train_targets, test_features
+
+
+def test_extract(train_features, train_targets, test_features):
+    """Test feature extraction."""
+    d, td = np.shape(train_features)[0], np.shape(test_features)[0]
     ext = pls(components=4, train_matrix=train_features, target=train_targets,
               test_matrix=test_features)
     assert np.shape(ext[0]) == (td, 4) and np.shape(ext[1]) == (d, 4)
@@ -68,20 +75,42 @@ def feature_test():
     assert np.shape(ext['test_fpv']) == (td, 4) and \
         np.shape(ext['train_fpv']) == (d, 4)
 
-    # Get descriptor correlation
+
+def test_screening(train_features, train_targets, test_features):
+    """Test feature screening."""
     corr = ['pearson', 'spearman', 'kendall']
+    d = 4
+    es = np.shape(train_features)[1]
     for c in corr:
         screen = FeatureScreening(correlation=c, iterative=False)
-        features = screen.eliminate_features(target=train_targets,
-                                             train_features=train_features,
-                                             test_features=test_features,
-                                             size=d, step=None, order=None)
-        assert np.shape(features[0])[1] == d and np.shape(features[1])[1] == d
+        feat = screen.eliminate_features(
+            target=train_targets, train_features=train_features,
+            test_features=test_features, size=d, step=None, order=None)
+        assert np.shape(feat[0])[1] == d and np.shape(feat[1])[1] == d
+
+        screen = FeatureScreening(correlation=c, iterative=True,
+                                  regression='ridge')
+        feat = screen.eliminate_features(
+            target=train_targets, train_features=train_features,
+            test_features=test_features, size=d, step=2, order=None)
+        assert np.shape(feat[0])[1] == es and np.shape(feat[1])[1] == es
 
         screen = FeatureScreening(correlation=c, iterative=True,
                                   regression='lasso')
-        features = screen.eliminate_features(target=train_targets,
-                                             train_features=train_features,
-                                             test_features=test_features,
-                                             size=d, step=2, order=None)
-        assert np.shape(features[0])[1] == d and np.shape(features[1])[1] == d
+        feat = screen.eliminate_features(
+            target=train_targets, train_features=train_features,
+            test_features=test_features, size=d, step=2, order=None)
+        assert np.shape(feat[0])[1] == es and np.shape(feat[1])[1] == es
+
+        screen = FeatureScreening(correlation=c, iterative=True,
+                                  regression='lasso', random_check=True)
+        feat = screen.eliminate_features(
+            target=train_targets, train_features=train_features,
+            test_features=test_features, size=d, step=2, order=None)
+        assert np.shape(feat[0])[1] != es and np.shape(feat[1])[1] != es
+
+
+if __name__ == '__main__':
+    train_features, train_targets, test_features = test_extend()
+    test_extract(train_features, train_targets, test_features)
+    test_screening(train_features, train_targets, test_features)

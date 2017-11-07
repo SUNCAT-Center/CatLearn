@@ -158,3 +158,7 @@ def setup_test():
     print('\nretrieve random vars:\n', dd.query_db(names=['random']))
 
     print('\nretrieved column names:\n', dd.get_column_names())
+
+
+if __name__ == '__main__':
+    setup_test()
