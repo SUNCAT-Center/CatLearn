@@ -59,6 +59,8 @@ class FeatureScreening(object):
             The ordered list of correlations between features and targets.
         """
         select = defaultdict(list)
+        n, f = np.shape(feature_matrix)
+        feature_matrix, _, _, randf = self._set_index(feature_matrix)
 
         # Get correlation between each feature and the targets.
         corr, order = self._get_correlation(target=target,
@@ -69,8 +71,14 @@ class FeatureScreening(object):
                                                   key=lambda x: x[0],
                                                   reverse=True))]
 
+        find_min = [n]
+        for i in randf:
+            find_min.append(sort_list[1].index(i))
+        size = min(find_min)
+
         select['index'] = sort_list[1]
         select['correlation'] = sort_list[0]
+        select['size'] = size
 
         return select
 
@@ -97,19 +105,14 @@ class FeatureScreening(object):
         size : int
             Number of accepted features.
         """
-        if self.random_check:
-            feature_matrix, r = self._random_extend(feature_matrix)
-            n, f = np.shape(feature_matrix)
-            index = list(range(f))
-            accepted, rejected, randf = [], index[:-r], index[-r:]
-        if not self.random_check:
-            n, f = np.shape(feature_matrix)
-            index = list(range(f))
-            accepted, rejected, randf = [], index, []
-        keep_train = feature_matrix
-
         # Assign default values and/or perform sanity checks.
+        n, f = np.shape(feature_matrix)
         size, step = self._dimension_check(n=n, f=f, size=size, step=step)
+
+        feature_matrix, accepted, rejected, \
+            randf = self._set_index(feature_matrix)
+        keep_train = feature_matrix
+        self.random_check = False
 
         # Initiate the feature reduction.
         iscreen = self.screen(target=target, feature_matrix=feature_matrix)
@@ -129,7 +132,6 @@ class FeatureScreening(object):
                 not_converged = False
             else:
                 sis_accept.append(rscreen['accepted'][i])
-        # sis_accept = [rscreen['accepted'][i] for i in regr]
         for i in sorted(sis_accept, reverse=True):
             accepted.append(rejected[i])
             del rejected[i]
@@ -165,7 +167,6 @@ class FeatureScreening(object):
                     not_converged = False
                     break
                 sis_accept.append(rscreen['accepted'][i])
-            # sis_accept = [rscreen['accepted'][i] for i in regr]
             for i in sorted(sis_accept, reverse=True):
                 accepted.append(rejected[i])
                 del rejected[i]
@@ -209,7 +210,9 @@ class FeatureScreening(object):
                     step=step)
             else:
                 order = self.screen(target=target,
-                                    feature_matrix=train_features)['index']
+                                    feature_matrix=train_features)
+                size = order['size']
+                order = order['index']
 
         reduced_train = self._reduce_matrix(feature_matrix=train_features,
                                             index_order=order, size=size)
@@ -217,6 +220,26 @@ class FeatureScreening(object):
                                            index_order=order, size=size)
 
         return reduced_train['matrix'], reduced_test['matrix']
+
+    def _set_index(self, feature_matrix):
+        """Function to add random features if desired.
+
+        Parameters
+        ----------
+        feature_matrix : array
+            The feature matrix for the training data.
+        """
+        if self.random_check:
+            feature_matrix, r = self._random_extend(feature_matrix)
+            n, f = np.shape(feature_matrix)
+            index = list(range(f))
+            accepted, rejected, randf = [], index[:-r], index[-r:]
+        if not self.random_check:
+            n, f = np.shape(feature_matrix)
+            index = list(range(f))
+            accepted, rejected, randf = [], index, []
+
+        return feature_matrix, accepted, rejected, randf
 
     def _get_correlation(self, target, feature_matrix):
         """Function to return the correlation between features and targets.
@@ -292,9 +315,19 @@ class FeatureScreening(object):
             Number of features to remain in the matrix.
         """
         data = defaultdict(list)
+
+        # Get matrx with correct dimensions if random features are expected.
+        feature_matrix, _, _, _ = self._set_index(feature_matrix)
+
+        msg = 'More features than expected based on length of importance list.'
+        assert np.shape(feature_matrix)[1] == len(index_order), msg
+
         data['accepted'] = index_order[:size]
         data['rejected'] = index_order[size:]
         data['matrix'] = np.delete(feature_matrix, data['rejected'], axis=1)
+
+        msg = 'Something went wrong, feature matrix is wrong shape.'
+        assert np.shape(data['matrix'])[1] == len(data['accepted']), msg
 
         return data
 
