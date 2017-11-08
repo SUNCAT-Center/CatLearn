@@ -228,6 +228,12 @@ class GaussianProcess(object):
         kdict = kernel_dict
         bounds = ()
         for key in kdict:
+            if key is 'const':
+                theta = kdict[key]['const']
+                if 'bounds' in kdict[key]:
+                    bounds += kdict[key]['bounds']
+                else:
+                    bounds += ((None, None),)
             if 'features' in kdict[key]:
                 N_D = len(kdict[key]['features'])
             else:
