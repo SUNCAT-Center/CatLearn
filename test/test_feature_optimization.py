@@ -79,8 +79,7 @@ def test_extract(train_features, train_targets, test_features):
 def test_screening(train_features, train_targets, test_features):
     """Test feature screening."""
     corr = ['pearson', 'spearman', 'kendall']
-    d = 4
-    es = np.shape(train_features)[1]
+    d, f = np.shape(train_features)
     for c in corr:
         screen = FeatureScreening(correlation=c, iterative=False)
         feat = screen.eliminate_features(
@@ -93,21 +92,21 @@ def test_screening(train_features, train_targets, test_features):
         feat = screen.eliminate_features(
             target=train_targets, train_features=train_features,
             test_features=test_features, size=d, step=2, order=None)
-        assert np.shape(feat[0])[1] == es and np.shape(feat[1])[1] == es
+        assert np.shape(feat[0])[1] == d and np.shape(feat[1])[1] == d
 
         screen = FeatureScreening(correlation=c, iterative=True,
                                   regression='lasso')
         feat = screen.eliminate_features(
             target=train_targets, train_features=train_features,
             test_features=test_features, size=d, step=2, order=None)
-        assert np.shape(feat[0])[1] == es and np.shape(feat[1])[1] == es
+        assert np.shape(feat[0])[1] == d and np.shape(feat[1])[1] == d
 
         screen = FeatureScreening(correlation=c, iterative=True,
                                   regression='lasso', random_check=True)
         feat = screen.eliminate_features(
             target=train_targets, train_features=train_features,
             test_features=test_features, size=d, step=2, order=None)
-        assert np.shape(feat[0])[1] != es and np.shape(feat[1])[1] != es
+        assert np.shape(feat[0])[1] != d and np.shape(feat[1])[1] != d
 
 
 if __name__ == '__main__':
