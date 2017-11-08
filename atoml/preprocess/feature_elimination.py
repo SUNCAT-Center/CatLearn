@@ -99,12 +99,13 @@ class FeatureScreening(object):
         """
         if self.random_check:
             feature_matrix, r = self._random_extend(feature_matrix)
-        n, f = np.shape(feature_matrix)
+            n, f = np.shape(feature_matrix)
+            index = list(range(f))
+            accepted, rejected, randf = [], index[:-r], index[-r:]
         if not self.random_check:
-            r = f
-
-        index = list(range(f))
-        accepted, rejected, randf = [], index[:-r], index[-r:]
+            n, f = np.shape(feature_matrix)
+            index = list(range(f))
+            accepted, rejected, randf = [], index, []
         keep_train = feature_matrix
 
         # Assign default values and/or perform sanity checks.
