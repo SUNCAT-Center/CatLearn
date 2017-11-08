@@ -228,12 +228,6 @@ class GaussianProcess(object):
         kdict = kernel_dict
         bounds = ()
         for key in kdict:
-            if key is 'const':
-                theta = kdict[key]['const']
-                if 'bounds' in kdict[key]:
-                    bounds += kdict[key]['bounds']
-                else:
-                    bounds += ((None, None),)
             if 'features' in kdict[key]:
                 N_D = len(kdict[key]['features'])
             else:
@@ -277,12 +271,16 @@ class GaussianProcess(object):
                     bounds += kdict[key]['bounds']
                 else:
                     bounds += ((1e-12, 1e12),) * N_D
-            elif 'bounds' in kdict[key]:
-                bounds += kdict[key]['bounds']
-            elif kdict[key]['type'] == 'linear':
-                bounds += ((0, None),)
             elif kdict[key]['type'] == 'quadratic':
                 bounds += ((1, None), (0, None),)
+            elif kdict[key]['type'] == 'constant':
+                theta = kdict[key]['const']
+                if 'bounds' in kdict[key]:
+                    bounds += kdict[key]['bounds']
+                else:
+                    bounds += ((0, None),)
+            elif 'bounds' in kdict[key]:
+                bounds += kdict[key]['bounds']
         self.kernel_dict = kernel_dict
         # Bounds for the regularization
         bounds += (regularization_bounds,)
@@ -305,7 +303,9 @@ class GaussianProcess(object):
 
         # Optimize
         self.theta_opt = minimize(log_marginal_likelihood, theta,
-                                  args=args,  # method='Nelder-Mead',
+                                  args=args,
+                                  # method='Nelder-Mead',
+                                  # options={'disp': True},
                                   bounds=self.bounds)
 
         # Update kernel_dict and regularization with optimized values.

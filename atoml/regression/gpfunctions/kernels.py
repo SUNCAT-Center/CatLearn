@@ -162,13 +162,16 @@ def list2kdict(hyperparameters, kernel_dict):
             ki += 2
 
         # Linear kernels have no hyperparameters
+        elif ktype == 'linear':
+            continue
+
         # If a constant is added.
         elif ktype == 'constant':
             kernel_dict[key]['const'] = hyperparameters[ki]
             ki += 1
 
         # Default hyperparameter keys for other kernels
-        elif ktype != 'linear':
+        else:
             N_D = len(kernel_dict[key]['hyperparameters'])
             theta = hyperparameters[ki:ki+N_D]
             kernel_dict[key]['hyperparameters'] = list(theta)
