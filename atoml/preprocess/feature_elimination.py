@@ -57,6 +57,8 @@ class FeatureScreening(object):
             The ordered list of feature indices.
         correlation : list
             The ordered list of correlations between features and targets.
+        size : int
+            Number of accepted features following screening.
         """
         select = defaultdict(list)
         n, f = np.shape(feature_matrix)
@@ -332,7 +334,19 @@ class FeatureScreening(object):
         return data
 
     def _regression_ordering(self, target, feature_matrix, size, steps):
-        """Function to get ordering of features absed on linear regression."""
+        """Function to get ordering of features absed on linear regression.
+
+        Parameters
+        ----------
+        target : list
+            The target values for the training data.
+        feature_matrix : array
+            Array to eliminate features from.
+        size : int
+            Number of features to remain in the matrix.
+        steps : int
+            Number of features to eliminate at each step.
+        """
         # Set up the regression fitting function.
         rf = RegressionFit(train_matrix=feature_matrix, train_target=target,
                            method=self.regression)
@@ -348,8 +362,10 @@ class FeatureScreening(object):
 
         Parameters
         ----------
-        feature_matrix : array
-            Array to eliminate features from.
+        train_matrix : array
+            An array of all remaining features.
+        reduced_matrix : array
+            An array of the currently accepted features.
         """
         response = []
         nv = np.linalg.norm(np.transpose(reduced_matrix), axis=1)
