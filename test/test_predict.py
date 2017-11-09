@@ -58,7 +58,8 @@ def rr_test(train_features, train_targets, test_features, test_targets):
 
 def gp_test(train_features, train_targets, test_features, test_targets):
     # Test prediction routine with linear kernel.
-    kdict = {'k1': {'type': 'linear', 'const': 1., 'scaling': 1.}}
+    kdict = {'k1': {'type': 'linear', 'scaling': 1.},
+             'c1': {'type': 'constant', 'const': 0.}}
     gp = GaussianProcess(train_fp=train_features, train_target=train_targets,
                          kernel_dict=kdict, regularization=-2.,
                          optimize_hyperparameters=True)
@@ -114,10 +115,10 @@ def gp_test(train_features, train_targets, test_features, test_targets):
     print('laplacian prediction:', pred['validation_error']['rmse_average'])
 
     # Test prediction routine with addative linear and gaussian kernel.
-    kdict = {'k1': {'type': 'linear', 'features': [0, 1], 'const': 1.,
-                    'scaling': 1.},
+    kdict = {'k1': {'type': 'linear', 'features': [0, 1], 'scaling': 1.},
              'k2': {'type': 'gaussian', 'features': [2, 3], 'width': 1.,
-                    'scaling': 1.}}
+                    'scaling': 1.},
+             'c1': {'type': 'constant', 'const': 0.}}
     gp = GaussianProcess(train_fp=train_features, train_target=train_targets,
                          kernel_dict=kdict, regularization=-2.,
                          optimize_hyperparameters=True)
@@ -129,10 +130,10 @@ def gp_test(train_features, train_targets, test_features, test_targets):
     print('addition prediction:', pred['validation_error']['rmse_average'])
 
     # Test prediction routine with multiplication of linear & gaussian kernel.
-    kdict = {'k1': {'type': 'linear', 'features': [0, 1], 'const': 1.,
-                    'scaling': 1.},
+    kdict = {'k1': {'type': 'linear', 'features': [0, 1], 'scaling': 1.},
              'k2': {'type': 'gaussian', 'features': [2, 3], 'width': 1.,
-                    'scaling': 1., 'operation': 'multiplication'}}
+                    'scaling': 1., 'operation': 'multiplication'},
+             'c1': {'type': 'constant', 'const': 0.}}
     gp = GaussianProcess(train_fp=train_features, train_target=train_targets,
                          kernel_dict=kdict, regularization=-2.,
                          optimize_hyperparameters=True)

@@ -22,6 +22,7 @@ def kdict2list(kdict, N_D=None):
         The number of descriptors if not specified in the kernel dict, by the
         lenght of the lists of hyperparameters.
     """
+
     # Get the kernel type.
     ktype = str(kdict['type'])
     if 'scaling' in kdict:
@@ -48,8 +49,12 @@ def kdict2list(kdict, N_D=None):
     elif ktype == 'quadratic':
         theta = [kdict['slope'], kdict['degree']]
 
-    # Linear kernels have only one hyperparameter
+    # Linear kernels have only no hyperparameters
     elif ktype == 'linear':
+        theta = []
+
+    # Constant kernel
+    elif ktype == 'constant':
         theta = [kdict['const']]
 
     # Default hyperparameter keys for other kernels
@@ -82,7 +87,7 @@ def kdict2list(kdict, N_D=None):
     else:
         constrained = []
 
-    return scaling, theta  # , constrained
+    return scaling, theta
 
 
 def kdicts2list(kernel_dict, N_D=None):
@@ -125,6 +130,7 @@ def list2kdict(hyperparameters, kernel_dict):
     """
     ki = 0
     for key in kernel_dict:
+
         ktype = kernel_dict[key]['type']
 
         # Retrieve the scaling factor if it is defined.
@@ -157,8 +163,11 @@ def list2kdict(hyperparameters, kernel_dict):
 
         # Linear kernels have no hyperparameters
         elif ktype == 'linear':
-            theta = hyperparameters[ki:ki+1]
-            kernel_dict[key]['const'] = theta[0]
+            continue
+
+        # If a constant is added.
+        elif ktype == 'constant':
+            kernel_dict[key]['const'] = hyperparameters[ki]
             ki += 1
 
         # Default hyperparameter keys for other kernels
@@ -167,6 +176,14 @@ def list2kdict(hyperparameters, kernel_dict):
             theta = hyperparameters[ki:ki+N_D]
             kernel_dict[key]['hyperparameters'] = list(theta)
     return kernel_dict
+
+
+def constant_kernel(theta, log_scale, m1, m2=None):
+    if m2 is None:
+        m2 = m1
+    if log_scale:
+        theta = np.exp(theta)
+    return np.ones([len(m1), len(m2)]) * theta
 
 
 def gaussian_kernel(theta, log_scale, m1, m2=None):
@@ -299,15 +316,10 @@ def linear_kernel(theta, log_scale, m1, m2=None):
     m2 : list or None
         A list of the training fingerprint vectors.
     """
-    if log_scale:
-        theta = np.exp(theta)
-
     if m2 is None:
         m2 = m1
 
-    c = np.zeros([len(m1), len(m2)]) + theta
-
-    return np.inner(m1, m2) + c
+    return np.inner(m1, m2)
 
 
 def quadratic_kernel(theta, log_scale, m1, m2=None):

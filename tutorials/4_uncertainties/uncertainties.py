@@ -20,7 +20,9 @@ def afunc(x):
 
 # Setting up data.
 # A number of training points in x.
-train_points = 10
+train_points = 30
+# Magnitude of the noise.
+noise_magnitude = 0.3
 
 # Randomly generate the training datapoints x.
 train_d1 = 2 * (np.random.random_sample(train_points) - 0.5)
@@ -34,10 +36,10 @@ target = np.array(afunc(train))
 
 # Add random noise from a normal distribution to the target values.
 for i in range(train_points):
-    target[i] += 0.3*np.random.normal()
+    target[i] += noise_magnitude * np.random.normal()
 
 # Generate test datapoints x.
-test_points = 33
+test_points = 30
 test1d = np.vstack(np.linspace(-1.3, 1.3, test_points))
 test_x1, test_x2 = np.meshgrid(test1d, test1d)
 test = np.hstack([np.vstack(test_x1.ravel()), np.vstack(test_x2.ravel())])
@@ -70,7 +72,8 @@ plt3d.plot_surface(test_x1, test_x2,
 if True:
     # Model example 1 - Gausian linear kernel regression.
     # Define prediction parameters
-    kdict = {'k1': {'type': 'linear', 'scaling': 1., 'const': 0}}
+    kdict = {'k1': {'type': 'linear', 'scaling': 1.},
+             'c1': {'type': 'constant', 'const': 0.}}
     # Set up the prediction routine.
     gp1 = GaussianProcess(kernel_dict=kdict, regularization=sdt1**2,
                           train_fp=std['train'], train_target=target,
