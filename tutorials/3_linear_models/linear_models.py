@@ -4,6 +4,9 @@ Like in tutorial 1, we set up a known underlying function, generate training
 and test data and calculate predictions and errors. We will compare the results
 of linear ridge regression, Gaussian linear kernel regression and finally a
 Gaussian process with the usual squared exponential kernel.
+
+Try playing around with the training set size (density) and noise_magnitude.
+
 """
 import numpy as np
 import matplotlib.pyplot as plt
@@ -20,7 +23,9 @@ def afunc(x):
 
 # Setting up data.
 # A number of training points in x.
-train_points = 10
+train_points = 30
+# Magnitude of the noise.
+noise_magnitude = 0.1
 
 # Randomly generate the training datapoints x.
 train_d1 = 2 * (np.random.random_sample(train_points) - 0.5)
@@ -34,10 +39,10 @@ target = np.array(afunc(train))
 
 # Add random noise from a normal distribution to the target values.
 for i in range(train_points):
-    target[i] += 0.3*np.random.normal()
+    target[i] += noise_magnitude * np.random.normal()
 
 # Generate test datapoints x.
-test_points = 33
+test_points = 10
 test1d = np.vstack(np.linspace(-1.3, 1.3, test_points))
 test_x1, test_x2 = np.meshgrid(test1d, test1d)
 test = np.hstack([np.vstack(test_x1.ravel()), np.vstack(test_x2.ravel())])
@@ -49,7 +54,7 @@ print(np.shape(target))
 # Store standard deviations of the training data and targets.
 stdx = np.std(train)
 stdy = np.std(target)
-sdt1 = np.sqrt(1e-6)
+sdt1 = np.sqrt(0.1)
 
 # Standardize the training and test data on the same scale.
 std = standardize(train_matrix=train,
@@ -90,14 +95,18 @@ if True:
 if True:
     # Model example 2 - Gausian linear kernel regression.
     # Define prediction parameters
-    kdict = {'k1': {'type': 'linear', 'scaling': 1., 'const': 0}}
+    kdict = {'k1': {'type': 'linear', 'scaling': 0.9},
+             'c1': {'type': 'constant', 'const': 0.0}}
     # Set up the prediction routine.
     gp1 = GaussianProcess(kernel_dict=kdict, regularization=sdt1**2,
                           train_fp=std['train'], train_target=target,
-                          optimize_hyperparameters=True)
+                          optimize_hyperparameters=True,
+                          scale_optimizer=False)
     # Do predictions.
-    linear = gp1.predict(test_fp=std['test'], uncertainty=True)
-    # Get confidence interval on predictions.
+    linear = gp1.predict(test_fp=std['test'], get_validation_error=True,
+                         test_target=afunc(test))
+    print('Gaussian linear regression prediction:',
+          linear['validation_error']['absolute_average'])
     # Plot the prediction.
     plt3d.plot_surface(test_x1, test_x2,
                        linear['prediction'].reshape(np.shape(test_x1)),
@@ -107,13 +116,17 @@ if True:
 if True:
     # Model example 3 - Gaussian Process with sqe kernel.
     # Set up the prediction routine and optimize hyperparameters.
-    kdict = {'k1': {'type': 'gaussian', 'width': [0.3, 3.]}}
+    kdict = {'k1': {'type': 'gaussian', 'width': [0.3, 3]},
+             'c1': {'type': 'constant', 'const': 0.0}}
     gp2 = GaussianProcess(kernel_dict=kdict, regularization=sdt1**2,
                           train_fp=std['train'], train_target=target,
-                          optimize_hyperparameters=True)
+                          optimize_hyperparameters=True,
+                          scale_optimizer=False)
     # Do the optimized predictions.
-    optimized = gp2.predict(test_fp=std['test'], uncertainty=True)
-    # Get confidence interval on predictions.
+    optimized = gp2.predict(test_fp=std['test'], get_validation_error=True,
+                            test_target=afunc(test))
+    print('Gaussian process prediction:',
+          optimized['validation_error']['absolute_average'])
     # Plot the prediction.
     plt3d.plot_surface(test_x1, test_x2,
                        optimized['prediction'].reshape(np.shape(test_x1)),
