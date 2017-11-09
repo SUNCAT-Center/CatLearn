@@ -181,6 +181,8 @@ def list2kdict(hyperparameters, kernel_dict):
 def constant_kernel(theta, log_scale, m1, m2=None):
     if m2 is None:
         m2 = m1
+    if log_scale:
+        theta = np.exp(theta)
     return np.ones([len(m1), len(m2)]) * theta
 
 
