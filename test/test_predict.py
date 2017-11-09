@@ -11,7 +11,7 @@ from atoml.regression import RidgeRegression, GaussianProcess
 wkdir = os.getcwd()
 
 
-def predict_test():
+def get_data():
     # Attach the database.
     dd = DescriptorDatabase(db_name='{}/fpv_store.sqlite'.format(wkdir),
                             table='FingerVector')
@@ -27,8 +27,12 @@ def predict_test():
     train_features, train_targets = feature_data[:35, :], target_data[:35]
     test_features, test_targets = feature_data[35:, :], target_data[35:]
 
+    return train_features, train_targets, test_features, test_targets
+
+
+def rr_test(train_features, train_targets, test_features, test_targets):
     # Test ridge regression predictions.
-    rr = RidgeRegression()
+    rr = RidgeRegression(cv='loocv')
     reg = rr.find_optimal_regularization(X=train_features, Y=train_targets)
     coef = rr.RR(X=train_features, Y=train_targets, omega2=reg)[0]
 
@@ -39,6 +43,20 @@ def predict_test():
         sumd += (p - tt) ** 2
     print('Ridge regression prediction:', (sumd / len(test_features)) ** 0.5)
 
+    # Test ridge regression predictions.
+    rr = RidgeRegression(cv='bootstrap')
+    reg = rr.find_optimal_regularization(X=train_features, Y=train_targets)
+    coef = rr.RR(X=train_features, Y=train_targets, omega2=reg)[0]
+
+    # Test the model.
+    sumd = 0.
+    for tf, tt in zip(test_features, test_targets):
+        p = (np.dot(coef, tf))
+        sumd += (p - tt) ** 2
+    print('Ridge regression prediction:', (sumd / len(test_features)) ** 0.5)
+
+
+def gp_test(train_features, train_targets, test_features, test_targets):
     # Test prediction routine with linear kernel.
     kdict = {'k1': {'type': 'linear', 'const': 1., 'scaling': 1.}}
     gp = GaussianProcess(train_fp=train_features, train_target=train_targets,
@@ -125,3 +143,9 @@ def predict_test():
     assert len(pred['prediction']) == len(test_features)
     print('multiplication prediction:',
           pred['validation_error']['rmse_average'])
+
+
+if __name__ == '__main__':
+    train_features, train_targets, test_features, test_targets = get_data()
+    rr_test(train_features, train_targets, test_features, test_targets)
+    gp_test(train_features, train_targets, test_features, test_targets)

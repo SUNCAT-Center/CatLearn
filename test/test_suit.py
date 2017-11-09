@@ -3,9 +3,9 @@ import os
 import unittest
 
 from test_data_setup import setup_test
-from test_data_clean import outlier_test
+import test_data_clean as dc
 import test_feature_optimization as ft
-from test_predict import predict_test
+import test_predict as pt
 from test_predict_scale import scale_test
 
 wkdir = os.getcwd()
@@ -20,7 +20,9 @@ class ConfigTestCase(unittest.TestCase):
 
     def test_data_clean_func(self):
         """Test data cleaning routines."""
-        outlier_test()
+        dc.outlier_test()
+        dc.variance_test()
+        dc.inf_test()
 
     def test_feature_opt_func(self):
         """Test feature optimization routines."""
@@ -30,7 +32,10 @@ class ConfigTestCase(unittest.TestCase):
 
     def test_predict_func(self):
         """Test prediction routines."""
-        predict_test()
+        train_features, train_targets, test_features, \
+            test_targets = pt.get_data()
+        pt.rr_test(train_features, train_targets, test_features, test_targets)
+        pt.gp_test(train_features, train_targets, test_features, test_targets)
         scale_test()
 
 
