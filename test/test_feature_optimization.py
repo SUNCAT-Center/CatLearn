@@ -6,13 +6,9 @@ import os
 import numpy as np
 
 from atoml.utilities import DescriptorDatabase
-from atoml.preprocess.feature_engineering import (single_transform,
-                                                  get_order_2,
-                                                  get_div_order_2,
-                                                  get_order_2ab,
-                                                  get_ablog)
+from atoml.preprocess import feature_engineering as fe
 from atoml.preprocess.feature_extraction import pls, pca, spca, atoml_pca
-from atoml.preprocess import FeatureScreening
+from atoml.preprocess.feature_elimination import FeatureScreening
 
 wkdir = os.getcwd()
 
@@ -36,21 +32,32 @@ def test_extend():
     d, f = np.shape(train_features)
     td, tf = np.shape(test_features)
 
+    # Make some toy names.
+    names = ['f{}'.format(i) for i in range(f)]
+
     # Perform feature engineering.
-    extend = single_transform(train_features)
+    extend = fe.single_transform(train_features)
     assert np.shape(extend) == (d, f * 3)
 
-    extend = get_order_2(train_features)
+    extend = fe.get_order_2(train_features)
+    ext_n = fe.get_labels_order_2(names, div=False)
     assert np.shape(extend) == (d, f*(f+1)/2)
+    assert len(ext_n) == np.shape(extend)[1]
 
-    extend = get_div_order_2(train_features)
+    extend = fe.get_div_order_2(train_features)
+    ext_n = fe.get_labels_order_2(names, div=True)
     assert np.shape(extend) == (d, f**2)
+    assert len(ext_n) == np.shape(extend)[1]
 
-    extend = get_order_2ab(train_features, a=2, b=4)
+    extend = fe.get_order_2ab(train_features, a=2, b=4)
+    ext_n = fe.get_labels_order_2ab(names, a=2, b=4)
     assert np.shape(extend) == (d, f*(f+1)/2)
+    assert len(ext_n) == np.shape(extend)[1]
 
-    extend = get_ablog(train_features, a=2, b=4)
+    extend = fe.get_ablog(train_features, a=2, b=4)
+    ext_n = fe.get_labels_ablog(names, a=2, b=4)
     assert np.shape(extend) == (d, f*(f+1)/2)
+    assert len(ext_n) == np.shape(extend)[1]
 
     return train_features, train_targets, test_features
 

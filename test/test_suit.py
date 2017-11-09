@@ -2,7 +2,7 @@
 import os
 import unittest
 
-from test_data_setup import setup_test
+import test_data_setup as ds
 import test_data_clean as dc
 import test_feature_optimization as ft
 import test_predict as pt
@@ -16,7 +16,9 @@ class ConfigTestCase(unittest.TestCase):
 
     def test_data_setup_func(self):
         """Test data setup routines."""
-        setup_test()
+        all_cand, data = ds.feature_test()
+        ds.cv_test(data)
+        ds.db_test(all_cand, data)
 
     def test_data_clean_func(self):
         """Test data cleaning routines."""
