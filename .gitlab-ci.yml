@@ -2,8 +2,7 @@ python_2_7_tests:
   script:
     - apt-get update -qy
     - apt-get install -qy python-pip python-numpy python-scipy
-    - pip install --upgrade scikit-learn
-    - pip install --upgrade pytest-cov
+    - pip install --upgrade scikit-learn pyyaml pytest-cov
     - git clone https://gitlab.com/ase/ase.git
     - pwd
     - export PYTHONPATH=$PWD/ase:$PYTHONPATH
@@ -16,8 +15,7 @@ python_3_tests:
   script:
     - apt-get update -qy
     - apt-get install -qy python3-pip python3-numpy python3-scipy
-    - pip3 install --upgrade scikit-learn
-    - pip3 install --upgrade pytest-cov
+    - pip3 install --upgrade scikit-learn pyyaml pytest-cov
     - git clone https://gitlab.com/ase/ase.git
     - pwd
     - export PYTHONPATH=$PWD/ase:$PYTHONPATH
