@@ -38,6 +38,52 @@ class FeatureScreening(object):
         self.regression = regression
         self.random_check = random_check
 
+    def eliminate_features(self, target, train_features, test_features,
+                           size=None, step=None, order=None):
+        """Function to eliminate features from training/test data.
+
+        Parameters
+        ----------
+        target : list
+            The target values for the training data.
+        train_features : array
+            Array of training data to eliminate features from.
+        test_features : array
+            Array of test data to eliminate features from.
+        size : int
+            Number of features after elimination.
+        step : int
+            Number of features to eliminate at each step.
+        order : list
+            Precomputed ordered indices for features.
+
+        Returns
+        -------
+        reduced_train : array
+            Reduced training feature matrix, now n x size shape.
+        reduced_test : array
+            Reduced test feature matrix, now m x size shape.
+        """
+        # First find the importance of features.
+        if order is None:
+            if self.iterative:
+                order, size = self.iterative_screen(
+                    target=target, feature_matrix=train_features, size=size,
+                    step=step)
+            else:
+                order = self.screen(target=target,
+                                    feature_matrix=train_features)
+                size = order['size']
+                order = order['index']
+
+        # Then eliminate unimportant features.
+        reduced_train = self._reduce_matrix(feature_matrix=train_features,
+                                            index_order=order, size=size)
+        reduced_test = self._reduce_matrix(feature_matrix=test_features,
+                                           index_order=order, size=size)
+
+        return reduced_train['matrix'], reduced_test['matrix']
+
     def screen(self, target, feature_matrix):
         """Feature selection based on SIS.
 
@@ -114,33 +160,12 @@ class FeatureScreening(object):
         feature_matrix, accepted, rejected, \
             randf = self._set_index(feature_matrix)
         keep_train = feature_matrix
+        # Set random check false for when the screen() func is called.
         self.random_check = False
 
-        # Initiate the feature reduction.
-        iscreen = self.screen(target=target, feature_matrix=feature_matrix)
-        rscreen = self._reduce_matrix(feature_matrix=feature_matrix,
-                                      index_order=iscreen['index'], size=size)
-
-        # Get ordering of remaining features from linear regression.
-        regr = self._regression_ordering(target=target,
-                                         feature_matrix=rscreen['matrix'],
-                                         size=step, steps=500)
-
-        # Sort all new ordering of accepted and rejected features.
-        not_converged = True
-        sis_accept = []
-        for i in regr:
-            if rscreen['accepted'][i] in randf:
-                not_converged = False
-            else:
-                sis_accept.append(rscreen['accepted'][i])
-        for i in sorted(sis_accept, reverse=True):
-            accepted.append(rejected[i])
-            del rejected[i]
-
-        # Create new active feature matrix.
-        feature_train = np.delete(keep_train, accepted, axis=1)
-        feature_reduced = np.delete(keep_train, rejected, axis=1)
+        not_converged, feature_train, feature_reduced = self._iterator(
+            target, feature_matrix, size, f, step, accepted, rejected, randf,
+            keep_train)
 
         # Iteratively reduce the remaining number of features by the step size.
         while np.shape(feature_reduced)[1] < size and not_converged:
@@ -151,77 +176,43 @@ class FeatureScreening(object):
             response = self._get_response(train_matrix=feature_train,
                                           reduced_matrix=feature_reduced)
 
-            # Do screening analysis on the residuals.
-            iscreen = self.screen(target=target, feature_matrix=response)
-            rscreen = self._reduce_matrix(feature_matrix=response,
-                                          index_order=iscreen['index'],
-                                          size=size)
-
-            # Get ordering of remaining features from linear regression.
-            regr = self._regression_ordering(target=target,
-                                             feature_matrix=rscreen['matrix'],
-                                             size=step, steps=500)
-
-            # Sort all new ordering of accepted and rejected features.
-            sis_accept = []
-            for i in regr:
-                if rscreen['accepted'][i] in randf:
-                    not_converged = False
-                    break
-                sis_accept.append(rscreen['accepted'][i])
-            for i in sorted(sis_accept, reverse=True):
-                accepted.append(rejected[i])
-                del rejected[i]
-
-            # Create new active feature matrix.
-            feature_train = np.delete(keep_train, accepted, axis=1)
-            feature_reduced = np.delete(keep_train, rejected, axis=1)
+            not_converged, feature_train, feature_reduced = self._iterator(
+                target, response, size, f, step, accepted, rejected, randf,
+                keep_train)
 
         return list(accepted) + list(rejected), len(list(accepted))
 
-    def eliminate_features(self, target, train_features, test_features,
-                           size=None, step=None, order=None):
-        """Function to eliminate features from training/test data.
+    def _iterator(self, target, features, size, f, step, accepted, rejected,
+                  randf, keep_train):
+        """The iterator within the Iterative SIS method."""
+        not_converged = True
+        # Do screening analysis on the residuals.
+        iscreen = self.screen(target=target, feature_matrix=features)
+        rscreen = self._reduce_matrix(feature_matrix=features,
+                                      index_order=iscreen['index'],
+                                      size=size)
 
-        Parameters
-        ----------
-        target : list
-            The target values for the training data.
-        train_features : array
-            Array of training data to eliminate features from.
-        test_features : array
-            Array of test data to eliminate features from.
-        size : int
-            Number of features after elimination.
-        step : int
-            Number of features to eliminate at each step.
-        order : list
-            Precomputed ordered indices for features.
+        # Get ordering of remaining features from linear regression.
+        regr = self._regression_ordering(target=target,
+                                         feature_matrix=rscreen['matrix'],
+                                         size=step, steps=5*f)
 
-        Returns
-        -------
-        reduced_train : array
-            Reduced training feature matrix, now n x size shape.
-        reduced_test : array
-            Reduced test feature matrix, now m x size shape.
-        """
-        if order is None:
-            if self.iterative:
-                order, size = self.iterative_screen(
-                    target=target, feature_matrix=train_features, size=size,
-                    step=step)
-            else:
-                order = self.screen(target=target,
-                                    feature_matrix=train_features)
-                size = order['size']
-                order = order['index']
+        # Sort all new ordering of accepted and rejected features.
+        sis_accept = []
+        for i in regr:
+            if rscreen['accepted'][i] in randf:
+                not_converged = False
+                break
+            sis_accept.append(rscreen['accepted'][i])
+        for i in sorted(sis_accept, reverse=True):
+            accepted.append(rejected[i])
+            del rejected[i]
 
-        reduced_train = self._reduce_matrix(feature_matrix=train_features,
-                                            index_order=order, size=size)
-        reduced_test = self._reduce_matrix(feature_matrix=test_features,
-                                           index_order=order, size=size)
+        # Create new active feature matrix.
+        feature_train = np.delete(keep_train, accepted, axis=1)
+        feature_reduced = np.delete(keep_train, rejected, axis=1)
 
-        return reduced_train['matrix'], reduced_test['matrix']
+        return not_converged, feature_train, feature_reduced
 
     def _set_index(self, feature_matrix):
         """Function to add random features if desired.

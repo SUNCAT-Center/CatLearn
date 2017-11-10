@@ -12,6 +12,7 @@ wkdir = os.getcwd()
 
 
 def get_data():
+    """Simple function to pull some training and test data."""
     # Attach the database.
     dd = DescriptorDatabase(db_name='{}/fpv_store.sqlite'.format(wkdir),
                             table='FingerVector')
@@ -31,6 +32,7 @@ def get_data():
 
 
 def rr_test(train_features, train_targets, test_features, test_targets):
+    """Test ridge regression predictions."""
     # Test ridge regression predictions.
     rr = RidgeRegression(cv='loocv')
     reg = rr.find_optimal_regularization(X=train_features, Y=train_targets)
@@ -57,6 +59,7 @@ def rr_test(train_features, train_targets, test_features, test_targets):
 
 
 def gp_test(train_features, train_targets, test_features, test_targets):
+    """Test Gaussian process predictions."""
     # Test prediction routine with linear kernel.
     kdict = {'k1': {'type': 'linear', 'scaling': 1.},
              'c1': {'type': 'constant', 'const': 0.}}
@@ -143,6 +146,29 @@ def gp_test(train_features, train_targets, test_features, test_targets):
                       get_training_error=True)
     assert len(pred['prediction']) == len(test_features)
     print('multiplication prediction:',
+          pred['validation_error']['rmse_average'])
+
+    # Test updating the last model.
+    d, f = np.shape(train_features)
+    train_features = np.concatenate((train_features, test_features))
+    new_features = np.random.random_sample((np.shape(train_features)[0], 5))
+    train_features = np.concatenate((train_features, new_features), axis=1)
+    assert np.shape(train_features) != (d, f)
+    train_targets = np.concatenate((train_targets, test_targets))
+    new_features = np.random.random_sample((len(test_features), 5))
+    test_features = np.concatenate((test_features, new_features), axis=1)
+    kdict = {'k1': {'type': 'linear', 'features': [0, 1, 6, 9], 'scaling': 1.},
+             'k2': {'type': 'gaussian', 'features': [2, 3, 4, 5], 'width': 1.,
+                    'scaling': 1., 'operation': 'multiplication'},
+             'c1': {'type': 'constant', 'const': 0.}}
+    gp.update_gp(train_fp=train_features, train_target=train_targets,
+                 kernel_dict=kdict)
+    pred = gp.predict(test_fp=test_features,
+                      test_target=test_targets,
+                      get_validation_error=True,
+                      get_training_error=True)
+    assert len(pred['prediction']) == len(test_features)
+    print('Update prediction:',
           pred['validation_error']['rmse_average'])
 
 
