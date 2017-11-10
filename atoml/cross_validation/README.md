@@ -7,6 +7,7 @@ hyperparameter optimization is performed, cross-validation also provides a way
 of avoiding overfitting.
 
 ## Hierarchy CV
+[(Back to top)](#cross-validation-functions)
 
 This forms the base class for cross-validation performed to generate the
 learning curve. The learning curve will plot the relationship between the
@@ -24,6 +25,7 @@ to avoid saving large numbers of feature matrices in memory.
 *   Requires some generalization, especially with respect to the database.
 
 ## K-fold CV
+[(Back to top)](#cross-validation-functions)
 
 K-fold cross-validation will divide a dataset into k equal sized subsets.
 The current method is over simplistic and does not include replacement or a

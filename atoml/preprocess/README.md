@@ -3,6 +3,7 @@
 The folder contains files to scale and optimize the feature space.
 
 ## Feature preprocess
+[(Back to top)](#data-preprocessing)
 
 This class provide functions to scale the feature data in different ways:
 
@@ -21,6 +22,7 @@ depending on how data is generated and when training is performed.
 *   Better define when scaling can be used with local-only/global data.
 
 ## Feature engineering
+[(Back to top)](#data-preprocessing)
 
 Feature engineering can be used to come up with more effective
 representations which can allow for more model flexibility while simplifying
@@ -36,6 +38,7 @@ doesn't appear to be a compelling reason to use it.
 *   More robust investigation for application to different problems.
 
 ## Feature elimination
+[(Back to top)](#data-preprocessing)
 
 The aim of feature elimination is to reduce the feature space, removing
 features that either add noise to the predictions, or that don't add additional
@@ -47,6 +50,15 @@ features and targets as a measure of fitness and removes features that don't
 correlate well. This is a simplistic elimination method but can work well when
 the feature space is too large to consider other (more accurate) elimination
 methods.
+
+Screening can be performed once, or in an iterative manner. When performed
+once, it is likely that more correlated features will be returned. When
+performed in an iterative manner, correlation between accepted features and
+the remaining feature set are also removed. This results in an uncorrelated
+feature set being likely to be returned. It is possible to test feature
+acceptance against the likelihood of just including random noise. The selection
+will stop early if random features correlate better with the targets than real
+features.
 
 If the feature space is smaller, it is possible to generate a sparse model
 using e.g. LASSO. Features with zero coefficients in the sparse linear model
@@ -63,9 +75,11 @@ within the GP code.
 *   Speed up some of the elimination methods.
 
 # Feature extraction
+[(Back to top)](#data-preprocessing)
 
-When a reasonable feature space has been generated it is potentially useful to perform feature
-extraction to produce a reduced number of more informative features. This is typically achieved
-by taking combinations of original features and so can result in less interpretable models.
-Common methods of extraction include PCA and PLS. A wrapper to scikit-learn has been written
-for a few of these methods, as well as a fully coded (very) basic PCA function.
+When a reasonable feature space has been generated it is potentially useful to
+perform feature extraction to produce a reduced number of more informative
+features. This is typically achieved by taking combinations of original
+features and so can result in less interpretable models. Common methods of
+extraction include PCA and PLS. A wrapper to scikit-learn has been written for
+a few of these methods, as well as a fully coded (very) basic PCA function.

@@ -6,31 +6,49 @@ README, that will provide a more detailed description of what it does.
 
 In general, there are modules for:
 
-*   Manipulate list of atoms objects to form training and test data. Useful
-when getting data from e.g. a database.
-    -   data_setup.py
-*   Convert ASE atoms objects into feature vectors for a number of potentially
-interesting problems.
-    -   fingerprint_setup.py
-    -   adsorbate_fingerprint.py
-    -   particle_fingerprint.py
-    -   neighborhood_matrix.py
-    -   standard_fingerprint.py
-    -   general_fingerprint.py
-*   Database functions to store the feature matrix from a given dataset.
-    -   database_functions.py
-*   Feature preprocessing, engineering, elimination and extraction methods.
-    -   feature_preprocess.py
-    -   feature_engineering.py
-    -   feature_elimination.py
-    -   feature_extraction.py
-*   Gaussian processes predictions with with model optimization.
-    -   predict.py
-    -   kernels.py
-    -   covarience.py
-    -   model_selection.py
-    -   uncertainty.py
-    -   gp_sensitivity.py
-    -   cost_function.py
-*   Model testing functions.
-    -   cross_validation.py
+-   [Feature generation](#feature-generation)
+-   [Preprocessing](#preprocessing)
+-   [Regression](#regression)
+-   [Cross-validation](#cross-validation)
+-   [Utilities](#utilities)
+
+## Feature generation
+[(Back to top)](#atoml-source-code)
+
+There are various fingerprint generators available. These typically take a list
+of [ASE](https://wiki.fysik.dtu.dk/ase/) atoms object and return an array of
+features. The setup functions wrap around some predefined, or user written
+generators for various systems. The predefined functions are:
+
+*   adsorbate_fingerprint.py
+*   particle_fingerprint.py
+*   neighborhood_matrix.py
+*   standard_fingerprint.py
+*   general_fingerprint.py
+
+## Preprocessing
+[(Back to top)](#atoml-source-code)
+
+The module contains functions to scale and optimize the feature space. The
+optimization routines include functions that will expand the space with various
+transforms and also reduce the space to form more compact representations with
+either elimination or extraction.
+
+## Regression
+[(Back to top)](#atoml-source-code)
+
+Ridge regression functions to generate reasonable linear models. This will
+typically give a good base level of predictive accuracy upon which to benchmark
+the more complex Gaussian process. The Gaussian processes functions are also
+located in this module. Along with Gaussian process regression, there are also
+functions for model optimization.
+
+## Cross-validation
+[(Back to top)](#atoml-source-code)
+
+Model testing functions to assess likely error in the predictions.
+
+## Utilities
+[(Back to top)](#atoml-source-code)
+
+General utilities to help build and test the models.
