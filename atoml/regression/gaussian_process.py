@@ -48,7 +48,7 @@ class GaussianProcess(object):
         # Perform some sanity checks.
         msg = 'GP must be trained on more than one data point.'
         assert np.shape(train_fp)[0] > 1, msg
-        msg = 'The number of targets does not match the number of targets.'
+        msg = 'The number of data does not match the number of targets.'
         assert np.shape(train_fp)[0] == len(train_target), msg
 
         _, self.N_D = np.shape(train_fp)
@@ -183,8 +183,6 @@ class GaussianProcess(object):
         msg = 'It looks like the number of features has changed. Train a new '
         msg += 'model instead of trying to update.'
         assert self.N_D == f
-
-        # self.N_D = f
 
         # Store the training data in the GP, enforce np.array type.
         self.train_fp = np.asarray(train_fp)
