@@ -25,18 +25,24 @@ generation of descriptors through use of the many ASE functions.
 
 The easiest way to install the code is with:
 
+  ```shell
     pip install git+https://gitlab.com/atoML/AtoML.git
+  ```
 
 This will automatically install the code as well as the dependencies.
 Alternatively, you can clone the repository to a local directory with:
 
+  ```shell
     git clone https://gitlab.com/atoML/AtoML.git
+  ```
 
 And then put the `<install_dir>/` into your `$PYTHONPATH` environment variable.
 
 Be sure to install dependencies in with:
 
+  ```shell
     pip install -r requirements.txt
+  ```
 
 ## Usage
 [(Back to top)](#table-of-contents)
@@ -44,6 +50,7 @@ Be sure to install dependencies in with:
 In the most basic form, it is possible to set up a GP model and make some
 predictions using the following lines of code:
 
+  ```python
     import numpy as np
     from atoml.regression import GaussianProcess
 
@@ -62,6 +69,7 @@ predictions using the following lines of code:
 
     # Get the predictions.
     prediction = gp.predict(test_fp=test_features)
+  ```
 
 The above sample of code will train a GP with the squared exponential kernel,
 fitting some random function. Of course this isn't so useful, more helpful
