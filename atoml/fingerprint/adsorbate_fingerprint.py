@@ -53,9 +53,9 @@ def n_outer(econf):
 def info2primary_index(atoms):
     liste = []
     surf_atoms = atoms.info['surf_atoms']
-    add_atoms = atoms.info['add_atoms']
+    ads_atoms = atoms.info['ads_atoms']
     for m in surf_atoms:
-        for a in add_atoms:
+        for a in ads_atoms:
             d = atoms.get_distance(m, a, mic=True, vector=False)
             liste.append([a, m, d])
     L = np.array(liste)
@@ -319,10 +319,10 @@ class AdsorbateFingerprintGenerator(object):
         else:
             # addsyms = ['H', 'C', 'O', 'N']
             # surf_atoms = atoms.info['surf_atoms']
-            # add_atoms = atoms.info['add_atoms']
+            # ads_atoms = atoms.info['ads_atoms']
             # liste = []
             # for m in surf_atoms:
-            #     for a in add_atoms:
+            #     for a in ads_atoms:
             #         d = atoms.get_distance(m, a, mic=True, vector=False)
             #         liste.append([a, d])
             primary_add = int(atoms.info['i_add1'])
@@ -356,10 +356,10 @@ class AdsorbateFingerprintGenerator(object):
             return ['num_C_add2nn', 'num_H_add2nn', 'num_M_add2nn']
         else:
             surf_atoms = atoms.info['surf_atoms']
-            add_atoms = atoms.info['add_atoms']
+            ads_atoms = atoms.info['ads_atoms']
             liste = []
             for m in surf_atoms:
-                for a in add_atoms:
+                for a in ads_atoms:
                     d = atoms.get_distance(m, a, mic=True, vector=False)
                     liste.append([a, d])
             L = np.array(liste)
@@ -371,7 +371,7 @@ class AdsorbateFingerprintGenerator(object):
             nC1 = len([a.index for a in atoms if a.symbol == 'C' and
                       atoms.get_distance(secondary_add, a.index, mic=True) <
                       1.15 and a.index != secondary_add])
-            nM = len([a.index for a in atoms if a.symbol not in add_atoms and
+            nM = len([a.index for a in atoms if a.symbol not in ads_atoms and
                      atoms.get_distance(secondary_add, a.index, mic=True) <
                      2.35])
             return [nC1, nH1, nM]  # , nN, nH]
@@ -430,7 +430,7 @@ class AdsorbateFingerprintGenerator(object):
                 for nni in top_atoms:
                     if nni == primary_surf or atoms[nni].symbol in adatoms:
                         continue
-                    assert nni not in atoms.info['add_atoms']
+                    assert nni not in atoms.info['ads_atoms']
                     # Get pair distance and append to list.
                     d_nn = atoms.get_distance(primary_surf, nni, mic=True,
                                               vector=False)
@@ -485,16 +485,16 @@ class AdsorbateFingerprintGenerator(object):
         """ Function that takes an atoms object and returns a fingerprint
             vector with the number of C-H bonds and C-C bonds in the adsorbate.
             The adsorbate atoms must be specified in advance in
-            atoms.info['add_atoms']
+            atoms.info['ads_atoms']
         """
         if atoms is None:
             return ['nC-C', 'ndouble', 'nC-H', 'nO-H']
         else:
-            add_atoms = atoms[atoms.info['add_atoms']]
-            A = connection_matrix(add_atoms, periodic=True, dx=0.2)
-            Hindex = [a.index for a in add_atoms if a.symbol == 'H']
-            Cindex = [a.index for a in add_atoms if a.symbol == 'C']
-            Oindex = [a.index for a in add_atoms if a.symbol == 'O']
+            ads_atoms = atoms[atoms.info['ads_atoms']]
+            A = connection_matrix(ads_atoms, periodic=True, dx=0.2)
+            Hindex = [a.index for a in ads_atoms if a.symbol == 'H']
+            Cindex = [a.index for a in ads_atoms if a.symbol == 'C']
+            Oindex = [a.index for a in ads_atoms if a.symbol == 'O']
             nCC = 0
             nCH = 0
             nC2 = 0
@@ -547,9 +547,9 @@ class AdsorbateFingerprintGenerator(object):
                     'ne_f_add_av',
                     'ionenergy_av']
         else:
-            add_atoms = atoms.info['add_atoms']
+            ads_atoms = atoms.info['ads_atoms']
             dat = []
-            for a in add_atoms:
+            for a in ads_atoms:
                 Z = atoms.numbers[a]
                 mnlv = get_mendeleev_params(Z, extra_params=['econf',
                                                              'ionenergies'])

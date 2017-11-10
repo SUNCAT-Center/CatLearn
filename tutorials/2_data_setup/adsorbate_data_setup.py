@@ -17,7 +17,7 @@ for f in dictionary.keys():
     # Loading the atoms objects from traj files.
     atoms = ase.io.read(f + '.traj')
     # Attach indices of adsorbate atoms to the info dict in the key 'add_atoms'
-    atoms.info['add_atoms'] = dictionary[f]['ads_index']
+    atoms.info['ads_atoms'] = dictionary[f]['ads_index']
     atoms.info['surf_atoms'] = slab_index(atoms)  # Modify if O/C/Nitrides
     # Get other information about the surface/adsorbate nearest neighbors.
     i_add1, i_surf1, Z_add1, Z_surf1, i_surfnn = info2primary_index(atoms)
