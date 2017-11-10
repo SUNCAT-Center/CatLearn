@@ -45,6 +45,10 @@ class GaussianProcess(object):
             Flag to define if the hyperparameters are log scale for
             optimization.
         """
+        # Perform some sanity checks.
+        msg = 'GP must be trained on more than one data point.'
+        assert np.shape(train_fp)[0] > 1, msg
+
         _, self.N_D = np.shape(train_fp)
         self.regularization = regularization
         self.scale_optimizer = scale_optimizer
@@ -85,6 +89,16 @@ class GaussianProcess(object):
         epsilon : float
             Threshold for insensitive error calculation.
         """
+        # Perform some sanity checks.
+        if get_validation_error:
+            msg = 'No test targets provided, can not return validation error.'
+            assert test_target is not None, msg
+
+        # Enforce np.array type for test data.
+        test_fp = np.asarray(test_fp)
+        if test_target is not None:
+            test_target = np.asarray(test_target)
+
         # Store input data.
         data = defaultdict(list)
 
@@ -155,9 +169,9 @@ class GaussianProcess(object):
         """
         # Get the shape of the training dataset.
         _, self.N_D = np.shape(train_fp)
-        # Store the training data in the GP
-        self.train_fp = train_fp
-        self.train_target = train_target
+        # Store the training data in the GP, enforce np.array type.
+        self.train_fp = np.asarray(train_fp)
+        self.train_target = np.asarray(train_target)
         # Get the Gram matrix on-the-fly if none is suppiled.
         cvm = get_covariance(kernel_dict=self.kernel_dict,
                              matrix1=self.train_fp,
