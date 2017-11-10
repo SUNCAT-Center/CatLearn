@@ -37,7 +37,7 @@ def n_outer(econf):
         elif len(shell) == 3:
             n_shell = int(shell[-1])
         elif len(shell) == 4:
-            n_shell = int(shell[-2:])            
+            n_shell = int(shell[-2:])
         n_tot += n_shell
         if 's' in shell:
             ns += n_shell
@@ -261,7 +261,7 @@ class AdsorbateFingerprintGenerator(object):
                     'dbfilling_surf1',
                     'dbwidth_surf1',
                     'dbskew_surf1',
-                    #'dbkurtosis_surf1',
+                    # 'dbkurtosis_surf1',
                     'block_surf1',
                     'ne_outer_surf1',
                     'ne_s_surf1',
@@ -269,15 +269,8 @@ class AdsorbateFingerprintGenerator(object):
                     'ne_d_surf1',
                     'ne_f_surf1',
                     'ionenergy_surf1',
-                    'strain_surf1',
                     'ground_state_magmom_surf1']
         else:
-            bulk = atoms.info['key_value_pairs']['bulk']
-            bulkcomp = string2symbols(bulk)
-            r = []
-            for bulk in bulkcomp:
-                r.append(covalent_radii[atomic_numbers[bulk]])
-            r0 = np.average(r)
             # Z = int(atoms.info['Z_surf1'])
             dat = []
             for j in atoms.info['i_surfnn']:
@@ -290,14 +283,13 @@ class AdsorbateFingerprintGenerator(object):
                                                           'dbfilling',
                                                           'dbwidth',
                                                           'dbskew',
-                                                          #'dbkurt',
+                                                          # 'dbkurt',
                                                           'block',
                                                           'econf',
                                                           'ionenergies'])
-                strain = (covalent_radii[Z] - r0) / r0
                 dat.append(mnlv[:-3] + [float(block2number[mnlv[-3]])] +
                            list(n_outer(mnlv[-2])) +
-                           [mnlv[-1]['1']] + [strain] +
+                           [mnlv[-1]['1']] +
                            [float(ground_state_magnetic_moments[Z])])
                 return list(np.nanmean(dat, axis=0, dtype=float))
 
@@ -308,7 +300,7 @@ class AdsorbateFingerprintGenerator(object):
         """
         if atoms is None:
             return ['total_num_C',
-                    'total_num_O' ,# 'total_num_N',
+                    'total_num_O',
                     'total_num_H']
         else:
             nC = len([a.index for a in atoms if a.symbol == 'C'])
@@ -507,11 +499,25 @@ class AdsorbateFingerprintGenerator(object):
             nCH = 0
             nC2 = 0
             nOH = 0
+            nOdouble = 0
+            nCdouble = 0
+            nCtriple = 0
+            nCquad = 0
             for o in Oindex:
                 nOH += np.sum(A[Hindex, o])
-            for a in Cindex:
-                nCC += np.sum(A[Cindex, a])
-                nCH += np.sum(A[Hindex, a])
+                Onn = np.sum(A[:, o])
+                if Onn == 1:
+                    nOdouble += 1
+            for c in Cindex:
+                nCC += np.sum(A[Cindex, c])
+                nCH += np.sum(A[Hindex, c])
+                Cnn = np.sum(A[:, c])
+                if Cnn == 3:
+                    nCdouble += 1
+                elif Cnn == 2:
+                    nCtriple += 1
+                elif Cnn == 1:
+                    nCquad += 1
                 nC2 += 4 - (nCC + nCH)
             return [nCC, nC2, nCH, nOH]
 
@@ -550,6 +556,27 @@ class AdsorbateFingerprintGenerator(object):
                 dat.append(mnlv[:-2] + list(n_outer(mnlv[-2])) +
                            [mnlv[-1]['1']])
             return list(np.average(dat, axis=0))
+
+    def strain(self, atoms=None):
+        if atoms is None:
+            return ['strain_surf1', 'strain_term']
+        else:
+            Z_add1 = int(atoms.info['Z_add1'])
+            bulk = atoms.info['key_value_pairs']['bulk']
+            term = atoms.info['key_value_pairs']['term']
+            bulkcomp = string2symbols(bulk)
+            termcomp = string2symbols(term)
+            rbulk = []
+            rterm = []
+            for b in bulkcomp:
+                rbulk.append(covalent_radii[atomic_numbers[b]])
+            for t in termcomp:
+                rterm.append(covalent_radii[atomic_numbers[t]])
+            av_term = np.average(rterm)
+            av_bulk = np.average(rbulk)
+            strain1 = (covalent_radii[Z_add1] - av_bulk) / av_bulk
+            strain_term = (av_term - av_bulk) / av_bulk
+            return [strain1, strain_term]
 
     def randomfpv(self, atoms=None):
         n = 20

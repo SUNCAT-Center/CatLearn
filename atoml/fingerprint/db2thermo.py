@@ -26,6 +26,12 @@ def metal_index(atoms):
     return metal_atoms
 
 
+def slab_index(atoms):
+    metal_atoms = [a.index for a in atoms if a.index not in
+                   atoms.info['add_atoms']]
+    return metal_atoms
+
+
 def adds_index(atoms):
     add_atoms = [a.index for a in atoms if a.symbol in addsyms]
     return add_atoms
