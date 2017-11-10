@@ -154,7 +154,9 @@ class GaussianProcess(object):
             optimization.
         """
         # Get the shape of the training dataset.
-        _, self.N_D = np.shape(train_fp)
+        N_train, self.N_D = np.shape(train_fp)
+        if N_train <= 1:
+            raise AssertionError("More than 1 training examples are required.")
         # Store the training data in the GP
         self.train_fp = train_fp
         self.train_target = train_target
