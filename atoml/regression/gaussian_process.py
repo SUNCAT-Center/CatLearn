@@ -258,11 +258,6 @@ class GaussianProcess(object):
         regularization_bounds : tuple
             Optional to change the bounds for the regularization.
         """
-        # Perform some sanity checks.
-        msg = 'Please change something in the GP.'
-        assert (train_fp is not None and kernel_dict is not None and
-                train_target is not None), msg
-
         if train_fp is not None:
             msg = 'GP must be trained on more than one data point.'
             assert np.shape(train_fp)[0] > 1, msg
