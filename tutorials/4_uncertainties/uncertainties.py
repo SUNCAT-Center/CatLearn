@@ -48,15 +48,12 @@ print(np.shape(train))
 print(np.shape(test))
 print(np.shape(target))
 
-# Store standard deviations of the training data and targets.
-stdx = np.std(train)
-stdy = np.std(target)
-tstd = 2.
-sdt1 = np.sqrt(1e-6)
-
 # Standardize the training and test data on the same scale.
 std = standardize(train_matrix=train,
                   test_matrix=test)
+# Standardize the training targets.
+train_targets = target_standardize(target)
+# Note that predictions will now be made on the standardized scale.
 
 # Plotting.
 plt3d = plt.figure().gca(projection='3d')
@@ -69,22 +66,32 @@ plt3d.plot_surface(test_x1, test_x2,
                    afunc(test).reshape(np.shape(test_x1)),
                    alpha=0.3, color='b')
 
+# plot predicted tstd * uncertainties intervals.
+tstd = 2.
+
+
 if True:
     # Model example 1 - Gausian linear kernel regression.
     # Define prediction parameters
     kdict = {'k1': {'type': 'linear', 'scaling': 1.},
              'c1': {'type': 'constant', 'const': 0.}}
-    # Set up the prediction routine.
-    gp1 = GaussianProcess(kernel_dict=kdict, regularization=sdt1**2,
-                          train_fp=std['train'], train_target=target,
+    # Starting guess for the noise parameter
+    sdt1 = noise_magnitude
+    # Set up the gaussian process.
+    gp1 = GaussianProcess(kernel_dict=kdict, regularization=sdt1,
+                          train_fp=std['train'],
+                          train_target=train_targets['target'],
                           optimize_hyperparameters=True)
     # Do predictions.
     linear = gp1.predict(test_fp=std['test'], uncertainty=True)
+    # Put predictions back on real scale.
+    prediction = np.array(linear['prediction']) * train_targets['std'] + \
+        train_targets['mean']
+    # Put uncertainties back on real scale.
+    uncertainty = np.array(linear['uncertainty']) * train_targets['std']
     # Get confidence interval on predictions.
-    over_upper = np.array(linear['prediction']) + \
-        (np.array(linear['uncertainty']) * tstd)
-    over_lower = np.array(linear['prediction']) - \
-        (np.array(linear['uncertainty']) * tstd)
+    over_upper = prediction + uncertainty * tstd
+    over_lower = prediction - uncertainty * tstd
     # Plot the uncertainties upper and lower bounds.
     plt3d.plot_surface(test_x1, test_x2,
                        over_upper.reshape(np.shape(test_x1)),
@@ -97,22 +104,29 @@ if True:
     # Model example 2 - Gaussian Process with sqe kernel.
     # Set up the prediction routine and optimize hyperparameters.
     kdict = {'k1': {'type': 'gaussian', 'width': [0.3, 3.]}}
-    gp2 = GaussianProcess(kernel_dict=kdict, regularization=sdt1**2,
-                          train_fp=std['train'], train_target=target,
+    # Starting guess for the noise parameter
+    sdt1 = noise_magnitude
+    # Set up the gaussian process.
+    gp2 = GaussianProcess(kernel_dict=kdict, regularization=sdt1,
+                          train_fp=std['train'],
+                          train_target=train_targets['target'],
                           optimize_hyperparameters=True)
     # Do the optimized predictions.
-    optimized = gp2.predict(test_fp=std['test'], uncertainty=True)
+    gaussian = gp2.predict(test_fp=std['test'], uncertainty=True)
+    # Put predictions back on real scale.
+    prediction = np.array(gaussian['prediction']) * train_targets['std'] + \
+        train_targets['mean']
+    # Put uncertainties back on real scale.
+    uncertainty = np.array(gaussian['uncertainty']) * train_targets['std']
     # Get confidence interval on predictions.
-    opt_upper = np.array(optimized['prediction']) + \
-        (np.array(optimized['uncertainty']) * tstd)
-    opt_lower = np.array(optimized['prediction']) - \
-        (np.array(optimized['uncertainty']) * tstd)
+    gp_upper = prediction + uncertainty * tstd
+    gp_lower = prediction - uncertainty * tstd
     # Plot the prediction.
     plt3d.plot_surface(test_x1, test_x2,
-                       opt_upper.reshape(np.shape(test_x1)),
+                       gp_upper.reshape(np.shape(test_x1)),
                        alpha=0.3, color='g')
     plt3d.plot_surface(test_x1, test_x2,
-                       opt_lower.reshape(np.shape(test_x1)),
+                       gp_lower.reshape(np.shape(test_x1)),
                        alpha=0.3, color='g')
 
 plt.xlabel('Descriptor 0')
