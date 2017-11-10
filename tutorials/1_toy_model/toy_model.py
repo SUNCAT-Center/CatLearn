@@ -17,14 +17,15 @@ from atoml.utilities.cost_function import get_error
 # A known underlying function in one dimension.
 def afunc(x):
     """Define some polynomial function."""
-    y = x - 50
+    y = x - 50.
     p = (y + 4) * (y + 4) * (y + 1) * (y - 1) * (y - 3.5) * (y - 2) * (y - 1)
-    p += 40 * y + 80 * np.sin(10 * x)
+    p += 40. * y + 80. * np.sin(10. * x)
     return 1. / 20. * p + 500
 
 # Setting up data.
 # A number of training points in x.
 train_points = 30
+noise_magnitude = 1.
 
 # Randomly generate the training datapoints x.
 train = 7.6 * np.random.random_sample((1, train_points)) - 4.2 + 50
@@ -35,17 +36,17 @@ target = np.array(afunc(train))
 # Add random noise from a normal distribution to the target values.
 nt = []
 for i in range(train_points):
-    nt.append(1.0*np.random.normal())
+    nt.append(noise_magnitude * np.random.normal())
 target += np.array(nt)
 
 # Generate test datapoints x.
 test_points = 1001
-test = np.linspace(45, 55, test_points)
+test = np.linspace(np.min(train)-0.1, np.max(train)+0.1, test_points)
 
 # Store standard deviations of the training data and targets.
 stdx = np.std(train)
 stdy = np.std(target)
-tstd = np.std(target, axis=1)
+tstd = 2.
 
 # Standardize the training and test data on the same scale.
 std = standardize(train_matrix=np.reshape(train, (np.shape(train)[1], 1)),
@@ -57,7 +58,7 @@ train_targets = target_standardize(target[0])
 # Model example 1 - biased model.
 # Define prediction parameters.
 sdt1 = np.sqrt(1e-1)
-w1 = 1.0  # Too large widths results in a biased model.
+w1 = 3.0  # Too large widths results in a biased model.
 kdict = {'k1': {'type': 'gaussian', 'width': w1}}
 # Set up the prediction routine.
 gp = GaussianProcess(kernel_dict=kdict, regularization=sdt1**2,
@@ -79,8 +80,8 @@ lower = under_prediction - under_uncertainty * tstd
 
 # Model example 2 - over-fitting.
 # Define prediction parameters
-sdt2 = np.sqrt(1e-5)
-w2 = 0.1  # Too small widths lead to over-fitting.
+sdt2 = np.sqrt(1e-6)
+w2 = 0.03  # Too small widths lead to over-fitting.
 kdict = {'k1': {'type': 'gaussian', 'width': w2}}
 # Set up the prediction routine.
 gp = GaussianProcess(kernel_dict=kdict, regularization=sdt2**2,
@@ -107,6 +108,7 @@ gp = GaussianProcess(kernel_dict=kdict, regularization=sdt1**2,
                      train_fp=std['train'],
                      train_target=train_targets['target'],
                      optimize_hyperparameters=True)
+print('Optimized kernel:', gp.kernel_dict)
 # Do the optimized predictions.
 optimized = gp.predict(test_fp=std['test'], uncertainty=True)
 # Scale predictions back to the original scale.
@@ -122,7 +124,7 @@ opt_lower = opt_prediction - opt_uncertainty * tstd
 
 # Plotting.
 # Store the known underlying function for plotting.
-linex = np.linspace(np.min(train), np.max(train), test_points)
+linex = np.linspace(np.min(test), np.max(test), test_points)
 liney = afunc(linex)
 
 fig = plt.figure(figsize=(15, 8))
