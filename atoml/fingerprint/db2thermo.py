@@ -20,10 +20,10 @@ from ase.geometry import get_layers
 addsyms = ['H', 'C', 'O', 'N']
 
 
-def metal_index(atoms):
-    metal_atoms = [a.index for a in atoms if a.symbol not in
-                   addsyms]
-    return metal_atoms
+def slab_index(atoms):
+    slab_atoms = [a.index for a in atoms if a.index not in
+                  atoms.info['ads_atoms']]
+    return slab_atoms
 
 
 def adds_index(atoms):
@@ -43,7 +43,7 @@ def layers_info(atoms):
                       if il[a.index] < layers-2]
         top_atoms = [a.index for a in atoms
                      if il[a.index] > layers-3 and
-                     a.index not in atoms.info['add_atoms']]
+                     a.index not in atoms.info['ads_atoms']]
     assert len(bulk_atoms) > 0 and len(top_atoms) > 0
     return bulk_atoms, top_atoms
 
@@ -51,7 +51,7 @@ def layers_info(atoms):
 def info2primary_index(atoms, rtol=1.3):
     liste = []
     surf_atoms = atoms.info['surf_atoms']
-    add_atoms = atoms.info['add_atoms']
+    add_atoms = atoms.info['ads_atoms']
     for m in surf_atoms:
         dM = covalent_radii[atoms.numbers[m]]
         for a in add_atoms:
@@ -226,8 +226,8 @@ def db2surf_info(fname, id_dict, formation_energies=None):
         atoms = c.get_atoms(dbid)
         atoms.info['key_value_pairs'] = d.key_value_pairs
         atoms.info['dbid'] = dbid
-        atoms.info['add_atoms'] = adds_index(atoms)
-        atoms.info['surf_atoms'] = metal_index(atoms)  # Modify if O/C/Nitrides
+        atoms.info['ads_atoms'] = adds_index(atoms)  # Modify if O/C/Nitrides
+        atoms.info['surf_atoms'] = slab_index(atoms)
         i_add1, i_surf1, Z_add1, Z_surf1, i_surfnn = info2primary_index(atoms)
         atoms.info['i_add1'] = i_add1
         atoms.info['i_surf1'] = i_surf1
@@ -256,8 +256,8 @@ def db2atoms_info(fname, selection=[]):
         atoms = c.get_atoms(dbid)
         atoms.info['key_value_pairs'] = d.key_value_pairs
         atoms.info['dbid'] = int(d.id)
-        atoms.info['add_atoms'] = adds_index(atoms)
-        atoms.info['surf_atoms'] = metal_index(atoms)  # Modify if O/C/Nitrides
+        atoms.info['ads_atoms'] = adds_index(atoms)  # Modify if O/C/Nitrides
+        atoms.info['surf_atoms'] = slab_index(atoms)
         i_add1, i_surf1, Z_add1, Z_surf1, i_surfnn = info2primary_index(atoms)
         atoms.info['i_add1'] = i_add1
         atoms.info['i_surf1'] = i_surf1
