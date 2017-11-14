@@ -13,13 +13,8 @@ from atoml.preprocess.scale_target import target_standardize
 from atoml.regression import GaussianProcess
 from atoml.utilities.cost_function import get_error
 
-# Standardization
-def Standardize(inputarray):
-    mean = np.mean(inputarray)
-    std = np.std(inputarray)
-    standardizedarray = (inputarray-mean)/std
-    return standardizedarray, mean, std
 
+# The user can choose if the features and/or the targets are standardize.
 StandardizeFeatures = True
 StandardizeTargets = True
 
@@ -59,18 +54,23 @@ org_train = train.copy()
 org_test = test.copy()
 
 if StandardizeFeatures:
-    train, train_mean, train_std = Standardize(train)
+    feature_std = standardize(train_matrix=train,test_matrix=test)
+    train, train_mean, train_std = feature_std['train'], feature_std['mean'], \
+    feature_std['std']
     test = (test -train_mean)/train_std
+
 else:
     train_mean, train_std = 0.0, 1.0
 if StandardizeTargets:
-    target, target_mean, target_std = Standardize(target)
+    target_std = standardize(train_matrix=target,test_matrix=train)
+    target, target_mean, target_std = target_std['train'], target_std[
+    'mean'], target_std['std']
 else:
     target_mean, target_std = 0.0, 1.0
 
 # Gradients
 
-if eval_gradients == True:
+if eval_gradients:
     gradients = []
     for i in org_train:
         gradients.append(afunc(i)[1])
@@ -98,27 +98,23 @@ pred = gp.predict(test_fp=test, uncertainty=True)
 
 # Scale predictions back to the original scale.
 
-# opt_prediction = np.array(pred['prediction']) * train_targets['std'] + \
-#     train_targets['mean']
-# opt_uncertainty = np.array(pred['uncertainty']) * train_targets['std']
 prediction = np.array(pred['prediction'][:,0])
 uncertainty = np.array(pred['uncertainty'])
 
-
-# Get average errors.
-error = get_error(prediction, afunc(test)[0])
-print('Gaussian linear regression prediction:', error['absolute_average'])
 # Get confidence interval on predictions.
 upper = prediction + uncertainty
 lower = prediction - uncertainty
 
-
-# Unstandardization:
+# Unstandardization.
 if StandardizeTargets:
     uncertainty = (uncertainty*target_std) + target_mean
     prediction = (prediction*target_std) + target_mean
     upper = (upper*target_std) + target_mean
     lower = (lower*target_std) + target_mean
+
+# Get average errors.
+error = get_error(prediction, afunc(test)[0])
+print('Gaussian linear regression prediction:', error['absolute_average'])
 
 # Plotting.
 # Store the known underlying function for plotting.
@@ -137,10 +133,8 @@ ax = fig.add_subplot(111)
 ax.plot(linex[0], liney[0], '-', lw=1, color='black')
 ax.plot(org_train, org_target, 'o', alpha=0.2, color='black')
 ax.plot(org_test, prediction, 'g-', lw=1, alpha=0.4)
-ax.fill_between(org_test[:,0], upper, lower,
-interpolate=True, \
-color='green',
-                alpha=0.2)
+ax.fill_between(org_test[:,0], upper, lower, interpolate=True,
+color='green', alpha=0.2)
 plt.title('GP. \n w: {0:.3f}, r: {1:.3f}'.format(
     gp.kernel_dict['k1']['width'][0], np.sqrt(gp.regularization)))
 plt.xlabel('Descriptor')
