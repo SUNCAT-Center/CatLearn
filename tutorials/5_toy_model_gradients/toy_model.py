@@ -14,15 +14,14 @@ from atoml.regression import GaussianProcess
 from atoml.utilities.cost_function import get_error
 
 
-# The user can choose if the features and/or the targets are standardize.
+# The user can choose whether the features and/or the targets are standardized.
 StandardizeFeatures = True
 StandardizeTargets = True
 
 # First derivative observations can be included.
 eval_gradients = True
 
-
-# A known underlying function in one dimension and it's first derivative.
+# A known underlying function in one dimension [y] and first derivative [dy].
 def afunc(x):
     """ Function [y] and first derivative [dy] """
     y =  np.sin(x)*np.cos(x)*np.exp(2*x)*x**-2*np.exp(-x)*np.cos(x)*np.sin(x)
@@ -34,10 +33,8 @@ def afunc(x):
 # Setting up data.
 
 # A number of training points in x.
-train = np.array([[1.0, 2.0, 4.0, 4.8, 5.0, 5.5, 5.8, 6.0]])
-train = np.reshape(train, (np.shape(train)[1], 1))
-
 # Each element in the list train can be referred to as a fingerprint.
+train = np.array([[1.0], [2.0], [4.0], [4.8], [5.0], [5.5], [5.8], [6.0]])
 
 # Call the underlying function to produce the target values.
 target = np.array(afunc(train)[0])
@@ -45,13 +42,15 @@ target = np.array(afunc(train)[0])
 # Generate test datapoints x.
 test_points = 200
 test = np.linspace(0.1,6.0,test_points)
-test =np.reshape(test, (test_points, 1))
+test = np.reshape(test, (test_points, 1))
 
-# Standardization of the train, test and train_test (target) data.
+# Make a copy of the original features and targets.
 
 org_target = target.copy()
 org_train = train.copy()
 org_test = test.copy()
+
+# Standardization of the train, test and target data.
 
 if StandardizeFeatures:
     feature_std = standardize(train_matrix=train,test_matrix=test)
@@ -62,13 +61,13 @@ if StandardizeFeatures:
 else:
     train_mean, train_std = 0.0, 1.0
 if StandardizeTargets:
-    target_std = standardize(train_matrix=target,test_matrix=train)
-    target, target_mean, target_std = target_std['train'], target_std[
+    target_std = target_standardize(target)
+    target, target_mean, target_std = target_std['target'], target_std[
     'mean'], target_std['std']
 else:
     target_mean, target_std = 0.0, 1.0
 
-# Gradients
+# Call the underlying function to produce the gradients of the target values.
 
 if eval_gradients:
     gradients = []
@@ -79,33 +78,35 @@ if eval_gradients:
     y_tilde = np.append(target, gradients)
     target = np.reshape(y_tilde,(np.shape(y_tilde)[0],1))
 
-# Model example - Gaussian Process
+# Gaussian Process.
 
 # Define prediction parameters.
 sdt1 = 0.01
 w1 = 1.0  # Too large widths results in a biased model.
 
 # Set up the prediction routine and optimize hyperparameters.
-kdict = {'k1': {'type': 'gaussian', 'width': [w1], 'scaling': 1.0}}
+kdict = {'k1': {'type': 'gaussian', 'width': [w1], 'scaling': 1.0}, 'k2': {
+'type': 'linear', 'scaling': 1.0}}
+
 gp = GaussianProcess(kernel_dict=kdict, regularization=sdt1**2,
                      train_fp=train,
                      train_target=target,
                      optimize_hyperparameters=True,
                      eval_gradients=eval_gradients)
 print('Optimized kernel:', gp.kernel_dict)
+
 # Do the optimized predictions.
 pred = gp.predict(test_fp=test, uncertainty=True)
-
-# Scale predictions back to the original scale.
-
 prediction = np.array(pred['prediction'][:,0])
+
+# Calculate the uncertainty of the predictions.
 uncertainty = np.array(pred['uncertainty'])
 
 # Get confidence interval on predictions.
 upper = prediction + uncertainty
 lower = prediction - uncertainty
 
-# Unstandardization.
+# Scale predictions back to the original scale.
 if StandardizeTargets:
     uncertainty = (uncertainty*target_std) + target_mean
     prediction = (prediction*target_std) + target_mean
@@ -117,6 +118,7 @@ error = get_error(prediction, afunc(test)[0])
 print('Gaussian linear regression prediction:', error['absolute_average'])
 
 # Plotting.
+
 # Store the known underlying function for plotting.
 
 linex = np.linspace(0.1,6.0,test_points)
@@ -135,8 +137,8 @@ ax.plot(org_train, org_target, 'o', alpha=0.2, color='black')
 ax.plot(org_test, prediction, 'g-', lw=1, alpha=0.4)
 ax.fill_between(org_test[:,0], upper, lower, interpolate=True,
 color='green', alpha=0.2)
-plt.title('GP. \n w: {0:.3f}, r: {1:.3f}'.format(
-    gp.kernel_dict['k1']['width'][0], np.sqrt(gp.regularization)))
+# plt.title('GP. \n w: {0:.3f}, r: {1:.3f}'.format(
+#     gp.kernel_dict['k1']['width'][0], np.sqrt(gp.regularization)))
 plt.xlabel('Descriptor')
 plt.ylabel('Response')
 plt.axis('tight')

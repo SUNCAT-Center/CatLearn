@@ -1,10 +1,7 @@
 """ Contains kernel functions and gradients of kernels. """
 import numpy as np
 from scipy.spatial import distance
-from atoml.regression.gpfunctions import gaussian_gradients_kernel as \
-gradientskernels
-from atoml.regression.gpfunctions import linear_gradients_kernel as \
-linearkernels
+from atoml.regression.gpfunctions.gkernels import gkernels as gkernels
 
 
 def kdict2list(kdict, N_D=None):
@@ -207,23 +204,24 @@ def gaussian_kernel(theta, log_scale, m1, m2=None, eval_gradients=False):
         A list of the training fingerprint vectors.
     """
     kwidth = theta
+    kernel_type = 'squared_exponential'
 
     if log_scale:
         kwidth = np.exp(kwidth)
 
     if eval_gradients == False:
         if m2 is None:
-            k = gradientskernels.bigk(kwidth, m1)
+            k = gkernels.bigk(kernel_type,kwidth, m1)
             return k
         else:
-            k = gradientskernels.k_little(kwidth,m1,m2)
+            k = gkernels.k_little(kernel_type,kwidth,m1,m2)
             return k
     if eval_gradients == True:
         if m2 is None:
-            k = gradientskernels.bigk_tilde(kwidth, m1)
+            k = gkernels.bigk_tilde(kernel_type,kwidth, m1)
             return k
         else:
-            k = gradientskernels.k_tilde(kwidth, m1, m2)
+            k = gkernels.k_tilde(kernel_type,kwidth, m1, m2)
             return k
 
 
@@ -330,23 +328,24 @@ def linear_kernel(theta, log_scale, m1, m2=None, eval_gradients=False):
         A list of the training fingerprint vectors.
     """
     kwidth = theta
+    kernel_type = 'linear'
 
     if log_scale:
         kwidth = np.exp(kwidth)
 
     if eval_gradients == False:
         if m2 is None:
-            k = linearkernels.bigk(kwidth, m1)
+            k = gkernels.bigk(kernel_type,kwidth, m1)
             return k
         else:
-            k = linearkernels.k_little(kwidth,m1,m2)
+            k = gkernels.k_little(kernel_type,kwidth,m1,m2)
             return k
     if eval_gradients == True:
         if m2 is None:
-            k = linearkernels.bigk_tilde(kwidth, m1)
+            k = gkernels.bigk_tilde(kernel_type,kwidth, m1)
             return k
         else:
-            k = linearkernels.k_tilde(kwidth,m1,m2)
+            k = gkernels.k_tilde(kernel_type,kwidth, m1, m2)
             return k
  
 
@@ -408,3 +407,4 @@ def laplacian_kernel(theta, log_scale, m1, m2=None):
     else:
         k = distance.cdist(m1 / theta, m2 / theta, metric='cityblock')
         return np.exp(-k)
+
