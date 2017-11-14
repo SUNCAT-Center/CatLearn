@@ -29,7 +29,7 @@ def get_uncertainty(kernel_dict, test_fp, reg, ktb, cinv, log_scale):
     """
     # Generate the test covariance matrix.
     kxx = get_covariance(kernel_dict=kernel_dict,
-                         matrix1=test_fp, log_scale=log_scale)
+                         matrix1=test_fp, log_scale=log_scale, eval_gradients=False)
     # Calculate the prediction variance for test data.
     kb = np.transpose(ktb)
     u = functools.reduce(np.dot, (functools.reduce(np.dot, (ktb, cinv)), kb))

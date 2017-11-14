@@ -1,6 +1,10 @@
 """ Contains kernel functions and gradients of kernels. """
 import numpy as np
 from scipy.spatial import distance
+from atoml.regression.gpfunctions import gaussian_gradients_kernel as \
+gradientskernels
+from atoml.regression.gpfunctions import linear_gradients_kernel as \
+linearkernels
 
 
 def kdict2list(kdict, N_D=None):
@@ -186,7 +190,7 @@ def constant_kernel(theta, log_scale, m1, m2=None):
     return np.ones([len(m1), len(m2)]) * theta
 
 
-def gaussian_kernel(theta, log_scale, m1, m2=None):
+def gaussian_kernel(theta, log_scale, m1, m2=None, eval_gradients=False):
     """Return covariance between data m1 & m2 with a gaussian kernel.
 
     Parameters
@@ -195,25 +199,32 @@ def gaussian_kernel(theta, log_scale, m1, m2=None):
         A list of widths for each feature.
     log_scale : boolean
         Scaling hyperparameters in kernel can be useful for optimization.
+    eval_gradients : boolean 
+        Analytical gradients of the training features can be included.
     m1 : list
         A list of the training fingerprint vectors.
     m2 : list
         A list of the training fingerprint vectors.
     """
     kwidth = theta
+
     if log_scale:
         kwidth = np.exp(kwidth)
 
-    if m2 is None:
-        k = distance.pdist(m1 / kwidth, metric='sqeuclidean')
-        k = distance.squareform(np.exp(-.5 * k))
-        np.fill_diagonal(k, 1)
-        return k
-
-    else:
-        k = distance.cdist(m1 / kwidth, m2 / kwidth,
-                           metric='sqeuclidean')
-        return np.exp(-.5 * k)
+    if eval_gradients == False:
+        if m2 is None:
+            k = gradientskernels.bigk(kwidth, m1)
+            return k
+        else:
+            k = gradientskernels.k_little(kwidth,m1,m2)
+            return k
+    if eval_gradients == True:
+        if m2 is None:
+            k = gradientskernels.bigk_tilde(kwidth, m1)
+            return k
+        else:
+            k = gradientskernels.k_tilde(kwidth, m1, m2)
+            return k
 
 
 def sqe_kernel(theta, log_scale, m1, m2=None):
@@ -302,7 +313,7 @@ def AA_kernel(theta, log_scale, m1, m2=None):
                            (q ** np.sqrt((u - v) ** 2))).sum())
 
 
-def linear_kernel(theta, log_scale, m1, m2=None):
+def linear_kernel(theta, log_scale, m1, m2=None, eval_gradients=False):
     """Return covariance between data m1 & m2 with a linear kernel.
 
     Parameters
@@ -311,15 +322,33 @@ def linear_kernel(theta, log_scale, m1, m2=None):
         A list containing constant offset.
     log_scale : boolean
         Scaling hyperparameters in kernel can be useful for optimization.
+    eval_gradients : boolean 
+        Analytical gradients of the training features can be included.
     m1 : list
         A list of the training fingerprint vectors.
     m2 : list or None
         A list of the training fingerprint vectors.
     """
-    if m2 is None:
-        m2 = m1
+    kwidth = theta
 
-    return np.inner(m1, m2)
+    if log_scale:
+        kwidth = np.exp(kwidth)
+
+    if eval_gradients == False:
+        if m2 is None:
+            k = linearkernels.bigk(kwidth, m1)
+            return k
+        else:
+            k = linearkernels.k_little(kwidth,m1,m2)
+            return k
+    if eval_gradients == True:
+        if m2 is None:
+            k = linearkernels.bigk_tilde(kwidth, m1)
+            return k
+        else:
+            k = linearkernels.k_tilde(kwidth,m1,m2)
+            return k
+ 
 
 
 def quadratic_kernel(theta, log_scale, m1, m2=None):
