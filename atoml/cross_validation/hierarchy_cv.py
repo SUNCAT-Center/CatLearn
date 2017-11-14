@@ -256,29 +256,35 @@ class Hierarchy(object):
 
         """
         result = []
+        size = []
         for i in reversed(index_split):
             j, k = i.split('_')
-            train_data = self._compile_split(index_split[j + '_' + k])
+            train_data = self._compile_split(index_split[i])
             train_features = np.array(train_data[:, 1:-1], np.float64)
             train_targets = np.array(train_data[:, -1:], np.float64)
             d1, d2 = np.shape(train_targets)
             train_targets = train_targets.reshape(d2, d1)[0]
 
-            if int(k) % 2 == 1:
-                test_data = self._compile_split(index_split[j + '_' +
-                                                            str(int(k)+1)])
-            else:
-                test_data = self._compile_split(index_split[j + '_' +
-                                                            str(int(k)-1)])
-            test_features = np.array(test_data[:, 1:-1], np.float64)
-            test_targets = np.array(test_data[:, -1:], np.float64)
-            d1, d2 = np.shape(test_targets)
-            test_targets = test_targets.reshape(d2, d1)[0]
+            for m in reversed(index_split):
+                n, o = m.split('_')
+                if n == j:
+                    if k != o:
+                        test_data = self._compile_split(
+                            index_split[m])
 
-            pred = predict(train_features=train_features,
-                           train_targets=train_targets,
-                           test_features=test_features,
-                           test_targets=test_targets, **kwargs)
-            result.append(pred['result'])
+                        test_features = np.array(test_data[:, 1:-1],
+                                                 np.float64)
+                        test_targets = np.array(test_data[:, -1:], np.float64)
+                        d1, d2 = np.shape(test_targets)
+                        test_targets = test_targets.reshape(d2, d1)[0]
 
-        return result
+                        pred = predict(train_features=train_features,
+                                       train_targets=train_targets,
+                                       test_features=test_features,
+                                       test_targets=test_targets, **kwargs)
+
+                        if 'size' in pred:
+                            size.append(pred['size'])
+                        result.append(pred['result'])
+
+        return result, size
