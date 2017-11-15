@@ -181,7 +181,7 @@ def list2kdict(hyperparameters, kernel_dict):
 
 def constant_kernel(theta, log_scale, m1, m2=None, eval_gradients=False):
     kernel_type = 'constant'
-    kwidth = theta
+
     if log_scale:
         theta = np.exp(theta)
 
@@ -191,10 +191,10 @@ def constant_kernel(theta, log_scale, m1, m2=None, eval_gradients=False):
         return np.ones([len(m1), len(m2)]) * theta
     if eval_gradients == True:
         if m2 is None:
-            k = gkernels.bigk_tilde(kernel_type,kwidth, m1)
+            k = gkernels.bigk_tilde(kernel_type,theta, m1)
             return k
         else:
-            k = gkernels.k_tilde(kernel_type,kwidth, m1, m2)
+            k = gkernels.k_tilde(kernel_type,theta, m1, m2)
             return k
 
 
@@ -207,7 +207,7 @@ def gaussian_kernel(theta, log_scale, m1, m2=None, eval_gradients=False):
         A list of widths for each feature.
     log_scale : boolean
         Scaling hyperparameters in kernel can be useful for optimization.
-    eval_gradients : boolean 
+    eval_gradients : boolean
         Analytical gradients of the training features can be included.
     m1 : list
         A list of the training fingerprint vectors.
@@ -222,11 +222,14 @@ def gaussian_kernel(theta, log_scale, m1, m2=None, eval_gradients=False):
 
     if eval_gradients == False:
         if m2 is None:
-            k = gkernels.bigk(kernel_type,kwidth, m1)
+            k = distance.pdist(m1 / kwidth, metric='sqeuclidean')
+            k = distance.squareform(np.exp(-.5 * k))
+            np.fill_diagonal(k, 1)
             return k
         else:
-            k = gkernels.k_little(kernel_type,kwidth,m1,m2)
-            return k
+            k = distance.cdist(m1 / kwidth, m2 / kwidth, metric='sqeuclidean')
+            return np.exp(-.5 * k)
+
     if eval_gradients == True:
         if m2 is None:
             k = gkernels.bigk_tilde(kernel_type,kwidth, m1)
@@ -331,7 +334,7 @@ def linear_kernel(theta, log_scale, m1, m2=None, eval_gradients=False):
         A list containing constant offset.
     log_scale : boolean
         Scaling hyperparameters in kernel can be useful for optimization.
-    eval_gradients : boolean 
+    eval_gradients : boolean
         Analytical gradients of the training features can be included.
     m1 : list
         A list of the training fingerprint vectors.
@@ -346,11 +349,9 @@ def linear_kernel(theta, log_scale, m1, m2=None, eval_gradients=False):
 
     if eval_gradients == False:
         if m2 is None:
-            k = gkernels.bigk(kernel_type,kwidth, m1)
-            return k
-        else:
-            k = gkernels.k_little(kernel_type,kwidth,m1,m2)
-            return k
+            m2 = m1
+        return np.inner(m1, m2)
+
     if eval_gradients == True:
         if m2 is None:
             k = gkernels.bigk_tilde(kernel_type,kwidth, m1)
@@ -358,7 +359,7 @@ def linear_kernel(theta, log_scale, m1, m2=None, eval_gradients=False):
         else:
             k = gkernels.k_tilde(kernel_type,kwidth, m1, m2)
             return k
- 
+
 
 
 def quadratic_kernel(theta, log_scale, m1, m2=None):
@@ -418,4 +419,5 @@ def laplacian_kernel(theta, log_scale, m1, m2=None):
     else:
         k = distance.cdist(m1 / theta, m2 / theta, metric='cityblock')
         return np.exp(-k)
+
 
