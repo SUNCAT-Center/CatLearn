@@ -19,7 +19,8 @@ class GaussianProcess(object):
 
     def __init__(self, train_fp, train_target, kernel_dict,
                  regularization=None, regularization_bounds=(1e-6, None),
-                 optimize_hyperparameters=False, scale_optimizer=False,eval_gradients=False):
+                 optimize_hyperparameters=False, scale_optimizer=False,
+                 eval_gradients=False, algomin = 'L-BFGS-B'):
         """Gaussian processes setup.
 
         Parameters
@@ -55,6 +56,7 @@ class GaussianProcess(object):
         self.regularization = regularization
         self.eval_gradients = eval_gradients
         self.scale_optimizer = scale_optimizer
+        self.algomin = algomin
 
         self._prepare_kernels(kernel_dict,
                               regularization_bounds=regularization_bounds)
@@ -63,7 +65,7 @@ class GaussianProcess(object):
                          scale_optimizer=scale_optimizer)
 
         if optimize_hyperparameters:
-            self.optimize_hyperparameters()
+            self.optimize_hyperparameters(algomin=algomin)
 
     def predict(self, test_fp, test_target=None, uncertainty=False, basis=None,
                 get_validation_error=False, get_training_error=False,
@@ -197,7 +199,7 @@ class GaussianProcess(object):
         # Invert the covariance matrix.
         self.cinv = np.linalg.inv(cvm)
 
-    def optimize_hyperparameters(self):
+    def optimize_hyperparameters(self,algomin):
         """Optimize hyperparameters of the Gaussian Process.
 
         This function assumes that the descriptors in the feature set remain
@@ -212,11 +214,10 @@ class GaussianProcess(object):
         # Define fixed arguments for log_marginal_likelihood
         args = (np.array(self.train_fp), np.array(self.train_target),
                 self.kernel_dict, self.scale_optimizer, self.eval_gradients)
-
         # Optimize
         self.theta_opt = minimize(log_marginal_likelihood, theta,
                                   args=args,
-                                  # method='Nelder-Mead',
+                                  method=algomin,
                                   # options={'disp': True},
                                   bounds=self.bounds)
 
