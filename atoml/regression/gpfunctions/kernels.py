@@ -179,12 +179,23 @@ def list2kdict(hyperparameters, kernel_dict):
     return kernel_dict
 
 
-def constant_kernel(theta, log_scale, m1, m2=None):
-    if m2 is None:
-        m2 = m1
+def constant_kernel(theta, log_scale, m1, m2=None, eval_gradients=False):
+    kernel_type = 'constant'
+    kwidth = theta
     if log_scale:
         theta = np.exp(theta)
-    return np.ones([len(m1), len(m2)]) * theta
+
+    if eval_gradients == False:
+        if m2 is None:
+            m2 = m1
+        return np.ones([len(m1), len(m2)]) * theta
+    if eval_gradients == True:
+        if m2 is None:
+            k = gkernels.bigk_tilde(kernel_type,kwidth, m1)
+            return k
+        else:
+            k = gkernels.k_tilde(kernel_type,kwidth, m1, m2)
+            return k
 
 
 def gaussian_kernel(theta, log_scale, m1, m2=None, eval_gradients=False):

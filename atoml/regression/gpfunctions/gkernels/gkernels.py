@@ -4,6 +4,7 @@
 import numpy as np
 from atoml.regression.gpfunctions.gkernels import squared_exponential_kernel as squared_exponential
 from atoml.regression.gpfunctions.gkernels import linear_kernel as linear
+from atoml.regression.gpfunctions.gkernels import constant_kernel as constant
 
 # To build k_little:
 def k_little(kernel_type, l,train,test):
