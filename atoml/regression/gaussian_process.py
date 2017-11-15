@@ -3,7 +3,7 @@ from __future__ import absolute_import
 from __future__ import division
 
 import numpy as np
-from scipy.optimize import minimize
+from scipy.optimize import minimize, basinhopping
 from collections import defaultdict
 import functools
 
@@ -20,7 +20,7 @@ class GaussianProcess(object):
     def __init__(self, train_fp, train_target, kernel_dict,
                  regularization=None, regularization_bounds=(1e-6, None),
                  optimize_hyperparameters=False, scale_optimizer=False,
-                 eval_gradients=False, algomin = 'L-BFGS-B'):
+                 eval_gradients=False, algomin='L-BFGS-B', global_opt=False):
         """Gaussian processes setup.
 
         Parameters
@@ -57,6 +57,7 @@ class GaussianProcess(object):
         self.eval_gradients = eval_gradients
         self.scale_optimizer = scale_optimizer
         self.algomin = algomin
+        self.global_opt = global_opt
 
         self._prepare_kernels(kernel_dict,
                               regularization_bounds=regularization_bounds)
@@ -65,7 +66,7 @@ class GaussianProcess(object):
                          scale_optimizer=scale_optimizer)
 
         if optimize_hyperparameters:
-            self.optimize_hyperparameters(algomin=algomin)
+            self.optimize_hyperparameters(algomin=algomin, global_opt=global_opt)
 
     def predict(self, test_fp, test_target=None, uncertainty=False, basis=None,
                 get_validation_error=False, get_training_error=False,
@@ -199,7 +200,7 @@ class GaussianProcess(object):
         # Invert the covariance matrix.
         self.cinv = np.linalg.inv(cvm)
 
-    def optimize_hyperparameters(self,algomin):
+    def optimize_hyperparameters(self,algomin,global_opt):
         """Optimize hyperparameters of the Gaussian Process.
 
         This function assumes that the descriptors in the feature set remain
@@ -215,11 +216,17 @@ class GaussianProcess(object):
         args = (np.array(self.train_fp), np.array(self.train_target),
                 self.kernel_dict, self.scale_optimizer, self.eval_gradients)
         # Optimize
-        self.theta_opt = minimize(log_marginal_likelihood, theta,
-                                  args=args,
-                                  method=algomin,
-                                  # options={'disp': True},
-                                  bounds=self.bounds)
+        if global_opt == False:
+            self.theta_opt = minimize(log_marginal_likelihood, theta,
+                                      args=args,
+                                      method=algomin,
+                                      # options={'disp': True},
+                                      bounds=self.bounds)
+        if global_opt == True:
+            minimizer_kwargs={'method': algomin,'args':args,'bounds':
+            self.bounds}
+            self.theta_opt = basinhopping(log_marginal_likelihood, theta,
+            minimizer_kwargs=minimizer_kwargs)
 
         # Update kernel_dict and regularization with optimized values.
         self.kernel_dict = list2kdict(self.theta_opt['x'][:-1],

@@ -19,7 +19,7 @@ StandardizeFeatures = True
 StandardizeTargets = True
 
 # First derivative observations can be included.
-eval_gradients = True
+eval_gradients = False
 
 # A known underlying function in one dimension [y] and first derivative [dy].
 def afunc(x):
@@ -85,9 +85,11 @@ sdt1 = 0.01
 w1 = 1.0  # Too large widths results in a biased model.
 
 # Set up the prediction routine and optimize hyperparameters.
-# kdict = {'k1': {'type': 'gaussian', 'width': [w1], 'scaling': 1.0}}
+kdict = {'k1': {'type': 'gaussian', 'width': [w1], 'scaling': 1.0}}
+
 # kdict = {'k1': {'type': 'gaussian', 'width': [w1], 'scaling': 1.0}, 'k2': {
 # 'type': 'linear', 'scaling': 1.0}}
+
 # kdict = {'k1': {'type': 'gaussian', 'width': [w1], 'scaling': 1.0}, 'k2': {
 # 'type': 'constant','const': 1.0, 'scaling': 1.0}}
 
@@ -95,7 +97,8 @@ gp = GaussianProcess(kernel_dict=kdict, regularization=sdt1**2,
                      train_fp=train,
                      train_target=target,
                      optimize_hyperparameters=True,
-                     eval_gradients=eval_gradients)
+                     eval_gradients=eval_gradients, algomin='L-BFGS-B',
+                     global_opt=True)
 print('Optimized kernel:', gp.kernel_dict)
 
 # Do the optimized predictions.

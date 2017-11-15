@@ -269,7 +269,7 @@ def sqe_kernel(theta, log_scale, m1, m2=None, eval_gradients=False):
     if eval_gradients == True:
         msg = 'Evaluation of the gradients for this kernel is not yet ' \
         'implemented'
-        print(msg), exit()
+        raise NotImplementedError(msg)
 
 def scaled_sqe_kernel(theta, log_scale, m1, m2=None, eval_gradients=False):
     """Return covariance between data m1 & m2 with a gaussian kernel.
@@ -301,7 +301,7 @@ def scaled_sqe_kernel(theta, log_scale, m1, m2=None, eval_gradients=False):
     if eval_gradients == True:
         msg = 'Evaluation of the gradients for this kernel is not yet ' \
         'implemented'
-        print(msg), exit()
+        raise NotImplementedError(msg)
 
 
 def AA_kernel(theta, log_scale, m1, m2=None, eval_gradients=False):
@@ -336,7 +336,7 @@ def AA_kernel(theta, log_scale, m1, m2=None, eval_gradients=False):
     if eval_gradients == True:
         msg = 'Evaluation of the gradients for this kernel is not yet ' \
         'implemented'
-        print(msg), exit()
+        raise NotImplementedError(msg)
 
 
 def linear_kernel(theta, log_scale, m1, m2=None, eval_gradients=False):
@@ -410,7 +410,7 @@ def quadratic_kernel(theta, log_scale, m1, m2=None, eval_gradients=False):
     if eval_gradients == True:
         msg = 'Evaluation of the gradients for this kernel is not yet ' \
         'implemented'
-        print(msg), exit()
+        raise NotImplementedError(msg)
 
 
 def laplacian_kernel(theta, log_scale, m1, m2=None, eval_gradients=False):
@@ -446,5 +446,5 @@ def laplacian_kernel(theta, log_scale, m1, m2=None, eval_gradients=False):
     if eval_gradients == True:
         msg = 'Evaluation of the gradients for this kernel is not yet ' \
         'implemented'
-        print(msg), exit()
+        raise NotImplementedError(msg)
 
