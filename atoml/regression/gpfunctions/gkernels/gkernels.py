@@ -8,13 +8,7 @@ from atoml.regression.gpfunctions.gkernels import constant_kernel as constant
 
 # To build k_little:
 def k_little(kernel_type, l,train,test):
-    l = np.array(l)
-    size1 = np.shape(train)
-    size2 = np.shape(test)
-    k_little = np.zeros((size1[0],size2[0]))
-    for i in range(len(train)):
-        for j in range(len(test)):
-            k_little[i][j] = eval(str(kernel_type)).kernel_k(l,test[j],train[i])
+    k_little = eval(str(kernel_type)).kernel_klittle(l,test,train)
     return k_little
 
 # To build kgd_tilde:
@@ -39,12 +33,7 @@ def kgd_tilde(kernel_type, l, train, test):
 
 # To build big_k:
 def bigk(kernel_type, l, train):
-    l = np.array(l)
-    size = np.shape(train)
-    bigk = np.zeros((size[0],size[0]))
-    for i in range(len(train)):
-        for j in range(len(train)):
-            bigk[i][j] = eval(str(kernel_type)).kernel_k(l,train[i],train[j])
+    bigk = eval(str(kernel_type)).kernel_bigk(l,train)
     return bigk
 
 

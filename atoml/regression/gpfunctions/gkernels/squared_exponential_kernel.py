@@ -2,6 +2,7 @@
 # by @jagarridotorres (jagt@stanford.edu)
 
 import numpy as np
+from scipy.spatial import distance
 
 # Squared exponential gaussian kernel:
 def kernel_k(l, xm, xn):
@@ -23,3 +24,15 @@ def kernel_kdd(l, xm, xn):
     kdd = (I_m*l**(-2) - np.outer(l**(-2)*d,(l**(-2)*d).T))*np.exp(-np.linalg.norm(
     d/l)**2/2)
     return kdd
+
+
+def kernel_klittle(l, test, train):
+    k = distance.cdist(train / l, test / l, metric='sqeuclidean')
+    return np.exp(-.5 * k)
+
+
+def kernel_bigk(l, train):
+    k = distance.pdist(train / l, metric='sqeuclidean')
+    k = distance.squareform(np.exp(-.5 * k))
+    np.fill_diagonal(k, 1)
+    return k

@@ -1,8 +1,8 @@
 """ This tutorial is intended to help you get familiar with using AtoML to set
 up a model and do predictions.
 
-First we set up a known underlying function in one dimension. Then we use it to
-generate some training data, adding a bit of random noise.
+First we set up a known underlying function in one dimension (including
+first derivative). Then, we pick some values to train.
 Finally we will use AtoML to make predictions on some unseen fingerprint and
 benchmark those predictions against the known underlying function.
 """
@@ -40,14 +40,14 @@ train = np.array([[1.0], [2.0], [4.0], [4.8], [5.0], [5.5], [5.8], [6.0]])
 target = np.array(afunc(train)[0])
 
 # Generate test datapoints x.
-test_points = 200
+test_points = 100
 test = np.linspace(0.1,6.0,test_points)
 test = np.reshape(test, (test_points, 1))
 
 # Make a copy of the original features and targets.
 
-org_target = target.copy()
 org_train = train.copy()
+org_target = target.copy()
 org_test = test.copy()
 
 # Standardization of the train, test and target data.
@@ -85,11 +85,11 @@ sdt1 = 0.01
 w1 = 1.0  # Too large widths results in a biased model.
 
 # Set up the prediction routine and optimize hyperparameters.
+# kdict = {'k1': {'type': 'gaussian', 'width': [w1], 'scaling': 1.0}}
 # kdict = {'k1': {'type': 'gaussian', 'width': [w1], 'scaling': 1.0}, 'k2': {
 # 'type': 'linear', 'scaling': 1.0}}
-
-kdict = {'k1': {'type': 'gaussian', 'width': [w1], 'scaling': 1.0}, 'k2': {
-'type': 'constant','const': 1.0, 'scaling': 1.0}}
+# kdict = {'k1': {'type': 'gaussian', 'width': [w1], 'scaling': 1.0}, 'k2': {
+# 'type': 'constant','const': 1.0, 'scaling': 1.0}}
 
 gp = GaussianProcess(kernel_dict=kdict, regularization=sdt1**2,
                      train_fp=train,

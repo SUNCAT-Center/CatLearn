@@ -18,3 +18,10 @@ def kernel_kgd(l, xm, xn):
 def kernel_kdd(l, xm, xn):
     kdd = np.ones((len(xm),len(xm)))
     return kdd
+
+def kernel_klittle(l, test, train):
+    return np.inner(train, test)
+
+
+def kernel_bigk(l, train):
+    return np.inner(train, train)
