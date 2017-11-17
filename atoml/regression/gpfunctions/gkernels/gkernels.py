@@ -61,7 +61,6 @@ def big_kdd(kernel_type, l, train):
             if j!=i:
                 big_kdd[j*size[1]:(j+1)*size[1],i*size[1]:(i+1)*size[1]] = \
                 k_dd.T
-    print("big_kdd asym norm",np.linalg.norm(big_kdd-big_kdd.T))
     return big_kdd
 
 
@@ -82,10 +81,11 @@ def k_tilde(kernel_type, l,test,train):
 def bigk_tilde(kernel_type, l,train):
     l = np.array(l)
     bigk_tilde = []
-    bigk_tilde = np.block([[bigk(kernel_type, l,train),big_kgd(kernel_type, l,
-    train)],
-    [np.transpose(
-    big_kgd(kernel_type, l,train)),big_kdd(kernel_type, l,train)]])
+    bigk1 = bigk(kernel_type, l,train)
+    big_kgd1 = big_kgd(kernel_type, l, train)
+    big_kdd1 = big_kdd(kernel_type, l,train)
+    bigk_tilde = np.block([[bigk1,big_kgd1],[np.transpose(big_kgd1),
+    big_kdd1]])
     return bigk_tilde
 
 #########################################
