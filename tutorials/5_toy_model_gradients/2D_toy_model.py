@@ -15,8 +15,8 @@ from atoml.utilities.cost_function import get_error
 
 
 # The user can choose whether the features and/or the targets are standardized.
-StandardizeFeatures = True
-StandardizeTargets = True
+StandardizeFeatures = False
+StandardizeTargets = False
 
 # First derivative observations can be included.
 eval_gradients = True
@@ -111,7 +111,7 @@ if eval_gradients:
 
 # Define prediction parameters.
 sdt1 = 0.01
-w1 = 1.0  # Too large widths results in a biased model.
+w1 = 2.0  # Too large widths results in a biased model.
 
 # Set up the prediction routine and optimize hyperparameters.
 kdict = {'k1': {'type': 'gaussian', 'width': [w1], 'scaling': 1.0}}
@@ -119,7 +119,7 @@ kdict = {'k1': {'type': 'gaussian', 'width': [w1], 'scaling': 1.0}}
 gp = GaussianProcess(kernel_dict=kdict, regularization=sdt1**2,
                      train_fp=train,
                      train_target=target,
-                     optimize_hyperparameters=True,
+                     optimize_hyperparameters=False,
                      eval_gradients=eval_gradients, algomin='L-BFGS-B',
                      global_opt=False)
 print('Optimized kernel:', gp.kernel_dict)

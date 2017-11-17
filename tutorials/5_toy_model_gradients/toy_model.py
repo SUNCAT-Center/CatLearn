@@ -15,8 +15,8 @@ from atoml.utilities.cost_function import get_error
 
 
 # The user can choose whether the features and/or the targets are standardized.
-StandardizeFeatures = False
-StandardizeTargets = False
+StandardizeFeatures = True
+StandardizeTargets = True
 
 # First derivative observations can be included.
 eval_gradients = True

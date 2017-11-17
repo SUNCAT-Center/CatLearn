@@ -43,15 +43,9 @@ def big_kgd(kernel_type, l,train):
     size = np.shape(train)
     big_kgd = np.zeros((size[0],size[0]*size[1]))
     for i in range(len(train)):
-        basis_vect1 = np.zeros(size[0])
-        basis_vect1[i] = 1.0
         for j in range(len(train)):
-            basis_vect2 = np.zeros(size[0])
-            basis_vect2[j] = 1.0
             k_gd = eval(str(kernel_type)).kernel_kgd(l, train[i],train[j])
-            prekron = np.outer(basis_vect1,np.transpose(basis_vect2))
-            kron = np.kron(prekron,k_gd)
-            big_kgd = big_kgd + kron
+            big_kgd[i:i+1,j*size[1]:(j+1)*size[1]] = k_gd
     return big_kgd
 
 
@@ -61,15 +55,13 @@ def big_kdd(kernel_type, l, train):
     size = np.shape(train)
     big_kdd = np.zeros((size[0]*size[1],size[0]*size[1]))
     for i in range(len(train)):
-        basis_vect1 = np.zeros(size[0])
-        basis_vect1[i] = 1.0
-        for j in range(len(train)):
-            basis_vect2 = np.zeros(size[0])
-            basis_vect2[j] = 1.0
+        for j in range(i,len(train)):
             k_dd = eval(str(kernel_type)).kernel_kdd(l, train[i],train[j])
-            prekron = np.outer(basis_vect1,np.transpose(basis_vect2))
-            kron = np.kron(prekron,k_dd)
-            big_kdd = big_kdd + kron
+            big_kdd[i*size[1]:(i+1)*size[1],j*size[1]:(j+1)*size[1]] = k_dd
+            if j!=i:
+                big_kdd[j*size[1]:(j+1)*size[1],i*size[1]:(i+1)*size[1]] = \
+                k_dd.T
+    print("big_kdd asym norm",np.linalg.norm(big_kdd-big_kdd.T))
     return big_kdd
 
 
