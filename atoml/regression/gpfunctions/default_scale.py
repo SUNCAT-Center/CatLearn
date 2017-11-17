@@ -1,11 +1,27 @@
-"""Class to scale everything within regression functions."""
+"""Scale everything within regression functions."""
 import numpy as np
 
 from atoml.preprocess.feature_preprocess import standardize
 from atoml.preprocess.scale_target import target_standardize
 
+
 class ScaleData(object):
+    """Class to perform default scaling in the regression functions.
+
+    Will standardize both the features and the targets. These can then be
+    rescaled before being returned.
+    """
+
     def __init__(self, train_features, train_targets):
+        """Initialize the scaling routine.
+
+        Parameters
+        ----------
+        train_features : array
+            Array of training features.
+        train_targets : list
+            List of the training targets.
+        """
         self.train_features = np.asarray(train_features)
         self.train_targets = np.asarray(train_targets)
 
