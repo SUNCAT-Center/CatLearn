@@ -15,8 +15,8 @@ from atoml.utilities.cost_function import get_error
 
 
 # The user can choose whether the features and/or the targets are standardized.
-StandardizeFeatures = False
-StandardizeTargets = False
+StandardizeFeatures = True
+StandardizeTargets = True
 
 # First derivative observations can be included.
 eval_gradients = True
@@ -119,9 +119,9 @@ kdict = {'k1': {'type': 'gaussian', 'width': [w1], 'scaling': 1.0}}
 gp = GaussianProcess(kernel_dict=kdict, regularization=sdt1**2,
                      train_fp=train,
                      train_target=target,
-                     optimize_hyperparameters=False,
+                     optimize_hyperparameters=True,
                      eval_gradients=eval_gradients, algomin='L-BFGS-B',
-                     global_opt=False)
+                     global_opt=False,scale_optimizer=False)
 print('Optimized kernel:', gp.kernel_dict)
 
 # Do the optimized predictions.
@@ -145,7 +145,6 @@ if StandardizeTargets:
 
 # Plots.
 
-
 plt.figure(figsize=(8.0, 5.0))
 
 # Contour plot for real function.
@@ -158,9 +157,7 @@ plt.contourf(X, Y, afunc(X, Y)[0], 6, alpha=.70, cmap='PRGn',vmin=np.min(afunc(
 X,Y)[0]),
 vmax=np.max(afunc(X,Y)[0]))
 plt.colorbar(orientation="horizontal", pad=0.1)
-plt.clim(np.min(afunc(
-X,Y)[0]),np.max(afunc(
-X,Y)[0]))
+plt.clim(np.min(afunc(X,Y)[0]),np.max(afunc(X,Y)[0]))
 C = plt.contour(X, Y, afunc(X, Y)[0], 6, colors='black', linewidths=1)
 plt.clabel(C, inline=1, fontsize=9)
 plt.title('Real function',fontsize=10)

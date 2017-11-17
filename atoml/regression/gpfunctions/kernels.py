@@ -217,25 +217,22 @@ def gaussian_kernel(theta, log_scale, m1, m2=None, eval_gradients=False):
     kwidth = theta
     if log_scale:
         kwidth = np.exp(kwidth)
-
-    if eval_gradients == False:
-        if m2 is None:
-            k = distance.pdist(m1 / kwidth, metric='sqeuclidean')
-            k = distance.squareform(np.exp(-.5 * k))
-            np.fill_diagonal(k, 1)
-            return k
-        else:
-            k = distance.cdist(m1 / kwidth, m2 / kwidth, metric='sqeuclidean')
-            return np.exp(-.5 * k)
-
-    if eval_gradients == True:
-        if m2 is None:
-            k = gkernels.bigk_tilde(kernel_type,kwidth, m1)
-            return k
-        else:
-            k = gkernels.k_tilde(kernel_type,kwidth, m1, m2)
-            return k
-
+    if m2 is None:
+        k = distance.pdist(m1 / kwidth, metric='sqeuclidean')
+        k = distance.squareform(np.exp(-.5 * k))
+        np.fill_diagonal(k, 1)
+        if eval_gradients == True:
+            big_kgd1 = gkernels.big_kgd(kernel_type, kwidth, m1)
+            big_kdd1 = gkernels.big_kdd(kernel_type, kwidth,m1)
+            k = np.block([[k,big_kgd1],[np.transpose(big_kgd1),big_kdd1]])
+        return k
+    else:
+        k = distance.cdist(m1 / kwidth, m2 / kwidth, metric='sqeuclidean')
+        k = np.exp(-.5 * k)
+        if eval_gradients == True:
+            k = np.block([k, gkernels.kgd_tilde(kernel_type, kwidth, m2,
+            m1).T])
+        return k
 
 def sqe_kernel(theta, log_scale, m1, m2=None, eval_gradients=False):
     """Return covariance between data m1 & m2 with a gaussian kernel.
