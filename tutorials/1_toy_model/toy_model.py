@@ -24,7 +24,7 @@ def afunc(x):
 
 # Setting up data.
 # A number of training points in x.
-train_points = 30
+train_points = 10.
 noise_magnitude = 1.
 
 # Randomly generate the training datapoints x.
@@ -58,7 +58,7 @@ train_targets = target_standardize(target[0])
 # Model example 1 - biased model.
 # Define prediction parameters.
 sdt1 = np.sqrt(1e-1)
-w1 = 3.0  # Too large widths results in a biased model.
+w1 = 0.449  # Too large widths results in a biased model.
 kdict = {'k1': {'type': 'gaussian', 'width': w1}}
 # Set up the prediction routine.
 gp = GaussianProcess(kernel_dict=kdict, regularization=sdt1**2,
@@ -103,12 +103,17 @@ over_lower = over_prediction - over_uncertainty * tstd
 
 # Model example 3 - Gaussian Process.
 # Set up the prediction routine and optimize hyperparameters.
-kdict = {'k1': {'type': 'gaussian', 'width': [w1], 'scaling': 0.9}}
+kdict = {
+         'k2': {'type': 'linear', 'scaling': 0.9},
+         'k3': {'type': 'constant', 'const': 0.1},
+         'k1': {'type': 'gaussian', 'width': [w1], 'scaling': 0.9},
+         }
 gp = GaussianProcess(kernel_dict=kdict, regularization=sdt1**2,
                      train_fp=std['train'],
                      train_target=train_targets['target'],
                      optimize_hyperparameters=True)
 print('Optimized kernel:', gp.kernel_dict)
+print(-gp.theta_opt['fun'])
 # Do the optimized predictions.
 optimized = gp.predict(test_fp=std['test'], uncertainty=True)
 # Scale predictions back to the original scale.

@@ -515,7 +515,10 @@ class AdsorbateFingerprintGenerator(object):
                 if Cnn == 3:
                     nCdouble += 1
                 elif Cnn == 2:
-                    nCtriple += 1
+                    if nCH > 0:
+                        nCtriple += 1
+                    else:
+                        nCdouble += 2
                 elif Cnn == 1:
                     nCquad += 1
                 nC2 += 4 - (nCC + nCH)

@@ -40,9 +40,9 @@ def layers_info(atoms):
         bulk_atoms = atoms.info['surf_atoms']
     else:
         bulk_atoms = [a.index for a in atoms
-                      if il[a.index] < layers-2]
+                      if il[a.index] < layers-1]
         top_atoms = [a.index for a in atoms
-                     if il[a.index] > layers-3 and
+                     if il[a.index] > layers-2 and
                      a.index not in atoms.info['ads_atoms']]
     assert len(bulk_atoms) > 0 and len(top_atoms) > 0
     return bulk_atoms, top_atoms
@@ -91,7 +91,7 @@ def db2surf(fname, selection=[]):
         species = str(d.species)
         if '-' in species:
             continue
-        if ads == 'slab':
+        if ads == 'slab' or ads == 'clean':
             ser = ''
             site = 'slab'
         else:
@@ -167,7 +167,7 @@ def db2dict(fname, selection=[]):
             elif abinitio_energies[mol+'_gas'] > abinitio_energy:
                 abinitio_energies[mol+'_gas'] = abinitio_energy
                 dbids[mol+'_gas'] = int(d.id)
-        elif 'add' in d:
+        elif 'ads' in d:
             cat = str(d.name) + '_' + str(d.phase)
             site_name = str(d.facet)
             # composition = str(d.formula)
