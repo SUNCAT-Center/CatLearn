@@ -19,11 +19,11 @@ StandardizeFeatures = True
 StandardizeTargets = True
 
 # First derivative observations can be included.
-eval_gradients = False
-train_points = 6 # Number of training points.
+eval_gradients = True
+train_points = 5 # Number of training points.
 test_points = 25 # Length of the grid test points (nxn).
 
-# A known underlying function in one dimension [y] and first derivative [dy].
+# A known underlying function in 2-dimension [z] and first derivatives [dx,dy].
 def afunc(x,y):
     """S FUNCTION"""
     z = -(12.0)*(x**2.0) + (1.0/3.0)*(x**4.0)
@@ -35,7 +35,7 @@ def afunc(x,y):
 # Setting up data.
 
 # A number of training points in x.
-# Each element in the list train can be referred to as a fingerprint.
+# Each element in the matrix train can be referred to as a fingerprint.
 
 train = []
 trainx = np.linspace(-5.0, 5.0, train_points)
@@ -94,11 +94,18 @@ else:
 if eval_gradients:
     gradients = []
     for i in org_train:
-        gradients.append(afunc(i)[1])
+        gradients.append(afunc(i[0],i[1])[1:3])
     org_gradients = np.asarray(gradients)
+    deriv = []
+    for i in range(len(gradients)):
+        for d in range(np.shape(gradients)[1]):
+            deriv.append(gradients[i][d])
+    gradients = deriv
     gradients = org_gradients/(target_std/train_std)
+    y_tilde = []
     y_tilde = np.append(target, gradients)
     target = np.reshape(y_tilde,(np.shape(y_tilde)[0],1))
+
 
 # Gaussian Process.
 
@@ -113,8 +120,8 @@ gp = GaussianProcess(kernel_dict=kdict, regularization=sdt1**2,
                      train_fp=train,
                      train_target=target,
                      optimize_hyperparameters=True,
-                     eval_gradients=eval_gradients, algomin='TNC',
-                     global_opt=True)
+                     eval_gradients=eval_gradients, algomin='L-BFGS-B',
+                     global_opt=False)
 print('Optimized kernel:', gp.kernel_dict)
 
 # Do the optimized predictions.
@@ -180,6 +187,15 @@ vmax=np.max(afunc(X,Y)[0]))
 plt.colorbar(orientation="horizontal", pad=0.1)
 C = plt.contour(testx, testy, zi, 6, colors='k',linewidths=1.0)
 plt.clabel(C, inline=0.1, fontsize=9)
+
+# Print training points positions
+plt.scatter(org_train[:,0],org_train[:,1],marker='o',s=5.0,c='black',
+edgecolors='black',alpha=0.8)
+plt.xlim(-5,5)
+plt.ylim(-5,5)
+plt.title('Predicted function',fontsize=10)
+
+
 
 
 plt.show()
