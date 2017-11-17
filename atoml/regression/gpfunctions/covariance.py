@@ -66,6 +66,8 @@ def get_covariance(kernel_dict, log_scale, matrix1, matrix2=None,
 
     # Apply noise parameter.
     if regularization is not None:
-        cov += np.exp(regularization) * np.identity(len(cov))
+        if log_scale:
+            regularization = np.exp(regularization)
+        cov += regularization * np.identity(len(cov))
 
     return cov

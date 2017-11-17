@@ -3,13 +3,13 @@ import numpy as np
 
 from .data_process import data_process
 from .placeholder import placeholder
-from atoml.predict import target_normalize
+from atoml.preprocess.scale_target import target_normalize
 
 
 def hierarchy(cv, features, min_split, max_split, new_data=True,
-             ridge=True, scale=True, globalscale=True, normalization=True,
-             featselect_featvar=False, featselect_featconst=True,
-             select_limit=None, feat_sub=15):
+              ridge=True, scale=True, globalscale=True, normalization=True,
+              featselect_featvar=False, featselect_featconst=True,
+              select_limit=None, feat_sub=15):
     """Start the hierarchy.
 
     Parameters
