@@ -198,7 +198,7 @@ class GaussianProcess(object):
 
         if self.scale_data:
             self.scaling = ScaleData(train_fp, train_target)
-            train_fp, train_target = self.scaling.train()
+            self.train_fp, self.train_target = self.scaling.train()
 
         # Get the Gram matrix on-the-fly if none is suppiled.
         cvm = get_covariance(kernel_dict=self.kernel_dict,
