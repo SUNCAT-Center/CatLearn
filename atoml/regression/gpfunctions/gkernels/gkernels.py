@@ -62,3 +62,31 @@ def big_kdd(kernel_type, l, train):
                 big_kdd[j*size[1]:(j+1)*size[1],i*size[1]:(i+1)*size[1]] = \
                 k_dd.T
     return big_kdd
+
+
+#########################################
+#######  k TILDE and bigK TILDE    ######
+#########################################
+
+# To build k_tilde:
+def k_tilde(kernel_type, l,test,train):
+    l = np.array(l)
+    k_tilde = []
+    k_tilde = np.vstack([k_little(kernel_type, l,train,test),kgd_tilde(
+    kernel_type, l,
+    train,test)])
+    return k_tilde.T
+
+# To build bigK_tilde:
+def bigk_tilde(kernel_type, l,train):
+    l = np.array(l)
+    bigk_tilde = []
+    bigk1 = bigk(kernel_type, l,train)
+    big_kgd1 = big_kgd(kernel_type, l, train)
+    big_kdd1 = big_kdd(kernel_type, l,train)
+    bigk_tilde = np.block([[bigk1,big_kgd1],[np.transpose(big_kgd1),
+    big_kdd1]])
+    return bigk_tilde
+
+#########################################
+#########################################
