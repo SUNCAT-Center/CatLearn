@@ -218,23 +218,25 @@ def gaussian_kernel(theta, log_scale, m1, m2=None, eval_gradients=False):
     if log_scale:
         kwidth = np.exp(kwidth)
     if m2 is None:
-        m1 = np.array([[0.0,1.5],[1.0,1.0],[2.0,1.0]])
-        k = distance.pdist(m1 / kwidth, metric='sqeuclidean')
-        k = distance.squareform(np.exp(-.5 * k))
-        np.fill_diagonal(k, 1)
+        # m1 = np.array([[0.0,1.5],[1.0,1.0],[2.0,1.0]])
+        d = m1[np.newaxis,:,:] - m1[:,np.newaxis,:]
+        sqd = np.sqrt(np.sum(d**2,axis=-1))
+        k = np.exp(-(sqd/kwidth)**2/2)
         if eval_gradients == True:
             kwidth = np.array(kwidth)
-            d = m1[np.newaxis,:,:] - m1[:,np.newaxis,:]
-            sqd = np.sqrt(np.sum(d**2,axis=-1))
-            k = np.exp(-(sqd/kwidth)**2/2)
-            print(k)
-            exit()
-            kgd = kwidth**(-2) * d * k
-            print(kgd)
-            exit()
-
-
-            big_kgd1 = gkernels.big_kgd(kernel_type, kwidth, m1)
+            for i in range(len(m1)):
+                d = (m1[np.newaxis,:,:] - m1[:,np.newaxis,:])[i]
+                sqd = np.sqrt(np.sum(d**2,axis=-1))
+                k1 = np.exp(-(sqd/kwidth)**2/2)
+                big_kgd = (kwidth**(-2) * d.T * k1).T
+                if i ==0:
+                    big_kgd1 = big_kgd
+                if i !=0:
+                    big_kgd1 = np.block([big_kgd1,big_kgd])
+                # I_m = np.identity(len(m1)*np.shape(m1)[1])
+                # print(I_m)
+                # exit()
+            # big_kgd1 = gkernels.big_kgd(kernel_type, kwidth, m1)
             big_kdd1 = gkernels.big_kdd(kernel_type, kwidth,m1)
             k = np.block([[k,big_kgd1],[np.transpose(big_kgd1),big_kdd1]])
         return k
