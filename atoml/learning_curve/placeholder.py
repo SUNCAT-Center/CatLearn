@@ -1,7 +1,7 @@
 """Placeholder for now."""
 import numpy as np
 
-from atoml.ridge_regression import RidgeRegression
+from atoml.regression import RidgeRegression
 from .feature_selection import feature_selection
 
 

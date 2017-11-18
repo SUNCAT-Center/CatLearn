@@ -7,13 +7,6 @@ def simple_learning_curve(gp, testx, testy, step=1, min_data=2,
                           optimize_interval=None):
     """Evaluate validation error versus training data size.
 
-    Returns a dictionary containing the lists:
-    -------
-    N_data : training data size
-    rmse_average : Root mean square validation error.
-    absolute_average : mean absolute validation error.
-    signed_mean : signed mean validation error.
-
     Parameters
     ----------
     gp : GaussianProcess class
@@ -29,6 +22,17 @@ def simple_learning_curve(gp, testx, testy, step=1, min_data=2,
         Number of datapoints in first prediction iteration.
     optimize_interval : integer or None
         Reoptimize the hyperparameters every this many datapoints.
+
+    Returns
+    -------
+    N_data : list
+        Training data size.
+    rmse_average : list
+        Root mean square validation error.
+    absolute_average : list
+        Mean absolute validation error.
+    signed_mean : list
+        Signed mean validation error.
     """
     if min_data < 2:
         raise ValueError("min_data must be at least 2.")
