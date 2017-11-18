@@ -21,8 +21,7 @@ def kgd_tilde(kernel_type, l, train, test):
         kgd_thistest = np.zeros(size1[0]*size1[1])
         for i in range(len(train)):
             kgd_thistest[i*size1[1]:(i+1)*size1[1]] = eval(str(
-            kernel_type)).kernel_kgd(
-            l,test[j],train[i])
+            kernel_type)).kernel_kgd(l,test[j],train[i])
         kgd[:,j] = kgd_thistest
     return kgd
 
