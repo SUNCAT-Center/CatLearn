@@ -24,9 +24,9 @@ def afunc(x):
 
 # Setting up data.
 # A number of training points in x.
-train_points = 30
+train_points = 10
 # Magnitude of the noise.
-noise_magnitude = 0.1
+noise_magnitude = 0.3
 
 # Randomly generate the training datapoints x.
 train_d1 = 2 * (np.random.random_sample(train_points) - 0.5)
