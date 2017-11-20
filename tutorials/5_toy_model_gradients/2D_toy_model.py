@@ -19,8 +19,8 @@ StandardizeFeatures = True
 StandardizeTargets = True
 
 # First derivative observations can be included.
-eval_gradients = True
-train_points = 5 # Number of training points.
+eval_gradients = False
+train_points = 10 # Number of training points.
 test_points = 25 # Length of the grid test points (nxn).
 
 # A known underlying function in 2-dimension [z] and first derivatives [dx,dy].
@@ -129,6 +129,7 @@ pred = gp.predict(test_fp=test, uncertainty=True)
 prediction = np.array(pred['prediction'][:,0])
 
 # Calculate the uncertainty of the predictions.
+
 uncertainty = np.array(pred['uncertainty'])
 
 # Get confidence interval on predictions.
@@ -143,28 +144,28 @@ if StandardizeTargets:
     lower = (lower*target_std) + target_mean
 
 
+interval = upper - prediction
+
 # Plots.
 
-plt.figure(figsize=(8.0, 5.0))
+plt.figure(figsize=(11.0, 5.0))
 
 # Contour plot for real function.
 
-plt.subplot(121)
+plt.subplot(131)
 x = np.linspace(-5.0, 5.0, test_points)
 y = np.linspace(-5.0, 5.0, test_points)
 X,Y = np.meshgrid(x, y)
-plt.contourf(X, Y, afunc(X, Y)[0], 6, alpha=.70, cmap='PRGn',vmin=np.min(afunc(
-X,Y)[0]),
-vmax=np.max(afunc(X,Y)[0]))
+plt.contourf(X, Y, afunc(X, Y)[0]-np.min(afunc(X, Y)[0]), 6, alpha=.70, cmap='PRGn')
 plt.colorbar(orientation="horizontal", pad=0.1)
-plt.clim(np.min(afunc(X,Y)[0]),np.max(afunc(X,Y)[0]))
-C = plt.contour(X, Y, afunc(X, Y)[0], 6, colors='black', linewidths=1)
+# plt.clim(np.min(afunc(X,Y)[0]-np.min(afunc(X, Y)[0])),np.max(afunc(X,Y)[0]))
+C = plt.contour(X, Y, afunc(X, Y)[0]-np.min(afunc(X, Y)[0]), 6, colors='black', linewidths=1)
 plt.clabel(C, inline=1, fontsize=9)
 plt.title('Real function',fontsize=10)
 
 # Contour plot for predicted function.
 
-plt.subplot(122)
+plt.subplot(132)
 
 x = []
 for i in range(len(test)):
@@ -176,11 +177,10 @@ for i in range(len(test)):
     t = y.append(t)
 
 
-zi = plt.mlab.griddata(x, y, prediction, testx, testy, interp='linear')
+zi = plt.mlab.griddata(x, y, prediction-np.min(prediction), testx, testy,
+interp='linear')
 
-plt.contourf(testx, testy, zi, 6, alpha=.70, cmap='PRGn',vmin=np.min(afunc(
-X,Y)[0]),
-vmax=np.max(afunc(X,Y)[0]))
+plt.contourf(testx, testy, zi, 6, alpha=.70, cmap='PRGn')
 plt.colorbar(orientation="horizontal", pad=0.1)
 C = plt.contour(testx, testy, zi, 6, colors='k',linewidths=1.0)
 plt.clabel(C, inline=0.1, fontsize=9)
@@ -193,6 +193,17 @@ plt.ylim(-5,5)
 plt.title('Predicted function',fontsize=10)
 
 
+# Plot Uncertainty
+
+plt.subplot(133)
+zi = plt.mlab.griddata(x, y, interval, testx, testy,
+interp='linear')
+
+plt.contourf(testx, testy, zi, 6, alpha=.70, cmap='Reds',vmin=0,
+vmax=np.max(afunc(X,Y)[0]))
+plt.colorbar(orientation="horizontal", pad=0.1)
+C = plt.contour(testx, testy, zi, 6, colors='k',linewidths=1.0)
+plt.clabel(C, inline=0.1, fontsize=9)
 
 
 plt.show()
