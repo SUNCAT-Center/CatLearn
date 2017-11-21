@@ -19,8 +19,8 @@ StandardizeFeatures = True
 StandardizeTargets = True
 
 # First derivative observations can be included.
-eval_gradients = False
-train_points = 10 # Number of training points.
+eval_gradients = True
+train_points = 4 # Number of training points.
 test_points = 25 # Length of the grid test points (nxn).
 
 # A known underlying function in 2-dimension [z] and first derivatives [dx,dy].
@@ -114,7 +114,7 @@ sdt1 = 0.01
 w1 = 2.0  # Too large widths results in a biased model.
 
 # Set up the prediction routine and optimize hyperparameters.
-kdict = {'k1': {'type': 'gaussian', 'width': [w1], 'scaling': 1.0}}
+kdict = {'k1': {'type': 'gaussian', 'width': w1, 'scaling': 1.0}}
 
 gp = GaussianProcess(kernel_dict=kdict, regularization=sdt1**2,
                      train_fp=train,
