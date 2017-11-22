@@ -223,24 +223,17 @@ def gaussian_kernel(theta, log_scale, m1, m2=None, eval_gradients=False):
         k = distance.pdist(m1 / kwidth, metric='sqeuclidean')
         k = distance.squareform(np.exp(-.5 * k))
         np.fill_diagonal(k, 1)
-
-
         if eval_gradients == True:
-            m1 = np.array([[0.0,1.5],[1.0,1.0],[2.0,1.0]])
-            print(m1)
-            exit()
+            # m1 = np.array([[0.0,1.5],[1.0,1.0],[2.0,1.0]])
             start=timer()
             size = np.shape(m1)
             # big_kdd = np.zeros((size[0]*size[1],size[0]*size[1]))
             d = (m1[np.newaxis,:,:] - m1[:,np.newaxis,:])
             invsqkwidth = 1/kwidth**2
-            sqd = np.sqrt(np.sum(invsqkwidth*d**2,axis=-1))
-            k1 = np.exp(-(sqd)**2/2)
+            den = np.sum(invsqkwidth*d**2,axis=-1)
+            k1 = np.exp(-den/2)
             big_kgd = -(invsqkwidth*d*k1[:,:,np.newaxis]).reshape(size[0],
             size[0]*size[1])
-            print(big_kgd)
-            # print(big_kdd1)
-            # exit()
             end = timer()
             print(end-start)
             big_kdd1 = gkernels.big_kdd(kernel_type, kwidth,m1)
