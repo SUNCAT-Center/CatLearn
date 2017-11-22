@@ -227,7 +227,8 @@ def gaussian_kernel(theta, log_scale, m1, m2=None, eval_gradients=False):
 
         if eval_gradients == True:
             # m1 = np.array([[0.0,1.5],[1.0,1.0],[2.0,1.0]])
-            # m2 = np.array([[1.1,2.3],[0.3,0.4]])
+
+            start=timer()
             size = np.shape(m1)
             # big_kdd = np.zeros((size[0]*size[1],size[0]*size[1]))
             d = (m1[np.newaxis,:,:] - m1[:,np.newaxis,:])
@@ -237,7 +238,12 @@ def gaussian_kernel(theta, log_scale, m1, m2=None, eval_gradients=False):
             big_kgd = -(invsqkwidth*d*k1[:,:,np.newaxis]).reshape(size[0],
             size[0]*size[1])
 
+            # print(big_kdd1)
+            # exit()
+            end = timer()
+            print(end-start)
             big_kdd1 = gkernels.big_kdd(kernel_type, kwidth,m1)
+
 
             k = np.block([[k,big_kgd],[np.transpose(big_kgd),big_kdd1]])
         return k
