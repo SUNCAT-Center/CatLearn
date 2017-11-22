@@ -2,6 +2,7 @@
 import numpy as np
 from scipy.spatial import distance
 from atoml.regression.gpfunctions.gkernels import gkernels as gkernels
+from timeit import default_timer as timer
 
 
 def kdict2list(kdict, N_D=None):
@@ -219,43 +220,25 @@ def gaussian_kernel(theta, log_scale, m1, m2=None, eval_gradients=False):
     if log_scale:
         kwidth = np.exp(kwidth)
     if m2 is None:
-        # m1 = np.array([[0.0,1.5],[1.0,1.0],[2.0,1.0]])
-
         k = distance.pdist(m1 / kwidth, metric='sqeuclidean')
         k = distance.squareform(np.exp(-.5 * k))
         np.fill_diagonal(k, 1)
+
+
         if eval_gradients == True:
+            # m1 = np.array([[0.0,1.5],[1.0,1.0],[2.0,1.0]])
+            # m2 = np.array([[1.1,2.3],[0.3,0.4]])
             size = np.shape(m1)
-            big_kgd = np.zeros((size[0],size[0]*size[1]))
             # big_kdd = np.zeros((size[0]*size[1],size[0]*size[1]))
             d = (m1[np.newaxis,:,:] - m1[:,np.newaxis,:])
             invsqkwidth = 1/kwidth**2
             sqd = np.sqrt(np.sum(invsqkwidth*d**2,axis=-1))
             k1 = np.exp(-(sqd)**2/2)
-            for i in range(size[0]):
-                big_kgd_i = ((invsqkwidth * d[i]).T * k1[i]).T
-                big_kgd[:,(size[1]*i):(size[1]+size[1]*i)] = big_kgd_i
-
-                #########  BIG_KDD WIP ###############################
-                # d0 = (m1[np.newaxis,:,:] - m1[:,np.newaxis,:])[0]
-                # d1 = (m1[np.newaxis,:,:] - m1[:,np.newaxis,:])[1]
-                # d2 = (m1[np.newaxis,:,:] - m1[:,np.newaxis,:])[2]
-                # sqd = np.sqrt(np.sum(d1**2,axis=-1))
-                # k1 = np.exp(-(sqd/kwidth)**2/2)
-                #
-                # # I_m = np.identity(len(m1))
-                # I_m = np.ones((3,2))
-                #
-                # iden = I_m * kwidth**(-2)
-                # distan = np.kron(kwidth**(-2)*d1,kwidth**(-2)*d1)
-                #
-                #
-                # first = iden - distan
-                #
-                # big_kdd = np.multiply(k1,first.T)
-                # ####################################################
+            big_kgd = -(invsqkwidth*d*k1[:,:,np.newaxis]).reshape(size[0],
+            size[0]*size[1])
 
             big_kdd1 = gkernels.big_kdd(kernel_type, kwidth,m1)
+
             k = np.block([[k,big_kgd],[np.transpose(big_kgd),big_kdd1]])
         return k
     else:
@@ -264,14 +247,12 @@ def gaussian_kernel(theta, log_scale, m1, m2=None, eval_gradients=False):
         if eval_gradients == True:
             size_m1 = np.shape(m1)
             size_m2 = np.shape(m2)
-            kgd_tilde = np.zeros((size_m1[0],size_m2[0]*size_m2[1]))
             d = (m1[np.newaxis,:,:] - m2[:,np.newaxis,:])
             invsqkwidth = 1/kwidth**2
             sqd = np.sqrt(np.sum(invsqkwidth*d**2,axis=-1))
             k1 = np.exp(-(sqd)**2/2)
-            for i in range(len(m2)):
-                kgd_tilde_i = ((invsqkwidth * d[i]).T * k1[i]).T
-                kgd_tilde[:,(size_m2[1]*i):(size_m2[1]+size_m2[1]*i)]=kgd_tilde_i
+            kgd_tilde = ((invsqkwidth*d*k1[:,:,np.newaxis]).swapaxes(
+            size_m1[1],1).reshape(size_m2[0]*size_m2[1],size_m1[0])).T
             k = np.block([k, kgd_tilde])
         return k
 
