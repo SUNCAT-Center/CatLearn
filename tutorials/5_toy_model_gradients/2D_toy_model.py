@@ -20,7 +20,7 @@ StandardizeTargets = True
 
 # First derivative observations can be included.
 eval_gradients = True
-train_points = 100 # Number of training points.
+train_points = 2 # Number of training points.
 test_points = 25 # Length of the grid test points (nxn).
 
 # A known underlying function in 2-dimension [z] and first derivatives [dx,dy].
