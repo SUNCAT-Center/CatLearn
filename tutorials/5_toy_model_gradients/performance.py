@@ -6,12 +6,12 @@ from scipy.spatial import distance
 # Method 1: broadcast, Method 2: for_train_loop, Method3: old for loops.
 # Method 4: broadcast+cdist
 
-method = '3'
+method = '4'
 np.random.seed(1)
 m1 = []
 train_points = 500
-dimensions = 500
-iterations = 5
+dimensions = 100
+iterations = 1
 
 m1= 1.2*np.random.randint(5.0, size=(train_points,
 dimensions))
@@ -67,6 +67,26 @@ for i in range(0,iterations):
         big_kgd = -(invsqkwidth*d*k1[:,:,np.newaxis]).reshape(size[0],
         size[0]*size[1])
         # print(big_kgd)
+
+    if method=='5':
+        k = distance.pdist(m1 / kwidth, metric='sqeuclidean')
+        k = distance.squareform(np.exp(-.5 * k))
+        np.fill_diagonal(k, 1)
+        size = np.shape(m1)
+        big_kgd = np.zeros((size[0],size[0]*size[1]))
+        l = np.array(kwidth)
+        size = np.shape(m1)
+        invkwidthsq = l**(-2)
+        for i in range(len(m1)):
+            for j in range(len(m1)):
+                d = m1[i]-m1[j]
+                k_gd = invkwidthsq * d * k[i][j]
+                big_kgd[i:i+1,j*size[1]:(j+1)*size[1]] = k_gd
+        # print(big_kgd)
+
+
+
+
 
 
     end = timer()
