@@ -6,11 +6,11 @@ from scipy.spatial import distance
 # Method 1: broadcast, Method 2: for_train_loop, Method3: old for loops.
 # Method 4: broadcast+cdist
 
-method = '6'
+method = '7'
 np.random.seed(1)
 m1 = []
 train_points = 500
-dimensions = 10
+dimensions = 100
 iterations = 5
 
 m1= 1.2*np.random.randint(5.0, size=(train_points,
@@ -19,6 +19,7 @@ dimensions))
 
 kwidth = np.zeros(np.shape(m1)[1])+2.0
 time=[]
+
 
 for i in range(0,iterations):
     start=timer()
@@ -85,6 +86,7 @@ for i in range(0,iterations):
                 big_kgd[i:i+1,j*size[1]:(j+1)*size[1]] = k_gd
         # print(big_kgd)
 
+# method 6 comes from method 2.
     if method=='6':
         size = np.shape(m1)
         big_kgd = np.zeros((size[0],size[0]*size[1]))
@@ -99,9 +101,29 @@ for i in range(0,iterations):
             big_kgd[:,(size[1]*i):(size[1]+size[1]*i)] = big_kgd_i
         # print(big_kgd)
 
-
-
-
+# method 7 comes from method 5.
+    if method=='7':
+        # m1 = np.array([[0.0,1.5],[1.0,1.0],[2.0,1.0]])
+        # kwidth = [2.0,2.0]
+        size = np.shape(m1)
+        big_kgd = np.zeros((size[0],size[0]*size[1]))
+        big_kdd = np.zeros((size[0]*size[1],size[0]*size[1]))
+        k = distance.pdist(m1 / kwidth, metric='sqeuclidean')
+        k = distance.squareform(np.exp(-.5 * k))
+        np.fill_diagonal(k, 1)
+        l = np.array(kwidth)
+        invkwidthsq = l**(-2)
+        I_m = np.identity(size[1])
+        for i in range(size[0]):
+            ldist = (invkwidthsq * (m1[:,:]-m1[i,:]))
+            k_gd = ldist*k[i,:].reshape(size[0],1)
+            big_kgd[:,size[1]*i:size[1]+size[1]*i] = k_gd
+            for j in range(i,size[0]):
+                k_dd = (I_m*invkwidthsq-np.outer(ldist[j],ldist[j].T))*k[i,j]
+                big_kdd[i*size[1]:(i+1)*size[1],j*size[1]:(j+1)*size[1]] = k_dd
+                if j!=i:
+                    big_kdd[j*size[1]:(j+1)*size[1],i*size[1]:(i+1)*size[1]]= k_dd.T
+        # print(big_kgd)
 
     end = timer()
     time_one_loop = end-start
