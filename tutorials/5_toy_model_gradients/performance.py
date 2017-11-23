@@ -6,12 +6,12 @@ from scipy.spatial import distance
 # Method 1: broadcast, Method 2: for_train_loop, Method3: old for loops.
 # Method 4: broadcast+cdist
 
-method = '4'
+method = '6'
 np.random.seed(1)
 m1 = []
 train_points = 500
-dimensions = 100
-iterations = 1
+dimensions = 10
+iterations = 5
 
 m1= 1.2*np.random.randint(5.0, size=(train_points,
 dimensions))
@@ -38,13 +38,14 @@ for i in range(0,iterations):
     if method=='2':
         size = np.shape(m1)
         big_kgd = np.zeros((size[0],size[0]*size[1]))
-        d = (m1[np.newaxis,:,:] - m1[:,np.newaxis,:])
         invsqkwidth = 1/kwidth**2
-        den = np.sum(invsqkwidth*d**2,axis=-1)
-        k1 = np.exp(-den/2)
+        k1 = distance.pdist(m1 / kwidth, metric='sqeuclidean')
+        k1 = distance.squareform(np.exp(-.5 * k1))
+        np.fill_diagonal(k1, 1)
         # print(k1)
         for i in range(size[0]):
-            big_kgd_i = ((invsqkwidth * d[i]).T * k1[i]).T
+            d = m1[:,:]-m1[i,:]
+            big_kgd_i = ((invsqkwidth * d).T * k1[i]).T
             big_kgd[:,(size[1]*i):(size[1]+size[1]*i)] = big_kgd_i
         # print(big_kgd)
 
@@ -84,6 +85,19 @@ for i in range(0,iterations):
                 big_kgd[i:i+1,j*size[1]:(j+1)*size[1]] = k_gd
         # print(big_kgd)
 
+    if method=='6':
+        size = np.shape(m1)
+        big_kgd = np.zeros((size[0],size[0]*size[1]))
+        invsqkwidth = 1/kwidth**2
+        k1 = distance.pdist(m1 / kwidth, metric='sqeuclidean')
+        k1 = distance.squareform(np.exp(-.5 * k1))
+        np.fill_diagonal(k1, 1)
+        # print(k1)
+        for i in range(size[0]):
+            d = m1[:,:]-m1[i,:]
+            big_kgd_i = ((invsqkwidth * d).T * k1[i]).T
+            big_kgd[:,(size[1]*i):(size[1]+size[1]*i)] = big_kgd_i
+        # print(big_kgd)
 
 
 
