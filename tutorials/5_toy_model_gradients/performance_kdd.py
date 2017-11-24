@@ -5,19 +5,20 @@ from scipy.spatial import distance
 
 # TEST METHODS FOR BIG KDD
 
-#T500/D100,    1=31.18     2=26.15      3=37.50     4=42.20
-#T100/D100,    1=0.819     2=0.819      3=1.12      4=1.16
-#T10/D1000,    1=1.31      2=1.146      3=1.80      4=1.77
-#T50/D1000,    1=37.92     2=36.31      3=77.79     4=78.41
-#T1000/D10,    1=23.69     2=6.54       3=0.99      4=1.06
-#T1000/D50,    1=53.84     2=33.05      3=41.39     4=39.83
-#T10000/D2,    1=NA        2=546.0      3=12.44     4=12.34
+#T1000/500,    1           2=40.1       3=63.28     4=40.00
+#T500/D100,    1=31.18     2=26.15      3=37.50     4=39.10  # 2,1,3,4
+#T100/D100,    1=0.819     2=0.819      3=1.12      4= 1.10  # 1,2,3,4
+#T50/D1000,    1=37.92     2=36.31      3=77.79     4= 80.0  # 2,1
+#T10/D1000,    1=1.31      2=1.146      3=1.80      4= 1.97  # 2,1,3,4
+#T1000/D50,    1=53.84     2=33.05      3=41.39     4= 39.99 # 2,4,3
+#T1000/D10,    1=23.69     2=6.38       3=0.99      4= 0.94  # 3,4
+#T10000/D2,    1=NA        2=546.0      3=12.44     4= 12.83 # 3,4
 
-method = '1'
+method = '3'
 np.random.seed(1)
 m1 = []
-train_points = 10000
-dimensions = 2
+train_points = 1000
+dimensions = 50
 iterations = 5
 
 m1= 1.2*np.random.randint(5.0, size=(train_points,
@@ -89,9 +90,12 @@ for i in range(0,iterations):
         I_m = np.identity(size[1])*invkwidthsq
         for i in range(size[0]):
             ldist = (invkwidthsq * (m1[:,:]-m1[i,:]))
-            k_dd = ((I_m - (ldist[:,None,:]*ldist[:,:,None]))*(k[i,None,None].T)).reshape(-1,size[1])
+            k_dd = ((I_m - (np.einsum('ij,ik->ijk',ldist,ldist)))*(k[i,None,
+            None].T)).reshape(-1,size[1])
             big_kdd[:,size[1]*i:size[1]+size[1]*i] = k_dd
         # print(big_kdd)
+
+
 
     end = timer()
     time_one_loop = end-start

@@ -6,18 +6,22 @@ from scipy.spatial import distance
 # Method 1: broadcast, Method 2: for_train_loop, Method3: old for loops.
 # Method 4: broadcast+cdist
 
-#T500/D100,    9=     10=      11=     12=
-#T100/D100,    9=     10=      11=     12=
-#T10/D1000,    9=     10=      11=     12=
-#T50/D1000,    9=     10=      11=     12=
-#T1000/D10,    9=     10=      11=     12=
-#T1000/D50,    9=     10=      11=     12=
-#T10000/D2,    9=     10=      11=     12=
+#T500/D100, 1=0.715  2=0.209  3=45.8  4=0.384  5=1.46 6=0.201  7=0.184 #2,7,6
+#T100/D100, 1=0.026  2=0.007  3=1.21  4=0.016  5=0.05 6=0.006  7=0.006 #6,7,2
+#T10/D1000, 1=0.006  2=0.001  3=1.27  4=0.003  5=0.002 6=0.001 7=0.003 #2,5,6,7
+#T50/D1000, 1=0.067  2=0.041  3=39.6  4=0.054  5=0.049 6=0.046 7=0.053 #2,6,7,5,1
+#T1000/D10, 1=0.221  2=0.098  3=47.79 4=0.169  5=4.15  6=0.107 7=0.145 #2,6,7,4
+#T1000/D50, 1=1.28   2=0.376  3=84.87 4=0.860  5=4.56  6=0.352 7=0.464 #6,2,7
+#T10000/D2, 1=18.8   2=5.698  3=BAD   4=10.29  5=BAD   6=5.53 7=5.43  #6,7,2
+#T10/D10000,1=0.019  2=0.006  3=NT    4=0.012  5=0.005 6=0.0079 7=0.019 #2,6,7
+#T500/D500, 1=2.989  2=1.34   3=NT    4=2.24   5=1.96  6=1.34  7=1.39 #2,6,7
+#T1000/D500,1=103.7  2=98.06  3=NT    4=53.74  5=8.15  6=4.31  7=4.38 #6,7
+#T1000/D1000, 1=NT   2=  3=   4=  5=  6=21.45  7=21.58 # 6,7
 
-method = '1'
+method = '3'
 np.random.seed(1)
 m1 = []
-train_points = 10000
+train_points = 3
 dimensions = 2
 iterations = 5
 
@@ -64,7 +68,7 @@ for i in range(0,iterations):
          np.fill_diagonal(k1, 1)
          # print(k1)
          big_kgd = gkernels.big_kgd('squared_exponential',kwidth,m1)
-         big_kdd = gkernels.big_kdd('squared_exponential',kwidth,m1)
+         # big_kdd = gkernels.big_kdd('squared_exponential',kwidth,m1)
          # print(big_kgd)
 
     if method=='4':
@@ -105,13 +109,10 @@ for i in range(0,iterations):
         np.fill_diagonal(k1, 1)
         # print(k1)
         for i in range(size[0]):
-            d = m1[:,:]-m1[i,:]
-            big_kgd_i = ((invsqkwidth * d).T * k1[i]).T
+            ldist = (invsqkwidth * (m1[:,:]-m1[i,:]))
+            big_kgd_i = ((ldist).T * k1[i]).T
             big_kgd[:,(size[1]*i):(size[1]+size[1]*i)] = big_kgd_i
         # print(big_kgd)
-
-
-######### COMBINATIONS KGD AND KDD ##############################
 
 # method 7 comes from method 5.
     if method=='7':
@@ -130,11 +131,11 @@ for i in range(0,iterations):
             ldist = (invkwidthsq * (m1[:,:]-m1[i,:]))
             k_gd = ldist*k[i,:].reshape(size[0],1)
             big_kgd[:,size[1]*i:size[1]+size[1]*i] = k_gd
-            for j in range(i,size[0]):
-                k_dd = (I_m*invkwidthsq-np.outer(ldist[j],ldist[j].T))*k[i,j]
-                big_kdd[i*size[1]:(i+1)*size[1],j*size[1]:(j+1)*size[1]] = k_dd
-                if j!=i:
-                    big_kdd[j*size[1]:(j+1)*size[1],i*size[1]:(i+1)*size[1]]= k_dd.T
+            # for j in range(i,size[0]):
+            #     k_dd = (I_m*invkwidthsq-np.outer(ldist[j],ldist[j].T))*k[i,j]
+            #     big_kdd[i*size[1]:(i+1)*size[1],j*size[1]:(j+1)*size[1]] = k_dd
+            #     if j!=i:
+            #         big_kdd[j*size[1]:(j+1)*size[1],i*size[1]:(i+1)*size[1]]= k_dd.T
         # print(big_kgd)
 
 # Method 8 same as 7 but using broadcast for bigkdd
