@@ -6,11 +6,19 @@ from scipy.spatial import distance
 # Method 1: broadcast, Method 2: for_train_loop, Method3: old for loops.
 # Method 4: broadcast+cdist
 
-method = '3'
+#T500/D100,    9=     10=      11=     12=
+#T100/D100,    9=     10=      11=     12=
+#T10/D1000,    9=     10=      11=     12=
+#T50/D1000,    9=     10=      11=     12=
+#T1000/D10,    9=     10=      11=     12=
+#T1000/D50,    9=     10=      11=     12=
+#T10000/D2,    9=     10=      11=     12=
+
+method = '1'
 np.random.seed(1)
 m1 = []
-train_points = 500
-dimensions = 100
+train_points = 10000
+dimensions = 2
 iterations = 5
 
 m1= 1.2*np.random.randint(5.0, size=(train_points,
@@ -102,6 +110,9 @@ for i in range(0,iterations):
             big_kgd[:,(size[1]*i):(size[1]+size[1]*i)] = big_kgd_i
         # print(big_kgd)
 
+
+######### COMBINATIONS KGD AND KDD ##############################
+
 # method 7 comes from method 5.
     if method=='7':
         # m1 = np.array([[0.0,1.5],[1.0,1.0],[2.0,1.0]])
@@ -146,6 +157,8 @@ for i in range(0,iterations):
             k_dd = ((I_m*invkwidthsq - (ldist[:,None,:]*ldist[:,:,None]))*(
             k[i,None,None].T)).reshape(-1,size[1])
             big_kdd[:,size[1]*i:size[1]+size[1]*i] = k_dd
+
+
 
 
     end = timer()
