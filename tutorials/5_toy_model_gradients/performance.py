@@ -6,7 +6,7 @@ from scipy.spatial import distance
 # Method 1: broadcast, Method 2: for_train_loop, Method3: old for loops.
 # Method 4: broadcast+cdist
 
-method = '7'
+method = '3'
 np.random.seed(1)
 m1 = []
 train_points = 500
@@ -56,6 +56,7 @@ for i in range(0,iterations):
          np.fill_diagonal(k1, 1)
          # print(k1)
          big_kgd = gkernels.big_kgd('squared_exponential',kwidth,m1)
+         big_kdd = gkernels.big_kdd('squared_exponential',kwidth,m1)
          # print(big_kgd)
 
     if method=='4':
@@ -124,6 +125,28 @@ for i in range(0,iterations):
                 if j!=i:
                     big_kdd[j*size[1]:(j+1)*size[1],i*size[1]:(i+1)*size[1]]= k_dd.T
         # print(big_kgd)
+
+# Method 8 same as 7 but using broadcast for bigkdd
+    if method=='8':
+        # m1 = np.array([[0.0,1.5],[1.0,1.0],[2.0,1.0]])
+        # kwidth = [2.0,2.0]
+        size = np.shape(m1)
+        big_kgd = np.zeros((size[0],size[0]*size[1]))
+        big_kdd = np.zeros((size[0]*size[1],size[0]*size[1]))
+        k = distance.pdist(m1 / kwidth, metric='sqeuclidean')
+        k = distance.squareform(np.exp(-.5 * k))
+        np.fill_diagonal(k, 1)
+        l = np.array(kwidth)
+        invkwidthsq = l**(-2)
+        I_m = np.identity(size[1])
+        for i in range(size[0]):
+            ldist = (invkwidthsq * (m1[:,:]-m1[i,:]))
+            k_gd = ldist*k[i,:].reshape(size[0],1)
+            big_kgd[:,size[1]*i:size[1]+size[1]*i] = k_gd
+            k_dd = ((I_m*invkwidthsq - (ldist[:,None,:]*ldist[:,:,None]))*(
+            k[i,None,None].T)).reshape(-1,size[1])
+            big_kdd[:,size[1]*i:size[1]+size[1]*i] = k_dd
+
 
     end = timer()
     time_one_loop = end-start
