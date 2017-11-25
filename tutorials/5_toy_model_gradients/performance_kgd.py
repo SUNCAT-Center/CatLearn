@@ -18,18 +18,21 @@ from scipy.spatial import distance
 #T1000/D500,1=103.7  2=98.06  3=NT    4=53.74  5=8.15  6=4.31  7=4.38 #6,7
 #T1000/D1000, 1=NT   2=  3=   4=  5=  6=21.45  7=21.58 # 6,7
 
-method = '7'
+method = '21'
+train_points = 10
+test_points = 200
+dimensions = 100
+iterations = 5
+
 np.random.seed(1)
 m1 = []
-train_points = 1000
-dimensions = 500
-iterations = 1
-
+m2 = []
 m1= 1.2*np.random.randint(5.0, size=(train_points,
 dimensions))
-
-
+m2= 2.3*np.random.randint(6.0, size=(test_points,
+dimensions))
 kwidth = np.zeros(np.shape(m1)[1])+2.0
+
 time=[]
 
 
@@ -176,7 +179,22 @@ for i in range(0,iterations):
             kgd_tilde_i = -((invsqkwidth * (m2[:,:]-m1[i,:])* k[i,
             :].reshape(size_m2[0],1)).reshape(1,size_m2[0]*size_m2[1]))
             kgd_tilde[i,:] = kgd_tilde_i
-        k = np.block([k, kgd_tilde])
+
+
+
+    if method=='21':
+        k = distance.cdist(m1 / kwidth, m2 / kwidth, metric='sqeuclidean')
+        k = np.exp(-.5 * k)
+        size_m1 = np.shape(m1)
+        size_m2 = np.shape(m2)
+        d = (m1[np.newaxis,:,:] - m2[:,np.newaxis,:])
+        invsqkwidth = 1/kwidth**2
+        sqd = np.sqrt(np.sum(invsqkwidth*d**2,axis=-1))
+        k1 = np.exp(-(sqd)**2/2)
+        kgd_tilde = ((invsqkwidth*d*k1[:,:,np.newaxis]).swapaxes(size_m1[1],
+        1).reshape(size_m2[0]*size_m2[1],size_m1[0])).T
+
+
 
 
     end = timer()

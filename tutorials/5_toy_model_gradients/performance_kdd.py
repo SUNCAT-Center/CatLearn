@@ -15,17 +15,17 @@ from scipy.spatial import distance
 #T10000/D2,    1=NA        2=546.0      3=12.44     4= 12.83 # 3,4
 
 method = '1'
-np.random.seed(1)
-m1 = []
 train_points = 1000
 dimensions = 500
 iterations = 5
 
+
+np.random.seed(1)
+m1 = []
 m1= 1.2*np.random.randint(5.0, size=(train_points,
 dimensions))
-
-
 kwidth = np.zeros(np.shape(m1)[1])+2.0
+
 time=[]
 
 
