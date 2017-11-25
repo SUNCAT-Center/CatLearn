@@ -18,12 +18,12 @@ from scipy.spatial import distance
 #T1000/D500,1=103.7  2=98.06  3=NT    4=53.74  5=8.15  6=4.31  7=4.38 #6,7
 #T1000/D1000, 1=NT   2=  3=   4=  5=  6=21.45  7=21.58 # 6,7
 
-method = '3'
+method = '7'
 np.random.seed(1)
 m1 = []
-train_points = 3
-dimensions = 2
-iterations = 5
+train_points = 1000
+dimensions = 500
+iterations = 1
 
 m1= 1.2*np.random.randint(5.0, size=(train_points,
 dimensions))
@@ -126,17 +126,17 @@ for i in range(0,iterations):
         np.fill_diagonal(k, 1)
         l = np.array(kwidth)
         invkwidthsq = l**(-2)
-        I_m = np.identity(size[1])
+        I_m = np.identity(size[1])*invkwidthsq
         for i in range(size[0]):
             ldist = (invkwidthsq * (m1[:,:]-m1[i,:]))
             k_gd = ldist*k[i,:].reshape(size[0],1)
             big_kgd[:,size[1]*i:size[1]+size[1]*i] = k_gd
             # for j in range(i,size[0]):
-            #     k_dd = (I_m*invkwidthsq-np.outer(ldist[j],ldist[j].T))*k[i,j]
+            #     k_dd = (I_m-np.outer(ldist[j],ldist[j].T))*k[i,j]
             #     big_kdd[i*size[1]:(i+1)*size[1],j*size[1]:(j+1)*size[1]] = k_dd
             #     if j!=i:
             #         big_kdd[j*size[1]:(j+1)*size[1],i*size[1]:(i+1)*size[1]]= k_dd.T
-        # print(big_kgd)
+        # print(big_kdd)
 
 # Method 8 same as 7 but using broadcast for bigkdd
     if method=='8':
@@ -155,11 +155,28 @@ for i in range(0,iterations):
             ldist = (invkwidthsq * (m1[:,:]-m1[i,:]))
             k_gd = ldist*k[i,:].reshape(size[0],1)
             big_kgd[:,size[1]*i:size[1]+size[1]*i] = k_gd
-            k_dd = ((I_m*invkwidthsq - (ldist[:,None,:]*ldist[:,:,None]))*(
-            k[i,None,None].T)).reshape(-1,size[1])
-            big_kdd[:,size[1]*i:size[1]+size[1]*i] = k_dd
+            # k_dd = ((I_m*invkwidthsq - (ldist[:,None,:]*ldist[:,:,None]))*(
+            # k[i,None,None].T)).reshape(-1,size[1])
+            # big_kdd[:,size[1]*i:size[1]+size[1]*i] = k_dd
 
 
+
+################################# TILDE #############
+
+    if method=='20':
+        # m1 = np.array([[0.0,1.5],[1.0,1.0],[2.0,1.0]])
+        # m2 = np.array([[1.1,2.3],[0.3,0.4]])
+        k = distance.cdist(m1 / kwidth, m2 / kwidth, metric='sqeuclidean')
+        k = np.exp(-.5 * k)
+        size_m1 = np.shape(m1)
+        size_m2 = np.shape(m2)
+        kgd_tilde = np.zeros((size_m1[0], size_m2[0] * size_m2[1]))
+        invsqkwidth = kwidth**(-2)
+        for i in range(size_m1[0]):
+            kgd_tilde_i = -((invsqkwidth * (m2[:,:]-m1[i,:])* k[i,
+            :].reshape(size_m2[0],1)).reshape(1,size_m2[0]*size_m2[1]))
+            kgd_tilde[i,:] = kgd_tilde_i
+        k = np.block([k, kgd_tilde])
 
 
     end = timer()

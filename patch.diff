@@ -1,0 +1,44 @@
+diff --git a/tutorials/5_toy_model_gradients/performance_kgd.py b/tutorials/5_toy_model_gradients/performance_kgd.py
+index d42315f..b3c1a5f 100644
+--- a/tutorials/5_toy_model_gradients/performance_kgd.py
++++ b/tutorials/5_toy_model_gradients/performance_kgd.py
+@@ -18,12 +18,12 @@ from scipy.spatial import distance
+ #T1000/D500,1=103.7  2=98.06  3=NT    4=53.74  5=8.15  6=4.31  7=4.38 #6,7
+ #T1000/D1000, 1=NT   2=  3=   4=  5=  6=21.45  7=21.58 # 6,7
+ 
+-method = '3'
++method = '7'
+ np.random.seed(1)
+ m1 = []
+ train_points = 3
+ dimensions = 2
+-iterations = 5
++iterations = 1
+ 
+ m1= 1.2*np.random.randint(5.0, size=(train_points,
+ dimensions))
+@@ -126,17 +126,17 @@ for i in range(0,iterations):
+         np.fill_diagonal(k, 1)
+         l = np.array(kwidth)
+         invkwidthsq = l**(-2)
+-        I_m = np.identity(size[1])
++        I_m = np.identity(size[1])*invkwidthsq
+         for i in range(size[0]):
+             ldist = (invkwidthsq * (m1[:,:]-m1[i,:]))
+             k_gd = ldist*k[i,:].reshape(size[0],1)
+             big_kgd[:,size[1]*i:size[1]+size[1]*i] = k_gd
+-            # for j in range(i,size[0]):
+-            #     k_dd = (I_m*invkwidthsq-np.outer(ldist[j],ldist[j].T))*k[i,j]
+-            #     big_kdd[i*size[1]:(i+1)*size[1],j*size[1]:(j+1)*size[1]] = k_dd
+-            #     if j!=i:
+-            #         big_kdd[j*size[1]:(j+1)*size[1],i*size[1]:(i+1)*size[1]]= k_dd.T
+-        # print(big_kgd)
++            for j in range(i,size[0]):
++                k_dd = (I_m-np.outer(ldist[j],ldist[j].T))*k[i,j]
++                big_kdd[i*size[1]:(i+1)*size[1],j*size[1]:(j+1)*size[1]] = k_dd
++                if j!=i:
++                    big_kdd[j*size[1]:(j+1)*size[1],i*size[1]:(i+1)*size[1]]= k_dd.T
++        # print(big_kdd)
+ 
+ # Method 8 same as 7 but using broadcast for bigkdd
+     if method=='8':
