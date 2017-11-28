@@ -21,6 +21,7 @@ StandardizeTargets = True
 # First derivative observations can be included.
 eval_gradients = True
 
+
 # A known underlying function in one dimension [y] and first derivative [dy].
 def afunc(x):
     """ Function [y] and first derivative [dy] """
