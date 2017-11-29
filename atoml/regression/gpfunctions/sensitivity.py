@@ -118,12 +118,14 @@ class SensitivityAnalysis(object):
         w = self.kernel_dict['k1']['width']
 
         # Calculate covariance.
-        cvm = get_covariance(kernel_dict=self.kernel_dict,
-                             matrix1=self.train_matrix,
-                             regularization=self.reg)
-        ktb = get_covariance(kernel_dict=self.kernel_dict,
-                             matrix1=self.train_matrix,
-                             regularization=self.reg)
+        cvm = get_covariance(
+            kernel_dict=self.kernel_dict, matrix1=self.train_matrix,
+            regularization=self.reg, log_scale=False
+            )
+        ktb = get_covariance(
+            kernel_dict=self.kernel_dict, matrix1=self.train_matrix,
+            regularization=self.reg, log_scale=False
+            )
 
         # Calculate weight estimates.
         cinv = np.linalg.inv(cvm)
@@ -146,11 +148,11 @@ class SensitivityAnalysis(object):
     def _get_opt_weights(self):
         """Function to get optimized kernel weights."""
         # Train the GP.
-        gp = GaussianProcess(train_fp=self.train_matrix,
-                             train_target=self.train_targets,
-                             kernel_dict=self.kernel_dict,
-                             regularization=self.reg,
-                             optimize_hyperparameters=True)
+        gp = GaussianProcess(
+            train_fp=self.train_matrix, train_target=self.train_targets,
+            kernel_dict=self.kernel_dict, regularization=self.reg,
+            optimize_hyperparameters=True, scale_data=True
+            )
 
         self.kernel_dict = gp.kernel_dict
         self.reg = gp.regularization
@@ -169,10 +171,10 @@ class SensitivityAnalysis(object):
         if self.test_targets is not None:
             ve = True
         # Test data.
-        pred = gp.predict(test_fp=self.test_matrix,
-                          test_target=self.test_targets,
-                          get_validation_error=ve,
-                          get_training_error=True)
+        pred = gp.predict(
+            test_fp=self.test_matrix, test_target=self.test_targets,
+            get_validation_error=ve, get_training_error=True
+            )
 
         print('{1} feature prediction ({0:.3f}):'.format(
             pred['validation_error']['rmse_average'],
