@@ -1,11 +1,14 @@
 """ This tutorial is intended to help you get familiar with using AtoML to set
 up a model and do predictions.
 
-First we set up a known underlying function in one dimension (including
-first derivative). Then, we pick some values to train.
+First we set up a known underlying function in one dimension.
+Then, we pick some values to train.
 Finally we will use AtoML to make predictions on some unseen fingerprint and
 benchmark those predictions against the known underlying function.
+In this toy model we show that one can improve the resulting estimates by
+including first derivative observations.
 """
+
 import numpy as np
 import matplotlib.pyplot as plt
 from atoml.preprocess.feature_preprocess import standardize
@@ -18,14 +21,13 @@ from atoml.utilities.cost_function import get_error
 StandardizeFeatures = True
 StandardizeTargets = True
 
-# First derivative observations can be included.
+# Set whether first derivative observations are included or not.
 eval_gradients = True
-number_of_iterations = 10
 
 # A known underlying function in one dimension [y] and first derivative [dy].
 def afunc(x):
     """ Function [y] and first derivative [dy] """
-    y =  3.0+np.sin(x)*np.cos(x)*np.exp(2*x)*x**-2*np.exp(-x)*np.cos(
+    y = 3.0+np.sin(x)*np.cos(x)*np.exp(2*x)*x**-2*np.exp(-x)*np.cos(
     x)*np.sin(x)
     dy =  (2 * np.exp(x)*np.cos(x)**3* np.sin(x))/x**2-(2*np.exp(x)* np.cos(
     x)**2* np.sin(x)**2)/x**3+(np.exp(x)*np.cos(x)**2 *np.sin(x)**2)/x**2-(
@@ -33,7 +35,7 @@ def afunc(x):
     return [y,dy]
 
 # Define initial and final state.
-train = np.array([[0.01],[5.9]])
+train = np.array([[0.01],[6.0]])
 
 # Define initial prediction parameters.
 reg = 0.01
@@ -41,12 +43,12 @@ w1 = 1.0  # Too large widths results in a biased model.
 scaling_exp = 1.0
 scaling_const = 1.0
 constant = 1.0
-scaling_linear = 1.0
 
 # Create figure.
 fig = plt.figure(figsize=(13.0, 6.0))
 
-# Loop over the iterations. In each iteration we add a new training point.
+# Times that we train the model, in each iteration we add a new training point.
+number_of_iterations = 10
 
 for iteration in range(1,number_of_iterations+1):
 
@@ -58,26 +60,25 @@ for iteration in range(1,number_of_iterations+1):
     target = np.array(afunc(train)[0])
 
     # Generate test datapoints x.
-    test_points = 150
+    test_points = 500
     test = np.linspace(0.1,6.0,test_points)
     test = np.reshape(test, (test_points, 1))
 
     # Make a copy of the original features and targets.
-
     org_train = train.copy()
     org_target = target.copy()
     org_test = test.copy()
 
-    # Standardization of the train, test and target data.
-
+    # Standardization of the features (train and test data)
     if StandardizeFeatures:
         feature_std = standardize(train_matrix=train,test_matrix=test)
         train, train_mean, train_std = feature_std['train'], feature_std['mean'], \
         feature_std['std']
         test = (test -train_mean)/train_std
-
     else:
         train_mean, train_std = 0.0, 1.0
+
+    # Standarization of the targets.
     if StandardizeTargets:
         target_std = target_standardize(target)
         target, target_mean, target_std = target_std['target'], target_std[
@@ -86,7 +87,6 @@ for iteration in range(1,number_of_iterations+1):
         target_mean, target_std = 0.0, 1.0
 
     # Call the underlying function to produce the gradients of the target values.
-
     if eval_gradients:
         gradients = []
         for i in org_train:
@@ -99,10 +99,11 @@ for iteration in range(1,number_of_iterations+1):
     # Gaussian Process.
 
     # Set up the prediction routine and optimize hyperparameters.
+    """" Note that in this example we used a combination of two kernels (squared
+    # exponential and constant kernels)."""
 
     kdict = {'k1': {'type': 'gaussian', 'width': w1, 'scaling': scaling_exp},
-    'k2': {'type': 'constant','const': constant, 'scaling': scaling_const},
-    'k3': {'type': 'linear', 'scaling': scaling_linear}}
+    'k2': {'type': 'constant','const': constant, 'scaling': scaling_const}}
 
     gp = GaussianProcess(kernel_dict=kdict, regularization=reg**2,
                          train_fp=train,
@@ -134,15 +135,18 @@ for iteration in range(1,number_of_iterations+1):
     error = get_error(prediction, afunc(test)[0])
     print('Gaussian linear regression prediction:', error['absolute_average'])
 
-    # A new training point is added following:
-    # 1st Calculate the gradients of the predicted function.
-    # 2nd Get the points were the gradients are below grad_prediction_interval
-    # 3rd For these points get the point which has the maximum uncertainty.
-    # 4th Add this "interesting" point to the list.
+
+    """" A new training point is added following:
+     Firstly, we calculate the gradients of the predicted function.
+     Secondly, we ask for the points which the value of their gradients are 
+     below grad_prediction_interval.
+     Thirdly, within the previous set of points we ask for the one which 
+     has the maximum uncertainty.
+     Finally, the "interesting" point is added to the list of training 
+     points."""
 
     grad_prediction = np.abs(np.gradient(prediction))
-    grad_prediction_interval = (np.max(grad_prediction)-np.min(
-    grad_prediction))/1e10
+    grad_prediction_interval = (np.max(grad_prediction)-np.min(grad_prediction))/1e10
     while not np.all(grad_prediction<grad_prediction_interval):
         grad_prediction_interval = grad_prediction_interval*10.0
     index = (np.linspace(1,len(prediction)/1,len(prediction/1))-1)/1
@@ -154,15 +158,15 @@ for iteration in range(1,number_of_iterations+1):
     new_train_point = np.reshape(new_train_point,(np.shape(new_train_point)[0],1))
     train = np.concatenate((org_train,new_train_point))
 
+
     # Update hyperarameters with the optimised ones after "n" iterations.
 
-    if iteration > 3:
+    if iteration > 5:
         reg = gp.regularization
         w1 = gp.kernel_dict['k1']['width']
         scaling_exp = gp.kernel_dict['k1']['scaling']
         constant = gp.kernel_dict['k2']['const']
         scaling_const = gp.kernel_dict['k2']['scaling']
-        scaling_linear = gp.kernel_dict['k3']['scaling']
 
     # Plots.
 

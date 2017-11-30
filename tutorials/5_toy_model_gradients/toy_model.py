@@ -1,8 +1,8 @@
-""" This tutorial is intended to help you get familiar with using AtoML to set
-up a model and do predictions.
+""" This tutorial is intended to show that the resulting estimates are
+improved by including first derivative observations.
 
-First we set up a known underlying function in one dimension (including
-first derivative). Then, we pick some values to train.
+First we set up a known underlying function in one dimension.
+Then, we pick some values to train.
 Finally we will use AtoML to make predictions on some unseen fingerprint and
 benchmark those predictions against the known underlying function.
 """
@@ -18,49 +18,49 @@ from atoml.utilities.cost_function import get_error
 StandardizeFeatures = True
 StandardizeTargets = True
 
-# First derivative observations can be included.
+# Set whether first derivative observations are included or not.
 eval_gradients = True
 
-
-# A known underlying function in one dimension [y] and first derivative [dy].
+# A known underlying function in one dimension (y) and first derivative (dy).
 def afunc(x):
-    """ Function [y] and first derivative [dy] """
-    y =  np.sin(x)*np.cos(x)*np.exp(2*x)*x**-2*np.exp(-x)*np.cos(x)*np.sin(x)
-    dy =  (2 * np.exp(x)*np.cos(x)**3* np.sin(x))/x**2-(2*np.exp(x)* np.cos(
-    x)**2* np.sin(x)**2)/x**3+(np.exp(x)*np.cos(x)**2 *np.sin(x)**2)/x**2-(
-    2*np.exp(x)*np.cos(x)*np.sin(x)**3)/x**2
+    """ Function (y) and first derivative (dy) """
+    y =  (x-4) * np.sin(x)
+    dy =  (x-4) * np.cos(x) + np.sin(x)
     return [y,dy]
 
 # Setting up data.
 
 # A number of training points in x.
+train_points = 6
+
 # Each element in the list train can be referred to as a fingerprint.
-train = np.array([[1.0], [2.0], [3.0], [4.0]])
+np.random.seed(104)
+train =  2*np.random.randn(train_points, 1) + 3.0
+train = np.concatenate((train,[[0.0],[7.0]]))
 
 # Call the underlying function to produce the target values.
 target = np.array(afunc(train)[0])
 
 # Generate test datapoints x.
-test_points = 100
-test = np.linspace(0.1,6.0,test_points)
+test_points = 500
+test = np.linspace(0.0,7.0,test_points)
 test = np.reshape(test, (test_points, 1))
 
 # Make a copy of the original features and targets.
-
 org_train = train.copy()
 org_target = target.copy()
 org_test = test.copy()
 
-# Standardization of the train, test and target data.
-
+# Standardization of the features (train and test data)
 if StandardizeFeatures:
     feature_std = standardize(train_matrix=train,test_matrix=test)
     train, train_mean, train_std = feature_std['train'], feature_std['mean'], \
     feature_std['std']
     test = (test -train_mean)/train_std
-
 else:
     train_mean, train_std = 0.0, 1.0
+
+# Standarization of the targets.
 if StandardizeTargets:
     target_std = target_standardize(target)
     target, target_mean, target_std = target_std['target'], target_std[
@@ -69,7 +69,6 @@ else:
     target_mean, target_std = 0.0, 1.0
 
 # Call the underlying function to produce the gradients of the target values.
-
 if eval_gradients:
     gradients = []
     for i in org_train:
@@ -81,15 +80,18 @@ if eval_gradients:
 
 # Gaussian Process.
 
-# Define prediction parameters.
+# Define initial prediction parameters.
 
 sdt1 = 0.01 # Regularisation parameter.
-w1 = 1.5  # Length scale parameter for k1 (squared exponential kernel).
-scaling = 2.0 # Scaling parameter for k1 (squared exponential kernel).
+w1 = 1.0  # Length scale parameter.
+scaling = 1.0 # Scaling parameter.
 
 # Set up the prediction routine and optimize hyperparameters.
+# Note that the default algorithm is L-BFGS-B but one could use also TNC.
+# Note also that global optimisation using basinhopping can be activated when
+# setting the flag global_opt=True.
 
-kdict = {'k1': {'type': 'gaussian', 'width': w1, 'scaling': 1.0}}
+kdict = {'k1': {'type': 'gaussian', 'width': w1, 'scaling': scaling}}
 
 gp = GaussianProcess(kernel_dict=kdict, regularization=sdt1**2,
                      train_fp=train,
@@ -122,10 +124,9 @@ error = get_error(prediction, afunc(test)[0])
 print('Gaussian linear regression prediction:', error['absolute_average'])
 
 # Plotting.
-
 # Store the known underlying function for plotting.
 
-linex = np.linspace(0.1,6.0,test_points)
+linex = np.linspace(0.0,7.0,test_points)
 linex = np.reshape(linex, (1,np.shape(linex)[0]))
 linex = np.sort(linex)
 liney = []
@@ -140,14 +141,14 @@ ax.plot(linex[0], liney[0], '-', lw=1, color='black')
 ax.plot(org_train, org_target, 'o', alpha=0.2, color='black')
 ax.plot(org_test, prediction, 'g-', lw=1, alpha=0.4)
 ax.fill_between(org_test[:,0], upper, lower, interpolate=True,
-color='green', alpha=0.2)
-# plt.title('GP. \n w: {0:.3f}, r: {1:.3f}'.format(
-#     gp.kernel_dict['k1']['width'][0], np.sqrt(gp.regularization)))
+color='red', alpha=0.2)
+plt.title('GP. \n w: {0:.3f}, r: {1:.3f}'.format(
+    gp.kernel_dict['k1']['width'][0], np.sqrt(gp.regularization)))
 plt.xlabel('Descriptor')
 plt.ylabel('Response')
 plt.axis('tight')
 
-# Gradients
+# Plot gradients (when included).
 
 if eval_gradients==True:
     size_bar_gradients = (np.abs(np.max(linex) - np.min(linex))/2.0)/25.0

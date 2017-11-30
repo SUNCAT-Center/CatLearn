@@ -18,12 +18,10 @@ from atoml.utilities.cost_function import get_error
 StandardizeFeatures = True
 StandardizeTargets = True
 
-# First derivative observations can be included.
+# Set whether first derivative observations are included or not.
 eval_gradients = True
-train_points = 5 # Number of training points.
-test_points = 25 # Length of the grid test points (nxn).
 
-# A known underlying function in 2-dimension [z] and first derivatives [dx,dy].
+# A known underlying 2D function (z) and first derivatives (dx,dy).
 def afunc(x,y):
     """S FUNCTION"""
     z = -(12.0)*(x**2.0) + (1.0/3.0)*(x**4.0)
@@ -34,9 +32,10 @@ def afunc(x,y):
 
 # Setting up data.
 
-# A number of training points in x.
-# Each element in the matrix train can be referred to as a fingerprint.
+# A number of training points in x and y.
+train_points = 5 # Number of training points.
 
+# Each element in the matrix train can be referred to as a fingerprint.
 train = []
 trainx = np.linspace(-5.0, 5.0, train_points)
 trainy = np.linspace(-5.0, 5.0, train_points)
@@ -47,15 +46,15 @@ for i in range(len(trainx)):
 train = np.array(train)
 train = np.append(train,([[0.0,0.0]]),axis=0)
 
-
 # Call the underlying function to produce the target values.
 target = []
 for i in train:
     target.append([afunc(i[0],i[1])[0]])
 target = np.array(target)
 
+# Generate test datapoints in x and y.
+test_points = 50 # Length of the grid test points (nxn).
 
-# Generate test datapoints x.
 test = []
 testx = np.linspace(-5.0, 5.0, test_points)
 testy = np.linspace(-5.0, 5.0, test_points)
@@ -67,21 +66,19 @@ test = np.array(test)
 
 
 # Make a copy of the original features and targets.
-
 org_train = train.copy()
 org_target = target.copy()
 org_test = test.copy()
 
 # Standardization of the train, test and target data.
-
 if StandardizeFeatures:
     feature_std = standardize(train_matrix=train,test_matrix=test)
     train, train_mean, train_std = feature_std['train'], feature_std['mean'], \
     feature_std['std']
     test = (test -train_mean)/train_std
-
 else:
     train_mean, train_std = 0.0, 1.0
+
 if StandardizeTargets:
     target_std = target_standardize(target)
     target, target_mean, target_std = target_std['target'], target_std[
@@ -90,7 +87,6 @@ else:
     target_mean, target_std = 0.0, 1.0
 
 # Call the underlying function to produce the gradients of the target values.
-
 if eval_gradients:
     gradients = []
     for i in org_train:
@@ -106,26 +102,20 @@ if eval_gradients:
     y_tilde = np.append(target, gradients)
     target = np.reshape(y_tilde,(np.shape(y_tilde)[0],1))
 
-
 # Gaussian Process.
 
 # Define prediction parameters.
 sdt1 = 0.01
-w1 = 2.0  # Too large widths results in a biased model.
+w1 = 1.0  # Too large widths results in a biased model.
 scaling = 1.0
 
-
-# Set up the prediction routine and optimize hyperparameters.
-# kdict = {'k1': {'type': 'gaussian', 'width': w1, 'scaling': scaling}}
-
 kdict = {'k1': {'type': 'gaussian', 'width': w1, 'scaling': scaling}}
-
 
 gp = GaussianProcess(kernel_dict=kdict, regularization=sdt1**2,
                      train_fp=train,
                      train_target=target,
                      optimize_hyperparameters=True,
-                     eval_gradients=eval_gradients, algomin='L-BFGS-B',
+                     eval_gradients=eval_gradients, algomin='TNC',
                      global_opt=False,scale_optimizer=False)
 print('Optimized kernel:', gp.kernel_dict)
 
@@ -134,7 +124,6 @@ pred = gp.predict(test_fp=test, uncertainty=True)
 prediction = np.array(pred['prediction'][:,0])
 
 # Calculate the uncertainty of the predictions.
-
 uncertainty = np.array(pred['uncertainty'])
 
 # Get confidence interval on predictions.
@@ -148,7 +137,6 @@ if StandardizeTargets:
     upper = (upper*target_std) + target_mean
     lower = (lower*target_std) + target_mean
 
-
 interval = upper - prediction
 
 # Plots.
@@ -156,20 +144,22 @@ interval = upper - prediction
 plt.figure(figsize=(11.0, 5.0))
 
 # Contour plot for real function.
-
 plt.subplot(131)
+
 x = np.linspace(-5.0, 5.0, test_points)
 y = np.linspace(-5.0, 5.0, test_points)
 X,Y = np.meshgrid(x, y)
 plt.contourf(X, Y, afunc(X, Y)[0]-np.min(afunc(X, Y)[0]), 6, alpha=.70, cmap='PRGn')
-plt.colorbar(orientation="horizontal", pad=0.1)
-# plt.clim(np.min(afunc(X,Y)[0]-np.min(afunc(X, Y)[0])),np.max(afunc(X,Y)[0]))
+cbar = plt.colorbar(orientation="horizontal", pad=0.15)
+cbar.set_label('Response', rotation=0)
 C = plt.contour(X, Y, afunc(X, Y)[0]-np.min(afunc(X, Y)[0]), 6, colors='black', linewidths=1)
 plt.clabel(C, inline=1, fontsize=9)
 plt.title('Real function',fontsize=10)
+plt.xlabel('Descriptor 1')
+plt.ylabel('Descriptor 2')
+
 
 # Contour plot for predicted function.
-
 plt.subplot(132)
 
 x = []
@@ -181,34 +171,37 @@ for i in range(len(test)):
     t = org_test[i][1]
     t = y.append(t)
 
-
 zi = plt.mlab.griddata(x, y, prediction-np.min(prediction), testx, testy,
 interp='linear')
-
 plt.contourf(testx, testy, zi, 6, alpha=.70, cmap='PRGn')
-plt.colorbar(orientation="horizontal", pad=0.1)
+cbar = plt.colorbar(orientation="horizontal", pad=0.15)
+cbar.set_label('Response', rotation=0)
 C = plt.contour(testx, testy, zi, 6, colors='k',linewidths=1.0)
 plt.clabel(C, inline=0.1, fontsize=9)
 
-# Print training points positions
+# Print training points positions (circles)
 plt.scatter(org_train[:,0],org_train[:,1],marker='o',s=5.0,c='black',
 edgecolors='black',alpha=0.8)
 plt.xlim(-5,5)
 plt.ylim(-5,5)
-plt.title('Predicted function',fontsize=10)
+plt.title('GP predicted function',fontsize=10)
+plt.xlabel('Descriptor 1')
 
 
-# Plot Uncertainty
-
+# Plot uncertainty
 plt.subplot(133)
 zi = plt.mlab.griddata(x, y, interval, testx, testy,
 interp='linear')
-
+plt.title('GP uncertainty',fontsize=10)
 plt.contourf(testx, testy, zi, 6, alpha=.70, cmap='Reds',vmin=0,
 vmax=np.max(afunc(X,Y)[0]))
-plt.colorbar(orientation="horizontal", pad=0.1)
+cbar = plt.colorbar(orientation="horizontal", pad=0.15)
+cbar.set_label('Uncertainty', rotation=0)
 C = plt.contour(testx, testy, zi, 6, colors='k',linewidths=1.0)
 plt.clabel(C, inline=0.1, fontsize=9)
+plt.xlabel('Descriptor 1')
+
+
 
 
 plt.show()

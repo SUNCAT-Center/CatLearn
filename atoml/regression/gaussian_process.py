@@ -18,7 +18,7 @@ class GaussianProcess(object):
     """Gaussian processes functions for the machine learning."""
 
     def __init__(self, train_fp, train_target, kernel_dict,
-                 regularization=None, regularization_bounds=(1e-4, 1e2),
+                 regularization=None, regularization_bounds=(1e-3, 1e2),
                  optimize_hyperparameters=False, scale_optimizer=False,
                  eval_gradients=False, algomin='L-BFGS-B', global_opt=False):
         """Gaussian processes setup.
@@ -242,7 +242,7 @@ class GaussianProcess(object):
         self.cinv = np.linalg.inv(cvm)
 
     def update_gp(self, train_fp=None, train_target=None, kernel_dict=None,
-                  scale_optimizer=False, regularization_bounds=(1e-4, 1e2)):
+                  scale_optimizer=False, regularization_bounds=(1e-3, 1e2)):
         """Potentially optimize the full Gaussian Process again.
 
         This alows for the definition of a new kernel as a result of changing

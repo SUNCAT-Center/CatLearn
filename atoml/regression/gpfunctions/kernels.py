@@ -1,7 +1,6 @@
 """ Contains kernel functions and gradients of kernels. """
 import numpy as np
 from scipy.spatial import distance
-from timeit import default_timer as timer
 
 
 def kdict2list(kdict, N_D=None):
@@ -263,6 +262,7 @@ def gaussian_kernel(theta, log_scale, m1, m2=None, eval_gradients=False):
                 kgd_tilde[i,:] = kgd_tilde_i
             return np.block([k, kgd_tilde])
 
+
 def sqe_kernel(theta, log_scale, m1, m2=None, eval_gradients=False):
     """Return covariance between data m1 & m2 with a gaussian kernel.
 
@@ -277,7 +277,6 @@ def sqe_kernel(theta, log_scale, m1, m2=None, eval_gradients=False):
     m2 : list
         A list of the training fingerprint vectors.
     """
-    kernel_type = 'sqe'
     kwidth = theta
     if log_scale:
         kwidth = np.exp(kwidth)
@@ -297,6 +296,7 @@ def sqe_kernel(theta, log_scale, m1, m2=None, eval_gradients=False):
         'implemented'
         raise NotImplementedError(msg)
 
+
 def scaled_sqe_kernel(theta, log_scale, m1, m2=None, eval_gradients=False):
     """Return covariance between data m1 & m2 with a gaussian kernel.
 
@@ -311,7 +311,6 @@ def scaled_sqe_kernel(theta, log_scale, m1, m2=None, eval_gradients=False):
     m2 : list
         A list of the training fingerprint vectors.
     """
-    kernel_type = 'scaled_sqe'
     N_D = len(theta) / 2
     scaling = np.vstack(theta[:N_D])
     kwidth = np.vstack(theta[N_D:])
@@ -344,7 +343,6 @@ def AA_kernel(theta, log_scale, m1, m2=None, eval_gradients=False):
     m2 : list
         A list of the training fingerprint vectors.
     """
-    kernel_type = 'AA'
     l = theta[0]
     c = np.vstack(theta[1:])
     if log_scale:
@@ -381,7 +379,6 @@ def linear_kernel(theta, log_scale, m1, m2=None, eval_gradients=False):
     m2 : list or None
         A list of the training fingerprint vectors.
     """
-    kernel_type = 'linear'
     kwidth = theta
     if log_scale:
         kwidth = np.exp(kwidth)
@@ -400,7 +397,6 @@ def linear_kernel(theta, log_scale, m1, m2=None, eval_gradients=False):
             return np.block([[np.inner(m1, m2), np.tile(m1,len(m2))]])
 
 
-
 def quadratic_kernel(theta, log_scale, m1, m2=None, eval_gradients=False):
     """Return covariance between data m1 & m2 with a quadratic kernel.
 
@@ -415,7 +411,6 @@ def quadratic_kernel(theta, log_scale, m1, m2=None, eval_gradients=False):
     m2 : list or None
         A list of the training fingerprint vectors.
     """
-    kernel_type = 'quadratic'
     slope = theta[0]
     degree = theta[1]
     if log_scale:
@@ -453,7 +448,6 @@ def laplacian_kernel(theta, log_scale, m1, m2=None, eval_gradients=False):
     m2 : list or None
         A list of the training fingerprint vectors.
     """
-    kernel_type = 'laplacian'
     if log_scale:
         theta = np.exp(theta)
 
