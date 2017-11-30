@@ -112,9 +112,17 @@ if eval_gradients:
 # Define prediction parameters.
 sdt1 = 0.01
 w1 = 2.0  # Too large widths results in a biased model.
+scaling = 1.0
+constant = 1.0
+scaling2 = 1.0
 
 # Set up the prediction routine and optimize hyperparameters.
-kdict = {'k1': {'type': 'gaussian', 'width': w1, 'scaling': 1.0}}
+# kdict = {'k1': {'type': 'gaussian', 'width': w1, 'scaling': scaling}}
+
+kdict = {'k1': {'type': 'gaussian', 'width': w1, 'scaling': scaling},
+'k2': {'type': 'constant','const': constant, 'scaling': scaling2}}
+
+
 
 gp = GaussianProcess(kernel_dict=kdict, regularization=sdt1**2,
                      train_fp=train,

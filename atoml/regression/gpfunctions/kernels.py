@@ -181,21 +181,22 @@ def list2kdict(hyperparameters, kernel_dict):
 
 
 def constant_kernel(theta, log_scale, m1, m2=None, eval_gradients=False):
-    kernel_type = 'constant'
     if log_scale:
         theta = np.exp(theta)
-
     if eval_gradients == False:
         if m2 is None:
             m2 = m1
         return np.ones([len(m1), len(m2)]) * theta
     if eval_gradients == True:
+        size_m1 = np.shape(m1)
         if m2 is None:
-            k = gkernels.bigk_tilde(kernel_type,theta, m1)
-            return k
+            k = np.zeros((size_m1[0]+size_m1[0]*size_m1[1],size_m1[0]+size_m1[0]*size_m1[1]))
+            k[0:size_m1[0],0:size_m1[0]] = np.ones([len(m1), len(m1)]) * theta
         else:
-            k = gkernels.k_tilde(kernel_type,theta, m1, m2)
-            return k
+            size_m2 = np.shape(m2)
+            k = np.zeros((size_m1[0],size_m2[0]+size_m2[0]*size_m2[1]))
+            k[0:size_m1[0],0:size_m2[0]] = np.ones([size_m1[0],size_m2[0]]) * theta
+        return k
 
 
 def gaussian_kernel(theta, log_scale, m1, m2=None, eval_gradients=False):
@@ -214,9 +215,7 @@ def gaussian_kernel(theta, log_scale, m1, m2=None, eval_gradients=False):
     m2 : list
         A list of the training fingerprint vectors.
     """
-    kernel_type = 'squared_exponential'
-    kwidth = theta
-    kwidth = np.array(kwidth)
+    kwidth = np.array(theta)
     if log_scale:
         kwidth = np.exp(kwidth)
     if m2 is None:
@@ -224,8 +223,6 @@ def gaussian_kernel(theta, log_scale, m1, m2=None, eval_gradients=False):
         k = distance.squareform(np.exp(-.5 * k))
         np.fill_diagonal(k, 1)
         if eval_gradients == True:
-            # m1 = np.array([[0.0,1.5],[1.0,1.0],[2.0,1.0]])
-            # kwidth = [2.0,2.0]
             size = np.shape(m1)
             big_kgd = np.zeros((size[0], size[0] * size[1]))
             big_kdd = np.zeros((size[0] * size[1], size[0] * size[1]))
@@ -233,18 +230,20 @@ def gaussian_kernel(theta, log_scale, m1, m2=None, eval_gradients=False):
             I_m = np.identity(size[1]) * invsqkwidth
             for i in range(size[0]):
                 ldist = (invsqkwidth * (m1[:,:]-m1[i,:]))
-                k_gd = ldist * k[i,:].reshape(size[0],1)
-                big_kgd[:,size[1]*i:size[1]+size[1]*i] = k_gd
-                for j in range(i, size[0]):
-                    k_dd = (I_m - np.outer(ldist[j], ldist[j].T)) * k[i,j]
-                    big_kdd[i*size[1]:(i+1)*size[1],j*size[1]:(j+1)*size[1]] = k_dd
-                    if j!=i:
-                        big_kdd[j*size[1]:(j+1)*size[1],i*size[1]:(i+1)*size[1]]= k_dd.T
+                big_kgd_i = ((ldist).T * k[i]).T
+                big_kgd[:,(size[1]*i):(size[1]+size[1]*i)] = big_kgd_i
+                if size[1]<=30: # Broadcasting requires large memory.
+                    k_dd = ((I_m - (ldist[:,None,:]*ldist[:,:,None]))*(k[i,None,None].T)).reshape(-1,size[1])
+                    big_kdd[:,size[1]*i:size[1]+size[1]*i] = k_dd
+                if size[1]>30: # Loop when the number of features is large.
+                    for j in range(i, size[0]):
+                        k_dd = (I_m - np.outer(ldist[j], ldist[j].T)) * k[i,j]
+                        big_kdd[i*size[1]:(i+1)*size[1],j*size[1]:(j+1)*size[1]] = k_dd
+                        if j!=i:
+                            big_kdd[j*size[1]:(j+1)*size[1],i*size[1]:(i+1)*size[1]]= k_dd.T
             k = np.block([[k, big_kgd], [np.transpose(big_kgd), big_kdd]])
         return k
     else:
-        # m1 = np.array([[0.0,1.5],[1.0,1.0],[2.0,1.0]])
-        # m2 = np.array([[1.1,2.3],[0.3,0.4]])
         k = distance.cdist(m1 / kwidth, m2 / kwidth, metric='sqeuclidean')
         k = np.exp(-.5 * k)
         if eval_gradients == True:
@@ -389,11 +388,11 @@ def linear_kernel(theta, log_scale, m1, m2=None, eval_gradients=False):
 
     if eval_gradients == True:
         if m2 is None:
-            k = gkernels.bigk_tilde(kernel_type,kwidth, m1)
-            return k
+            return np.block([[np.inner(m1, m1), np.tile(m1,len(m1))],
+            [np.transpose(np.tile(m1,len(m1))), np.ones([np.shape(m1)[
+            0]*np.shape(m1)[1],np.shape(m1)[0]*np.shape(m1)[1]])]])
         else:
-            k = gkernels.k_tilde(kernel_type,kwidth, m1, m2)
-            return k
+            return np.block([[np.inner(m1, m2), np.tile(m1,len(m2))]])
 
 
 

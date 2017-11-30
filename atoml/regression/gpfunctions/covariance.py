@@ -54,11 +54,6 @@ def get_covariance(kernel_dict, log_scale, matrix1, matrix2=None,
             scaling = np.exp(scaling)
 
         # Get mapping from kernel functions.
-        # k = eval('ak.' + str(ktype) +
-        #                           '_kernel(m1=matrix1, m2=matrix2,' +
-        #                           ' theta=hyperparameters, '
-        #                           '' ' log_scale=log_scale, '
-        #                           'eval_gradients=eval_gradients)')
         k = eval('ak.{}_kernel(m1=matrix1, m2=matrix2, \
                  theta=hyperparameters,eval_gradients=eval_gradients, log_scale=log_scale)'.format(ktype))
 

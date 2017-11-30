@@ -3,11 +3,14 @@ from atoml.regression.gpfunctions.gkernels import gkernels as gkernels
 from timeit import default_timer as timer
 from scipy.spatial import distance
 
+# Test the performance of the construction of Kgd (train/train).
+# Returns elapsed time for each iteration, average and fastest iteration times.
+
 
 method = '1'
-train_points = 200
+train_points = 500
 test_points = 1
-dimensions = 200
+dimensions = 1000
 iterations = 1
 
 np.random.seed(1)
@@ -103,6 +106,22 @@ for i in range(0,iterations):
             big_kgd[:,(size[1]*i):(size[1]+size[1]*i)] = big_kgd_i
         # print(big_kgd)
 
+# method 6 p
+    if method=='6p':
+        size = np.shape(m1)
+        big_kgdT = np.zeros((size[0]*size[1],size[0]))
+        invkwidth = 1/kwidth
+        invsqkwidth = invkwidth**2
+        k1 = distance.pdist(m1 * invkwidth, metric='sqeuclidean')
+        k1 = distance.squareform(np.exp(-.5 * k1))
+        np.fill_diagonal(k1, 1)
+        for i in range(size[0]):
+            ldist = (invsqkwidth * (m1[:,:]-m1[i,:]))
+            big_kgd_i = k1[i] * ldist.T
+            big_kgdT[(size[1]*i):(size[1]+size[1]*i),:] = big_kgd_i
+        #big_kgd = big_kgdT.T
+        # print(big_kgd)
+
 # method 7 comes from method 5.
     if method=='7':
         # m1 = np.array([[0.0,1.5],[1.0,1.0],[2.0,1.0]])
@@ -167,7 +186,6 @@ for i in range(0,iterations):
             kgd_tilde[i,:] = kgd_tilde_i
 
 
-
     if method=='21':
         k = distance.cdist(m1 / kwidth, m2 / kwidth, metric='sqeuclidean')
         k = np.exp(-.5 * k)
@@ -179,8 +197,6 @@ for i in range(0,iterations):
         k1 = np.exp(-(sqd)**2/2)
         kgd_tilde = ((invsqkwidth*d*k1[:,:,np.newaxis]).swapaxes(size_m1[1],
         1).reshape(size_m2[0]*size_m2[1],size_m1[0])).T
-
-
 
 
     end = timer()

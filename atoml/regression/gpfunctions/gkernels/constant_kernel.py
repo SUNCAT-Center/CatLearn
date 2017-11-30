@@ -11,12 +11,12 @@ def kernel_k(l, xm, xn):
 
 
 def kernel_kgd(l, xm, xn):
-    kgd = 1.0
+    kgd = 0.0
     return kgd
 
 
 def kernel_kdd(l, xm, xn):
-    kdd = np.ones((len(xm),len(xm)))
+    kdd = np.zeros((len(xm),len(xm)))
     return kdd
 
 

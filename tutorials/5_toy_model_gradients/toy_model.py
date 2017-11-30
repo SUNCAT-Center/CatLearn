@@ -82,23 +82,30 @@ if eval_gradients:
 # Gaussian Process.
 
 # Define prediction parameters.
-sdt1 = 0.01
-w1 = 1.0  # Too large widths results in a biased model.
+
+sdt1 = 0.01 # Regularisation parameter.
+w1 = 1.5  # Length scale parameter for k1 (squared exponential kernel).
+scaling = 2.0 # Scaling parameter for k1 (squared exponential kernel).
+constant = 1.5 # Constant parameter in k2 (constant kernel).
+scaling_const = 1.0 # Scaling parameter in k2 (constant kernel).
+scaling_linear = 1.0 # Scaling parameter in k3 (linear kernel)
 
 # Set up the prediction routine and optimize hyperparameters.
-kdict = {'k1': {'type': 'gaussian', 'width': [w1], 'scaling': 1.0}}
 
-# kdict = {'k1': {'type': 'gaussian', 'width': [w1], 'scaling': 1.0}, 'k2': {
-# 'type': 'linear', 'scaling': 1.0}}
+# kdict = {'k1': {'type': 'gaussian', 'width': w1, 'scaling': 1.0}}
 
-# kdict = {'k1': {'type': 'gaussian', 'width': [w1], 'scaling': 1.0}, 'k2': {
-# 'type': 'constant','const': 1.0, 'scaling': 1.0}}
+kdict = {'k1': {'type': 'gaussian', 'width': w1, 'scaling': scaling},
+'k2': {'type': 'constant','const': constant, 'scaling': scaling_const}}
+
+# kdict = {'k1': {'type': 'gaussian', 'width': w1, 'scaling': scaling}, 'k3': {
+# 'type': 'linear', 'scaling': scaling_linear}}
+
 
 gp = GaussianProcess(kernel_dict=kdict, regularization=sdt1**2,
                      train_fp=train,
                      train_target=target,
                      optimize_hyperparameters=True,
-                     eval_gradients=eval_gradients, algomin='TNC',
+                     eval_gradients=eval_gradients, algomin='L-BFGS-B',
                      global_opt=False)
 print('Optimized kernel:', gp.kernel_dict)
 

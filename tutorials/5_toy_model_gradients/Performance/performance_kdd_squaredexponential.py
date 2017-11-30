@@ -3,37 +3,25 @@ from atoml.regression.gpfunctions.gkernels import gkernels as gkernels
 from timeit import default_timer as timer
 from scipy.spatial import distance
 
-# TEST METHODS FOR BIG KDD
+# Test the performance of the construction of Kdd (train/train).
+# Returns elapsed time for each iteration, average and fastest iteration times.
 
-#T1000/500,    1=NA        2=40.1       3=63.28     4=40.00  # 4,2,3
-#T500/D100,    1=31.18     2=26.15      3=37.50     4=39.10  # 2,1,3,4
-#T100/D100,    1=0.819     2=0.819      3=1.12      4= 1.10  # 2,1,3,4
-#T50/D1000,    1=37.92     2=36.31      3=77.79     4= 80.0  # 2,1
-#T10/D1000,    1=1.31      2=1.146      3=1.80      4= 1.97  # 2,1,3,4
-#T1000/D50,    1=53.84     2=33.05      3=41.39     4= 39.99 # 2,4,3
-#T1000/D10,    1=23.69     2=6.38       3=0.99      4= 0.94  # 3,4
-#T10000/D2,    1=NA        2=546.0      3=12.44     4= 12.83 # 3,4
-
-method = '1'
-train_points = 1000
-dimensions = 500
-iterations = 5
+method = 'i' # Methods 1,2,3,4 and i (combination of methods 2 and 3).
+train_points = 1000 # Number of training points
+dimensions = 10 # Dimensions of the training points
+iterations = 1 # Number of iterations for average time.
 
 
-np.random.seed(1)
+np.random.seed(1) # Random seed.
 m1 = []
-m1= 1.2*np.random.randint(5.0, size=(train_points,
-dimensions))
-kwidth = np.zeros(np.shape(m1)[1])+2.0
+m1= 1.2*np.random.randint(5.0, size=(train_points,dimensions)) # Train
+kwidth = np.zeros(np.shape(m1)[1])+2.0 # Length scale.
 
 time=[]
 
-
-for i in range(0,iterations):
+for loop in range(0,iterations):
     start=timer()
-    loop_number = i
-
-
+    loop_number = loop
 
     if method=='1':
          k1 = distance.pdist(m1 / kwidth, metric='sqeuclidean')
@@ -77,9 +65,8 @@ for i in range(0,iterations):
             big_kdd[:,size[1]*i:size[1]+size[1]*i] = k_dd
         # print(big_kdd)
 
+
     if method=='4':
-        # m1 = np.array([[0.0,1.5],[1.0,1.0],[2.0,1.0]])
-        # kwidth = [2.0,2.0]
         size = np.shape(m1)
         big_kdd = np.zeros((size[0]*size[1],size[0]*size[1]))
         k = distance.pdist(m1 / kwidth, metric='sqeuclidean')
@@ -95,6 +82,30 @@ for i in range(0,iterations):
             big_kdd[:,size[1]*i:size[1]+size[1]*i] = k_dd
         # print(big_kdd)
 
+
+    if method=='i':
+        k = distance.pdist(m1 / kwidth, metric='sqeuclidean')
+        k = distance.squareform(np.exp(-.5 * k))
+        np.fill_diagonal(k, 1)
+        size = np.shape(m1)
+        big_kgd = np.zeros((size[0], size[0] * size[1]))
+        big_kdd = np.zeros((size[0] * size[1], size[0] * size[1]))
+        invsqkwidth = kwidth**(-2)
+        I_m = np.identity(size[1]) * invsqkwidth
+        for i in range(size[0]):
+            ldist = (invsqkwidth * (m1[:,:]-m1[i,:]))
+            # big_kgd_i = ((ldist).T * k[i]).T
+            # big_kgd[:,(size[1]*i):(size[1]+size[1]*i)] = big_kgd_i
+            if size[1]<=30: # (Method 3) Broadcasting requires large memory.
+                k_dd = ((I_m - (ldist[:,None,:]*ldist[:,:,None]))*(k[i,None,None].T)).reshape(-1,size[1])
+                big_kdd[:,size[1]*i:size[1]+size[1]*i] = k_dd
+            if size[1]>30: # (Method 2) Loop when the number of features is
+            # large.
+                for j in range(i, size[0]):
+                    k_dd = (I_m - np.outer(ldist[j], ldist[j].T)) * k[i,j]
+                    big_kdd[i*size[1]:(i+1)*size[1],j*size[1]:(j+1)*size[1]] = k_dd
+                    if j!=i:
+                        big_kdd[j*size[1]:(j+1)*size[1],i*size[1]:(i+1)*size[1]]= k_dd.T
 
 
     end = timer()

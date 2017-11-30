@@ -20,7 +20,7 @@ StandardizeTargets = True
 
 # First derivative observations can be included.
 eval_gradients = True
-number_of_cycles = 11
+number_of_iterations = 11
 
 # A known underlying function in one dimension [y] and first derivative [dy].
 def afunc(x):
@@ -37,12 +37,14 @@ train = np.array([[0.01],[5.9]])
 
 # Define initial prediction parameters.
 reg = 0.01
-w1 = [1.0]  # Too large widths results in a biased model.
+w1 = 1.0  # Too large widths results in a biased model.
 scaling = 1.0
+scaling_const = 1.0
+constant = 1.0
 fig = plt.figure(figsize=(13.0, 6.0))
 
-for i in range(1,number_of_cycles):
-    number_of_plot = i
+for iteration in range(1,number_of_iterations):
+    number_of_plot = iteration
 
     # Setting up data.
 
@@ -97,11 +99,13 @@ for i in range(1,number_of_cycles):
     # Set up the prediction routine and optimize hyperparameters.
     kdict = {'k1': {'type': 'gaussian', 'width': w1, 'scaling': scaling}}
 
-    # kdict = {'k1': {'type': 'gaussian', 'width': [w1], 'scaling': 1.0}, 'k2': {
-    # 'type': 'linear', 'scaling': 1.0}}
+    kdict = {'k1': {'type': 'gaussian', 'width': w1, 'scaling': scaling},
+    'k2': {
+    'type': 'linear', 'scaling': scaling}}
 
-    # kdict = {'k1': {'type': 'gaussian', 'width': [w1], 'scaling': 1.0}, 'k2': {
-    # 'type': 'constant','const': 1.0, 'scaling': 1.0}}
+    # kdict = {'k1': {'type': 'gaussian', 'width': w1, 'scaling': scaling},
+    # 'k2': {
+    # 'type': 'constant','const': constant, 'scaling': scaling_const}}
 
     gp = GaussianProcess(kernel_dict=kdict, regularization=reg**2,
                          train_fp=train,
@@ -134,8 +138,8 @@ for i in range(1,number_of_cycles):
     error = get_error(prediction, afunc(test)[0])
     print('Gaussian linear regression prediction:', error['absolute_average'])
 
-    # Add new point. Algo. 1) Calculate the gradients of the predicted
-    # function.
+    # Add new point:
+    # 1) Calculate the gradients of the predicted function.
     # 2) Get the points were the gradients are below grad_prediction_interval
     # 3) For these points get the point which has the maximum uncertainty.
     # 4) Add it to the next train list.
@@ -154,10 +158,14 @@ for i in range(1,number_of_cycles):
     new_train_point = np.reshape(new_train_point,(np.shape(new_train_point)[0],1))
     train = np.concatenate((org_train,new_train_point))
 
-    # Update hyperarameters with the optimised ones.
-    reg = gp.regularization
-    w1 = gp.kernel_dict['k1']['width']
-    scaling = gp.kernel_dict['k1']['scaling']
+    # Update hyperarameters with the optimised ones after n iterations.
+
+    if iteration > 3:
+        reg = gp.regularization
+        w1 = gp.kernel_dict['k1']['width']
+        scaling = gp.kernel_dict['k1']['scaling']
+        constant = gp.kernel_dict['k2']['const']
+        scaling_const = gp.kernel_dict['k2']['scaling']
 
     # Plotting.
 
