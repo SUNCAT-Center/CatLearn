@@ -20,7 +20,7 @@ StandardizeTargets = True
 
 # First derivative observations can be included.
 eval_gradients = True
-number_of_iterations = 11
+number_of_iterations = 10
 
 # A known underlying function in one dimension [y] and first derivative [dy].
 def afunc(x):
@@ -38,18 +38,21 @@ train = np.array([[0.01],[5.9]])
 # Define initial prediction parameters.
 reg = 0.01
 w1 = 1.0  # Too large widths results in a biased model.
-scaling = 1.0
+scaling_exp = 1.0
 scaling_const = 1.0
 constant = 1.0
+scaling_linear = 1.0
+
+# Create figure.
 fig = plt.figure(figsize=(13.0, 6.0))
 
-for iteration in range(1,number_of_iterations):
+# Loop over the iterations. In each iteration we add a new training point.
+
+for iteration in range(1,number_of_iterations+1):
+
     number_of_plot = iteration
 
     # Setting up data.
-
-    # A number of training points in x.
-    # Each element in the list train can be referred to as a fingerprint.
 
     # Call the underlying function to produce the target values.
     target = np.array(afunc(train)[0])
@@ -95,17 +98,11 @@ for iteration in range(1,number_of_iterations):
 
     # Gaussian Process.
 
-
     # Set up the prediction routine and optimize hyperparameters.
-    kdict = {'k1': {'type': 'gaussian', 'width': w1, 'scaling': scaling}}
 
-    kdict = {'k1': {'type': 'gaussian', 'width': w1, 'scaling': scaling},
-    'k2': {
-    'type': 'linear', 'scaling': scaling}}
-
-    # kdict = {'k1': {'type': 'gaussian', 'width': w1, 'scaling': scaling},
-    # 'k2': {
-    # 'type': 'constant','const': constant, 'scaling': scaling_const}}
+    kdict = {'k1': {'type': 'gaussian', 'width': w1, 'scaling': scaling_exp},
+    'k2': {'type': 'constant','const': constant, 'scaling': scaling_const},
+    'k3': {'type': 'linear', 'scaling': scaling_linear}}
 
     gp = GaussianProcess(kernel_dict=kdict, regularization=reg**2,
                          train_fp=train,
@@ -114,7 +111,6 @@ for iteration in range(1,number_of_iterations):
                          eval_gradients=eval_gradients, algomin='L-BFGS-B',
                          global_opt=False)
     print('Optimized kernel:', gp.kernel_dict)
-
 
     # Do the optimized predictions.
     pred = gp.predict(test_fp=test, uncertainty=True)
@@ -138,11 +134,11 @@ for iteration in range(1,number_of_iterations):
     error = get_error(prediction, afunc(test)[0])
     print('Gaussian linear regression prediction:', error['absolute_average'])
 
-    # Add new point:
-    # 1) Calculate the gradients of the predicted function.
-    # 2) Get the points were the gradients are below grad_prediction_interval
-    # 3) For these points get the point which has the maximum uncertainty.
-    # 4) Add it to the next train list.
+    # A new training point is added following:
+    # 1st Calculate the gradients of the predicted function.
+    # 2nd Get the points were the gradients are below grad_prediction_interval
+    # 3rd For these points get the point which has the maximum uncertainty.
+    # 4th Add this "interesting" point to the list.
 
     grad_prediction = np.abs(np.gradient(prediction))
     grad_prediction_interval = (np.max(grad_prediction)-np.min(
@@ -158,16 +154,17 @@ for iteration in range(1,number_of_iterations):
     new_train_point = np.reshape(new_train_point,(np.shape(new_train_point)[0],1))
     train = np.concatenate((org_train,new_train_point))
 
-    # Update hyperarameters with the optimised ones after n iterations.
+    # Update hyperarameters with the optimised ones after "n" iterations.
 
     if iteration > 3:
         reg = gp.regularization
         w1 = gp.kernel_dict['k1']['width']
-        scaling = gp.kernel_dict['k1']['scaling']
+        scaling_exp = gp.kernel_dict['k1']['scaling']
         constant = gp.kernel_dict['k2']['const']
         scaling_const = gp.kernel_dict['k2']['scaling']
+        scaling_linear = gp.kernel_dict['k3']['scaling']
 
-    # Plotting.
+    # Plots.
 
     # Store the known underlying function for plotting.
 
@@ -177,7 +174,6 @@ for iteration in range(1,number_of_iterations):
     liney = []
     for i in linex:
         liney.append(afunc(i)[0])
-
 
     # Example
     ax = fig.add_subplot(2,5,number_of_plot)

@@ -86,20 +86,10 @@ if eval_gradients:
 sdt1 = 0.01 # Regularisation parameter.
 w1 = 1.5  # Length scale parameter for k1 (squared exponential kernel).
 scaling = 2.0 # Scaling parameter for k1 (squared exponential kernel).
-constant = 1.5 # Constant parameter in k2 (constant kernel).
-scaling_const = 1.0 # Scaling parameter in k2 (constant kernel).
-scaling_linear = 1.0 # Scaling parameter in k3 (linear kernel)
 
 # Set up the prediction routine and optimize hyperparameters.
 
-# kdict = {'k1': {'type': 'gaussian', 'width': w1, 'scaling': 1.0}}
-
-kdict = {'k1': {'type': 'gaussian', 'width': w1, 'scaling': scaling},
-'k2': {'type': 'constant','const': constant, 'scaling': scaling_const}}
-
-# kdict = {'k1': {'type': 'gaussian', 'width': w1, 'scaling': scaling}, 'k3': {
-# 'type': 'linear', 'scaling': scaling_linear}}
-
+kdict = {'k1': {'type': 'gaussian', 'width': w1, 'scaling': 1.0}}
 
 gp = GaussianProcess(kernel_dict=kdict, regularization=sdt1**2,
                      train_fp=train,

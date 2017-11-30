@@ -1,7 +1,6 @@
 """ Contains kernel functions and gradients of kernels. """
 import numpy as np
 from scipy.spatial import distance
-from atoml.regression.gpfunctions.gkernels import gkernels as gkernels
 from timeit import default_timer as timer
 
 
@@ -218,11 +217,20 @@ def gaussian_kernel(theta, log_scale, m1, m2=None, eval_gradients=False):
     kwidth = np.array(theta)
     if log_scale:
         kwidth = np.exp(kwidth)
-    if m2 is None:
-        k = distance.pdist(m1 / kwidth, metric='sqeuclidean')
-        k = distance.squareform(np.exp(-.5 * k))
-        np.fill_diagonal(k, 1)
-        if eval_gradients == True:
+    if eval_gradients == False:
+        if m2 is None:
+            k = distance.pdist(m1 / kwidth, metric='sqeuclidean')
+            k = distance.squareform(np.exp(-.5 * k))
+            np.fill_diagonal(k, 1)
+            return k
+        else:
+            k = distance.cdist(m1 / kwidth, m2 / kwidth, metric='sqeuclidean')
+            return np.exp(-.5 * k)
+    if eval_gradients == True:
+        if m2 is None:
+            k = distance.pdist(m1 / kwidth, metric='sqeuclidean')
+            k = distance.squareform(np.exp(-.5 * k))
+            np.fill_diagonal(k, 1)
             size = np.shape(m1)
             big_kgd = np.zeros((size[0], size[0] * size[1]))
             big_kdd = np.zeros((size[0] * size[1], size[0] * size[1]))
@@ -241,12 +249,10 @@ def gaussian_kernel(theta, log_scale, m1, m2=None, eval_gradients=False):
                         big_kdd[i*size[1]:(i+1)*size[1],j*size[1]:(j+1)*size[1]] = k_dd
                         if j!=i:
                             big_kdd[j*size[1]:(j+1)*size[1],i*size[1]:(i+1)*size[1]]= k_dd.T
-            k = np.block([[k, big_kgd], [np.transpose(big_kgd), big_kdd]])
-        return k
-    else:
-        k = distance.cdist(m1 / kwidth, m2 / kwidth, metric='sqeuclidean')
-        k = np.exp(-.5 * k)
-        if eval_gradients == True:
+            return np.block([[k, big_kgd], [np.transpose(big_kgd), big_kdd]])
+        else:
+            k = distance.cdist(m1 / kwidth, m2 / kwidth, metric='sqeuclidean')
+            k = np.exp(-.5 * k)
             size_m1 = np.shape(m1)
             size_m2 = np.shape(m2)
             kgd_tilde = np.zeros((size_m1[0], size_m2[0] * size_m2[1]))
@@ -255,8 +261,7 @@ def gaussian_kernel(theta, log_scale, m1, m2=None, eval_gradients=False):
                 kgd_tilde_i = -((invsqkwidth * (m2[:,:]-m1[i,:])* k[i,
                 :].reshape(size_m2[0],1)).reshape(1,size_m2[0]*size_m2[1]))
                 kgd_tilde[i,:] = kgd_tilde_i
-            k = np.block([k, kgd_tilde])
-        return k
+            return np.block([k, kgd_tilde])
 
 def sqe_kernel(theta, log_scale, m1, m2=None, eval_gradients=False):
     """Return covariance between data m1 & m2 with a gaussian kernel.
