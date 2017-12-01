@@ -16,7 +16,7 @@ from atoml.utilities.cost_function import get_error
 # A known underlying function in one dimension (y) and first derivative (dy).
 def afunc(x):
     """ Function (y) and first derivative (dy) """
-    y =  (x-4) * np.sin(x)
+    y =  10+(x-4) * np.sin(x)
     dy =  (x-4) * np.cos(x) + np.sin(x)
     return [y,dy]
 
@@ -42,7 +42,6 @@ test = np.reshape(test, (test_points, 1))
 org_train = train.copy()
 org_target = target.copy()
 org_test = test.copy()
-
 
 # Call the underlying function to produce the gradients of the target values.
 
@@ -72,7 +71,7 @@ gp = GaussianProcess(kernel_dict=kdict, regularization=sdt1**2,
                      train_target=target,gradients=gradients,
                      optimize_hyperparameters=True,
                      algomin='L-BFGS-B',
-                     global_opt=False,scale_data=False)
+                     global_opt=False,scale_data=True)
 print('Optimized kernel:', gp.kernel_dict)
 
 # Do the optimized predictions.
@@ -100,7 +99,7 @@ liney = []
 for i in linex:
     liney.append(afunc(i)[0])
 
-fig = plt.figure(figsize=(5, 5))
+fig = plt.figure(figsize=(3, 3))
 
 # Example
 ax = fig.add_subplot(111)

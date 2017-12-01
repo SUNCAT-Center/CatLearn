@@ -57,16 +57,12 @@ class GaussianProcess(object):
         msg = 'The number of data does not match the number of targets.'
 
         if gradients is None:
-            assert np.shape(train_fp)[0] == len(train_target), msg
             eval_gradients = False
 
         if gradients is not None:
             eval_gradients = True
-            train_target = np.append(train_target, gradients)
-            train_target = np.reshape(train_target,(np.shape(train_target)[
-            0],1))
-            assert np.shape(train_fp)[0] == np.shape(train_target)[
-            0]-np.shape(train_fp)[0]*np.shape(train_fp)[1], msg
+
+        assert np.shape(train_fp)[0] == len(train_target), msg
 
         _, self.N_D = np.shape(train_fp)
         self.regularization = regularization
@@ -80,7 +76,7 @@ class GaussianProcess(object):
         self._prepare_kernels(kernel_dict,
                               regularization_bounds=regularization_bounds)
 
-        self.update_data(train_fp, train_target,
+        self.update_data(train_fp, train_target, gradients,
                          scale_optimizer=scale_optimizer)
 
         if optimize_hyperparameters:
@@ -179,7 +175,8 @@ class GaussianProcess(object):
 
         return data
 
-    def update_data(self, train_fp, train_target, scale_optimizer=False):
+    def update_data(self, train_fp, train_target,gradients,
+    scale_optimizer=False):
         """Update the training matrix, targets and covariance matrix.
 
         This function assumes that the descriptors in the feature set remain
@@ -213,7 +210,15 @@ class GaussianProcess(object):
 
         if self.scale_data:
             self.scaling = ScaleData(train_fp, train_target)
+            if gradients is not None:
+                gradients = gradients / (np.std(self.train_target)/np.std(
+                self.train_fp))
             self.train_fp, self.train_target = self.scaling.train()
+
+        if gradients is not None:
+             train_target_grad = np.append(self.train_target, gradients)
+             self.train_target = np.reshape(train_target_grad,(np.shape(
+             train_target_grad)[0],1))
 
         # Get the Gram matrix on-the-fly if none is suppiled.
         cvm = get_covariance(kernel_dict=self.kernel_dict,
@@ -304,7 +309,7 @@ class GaussianProcess(object):
             msg = 'To update the data, both train_fp and train_target must be '
             msg += 'defined.'
             assert train_fp is not None, msg
-            self.update_data(train_fp, train_target, scale_optimizer)
+            self.update_data(train_fp, train_target,gradients, scale_optimizer)
 
         self.optimize_hyperparameters()
 
