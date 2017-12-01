@@ -47,11 +47,14 @@ class GaussianProcess(object):
             optimization.
         """
         # # Perform some sanity checks.
-        # msg = 'GP must be trained on more than one data point.'
-        # assert np.shape(train_fp)[0] > 1, msg
-        # msg = 'The number of data does not match the number of targets.'
-        # assert np.shape(train_fp)[0] == len(train_target), msg
-
+        msg = 'GP must be trained on more than one data point.'
+        assert np.shape(train_fp)[0] > 1, msg
+        msg = 'The number of data does not match the number of targets.'
+        if eval_gradients == False:
+            assert np.shape(train_fp)[0] == len(train_target), msg
+        if eval_gradients == True:
+            assert np.shape(train_fp)[0] == np.shape(train_target)[
+            0]-np.shape(train_fp)[0]*np.shape(train_fp)[1], msg
         _, self.N_D = np.shape(train_fp)
         self.regularization = regularization
         self.eval_gradients = eval_gradients

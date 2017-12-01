@@ -25,10 +25,9 @@ def get_covariance(kernel_dict, log_scale, matrix1, matrix2=None,
     n1, n1_D = np.shape(matrix1)
 
     if matrix2 is not None:
-        n2, n2_D = np.shape(matrix2) 
-        assert n1_D == n2_D
-    else:
-        n2 = n1
+        assert n1_D == np.shape(matrix2)[1]
+    cov = None
+
 
     # Keep copies of original matrices.
     store1, store2 = matrix1, matrix2
