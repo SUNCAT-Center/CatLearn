@@ -216,20 +216,11 @@ def gaussian_kernel(theta, log_scale, m1, m2=None, eval_gradients=False):
     kwidth = np.array(theta)
     if log_scale:
         kwidth = np.exp(kwidth)
-    if eval_gradients == False:
-        if m2 is None:
-            k = distance.pdist(m1 / kwidth, metric='sqeuclidean')
-            k = distance.squareform(np.exp(-.5 * k))
-            np.fill_diagonal(k, 1)
-            return k
-        else:
-            k = distance.cdist(m1 / kwidth, m2 / kwidth, metric='sqeuclidean')
-            return np.exp(-.5 * k)
-    if eval_gradients == True:
-        if m2 is None:
-            k = distance.pdist(m1 / kwidth, metric='sqeuclidean')
-            k = distance.squareform(np.exp(-.5 * k))
-            np.fill_diagonal(k, 1)
+    if m2 is None:
+        k = distance.pdist(m1 / kwidth, metric='sqeuclidean')
+        k = distance.squareform(np.exp(-.5 * k))
+        np.fill_diagonal(k, 1)
+        if eval_gradients == True:
             size = np.shape(m1)
             big_kgd = np.zeros((size[0], size[0] * size[1]))
             big_kdd = np.zeros((size[0] * size[1], size[0] * size[1]))
@@ -249,9 +240,11 @@ def gaussian_kernel(theta, log_scale, m1, m2=None, eval_gradients=False):
                         if j!=i:
                             big_kdd[j*size[1]:(j+1)*size[1],i*size[1]:(i+1)*size[1]]= k_dd.T
             return np.block([[k, big_kgd], [np.transpose(big_kgd), big_kdd]])
-        else:
-            k = distance.cdist(m1 / kwidth, m2 / kwidth, metric='sqeuclidean')
-            k = np.exp(-.5 * k)
+
+    else:
+        k = distance.cdist(m1 / kwidth, m2 / kwidth, metric='sqeuclidean')
+        k = np.exp(-.5 * k)
+        if eval_gradients == True:
             size_m1 = np.shape(m1)
             size_m2 = np.shape(m2)
             kgd_tilde = np.zeros((size_m1[0], size_m2[0] * size_m2[1]))
@@ -261,6 +254,7 @@ def gaussian_kernel(theta, log_scale, m1, m2=None, eval_gradients=False):
                 :].reshape(size_m2[0],1)).reshape(1,size_m2[0]*size_m2[1]))
                 kgd_tilde[i,:] = kgd_tilde_i
             return np.block([k, kgd_tilde])
+    return k
 
 
 def sqe_kernel(theta, log_scale, m1, m2=None, eval_gradients=False):

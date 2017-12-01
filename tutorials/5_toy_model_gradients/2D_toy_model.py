@@ -69,12 +69,6 @@ gradients = []
 for i in org_train:
     gradients.append(afunc(i[0],i[1])[1:3])
 org_gradients = np.asarray(gradients)
-deriv = []
-for i in range(len(gradients)):
-    for d in range(np.shape(gradients)[1]):
-        deriv.append(gradients[i][d])
-gradients = deriv
-org_gradients = np.asarray(gradients)
 gradients = org_gradients
 
 # Gaussian Process.

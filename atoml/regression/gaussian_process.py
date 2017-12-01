@@ -214,6 +214,12 @@ class GaussianProcess(object):
             if gradients is not None:
                 gradients = gradients / (self.scaling.target_data[
                 'std']/self.scaling.feature_data['std'])
+                deriv = []
+                for i in range(len(gradients)):
+                    for d in range(np.shape(gradients)[1]):
+                        deriv.append(gradients[i][d])
+                gradients = deriv
+
 
 
         if gradients is not None:
