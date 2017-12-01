@@ -18,10 +18,10 @@ from atoml.utilities.cost_function import get_error
 class GaussianProcess(object):
     """Gaussian processes functions for the machine learning."""
 
-    def __init__(self, train_fp, train_target, kernel_dict,
+    def __init__(self, train_fp, train_target, kernel_dict, gradients=None,
                  regularization=None, regularization_bounds=(1e-3, 1e2),
                  optimize_hyperparameters=False, scale_optimizer=False,
-                 eval_gradients=False, algomin='L-BFGS-B', global_opt=False,
+                 algomin='L-BFGS-B', global_opt=False,
                  scale_data=False):
         """Gaussian processes setup.
 
@@ -55,13 +55,22 @@ class GaussianProcess(object):
         msg = 'GP must be trained on more than one data point.'
         assert np.shape(train_fp)[0] > 1, msg
         msg = 'The number of data does not match the number of targets.'
-        if eval_gradients == False:
+
+        if gradients is None:
             assert np.shape(train_fp)[0] == len(train_target), msg
-        if eval_gradients == True:
+            eval_gradients = False
+
+        if gradients is not None:
+            eval_gradients = True
+            train_target = np.append(train_target, gradients)
+            train_target = np.reshape(train_target,(np.shape(train_target)[
+            0],1))
             assert np.shape(train_fp)[0] == np.shape(train_target)[
             0]-np.shape(train_fp)[0]*np.shape(train_fp)[1], msg
+
         _, self.N_D = np.shape(train_fp)
         self.regularization = regularization
+        self.gradients = gradients
         self.eval_gradients = eval_gradients
         self.scale_optimizer = scale_optimizer
         self.algomin = algomin
