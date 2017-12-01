@@ -14,12 +14,7 @@ from atoml.regression import GaussianProcess
 from atoml.utilities.cost_function import get_error
 
 
-# The user can choose whether the features and/or the targets are standardized.
-StandardizeFeatures = True
-StandardizeTargets = True
-
 # Set whether first derivative observations are included or not.
-eval_gradients = True
 
 # A known underlying 2D function (z) and first derivatives (dx,dy).
 def afunc(x,y):
@@ -64,43 +59,23 @@ for i in range(len(testx)):
         test.append(test1)
 test = np.array(test)
 
-
 # Make a copy of the original features and targets.
 org_train = train.copy()
 org_target = target.copy()
 org_test = test.copy()
 
-# Standardization of the train, test and target data.
-if StandardizeFeatures:
-    feature_std = standardize(train_matrix=train,test_matrix=test)
-    train, train_mean, train_std = feature_std['train'], feature_std['mean'], \
-    feature_std['std']
-    test = (test -train_mean)/train_std
-else:
-    train_mean, train_std = 0.0, 1.0
-
-if StandardizeTargets:
-    target_std = target_standardize(target)
-    target, target_mean, target_std = target_std['target'], target_std[
-    'mean'], target_std['std']
-else:
-    target_mean, target_std = 0.0, 1.0
-
 # Call the underlying function to produce the gradients of the target values.
-if eval_gradients:
-    gradients = []
-    for i in org_train:
-        gradients.append(afunc(i[0],i[1])[1:3])
-    org_gradients = np.asarray(gradients)
-    deriv = []
-    for i in range(len(gradients)):
-        for d in range(np.shape(gradients)[1]):
-            deriv.append(gradients[i][d])
-    gradients = deriv
-    gradients = org_gradients/(target_std/train_std)
-    y_tilde = []
-    y_tilde = np.append(target, gradients)
-    target = np.reshape(y_tilde,(np.shape(y_tilde)[0],1))
+gradients = []
+for i in org_train:
+    gradients.append(afunc(i[0],i[1])[1:3])
+org_gradients = np.asarray(gradients)
+deriv = []
+for i in range(len(gradients)):
+    for d in range(np.shape(gradients)[1]):
+        deriv.append(gradients[i][d])
+gradients = deriv
+org_gradients = np.asarray(gradients)
+gradients = org_gradients
 
 # Gaussian Process.
 
@@ -115,8 +90,8 @@ gp = GaussianProcess(kernel_dict=kdict, regularization=sdt1**2,
                      train_fp=train,
                      train_target=target,
                      optimize_hyperparameters=True,
-                     eval_gradients=eval_gradients, algomin='TNC',
-                     global_opt=False,scale_optimizer=False)
+                     gradients=gradients, algomin='TNC',
+                     global_opt=False,scale_optimizer=False,scale_data=True)
 print('Optimized kernel:', gp.kernel_dict)
 
 # Do the optimized predictions.
@@ -129,13 +104,6 @@ uncertainty = np.array(pred['uncertainty'])
 # Get confidence interval on predictions.
 upper = prediction + uncertainty
 lower = prediction - uncertainty
-
-# Scale predictions back to the original scale.
-if StandardizeTargets:
-    uncertainty = (uncertainty*target_std) + target_mean
-    prediction = (prediction*target_std) + target_mean
-    upper = (upper*target_std) + target_mean
-    lower = (lower*target_std) + target_mean
 
 interval = upper - prediction
 

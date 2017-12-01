@@ -17,13 +17,6 @@ from atoml.regression import GaussianProcess
 from atoml.utilities.cost_function import get_error
 
 
-# The user can choose whether the features and/or the targets are standardized.
-StandardizeFeatures = True
-StandardizeTargets = True
-
-# Set whether first derivative observations are included or not.
-eval_gradients = True
-
 # A known underlying function in one dimension [y] and first derivative [dy].
 def afunc(x):
     """ Function [y] and first derivative [dy] """
@@ -69,32 +62,12 @@ for iteration in range(1,number_of_iterations+1):
     org_target = target.copy()
     org_test = test.copy()
 
-    # Standardization of the features (train and test data)
-    if StandardizeFeatures:
-        feature_std = standardize(train_matrix=train,test_matrix=test)
-        train, train_mean, train_std = feature_std['train'], feature_std['mean'], \
-        feature_std['std']
-        test = (test -train_mean)/train_std
-    else:
-        train_mean, train_std = 0.0, 1.0
-
-    # Standarization of the targets.
-    if StandardizeTargets:
-        target_std = target_standardize(target)
-        target, target_mean, target_std = target_std['target'], target_std[
-        'mean'], target_std['std']
-    else:
-        target_mean, target_std = 0.0, 1.0
 
     # Call the underlying function to produce the gradients of the target values.
-    if eval_gradients:
-        gradients = []
-        for i in org_train:
-            gradients.append(afunc(i)[1])
-        org_gradients = np.asarray(gradients)
-        gradients = org_gradients/(target_std/train_std)
-        y_tilde = np.append(target, gradients)
-        target = np.reshape(y_tilde,(np.shape(y_tilde)[0],1))
+    gradients = []
+    for i in org_train:
+        gradients.append(afunc(i)[1])
+    org_gradients = np.asarray(gradients)
 
     # Gaussian Process.
 
@@ -109,7 +82,7 @@ for iteration in range(1,number_of_iterations+1):
                          train_fp=train,
                          train_target=target,
                          optimize_hyperparameters=True,
-                         eval_gradients=eval_gradients, algomin='L-BFGS-B',
+                         gradients=gradients, algomin='L-BFGS-B',
                          global_opt=False)
     print('Optimized kernel:', gp.kernel_dict)
 
@@ -123,13 +96,6 @@ for iteration in range(1,number_of_iterations+1):
     # Get confidence interval on predictions.
     upper = prediction + uncertainty
     lower = prediction - uncertainty
-
-    # Scale predictions back to the original scale.
-    if StandardizeTargets:
-        uncertainty = (uncertainty*target_std) + target_mean
-        prediction = (prediction*target_std) + target_mean
-        upper = (upper*target_std) + target_mean
-        lower = (lower*target_std) + target_mean
 
     # Get average errors.
     error = get_error(prediction, afunc(test)[0])
@@ -195,7 +161,7 @@ for iteration in range(1,number_of_iterations+1):
 
     # Gradients
 
-    if eval_gradients==True:
+    if gradients is not None:
         size_bar_gradients = (np.abs(np.max(linex) - np.min(linex))/2.0)/25.0
         def lineary(m,linearx,train,target):
                 """Define some linear function."""
