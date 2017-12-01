@@ -2,7 +2,6 @@
 from __future__ import absolute_import
 from __future__ import division
 
-import functools
 import numpy as np
 from scipy.special import erf
 
@@ -31,11 +30,11 @@ def get_uncertainty(kernel_dict, test_fp, reg, ktb, cinv, log_scale):
     kxx = get_covariance(kernel_dict=kernel_dict,
                          matrix1=test_fp, log_scale=log_scale, eval_gradients=False)
     # Calculate the prediction variance for test data.
-    kb = np.transpose(ktb)
-    u = functools.reduce(np.dot, (functools.reduce(np.dot, (ktb, cinv)), kb))
-    u = (reg + kxx - u).diagonal() ** 0.5
+    scale = np.diagonal(kxx)
+    var = np.einsum("ij,ij->i", np.dot(ktb, cinv), ktb)
+    uncertainty = np.sqrt(reg + scale - var)
 
-    return u
+    return uncertainty
 
 
 def classify_uncertainty(test_dict, train_dict):

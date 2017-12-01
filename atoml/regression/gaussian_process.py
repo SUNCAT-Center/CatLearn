@@ -11,6 +11,7 @@ from .gpfunctions.log_marginal_likelihood import log_marginal_likelihood
 from .gpfunctions.covariance import get_covariance
 from .gpfunctions.kernels import kdicts2list, list2kdict
 from .gpfunctions.uncertainty import get_uncertainty
+from .gpfunctions.default_scale import ScaleData
 from atoml.utilities.cost_function import get_error
 
 
@@ -20,7 +21,8 @@ class GaussianProcess(object):
     def __init__(self, train_fp, train_target, kernel_dict,
                  regularization=None, regularization_bounds=(1e-3, 1e2),
                  optimize_hyperparameters=False, scale_optimizer=False,
-                 eval_gradients=False, algomin='L-BFGS-B', global_opt=False):
+                 eval_gradients=False, algomin='L-BFGS-B', global_opt=False,
+                 scale_data=False):
         """Gaussian processes setup.
 
         Parameters
@@ -45,6 +47,9 @@ class GaussianProcess(object):
         scale_optimizer : boolean
             Flag to define if the hyperparameters are log scale for
             optimization.
+        scale_data : boolean
+            Scale the training and test features as well as target values.
+            Default is False.
         """
         # # Perform some sanity checks.
         msg = 'GP must be trained on more than one data point.'
@@ -61,6 +66,7 @@ class GaussianProcess(object):
         self.scale_optimizer = scale_optimizer
         self.algomin = algomin
         self.global_opt = global_opt
+        self.scale_data = scale_data
 
         self._prepare_kernels(kernel_dict,
                               regularization_bounds=regularization_bounds)
@@ -105,6 +111,8 @@ class GaussianProcess(object):
 
         # Enforce np.array type for test data.
         test_fp = np.asarray(test_fp)
+        if self.scale_data:
+            test_fp = self.scaling.test(test_fp)
         if test_target is not None:
             test_target = np.asarray(test_target)
 
@@ -193,6 +201,10 @@ class GaussianProcess(object):
         # Store the training data in the GP, enforce np.array type.
         self.train_fp = np.asarray(train_fp)
         self.train_target = np.asarray(train_target)
+
+        if self.scale_data:
+            self.scaling = ScaleData(train_fp, train_target)
+            self.train_fp, self.train_target = self.scaling.train()
 
         # Get the Gram matrix on-the-fly if none is suppiled.
         cvm = get_covariance(kernel_dict=self.kernel_dict,
@@ -379,6 +391,9 @@ class GaussianProcess(object):
         alpha = functools.reduce(np.dot, (cinv, target))
 
         pred = functools.reduce(np.dot, (ktb, alpha))
+
+        if self.scale_data:
+            pred = self.scaling.rescale(pred)
 
         return pred
 

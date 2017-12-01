@@ -1,8 +1,10 @@
-"""Feature selection with lasso"""
+"""Feature selection with lasso."""
 from __future__ import division
-from sklearn.linear_model import LassoCV
+
 import numpy as np
 from collections import OrderedDict
+
+from sklearn.linear_model import LassoCV
 
 
 class feature_selection(object):
