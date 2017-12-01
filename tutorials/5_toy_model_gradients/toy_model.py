@@ -16,7 +16,7 @@ from atoml.utilities.cost_function import get_error
 # A known underlying function in one dimension (y) and first derivative (dy).
 def afunc(x):
     """ Function (y) and first derivative (dy) """
-    y =  10+(x-4) * np.sin(x)
+    y =  100 + (x-4) * np.sin(x)
     dy =  (x-4) * np.cos(x) + np.sin(x)
     return [y,dy]
 

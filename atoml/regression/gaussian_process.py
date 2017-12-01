@@ -19,7 +19,7 @@ class GaussianProcess(object):
     """Gaussian processes functions for the machine learning."""
 
     def __init__(self, train_fp, train_target, kernel_dict, gradients=None,
-                 regularization=None, regularization_bounds=(1e-3, 1e2),
+                 regularization=None, regularization_bounds=(1e-3, None),
                  optimize_hyperparameters=False, scale_optimizer=False,
                  algomin='L-BFGS-B', global_opt=False,
                  scale_data=False):
@@ -210,10 +210,11 @@ class GaussianProcess(object):
 
         if self.scale_data:
             self.scaling = ScaleData(train_fp, train_target)
-            if gradients is not None:
-                gradients = gradients / (np.std(self.train_target)/np.std(
-                self.train_fp))
             self.train_fp, self.train_target = self.scaling.train()
+            if gradients is not None:
+                gradients = gradients / (self.scaling.target_data[
+                'std']/self.scaling.feature_data['std'])
+
 
         if gradients is not None:
              train_target_grad = np.append(self.train_target, gradients)
