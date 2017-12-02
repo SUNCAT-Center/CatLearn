@@ -120,7 +120,9 @@ if True:
 if True:
     # Set up the prediction routine and optimize hyperparameters.
     kdict = {'k1': {'type': 'gaussian', 'width': [0.3, 3.], 'scaling': 0.9},
-             'c1': {'type': 'constant', 'const': 0.0}}
+             'c1': {'type': 'constant', 'const': 0.0},
+             #'l1': {'type': 'linear', 'scaling': 0.1}
+             }
     # Starting guess for the noise parameter
     sdt1 = noise_magnitude
     # Set up the gaussian process.

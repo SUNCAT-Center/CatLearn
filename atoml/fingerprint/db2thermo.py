@@ -21,17 +21,61 @@ addsyms = ['H', 'C', 'O', 'N']
 
 
 def slab_index(atoms):
+    """ Return the index of all atoms that are not in atoms.info['ads_atoms']
+
+    Parameters
+    ----------
+    atoms : ase atoms object
+        atoms.info must be a dictionary containing the key 'ads_atoms'.
+    """
     slab_atoms = [a.index for a in atoms if a.index not in
                   atoms.info['ads_atoms']]
     return slab_atoms
 
 
 def adds_index(atoms):
+    """ Returns the indexes of atoms that are in the global list addsyms.
+
+    Parameters
+    ----------
+    atoms : ase atoms object.
+    """
     add_atoms = [a.index for a in atoms if a.symbol in addsyms]
+
+    return add_atoms
+
+
+def last_index2ads(atoms):
+    """ Returns the indexes of the last n atoms in the atoms object, where n is
+    the length of the composition of the species field.
+
+    Parameters
+    ----------
+    atoms : ase atoms object.
+        atoms.info must be a dictionary containing the key 'key_value_pairs',
+        which is expected to contain standard adsorbate structure
+        key value pairs. 'species' should be the chemical formula of an
+        adsorbate.
+
+    Parameters
+    ----------
+    atoms : ase atoms object.
+    """
+    species = atoms.info['key_value_pairs']['species']
+    n_ads = len(string2symbols(species))
+    natoms = len(atoms)
+    add_atoms = list(range(natoms-n_ads, natoms+1))
     return add_atoms
 
 
 def layers_info(atoms):
+    """Returns two lists, the first containing indices of subsurface atoms and
+    the second containing indices of atoms in the two outermost layers.
+
+    Parameters
+    ----------
+    atoms : ase atoms object.
+    """
     il, z = get_layers(atoms, (0, 0, 1),
                        tolerance=covalent_radii[atoms.info['Z_surf1']])
     layers = atoms.info['key_value_pairs']['layers']
@@ -40,15 +84,23 @@ def layers_info(atoms):
         bulk_atoms = atoms.info['surf_atoms']
     else:
         bulk_atoms = [a.index for a in atoms
-                      if il[a.index] < layers-1]
+                      if il[a.index] < layers-2]
         top_atoms = [a.index for a in atoms
-                     if il[a.index] > layers-2 and
+                     if il[a.index] > layers-3 and
                      a.index not in atoms.info['ads_atoms']]
     assert len(bulk_atoms) > 0 and len(top_atoms) > 0
     return bulk_atoms, top_atoms
 
 
 def info2primary_index(atoms, rtol=1.3):
+    """ Returns lists identifying the nearest neighbors of the adsorbate atoms.
+
+    Parameters
+    ----------
+    atoms : ase atoms object.
+        atoms.info must be a dictionary containing the keys 'ads_atoms' and
+        'surf_atoms'.
+    """
     liste = []
     surf_atoms = atoms.info['surf_atoms']
     add_atoms = atoms.info['ads_atoms']
@@ -91,14 +143,16 @@ def db2surf(fname, selection=[]):
         species = str(d.species)
         if '-' in species:
             continue
-        if ads == 'slab' or ads == 'clean':
+        if ads == 'clean':
             ser = ''
             site = 'slab'
         else:
             ser = species
             site = str(d.site)
-        site_name = lattice + '_' + facet + '_' + site
-        key = ser + '_' + cat + '_' + site_name
+        size = str(d.supercell) + 'x' + str(d.layers)
+        n = str(d.n)
+        site_name = lattice + '_' + facet + '_' + size + '_' + site
+        key = n + '_' + ser + '_' + cat + '_' + site_name
         if key not in abinitio_energies:
             abinitio_energies[key] = abinitio_energy
             dbids[key] = int(d.id)
@@ -142,46 +196,12 @@ def get_refs(energy_dict, mol_dict):
     ref_dict = mol_dict
     for key in energy_dict.keys():
         if 'slab' in key:
-            ser, cat, pha, lattice, fac, site = key.split('_')
+            n, ser, cat, pha, lattice, fac, size, site = key.split('_')
             Eref = energy_dict[key]
-            name = ser + '_' + cat + '_' + pha + '_' + lattice + '_' + fac \
-                + '_slab'
+            name = n + '_' + ser + '_' + cat + '_' + pha + '_' + lattice + \
+                '_' + fac + '_' + size + '_slab'
             ref_dict[name] = Eref
     return ref_dict
-
-
-def db2dict(fname, selection=[]):
-    csurf = ase.db.connect(fname)
-    ssurf = csurf.select(selection)
-    abinitio_energies = {}
-    dbids = {}
-    # Get slabs and speciess from .db.
-    for d in ssurf:
-        abinitio_energy = float(d.epot)  # float(d.ab_initio_energy)
-        # Is row a molecule?
-        if 'mol' in d:
-            mol = str(d.mol)
-            if mol+'_gas' not in abinitio_energies:
-                abinitio_energies[mol+'_gas'] = abinitio_energy
-                dbids[mol+'_gas'] = int(d.id)
-            elif abinitio_energies[mol+'_gas'] > abinitio_energy:
-                abinitio_energies[mol+'_gas'] = abinitio_energy
-                dbids[mol+'_gas'] = int(d.id)
-        elif 'ads' in d:
-            cat = str(d.name) + '_' + str(d.phase)
-            site_name = str(d.facet)
-            # composition = str(d.formula)
-            ads = str(d.ads)
-            if ads + '_' + cat + '_' + site_name not in abinitio_energies:
-                abinitio_energies[ads + '_' + cat + '_' +
-                                  site_name] = abinitio_energy
-                dbids[ads + '_' + cat + '_' + site_name] = int(d.id)
-            elif abinitio_energies[ads + '_' + cat + '_' +
-                                   site_name] > abinitio_energy:
-                abinitio_energies[ads + '_' + cat + '_' +
-                                  site_name] = abinitio_energy
-                dbids[ads + '_' + cat + '_' + site_name] = int(d.id)
-    return abinitio_energies, dbids
 
 
 def get_formation_energies(energy_dict, ref_dict):  # adapted from CATMAP wiki
@@ -191,9 +211,9 @@ def get_formation_energies(energy_dict, ref_dict):  # adapted from CATMAP wiki
         if 'gas' in key:
             ser, site_name = key.split('_')
         else:
-            ser, cat, pha, lattice, fac, site = key.split('_')
-            site_name = '_' + cat + '_' + pha+'_' + lattice + '_' + fac + \
-                '_slab'
+            n, ser, cat, pha, lattice, fac, size, site = key.split('_')
+            site_name = '0__' + cat + '_' + pha+'_' + lattice + '_' + fac + \
+                '_' + size + '_slab'
             if site_name in ref_dict:
                 E0 -= ref_dict[site_name]
             else:
@@ -226,6 +246,7 @@ def db2surf_info(fname, id_dict, formation_energies=None):
         atoms = c.get_atoms(dbid)
         atoms.info['key_value_pairs'] = d.key_value_pairs
         atoms.info['dbid'] = dbid
+        atoms.info['ctime'] = float(d.ctime)
         atoms.info['ads_atoms'] = adds_index(atoms)  # Modify if O/C/Nitrides
         atoms.info['surf_atoms'] = slab_index(atoms)
         i_add1, i_surf1, Z_add1, Z_surf1, i_surfnn = info2primary_index(atoms)
@@ -255,6 +276,7 @@ def db2atoms_info(fname, selection=[]):
         dbid = int(d.id)
         atoms = c.get_atoms(dbid)
         atoms.info['key_value_pairs'] = d.key_value_pairs
+        atoms.info['ctime'] = float(d.ctime)
         atoms.info['dbid'] = int(d.id)
         atoms.info['ads_atoms'] = adds_index(atoms)  # Modify if O/C/Nitrides
         atoms.info['surf_atoms'] = slab_index(atoms)
