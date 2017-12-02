@@ -215,12 +215,7 @@ class GaussianProcess(object):
                 gradients = gradients / (self.scaling.target_data[
                 'std']/self.scaling.feature_data['std'])
                 deriv = []
-                for i in range(len(gradients)):
-                    for d in range(np.shape(gradients)[1]):
-                        deriv.append(gradients[i][d])
-                gradients = deriv
-
-
+                gradients = np.ravel(gradients)
 
         if gradients is not None:
              train_target_grad = np.append(self.train_target, gradients)
@@ -278,7 +273,7 @@ class GaussianProcess(object):
         self.cinv = np.linalg.inv(cvm)
 
     def update_gp(self, train_fp=None, train_target=None, kernel_dict=None,
-                  scale_optimizer=False, regularization_bounds=(1e-3, 1e2)):
+                  scale_optimizer=False, regularization_bounds=(1e-3, None)):
         """Potentially optimize the full Gaussian Process again.
 
         This alows for the definition of a new kernel as a result of changing
