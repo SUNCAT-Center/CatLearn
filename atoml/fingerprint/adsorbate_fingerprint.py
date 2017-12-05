@@ -591,9 +591,17 @@ class AdsorbateFingerprintGenerator(object):
 
     def info2Ef(self, atoms):
         if atoms is None:
-            ['Ef']
+            return ['Ef']
         else:
             return [float(atoms.info['Ef'])]
+
+    def name(self, atoms):
+        if atoms is None:
+            return ['catapp_name']
+        else:
+            kvp = atoms.info['key_value_pairs']
+            name = kvp['species'] + '*' + kvp['name'] + kvp['facet']
+            return [name]
 
     def get_dbid(self, atoms=None):
         if atoms is None:

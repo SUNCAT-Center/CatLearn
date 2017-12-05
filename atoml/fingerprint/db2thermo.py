@@ -248,6 +248,9 @@ def db2surf_info(fname, id_dict, formation_energies=None):
         atoms.info['dbid'] = dbid
         atoms.info['ctime'] = float(d.ctime)
         atoms.info['ads_atoms'] = adds_index(atoms)  # Modify if O/C/Nitrides
+        if len(atoms.info['ads_atoms']) == 0:
+            print('Warning: No adsorbate.', fname, dbid)
+            continue
         atoms.info['surf_atoms'] = slab_index(atoms)
         i_add1, i_surf1, Z_add1, Z_surf1, i_surfnn = info2primary_index(atoms)
         atoms.info['i_add1'] = i_add1
