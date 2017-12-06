@@ -25,8 +25,8 @@ for f in dictionary.keys():
     atoms = ase.io.read(f + '.traj')
     # Attach indices of adsorbate atoms to the info dict in the key 'add_atoms'
     atoms.info['ads_atoms'] = dictionary[f]['ads_index']
-    atoms.info['surf_atoms'] = slab_index(atoms)
     # Get other information about the surface/adsorbate nearest neighbors.
+    atoms.info['surf_atoms'] = slab_index(atoms)
     i_add1, i_surf1, Z_add1, Z_surf1, i_surfnn = info2primary_index(atoms)
     atoms.info['i_add1'] = i_add1
     atoms.info['i_surf1'] = i_surf1
