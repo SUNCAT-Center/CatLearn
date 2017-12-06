@@ -8,7 +8,7 @@ from .covariance import get_covariance
 
 
 def get_uncertainty(kernel_dict, test_fp, reg, ktb, cinv, log_scale,
-                    include_noise):
+                    include_noise=True):
     """Function to calculate uncertainty.
 
     Parameters
