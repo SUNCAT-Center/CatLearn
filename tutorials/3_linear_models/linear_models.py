@@ -24,9 +24,9 @@ def afunc(x):
 
 # Setting up data.
 # A number of training points in x.
-train_points = 10
+train_points = 30
 # Magnitude of the noise.
-noise_magnitude = 0.3
+noise_magnitude = 0.1
 
 # Randomly generate the training datapoints x.
 train_d1 = 2 * (np.random.random_sample(train_points) - 0.5)
@@ -72,7 +72,7 @@ plt3d.plot_surface(test_x1, test_x2,
                    alpha=0.3, color='b')
 
 # Model example 1 - Ridge regression.
-if True:
+if False:
     # Test ridge regression predictions.
     rr = RidgeRegression()
     reg = rr.find_optimal_regularization(X=std['train'],
@@ -120,9 +120,7 @@ if True:
 if True:
     # Set up the prediction routine and optimize hyperparameters.
     kdict = {'k1': {'type': 'gaussian', 'width': [0.3, 3.], 'scaling': 0.9},
-             'c1': {'type': 'constant', 'const': 0.0},
-             #'l1': {'type': 'linear', 'scaling': 0.1}
-             }
+             'c1': {'type': 'constant', 'const': 0.0}}
     # Starting guess for the noise parameter
     sdt1 = noise_magnitude
     # Set up the gaussian process.

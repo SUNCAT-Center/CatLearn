@@ -11,7 +11,7 @@ def target_standardize(target):
     target : list
         A list of the target values.
     """
-    target = np.vstack(target)
+    target = np.asarray(target)
 
     data = defaultdict(list)
     data['mean'] = np.mean(target, axis=0)
@@ -28,7 +28,7 @@ def target_normalize(target):
     target : list
         A list of the target values.
     """
-    target = np.vstack(target)
+    target = np.asarray(target)
 
     data = defaultdict(list)
     data['mean'] = np.mean(target, axis=0)
@@ -46,7 +46,7 @@ def target_center(target):
     target : list
         A list of the target values.
     """
-    target = np.vstack(target)
+    target = np.asarray(target)
 
     data = defaultdict(list)
     data['mean'] = np.mean(target, axis=0)
