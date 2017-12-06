@@ -85,10 +85,10 @@ if True:
     # Do predictions.
     linear = gp1.predict(test_fp=std['test'], uncertainty=True)
     # Put predictions back on real scale.
-    prediction = np.array(linear['prediction']) * train_targets['std'] + \
+    prediction = np.vstack(linear['prediction']) * train_targets['std'] + \
         train_targets['mean']
     # Put uncertainties back on real scale.
-    uncertainty = np.array(linear['uncertainty']) * train_targets['std']
+    uncertainty = np.vstack(linear['uncertainty']) * train_targets['std']
     # Get confidence interval on predictions.
     over_upper = prediction + uncertainty * tstd
     over_lower = prediction - uncertainty * tstd
@@ -114,10 +114,10 @@ if True:
     # Do the optimized predictions.
     gaussian = gp2.predict(test_fp=std['test'], uncertainty=True)
     # Put predictions back on real scale.
-    prediction = np.array(gaussian['prediction']) * train_targets['std'] + \
+    prediction = np.vstack(gaussian['prediction']) * train_targets['std'] + \
         train_targets['mean']
     # Put uncertainties back on real scale.
-    uncertainty = np.array(gaussian['uncertainty']) * train_targets['std']
+    uncertainty = np.vstack(gaussian['uncertainty']) * train_targets['std']
     # Get confidence interval on predictions.
     gp_upper = prediction + uncertainty * tstd
     gp_lower = prediction - uncertainty * tstd

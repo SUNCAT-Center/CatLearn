@@ -72,7 +72,7 @@ plt3d.plot_surface(test_x1, test_x2,
                    alpha=0.3, color='b')
 
 # Model example 1 - Ridge regression.
-if True:
+if False:
     # Test ridge regression predictions.
     rr = RidgeRegression()
     reg = rr.find_optimal_regularization(X=std['train'],

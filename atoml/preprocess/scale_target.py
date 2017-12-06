@@ -37,6 +37,7 @@ def target_normalize(target):
 
     return data
 
+
 def target_center(target):
     """Return a list of normalized target values.
 

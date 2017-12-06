@@ -414,6 +414,7 @@ class AdsorbateFingerprintGenerator(object):
                     'ionenergy_surf2',
                     'ground_state_magmom_surf2']
         else:
+            atoms.set_constraint()
             atoms = atoms.repeat([2, 2, 1])
             bulk_atoms, top_atoms = layers_info(atoms)
             symbols = atoms.get_chemical_symbols()
@@ -421,7 +422,7 @@ class AdsorbateFingerprintGenerator(object):
             # Get a list of neighbors of binding surface atom(s).
             # Loop over binding surface atoms.
             ai = []
-            adatoms = ['H', 'C', 'N', 'O']
+            adatoms = atoms.info['key_value_pairs']['species']
             for primary_surf in atoms.info['i_surfnn']:
                 name = symbols[primary_surf]
                 Z0 = numbers[primary_surf]
@@ -515,7 +516,10 @@ class AdsorbateFingerprintGenerator(object):
                 if Cnn == 3:
                     nCdouble += 1
                 elif Cnn == 2:
-                    nCtriple += 1
+                    if nCH > 0:
+                        nCtriple += 1
+                    else:
+                        nCdouble += 2
                 elif Cnn == 1:
                     nCquad += 1
                 nC2 += 4 - (nCC + nCH)
@@ -587,9 +591,17 @@ class AdsorbateFingerprintGenerator(object):
 
     def info2Ef(self, atoms):
         if atoms is None:
-            ['Ef']
+            return ['Ef']
         else:
             return [float(atoms.info['Ef'])]
+
+    def name(self, atoms):
+        if atoms is None:
+            return ['catapp_name']
+        else:
+            kvp = atoms.info['key_value_pairs']
+            name = kvp['species'] + '*' + kvp['name'] + kvp['facet']
+            return [name]
 
     def get_dbid(self, atoms=None):
         if atoms is None:
@@ -601,7 +613,7 @@ class AdsorbateFingerprintGenerator(object):
         if atoms is None:
             return ['ctime']
         else:
-            return [int(atoms.info['key_value_pairs']['ctime'])]
+            return [int(atoms.info['ctime'])]
 
     def get_keyvaluepair(self, atoms=None, field_name='None'):
         if atoms is None:
