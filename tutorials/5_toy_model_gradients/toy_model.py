@@ -69,9 +69,7 @@ kdict = {'k1': {'type': 'gaussian', 'width': w1, 'scaling': scaling}}
 gp = GaussianProcess(kernel_dict=kdict, regularization=sdt1**2,
                      train_fp=train,
                      train_target=target,gradients=gradients,
-                     optimize_hyperparameters=True,
-                     algomin='L-BFGS-B',
-                     global_opt=False,scale_data=True)
+                     optimize_hyperparameters=True,scale_data=True)
 print('Optimized kernel:', gp.kernel_dict)
 
 # Do the optimized predictions.

@@ -83,10 +83,13 @@ kdict = {'k1': {'type': 'gaussian', 'width': w1, 'scaling': scaling}}
 gp = GaussianProcess(kernel_dict=kdict, regularization=sdt1**2,
                      train_fp=train,
                      train_target=target,
-                     optimize_hyperparameters=True,
-                     gradients=gradients, algomin='TNC',
-                     global_opt=False,scale_optimizer=False,scale_data=True)
+                     optimize_hyperparameters=False,
+                     gradients=gradients,
+                     scale_optimizer=False,scale_data=True)
 print('Optimized kernel:', gp.kernel_dict)
+
+# Hyperaparam optimization algorithms change from default.
+gp.optimize_hyperparameters(algomin='TNC',global_opt=False)
 
 # Do the optimized predictions.
 pred = gp.predict(test_fp=test, uncertainty=True)
