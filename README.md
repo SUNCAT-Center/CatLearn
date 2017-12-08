@@ -94,4 +94,5 @@ the code that could be improved.
 #### Contributors
 -   Andrew Doyle
 -   Jacob Boes
+-   Jose A. Garrido Torres
 -   Markus Ekvall
