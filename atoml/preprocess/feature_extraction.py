@@ -16,7 +16,7 @@ def pls(components, train_matrix, target, test_matrix):
     new_train = model.transform(train_matrix)
     new_test = model.transform(test_matrix)
 
-    return new_test, new_train
+    return new_train, new_test
 
 
 def pca(components, train_matrix, test_matrix):
@@ -26,7 +26,7 @@ def pca(components, train_matrix, test_matrix):
     new_train = model.transform(train_matrix)
     new_test = model.transform(test_matrix)
 
-    return new_test, new_train
+    return new_train, new_test
 
 
 def spca(components, train_matrix, test_matrix):
@@ -36,7 +36,7 @@ def spca(components, train_matrix, test_matrix):
     new_train = model.transform(train_matrix)
     new_test = model.transform(test_matrix)
 
-    return new_test, new_train
+    return new_train, new_test
 
 
 def atoml_pca(components, train_fpv, test_fpv=None, cleanup=False,
