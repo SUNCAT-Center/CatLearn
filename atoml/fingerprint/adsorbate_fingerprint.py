@@ -50,23 +50,6 @@ def n_outer(econf):
     return n_tot, ns, np, nd, nf
 
 
-def info2primary_index(atoms):
-    liste = []
-    surf_atoms = atoms.info['surf_atoms']
-    ads_atoms = atoms.info['ads_atoms']
-    for m in surf_atoms:
-        for a in ads_atoms:
-            d = atoms.get_distance(m, a, mic=True, vector=False)
-            liste.append([a, m, d])
-    L = np.array(liste)
-    i = np.argmin(L[:, 2])
-    i_add1 = L[i, 0]
-    i_surf1 = L[i, 1]
-    Z_add1 = atoms.numbers[int(i_add1)]
-    Z_surf1 = atoms.numbers[int(i_surf1)]
-    return i_add1, i_surf1, Z_add1, Z_surf1
-
-
 class AdsorbateFingerprintGenerator(object):
     def __init__(self):
         """ Class containing functions for fingerprint generation.
