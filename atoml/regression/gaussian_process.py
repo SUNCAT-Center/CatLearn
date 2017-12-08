@@ -369,7 +369,7 @@ class GaussianProcess(object):
                         bounds += ((1e-6, 1e6),) * N_D
                     else:
                         bounds += ((0, None),) * N_D
-            if 'width' in kdict[key]:
+            if 'width' in kdict[key] and kdict[key]['type'] != 'linear':
                 theta = kdict[key]['width']
                 if type(theta) is float or type(theta) is int:
                     kernel_dict[key]['width'] = np.zeros(N_D,) + theta
