@@ -357,7 +357,7 @@ class GaussianProcess(object):
                     if eval_gradients:
                         bounds += ((1e-6, 1e6),)
                     else:
-                        bounds += ((0, None),)
+                        bounds += ((1e-12, None),)
             if 'd_scaling' in kdict[key]:
                 d_scaling = kdict[key]['d_scaling']
                 if type(d_scaling) is float or type(d_scaling) is int:
@@ -368,7 +368,7 @@ class GaussianProcess(object):
                     if eval_gradients:
                         bounds += ((1e-6, 1e6),) * N_D
                     else:
-                        bounds += ((0, None),) * N_D
+                        bounds += ((1e-12, None),) * N_D
             if 'width' in kdict[key] and kdict[key]['type'] != 'linear':
                 theta = kdict[key]['width']
                 if type(theta) is float or type(theta) is int:
@@ -414,7 +414,7 @@ class GaussianProcess(object):
                     if eval_gradients:
                         bounds += ((1e-6, 1e6),)
                     else:
-                        bounds += ((0, None),)
+                        bounds += ((1e-12, None),)
             elif 'bounds' in kdict[key]:
                 bounds += kdict[key]['bounds']
         self.kernel_dict = kernel_dict
