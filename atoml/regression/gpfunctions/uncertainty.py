@@ -28,7 +28,7 @@ def get_uncertainty(kernel_dict, test_fp, reg, ktb, cinv, log_scale):
     """
     # Generate the test covariance matrix.
     kxx = get_covariance(kernel_dict=kernel_dict,
-                         matrix1=test_fp, log_scale=log_scale)
+                         matrix1=test_fp, log_scale=log_scale, eval_gradients=False)
     # Calculate the prediction variance for test data.
     scale = np.diagonal(kxx)
     var = np.einsum("ij,ij->i", np.dot(ktb, cinv), ktb)
