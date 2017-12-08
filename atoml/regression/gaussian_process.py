@@ -21,7 +21,6 @@ class GaussianProcess(object):
     def __init__(self, train_fp, train_target, kernel_dict, gradients=None,
                  regularization=None, regularization_bounds=(1e-12, None),
                  optimize_hyperparameters=False, scale_optimizer=False,
-                 algomin='L-BFGS-B', global_opt=False,
                  scale_data=False):
         """Gaussian processes setup.
 
@@ -61,7 +60,7 @@ class GaussianProcess(object):
 
         if gradients is not None:
             eval_gradients = True
-            regularization_bounds = (1e-3,1e3)
+            regularization_bounds = (1e-3, 1e3)
 
         assert np.shape(train_fp)[0] == len(train_target), msg
 
@@ -70,20 +69,18 @@ class GaussianProcess(object):
         self.gradients = gradients
         self.eval_gradients = eval_gradients
         self.scale_optimizer = scale_optimizer
-        self.algomin = algomin
-        self.global_opt = global_opt
         self.scale_data = scale_data
 
-
-        self._prepare_kernels(kernel_dict,
-                              regularization_bounds=regularization_bounds,
-                              eval_gradients=eval_gradients)
+        self._prepare_kernels(
+            kernel_dict, regularization_bounds=regularization_bounds,
+            eval_gradients=eval_gradients
+            )
 
         self.update_data(train_fp, train_target, gradients=self.gradients,
                          scale_optimizer=scale_optimizer)
 
         if optimize_hyperparameters:
-            self.optimize_hyperparameters(algomin=algomin, global_opt=global_opt)
+            self.optimize_hyperparameters()
 
     def predict(self, test_fp, test_target=None, uncertainty=False, basis=None,
                 get_validation_error=False, get_training_error=False,
@@ -130,7 +127,8 @@ class GaussianProcess(object):
         # Calculate the covariance between the test and training datasets.
         ktb = get_covariance(kernel_dict=self.kernel_dict, matrix1=test_fp,
                              matrix2=self.train_fp, regularization=None,
-                             log_scale=self.scale_optimizer, eval_gradients=self.eval_gradients)
+                             log_scale=self.scale_optimizer,
+                             eval_gradients=self.eval_gradients)
 
         # Build the list of predictions.
         data['prediction'] = self._make_prediction(ktb=ktb, cinv=self.cinv,
@@ -147,12 +145,13 @@ class GaussianProcess(object):
             # Calculate the covariance between the training dataset.
             kt_train = get_covariance(
                 kernel_dict=self.kernel_dict, matrix1=self.train_fp,
-                regularization=None, log_scale=self.scale_optimizer, eval_gradients=self.eval_gradients)
+                regularization=None, log_scale=self.scale_optimizer,
+                eval_gradients=self.eval_gradients)
 
             # Calculate predictions for the training data.
-            data['train_prediction'] = \
-                self._make_prediction(ktb=kt_train, cinv=self.cinv,
-                                      target=self.train_target)
+            data['train_prediction'] = self._make_prediction(
+                ktb=kt_train, cinv=self.cinv, target=self.train_target
+                )
 
             # Calculated the error for the prediction on the training data.
             train_target = self.train_target
@@ -178,8 +177,8 @@ class GaussianProcess(object):
 
         return data
 
-    def update_data(self, train_fp, train_target,gradients,
-    scale_optimizer=False):
+    def update_data(self, train_fp, train_target, gradients=None,
+                    scale_optimizer=False):
         """Update the training matrix, targets and covariance matrix.
 
         This function assumes that the descriptors in the feature set remain
@@ -215,32 +214,39 @@ class GaussianProcess(object):
             self.scaling = ScaleData(train_fp, train_target)
             self.train_fp, self.train_target = self.scaling.train()
             if gradients is not None:
-                gradients = gradients / (self.scaling.target_data[
-                'std']/self.scaling.feature_data['std'])
-                deriv = []
+                gradients = gradients / (self.scaling.target_data['std'] /
+                                         self.scaling.feature_data['std'])
                 gradients = np.ravel(gradients)
 
         if gradients is not None:
-             train_target_grad = np.append(self.train_target, gradients)
-             self.train_target = np.reshape(train_target_grad,(np.shape(
-             train_target_grad)[0],1))
+            train_target_grad = np.append(self.train_target, gradients)
+            self.train_target = np.reshape(train_target_grad,
+                                           (np.shape(train_target_grad)[0], 1))
 
         # Get the Gram matrix on-the-fly if none is suppiled.
-        cvm = get_covariance(kernel_dict=self.kernel_dict,
-                             matrix1=self.train_fp,
-                             regularization=self.regularization,
-                             log_scale=scale_optimizer, eval_gradients=self.eval_gradients)
+        cvm = get_covariance(
+            kernel_dict=self.kernel_dict, matrix1=self.train_fp,
+            regularization=self.regularization, log_scale=scale_optimizer,
+            eval_gradients=self.eval_gradients)
 
         # Invert the covariance matrix.
         self.cinv = np.linalg.inv(cvm)
 
-    def optimize_hyperparameters(self,algomin,global_opt):
+    def optimize_hyperparameters(self, global_opt=False, algomin='L-BFGS-B'):
         """Optimize hyperparameters of the Gaussian Process.
 
         This function assumes that the descriptors in the feature set remain
         the same. Optimization is performed with respect to the log marginal
         likelihood. Optimized hyperparameters are saved in the kernel
         dictionary. Finally, the covariance matrix is updated.
+
+        Parameters
+        ----------
+        global_opt : boolean
+            Flag whether to do basin hopping optimization of hyperparameters.
+            Default is False.
+        algomin : str
+            Define scipy minimizer method to call. Default is L-BFGS-B.
         """
         # Create a list of all hyperparameters.
         theta = kdicts2list(self.kernel_dict, N_D=self.N_D)
@@ -250,17 +256,17 @@ class GaussianProcess(object):
         args = (np.array(self.train_fp), np.array(self.train_target),
                 self.kernel_dict, self.scale_optimizer, self.eval_gradients)
         # Optimize
-        if global_opt == False:
+        if not global_opt:
             self.theta_opt = minimize(log_marginal_likelihood, theta,
                                       args=args,
                                       method=algomin,
                                       # options={'disp': True},
                                       bounds=self.bounds)
-        if global_opt == True:
-            minimizer_kwargs={'method': algomin,'args':args,'bounds':
-            self.bounds}
+        else:
+            minimizer_kwargs = {'method': algomin, 'args': args,
+                                'bounds': self.bounds}
             self.theta_opt = basinhopping(log_marginal_likelihood, theta,
-            minimizer_kwargs=minimizer_kwargs)
+                                          minimizer_kwargs=minimizer_kwargs)
 
         # Update kernel_dict and regularization with optimized values.
         self.kernel_dict = list2kdict(self.theta_opt['x'][:-1],
@@ -277,8 +283,7 @@ class GaussianProcess(object):
 
     def update_gp(self, train_fp=None, train_target=None, kernel_dict=None,
                   scale_optimizer=False, gradients=None,
-                  regularization_bounds=(
-                  1e-12, None)):
+                  regularization_bounds=(1e-12, None)):
         """Potentially optimize the full Gaussian Process again.
 
         This alows for the definition of a new kernel as a result of changing
@@ -309,19 +314,26 @@ class GaussianProcess(object):
             _, self.N_D = np.shape(train_fp)
             self.train_fp = np.asarray(train_fp)
 
+        # Assign flags for gradient evaluation.
+        eval_gradients = False
+        if gradients is not None:
+            eval_gradients = True
+
         if kernel_dict is not None:
-            self._prepare_kernels(kernel_dict,
-                                  regularization_bounds=regularization_bounds)
+            self._prepare_kernels(
+                kernel_dict, regularization_bounds=regularization_bounds,
+                eval_gradients=eval_gradients)
         if train_target is not None:
             msg = 'To update the data, both train_fp and train_target must be '
             msg += 'defined.'
             assert train_fp is not None, msg
-            self.update_data(train_fp, train_target,gradients, scale_optimizer)
+            self.update_data(train_fp, train_target, gradients,
+                             scale_optimizer)
 
         self.optimize_hyperparameters()
 
     def _prepare_kernels(self, kernel_dict, regularization_bounds,
-    eval_gradients):
+                         eval_gradients):
         """Format kernel_dictionary and stores bounds for optimization.
 
         Parameters
@@ -447,9 +459,9 @@ class GaussianProcess(object):
         """
         data = defaultdict(list)
         # Calculate the K(X*,X*) covariance matrix.
-        ktest = get_covariance(kernel_dict=self.kernel_dict, matrix1=test,
-                               regularization=None,
-                               log_scale=self.scale_optimizer, eval_gradients=self.eval_gradients)
+        ktest = get_covariance(
+            kernel_dict=self.kernel_dict, matrix1=test, regularization=None,
+            log_scale=self.scale_optimizer, eval_gradients=self.eval_gradients)
 
         # Form H and H* matrix, multiplying X by basis.
         train_matrix = np.asarray([basis(i) for i in train])
