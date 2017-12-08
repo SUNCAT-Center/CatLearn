@@ -19,7 +19,7 @@ class GaussianProcess(object):
     """Gaussian processes functions for the machine learning."""
 
     def __init__(self, train_fp, train_target, kernel_dict, gradients=None,
-                 regularization=None, regularization_bounds=(1e-3, None),
+                 regularization=None, regularization_bounds=(1e-12, None),
                  optimize_hyperparameters=False, scale_optimizer=False,
                  algomin='L-BFGS-B', global_opt=False,
                  scale_data=False):
@@ -61,6 +61,7 @@ class GaussianProcess(object):
 
         if gradients is not None:
             eval_gradients = True
+            regularization_bounds = (1e-3,1e3)
 
         assert np.shape(train_fp)[0] == len(train_target), msg
 
@@ -73,10 +74,12 @@ class GaussianProcess(object):
         self.global_opt = global_opt
         self.scale_data = scale_data
 
-        self._prepare_kernels(kernel_dict,
-                              regularization_bounds=regularization_bounds)
 
-        self.update_data(train_fp, train_target, gradients,
+        self._prepare_kernels(kernel_dict,
+                              regularization_bounds=regularization_bounds,
+                              eval_gradients=eval_gradients)
+
+        self.update_data(train_fp, train_target, gradients=self.gradients,
                          scale_optimizer=scale_optimizer)
 
         if optimize_hyperparameters:
@@ -273,7 +276,9 @@ class GaussianProcess(object):
         self.cinv = np.linalg.inv(cvm)
 
     def update_gp(self, train_fp=None, train_target=None, kernel_dict=None,
-                  scale_optimizer=False, regularization_bounds=(1e-3, None)):
+                  scale_optimizer=False, gradients=None,
+                  regularization_bounds=(
+                  1e-12, None)):
         """Potentially optimize the full Gaussian Process again.
 
         This alows for the definition of a new kernel as a result of changing
@@ -315,7 +320,8 @@ class GaussianProcess(object):
 
         self.optimize_hyperparameters()
 
-    def _prepare_kernels(self, kernel_dict, regularization_bounds):
+    def _prepare_kernels(self, kernel_dict, regularization_bounds,
+    eval_gradients):
         """Format kernel_dictionary and stores bounds for optimization.
 
         Parameters
@@ -336,7 +342,10 @@ class GaussianProcess(object):
                 if 'scaling_bounds' in kdict[key]:
                     bounds += kdict[key]['scaling_bounds']
                 else:
-                    bounds += ((1e-5, 1e5),)
+                    if eval_gradients:
+                        bounds += ((1e-6, 1e6),)
+                    else:
+                        bounds += ((0, None),)
             if 'd_scaling' in kdict[key]:
                 d_scaling = kdict[key]['d_scaling']
                 if type(d_scaling) is float or type(d_scaling) is int:
@@ -344,7 +353,10 @@ class GaussianProcess(object):
                 if 'bounds' in kdict[key]:
                     bounds += kdict[key]['bounds']
                 else:
-                    bounds += ((1e-5, 1e5),) * N_D
+                    if eval_gradients:
+                        bounds += ((1e-6, 1e6),) * N_D
+                    else:
+                        bounds += ((0, None),) * N_D
             if 'width' in kdict[key]:
                 theta = kdict[key]['width']
                 if type(theta) is float or type(theta) is int:
@@ -352,7 +364,10 @@ class GaussianProcess(object):
                 if 'bounds' in kdict[key]:
                     bounds += kdict[key]['bounds']
                 else:
-                    bounds += ((1e-5, 1e5),) * N_D
+                    if eval_gradients:
+                        bounds += ((1e-6, 1e6),) * N_D
+                    else:
+                        bounds += ((1e-12, 1e12),) * N_D
             elif 'hyperparameters' in kdict[key]:
                 theta = kdict[key]['hyperparameters']
                 if type(theta) is float or type(theta) is int:
@@ -361,7 +376,10 @@ class GaussianProcess(object):
                 if 'bounds' in kdict[key]:
                     bounds += kdict[key]['bounds']
                 else:
-                    bounds += ((1e-5, 1e5),) * N_D
+                    if eval_gradients:
+                        bounds += ((1e-6, 1e6),) * N_D
+                    else:
+                        bounds += ((1e-12, 1e12),) * N_D
             elif 'theta' in kdict[key]:
                 theta = kdict[key]['theta']
                 if type(theta) is float or type(theta) is int:
@@ -370,7 +388,10 @@ class GaussianProcess(object):
                 if 'bounds' in kdict[key]:
                     bounds += kdict[key]['bounds']
                 else:
-                    bounds += ((1e-5, 1e5),) * N_D
+                    if eval_gradients:
+                        bounds += ((1e-6, 1e6),) * N_D
+                    else:
+                        bounds += ((1e-12, 1e12),) * N_D
             elif kdict[key]['type'] == 'quadratic':
                 bounds += ((1, None), (0, None),)
             elif kdict[key]['type'] == 'constant':
@@ -378,7 +399,10 @@ class GaussianProcess(object):
                 if 'bounds' in kdict[key]:
                     bounds += kdict[key]['bounds']
                 else:
-                    bounds += ((1e-5, 1e5),)
+                    if eval_gradients:
+                        bounds += ((1e-6, 1e6),)
+                    else:
+                        bounds += ((0, None),)
             elif 'bounds' in kdict[key]:
                 bounds += kdict[key]['bounds']
         self.kernel_dict = kernel_dict

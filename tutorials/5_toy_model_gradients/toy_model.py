@@ -23,7 +23,7 @@ def afunc(x):
 # Setting up data.
 
 # A number of training points in x.
-train_points = 6
+train_points = 4
 
 # Each element in the list train can be referred to as a fingerprint.
 np.random.seed(104)
@@ -99,7 +99,7 @@ liney = []
 for i in linex:
     liney.append(afunc(i)[0])
 
-fig = plt.figure(figsize=(3, 3))
+fig = plt.figure(figsize=(5, 5))
 
 # Example
 ax = fig.add_subplot(111)
