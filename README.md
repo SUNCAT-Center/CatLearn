@@ -1,5 +1,6 @@
 # AtoML
-![Build Status](https://gitlab.com/atoML/AtoML/badges/master/build.svg)
+[![pipeline status](https://gitlab.com/atoML/AtoML/badges/master/pipeline.svg)](https://gitlab.com/atoML/AtoML/commits/master)
+[![coverage report](https://gitlab.com/atoML/AtoML/badges/master/coverage.svg)](https://gitlab.com/atoML/AtoML/commits/master)
 
 Utilities for building and testing Atomic Machine Learning (AtoML) models.
 Gaussian Processes (GP) regression machine learning routines are implemented.
@@ -12,47 +13,86 @@ a number of additional functions have been added that interface with
 manipulation of atoms objects through GP predictions, as well as dynamic
 generation of descriptors through use of the many ASE functions.
 
-## AtoML functions
+## Table of contents
 
-*   Manipulate list of atoms objects to form training and test data. Useful
-when getting data from e.g. a database.
-    -   data_setup.py
-*   Convert ASE atoms objects into feature vectors for a number of potentially
-interesting problems.
-    -   fingerprint_setup.py
-    -   adsorbate_fingerprint.py
-    -   particle_fingerprint.py
-    -   neighborhood_matrix.py
-    -   standard_fingerprint.py
-    -   general_fingerprint.py
-*   Database functions to store the feature matrix from a given dataset.
-    -   database_functions.py
-*   Feature preprocessing, engineering, elimination and extraction methods.
-    -   feature_preprocess.py
-    -   feature_engineering.py
-    -   feature_elimination.py
-    -   feature_extraction.py
-*   Gaussian processes predictions with with model optimization.
-    -   predict.py
-    -   kernels.py
-    -   covarience.py
-    -   model_selection.py
-    -   uncertainty.py
-    -   gp_sensitivity.py
-    -   cost_function.py
-*   Model testing functions.
-    -   cross_validation.py
+-   [Installation](#installation)
+-   [Usage](#usage)
+-   [Contribution](#contribution)
+-   [Authors](#authors)
 
 ## Installation
+[(Back to top)](#table-of-contents)
 
-Put the `<install_dir>/` into your `$PYTHONPATH` environment variable.
+The easiest way to install the code is with:
 
-Install dependencies in with:
+  ```shell
+    pip install git+https://gitlab.com/atoML/AtoML.git
+  ```
 
+This will automatically install the code as well as the dependencies.
+Alternatively, you can clone the repository to a local directory with:
+
+  ```shell
+    git clone https://gitlab.com/atoML/AtoML.git
+  ```
+
+And then put the `<install_dir>/` into your `$PYTHONPATH` environment variable.
+
+Be sure to install dependencies in with:
+
+  ```shell
     pip install -r requirements.txt
+  ```
 
-Examples and test scripts are present for most features.
+## Usage
+[(Back to top)](#table-of-contents)
+
+In the most basic form, it is possible to set up a GP model and make some
+predictions using the following lines of code:
+
+  ```python
+    import numpy as np
+    from atoml.regression import GaussianProcess
+
+    # Define some input data.
+    train_features = np.arange(200).reshape(50, 4)
+    target = np.random.random_sample((50,))
+    test_features = np.arange(100).reshape(25, 4)
+
+    # Setup the kernel.
+    kernel = {'k1': {'type': 'gaussian', 'width': 0.5}}
+
+    # Train the GP model.
+    gp = GaussianProcess(kernel_dict=kernel, regularization=1e-3,
+                         train_fp=train_features, train_target=target,
+                         optimize_hyperparameters=True)
+
+    # Get the predictions.
+    prediction = gp.predict(test_fp=test_features)
+  ```
+
+The above sample of code will train a GP with the squared exponential kernel,
+fitting some random function. Of course this isn't so useful, more helpful
+examples and test scripts are present for most features.
 
 ## Contribution
+[(Back to top)](#table-of-contents)
 
-See the contribution guide.
+Anyone is welcome to contribute to the project. Please see the contribution
+guide for help setting up a local copy of the code. There are some `TODO` items
+in the README files for the various modules that give suggestions on parts of
+the code that could be improved.
+
+## Authors
+[(Back to top)](#table-of-contents)
+
+#### Lead
+-   Paul Jennings
+-   Martin Hansen
+-   Thomas Bligaard
+
+#### Contributors
+-   Andrew Doyle
+-   Jacob Boes
+-   Jose A. Garrido Torres
+-   Markus Ekvall

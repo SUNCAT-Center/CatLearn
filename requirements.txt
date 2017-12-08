@@ -1,8 +1,8 @@
-asap3==3.10.6
-ase==3.14.1
-matplotlib==2.0.2
-numpy==1.13.1
-pandas==0.20.3
-scikit-learn==0.19.0
-scipy==0.19.1
-seaborn==0.8
+#asap3==3.10.7
+ase==3.15.0
+matplotlib==2.1.0
+numpy==1.13.3
+pandas==0.21.0
+scikit-learn==0.19.1
+scipy==1.0.0
+seaborn==0.8.1

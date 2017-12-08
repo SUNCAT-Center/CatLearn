@@ -1,9 +1,11 @@
 """Processing of data for HierarchyValidation."""
 from __future__ import division
+
 import numpy as np
 from scipy.stats import pearsonr
-from atoml.feature_preprocess import standardize, normalize
-from atoml.predict import target_standardize, target_normalize
+
+from atoml.preprocess.feature_preprocess import standardize, normalize
+from atoml.preprocess.scale_target import target_standardize, target_normalize
 
 
 class data_process(object):
