@@ -28,12 +28,10 @@ def get_covariance(kernel_dict, log_scale, matrix1, matrix2=None,
         assert n1_D == np.shape(matrix2)[1]
     cov = None
 
-
     # Keep copies of original matrices.
     store1, store2 = matrix1, matrix2
 
     # Loop over kernels in kernel_dict
-    cov = None
     for key in kernel_dict:
         matrix1, matrix2 = store1, store2
         ktype = kernel_dict[key]['type']
@@ -53,8 +51,9 @@ def get_covariance(kernel_dict, log_scale, matrix1, matrix2=None,
             scaling = np.exp(scaling)
 
         # Get mapping from kernel functions.
-        k = eval('ak.{}_kernel(m1=matrix1, m2=matrix2, \
-                 theta=hyperparameters,eval_gradients=eval_gradients, log_scale=log_scale)'.format(ktype))
+        k = eval(
+            'ak.{}_kernel(m1=matrix1, m2=matrix2, theta=hyperparameters, \
+            eval_gradients=eval_gradients, log_scale=log_scale)'.format(ktype))
 
         # Initialize covariance matrix
         if cov is None:

@@ -1,3 +1,4 @@
+"""The pip setup file for AtoML."""
 import setuptools
 
 
@@ -13,7 +14,7 @@ reqs = [str(req) for req in install_reqs]
 
 setuptools.setup(
     name="AtoML",
-    version="0.0.1",
+    version="0.1.0",
     url="https://gitlab.com/atoML/AtoML",
 
     author="Paul C. Jennings, Martin H. Hansen",

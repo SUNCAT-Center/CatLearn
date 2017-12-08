@@ -1,9 +1,4 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Fri Nov 18 14:30:20 2016
-
-@author: mhangaard
-"""
+"""Log marginal likelihood calculator function."""
 from __future__ import absolute_import
 from __future__ import division
 
@@ -15,7 +10,7 @@ from .kernels import list2kdict
 
 
 def log_marginal_likelihood(theta, train_matrix, targets, kernel_dict,
-                            scale_optimizer,eval_gradients):
+                            scale_optimizer, eval_gradients):
     """Return the negative of the log marginal likelyhood.
 
     Equation 5.8 in C. E. Rasmussen and C. K. I. Williams, 2006
@@ -35,8 +30,12 @@ def log_marginal_likelihood(theta, train_matrix, targets, kernel_dict,
     """
     # Get the covariance matrix.
     kernel_dict = list2kdict(theta, kernel_dict)
-    K = get_covariance(kernel_dict=kernel_dict, matrix1=train_matrix,
-                       regularization=theta[-1], log_scale=scale_optimizer,eval_gradients=eval_gradients)
+    K = get_covariance(
+        kernel_dict=kernel_dict, matrix1=train_matrix,
+        regularization=theta[-1], log_scale=scale_optimizer,
+        eval_gradients=eval_gradients
+        )
+
     # Setup the data.
     n = len(targets)
     y = targets.reshape([n, 1])

@@ -16,7 +16,7 @@ def pls(components, train_matrix, target, test_matrix):
     new_train = model.transform(train_matrix)
     new_test = model.transform(test_matrix)
 
-    return new_test, new_train
+    return new_train, new_test
 
 
 def pca(components, train_matrix, test_matrix):
@@ -26,7 +26,7 @@ def pca(components, train_matrix, test_matrix):
     new_train = model.transform(train_matrix)
     new_test = model.transform(test_matrix)
 
-    return new_test, new_train
+    return new_train, new_test
 
 
 def spca(components, train_matrix, test_matrix):
@@ -36,7 +36,7 @@ def spca(components, train_matrix, test_matrix):
     new_train = model.transform(train_matrix)
     new_test = model.transform(test_matrix)
 
-    return new_test, new_train
+    return new_train, new_test
 
 
 def atoml_pca(components, train_fpv, test_fpv=None, cleanup=False,
@@ -66,8 +66,8 @@ def atoml_pca(components, train_fpv, test_fpv=None, cleanup=False,
     # Make a list of (eigenvalue, eigenvector) tuples
     eig_pairs = [(np.abs(s[i]), u[:, i]) for i in range(len(s))]
 
-    # Get the varience as percentage.
-    data['varience'] = [(i / sum(s))*100 for i in sorted(s, reverse=True)]
+    # Get the variance as percentage.
+    data['variance'] = [(i / sum(s))*100 for i in sorted(s, reverse=True)]
 
     # Form the projection matrix.
     features = len(train_fpv[0])

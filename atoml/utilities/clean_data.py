@@ -53,6 +53,10 @@ def clean_variance(train, test=None, labels=None):
     test : array
         Optional feature matrix for the test data.
     """
+    train = np.asarray(train)
+    if test is not None:
+        test = np.asarray(test)
+
     clean = defaultdict(list)
     m = train.T
     # Find features that provide no input for model.
@@ -87,6 +91,10 @@ def clean_infinite(train, test=None, labels=None):
     test : array
         Optional feature matrix for the test data.
     """
+    train = np.asarray(train)
+    if test is not None:
+        test = np.asarray(test)
+
     clean = defaultdict(list)
     # Find features that have only finite values.
     bool_test = np.isfinite(train).all(axis=0)
