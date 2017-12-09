@@ -1,6 +1,19 @@
-image:
-  - "continuumio/anaconda"
-  - "continuumio/anaconda3"
+image: continuumio/anaconda
+
+before_script:
+  - python -V
+  - pip install pyyaml pytest-cov
+  - git clone https://gitlab.com/ase/ase.git
+  - pwd
+  - export PYTHONPATH=$PWD/ase:$PYTHONPATH
+  - export PATH=$PWD/ase/tools:$PATH
+  - export PYTHONPATH=$PWD/:$PYTHONPATH
+
+test:
+  script:
+    - py.test --cov=atoml test/test_suit.py
+
+image: continuumio/anaconda3
 
 before_script:
   - python -V
