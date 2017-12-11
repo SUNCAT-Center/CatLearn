@@ -719,9 +719,11 @@ class AdsorbateFingerprintGenerator(object):
                     'ne_f_sum',
                     'ionenergy_sum',
                     'ground_state_magmom_sum',
+                    'concentration_catapp',
                     'facet_catapp',
                     'site_catapp']
         else:
+            kvp = atoms.info['key_value_pairs']
             Z_surf1 = [atoms.numbers[j] for j in atoms.info['i_surfnn']]
             z1 = Z_surf1[0]
             z2 = Z_surf1[0]
@@ -734,8 +736,13 @@ class AdsorbateFingerprintGenerator(object):
                     site = 1.
                 elif Z_surf1[0] == z2:
                     site = 3.
+                conc = 1.
             else:
                 site = 2.
+                if '3' in kvp['term']:
+                    conc = 3.
+                else:
+                    conc = 2.
             f1 = get_mendeleev_params(z1,
                                       extra_params=['heat_of_formation',
                                                     'dft_bulk_modulus',
@@ -769,10 +776,9 @@ class AdsorbateFingerprintGenerator(object):
                 f2 = f2[:-3] + [float(block2number[f2[-3]])] + \
                     list(n_outer(f2[-2])) + [f2[-1]['1']] + \
                     [float(ground_state_magnetic_moments[z2])]
-            kvp = atoms.info['key_value_pairs']
             msum = list(np.nansum([f1, f2], axis=0, dtype=np.float))
             facet = facetdict[kvp['facet'].replace(')', '').replace('(', '')]
-            fp = f1 + f2 + msum + facet + [site]
+            fp = f1 + f2 + msum + conc + facet + [site]
             return fp
 
     def get_dbid(self, atoms=None):

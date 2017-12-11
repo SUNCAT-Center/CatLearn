@@ -67,6 +67,32 @@ def last_index2ads(atoms, formula):
     return add_atoms
 
 
+def detect_ads(atoms, formula):
+    """ Returns the indexes of the last n atoms in the atoms object, where n is
+    the length of the composition of the species field.
+
+    Parameters
+    ----------
+    atoms : ase atoms object.
+        atoms.info must be a dictionary containing the key 'key_value_pairs',
+        which is expected to contain standard adsorbate structure
+        key value pairs. 'species' should be the chemical formula of an
+        adsorbate.
+
+    Parameters
+    ----------
+    atoms : ase atoms object.
+    """
+    string2symbols(formula)
+    n_ads = len()
+    natoms = len(atoms)
+    lz, li = get_layers(atoms, (0, 0, 1), tolerance=0.3)
+    layers = int(atoms.info['key_value_pairs']['layers'])
+    add_atoms = [a.index for a in atoms if li[a.index] > layers-1]
+    add_atoms = list(range(natoms-n_ads, natoms))
+    return add_atoms
+
+
 def layers_info(atoms):
     """Returns two lists, the first containing indices of subsurface atoms and
     the second containing indices of atoms in the two outermost layers.
