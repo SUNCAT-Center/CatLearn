@@ -9,7 +9,7 @@ import functools
 
 from .gpfunctions.log_marginal_likelihood import log_marginal_likelihood
 from .gpfunctions.covariance import get_covariance
-from .gpfunctions.kernels import kdicts2list, list2kdict
+from .gpfunctions.kernel_setup import prepare_kernels, kdicts2list, list2kdict
 from .gpfunctions.uncertainty import get_uncertainty
 from .gpfunctions.default_scale import ScaleData
 from atoml.utilities.cost_function import get_error
@@ -71,9 +71,9 @@ class GaussianProcess(object):
         self.scale_optimizer = scale_optimizer
         self.scale_data = scale_data
 
-        self._prepare_kernels(
+        self.kernel_dict, self.bounds = prepare_kernels(
             kernel_dict, regularization_bounds=regularization_bounds,
-            eval_gradients=eval_gradients
+            eval_gradients=eval_gradients, N_D=self.N_D
             )
 
         self.update_data(train_fp, train_target, gradients=self.gradients,
@@ -320,9 +320,10 @@ class GaussianProcess(object):
             eval_gradients = True
 
         if kernel_dict is not None:
-            self._prepare_kernels(
+            self.kernel_dict, self.bounds = prepare_kernels(
                 kernel_dict, regularization_bounds=regularization_bounds,
-                eval_gradients=eval_gradients)
+                eval_gradients=eval_gradients, N_D=self.N_D
+                )
         if train_target is not None:
             msg = 'To update the data, both train_fp and train_target must be '
             msg += 'defined.'
@@ -331,96 +332,6 @@ class GaussianProcess(object):
                              scale_optimizer)
 
         self.optimize_hyperparameters()
-
-    def _prepare_kernels(self, kernel_dict, regularization_bounds,
-                         eval_gradients):
-        """Format kernel_dictionary and stores bounds for optimization.
-
-        Parameters
-        ----------
-        kernel_dict : dict
-            Dictionary containing all information for the kernels.
-        regularization_bounds : tuple
-            Optional to change the bounds for the regularization.
-        """
-        kdict = kernel_dict
-        bounds = ()
-        for key in kdict:
-            if 'features' in kdict[key]:
-                N_D = len(kdict[key]['features'])
-            else:
-                N_D = self.N_D
-            if 'scaling' in kdict[key]:
-                if 'scaling_bounds' in kdict[key]:
-                    bounds += kdict[key]['scaling_bounds']
-                else:
-                    if eval_gradients:
-                        bounds += ((1e-6, 1e6),)
-                    else:
-                        bounds += ((1e-12, None),)
-            if 'd_scaling' in kdict[key]:
-                d_scaling = kdict[key]['d_scaling']
-                if type(d_scaling) is float or type(d_scaling) is int:
-                    kernel_dict[key]['d_scaling'] = np.zeros(N_D,) + d_scaling
-                if 'bounds' in kdict[key]:
-                    bounds += kdict[key]['bounds']
-                else:
-                    if eval_gradients:
-                        bounds += ((1e-6, 1e6),) * N_D
-                    else:
-                        bounds += ((1e-12, None),) * N_D
-            if 'width' in kdict[key] and kdict[key]['type'] != 'linear':
-                theta = kdict[key]['width']
-                if type(theta) is float or type(theta) is int:
-                    kernel_dict[key]['width'] = np.zeros(N_D,) + theta
-                if 'bounds' in kdict[key]:
-                    bounds += kdict[key]['bounds']
-                else:
-                    if eval_gradients:
-                        bounds += ((1e-6, 1e6),) * N_D
-                    else:
-                        bounds += ((1e-12, 1e12),) * N_D
-            elif 'hyperparameters' in kdict[key]:
-                theta = kdict[key]['hyperparameters']
-                if type(theta) is float or type(theta) is int:
-                    kernel_dict[key]['hyperparameters'] = (np.zeros(N_D,) +
-                                                           theta)
-                if 'bounds' in kdict[key]:
-                    bounds += kdict[key]['bounds']
-                else:
-                    if eval_gradients:
-                        bounds += ((1e-6, 1e6),) * N_D
-                    else:
-                        bounds += ((1e-12, 1e12),) * N_D
-            elif 'theta' in kdict[key]:
-                theta = kdict[key]['theta']
-                if type(theta) is float or type(theta) is int:
-                    kernel_dict[key]['hyperparameters'] = (np.zeros(N_D,) +
-                                                           theta)
-                if 'bounds' in kdict[key]:
-                    bounds += kdict[key]['bounds']
-                else:
-                    if eval_gradients:
-                        bounds += ((1e-6, 1e6),) * N_D
-                    else:
-                        bounds += ((1e-12, 1e12),) * N_D
-            elif kdict[key]['type'] == 'quadratic':
-                bounds += ((1, None), (0, None),)
-            elif kdict[key]['type'] == 'constant':
-                theta = kdict[key]['const']
-                if 'bounds' in kdict[key]:
-                    bounds += kdict[key]['bounds']
-                else:
-                    if eval_gradients:
-                        bounds += ((1e-6, 1e6),)
-                    else:
-                        bounds += ((1e-12, None),)
-            elif 'bounds' in kdict[key]:
-                bounds += kdict[key]['bounds']
-        self.kernel_dict = kernel_dict
-        # Bounds for the regularization
-        bounds += (regularization_bounds,)
-        self.bounds = bounds
 
     def _make_prediction(self, ktb, cinv, target):
         """Function to make the prediction.
