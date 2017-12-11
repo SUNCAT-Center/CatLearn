@@ -27,8 +27,8 @@ def test_extend():
                              (np.shape(feature_data)[0], ))
 
     # Split the data into so test and training sets.
-    train_features, train_targets = feature_data[:35, :], target_data[:35]
-    test_features = feature_data[35:, :]
+    train_features, train_targets = feature_data[:10, :], target_data[:10]
+    test_features = feature_data[10:, :]
     d, f = np.shape(train_features)
     td, tf = np.shape(test_features)
 

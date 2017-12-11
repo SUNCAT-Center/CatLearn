@@ -29,14 +29,14 @@ def feature_test():
     all_cand = gadb.get_all_relaxed_candidates(use_extinct=False)
 
     # Setup the test and training datasets.
-    testset = get_unique(atoms=all_cand, size=10, key='raw_score')
-    assert len(testset['atoms']) == 10
-    assert len(testset['taken']) == 10
+    testset = get_unique(atoms=all_cand, size=3, key='raw_score')
+    assert len(testset['atoms']) == 3
+    assert len(testset['taken']) == 3
 
-    trainset = get_train(atoms=all_cand, size=50, taken=testset['taken'],
+    trainset = get_train(atoms=all_cand, size=15, taken=testset['taken'],
                          key='raw_score')
-    assert len(trainset['atoms']) == 50
-    assert len(trainset['target']) == 50
+    assert len(trainset['atoms']) == 15
+    assert len(trainset['target']) == 15
 
     # Clear out some old saved data.
     for i in trainset['atoms']:
@@ -45,68 +45,68 @@ def feature_test():
     # Initiate the fingerprint generators with relevant input variables.
     print('Getting the fingerprints')
     pfpv = ParticleFingerprintGenerator(atom_numbers=[78, 79], max_bonds=13,
-                                        get_nl=False, dx=0.2, cell_size=50.,
+                                        get_nl=False, dx=0.2, cell_size=30.,
                                         nbin=4)
     sfpv = StandardFingerprintGenerator(atom_types=[78, 79])
 
     data = return_fpv(trainset['atoms'], [pfpv.nearestneighbour_fpv],
                       use_prior=False)
     n, d = np.shape(data)
-    assert n == 50, d == 4
+    assert n == 15, d == 4
 
     train_fp = return_fpv(trainset['atoms'], [pfpv.bond_count_fpv],
                           use_prior=False)
     n, d = np.shape(train_fp)
     data = np.concatenate((data, train_fp), axis=1)
-    assert n == 50, d == 52
+    assert n == 15, d == 52
 
     train_fp = return_fpv(trainset['atoms'], [pfpv.distribution_fpv],
                           use_prior=False)
     n, d = np.shape(train_fp)
     data = np.concatenate((data, train_fp), axis=1)
-    assert n == 50, d == 8
+    assert n == 15, d == 8
 
     train_fp = return_fpv(trainset['atoms'], [pfpv.connections_fpv],
                           use_prior=False)
     n, d = np.shape(train_fp)
     data = np.concatenate((data, train_fp), axis=1)
-    assert n == 50, d == 26
+    assert n == 15, d == 26
 
     train_fp = return_fpv(trainset['atoms'], [pfpv.rdf_fpv], use_prior=False)
     n, d = np.shape(train_fp)
     data = np.concatenate((data, train_fp), axis=1)
-    assert n == 50, d == 20
+    assert n == 15, d == 20
 
     # Start testing the standard fingerprint vector generators.
     train_fp = return_fpv(trainset['atoms'], [sfpv.mass_fpv], use_prior=False)
     n, d = np.shape(train_fp)
     data = np.concatenate((data, train_fp), axis=1)
-    assert n == 50, d == 1
+    assert n == 15, d == 1
 
     train_fp = return_fpv(trainset['atoms'], [sfpv.composition_fpv],
                           use_prior=False)
     n, d = np.shape(train_fp)
     data = np.concatenate((data, train_fp), axis=1)
-    assert n == 50, d == 2
+    assert n == 15, d == 2
 
     train_fp = return_fpv(trainset['atoms'], [sfpv.eigenspectrum_fpv],
                           use_prior=False)
     n, d = np.shape(train_fp)
     data = np.concatenate((data, train_fp), axis=1)
-    assert n == 50, d == 147
+    assert n == 15, d == 147
 
     train_fp = return_fpv(trainset['atoms'], [sfpv.distance_fpv],
                           use_prior=False)
     n, d = np.shape(train_fp)
     data = np.concatenate((data, train_fp), axis=1)
-    assert n == 50, d == 2
+    assert n == 15, d == 2
 
     train_fp = return_fpv(trainset['atoms'], [pfpv.nearestneighbour_fpv,
                                               sfpv.mass_fpv,
                                               sfpv.composition_fpv])
     n, d = np.shape(train_fp)
     data = np.concatenate((data, train_fp), axis=1)
-    assert n == 50, d == 7
+    assert n == 15, d == 7
 
     # Do basic check for atomic porperties.
     no_prop = []
@@ -117,7 +117,7 @@ def feature_test():
                                          property=['atomic_number']))
     data = np.concatenate((data, no_prop), axis=1)
     data = np.concatenate((data, an_prop), axis=1)
-    assert np.shape(no_prop) == (50, 15) and np.shape(an_prop) == (50, 30)
+    assert np.shape(no_prop) == (15, 15) and np.shape(an_prop) == (15, 30)
 
     return all_cand, data
 
