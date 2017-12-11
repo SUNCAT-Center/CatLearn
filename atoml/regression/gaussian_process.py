@@ -445,7 +445,7 @@ class GaussianProcess(object):
         pred = functools.reduce(np.dot, (ktb, alpha))
 
         if self.scale_data:
-            pred = self.scaling.rescale(pred)
+            pred = self.scaling.rescale_targets(pred)
 
         return pred
 

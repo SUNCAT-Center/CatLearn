@@ -9,7 +9,15 @@ class ScaleData(object):
     """Class to perform default scaling in the regression functions.
 
     Will standardize both the features and the targets. These can then be
-    rescaled before being returned.
+    rescaled before being returned. The parameters can be accessed from the
+    class with:
+
+        ScaleData.feature_data['mean']
+
+    This can be accessed from the gp with:
+
+        gp = GaussianProcess(...)
+        gp.scaling.feature_data['mean']
     """
 
     def __init__(self, train_features, train_targets):
@@ -47,15 +55,28 @@ class ScaleData(object):
 
         return scaled
 
-    def rescale(self, predictions):
+    def hyperparameters(self):
+        """Scale the hyperparameters."""
+        raise NotImplemented
+
+    def rescale_targets(self, predictions):
         """Rescale predictions.
 
         Parameters
         ----------
         predictions : list
-           The predicted values from the GP.
+            The predicted values from the GP.
+
+        Returns
+        -------
+        p : array
+            The rescaled predictions.
         """
         predictions = np.asarray(predictions)
         p = (predictions * self.target_data['std']) + self.target_data['mean']
 
         return p
+
+    def rescale_hyperparameters(self):
+        """Rescale hyperparameters."""
+        raise NotImplemented
