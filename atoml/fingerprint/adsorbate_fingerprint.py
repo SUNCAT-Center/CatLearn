@@ -16,7 +16,7 @@ from ase.data import atomic_numbers
 from .periodic_table_data import get_mendeleev_params
 from .db2thermo import layers_info
 from .neighbor_matrix import connection_matrix
-
+import collections
 
 block2number = {'s': 1,
                 'p': 2,
@@ -644,8 +644,8 @@ class AdsorbateFingerprintGenerator(object):
                     'en_allen_m1',
                     'atomic_weight_m1',
                     'heat_of_formation_m1',
-                    'dft_bulk_modulus_m1',
-                    'dft_rhodensity_m1',
+                    #'dft_bulk_modulus_m1',
+                    #'dft_rhodensity_m1',
                     #'dbcenter_m1',
                     #'dbfilling_m1',
                     #'dbwidth_m1',
@@ -674,8 +674,8 @@ class AdsorbateFingerprintGenerator(object):
                     'en_allen_m2',
                     'atomic_weight_m2',
                     'heat_of_formation_m2',
-                    'dft_bulk_modulus_m2',
-                    'dft_rhodensity_m2',
+                    #'dft_bulk_modulus_m2',
+                    #'dft_rhodensity_m2',
                     #'dbcenter_m2',
                     #'dbfilling_m2',
                     #'dbwidth_m2',
@@ -704,8 +704,8 @@ class AdsorbateFingerprintGenerator(object):
                     'en_allen_sum',
                     'atomic_weight_sum',
                     'heat_of_formation_sum',
-                    'dft_bulk_modulus_sum',
-                    'dft_rhodensity_sum',
+                    #'dft_bulk_modulus_sum',
+                    #'dft_rhodensity_sum',
                     #'dbcenter_sum',
                     #'dbfilling_sum',
                     #'dbwidth_sum',
@@ -724,7 +724,9 @@ class AdsorbateFingerprintGenerator(object):
                     'site_catapp']
         else:
             kvp = atoms.info['key_value_pairs']
-            Z_surf1 = [atoms.numbers[j] for j in atoms.info['i_surfnn']]
+            Z_surf1_raw = [atoms.numbers[j] for j in atoms.info['i_surfnn']]
+            counts = collections.Counter(Z_surf1_raw)
+            Z_surf1 = sorted(Z_surf1_raw, key=counts.get, reverse=True)
             z1 = Z_surf1[0]
             z2 = Z_surf1[0]
             for z in Z_surf1:
@@ -745,8 +747,8 @@ class AdsorbateFingerprintGenerator(object):
                     conc = 2.
             f1 = get_mendeleev_params(z1,
                                       extra_params=['heat_of_formation',
-                                                    'dft_bulk_modulus',
-                                                    'dft_density',
+                                                    #'dft_bulk_modulus',
+                                                    #'dft_density',
                                                     #'dbcenter',
                                                     #'dbfilling',
                                                     #'dbwidth',
@@ -763,8 +765,8 @@ class AdsorbateFingerprintGenerator(object):
             else:
                 f2 = get_mendeleev_params(z2,
                                           extra_params=['heat_of_formation',
-                                                        'dft_bulk_modulus',
-                                                        'dft_density',
+                                                        #'dft_bulk_modulus',
+                                                        #'dft_density',
                                                         #'dbcenter',
                                                         #'dbfilling',
                                                         #'dbwidth',
@@ -778,7 +780,7 @@ class AdsorbateFingerprintGenerator(object):
                     [float(ground_state_magnetic_moments[z2])]
             msum = list(np.nansum([f1, f2], axis=0, dtype=np.float))
             facet = facetdict[kvp['facet'].replace(')', '').replace('(', '')]
-            fp = f1 + f2 + msum + conc + facet + [site]
+            fp = f1 + f2 + msum + [conc] + facet + [site]
             return fp
 
     def get_dbid(self, atoms=None):
