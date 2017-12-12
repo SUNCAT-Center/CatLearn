@@ -172,4 +172,13 @@ def scale_test():
 
 
 if __name__ == '__main__':
+    from pyinstrument import Profiler
+
+    profiler = Profiler()
+    profiler.start()
+
     scale_test()
+
+    profiler.stop()
+
+    print(profiler.output_text(unicode=True, color=True))

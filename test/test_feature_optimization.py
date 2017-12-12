@@ -12,6 +12,8 @@ from atoml.preprocess.feature_elimination import FeatureScreening
 
 wkdir = os.getcwd()
 
+train_size, test_size = 45, 5
+
 
 def test_extend():
     """Generate an extended feature space."""
@@ -27,8 +29,9 @@ def test_extend():
                              (np.shape(feature_data)[0], ))
 
     # Split the data into so test and training sets.
-    train_features, train_targets = feature_data[:10, :], target_data[:10]
-    test_features = feature_data[10:, :]
+    train_features = feature_data[:train_size, :]
+    train_targets = target_data[:train_size]
+    test_features = feature_data[test_size:, :]
     d, f = np.shape(train_features)
     td, tf = np.shape(test_features)
 
@@ -117,6 +120,15 @@ def test_screening(train_features, train_targets, test_features):
 
 
 if __name__ == '__main__':
+    from pyinstrument import Profiler
+
+    profiler = Profiler()
+    profiler.start()
+
     train_features, train_targets, test_features = test_extend()
     test_extract(train_features, train_targets, test_features)
     test_screening(train_features, train_targets, test_features)
+
+    profiler.stop()
+
+    print(profiler.output_text(unicode=True, color=True))

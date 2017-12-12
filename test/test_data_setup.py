@@ -18,7 +18,8 @@ from atoml.utilities import DescriptorDatabase
 
 wkdir = os.getcwd()
 
-train_size, test_size = 50, 5
+# Perform expensive feature generation on small test set only.
+train_size, test_size = 50, 3
 
 
 def feature_test():
@@ -68,11 +69,11 @@ def feature_test():
     data = np.concatenate((data, train_fp), axis=1)
     assert n == train_size, d == 8
 
-    # train_fp = return_fpv(trainset['atoms'], [pfpv.connections_fpv],
-    #                      use_prior=False)
-    # n, d = np.shape(train_fp)
-    # data = np.concatenate((data, train_fp), axis=1)
-    # assert n == train_size, d == 26
+    # EXPENSIVE to calculate. Not included in training data.
+    train_fp = return_fpv(testset['atoms'], [pfpv.connections_fpv],
+                          use_prior=False)
+    n, d = np.shape(train_fp)
+    assert n == test_size, d == 26
 
     train_fp = return_fpv(trainset['atoms'], [pfpv.rdf_fpv], use_prior=False)
     n, d = np.shape(train_fp)
@@ -113,14 +114,13 @@ def feature_test():
     # Do basic check for atomic porperties.
     no_prop = []
     an_prop = []
-    for atoms in trainset['atoms']:
+    # EXPENSIVE to calculate. Not included in training data.
+    for atoms in testset['atoms']:
         no_prop.append(neighbor_features(atoms=atoms))
         an_prop.append(neighbor_features(atoms=atoms,
                                          property=['atomic_number']))
-    data = np.concatenate((data, no_prop), axis=1)
-    data = np.concatenate((data, an_prop), axis=1)
-    assert np.shape(no_prop) == (train_size, 15)
-    assert np.shape(an_prop) == (train_size, 30)
+    assert np.shape(no_prop) == (test_size, 15)
+    assert np.shape(an_prop) == (test_size, 30)
 
     return all_cand, data
 
@@ -177,6 +177,15 @@ def db_test(all_cand, data):
 
 
 if __name__ == '__main__':
+    from pyinstrument import Profiler
+
+    profiler = Profiler()
+    profiler.start()
+
     all_cand, data = feature_test()
     cv_test(data)
     db_test(all_cand, data)
+
+    profiler.stop()
+
+    print(profiler.output_text(unicode=True, color=True))

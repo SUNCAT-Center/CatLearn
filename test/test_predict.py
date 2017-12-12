@@ -10,6 +10,8 @@ from atoml.regression import RidgeRegression, GaussianProcess
 
 wkdir = os.getcwd()
 
+train_size, test_size = 45, 5
+
 
 def get_data():
     """Simple function to pull some training and test data."""
@@ -25,8 +27,10 @@ def get_data():
                              (np.shape(feature_data)[0], ))
 
     # Split the data into so test and training sets.
-    train_features, train_targets = feature_data[:10, :], target_data[:10]
-    test_features, test_targets = feature_data[10:, :], target_data[10:]
+    train_features = feature_data[:train_size, :]
+    train_targets = target_data[:train_size]
+    test_features = feature_data[test_size:, :]
+    test_targets = target_data[test_size:]
 
     return train_features, train_targets, test_features, test_targets
 
@@ -108,7 +112,7 @@ def gp_test(train_features, train_targets, test_features, test_targets):
 
     # Test prediction routine with gaussian kernel.
     gp = GaussianProcess(train_fp=train_features, train_target=train_targets,
-                         kernel_dict=kdict, regularization=1e-5,
+                         kernel_dict=kdict, regularization=1e-3,
                          optimize_hyperparameters=True, scale_data=True)
     pred = gp.predict(test_fp=test_features,
                       test_target=test_targets,
@@ -189,6 +193,15 @@ def gp_test(train_features, train_targets, test_features, test_targets):
 
 
 if __name__ == '__main__':
+    from pyinstrument import Profiler
+
+    profiler = Profiler()
+    profiler.start()
+
     train_features, train_targets, test_features, test_targets = get_data()
     rr_test(train_features, train_targets, test_features, test_targets)
     gp_test(train_features, train_targets, test_features, test_targets)
+
+    profiler.stop()
+
+    print(profiler.output_text(unicode=True, color=True))
