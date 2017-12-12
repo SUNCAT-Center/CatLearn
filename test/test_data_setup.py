@@ -18,6 +18,8 @@ from atoml.utilities import DescriptorDatabase
 
 wkdir = os.getcwd()
 
+train_size, test_size = 50, 5
+
 
 def feature_test():
     """Generate features from atoms objects."""
@@ -29,14 +31,14 @@ def feature_test():
     all_cand = gadb.get_all_relaxed_candidates(use_extinct=False)
 
     # Setup the test and training datasets.
-    testset = get_unique(atoms=all_cand, size=3, key='raw_score')
-    assert len(testset['atoms']) == 3
-    assert len(testset['taken']) == 3
+    testset = get_unique(atoms=all_cand, size=test_size, key='raw_score')
+    assert len(testset['atoms']) == test_size
+    assert len(testset['taken']) == test_size
 
-    trainset = get_train(atoms=all_cand, size=15, taken=testset['taken'],
-                         key='raw_score')
-    assert len(trainset['atoms']) == 15
-    assert len(trainset['target']) == 15
+    trainset = get_train(atoms=all_cand, size=train_size,
+                         taken=testset['taken'], key='raw_score')
+    assert len(trainset['atoms']) == train_size
+    assert len(trainset['target']) == train_size
 
     # Clear out some old saved data.
     for i in trainset['atoms']:
@@ -52,61 +54,61 @@ def feature_test():
     data = return_fpv(trainset['atoms'], [pfpv.nearestneighbour_fpv],
                       use_prior=False)
     n, d = np.shape(data)
-    assert n == 15, d == 4
+    assert n == train_size, d == 4
 
     train_fp = return_fpv(trainset['atoms'], [pfpv.bond_count_fpv],
                           use_prior=False)
     n, d = np.shape(train_fp)
     data = np.concatenate((data, train_fp), axis=1)
-    assert n == 15, d == 52
+    assert n == train_size, d == 52
 
     train_fp = return_fpv(trainset['atoms'], [pfpv.distribution_fpv],
                           use_prior=False)
     n, d = np.shape(train_fp)
     data = np.concatenate((data, train_fp), axis=1)
-    assert n == 15, d == 8
+    assert n == train_size, d == 8
 
-    train_fp = return_fpv(trainset['atoms'], [pfpv.connections_fpv],
-                          use_prior=False)
-    n, d = np.shape(train_fp)
-    data = np.concatenate((data, train_fp), axis=1)
-    assert n == 15, d == 26
+    # train_fp = return_fpv(trainset['atoms'], [pfpv.connections_fpv],
+    #                      use_prior=False)
+    # n, d = np.shape(train_fp)
+    # data = np.concatenate((data, train_fp), axis=1)
+    # assert n == train_size, d == 26
 
     train_fp = return_fpv(trainset['atoms'], [pfpv.rdf_fpv], use_prior=False)
     n, d = np.shape(train_fp)
     data = np.concatenate((data, train_fp), axis=1)
-    assert n == 15, d == 20
+    assert n == train_size, d == 20
 
     # Start testing the standard fingerprint vector generators.
     train_fp = return_fpv(trainset['atoms'], [sfpv.mass_fpv], use_prior=False)
     n, d = np.shape(train_fp)
     data = np.concatenate((data, train_fp), axis=1)
-    assert n == 15, d == 1
+    assert n == train_size, d == 1
 
     train_fp = return_fpv(trainset['atoms'], [sfpv.composition_fpv],
                           use_prior=False)
     n, d = np.shape(train_fp)
     data = np.concatenate((data, train_fp), axis=1)
-    assert n == 15, d == 2
+    assert n == train_size, d == 2
 
     train_fp = return_fpv(trainset['atoms'], [sfpv.eigenspectrum_fpv],
                           use_prior=False)
     n, d = np.shape(train_fp)
     data = np.concatenate((data, train_fp), axis=1)
-    assert n == 15, d == 147
+    assert n == train_size, d == 147
 
     train_fp = return_fpv(trainset['atoms'], [sfpv.distance_fpv],
                           use_prior=False)
     n, d = np.shape(train_fp)
     data = np.concatenate((data, train_fp), axis=1)
-    assert n == 15, d == 2
+    assert n == train_size, d == 2
 
     train_fp = return_fpv(trainset['atoms'], [pfpv.nearestneighbour_fpv,
                                               sfpv.mass_fpv,
                                               sfpv.composition_fpv])
     n, d = np.shape(train_fp)
     data = np.concatenate((data, train_fp), axis=1)
-    assert n == 15, d == 7
+    assert n == train_size, d == 7
 
     # Do basic check for atomic porperties.
     no_prop = []
@@ -117,12 +119,14 @@ def feature_test():
                                          property=['atomic_number']))
     data = np.concatenate((data, no_prop), axis=1)
     data = np.concatenate((data, an_prop), axis=1)
-    assert np.shape(no_prop) == (15, 15) and np.shape(an_prop) == (15, 30)
+    assert np.shape(no_prop) == (train_size, 15)
+    assert np.shape(an_prop) == (train_size, 30)
 
     return all_cand, data
 
 
 def cv_test(data):
+    """Test some cross-validation."""
     split = k_fold(data, 5)
     assert len(split) == 5
 

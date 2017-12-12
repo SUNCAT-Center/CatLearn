@@ -64,7 +64,7 @@ def gp_test(train_features, train_targets, test_features, test_targets):
     kdict = {'k1': {'type': 'linear', 'scaling': 1.},
              'c1': {'type': 'constant', 'const': 0.}}
     gp = GaussianProcess(train_fp=train_features, train_target=train_targets,
-                         kernel_dict=kdict, regularization=-2.,
+                         kernel_dict=kdict, regularization=1e-3,
                          optimize_hyperparameters=True)
     pred = gp.predict(test_fp=test_features,
                       test_target=test_targets,
@@ -89,7 +89,7 @@ def gp_test(train_features, train_targets, test_features, test_targets):
     # Test prediction routine with gaussian kernel.
     kdict = {'k1': {'type': 'gaussian', 'width': 30., 'scaling': 10.}}
     gp = GaussianProcess(train_fp=train_features, train_target=train_targets,
-                         kernel_dict=kdict, regularization=-2.,
+                         kernel_dict=kdict, regularization=1e-3,
                          optimize_hyperparameters=True)
     pred = gp.predict(test_fp=test_features,
                       test_target=test_targets,
@@ -108,7 +108,7 @@ def gp_test(train_features, train_targets, test_features, test_targets):
 
     # Test prediction routine with gaussian kernel.
     gp = GaussianProcess(train_fp=train_features, train_target=train_targets,
-                         kernel_dict=kdict, regularization=-2.,
+                         kernel_dict=kdict, regularization=1e-5,
                          optimize_hyperparameters=True, scale_data=True)
     pred = gp.predict(test_fp=test_features,
                       test_target=test_targets,
@@ -124,7 +124,7 @@ def gp_test(train_features, train_targets, test_features, test_targets):
     # Test prediction routine with laplacian kernel.
     kdict = {'k1': {'type': 'laplacian', 'width': 1., 'scaling': 1.}}
     gp = GaussianProcess(train_fp=train_features, train_target=train_targets,
-                         kernel_dict=kdict, regularization=-2.,
+                         kernel_dict=kdict, regularization=1e-3,
                          optimize_hyperparameters=True)
     pred = gp.predict(test_fp=test_features,
                       test_target=test_targets,
@@ -139,7 +139,7 @@ def gp_test(train_features, train_targets, test_features, test_targets):
                     'scaling': 1.},
              'c1': {'type': 'constant', 'const': 0.}}
     gp = GaussianProcess(train_fp=train_features, train_target=train_targets,
-                         kernel_dict=kdict, regularization=-2.,
+                         kernel_dict=kdict, regularization=1e-3,
                          optimize_hyperparameters=True)
     pred = gp.predict(test_fp=test_features,
                       test_target=test_targets,
@@ -154,7 +154,7 @@ def gp_test(train_features, train_targets, test_features, test_targets):
                     'scaling': 1., 'operation': 'multiplication'},
              'c1': {'type': 'constant', 'const': 0.}}
     gp = GaussianProcess(train_fp=train_features, train_target=train_targets,
-                         kernel_dict=kdict, regularization=-2.,
+                         kernel_dict=kdict, regularization=1e-3,
                          optimize_hyperparameters=True)
     pred = gp.predict(test_fp=test_features,
                       test_target=test_targets,
