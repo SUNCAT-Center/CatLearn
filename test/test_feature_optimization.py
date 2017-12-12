@@ -12,7 +12,7 @@ from atoml.preprocess.feature_elimination import FeatureScreening
 
 wkdir = os.getcwd()
 
-train_size, test_size = 45, 5
+train_size, test_size = 30, 20
 
 
 def test_extend():
@@ -67,23 +67,26 @@ def test_extend():
 
 def test_extract(train_features, train_targets, test_features):
     """Test feature extraction."""
+    nc = 3
+
     d, td = np.shape(train_features)[0], np.shape(test_features)[0]
-    ext = pls(components=4, train_matrix=train_features, target=train_targets,
+
+    ext = pls(components=nc, train_matrix=train_features, target=train_targets,
               test_matrix=test_features)
-    assert np.shape(ext[0]) == (d, 4) and np.shape(ext[1]) == (td, 4)
+    assert np.shape(ext[0]) == (d, nc) and np.shape(ext[1]) == (td, nc)
 
-    ext = pca(components=4, train_matrix=train_features,
+    ext = pca(components=nc, train_matrix=train_features,
               test_matrix=test_features)
-    assert np.shape(ext[0]) == (d, 4) and np.shape(ext[1]) == (td, 4)
+    assert np.shape(ext[0]) == (d, nc) and np.shape(ext[1]) == (td, nc)
 
-    ext = spca(components=4, train_matrix=train_features,
-               test_matrix=test_features)
-    assert np.shape(ext[0]) == (d, 4) and np.shape(ext[1]) == (td, 4)
+    # ext = spca(components=nc, train_matrix=test_features,
+    #           test_matrix=test_features)
+    # assert np.shape(ext[0]) == (td, nc) and np.shape(ext[1]) == (td, nc)
 
-    ext = atoml_pca(components=4, train_fpv=train_features,
+    ext = atoml_pca(components=nc, train_fpv=train_features,
                     test_fpv=test_features, cleanup=True, scale=True)
-    assert np.shape(ext['train_fpv']) == (d, 4) and \
-        np.shape(ext['test_fpv']) == (td, 4)
+    assert np.shape(ext['train_fpv']) == (d, nc) and \
+        np.shape(ext['test_fpv']) == (td, nc)
 
 
 def test_screening(train_features, train_targets, test_features):
