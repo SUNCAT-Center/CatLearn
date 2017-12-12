@@ -723,8 +723,9 @@ class AdsorbateFingerprintGenerator(object):
                     'facet_catapp',
                     'site_catapp']
         else:
-            kvp = atoms.info['key_value_pairs']
+            # Atomic numbers in the site.
             Z_surf1_raw = [atoms.numbers[j] for j in atoms.info['i_surfnn']]
+            # Sort by concentration
             counts = collections.Counter(Z_surf1_raw)
             Z_surf1 = sorted(Z_surf1_raw, key=counts.get, reverse=True)
             z1 = Z_surf1[0]
@@ -738,13 +739,20 @@ class AdsorbateFingerprintGenerator(object):
                     site = 1.
                 elif Z_surf1[0] == z2:
                     site = 3.
-                conc = 1.
             else:
                 site = 2.
-                if '3' in kvp['term']:
-                    conc = 3.
-                else:
-                    conc = 2.
+            # Import overlayer composition from ase database.
+            kvp = atoms.info['key_value_pairs']
+            term = [atomic_numbers[zt] for zt in string2symbols(kvp['term'])]
+            termuu, termui = np.unique(term, return_index=True)
+            if '3' in kvp['term']:
+                conc = 3.
+            elif len(termui) == 1:
+                conc = 1.
+            elif len(termui) == 2:
+                conc = 2.
+            else:
+                raise AssertionError("Tertiary surfaces not supported.")
             f1 = get_mendeleev_params(z1,
                                       extra_params=['heat_of_formation',
                                                     #'dft_bulk_modulus',
