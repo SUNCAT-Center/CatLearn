@@ -19,7 +19,7 @@ class GaussianProcess(object):
     """Gaussian processes functions for the machine learning."""
 
     def __init__(self, train_fp, train_target, kernel_dict, gradients=None,
-                 regularization=None, regularization_bounds=(1e-12, None),
+                 regularization=None, regularization_bounds=None,
                  optimize_hyperparameters=False, scale_optimizer=False,
                  scale_data=False):
         """Gaussian processes setup.
@@ -36,6 +36,8 @@ class GaussianProcess(object):
             Each kernel dict contains information on a kernel such as:
             -   The 'type' key containing the name of kernel function.
             -   The hyperparameters, e.g. 'scaling', 'lengthscale', etc.
+        gradients : list
+            A list of gradients for all training data.
         regularization : float
             The regularization strength (smoothing function) applied to the
             covariance matrix.
@@ -54,26 +56,28 @@ class GaussianProcess(object):
         msg = 'GP must be trained on more than one data point.'
         assert np.shape(train_fp)[0] > 1, msg
         msg = 'The number of data does not match the number of targets.'
-
-        if gradients is None:
-            eval_gradients = False
-
-        if gradients is not None:
-            eval_gradients = True
-            regularization_bounds = (1e-3, 1e3)
-
         assert np.shape(train_fp)[0] == len(train_target), msg
 
         _, self.N_D = np.shape(train_fp)
         self.regularization = regularization
         self.gradients = gradients
-        self.eval_gradients = eval_gradients
         self.scale_optimizer = scale_optimizer
         self.scale_data = scale_data
 
+        # Set flag for evaluating gradients.
+        self.eval_gradients = False
+        if self.gradients is not None:
+            self.eval_gradients = True
+
+        # Set bounds on regularization during hyperparameter optimization.
+        if regularization_bounds is None:
+            regularization_bounds = (1e-12, None)
+            if self.eval_gradients:
+                regularization_bounds = (1e-3, 1e3)
+
         self.kernel_dict, self.bounds = prepare_kernels(
             kernel_dict, regularization_bounds=regularization_bounds,
-            eval_gradients=eval_gradients, N_D=self.N_D
+            eval_gradients=self.eval_gradients, N_D=self.N_D
             )
 
         self.update_data(train_fp, train_target, gradients=self.gradients,
