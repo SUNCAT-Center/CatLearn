@@ -195,7 +195,7 @@ class FeatureScreening(object):
         # Get ordering of remaining features from linear regression.
         regr = self._regression_ordering(target=target,
                                          feature_matrix=rscreen['matrix'],
-                                         size=step, steps=5*f)
+                                         size=step, steps=f)
 
         # Sort all new ordering of accepted and rejected features.
         sis_accept = []
