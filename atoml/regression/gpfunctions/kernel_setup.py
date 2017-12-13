@@ -74,7 +74,7 @@ def _scaling_setup(kdict_param, bounds, default_bounds):
 
 def _constant_setup(kdict_param, bounds, N_D, default_bounds):
     """Setup the constant kernel."""
-    allowed_keys = ['type', 'operation', 'features', 'const']
+    allowed_keys = ['type', 'operation', 'features', 'dimension', 'const']
     msg = 'It appears as though an undefined key has been provided.'
     for k in kdict_param:
         assert k in allowed_keys, msg
@@ -91,7 +91,8 @@ def _constant_setup(kdict_param, bounds, N_D, default_bounds):
 
 def _gaussian_setup(kdict_param, bounds, N_D, default_bounds):
     """Setup the gaussian kernel."""
-    allowed_keys = ['type', 'operation', 'features', 'scaling', 'width']
+    allowed_keys = ['type', 'operation', 'features', 'dimension', 'scaling',
+                    'width']
     msg = 'It appears as though an undefined key has been provided.'
     for k in kdict_param:
         assert k in allowed_keys, msg
@@ -109,8 +110,8 @@ def _gaussian_setup(kdict_param, bounds, N_D, default_bounds):
 
 def _quadratic_setup(kdict_param, bounds, N_D, default_bounds):
     """Setup the gaussian kernel."""
-    allowed_keys = ['type', 'operation', 'features', 'scaling', 'slope',
-                    'degree']
+    allowed_keys = ['type', 'operation', 'features', 'dimension', 'scaling',
+                    'slope', 'degree']
     msg = 'It appears as though an undefined key has been provided.'
     for k in kdict_param:
         assert k in allowed_keys, msg
@@ -136,7 +137,8 @@ def _quadratic_setup(kdict_param, bounds, N_D, default_bounds):
 
 def _laplacian_setup(kdict_param, bounds, N_D, default_bounds):
     """Setup the laplacian kernel."""
-    allowed_keys = ['type', 'operation', 'features', 'scaling', 'width']
+    allowed_keys = ['type', 'operation', 'features', 'dimension', 'scaling',
+                    'width']
     msg = 'It appears as though an undefined key has been provided.'
     for k in kdict_param:
         assert k in allowed_keys, msg

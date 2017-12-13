@@ -115,6 +115,7 @@ def gp_test(train_features, train_targets, test_features, test_targets):
     gp = GaussianProcess(train_fp=train_features, train_target=train_targets,
                          kernel_dict=kdict, regularization=1e-3,
                          optimize_hyperparameters=True, scale_data=True)
+    assert len(gp.kernel_dict['k1']['width']) == np.shape(train_features)[1]
     pred = gp.predict(test_fp=test_features,
                       test_target=test_targets,
                       get_validation_error=True,
@@ -124,6 +125,24 @@ def gp_test(train_features, train_targets, test_features, test_targets):
     assert len(pred['prediction']) == len(test_features)
     assert np.sum(pred['prediction']) != np.sum(no_scale)
     print('gaussian default scale (rmse):',
+          pred['validation_error']['rmse_average'])
+
+    # Test prediction routine with single width parameter.
+    kdict = {'k1': {'type': 'gaussian', 'width': 30., 'scaling': 10.,
+                    'dimension': 'single'}}
+    gp = GaussianProcess(train_fp=train_features, train_target=train_targets,
+                         kernel_dict=kdict, regularization=1e-3,
+                         optimize_hyperparameters=True, scale_data=True)
+    assert len(gp.kernel_dict['k1']['width']) == 1
+    pred = gp.predict(test_fp=test_features,
+                      test_target=test_targets,
+                      get_validation_error=True,
+                      get_training_error=True,
+                      uncertainty=True,
+                      epsilon=0.1)
+    assert len(pred['prediction']) == len(test_features)
+    assert np.sum(pred['prediction']) != np.sum(no_scale)
+    print('gaussian single width (rmse):',
           pred['validation_error']['rmse_average'])
 
     # Test prediction routine with laplacian kernel.
