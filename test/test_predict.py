@@ -110,7 +110,8 @@ def gp_test(train_features, train_targets, test_features, test_targets):
     print('gaussian prediction (abs):',
           pred['validation_error']['absolute_average'])
 
-    # Test prediction routine with gaussian kernel.
+    # Test prediction routine with default scaling.
+    kdict = {'k1': {'type': 'gaussian', 'width': 30., 'scaling': 10.}}
     gp = GaussianProcess(train_fp=train_features, train_target=train_targets,
                          kernel_dict=kdict, regularization=1e-3,
                          optimize_hyperparameters=True, scale_data=True)
