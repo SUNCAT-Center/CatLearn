@@ -18,6 +18,9 @@ from atoml.utilities import DescriptorDatabase
 
 wkdir = os.getcwd()
 
+# Perform expensive feature generation on small test set only.
+train_size, test_size = 50, 3
+
 
 def feature_test():
     """Generate features from atoms objects."""
@@ -29,14 +32,14 @@ def feature_test():
     all_cand = gadb.get_all_relaxed_candidates(use_extinct=False)
 
     # Setup the test and training datasets.
-    testset = get_unique(atoms=all_cand, size=10, key='raw_score')
-    assert len(testset['atoms']) == 10
-    assert len(testset['taken']) == 10
+    testset = get_unique(atoms=all_cand, size=test_size, key='raw_score')
+    assert len(testset['atoms']) == test_size
+    assert len(testset['taken']) == test_size
 
-    trainset = get_train(atoms=all_cand, size=50, taken=testset['taken'],
-                         key='raw_score')
-    assert len(trainset['atoms']) == 50
-    assert len(trainset['target']) == 50
+    trainset = get_train(atoms=all_cand, size=train_size,
+                         taken=testset['taken'], key='raw_score')
+    assert len(trainset['atoms']) == train_size
+    assert len(trainset['target']) == train_size
 
     # Clear out some old saved data.
     for i in trainset['atoms']:
@@ -45,84 +48,85 @@ def feature_test():
     # Initiate the fingerprint generators with relevant input variables.
     print('Getting the fingerprints')
     pfpv = ParticleFingerprintGenerator(atom_numbers=[78, 79], max_bonds=13,
-                                        get_nl=False, dx=0.2, cell_size=50.,
+                                        get_nl=False, dx=0.2, cell_size=30.,
                                         nbin=4)
     sfpv = StandardFingerprintGenerator(atom_types=[78, 79])
 
     data = return_fpv(trainset['atoms'], [pfpv.nearestneighbour_fpv],
                       use_prior=False)
     n, d = np.shape(data)
-    assert n == 50, d == 4
+    assert n == train_size, d == 4
 
     train_fp = return_fpv(trainset['atoms'], [pfpv.bond_count_fpv],
                           use_prior=False)
     n, d = np.shape(train_fp)
     data = np.concatenate((data, train_fp), axis=1)
-    assert n == 50, d == 52
+    assert n == train_size, d == 52
 
     train_fp = return_fpv(trainset['atoms'], [pfpv.distribution_fpv],
                           use_prior=False)
     n, d = np.shape(train_fp)
     data = np.concatenate((data, train_fp), axis=1)
-    assert n == 50, d == 8
+    assert n == train_size, d == 8
 
-    train_fp = return_fpv(trainset['atoms'], [pfpv.connections_fpv],
+    # EXPENSIVE to calculate. Not included in training data.
+    train_fp = return_fpv(testset['atoms'], [pfpv.connections_fpv],
                           use_prior=False)
     n, d = np.shape(train_fp)
-    data = np.concatenate((data, train_fp), axis=1)
-    assert n == 50, d == 26
+    assert n == test_size, d == 26
 
     train_fp = return_fpv(trainset['atoms'], [pfpv.rdf_fpv], use_prior=False)
     n, d = np.shape(train_fp)
     data = np.concatenate((data, train_fp), axis=1)
-    assert n == 50, d == 20
+    assert n == train_size, d == 20
 
     # Start testing the standard fingerprint vector generators.
     train_fp = return_fpv(trainset['atoms'], [sfpv.mass_fpv], use_prior=False)
     n, d = np.shape(train_fp)
     data = np.concatenate((data, train_fp), axis=1)
-    assert n == 50, d == 1
+    assert n == train_size, d == 1
 
     train_fp = return_fpv(trainset['atoms'], [sfpv.composition_fpv],
                           use_prior=False)
     n, d = np.shape(train_fp)
     data = np.concatenate((data, train_fp), axis=1)
-    assert n == 50, d == 2
+    assert n == train_size, d == 2
 
     train_fp = return_fpv(trainset['atoms'], [sfpv.eigenspectrum_fpv],
                           use_prior=False)
     n, d = np.shape(train_fp)
     data = np.concatenate((data, train_fp), axis=1)
-    assert n == 50, d == 147
+    assert n == train_size, d == 147
 
     train_fp = return_fpv(trainset['atoms'], [sfpv.distance_fpv],
                           use_prior=False)
     n, d = np.shape(train_fp)
     data = np.concatenate((data, train_fp), axis=1)
-    assert n == 50, d == 2
+    assert n == train_size, d == 2
 
     train_fp = return_fpv(trainset['atoms'], [pfpv.nearestneighbour_fpv,
                                               sfpv.mass_fpv,
                                               sfpv.composition_fpv])
     n, d = np.shape(train_fp)
     data = np.concatenate((data, train_fp), axis=1)
-    assert n == 50, d == 7
+    assert n == train_size, d == 7
 
     # Do basic check for atomic porperties.
     no_prop = []
     an_prop = []
-    for atoms in trainset['atoms']:
+    # EXPENSIVE to calculate. Not included in training data.
+    for atoms in testset['atoms']:
         no_prop.append(neighbor_features(atoms=atoms))
         an_prop.append(neighbor_features(atoms=atoms,
                                          property=['atomic_number']))
-    data = np.concatenate((data, no_prop), axis=1)
-    data = np.concatenate((data, an_prop), axis=1)
-    assert np.shape(no_prop) == (50, 15) and np.shape(an_prop) == (50, 30)
+    assert np.shape(no_prop) == (test_size, 15)
+    assert np.shape(an_prop) == (test_size, 30)
 
     return all_cand, data
 
 
 def cv_test(data):
+    """Test some cross-validation."""
     split = k_fold(data, 5)
     assert len(split) == 5
 
@@ -173,6 +177,15 @@ def db_test(all_cand, data):
 
 
 if __name__ == '__main__':
+    from pyinstrument import Profiler
+
+    profiler = Profiler()
+    profiler.start()
+
     all_cand, data = feature_test()
     cv_test(data)
     db_test(all_cand, data)
+
+    profiler.stop()
+
+    print(profiler.output_text(unicode=True, color=True))

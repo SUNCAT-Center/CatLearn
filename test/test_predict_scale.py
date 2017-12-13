@@ -12,6 +12,8 @@ from atoml.regression import RidgeRegression, GaussianProcess
 
 wkdir = os.getcwd()
 
+train_size, test_size = 45, 5
+
 
 def scale_test():
     # Attach the database.
@@ -26,8 +28,10 @@ def scale_test():
                              (np.shape(feature_data)[0], ))
 
     # Split the data into so test and training sets.
-    train_features, train_targets = feature_data[:35, :], target_data[:35]
-    test_features, test_targets = feature_data[35:, :], target_data[35:]
+    train_features = feature_data[:train_size, :]
+    train_targets = target_data[:train_size]
+    test_features = feature_data[test_size:, :]
+    test_targets = target_data[test_size:]
 
     # Test ridge regression predictions.
     rr = RidgeRegression()
@@ -65,7 +69,7 @@ def scale_test():
     kdict = {'k1': {'type': 'linear', 'scaling': 1.},
              'c1': {'type': 'constant', 'const': 0.}}
     gp = GaussianProcess(train_fp=sfp['train'], train_target=train_targets,
-                         kernel_dict=kdict, regularization=1.,
+                         kernel_dict=kdict, regularization=1e-3,
                          optimize_hyperparameters=True)
     pred = gp.predict(test_fp=sfp['test'],
                       test_target=test_targets,
@@ -78,7 +82,7 @@ def scale_test():
     kdict = {'k1': {'type': 'quadratic', 'slope': 1., 'degree': 1.,
                     'scaling': 1.}}
     gp = GaussianProcess(train_fp=sfp['train'], train_target=train_targets,
-                         kernel_dict=kdict, regularization=0.001,
+                         kernel_dict=kdict, regularization=1e-3,
                          optimize_hyperparameters=True)
     pred = gp.predict(test_fp=sfp['test'],
                       test_target=test_targets,
@@ -90,7 +94,7 @@ def scale_test():
     # Test prediction routine with gaussian kernel.
     kdict = {'k1': {'type': 'gaussian', 'width': 0.5, 'scaling': 1.}}
     gp = GaussianProcess(train_fp=sfp['train'], train_target=train_targets,
-                         kernel_dict=kdict, regularization=0.001,
+                         kernel_dict=kdict, regularization=1e-3,
                          optimize_hyperparameters=False)
     pred = gp.predict(test_fp=sfp['test'],
                       test_target=test_targets,
@@ -114,7 +118,7 @@ def scale_test():
     for s, n in zip(scale, name):
         kdict = {'k1': {'type': 'gaussian', 'width': 1., 'scaling': 1.}}
         gp = GaussianProcess(train_fp=s['train'], train_target=train_targets,
-                             kernel_dict=kdict, regularization=-2.,
+                             kernel_dict=kdict, regularization=1e-3,
                              optimize_hyperparameters=True)
         pred = gp.predict(test_fp=s['test'],
                           test_target=test_targets,
@@ -127,7 +131,7 @@ def scale_test():
     # Test prediction routine with laplacian kernel.
     kdict = {'k1': {'type': 'laplacian', 'width': 0.5}}
     gp = GaussianProcess(train_fp=sfp['train'], train_target=train_targets,
-                         kernel_dict=kdict, regularization=0.001,
+                         kernel_dict=kdict, regularization=1e-3,
                          optimize_hyperparameters=True)
     pred = gp.predict(test_fp=sfp['test'],
                       test_target=test_targets,
@@ -141,7 +145,7 @@ def scale_test():
              'k2': {'type': 'gaussian', 'features': [2, 3], 'width': 0.5},
              'c1': {'type': 'constant', 'const': 0.}}
     gp = GaussianProcess(train_fp=sfp['train'], train_target=train_targets,
-                         kernel_dict=kdict, regularization=0.001,
+                         kernel_dict=kdict, regularization=1e-3,
                          optimize_hyperparameters=True)
     pred = gp.predict(test_fp=sfp['test'],
                       test_target=test_targets,
@@ -156,7 +160,7 @@ def scale_test():
                     'operation': 'multiplication'},
              'c1': {'type': 'constant', 'const': 0.}}
     gp = GaussianProcess(train_fp=sfp['train'], train_target=train_targets,
-                         kernel_dict=kdict, regularization=0.001,
+                         kernel_dict=kdict, regularization=1e-3,
                          optimize_hyperparameters=True)
     pred = gp.predict(test_fp=sfp['test'],
                       test_target=test_targets,
@@ -168,4 +172,13 @@ def scale_test():
 
 
 if __name__ == '__main__':
+    from pyinstrument import Profiler
+
+    profiler = Profiler()
+    profiler.start()
+
     scale_test()
+
+    profiler.stop()
+
+    print(profiler.output_text(unicode=True, color=True))

@@ -1,25 +1,23 @@
-python_2_7_tests:
+build:py2:
+  image: continuumio/anaconda
   script:
-    - apt-get update -qy
-    - apt-get install -qy python-pip python-numpy python-scipy
-    - pip install --upgrade scikit-learn pyyaml pytest-cov
+    - python -V
+    - pip install pytest-cov
     - git clone https://gitlab.com/ase/ase.git
     - pwd
     - export PYTHONPATH=$PWD/ase:$PYTHONPATH
     - export PATH=$PWD/ase/tools:$PATH
     - export PYTHONPATH=$PWD/:$PYTHONPATH
-    - python --version
     - py.test --cov=atoml test/test_suit.py
 
-python_3_tests:
+build:py3:
+  image: continuumio/anaconda3
   script:
-    - apt-get update -qy
-    - apt-get install -qy python3-pip python3-numpy python3-scipy
-    - pip3 install --upgrade scikit-learn pyyaml pytest-cov
+    - python -V
+    - pip install pytest-cov
     - git clone https://gitlab.com/ase/ase.git
     - pwd
     - export PYTHONPATH=$PWD/ase:$PYTHONPATH
     - export PATH=$PWD/ase/tools:$PATH
     - export PYTHONPATH=$PWD/:$PYTHONPATH
-    - python3 --version
     - py.test --cov=atoml test/test_suit.py

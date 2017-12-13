@@ -1,4 +1,4 @@
-# Version 0.1.0 (November 2017)
+# Version 0.1.0 (December 2017)
 
 -   The first stable version of the code base!
 -   For those that used the precious development version, there are many

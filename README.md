@@ -87,11 +87,12 @@ the code that could be improved.
 [(Back to top)](#table-of-contents)
 
 #### Lead
--   Paul Jennings
--   Martin Hansen
--   Thomas Bligaard
+-   [Paul Jennings](http://suncat.stanford.edu/theory/people/paul-jennings)
+-   [Martin Hansen](https://suncat.stanford.edu/theory/people/martin-hangaard-hansen)
+-   [Thomas Bligaard](https://suncat.stanford.edu/theory/people/thomas-bligaard)
 
 #### Contributors
--   Andrew Doyle
+-   Jose A. Garrido Torres
 -   Jacob Boes
+-   Andrew Doyle
 -   Markus Ekvall
