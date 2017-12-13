@@ -98,7 +98,7 @@ def _gaussian_setup(kdict_param, bounds, N_D, default_bounds):
 
     theta = kdict_param['width']
     if type(theta) is float or type(theta) is int:
-        kdict_param['width'] = np.zeros(N_D,) + theta
+        kdict_param['width'] = [theta] * N_D
     if 'bounds' in kdict_param:
         bounds += kdict_param['bounds']
     else:
@@ -117,7 +117,7 @@ def _quadratic_setup(kdict_param, bounds, N_D, default_bounds):
 
     # theta = kdict_param['slope']
     # if type(theta) is float or type(theta) is int:
-    #    kdict_param['slope'] = np.zeros(N_D,) + theta
+    #    kdict_param['slope'] = [theta] * N_D
     if 'bounds' in kdict_param:
         bounds += kdict_param['bounds']
     else:
@@ -125,7 +125,7 @@ def _quadratic_setup(kdict_param, bounds, N_D, default_bounds):
 
     # theta = kdict_param['degree']
     # if type(theta) is float or type(theta) is int:
-    #    kdict_param['degree'] = np.zeros(N_D,) + theta
+    #    kdict_param['degree'] = [theta] * N_D
     if 'bounds' in kdict_param:
         bounds += kdict_param['bounds']
     else:
@@ -143,7 +143,7 @@ def _laplacian_setup(kdict_param, bounds, N_D, default_bounds):
 
     theta = kdict_param['width']
     if type(theta) is float or type(theta) is int:
-        kdict_param['width'] = np.zeros(N_D,) + theta
+        kdict_param['width'] = [theta] * N_D
     if 'bounds' in kdict_param:
         bounds += kdict_param['bounds']
     else:
