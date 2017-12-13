@@ -6,7 +6,7 @@ import numpy as np
 from scipy.linalg import cholesky, cho_solve
 
 from .covariance import get_covariance
-from .kernels import list2kdict
+from .kernel_setup import list2kdict
 
 
 def log_marginal_likelihood(theta, train_matrix, targets, kernel_dict,
