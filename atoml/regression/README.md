@@ -22,7 +22,7 @@ defined in `gpfunctions/kernels.py` but in general have a uniform setup, though
 parameters that must be specified differ.
 
   ```python
-    kernel = {'k1': {'type': 'gaussian', 'width': 0.5, 'const': 1.0}}
+    kernel = {'k1': {'type': 'gaussian', 'width': 0.5, 'scaling': 1.0}}
   ```
 
 It is also possible to append numerous kernel functions together, which can be
@@ -49,7 +49,7 @@ predicted mean. It is important to note that this is currently *not* rescaled
 in any way, even if input features are scaled.
 
   ```python
-    p = gp.predict(test, uncertainty=True)
+    p = gp.predict(test_features, uncertainty=True)
     p['uncertainty']
     p['prediction']
   ```
