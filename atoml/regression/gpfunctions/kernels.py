@@ -216,9 +216,9 @@ def linear_kernel(theta, log_scale, m1, m2=None, eval_gradients=False):
     m2 : list or None
         A list of the training fingerprint vectors.
     """
-    kwidth = theta
-    if log_scale:
-        kwidth = np.exp(kwidth)
+    # kwidth = theta
+    # if log_scale:
+    #    kwidth = np.exp(kwidth)
 
     if not eval_gradients:
         if m2 is None:

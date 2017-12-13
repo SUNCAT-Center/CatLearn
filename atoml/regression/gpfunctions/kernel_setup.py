@@ -25,68 +25,102 @@ def prepare_kernels(kernel_dict, regularization_bounds, eval_gradients, N_D):
         default_bounds = ((1e-6, 1e6),)
 
     for key in kdict:
+        msg = 'A kernel type should be set, e.g. "linear", "gaussian", etc'
+        assert 'type' in kdict[key], msg
+
         if 'features' in kdict[key]:
             N_D = len(kdict[key]['features'])
 
         if 'scaling' in kdict[key]:
-            if 'scaling_bounds' in kdict[key]:
-                bounds += kdict[key]['scaling_bounds']
-            else:
-                bounds += default_bounds
+            bounds = _scaling_setup(kdict_param=kdict[key], bounds=bounds,
+                                    default_bounds=default_bounds)
 
-        if 'd_scaling' in kdict[key]:
-            d_scaling = kdict[key]['d_scaling']
-            if type(d_scaling) is float or type(d_scaling) is int:
-                kernel_dict[key]['d_scaling'] = np.zeros(N_D,) + d_scaling
-            if 'bounds' in kdict[key]:
-                bounds += kdict[key]['bounds']
-            else:
-                bounds += default_bounds * N_D
-
-        if 'width' in kdict[key] and kdict[key]['type'] != 'linear':
-            theta = kdict[key]['width']
-            if type(theta) is float or type(theta) is int:
-                kernel_dict[key]['width'] = np.zeros(N_D,) + theta
-            if 'bounds' in kdict[key]:
-                bounds += kdict[key]['bounds']
-            else:
-                bounds += default_bounds * N_D
-
-        elif 'hyperparameters' in kdict[key]:
-            theta = kdict[key]['hyperparameters']
-            if type(theta) is float or type(theta) is int:
-                kernel_dict[key]['hyperparameters'] = (np.zeros(N_D,) +
-                                                       theta)
-            if 'bounds' in kdict[key]:
-                bounds += kdict[key]['bounds']
-            else:
-                bounds += default_bounds * N_D
-
-        elif 'theta' in kdict[key]:
-            theta = kdict[key]['theta']
-            if type(theta) is float or type(theta) is int:
-                kernel_dict[key]['hyperparameters'] = (np.zeros(N_D,) +
-                                                       theta)
-            if 'bounds' in kdict[key]:
-                bounds += kdict[key]['bounds']
-            else:
-                bounds += default_bounds * N_D
-
-        elif kdict[key]['type'] == 'quadratic':
-            bounds += ((1, None), (0, None),)
-        elif kdict[key]['type'] == 'constant':
-            theta = kdict[key]['const']
-            if 'bounds' in kdict[key]:
-                bounds += kdict[key]['bounds']
-            else:
-                bounds += default_bounds
-        elif 'bounds' in kdict[key]:
-            bounds += kdict[key]['bounds']
+        ktype = kdict[key]['type']
+        if ktype is not 'user' and ktype is not 'linear':
+            cmd = '_{0}_setup(kdict[key], bounds, N_D, default_bounds)'.format(
+                kdict[key]['type'])
+            try:
+                bounds = eval(cmd)
+            except NameError:
+                msg = '{} kernel not implemented'.format(kdict[key]['type'])
+                raise NotImplementedError(msg)
 
     # Bounds for the regularization
     bounds += (regularization_bounds,)
 
     return kernel_dict, bounds
+
+
+def _scaling_setup(kdict_param, bounds, default_bounds):
+    msg = 'Scaling parameter should be a float.'
+    assert type(kdict_param['scaling']) is float, msg
+    if 'scaling_bounds' in kdict_param:
+        bounds += kdict_param['scaling_bounds']
+    else:
+        bounds += default_bounds
+
+    return bounds
+
+
+def _linear_setup(kdict_param, bounds, N_D, default_bounds):
+    """Setup the linear kernel."""
+
+
+def _constant_setup(kdict_param, bounds, N_D, default_bounds):
+    """Setup the linear kernel."""
+    if 'bounds' in kdict_param:
+        bounds += kdict_param['bounds']
+    else:
+        bounds += default_bounds
+
+    return bounds
+
+
+def _gaussian_setup(kdict_param, bounds, N_D, default_bounds):
+    """Setup the gaussian kernel."""
+    theta = kdict_param['width']
+    if type(theta) is float or type(theta) is int:
+        kdict_param['width'] = np.zeros(N_D,) + theta
+    if 'bounds' in kdict_param:
+        bounds += kdict_param['bounds']
+    else:
+        bounds += default_bounds * N_D
+
+    return bounds
+
+
+def _quadratic_setup(kdict_param, bounds, N_D, default_bounds):
+    """Setup the gaussian kernel."""
+    # theta = kdict_param['slope']
+    # if type(theta) is float or type(theta) is int:
+    #    kdict_param['slope'] = np.zeros(N_D,) + theta
+    if 'bounds' in kdict_param:
+        bounds += kdict_param['bounds']
+    else:
+        bounds += default_bounds  # * N_D
+
+    # theta = kdict_param['degree']
+    # if type(theta) is float or type(theta) is int:
+    #    kdict_param['degree'] = np.zeros(N_D,) + theta
+    if 'bounds' in kdict_param:
+        bounds += kdict_param['bounds']
+    else:
+        bounds += default_bounds  # * N_D
+
+    return bounds
+
+
+def _laplacian_setup(kdict_param, bounds, N_D, default_bounds):
+    """Setup the laplacian kernel."""
+    theta = kdict_param['width']
+    if type(theta) is float or type(theta) is int:
+        kdict_param['width'] = np.zeros(N_D,) + theta
+    if 'bounds' in kdict_param:
+        bounds += kdict_param['bounds']
+    else:
+        bounds += default_bounds * N_D
+
+    return bounds
 
 
 def kdict2list(kdict, N_D=None):
