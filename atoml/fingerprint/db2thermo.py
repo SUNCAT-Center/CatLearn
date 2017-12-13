@@ -33,7 +33,7 @@ def slab_index(atoms):
     return slab_atoms
 
 
-def adds_index(atoms):
+def ads_index(atoms):
     """ Returns the indexes of atoms that are in the global list addsyms.
 
     Parameters
@@ -45,7 +45,7 @@ def adds_index(atoms):
     return add_atoms
 
 
-def last_index2ads(atoms):
+def last_index2ads(atoms, formula):
     """ Returns the indexes of the last n atoms in the atoms object, where n is
     the length of the composition of the species field.
 
@@ -61,10 +61,35 @@ def last_index2ads(atoms):
     ----------
     atoms : ase atoms object.
     """
-    species = atoms.info['key_value_pairs']['species']
-    n_ads = len(string2symbols(species))
+    n_ads = len(string2symbols(formula))
     natoms = len(atoms)
-    add_atoms = list(range(natoms-n_ads, natoms+1))
+    add_atoms = list(range(natoms-n_ads, natoms))
+    return add_atoms
+
+
+def detect_ads(atoms, formula):
+    """ Returns the indexes of the last n atoms in the atoms object, where n is
+    the length of the composition of the species field.
+
+    Parameters
+    ----------
+    atoms : ase atoms object.
+        atoms.info must be a dictionary containing the key 'key_value_pairs',
+        which is expected to contain standard adsorbate structure
+        key value pairs. 'species' should be the chemical formula of an
+        adsorbate.
+
+    Parameters
+    ----------
+    atoms : ase atoms object.
+    """
+    string2symbols(formula)
+    n_ads = len()
+    natoms = len(atoms)
+    lz, li = get_layers(atoms, (0, 0, 1), tolerance=0.3)
+    layers = int(atoms.info['key_value_pairs']['layers'])
+    add_atoms = [a.index for a in atoms if li[a.index] > layers-1]
+    add_atoms = list(range(natoms-n_ads, natoms))
     return add_atoms
 
 
@@ -247,10 +272,14 @@ def db2surf_info(fname, id_dict, formation_energies=None):
         atoms.info['key_value_pairs'] = d.key_value_pairs
         atoms.info['dbid'] = dbid
         atoms.info['ctime'] = float(d.ctime)
-        atoms.info['ads_atoms'] = adds_index(atoms)  # Modify if O/C/Nitrides
-        if len(atoms.info['ads_atoms']) == 0:
+        species = atoms.info['key_value_pairs']['species']
+        if species == '':
             print('Warning: No adsorbate.', fname, dbid)
+            atoms.info['ads_atoms'] = []
             continue
+        else:
+            atoms.info['ads_atoms'] = ads_index(atoms)
+            #  last_index2ads(atoms, species)
         atoms.info['surf_atoms'] = slab_index(atoms)
         i_add1, i_surf1, Z_add1, Z_surf1, i_surfnn = info2primary_index(atoms)
         atoms.info['i_add1'] = i_add1
@@ -281,7 +310,9 @@ def db2atoms_info(fname, selection=[]):
         atoms.info['key_value_pairs'] = d.key_value_pairs
         atoms.info['ctime'] = float(d.ctime)
         atoms.info['dbid'] = int(d.id)
-        atoms.info['ads_atoms'] = adds_index(atoms)  # Modify if O/C/Nitrides
+        # species = atoms.info['key_value_pairs']['species']
+        atoms.info['ads_atoms'] = ads_index(atoms)
+        # last_index2ads(atoms, species)
         atoms.info['surf_atoms'] = slab_index(atoms)
         i_add1, i_surf1, Z_add1, Z_surf1, i_surfnn = info2primary_index(atoms)
         atoms.info['i_add1'] = i_add1

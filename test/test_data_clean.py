@@ -38,6 +38,15 @@ def inf_test():
 
 
 if __name__ == '__main__':
+    from pyinstrument import Profiler
+
+    profiler = Profiler()
+    profiler.start()
+
     outlier_test()
     variance_test()
     inf_test()
+
+    profiler.stop()
+
+    print(profiler.output_text(unicode=True, color=True))

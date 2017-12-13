@@ -2,6 +2,8 @@
 from __future__ import absolute_import
 
 import numpy as np
+
+from atoml.regression.gpfunctions.kernel_setup import kdict2list
 from atoml.regression.gpfunctions import kernels as ak
 
 
@@ -41,7 +43,7 @@ def get_covariance(kernel_dict, log_scale, matrix1, matrix2=None,
             matrix1 = matrix1[:, kernel_dict[key]['features']]
             if matrix2 is not None:
                 matrix2 = matrix2[:, kernel_dict[key]['features']]
-        theta = ak.kdict2list(kernel_dict[key], n1_D)
+        theta = kdict2list(kernel_dict[key], n1_D)
         hyperparameters = theta[1]
         if len(theta[0]) == 0:
             scaling = 1.0

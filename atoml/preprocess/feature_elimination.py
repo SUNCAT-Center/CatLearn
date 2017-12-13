@@ -163,6 +163,9 @@ class FeatureScreening(object):
         # Set random check false for when the screen() func is called.
         self.random_check = False
 
+        assert np.shape(feature_matrix)[1] == sum(
+            (len(accepted), len(rejected), len(randf)))
+
         not_converged, feature_train, feature_reduced = self._iterator(
             target, feature_matrix, size, f, step, accepted, rejected, randf,
             keep_train)
@@ -195,7 +198,7 @@ class FeatureScreening(object):
         # Get ordering of remaining features from linear regression.
         regr = self._regression_ordering(target=target,
                                          feature_matrix=rscreen['matrix'],
-                                         size=step, steps=5*f)
+                                         size=step, steps=f)
 
         # Sort all new ordering of accepted and rejected features.
         sis_accept = []
@@ -209,8 +212,13 @@ class FeatureScreening(object):
             del rejected[i]
 
         # Create new active feature matrix.
-        feature_train = np.delete(keep_train, accepted, axis=1)
-        feature_reduced = np.delete(keep_train, rejected, axis=1)
+        tmp_a = list(accepted) + list(randf)
+        tmp_r = list(rejected) + list(randf)
+        feature_train = np.delete(keep_train, tmp_a, axis=1)
+        feature_reduced = np.delete(keep_train, tmp_r, axis=1)
+
+        assert np.shape(feature_train)[1] == len(rejected)
+        assert np.shape(feature_reduced)[1] == len(accepted)
 
         return not_converged, feature_train, feature_reduced
 
@@ -222,13 +230,15 @@ class FeatureScreening(object):
         feature_matrix : array
             The feature matrix for the training data.
         """
+        n, f = np.shape(feature_matrix)
         if self.random_check:
             feature_matrix, r = self._random_extend(feature_matrix)
-            n, f = np.shape(feature_matrix)
-            index = list(range(f))
+            n, fr = np.shape(feature_matrix)
+            msg = 'Feature matrix not extended with random values.'
+            assert fr != f, msg
+            index = list(range(fr))
             accepted, rejected, randf = [], index[:-r], index[-r:]
         if not self.random_check:
-            n, f = np.shape(feature_matrix)
             index = list(range(f))
             accepted, rejected, randf = [], index, []
 

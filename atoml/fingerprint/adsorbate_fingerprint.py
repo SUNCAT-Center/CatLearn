@@ -16,12 +16,17 @@ from ase.data import atomic_numbers
 from .periodic_table_data import get_mendeleev_params
 from .db2thermo import layers_info
 from .neighbor_matrix import connection_matrix
-
+import collections
 
 block2number = {'s': 1,
                 'p': 2,
                 'd': 3,
                 'f': 4}
+
+# Text based feature.
+facetdict = {'001': [1.], '0001step': [2.], '100': [3.],
+             '110': [4.], '111': [5.], '211': [6.], '311': [7.],
+             '532': [8.]}
 
 
 def n_outer(econf):
@@ -48,23 +53,6 @@ def n_outer(econf):
         elif 'f' in shell:
             nf += n_shell
     return n_tot, ns, np, nd, nf
-
-
-def info2primary_index(atoms):
-    liste = []
-    surf_atoms = atoms.info['surf_atoms']
-    ads_atoms = atoms.info['ads_atoms']
-    for m in surf_atoms:
-        for a in ads_atoms:
-            d = atoms.get_distance(m, a, mic=True, vector=False)
-            liste.append([a, m, d])
-    L = np.array(liste)
-    i = np.argmin(L[:, 2])
-    i_add1 = L[i, 0]
-    i_surf1 = L[i, 1]
-    Z_add1 = atoms.numbers[int(i_add1)]
-    Z_surf1 = atoms.numbers[int(i_surf1)]
-    return i_add1, i_surf1, Z_add1, Z_surf1
 
 
 class AdsorbateFingerprintGenerator(object):
@@ -525,31 +513,31 @@ class AdsorbateFingerprintGenerator(object):
                 nC2 += 4 - (nCC + nCH)
             return [nCC, nC2, nCH, nOH]
 
-    def adds_av(self, atoms=None):
+    def ads_sum(self, atoms=None):
         """ Function that takes an atoms objects and returns a fingerprint
             vector with averages of the atomic properties of the adsorbate.
         """
         if atoms is None:
-            return ['atomic_number_add_av',
-                    'atomic_volume_add_av',
-                    'boiling_point_add_av',
-                    'density_add_av',
-                    'dipole_polarizability_add_av',
-                    'electron_affinity_add_av',
-                    'group_id_add_av',
-                    'lattice_constant_add_av',
-                    'melting_point_add_av',
-                    'period_add_av',
-                    'vdw_radius_add_av',
-                    'covalent_radius_cordero_add_av',
-                    'en_allen_add_av',
-                    'atomic_weight_add_av',
-                    'ne_outer_add_av',
-                    'ne_s_add_av',
-                    'ne_p_add_av',
-                    'ne_d_add_av',
-                    'ne_f_add_av',
-                    'ionenergy_av']
+            return ['atomic_number_ads_sum',
+                    'atomic_volume_ads_sum',
+                    'boiling_point_ads_sum',
+                    'density_ads_sum',
+                    'dipole_polarizability_ads_sum',
+                    'electron_affinity_ads_sum',
+                    'group_id_ads_sum',
+                    'lattice_constant_ads_sum',
+                    'melting_point_ads_sum',
+                    'period_ads_sum',
+                    'vdw_radius_ads_sum',
+                    'covalent_radius_cordero_ads_sum',
+                    'en_allen_ads_sum',
+                    'atomic_weight_ads_sum',
+                    'ne_outer_ads_sum',
+                    'ne_s_ads_sum',
+                    'ne_p_ads_sum',
+                    'ne_d_ads_sum',
+                    'ne_f_ads_sum',
+                    'ionenergy_ads_sum']
         else:
             ads_atoms = atoms.info['ads_atoms']
             dat = []
@@ -559,7 +547,43 @@ class AdsorbateFingerprintGenerator(object):
                                                              'ionenergies'])
                 dat.append(mnlv[:-2] + list(n_outer(mnlv[-2])) +
                            [mnlv[-1]['1']])
-            return list(np.average(dat, axis=0))
+            return list(np.nansum(dat, axis=0))
+
+    def ads_av(self, atoms=None):
+        """ Function that takes an atoms objects and returns a fingerprint
+            vector with averages of the atomic properties of the adsorbate.
+        """
+        if atoms is None:
+            return ['atomic_number_ads_av',
+                    'atomic_volume_ads_av',
+                    'boiling_point_ads_av',
+                    'density_ads_av',
+                    'dipole_polarizability_ads_av',
+                    'electron_affinity_ads_av',
+                    'group_id_ads_av',
+                    'lattice_constant_ads_av',
+                    'melting_point_ads_av',
+                    'period_ads_av',
+                    'vdw_radius_ads_av',
+                    'covalent_radius_cordero_ads_av',
+                    'en_allen_ads_av',
+                    'atomic_weight_ads_av',
+                    'ne_outer_ads_av',
+                    'ne_s_ads_av',
+                    'ne_p_ads_av',
+                    'ne_d_ads_av',
+                    'ne_f_ads_av',
+                    'ionenergy_ads_av']
+        else:
+            ads_atoms = atoms.info['ads_atoms']
+            dat = []
+            for a in ads_atoms:
+                Z = atoms.numbers[a]
+                mnlv = get_mendeleev_params(Z, extra_params=['econf',
+                                                             'ionenergies'])
+                dat.append(mnlv[:-2] + list(n_outer(mnlv[-2])) +
+                           [mnlv[-1]['1']])
+            return list(np.nanmean(dat, axis=0))
 
     def strain(self, atoms=None):
         if atoms is None:
@@ -589,19 +613,183 @@ class AdsorbateFingerprintGenerator(object):
         else:
             return list(np.random.randint(0, 10, size=n))
 
-    def info2Ef(self, atoms):
+    def info2Ef(self, atoms=None):
         if atoms is None:
             return ['Ef']
         else:
             return [float(atoms.info['Ef'])]
 
-    def name(self, atoms):
+    def name(self, atoms=None):
         if atoms is None:
             return ['catapp_name']
         else:
             kvp = atoms.info['key_value_pairs']
             name = kvp['species'] + '*' + kvp['name'] + kvp['facet']
             return [name]
+
+    def catapp_AB(self, atoms=None):
+        if atoms is None:
+            return ['atomic_number_m1',
+                    'atomic_volume_m1',
+                    'boiling_point_m1',
+                    'density_m1',
+                    'dipole_polarizability_m1',
+                    'electron_affinity_m1',
+                    'group_id_m1',
+                    'lattice_constant_m1',
+                    'melting_point_m1',
+                    'period_m1',
+                    'vdw_radius_m1',
+                    'covalent_radius_cordero_m1',
+                    'en_allen_m1',
+                    'atomic_weight_m1',
+                    'heat_of_formation_m1',
+                    #'dft_bulk_modulus_m1',
+                    #'dft_rhodensity_m1',
+                    #'dbcenter_m1',
+                    #'dbfilling_m1',
+                    #'dbwidth_m1',
+                    #'dbskew_m1',
+                    #'dbkurtosis_m1',
+                    'block_m1',
+                    'ne_outer_m1',
+                    'ne_s_m1',
+                    'ne_p_m1',
+                    'ne_d_m1',
+                    'ne_f_m1',
+                    'ionenergy_m1',
+                    'ground_state_magmom_m1',
+                    'atomic_number_m2',
+                    'atomic_volume_m2',
+                    'boiling_point_m2',
+                    'density_m2',
+                    'dipole_polarizability_m2',
+                    'electron_affinity_m2',
+                    'group_id_m2',
+                    'lattice_constant_m2',
+                    'melting_point_m2',
+                    'period_m2',
+                    'vdw_radius_m2',
+                    'covalent_radius_cordero_m2',
+                    'en_allen_m2',
+                    'atomic_weight_m2',
+                    'heat_of_formation_m2',
+                    #'dft_bulk_modulus_m2',
+                    #'dft_rhodensity_m2',
+                    #'dbcenter_m2',
+                    #'dbfilling_m2',
+                    #'dbwidth_m2',
+                    #'dbskew_m2',
+                    #'dbkurtosis_m1',
+                    'block_m2',
+                    'ne_outer_m2',
+                    'ne_s_m2',
+                    'ne_p_m2',
+                    'ne_d_m2',
+                    'ne_f_m2',
+                    'ionenergy_m2',
+                    'ground_state_magmom_m2',
+                    'atomic_number_sum',
+                    'atomic_volume_sum',
+                    'boiling_point_sum',
+                    'density_sum',
+                    'dipole_polarizability_sum',
+                    'electron_affinity_sum',
+                    'group_id_sum',
+                    'lattice_constant_sum',
+                    'melting_point_sum',
+                    'period_sum',
+                    'vdw_radius_sum',
+                    'covalent_radius_cordero_sum',
+                    'en_allen_sum',
+                    'atomic_weight_sum',
+                    'heat_of_formation_sum',
+                    #'dft_bulk_modulus_sum',
+                    #'dft_rhodensity_sum',
+                    #'dbcenter_sum',
+                    #'dbfilling_sum',
+                    #'dbwidth_sum',
+                    #'dbskew_sum',
+                    #'dbkurtosis_sum',
+                    'block_sum',
+                    'ne_outer_sum',
+                    'ne_s_sum',
+                    'ne_p_sum',
+                    'ne_d_sum',
+                    'ne_f_sum',
+                    'ionenergy_sum',
+                    'ground_state_magmom_sum',
+                    'concentration_catapp',
+                    'facet_catapp',
+                    'site_catapp']
+        else:
+            # Atomic numbers in the site.
+            Z_surf1_raw = [atoms.numbers[j] for j in atoms.info['i_surfnn']]
+            # Sort by concentration
+            counts = collections.Counter(Z_surf1_raw)
+            Z_surf1 = sorted(Z_surf1_raw, key=counts.get, reverse=True)
+            z1 = Z_surf1[0]
+            z2 = Z_surf1[0]
+            for z in Z_surf1:
+                if z != z1:
+                    z2 = z
+            uu, ui = np.unique(Z_surf1, return_index=True)
+            if len(ui) == 1:
+                if Z_surf1[0] == z1:
+                    site = 1.
+                elif Z_surf1[0] == z2:
+                    site = 3.
+            else:
+                site = 2.
+            # Import overlayer composition from ase database.
+            kvp = atoms.info['key_value_pairs']
+            term = [atomic_numbers[zt] for zt in string2symbols(kvp['term'])]
+            termuu, termui = np.unique(term, return_index=True)
+            if '3' in kvp['term']:
+                conc = 3.
+            elif len(termui) == 1:
+                conc = 1.
+            elif len(termui) == 2:
+                conc = 2.
+            else:
+                raise AssertionError("Tertiary surfaces not supported.")
+            f1 = get_mendeleev_params(z1,
+                                      extra_params=['heat_of_formation',
+                                                    #'dft_bulk_modulus',
+                                                    #'dft_density',
+                                                    #'dbcenter',
+                                                    #'dbfilling',
+                                                    #'dbwidth',
+                                                    #'dbskew',
+                                                    #'dbkurt',
+                                                    'block',
+                                                    'econf',
+                                                    'ionenergies'])
+            f1 = f1[:-3] + [float(block2number[f1[-3]])] + \
+                list(n_outer(f1[-2])) + [f1[-1]['1']] + \
+                [float(ground_state_magnetic_moments[z1])]
+            if z1 == z2:
+                f2 = f1
+            else:
+                f2 = get_mendeleev_params(z2,
+                                          extra_params=['heat_of_formation',
+                                                        #'dft_bulk_modulus',
+                                                        #'dft_density',
+                                                        #'dbcenter',
+                                                        #'dbfilling',
+                                                        #'dbwidth',
+                                                        #'dbskew',
+                                                        #'dbkurt',
+                                                        'block',
+                                                        'econf',
+                                                        'ionenergies'])
+                f2 = f2[:-3] + [float(block2number[f2[-3]])] + \
+                    list(n_outer(f2[-2])) + [f2[-1]['1']] + \
+                    [float(ground_state_magnetic_moments[z2])]
+            msum = list(np.nansum([f1, f2], axis=0, dtype=np.float))
+            facet = facetdict[kvp['facet'].replace(')', '').replace('(', '')]
+            fp = f1 + f2 + msum + [conc] + facet + [site]
+            return fp
 
     def get_dbid(self, atoms=None):
         if atoms is None:
