@@ -16,33 +16,39 @@ def prepare_kernels(kernel_dict, regularization_bounds, eval_gradients, N_D):
     N_D : int
         Number of dimensions of the original data.
     """
-    kdict = kernel_dict
-    bounds = ()
-
     # Set some default bounds.
+    bounds = ()
     default_bounds = ((1e-12, None),)
     if eval_gradients:
         default_bounds = ((1e-6, 1e6),)
 
-    for key in kdict:
+    for key in kernel_dict:
+        kdict = kernel_dict[key]
         msg = 'A kernel type should be set, e.g. "linear", "gaussian", etc'
-        assert 'type' in kdict[key], msg
+        assert 'type' in kdict, msg
 
-        if 'features' in kdict[key]:
-            N_D = len(kdict[key]['features'])
+        if 'features' in kdict:
+            N_D, f = len(kdict['features']), N_D
+            msg = 'Trying to use greater number of features than available.'
+            assert N_D <= f, msg
 
-        if 'scaling' in kdict[key]:
-            bounds = _scaling_setup(kdict_param=kdict[key], bounds=bounds,
-                                    default_bounds=default_bounds)
+        if 'dimension' in kdict:
+            msg = 'Can assign parameters in "single" dimension, or in the '
+            msg += 'number of "features".'
+            assert kdict['dimension'] in ['single', 'features'], msg
+            if kdict['dimension'] is 'single':
+                N_D = 1
 
-        ktype = kdict[key]['type']
+        if 'scaling' in kdict:
+            bounds = _scaling_setup(kdict, bounds, default_bounds)
+
+        ktype = kdict['type']
         if ktype is not 'user' and ktype is not 'linear':
-            cmd = '_{0}_setup(kdict[key], bounds, N_D, default_bounds)'.format(
-                kdict[key]['type'])
+            cmd = '_{}_setup(kdict, bounds, N_D, default_bounds)'.format(ktype)
             try:
                 bounds = eval(cmd)
             except NameError:
-                msg = '{} kernel not implemented'.format(kdict[key]['type'])
+                msg = '{} kernel not implemented'.format(ktype)
                 raise NotImplementedError(msg)
 
     # Bounds for the regularization
@@ -62,12 +68,19 @@ def _scaling_setup(kdict_param, bounds, default_bounds):
     return bounds
 
 
-def _linear_setup(kdict_param, bounds, N_D, default_bounds):
-    """Setup the linear kernel."""
+# def _linear_setup(kdict_param, bounds, N_D, default_bounds):
+#    """Setup the linear kernel."""
 
 
 def _constant_setup(kdict_param, bounds, N_D, default_bounds):
-    """Setup the linear kernel."""
+    """Setup the constant kernel."""
+    allowed_keys = ['type', 'operation', 'features', 'const']
+    msg = 'It appears as though an undefined key has been provided.'
+    for k in kdict_param:
+        assert k in allowed_keys, msg
+    msg = 'Constant parameter should be a float.'
+    assert type(kdict_param['const']) is float, msg
+
     if 'bounds' in kdict_param:
         bounds += kdict_param['bounds']
     else:
@@ -78,6 +91,11 @@ def _constant_setup(kdict_param, bounds, N_D, default_bounds):
 
 def _gaussian_setup(kdict_param, bounds, N_D, default_bounds):
     """Setup the gaussian kernel."""
+    allowed_keys = ['type', 'operation', 'features', 'scaling', 'width']
+    msg = 'It appears as though an undefined key has been provided.'
+    for k in kdict_param:
+        assert k in allowed_keys, msg
+
     theta = kdict_param['width']
     if type(theta) is float or type(theta) is int:
         kdict_param['width'] = np.zeros(N_D,) + theta
@@ -91,6 +109,12 @@ def _gaussian_setup(kdict_param, bounds, N_D, default_bounds):
 
 def _quadratic_setup(kdict_param, bounds, N_D, default_bounds):
     """Setup the gaussian kernel."""
+    allowed_keys = ['type', 'operation', 'features', 'scaling', 'slope',
+                    'degree']
+    msg = 'It appears as though an undefined key has been provided.'
+    for k in kdict_param:
+        assert k in allowed_keys, msg
+
     # theta = kdict_param['slope']
     # if type(theta) is float or type(theta) is int:
     #    kdict_param['slope'] = np.zeros(N_D,) + theta
@@ -112,6 +136,11 @@ def _quadratic_setup(kdict_param, bounds, N_D, default_bounds):
 
 def _laplacian_setup(kdict_param, bounds, N_D, default_bounds):
     """Setup the laplacian kernel."""
+    allowed_keys = ['type', 'operation', 'features', 'scaling', 'width']
+    msg = 'It appears as though an undefined key has been provided.'
+    for k in kdict_param:
+        assert k in allowed_keys, msg
+
     theta = kdict_param['width']
     if type(theta) is float or type(theta) is int:
         kdict_param['width'] = np.zeros(N_D,) + theta
