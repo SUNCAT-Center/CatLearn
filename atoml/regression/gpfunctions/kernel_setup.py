@@ -59,7 +59,7 @@ def prepare_kernels(kernel_dict, regularization_bounds, eval_gradients, N_D):
 
 def _scaling_setup(kdict_param, bounds, default_bounds):
     msg = 'Scaling parameter should be a float.'
-    assert type(kdict_param['scaling']) is float, msg
+    assert isinstance(kdict_param['scaling'], float), msg
     if 'scaling_bounds' in kdict_param:
         bounds += kdict_param['scaling_bounds']
     else:
@@ -75,11 +75,13 @@ def _scaling_setup(kdict_param, bounds, default_bounds):
 def _constant_setup(kdict_param, bounds, N_D, default_bounds):
     """Setup the constant kernel."""
     allowed_keys = ['type', 'operation', 'features', 'dimension', 'const']
-    msg = 'It appears as though an undefined key has been provided.'
+    msg1 = "An undefined key, '"
+    msg2 = "', has been provided in a 'constant' type kernel dict."
     for k in kdict_param:
-        assert k in allowed_keys, msg
+        assert k in allowed_keys, msg1+k+msg2
+
     msg = 'Constant parameter should be a float.'
-    assert type(kdict_param['const']) is float, msg
+    assert isinstance(kdict_param['const'], float), msg
 
     if 'bounds' in kdict_param:
         bounds += kdict_param['bounds']
@@ -93,9 +95,10 @@ def _gaussian_setup(kdict_param, bounds, N_D, default_bounds):
     """Setup the gaussian kernel."""
     allowed_keys = ['type', 'operation', 'features', 'dimension', 'scaling',
                     'width']
-    msg = 'It appears as though an undefined key has been provided.'
+    msg1 = "An undefined key, '"
+    msg2 = "', has been provided in a 'gaussian' type kernel dict"
     for k in kdict_param:
-        assert k in allowed_keys, msg
+        assert k in allowed_keys, msg1+k+msg2
 
     theta = kdict_param['width']
     if type(theta) is float or type(theta) is int:
@@ -112,9 +115,10 @@ def _quadratic_setup(kdict_param, bounds, N_D, default_bounds):
     """Setup the gaussian kernel."""
     allowed_keys = ['type', 'operation', 'features', 'dimension', 'scaling',
                     'slope', 'degree']
-    msg = 'It appears as though an undefined key has been provided.'
+    msg1 = "An undefined key, '"
+    msg2 = "', has been provided in a 'quadratic' type kernel dict"
     for k in kdict_param:
-        assert k in allowed_keys, msg
+        assert k in allowed_keys, msg1+k+msg2
 
     # theta = kdict_param['slope']
     # if type(theta) is float or type(theta) is int:
@@ -139,9 +143,10 @@ def _laplacian_setup(kdict_param, bounds, N_D, default_bounds):
     """Setup the laplacian kernel."""
     allowed_keys = ['type', 'operation', 'features', 'dimension', 'scaling',
                     'width']
-    msg = 'It appears as though an undefined key has been provided.'
+    msg1 = "An undefined key, '"
+    msg2 = "', has been provided in a 'laplacian' type kernel dict."
     for k in kdict_param:
-        assert k in allowed_keys, msg
+        assert k in allowed_keys, msg1+k+msg2
 
     theta = kdict_param['width']
     if type(theta) is float or type(theta) is int:
@@ -286,7 +291,7 @@ def list2kdict(hyperparameters, kernel_dict):
 
         # Retrieve the scaling factor if it is defined.
         if 'scaling' in kernel_dict[key]:
-            kernel_dict[key]['scaling'] = hyperparameters[ki]
+            kernel_dict[key]['scaling'] = float(hyperparameters[ki])
             ki += 1
 
         # Retreive hyperparameters from a single list theta
@@ -318,7 +323,7 @@ def list2kdict(hyperparameters, kernel_dict):
 
         # If a constant is added.
         elif ktype == 'constant':
-            kernel_dict[key]['const'] = hyperparameters[ki]
+            kernel_dict[key]['const'] = float(hyperparameters[ki])
             ki += 1
 
         # Default hyperparameter keys for other kernels
