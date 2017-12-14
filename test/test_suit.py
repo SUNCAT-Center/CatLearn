@@ -3,10 +3,10 @@ import os
 import unittest
 
 import test_data_setup as ds
+from test_scale import st
 import test_data_clean as dc
 import test_feature_optimization as ft
 import test_predict as pt
-from test_predict_scale import scale_test
 import test_hierarchy_cv as ht
 
 wkdir = os.getcwd()
@@ -20,6 +20,7 @@ class ConfigTestCase(unittest.TestCase):
         all_cand, data = ds.feature_test()
         ds.cv_test(data)
         ds.db_test(all_cand, data)
+        st.scale_test()
 
     def test_data_clean_func(self):
         """Test data cleaning routines."""
@@ -39,7 +40,6 @@ class ConfigTestCase(unittest.TestCase):
             test_targets = pt.get_data()
         pt.rr_test(train_features, train_targets, test_features, test_targets)
         pt.gp_test(train_features, train_targets, test_features, test_targets)
-        scale_test()
 
     def test_hierarchy_func(self):
         """Test hierarchy routines."""
