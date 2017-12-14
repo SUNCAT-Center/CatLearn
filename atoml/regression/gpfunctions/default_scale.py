@@ -34,7 +34,15 @@ class ScaleData(object):
         self.train_targets = np.asarray(train_targets)
 
     def train(self):
-        """Scale the training features and targets."""
+        """Scale the training features and targets.
+
+        Returns
+        -------
+        feature_data : array
+            The scaled features for the training data.
+        target_data : array
+            The scaled targets for the training data.
+        """
         self.feature_data = standardize(train_matrix=self.train_features)
 
         self.target_data = target_standardize(target=self.train_targets)
@@ -48,12 +56,17 @@ class ScaleData(object):
         ----------
         test_features : array
             Feature matrix for the test data.
+
+        Returns
+        -------
+        scaled_features : array
+            The scaled features for the test data.
         """
         test_features = np.asarray(test_features)
         center = test_features - self.feature_data['mean']
-        scaled = center / self.feature_data['std']
+        scaled_features = center / self.feature_data['std']
 
-        return scaled
+        return scaled_features
 
     def hyperparameters(self):
         """Scale the hyperparameters."""
