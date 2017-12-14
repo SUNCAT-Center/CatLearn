@@ -71,7 +71,7 @@ class GaussianProcess(object):
 
         # Set bounds on regularization during hyperparameter optimization.
         if regularization_bounds is None:
-            regularization_bounds = (1e-12, None)
+            regularization_bounds = (1e-6, None)
             if self.eval_gradients:
                 regularization_bounds = (1e-3, 1e3)
 
