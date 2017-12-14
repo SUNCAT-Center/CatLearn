@@ -7,6 +7,7 @@ import test_data_clean as dc
 import test_feature_optimization as ft
 import test_predict as pt
 from test_predict_scale import scale_test
+import test_hierarchy as ht
 
 wkdir = os.getcwd()
 
@@ -39,6 +40,10 @@ class ConfigTestCase(unittest.TestCase):
         pt.rr_test(train_features, train_targets, test_features, test_targets)
         pt.gp_test(train_features, train_targets, test_features, test_targets)
         scale_test()
+
+    def test_hierarchy_func(self):
+        """Test hierarchy routines."""
+        ht.hierarchy_test()
 
 
 if __name__ == '__main__':
