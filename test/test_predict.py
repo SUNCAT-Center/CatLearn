@@ -27,9 +27,9 @@ def get_data():
                              (np.shape(feature_data)[0], ))
 
     # Split the data into so test and training sets.
-    train_features = feature_data[:train_size, :]
+    train_features = feature_data[:train_size, :50]
     train_targets = target_data[:train_size]
-    test_features = feature_data[test_size:, :]
+    test_features = feature_data[test_size:, :50]
     test_targets = target_data[test_size:]
 
     return train_features, train_targets, test_features, test_targets
@@ -66,7 +66,7 @@ def gp_test(train_features, train_targets, test_features, test_targets):
     """Test Gaussian process predictions."""
     # Test prediction routine with linear kernel.
     kdict = {'k1': {'type': 'linear', 'scaling': 1.},
-             'c1': {'type': 'constant', 'const': 0.}}
+             'c1': {'type': 'constant', 'const': 1.}}
     gp = GaussianProcess(train_fp=train_features, train_target=train_targets,
                          kernel_dict=kdict, regularization=1e-3,
                          optimize_hyperparameters=True)

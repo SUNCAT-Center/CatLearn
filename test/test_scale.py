@@ -7,14 +7,18 @@ import numpy as np
 
 from atoml.utilities import DescriptorDatabase
 from atoml.preprocess.feature_preprocess import (standardize, normalize,
-                                                 min_max, unit_length)
+                                                 min_max, unit_length,
+                                                 cluster_features)
+from atoml.preprocess.scale_target import (target_standardize,
+                                           target_normalize, target_center)
 
 wkdir = os.getcwd()
 
 train_size, test_size = 45, 5
 
 
-def scale_test():
+def get_data():
+    """Simple function to pull some training and test data."""
     # Attach the database.
     dd = DescriptorDatabase(db_name='{}/fpv_store.sqlite'.format(wkdir),
                             table='FingerVector')
@@ -32,6 +36,11 @@ def scale_test():
     test_features = feature_data[test_size:, :]
     test_targets = target_data[test_size:]
 
+    return train_features, train_targets, test_features, test_targets
+
+
+def scale_test(train_features, train_targets, test_features):
+    """Test data scaling functions."""
     sfp = standardize(train_matrix=train_features, test_matrix=test_features)
     sfpg = standardize(train_matrix=train_features, test_matrix=test_features,
                        local=False)
@@ -52,6 +61,28 @@ def scale_test():
                         local=False)
     assert np.allclose(ulfp['train'], ulfpg['train'])
 
+    ts = target_standardize(train_targets)
+    assert not np.allclose(ts['target'], train_targets)
+
+    ts = target_normalize(train_targets)
+    assert not np.allclose(ts['target'], train_targets)
+
+    ts = target_center(train_targets)
+    assert not np.allclose(ts['target'], train_targets)
+
+
+def cluster_test(train_features, train_targets, test_features, test_targets):
+    """Test clustering function."""
+    cf = cluster_features(train_matrix=train_features,
+                          train_target=train_targets,
+                          test_matrix=test_features,
+                          test_target=test_targets,
+                          k=2)
+    assert len(cf['train_features']) == 2
+    assert len(cf['train_target']) == 2
+    assert len(cf['test_features']) == 2
+    assert len(cf['test_target']) == 2
+
 
 if __name__ == '__main__':
     from pyinstrument import Profiler
@@ -59,7 +90,9 @@ if __name__ == '__main__':
     profiler = Profiler()
     profiler.start()
 
-    scale_test()
+    train_features, train_targets, test_features, test_targets = get_data()
+    scale_test(train_features, train_targets, test_features)
+    cluster_test(train_features, train_targets, test_features, test_targets)
 
     profiler.stop()
 
