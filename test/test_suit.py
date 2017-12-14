@@ -7,7 +7,7 @@ import test_data_clean as dc
 import test_feature_optimization as ft
 import test_predict as pt
 from test_predict_scale import scale_test
-import test_hierarchy as ht
+import test_hierarchy_cv as ht
 
 wkdir = os.getcwd()
 
