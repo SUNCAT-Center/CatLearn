@@ -3,7 +3,7 @@ import os
 import unittest
 
 import test_data_setup as ds
-from test_scale import st
+import test_scale as st
 import test_data_clean as dc
 import test_feature_optimization as ft
 import test_predict as pt
