@@ -20,7 +20,12 @@ class ConfigTestCase(unittest.TestCase):
         all_cand, data = ds.feature_test()
         ds.cv_test(data)
         ds.db_test(all_cand, data)
-        st.scale_test()
+
+        train_features, train_targets, test_features, \
+            test_targets = st.get_data()
+        st.scale_test(train_features, train_targets, test_features)
+        st.cluster_test(
+            train_features, train_targets, test_features, test_targets)
 
     def test_data_clean_func(self):
         """Test data cleaning routines."""
