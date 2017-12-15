@@ -7,6 +7,7 @@ import numpy as np
 
 from atoml.utilities import DescriptorDatabase
 from atoml.regression import RidgeRegression, GaussianProcess
+from atoml.regression.gpfunctions.sensitivity import SensitivityAnalysis
 
 wkdir = os.getcwd()
 
@@ -27,9 +28,9 @@ def get_data():
                              (np.shape(feature_data)[0], ))
 
     # Split the data into so test and training sets.
-    train_features = feature_data[:train_size, :]
+    train_features = feature_data[:train_size, :50]
     train_targets = target_data[:train_size]
-    test_features = feature_data[test_size:, :]
+    test_features = feature_data[test_size:, :50]
     test_targets = target_data[test_size:]
 
     return train_features, train_targets, test_features, test_targets
@@ -66,7 +67,7 @@ def gp_test(train_features, train_targets, test_features, test_targets):
     """Test Gaussian process predictions."""
     # Test prediction routine with linear kernel.
     kdict = {'k1': {'type': 'linear', 'scaling': 1.},
-             'c1': {'type': 'constant', 'const': 0.}}
+             'c1': {'type': 'constant', 'const': 1.}}
     gp = GaussianProcess(train_fp=train_features, train_target=train_targets,
                          kernel_dict=kdict, regularization=1e-3,
                          optimize_hyperparameters=True)
@@ -210,6 +211,16 @@ def gp_test(train_features, train_targets, test_features, test_targets):
     assert len(pred['prediction']) == len(test_features)
     print('Update prediction:',
           pred['validation_error']['rmse_average'])
+
+    # Start the sensitivity analysis.
+    kdict = {'k1': {'type': 'gaussian', 'width': 30., 'scaling': 5.}}
+    sen = SensitivityAnalysis(
+        train_matrix=train_features[:, :5], train_targets=train_targets,
+        test_matrix=test_features[:, :5], kernel_dict=kdict, init_reg=0.001,
+        init_width=10.)
+
+    sel = sen.backward_selection(predict=True, test_targets=test_targets,
+                                 selection=3)
 
 
 if __name__ == '__main__':

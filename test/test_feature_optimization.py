@@ -62,6 +62,12 @@ def test_extend():
     assert np.shape(extend) == (d, f*(f+1)/2)
     assert len(ext_n) == np.shape(extend)[1]
 
+    p = train_features[:3, :10]
+    extend = fe.generate_features(p, max_num=2, max_den=0, log=False,
+                                  sqrt=False, exclude=False, s=True)
+    extend = fe.generate_features(p, max_num=2, max_den=1, log=True, sqrt=True,
+                                  exclude=True, s=True)
+
     return train_features, train_targets, test_features
 
 

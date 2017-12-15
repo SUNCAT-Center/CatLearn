@@ -127,8 +127,14 @@ def feature_test():
 
 def cv_test(data):
     """Test some cross-validation."""
-    split = k_fold(data, 5)
+    split = k_fold(data, nsplit=5)
     assert len(split) == 5
+    for s in split:
+        assert len(s) == 10
+    split = k_fold(data, nsplit=5, fix_size=5)
+    assert len(split) == 5
+    for s in split:
+        assert len(s) == 5
 
 
 def db_test(all_cand, data):
