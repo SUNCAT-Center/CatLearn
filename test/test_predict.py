@@ -7,6 +7,7 @@ import numpy as np
 
 from atoml.utilities import DescriptorDatabase
 from atoml.regression import RidgeRegression, GaussianProcess
+from atoml.regression.gpfunctions.sensitivity import SensitivityAnalysis
 
 wkdir = os.getcwd()
 
@@ -210,6 +211,16 @@ def gp_test(train_features, train_targets, test_features, test_targets):
     assert len(pred['prediction']) == len(test_features)
     print('Update prediction:',
           pred['validation_error']['rmse_average'])
+
+    # Start the sensitivity analysis.
+    kdict = {'k1': {'type': 'gaussian', 'width': 30., 'scaling': 5.}}
+    sen = SensitivityAnalysis(
+        train_matrix=train_features[:, :5], train_targets=train_targets,
+        test_matrix=test_features[:, :5], kernel_dict=kdict, init_reg=0.001,
+        init_width=10.)
+
+    sel = sen.backward_selection(predict=True, test_targets=test_targets,
+                                 selection=3)
 
 
 if __name__ == '__main__':
