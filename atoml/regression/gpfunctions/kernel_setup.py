@@ -93,6 +93,9 @@ def _constant_setup(kdict_param, bounds, N_D, default_bounds):
 
 def _gaussian_setup(kdict_param, bounds, N_D, default_bounds):
     """Setup the gaussian kernel."""
+    msg = 'An initial width must be set.'
+    assert 'width' in kdict_param, msg
+
     allowed_keys = ['type', 'operation', 'features', 'dimension', 'scaling',
                     'width']
     msg1 = "An undefined key, '"
