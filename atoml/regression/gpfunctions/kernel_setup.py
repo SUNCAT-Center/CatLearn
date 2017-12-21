@@ -112,6 +112,9 @@ def _gaussian_setup(kdict_param, bounds, N_D, default_bounds):
 
 def _quadratic_setup(kdict_param, bounds, N_D, default_bounds):
     """Setup the gaussian kernel."""
+    msg = 'An initial slope and degree parameter must be set.'
+    assert 'slope' in kdict_param and 'degree' in kdict_param, msg
+
     allowed_keys = ['type', 'operation', 'features', 'dimension', 'scaling',
                     'slope', 'degree']
     msg1 = "An undefined key, '"
@@ -127,19 +130,19 @@ def _quadratic_setup(kdict_param, bounds, N_D, default_bounds):
     else:
         bounds += default_bounds * N_D
 
-    # theta = kdict_param['degree']
-    # if type(theta) is float or type(theta) is int:
-    #    kdict_param['degree'] = [theta] * N_D
     if 'bounds' in kdict_param:
         bounds += kdict_param['bounds']
     else:
-        bounds += default_bounds  # * N_D
+        bounds += default_bounds
 
     return bounds
 
 
 def _laplacian_setup(kdict_param, bounds, N_D, default_bounds):
     """Setup the laplacian kernel."""
+    msg = 'An initial width must be set.'
+    assert 'width' in kdict_param, msg
+
     allowed_keys = ['type', 'operation', 'features', 'dimension', 'scaling',
                     'width']
     msg1 = "An undefined key, '"
@@ -324,4 +327,5 @@ def list2kdict(hyperparameters, kernel_dict):
             N_D = len(kernel_dict[key]['hyperparameters'])
             theta = hyperparameters[ki:ki+N_D]
             kernel_dict[key]['hyperparameters'] = list(theta)
+
     return kernel_dict
