@@ -2,11 +2,7 @@ build:py2:
   image: continuumio/anaconda
   script:
     - python -V
-    - pip install pytest-cov
-    - git clone https://gitlab.com/ase/ase.git
-    - pwd
-    - export PYTHONPATH=$PWD/ase:$PYTHONPATH
-    - export PATH=$PWD/ase/tools:$PATH
+    - pip install ase pytest-cov
     - export PYTHONPATH=$PWD/:$PYTHONPATH
     - py.test --cov=atoml test/test_suit.py
 
@@ -14,10 +10,6 @@ build:py3:
   image: continuumio/anaconda3
   script:
     - python -V
-    - pip install pytest-cov
-    - git clone https://gitlab.com/ase/ase.git
-    - pwd
-    - export PYTHONPATH=$PWD/ase:$PYTHONPATH
-    - export PATH=$PWD/ase/tools:$PATH
+    - pip install ase pytest-cov
     - export PYTHONPATH=$PWD/:$PYTHONPATH
     - py.test --cov=atoml test/test_suit.py
