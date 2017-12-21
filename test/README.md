@@ -71,7 +71,7 @@ They can also be run on the command line. If this is done, please make sure
 that `pyinstrument` profiler is installed:
 
 ```shell
-  pip install --upgrade pyinstrument
+  $ pip install --upgrade pyinstrument
 ```
 
 The profiler is run to give an indication of how long tests are likely to take
