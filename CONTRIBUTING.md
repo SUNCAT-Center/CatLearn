@@ -89,4 +89,8 @@ correctly simply run the following:
 
         $ python test/test_suit.py
 
-To make changes to this, it is possibly to simply edit the `Dockerfile`.
+To make changes to this, it is possibly to simply edit the `Dockerfile`. The
+current setup uses Python 2.7, to change this to Python 3.6 simply edit the
+first line of the `Dockerfile` to:
+
+        FROM continuumio/anaconda3
