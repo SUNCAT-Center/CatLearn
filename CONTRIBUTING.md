@@ -95,22 +95,22 @@ sometimes easier to develop within a controlled environment such as this. In
 particular, it is possible for other developers to attain the same environment.
 To run AtoML in the docker container, use the following commands:
 
-      ```shell
-        $ docker build -t atoml .
-        $ docker run -it atoml bash
-      ```
+  ```shell
+    $ docker build -t atoml .
+    $ docker run -it atoml bash
+  ```
 
 This will load up the AtoML directory. To check that everything is working
 correctly simply run the following:
 
-      ```shell
-        $ python test/test_suit.py
-      ```
+  ```shell
+    $ python test/test_suit.py
+  ```
 
 To make changes to this, it is possibly to simply edit the `Dockerfile`. The
 current setup uses Python 2.7, to change this to Python 3.6 simply edit the
 first line of the `Dockerfile` to:
 
-      ```shell
-        FROM continuumio/anaconda3
-      ```
+  ```shell
+    FROM continuumio/anaconda3
+  ```
