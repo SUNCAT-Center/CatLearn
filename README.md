@@ -44,6 +44,28 @@ Be sure to install dependencies in with:
     pip install -r requirements.txt
   ```
 
+#### Docker
+It is necessary to have [docker](https://www.docker.com) installed and running.
+Then it is possible to run AtoML inside a docker image. After cloning the
+project, build and run the image as follows:
+
+  ```shell
+    docker build -t atoml .
+    docker run -it atoml bash
+  ```
+
+Use ctrl + d to exit the docker image when done.
+
+#### Optional Dependencies
+
+The tutorial scripts will generally output some graphical representations of
+the results etc. For these scripts, it is advisable to have at least
+`matplotlib` installed:
+
+  ```shell
+    pip install matplotlib pandas seaborn
+  ```
+
 ## Usage
 [(Back to top)](#table-of-contents)
 
