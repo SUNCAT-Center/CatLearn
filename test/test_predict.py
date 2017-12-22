@@ -8,6 +8,7 @@ import numpy as np
 from atoml.utilities import DescriptorDatabase
 from atoml.regression import RidgeRegression, GaussianProcess
 from atoml.regression.gpfunctions.sensitivity import SensitivityAnalysis
+from atoml.utilities.acquisition_functions import AcquisitionFunctions
 
 wkdir = os.getcwd()
 
@@ -102,7 +103,7 @@ def gp_test(train_features, train_targets, test_features, test_targets):
                       get_training_error=True,
                       uncertainty=True,
                       epsilon=0.1)
-    no_scale = pred['prediction']
+    mult_dim = pred['prediction']
     assert len(pred['prediction']) == len(test_features)
     print('gaussian prediction (rmse):',
           pred['validation_error']['rmse_average'])
@@ -110,6 +111,14 @@ def gp_test(train_features, train_targets, test_features, test_targets):
           pred['validation_error']['insensitive_average'])
     print('gaussian prediction (abs):',
           pred['validation_error']['absolute_average'])
+
+    # Test acquisition function class.
+    af = AcquisitionFunctions(targets=train_targets,
+                              predictions=pred['prediction'],
+                              uncertainty=pred['uncertainty'])
+    acq = af.rank()
+    assert len(acq['cdf']) == len(test_targets)
+    assert len(acq['optimistic']) == len(test_targets)
 
     # Test prediction routine with single width parameter.
     kdict = {'k1': {'type': 'gaussian', 'width': 1., 'scaling': 1.,
@@ -125,7 +134,7 @@ def gp_test(train_features, train_targets, test_features, test_targets):
                       uncertainty=True,
                       epsilon=0.1)
     assert len(pred['prediction']) == len(test_features)
-    assert np.sum(pred['prediction']) != np.sum(no_scale)
+    assert np.sum(pred['prediction']) != np.sum(mult_dim)
     print('gaussian single width (rmse):',
           pred['validation_error']['rmse_average'])
 
