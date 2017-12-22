@@ -6,44 +6,64 @@ import numpy as np
 from scipy.special import erf
 
 
-def classify_uncertainty(test_dict, train_dict):
-    """Function to classify how good something is based of CDF.
+class AcquisitionFunctions(object):
+    """Base class for acquisition functions."""
 
-    Parameters
-    ----------
-    test_dict : dict
-        Information from test data. For each system, there should be a
-        class identifier, the prediction and uncertainty.
-    train_dict : dict
-        Information from training data. For each known class, there should
-        be known property.
-    """
-    for i in test_dict:
-        c = i['class']
-        if c not in train_dict['class']:
-            cdf = float('inf')
-        else:
-            x = train_dict[c]
-            m = test_dict[i]['pred']
-            v = test_dict[i]['uncertainty']
-            cdf = _cdf_fit(x=x, m=m, v=v)
-    test_dict[i]['fit'] = cdf
+    def __init__(self, targets, predictions, uncertainty):
+        """Initialization of class.
 
-    return test_dict
+        Parameters
+        ----------
+        targets : list
+            List of knowns.
+        predictions : list
+            List of predictions from the GP.
+        uncertainty : list
+            List of variance on the GP predictions.
+        """
+        self.targets = targets
+        self.predictions = predictions
+        self.uncertainty = uncertainty
 
+    def rank(self):
+        """Rank predictions based on acquisition function."""
+        res = {'cdf': [], 'optimistic': []}
+        best = max(self.targets)
 
-def _cdf_fit(x, m, v):
-    """Calculate the cumulative distribution function.
+        for i, j in zip(self.predictions, self.uncertainty):
+            res['cdf'].append(self._cdf_fit(x=best, m=i, v=j))
+            res['optimistic'].append(self._optimistic_fit(x=best, m=i, v=j))
 
-    Parameters
-    ----------
-    x : float
-        Known value.
-    m : float
-        Predicted mean.
-    v : float
-        Variance on prediction.
-    """
-    cdf = 0.5 * (1 + erf((x - m) / np.sqrt(2 * v ** 2)))
+        return res
 
-    return cdf
+    def _cdf_fit(self, x, m, v):
+        """Calculate the cumulative distribution function.
+
+        Parameters
+        ----------
+        x : float
+            Known value.
+        m : float
+            Predicted mean.
+        v : float
+            Variance on prediction.
+        """
+        cdf = 0.5 * (1 + erf((m - x) / np.sqrt(2 * v ** 2)))
+
+        return cdf
+
+    def _optimistic_fit(self, x, m, v):
+        """Find predictions that will optimistically lead to progress.
+
+        Parameters
+        ----------
+        x : float
+            Known value.
+        m : float
+            Predicted mean.
+        v : float
+            Variance on prediction.
+        """
+        a = m + v - x
+
+        return a
