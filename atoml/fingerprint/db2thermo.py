@@ -17,7 +17,7 @@ from ase.geometry import get_layers
 # from ase.data import chemical_symbols
 
 
-addsyms = ['H', 'C', 'O', 'N']
+addsyms = ['H', 'C', 'O', 'N', 'S']
 
 
 def slab_index(atoms):
@@ -33,7 +33,7 @@ def slab_index(atoms):
     return slab_atoms
 
 
-def ads_index(atoms):
+def sym2ads_index(atoms):
     """ Returns the indexes of atoms that are in the global list addsyms.
 
     Parameters
@@ -45,7 +45,7 @@ def ads_index(atoms):
     return add_atoms
 
 
-def last_index2ads(atoms, formula):
+def last2ads_index(atoms, formula):
     """ Returns the indexes of the last n atoms in the atoms object, where n is
     the length of the composition of the species field.
 
@@ -67,7 +67,14 @@ def last_index2ads(atoms, formula):
     return add_atoms
 
 
-def detect_ads(atoms, formula):
+def formula2ads_index(atoms, formula):
+    composition = string2symbols(formula)
+    ads_atoms = [a.index for a in atoms if a.symbol in composition]
+    assert len(ads_atoms) == len(composition)
+    return ads_atoms
+
+
+def layers2ads_index(atoms, formula):
     """ Returns the indexes of the last n atoms in the atoms object, where n is
     the length of the composition of the species field.
 
@@ -83,14 +90,15 @@ def detect_ads(atoms, formula):
     ----------
     atoms : ase atoms object.
     """
-    string2symbols(formula)
+    composition = string2symbols(formula)
     n_ads = len()
     natoms = len(atoms)
     lz, li = get_layers(atoms, (0, 0, 1), tolerance=0.3)
     layers = int(atoms.info['key_value_pairs']['layers'])
-    add_atoms = [a.index for a in atoms if li[a.index] > layers-1]
-    add_atoms = list(range(natoms-n_ads, natoms))
-    return add_atoms
+    ads_atoms = [a.index for a in atoms if li[a.index] > layers-1]
+    ads_atoms = list(range(natoms-n_ads, natoms))
+    assert len(ads_atoms) == len(composition)
+    return ads_atoms
 
 
 def layers_info(atoms):
@@ -160,23 +168,44 @@ def db2surf(fname, selection=[]):
     dbids = {}
     # Get slabs and speciess from .db.
     for d in ssurf:
-        cat = str(d.name) + '_' + str(d.phase)
-        facet = str(d.facet)
-        lattice = str(d.surf_lattice)
         abinitio_energy = float(d.epot)
         ads = str(d.ads)
         species = str(d.species)
         if '-' in species:
             continue
-        if ads == 'clean':
+        if ads == 'clean' or species == '':
             ser = ''
             site = 'slab'
+            n = '0'
         else:
             ser = species
             site = str(d.site)
-        size = str(d.supercell) + 'x' + str(d.layers)
-        n = str(d.n)
-        site_name = lattice + '_' + facet + '_' + size + '_' + site
+            if 'n' in d:
+                n = str(d.n)
+            else:
+                n = '1'
+        if 'phase' in d:
+            phase = str(d.phase)
+        elif 'crystal' in d:
+            phase = str(d.crystal)
+        else:
+            phase = ''
+        if 'facet' in d:
+            facet = str(d.facet)
+        else:
+            facet = 'facet'
+        if 'surf_lattice' in d:
+            lattice = str(d.surf_lattice)
+        else:
+            lattice = 'lattice'
+        if 'supercell' in d:
+            cell = str(d.supercell)
+        else:
+            cell = 'XxY'
+        if 'layers' in d:
+            cell += 'x' + str(d.layers)
+        cat = str(d.name) + '_' + phase
+        site_name = lattice + '_' + facet + '_' + cell + '_' + site
         key = n + '_' + ser + '_' + cat + '_' + site_name
         if key not in abinitio_energies:
             abinitio_energies[key] = abinitio_energy
@@ -212,7 +241,8 @@ def mol2ref(abinitio_energies):
     mol_dict['H'] = 0.5*abinitio_energies['H2_gas']
     mol_dict['O'] = abinitio_energies['H2O_gas'] - 2*mol_dict['H']
     mol_dict['C'] = abinitio_energies['CH4_gas'] - 4*mol_dict['H']
-    # mol_dict['C'] = abinitio_energies['CO_gas'] - mol_dict['O']
+    mol_dict['S'] = abinitio_energies['O2S_gas'] - 2*mol_dict['O']
+    mol_dict['N'] = abinitio_energies['H3N_gas'] - 3*mol_dict['H']
     return mol_dict
 
 
@@ -278,8 +308,7 @@ def db2surf_info(fname, id_dict, formation_energies=None):
             atoms.info['ads_atoms'] = []
             continue
         else:
-            atoms.info['ads_atoms'] = ads_index(atoms)
-            #  last_index2ads(atoms, species)
+            atoms.info['ads_atoms'] = formula2ads_index(atoms, species)
         atoms.info['surf_atoms'] = slab_index(atoms)
         i_add1, i_surf1, Z_add1, Z_surf1, i_surfnn = info2primary_index(atoms)
         atoms.info['i_add1'] = i_add1
@@ -310,9 +339,8 @@ def db2atoms_info(fname, selection=[]):
         atoms.info['key_value_pairs'] = d.key_value_pairs
         atoms.info['ctime'] = float(d.ctime)
         atoms.info['dbid'] = int(d.id)
-        # species = atoms.info['key_value_pairs']['species']
-        atoms.info['ads_atoms'] = ads_index(atoms)
-        # last_index2ads(atoms, species)
+        species = atoms.info['key_value_pairs']['species']
+        atoms.info['ads_atoms'] = formula2ads_index(atoms, species)
         atoms.info['surf_atoms'] = slab_index(atoms)
         i_add1, i_surf1, Z_add1, Z_surf1, i_surfnn = info2primary_index(atoms)
         atoms.info['i_add1'] = i_add1
