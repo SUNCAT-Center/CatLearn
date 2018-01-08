@@ -252,6 +252,9 @@ class GaussianProcess(object):
         algomin : str
             Define scipy minimizer method to call. Default is L-BFGS-B.
         """
+        if self.scale_data:
+            self.kernel_dict = self.scaling.hyperparameters(self.kernel_dict)
+
         # Create a list of all hyperparameters.
         theta = kdicts2list(self.kernel_dict, N_D=self.N_D)
         theta = np.append(theta, self.regularization)

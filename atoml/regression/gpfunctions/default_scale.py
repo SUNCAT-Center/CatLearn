@@ -3,6 +3,7 @@ import numpy as np
 
 from atoml.preprocess.feature_preprocess import standardize
 from atoml.preprocess.scale_target import target_standardize
+from .kernel_scaling import kernel_scaling
 
 
 class ScaleData(object):
@@ -68,9 +69,9 @@ class ScaleData(object):
 
         return scaled_features
 
-    def hyperparameters(self):
+    def hyperparameters(self, kernel_dict):
         """Scale the hyperparameters."""
-        raise NotImplemented
+        return kernel_scaling(self, kernel_dict, rescale=False)
 
     def rescale_targets(self, predictions):
         """Rescale predictions.
