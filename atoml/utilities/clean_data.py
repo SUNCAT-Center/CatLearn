@@ -43,7 +43,7 @@ def remove_outliers(features, targets, con=1.4826, dev=3., constraint=None):
     return data
 
 
-def clean_variance(train, test=None, labels=None):
+def clean_variance(train, test=None, labels=None, mask=None):
     """Remove features that contribute nothing to the model.
 
     Parameters
@@ -61,6 +61,9 @@ def clean_variance(train, test=None, labels=None):
     m = train.T
     # Find features that provide no input for model.
     for i in list(range(len(m))):
+        if mask is not None:
+            if np.allclose(m[i], m[i][0]) and i not in mask:
+                clean['index'].append(i)
         if np.allclose(m[i], m[i][0]):
             clean['index'].append(i)
     # Remove bad data from feature matrix.
@@ -77,7 +80,7 @@ def clean_variance(train, test=None, labels=None):
     return clean
 
 
-def clean_infinite(train, test=None, labels=None):
+def clean_infinite(train, test=None, labels=None, mask=None):
     """Remove features that have non finite values in the training data.
 
     Optionally removes features in test data with non fininte values. Returns
@@ -98,6 +101,9 @@ def clean_infinite(train, test=None, labels=None):
     clean = defaultdict(list)
     # Find features that have only finite values.
     bool_test = np.isfinite(train).all(axis=0)
+    # Also accept features, that are masked.
+    if mask is not None:
+        bool_test[mask] = True
     # Save the indices of columns that contain non-finite values.
     clean['index'] = list(np.where(~bool_test)[0])
     # Save a cleaned training data matrix.
