@@ -176,8 +176,8 @@ class SensitivityAnalysis(object):
             get_validation_error=ve, get_training_error=True
             )
 
-        print('{1} feature prediction ({0:.3f}):'.format(
-            pred['validation_error']['rmse_average'],
-            np.shape(self.test_matrix)[1]))
+        # print('{1} feature prediction ({0:.3f}):'.format(
+        #    pred['validation_error']['rmse_average'],
+        #    np.shape(self.test_matrix)[1]))
 
         return pred

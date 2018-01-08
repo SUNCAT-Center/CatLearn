@@ -71,7 +71,7 @@ class GaussianProcess(object):
 
         # Set bounds on regularization during hyperparameter optimization.
         if regularization_bounds is None:
-            regularization_bounds = (1e-12, None)
+            regularization_bounds = (1e-6, None)
             if self.eval_gradients:
                 regularization_bounds = (1e-3, 1e3)
 
@@ -287,7 +287,7 @@ class GaussianProcess(object):
 
     def update_gp(self, train_fp=None, train_target=None, kernel_dict=None,
                   scale_optimizer=False, gradients=None,
-                  regularization_bounds=(1e-12, None)):
+                  regularization_bounds=(1e-6, None)):
         """Potentially optimize the full Gaussian Process again.
 
         This alows for the definition of a new kernel as a result of changing
