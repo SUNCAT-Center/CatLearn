@@ -64,7 +64,7 @@ def clean_variance(train, test=None, labels=None, mask=None):
         if mask is not None:
             if np.allclose(m[i], m[i][0]) and i not in mask:
                 clean['index'].append(i)
-        if np.allclose(m[i], m[i][0]):
+        elif np.allclose(m[i], m[i][0]):
             clean['index'].append(i)
     # Remove bad data from feature matrix.
     if 'index' in clean:
