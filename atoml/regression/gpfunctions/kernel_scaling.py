@@ -1,4 +1,8 @@
 """Function to scale kernel hyperparameters."""
+from __future__ import absolute_import
+from __future__ import division
+
+import numpy as np
 
 
 def kernel_scaling(scale_data, kernel_dict, rescale):
@@ -71,8 +75,6 @@ def _gaussian_kernel_scale(kernel, mean, std, rescale):
     rescale : boolean
        Flag for whether to scale or rescale the data.
     """
-    # if 'dimension' in kernel and kernel['dimension'] == 'single':
-    #     return kernel
     if not rescale:
         kernel['width'] /= std
     else:
