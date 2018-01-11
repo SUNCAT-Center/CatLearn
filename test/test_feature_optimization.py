@@ -104,9 +104,10 @@ def test_extract(train_features, train_targets, test_features):
               test_matrix=test_features)
     assert np.shape(ext[0]) == (d, nc) and np.shape(ext[1]) == (td, nc)
 
-    # ext = spca(components=nc, train_matrix=test_features,
-    #           test_matrix=test_features)
-    # assert np.shape(ext[0]) == (td, nc) and np.shape(ext[1]) == (td, nc)
+    # Sparse PCA is expensive, perform on reduced feature set.
+    ext = spca(components=nc, train_matrix=train_features[:, :5],
+               test_matrix=test_features[:, :5])
+    assert np.shape(ext[0]) == (td, nc) and np.shape(ext[1]) == (td, nc)
 
     ext = atoml_pca(components=nc, train_fpv=train_features,
                     test_fpv=test_features, cleanup=True, scale=True)
