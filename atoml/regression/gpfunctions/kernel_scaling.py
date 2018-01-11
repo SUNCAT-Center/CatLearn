@@ -2,8 +2,6 @@
 from __future__ import absolute_import
 from __future__ import division
 
-import numpy as np
-
 
 def kernel_scaling(scale_data, kernel_dict, rescale):
     """Base hyperparameter scaling function.
