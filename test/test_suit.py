@@ -36,6 +36,7 @@ class ConfigTestCase(unittest.TestCase):
 
     def test_feature_opt_func(self):
         """Test feature optimization routines."""
+        ft.test_importance()
         train_features, train_targets, test_features = ft.test_extend()
         ft.test_extract(train_features, train_targets, test_features)
         ft.test_screening(train_features, train_targets, test_features)
