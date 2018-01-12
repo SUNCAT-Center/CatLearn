@@ -40,8 +40,8 @@ def simple_learning_curve(gp, testx, testy, step=1, min_data=2,
     trainx = (gp.train_fp).copy()
     # If the targets are standardized, convert back to the raw targets.
     trainy = (gp.train_target).copy() * \
-        gp.standardize_data['std'] + \
-        gp.standardize_data['mean']
+        gp.scaling['std'] + \
+        gp.scaling['mean']
     rmse = []
     mae = []
     signed_mean = []

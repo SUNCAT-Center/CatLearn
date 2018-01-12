@@ -8,26 +8,26 @@ with open('/'.join(atoml_path[0].split('/')[:-1]) +
     data = json.load(f)
 
 
-def get_mendeleev_params(atomic_number, index=None, extra_params=[]):
-    """Return a list of generic parameters about an indexed atom.
+def get_mendeleev_params(atomic_number, extra_params=[]):
+    """Return a list of generic parameters about an atom.
 
     Parameters
     ----------
-    atomic_number : int
+    atomic_number : list or int
         An atomic number.
-    index : int
-        The atom index whose parameters to return.
     extra_params: list of str
         Extra Mendaleev parameters to be returned in the list.
         For a full list see here - https://goo.gl/G4eTvu
 
     Returns
     -------
-    list
-        All parameters of the indexed element in the
-        params list.
-
+    var : list
+        All parameters of the element with specified atomic number.
     """
+    # Type check atomic_number var. Switch to list if needed.
+    if type(atomic_number) is int:
+        atomic_number = [atomic_number]
+
     # Parameters which typically do not contain None
     params = [
         'atomic_number',
@@ -49,7 +49,8 @@ def get_mendeleev_params(atomic_number, index=None, extra_params=[]):
         params += extra_params
 
     var = []
-    for _ in params:
-        var += [data[str(atomic_number)].get(_)]
+    for an in atomic_number:
+        for _ in params:
+            var += [data[str(an)].get(_)]
 
     return var
