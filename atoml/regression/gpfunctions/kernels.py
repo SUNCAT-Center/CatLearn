@@ -216,10 +216,6 @@ def linear_kernel(theta, log_scale, m1, m2=None, eval_gradients=False):
     m2 : list or None
         A list of the training fingerprint vectors.
     """
-    # kwidth = theta
-    # if log_scale:
-    #    kwidth = np.exp(kwidth)
-
     if not eval_gradients:
         if m2 is None:
             m2 = m1
@@ -251,7 +247,7 @@ def quadratic_kernel(theta, log_scale, m1, m2=None, eval_gradients=False):
     m2 : list or None
         A list of the training fingerprint vectors.
     """
-    slope = theta[0]
+    slope = np.array(theta[0])
     degree = theta[1]
     if log_scale:
         slope, degree = np.exp(slope), np.exp(degree)
@@ -290,6 +286,7 @@ def laplacian_kernel(theta, log_scale, m1, m2=None, eval_gradients=False):
     m2 : list or None
         A list of the training fingerprint vectors.
     """
+    theta = np.array(theta)
     if log_scale:
         theta = np.exp(theta)
 

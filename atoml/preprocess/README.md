@@ -2,6 +2,15 @@
 
 The folder contains files to scale and optimize the feature space.
 
+## Preprocessing functions
+[(Back to top)](#data-preprocessing)
+
+-   [Feature preprocess](#feature-preprocess)
+-   [Feature engineering](#feature-engineering)
+-   [Feature elimination](#feature-elimination)
+-   [Feature extraction](#feature-extraction)
+-   [Importance testing](#importance-testing)
+
 ## Feature preprocess
 [(Back to top)](#data-preprocessing)
 
@@ -83,3 +92,19 @@ features. This is typically achieved by taking combinations of original
 features and so can result in less interpretable models. Common methods of
 extraction include PCA and PLS. A wrapper to scikit-learn has been written for
 a few of these methods, as well as a fully coded (very) basic PCA function.
+
+# Importance testing
+[(Back to top)](#data-preprocessing)
+
+Some functions have been defined for testing the importance of features is a
+simple manner. These functions simply take a feature at a given index and
+permute the feature in some way to reduce its significance. When a model is
+trained with the new "useless" feature, the error can be tracked and features
+that correspond to an increase in error can be viewed as being more significant
+than those that have no impact on the accuracy.
+
+The the functions are as follows:
+
+*   Make a feature invariant.
+*   Make a feature random noise.
+*   Shuffle a feature.
