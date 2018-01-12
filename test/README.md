@@ -29,7 +29,10 @@ data, if different data is required to test out a feature generator, this will
 need to be imported separately. The tests are mostly testing that features are
 generated with the correct dimensionality.
 
-*This script should be called before any of the following can be run.*
+**_This script should be called before any of the following can be run._**
+
+The various scaling routines are tested in `test_scale.py`, this set of tests
+simply scales all the features and checks that we get a change in value.
 
 ### Feature Optimization
 [(Back to top)](#atoml-tests)
@@ -42,10 +45,14 @@ or extraction functions are called.
 ### Predictions
 [(Back to top)](#atoml-tests)
 
-The regression functions are tested in the `test_predict(_scale).py` scripts. This
+The regression functions are tested in the `test_predict.py` script. This
 mostly just checks that predictions are made for all data points. Further, the
 predictions are printed in the CI log so it is possible to see if they look
 reasonable.
+
+There are also scripts to test the hyperparameter scaling routines in the
+utilities module with `test_hypot_scaling.py`. Further, tests for predictions
+within the hierarchy CV routines are included in `test_hierarchy_cv.py`.
 
 ### Test Suit
 [(Back to top)](#atoml-tests)
@@ -71,7 +78,7 @@ They can also be run on the command line. If this is done, please make sure
 that `pyinstrument` profiler is installed:
 
 ```shell
-  pip install --upgrade pyinstrument
+  $ pip install --upgrade pyinstrument
 ```
 
 The profiler is run to give an indication of how long tests are likely to take

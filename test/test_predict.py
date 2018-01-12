@@ -28,9 +28,9 @@ def get_data():
                              (np.shape(feature_data)[0], ))
 
     # Split the data into so test and training sets.
-    train_features = feature_data[:train_size, :50]
+    train_features = feature_data[:train_size, :100]
     train_targets = target_data[:train_size]
-    test_features = feature_data[test_size:, :50]
+    test_features = feature_data[test_size:, :100]
     test_targets = target_data[test_size:]
 
     return train_features, train_targets, test_features, test_targets

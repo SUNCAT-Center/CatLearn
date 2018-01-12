@@ -6,6 +6,12 @@ from collections import defaultdict
 def remove_outliers(features, targets, con=1.4826, dev=3., constraint=None):
     """Preprocessing routine to remove outliers by median absolute deviation.
 
+    This will take the training feature and target arrays, calculate any
+    outliers, then return the reduced arrays. It is possible to set a
+    constraint key ('high', 'low', None) in order to allow for outliers that
+    are e.g. very low in energy, as this may be the desired outcome of the
+    study.
+
     Parameters
     ----------
     features : array
@@ -46,12 +52,18 @@ def remove_outliers(features, targets, con=1.4826, dev=3., constraint=None):
 def clean_variance(train, test=None, labels=None, mask=None):
     """Remove features that contribute nothing to the model.
 
+    Removes a feature if there is zero variance in the training data. If this
+    is the case, then the model won't learn anything new from adding this
+    feature as it will just act as a scalar.
+
     Parameters
     ----------
     train : array
         Feature matrix for the traing data.
     test : array
-        Optional feature matrix for the test data.
+        Optional feature matrix for the test data. Default is None passed.
+    labels : array
+        Optional list of feature labels. Default is None passed.
     """
     train = np.asarray(train)
     if test is not None:
@@ -92,7 +104,9 @@ def clean_infinite(train, test=None, labels=None, mask=None):
     train : array
         Feature matrix for the traing data.
     test : array
-        Optional feature matrix for the test data.
+        Optional feature matrix for the test data. Default is None passed.
+    labels : array
+        Optional list of feature labels. Default is None passed.
     """
     train = np.asarray(train)
     if test is not None:
