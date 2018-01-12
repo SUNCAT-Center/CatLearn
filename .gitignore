@@ -2,3 +2,4 @@
 *.pickle
 
 .idea/
+.ipynb_checkpoints/
