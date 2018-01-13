@@ -61,7 +61,7 @@ for w, p in zip([1.5, 1., 0.5, 0.1], [141, 142, 143, 144]):
 
     # Get average errors.
     error = get_error(fit['prediction'], afunc(test))
-    print('Gaussian regression error with {0} width: {1}'.format(
+    print('Gaussian regression error with {0} width: {1:.3f}'.format(
         w, error['absolute_average']))
 
     # Plotting.
@@ -81,7 +81,7 @@ for r, p in zip([1., 1e-2, 1e-4, 1e-6], [141, 142, 143, 144]):
 
     # Get average errors.
     error = get_error(fit['prediction'], afunc(test))
-    print('Gaussian regression error with {0} regularization: {1}'.format(
+    print('Gaussian regression error with {0} regularization: {1:.3f}'.format(
         r, error['absolute_average']))
 
     # Plotting.
@@ -101,10 +101,33 @@ for s, p in zip([1., 1e2, 1e4, 1e6], [141, 142, 143, 144]):
 
     # Get average errors.
     error = get_error(fit['prediction'], afunc(test))
-    print('Gaussian regression error with {0} regularization: {1}'.format(
+    print('Gaussian regression error with {0} regularization: {1:.3f}'.format(
         s, error['absolute_average']))
 
     # Plotting.
     plot(p, fit['prediction'])
+
+fig = plt.figure(figsize=(20, 10))
+
+kdict = {'k1': {'type': 'gaussian', 'width': 0.5, 'scaling': 1.}}
+# Set up the prediction routine.
+gp = GaussianProcess(kernel_dict=kdict, regularization=1e-3,
+                     train_fp=train,
+                     train_target=target,
+                     optimize_hyperparameters=True, scale_data=True)
+# Do predictions.
+fit = gp.predict(test_fp=test)
+
+# Get average errors.
+error = get_error(fit['prediction'], afunc(test))
+print('Gaussian regression error: {0:.3f}'.format(
+    error['absolute_average']))
+
+# Plotting.
+plot(p, fit['prediction'])
+
+print('Optimized width: {0:.3f}'.format(gp.kernel_dict['k1']['width'][0]))
+print('Optimized scale: {0:.3f}'.format(gp.kernel_dict['k1']['scaling']))
+print('Optimized regularization: {0:.3f}'.format(gp.regularization))
 
 plt.show()
