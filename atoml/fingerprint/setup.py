@@ -88,7 +88,7 @@ def get_combined_descriptors(fpv_list):
 def get_keyvaluepair(c=[], fpv_name='None'):
     """Get a list of the key_value_pairs target names/values."""
     if len(c) == 0:
-        return ['kvp_'+fpv_name]
+        return ['kvp_' + fpv_name]
     else:
         out = []
         for atoms in c:

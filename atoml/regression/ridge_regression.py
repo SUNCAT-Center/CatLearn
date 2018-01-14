@@ -110,11 +110,11 @@ class RidgeRegression(object):
 
         # Set initial regularization search space.
         whigh, wlow = np.log(self.W2[0] * 2.), np.log(self.W2[-1] * 0.5)
-        basesearchwidth = whigh-wlow
-        omega2_range = [1e-6*np.exp(wlow)]
+        basesearchwidth = whigh - wlow
+        omega2_range = [1e-6 * np.exp(wlow)]
         for pp in np.linspace(wlow, whigh, self.wsteps):
             omega2_range.append(np.exp(pp))
-        omega2_range.append(1e6*np.exp(whigh))
+        omega2_range.append(1e6 * np.exp(whigh))
 
         # Find best value by successively reducing seach area for omega2.
         for s in range(self.rsteps):
@@ -129,14 +129,14 @@ class RidgeRegression(object):
 
             epe_ind = np.argmin(epe_list)
             omega2_min = omega2_list[epe_ind]
-            if s is 0 and epe_ind is 0 or epe_ind is len(omega2_list)-1:
+            if s is 0 and epe_ind is 0 or epe_ind is len(omega2_list) - 1:
                 return omega2_min
 
             # Update search range
             logmin_epe = np.log(omega2_min)
-            basesearchwidth = 2*basesearchwidth/(self.wsteps-1)
-            wlow = logmin_epe - basesearchwidth*0.5
-            whigh = logmin_epe + basesearchwidth*0.5
+            basesearchwidth = 2 * basesearchwidth / (self.wsteps - 1)
+            wlow = logmin_epe - basesearchwidth * 0.5
+            whigh = logmin_epe + basesearchwidth * 0.5
 
             omega2_range = []
             for pp in np.linspace(wlow, whigh, self.wsteps):
@@ -287,7 +287,7 @@ class RidgeRegression(object):
             Number of bootstrap samples.
         """
         np.random.seed(seed)
-        return np.random.random_integers(0, Nd-1, (Ns, Nd))
+        return np.random.random_integers(0, Nd - 1, (Ns, Nd))
 
     def bootstrap_calc(self, X, Y, p, omega2, samples, W2_samples, Vh_samples):
         """Calculate optimal omega2 from bootstrap.
@@ -310,7 +310,7 @@ class RidgeRegression(object):
             Right hand side of sigular matrix for samples.
         """
         coefs = self._RR_preSVD(X, Y, p, omega2, self.W2, self.Vh)
-        err = np.sum((np.dot(X, coefs.T)-Y)**2/len(Y))
+        err = np.sum((np.dot(X, coefs.T) - Y)**2 / len(Y))
 
         error_samples = []
         for i in range(len(samples)):
@@ -330,7 +330,7 @@ class RidgeRegression(object):
                 error_samples = np.vstack((error_samples, error))
 
         ERR = self._bootstrap_ERR(error_samples, samples)
-        EPE = np.sqrt(0.368*err + 0.632*ERR)
+        EPE = np.sqrt(0.368 * err + 0.632 * ERR)
 
         return err, ERR, EPE, a_samples
 
@@ -424,7 +424,7 @@ class RidgeRegression(object):
         W : array
             Sigular values for X (not form XtX).
         """
-        Y_ = Y-np.dot(X, [p] * np.shape(X)[1])
+        Y_ = Y - np.dot(X, [p] * np.shape(X)[1])
 
         dig1 = ((W**2 + omega2)**(-1)) * W**2
         XtX_reg_inv2 = np.dot(np.dot(U, np.diag(dig1)), U.T)

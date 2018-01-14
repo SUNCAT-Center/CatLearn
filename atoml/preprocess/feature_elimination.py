@@ -261,7 +261,7 @@ class FeatureScreening(object):
         corr = []
         order = list(range(np.shape(feature_matrix)[1]))
         for i in order:
-            d = feature_matrix[:, i:i+1]
+            d = feature_matrix[:, i:i + 1]
             if np.allclose(d, d[0]):
                 corr.append(0.)
             elif self.correlation is 'pearson':
