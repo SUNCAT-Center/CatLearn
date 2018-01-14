@@ -1,4 +1,6 @@
-""" This tutorial is intended to give further intuition for Gaussian processes.
+"""Third AtoML tutorial.
+
+This tutorial is intended to give further intuition for Gaussian processes.
 
 Like in tutorial 1, we set up a known underlying function, generate training
 and test data and calculate predictions and errors. We will compare the results
@@ -6,7 +8,6 @@ of linear ridge regression, Gaussian linear kernel regression and finally a
 Gaussian process with the usual squared exponential kernel.
 
 Try playing around with the training set size (density) and noise_magnitude.
-
 """
 import numpy as np
 import matplotlib.pyplot as plt
@@ -19,8 +20,9 @@ from mpl_toolkits.mplot3d import Axes3D
 
 # A known underlying function in two dimensions
 def afunc(x):
-    """ 2D linear function (plane) """
+    """2D linear function (plane)."""
     return 3. * x[:, 0] - 1. * x[:, 1] + 500.
+
 
 # Setting up data.
 # A number of training points in x.

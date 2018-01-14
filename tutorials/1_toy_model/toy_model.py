@@ -1,4 +1,6 @@
-""" This tutorial is intended to help you get familiar with using AtoML to set
+"""First AtoML tutorial.
+
+This tutorial is intended to help you get familiar with using AtoML to set
 up a model and do predictions.
 
 First we set up a known underlying function in one dimension. Then we use it to
@@ -22,6 +24,7 @@ def afunc(x):
     p += 40. * y + 80. * np.sin(10. * x)
     return 1. / 20. * p + 500
 
+
 # Setting up data.
 # A number of training points in x.
 train_points = 17
@@ -38,7 +41,7 @@ target += noise_magnitude * np.random.randn(train_points, 1)
 
 # Generate test datapoints x.
 test_points = 513
-test = np.vstack(np.linspace(np.min(train)-0.1, np.max(train)+0.1,
+test = np.vstack(np.linspace(np.min(train) - 0.1, np.max(train) + 0.1,
                              test_points))
 
 # Store standard deviations of the training data and targets.
@@ -158,8 +161,8 @@ if True:
     w3 = 0.1
     sdt3 = 0.001
     kdict = {
-             'k1': {'type': 'gaussian', 'width': [w3]},
-             }
+        'k1': {'type': 'gaussian', 'width': [w3]},
+    }
     gp = GaussianProcess(kernel_dict=kdict, regularization=sdt3**2,
                          train_fp=std['train'],
                          train_target=train_targets['target'],
@@ -189,8 +192,8 @@ if True:
                     np.hstack(opt_lower), interpolate=True,
                     color='green', alpha=0.2)
     plt.title('Optimized GP. \n w: {0:.3f}, r: {1:.3f}'.format(
-        gp.kernel_dict['k1']['width'][0]*stdx,
-        np.sqrt(gp.regularization)*stdy))
+        gp.kernel_dict['k1']['width'][0] * stdx,
+        np.sqrt(gp.regularization) * stdy))
     plt.xlabel('Descriptor')
     plt.ylabel('Response')
     plt.axis('tight')

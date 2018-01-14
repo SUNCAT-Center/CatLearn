@@ -1,4 +1,6 @@
-""" This tutorial is intended to give further intuition for Gaussian processes.
+"""Fourth AtoML tutorial.
+
+This tutorial is intended to give further intuition for Gaussian processes.
 
 Like in tutorial 1, we set up a known underlying function, generate training
 and test data and calculate predictions and errors. We will compare the results
@@ -9,14 +11,15 @@ import numpy as np
 import matplotlib.pyplot as plt
 from atoml.preprocess.feature_preprocess import standardize
 from atoml.preprocess.scale_target import target_standardize
-from atoml.regression import GaussianProcess, RidgeRegression
+from atoml.regression import GaussianProcess
 from mpl_toolkits.mplot3d import Axes3D
 
 
 # A known underlying function in two dimensions
 def afunc(x):
-    """ 2D linear function (plane) """
+    """2D linear function (plane)."""
     return 3. * x[:, 0] - 1. * x[:, 1] + 50.
+
 
 # Setting up data.
 # A number of training points in x.

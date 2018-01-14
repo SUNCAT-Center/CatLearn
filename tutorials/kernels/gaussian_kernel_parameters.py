@@ -40,7 +40,7 @@ target += noise_magnitude * np.random.randn(train_points, 1)
 
 # Generate test datapoints x.
 test_points = 513
-test = np.vstack(np.linspace(np.min(train)-0.1, np.max(train)+0.1,
+test = np.vstack(np.linspace(np.min(train) - 0.1, np.max(train) + 0.1,
                              test_points))
 
 # Store the known underlying function for plotting.
