@@ -3,11 +3,15 @@
 This tutorial shows how to set up your training data. All prediction functions
 accept training data in the form of a N x D matrix, where N is a number of
 training examples and D is the number of descriptors. Each row in the matrix,
-we call the fingerprint of a training example.
+we call the fingerprint of a training example. Each column, we call a feature.
 
 AtoML contains functionality to create fingerprints from ase atoms objects.
 This functionality is done by one or several of the fingerprint generators in
-AtoML. In this tutorial we will try the adsorbate fingerprint generator, which
+AtoML. 
+
+# Adsorbate fingerprinting
+
+In this tutorial we will try the adsorbate fingerprint generator, which
 is useful for converting adsorbates on extended surfaces into fingerprints for
 predicting their chemisorption energies. Try looking at the code and running
 `adsorbate_data_setup.py`.
@@ -15,7 +19,7 @@ predicting their chemisorption energies. Try looking at the code and running
 Attached to the atoms objects, the fingerprinter needs one crucial piece of
 information - the indices of atoms belonging to the adsorbate. Those are set in
 `atoms.info['ads_index']`. A few other necessary attachments are made by some
-auxiliary function based in the `ads_index`:
+auxiliary function based on the `ads_index`:
 
   ```python
     atoms.info['surf_atoms'] = slab_index(atoms)
@@ -39,7 +43,7 @@ We select a few fingerprinters and put them in a list:
                          fingerprint_generator.primary_adds_nn]
   ```
 
-The fingerprinters are run by like so:
+The fingerprinters are run like so:
 
   ```python
     # Generate the data
