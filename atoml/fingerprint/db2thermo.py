@@ -12,7 +12,7 @@ Input:
 import numpy as np
 import ase.db
 from ase.atoms import string2symbols
-from ase.data import covalent_radii
+from ase.data import covalent_radii, atomic_numbers
 from ase.geometry import get_layers
 # from ase.data import chemical_symbols
 
@@ -47,57 +47,98 @@ def sym2ads_index(atoms):
 
 def last2ads_index(atoms, formula):
     """ Returns the indexes of the last n atoms in the atoms object, where n is
-    the length of the composition of the species field.
+    the length of the composition of the adsorbate species. This function will
+    work on atoms objects, where the slab was set up first,
+    and the adsorbate was added after.
 
     Parameters
     ----------
     atoms : ase atoms object.
         atoms.info must be a dictionary containing the key 'key_value_pairs',
-        which is expected to contain standard adsorbate structure
-        key value pairs. 'species' should be the chemical formula of an
-        adsorbate.
-
-    Parameters
-    ----------
-    atoms : ase atoms object.
+        which is expected to contain CATMAP standard adsorbate structure
+        key value pairs. See the ase db to catmap module in catmap.
+        the key value pair 'species' must be the
+        chemical formula of the adsorbate.
     """
     n_ads = len(string2symbols(formula))
     natoms = len(atoms)
     add_atoms = list(range(natoms-n_ads, natoms))
+    composition = string2symbols(formula)
+    for a in add_atoms:
+        if atoms[a].symbol not in composition:
+            raise AssertionError("last index adsorbate identification failed.")
     return add_atoms
 
 
 def formula2ads_index(atoms, formula):
-    composition = string2symbols(formula)
-    ads_atoms = [a.index for a in atoms if a.symbol in composition]
-    assert len(ads_atoms) == len(composition)
-    return ads_atoms
-
-
-def layers2ads_index(atoms, formula):
-    """ Returns the indexes of the last n atoms in the atoms object, where n is
-    the length of the composition of the species field.
+    """ Returns the indexes of atoms,
+    which have symbols matching the chemical formula of the adsorbate. This
+    function will not work for adsorbates containing the same elements as the
+    slab.
 
     Parameters
     ----------
     atoms : ase atoms object.
         atoms.info must be a dictionary containing the key 'key_value_pairs',
-        which is expected to contain standard adsorbate structure
-        key value pairs. 'species' should be the chemical formula of an
-        adsorbate.
+        which is expected to contain CATMAP standard adsorbate structure
+        key value pairs. See the ase db to catmap module in catmap.
+        the key value pair 'species' must be the
+        chemical formula of the adsorbate.
+    """
+    composition = string2symbols(formula)
+    ads_atoms = [a.index for a in atoms if a.symbol in composition]
+    if len(ads_atoms) != len(composition):
+        raise AssertionError("ads atoms identification by formula failed.")
+    return ads_atoms
+
+
+def layers2ads_index(atoms, formula):
+    """ Returns the indexes of atoms in layers exceeding the number of layers
+    stored in the key value pair 'layers'.
 
     Parameters
     ----------
     atoms : ase atoms object.
+        atoms.info must be a dictionary containing the key 'key_value_pairs',
+        which is expected to contain CATMAP standard adsorbate structure
+        key value pairs. See the ase db to catmap module in catmap.
+        the key value pair 'species' must be the
+        chemical formula of the adsorbate and 'layers' must be an integer.
     """
     composition = string2symbols(formula)
-    n_ads = len()
+    n_ads = len(composition)
     natoms = len(atoms)
-    lz, li = get_layers(atoms, (0, 0, 1), tolerance=0.3)
+    radii = [covalent_radii[atomic_numbers[s]] for s in composition]
+    lz, li = get_layers(atoms, (0, 0, 1), tolerance=2 * min(radii))
     layers = int(atoms.info['key_value_pairs']['layers'])
     ads_atoms = [a.index for a in atoms if li[a.index] > layers-1]
     ads_atoms = list(range(natoms-n_ads, natoms))
-    assert len(ads_atoms) == len(composition)
+    if len(ads_atoms) != len(composition):
+        raise AssertionError("ads atoms identification by layers failed.")
+    return ads_atoms
+
+
+def z2ads_index(atoms, formula):
+    """ Returns the indexes of the n atoms with the highest position
+    in the z direction,
+    where n is the number of atoms in the chemical formula from the species
+    key value pair.
+
+    Parameters
+    ----------
+    atoms : ase atoms object.
+        atoms.info must be a dictionary containing the key 'key_value_pairs',
+        which is expected to contain CATMAP standard adsorbate structure
+        key value pairs. See the ase db to catmap module in catmap.
+        the key value pair 'species'.
+    """
+    composition = string2symbols(formula)
+    n_ads = len(composition)
+    z = atoms.get_positions()[:, 2]
+    ads_atoms = np.argsort(z)[:n_ads]
+    for a in ads_atoms:
+        if atoms[a].symbol not in composition:
+            raise AssertionError("adsorbate identification by z coord failed.")
     return ads_atoms
 
 

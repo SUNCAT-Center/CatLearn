@@ -160,7 +160,7 @@ class AdsorbateFingerprintGenerator(object):
             dat = []
             # np.unique could be used.
             for symb in bulkcomp:
-                Z = atomic_numbers[symb]
+                Z = int(atomic_numbers[symb])
                 mnlv = get_mendeleev_params(Z,
                                             extra_params=['heat_of_formation',
                                                           'dft_bulk_modulus',
@@ -442,7 +442,7 @@ class AdsorbateFingerprintGenerator(object):
             q_self = []
             for nn in ai:
                 q = nn[0]
-                Znn = numbers[q]
+                Znn = int(numbers[q])
                 r_bond_nn = covalent_radii[Znn]
                 if q != primary_surf and nn[1] < rtol * (r_bond_nn+r_bond):
                     sym = symbols[q]
@@ -578,7 +578,7 @@ class AdsorbateFingerprintGenerator(object):
             ads_atoms = atoms.info['ads_atoms']
             dat = []
             for a in ads_atoms:
-                Z = atoms.numbers[a]
+                Z = int(atoms.numbers[a])
                 mnlv = get_mendeleev_params(Z, extra_params=['econf',
                                                              'ionenergies'])
                 dat.append(mnlv[:-2] + list(n_outer(mnlv[-2])) +
