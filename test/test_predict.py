@@ -102,7 +102,7 @@ def gp_test(train_features, train_targets, test_features, test_targets):
                       get_training_error=True,
                       uncertainty=True,
                       epsilon=0.1)
-    no_scale = pred['prediction']
+    mult_dim = pred['prediction']
     assert len(pred['prediction']) == len(test_features)
     print('gaussian prediction (rmse):',
           pred['validation_error']['rmse_average'])
@@ -125,7 +125,7 @@ def gp_test(train_features, train_targets, test_features, test_targets):
                       uncertainty=True,
                       epsilon=0.1)
     assert len(pred['prediction']) == len(test_features)
-    assert np.sum(pred['prediction']) != np.sum(no_scale)
+    assert np.sum(pred['prediction']) != np.sum(mult_dim)
     print('gaussian single width (rmse):',
           pred['validation_error']['rmse_average'])
 

@@ -4,46 +4,149 @@ from __future__ import division
 
 import numpy as np
 from scipy.special import erf
+from collections import defaultdict, Counter
+
+from .clustering import cluster_features
 
 
-def classify_uncertainty(test_dict, train_dict):
-    """Function to classify how good something is based of CDF.
+class AcquisitionFunctions(object):
+    """Base class for acquisition functions."""
 
-    Parameters
-    ----------
-    test_dict : dict
-        Information from test data. For each system, there should be a
-        class identifier, the prediction and uncertainty.
-    train_dict : dict
-        Information from training data. For each known class, there should
-        be known property.
-    """
-    for i in test_dict:
-        c = i['class']
-        if c not in train_dict['class']:
-            cdf = float('inf')
-        else:
-            x = train_dict[c]
-            m = test_dict[i]['pred']
-            v = test_dict[i]['uncertainty']
-            cdf = _cdf_fit(x=x, m=m, v=v)
-    test_dict[i]['fit'] = cdf
+    def __init__(self, targets, predictions, uncertainty, train_features=None,
+                 test_features=None, k=3):
+        """Initialization of class.
 
-    return test_dict
+        Parameters
+        ----------
+        targets : list
+            List of known target values.
+        predictions : list
+            List of predictions from the GP.
+        uncertainty : list
+            List of variance on the GP predictions.
+        train_features : array
+            Feature matrix for the training data.
+        test_features : array
+            Feature matrix for the test data.
+        k : int
+            Number of cluster to generate with clustering.
+        """
+        self.targets = targets
+        self.predictions = predictions
+        self.uncertainty = uncertainty
+        self.train_features = train_features
+        self.test_features = test_features
+        self.k = k
 
+    def rank(self):
+        """Rank predictions based on acquisition function.
 
-def _cdf_fit(x, m, v):
-    """Calculate the cumulative distribution function.
+        Returns
+        -------
+        res : dict
+            A dictionary of lists containg the fitness of each test point for
+            the different acquisition functions.
+        """
+        res = {'cdf': [], 'optimistic': []}
+        best = max(self.targets)
 
-    Parameters
-    ----------
-    x : float
-        Known value.
-    m : float
-        Predicted mean.
-    v : float
-        Variance on prediction.
-    """
-    cdf = 0.5 * (1 + erf((x - m) / np.sqrt(2 * v ** 2)))
+        # Calcuate fitness based on acquisition functions.
+        for i, j in zip(self.predictions, self.uncertainty):
+            res['cdf'].append(self._cdf_fit(x=best, m=i, v=j))
+            res['optimistic'].append(self._optimistic_fit(x=best, m=i, v=j))
 
-    return cdf
+        res['cluster'] = self._cluster_fit()
+
+        return res
+
+    def classify(self, classifier, train_atoms, test_atoms):
+        """Classify ranked predictions based on acquisition function.
+
+        Parameters
+        ----------
+        classifier : func
+            User defined function to classify an atoms object.
+        train_atoms : list
+            List of atoms objects from training data upon which to base
+            classification.
+        test_atoms : list
+            List of atoms objects from test data upon which to base
+            classification.
+
+        Returns
+        -------
+        res : dict
+            A dictionary of lists containg the fitness of each test point for
+            the different acquisition functions.
+        """
+        res = {'cdf': [], 'optimistic': [], 'cluster': []}
+        best = defaultdict(list)
+
+        # start by classifying the training data.
+        for i, a in enumerate(train_atoms):
+            c = classifier(a)
+            best[c].append(self.targets[i])
+
+        # Calcuate fitness based on acquisition functions.
+        for i, a in enumerate(test_atoms):
+            c = classifier(a)
+            if c in best:
+                b = max(best[c])
+                p = self.predictions[i]
+                u = self.uncertainty[i]
+                res['cdf'].append(self._cdf_fit(x=b, m=p, v=u))
+                res['optimistic'].append(self._optimistic_fit(x=b, m=p, v=u))
+            else:
+                res['cdf'].append(float('inf'))
+                res['optimistic'].append(float('inf'))
+
+        return res
+
+    def _cdf_fit(self, x, m, v):
+        """Calculate the cumulative distribution function.
+
+        Parameters
+        ----------
+        x : float
+            Known value.
+        m : float
+            Predicted mean.
+        v : float
+            Variance on prediction.
+        """
+        cdf = 0.5 * (1 + erf((m - x) / np.sqrt(2 * v ** 2)))
+
+        return cdf
+
+    def _optimistic_fit(self, x, m, v):
+        """Find predictions that will optimistically lead to progress.
+
+        Parameters
+        ----------
+        x : float
+            Known value.
+        m : float
+            Predicted mean.
+        v : float
+            Variance on prediction.
+        """
+        a = m + v - x
+
+        return a
+
+    def _cluster_fit(self):
+        """Penalize test points that are too clustered."""
+        fit = []
+
+        cf = cluster_features(
+            train_matrix=self.train_features, train_target=self.targets,
+            k=self.k, test_matrix=self.test_features,
+            test_target=self.predictions
+            )
+
+        train_count = Counter(cf['train_order'])
+
+        for i, c in enumerate(cf['test_order']):
+            fit.append(self.predictions[i] / train_count[c])
+
+        return fit
