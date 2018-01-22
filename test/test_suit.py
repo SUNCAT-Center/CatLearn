@@ -8,6 +8,7 @@ import test_data_clean as dc
 import test_feature_optimization as ft
 import test_predict as pt
 import test_hierarchy_cv as ht
+import test_hypot_scaling as hs
 
 wkdir = os.getcwd()
 
@@ -35,6 +36,7 @@ class ConfigTestCase(unittest.TestCase):
 
     def test_feature_opt_func(self):
         """Test feature optimization routines."""
+        ft.test_importance()
         train_features, train_targets, test_features = ft.test_extend()
         ft.test_extract(train_features, train_targets, test_features)
         ft.test_screening(train_features, train_targets, test_features)
@@ -45,6 +47,7 @@ class ConfigTestCase(unittest.TestCase):
             test_targets = pt.get_data()
         pt.rr_test(train_features, train_targets, test_features, test_targets)
         pt.gp_test(train_features, train_targets, test_features, test_targets)
+        hs.gp_test(train_features, train_targets, test_features, test_targets)
 
     def test_hierarchy_func(self):
         """Test hierarchy routines."""

@@ -171,6 +171,9 @@ class GaussianProcess(object):
                 reg=self.regularization, ktb=ktb, cinv=self.cinv,
                 log_scale=self.scale_optimizer
                 )
+            # Rescale uncertainty if needed.
+            if self.scale_data:
+                data['uncertainty'] *= self.scaling.target_data['std']
 
         if basis is not None:
             data['basis'] = self._fixed_basis(
@@ -360,7 +363,7 @@ class GaussianProcess(object):
         pred = functools.reduce(np.dot, (ktb, alpha))
 
         if self.scale_data:
-            pred = self.scaling.rescale(pred)
+            pred = self.scaling.rescale_targets(pred)
 
         return pred
 

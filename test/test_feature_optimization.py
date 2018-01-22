@@ -6,6 +6,7 @@ import os
 import numpy as np
 
 from atoml.utilities import DescriptorDatabase
+from atoml.preprocess import importance_testing as it
 from atoml.preprocess import feature_engineering as fe
 from atoml.preprocess.feature_extraction import pls, pca, spca, atoml_pca
 from atoml.preprocess.feature_elimination import FeatureScreening
@@ -13,6 +14,24 @@ from atoml.preprocess.feature_elimination import FeatureScreening
 wkdir = os.getcwd()
 
 train_size, test_size = 30, 20
+
+
+def test_importance():
+    """Test feature importance helper functions."""
+    # Attach the database.
+    dd = DescriptorDatabase(db_name='{}/fpv_store.sqlite'.format(wkdir),
+                            table='FingerVector')
+
+    # Pull the features and targets from the database.
+    names = dd.get_column_names()
+    feature_data = dd.query_db(names=names[1:-1])
+
+    nf = it.feature_invariance(feature_data, 1)
+    assert not np.allclose(nf, feature_data)
+    nf = it.feature_randomize(feature_data, 1)
+    assert not np.allclose(nf, feature_data)
+    nf = it.feature_shuffle(feature_data, 1)
+    assert not np.allclose(nf, feature_data)
 
 
 def test_extend():
@@ -85,9 +104,10 @@ def test_extract(train_features, train_targets, test_features):
               test_matrix=test_features)
     assert np.shape(ext[0]) == (d, nc) and np.shape(ext[1]) == (td, nc)
 
-    # ext = spca(components=nc, train_matrix=test_features,
-    #           test_matrix=test_features)
-    # assert np.shape(ext[0]) == (td, nc) and np.shape(ext[1]) == (td, nc)
+    # Sparse PCA is expensive, perform on reduced feature set.
+    ext = spca(components=nc, train_matrix=train_features[:, :5],
+               test_matrix=test_features[:, :5])
+    assert np.shape(ext[0]) == (td, nc) and np.shape(ext[1]) == (td, nc)
 
     ext = atoml_pca(components=nc, train_fpv=train_features,
                     test_fpv=test_features, cleanup=True, scale=True)
@@ -134,6 +154,7 @@ if __name__ == '__main__':
     profiler = Profiler()
     profiler.start()
 
+    test_importance()
     train_features, train_targets, test_features = test_extend()
     test_extract(train_features, train_targets, test_features)
     test_screening(train_features, train_targets, test_features)
