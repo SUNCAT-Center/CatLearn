@@ -27,10 +27,18 @@ class AcquisitionFunctions(object):
         self.uncertainty = uncertainty
 
     def rank(self):
-        """Rank predictions based on acquisition function."""
+        """Rank predictions based on acquisition function.
+
+        Returns
+        -------
+        res : dict
+            A dictionary of lists containg the fitness of each test point for
+            the different acquisition functions.
+        """
         res = {'cdf': [], 'optimistic': []}
         best = max(self.targets)
 
+        # Calcuate fitness based on acquisition functions.
         for i, j in zip(self.predictions, self.uncertainty):
             res['cdf'].append(self._cdf_fit(x=best, m=i, v=j))
             res['optimistic'].append(self._optimistic_fit(x=best, m=i, v=j))
@@ -50,6 +58,12 @@ class AcquisitionFunctions(object):
         test_atoms : list
             List of atoms objects from test data upon which to base
             classification.
+
+        Returns
+        -------
+        res : dict
+            A dictionary of lists containg the fitness of each test point for
+            the different acquisition functions.
         """
         res = {'cdf': [], 'optimistic': []}
         best = defaultdict(list)
@@ -59,6 +73,7 @@ class AcquisitionFunctions(object):
             c = classifier(a)
             best[c].append(self.targets[i])
 
+        # Calcuate fitness based on acquisition functions.
         for i, a in enumerate(test_atoms):
             c = classifier(a)
             if c in best:
