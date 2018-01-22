@@ -8,7 +8,6 @@ import numpy as np
 from atoml.utilities import DescriptorDatabase
 from atoml.regression import RidgeRegression, GaussianProcess
 from atoml.regression.gpfunctions.sensitivity import SensitivityAnalysis
-from atoml.utilities.acquisition_functions import AcquisitionFunctions
 
 wkdir = os.getcwd()
 
@@ -111,14 +110,6 @@ def gp_test(train_features, train_targets, test_features, test_targets):
           pred['validation_error']['insensitive_average'])
     print('gaussian prediction (abs):',
           pred['validation_error']['absolute_average'])
-
-    # Test acquisition function class.
-    af = AcquisitionFunctions(targets=train_targets,
-                              predictions=pred['prediction'],
-                              uncertainty=pred['uncertainty'])
-    acq = af.rank()
-    assert len(acq['cdf']) == len(test_targets)
-    assert len(acq['optimistic']) == len(test_targets)
 
     # Test prediction routine with single width parameter.
     kdict = {'k1': {'type': 'gaussian', 'width': 1., 'scaling': 1.,

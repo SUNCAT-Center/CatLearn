@@ -4,6 +4,7 @@ from __future__ import division
 
 import numpy as np
 from scipy.special import erf
+from collections import defaultdict
 
 
 class AcquisitionFunctions(object):
@@ -33,6 +34,42 @@ class AcquisitionFunctions(object):
         for i, j in zip(self.predictions, self.uncertainty):
             res['cdf'].append(self._cdf_fit(x=best, m=i, v=j))
             res['optimistic'].append(self._optimistic_fit(x=best, m=i, v=j))
+
+        return res
+
+    def classify(self, classifier, train_atoms, test_atoms):
+        """Classify ranked predictions based on acquisition function.
+
+        Parameters
+        ----------
+        classifier : func
+            User defined function to classify an atoms object.
+        train_atoms : list
+            List of atoms objects from training data upon which to base
+            classification.
+        test_atoms : list
+            List of atoms objects from test data upon which to base
+            classification.
+        """
+        res = {'cdf': [], 'optimistic': []}
+        best = defaultdict(list)
+
+        # start by classifying the training data.
+        for i, a in enumerate(train_atoms):
+            c = classifier(a)
+            best[c].append(self.targets[i])
+
+        for i, a in enumerate(test_atoms):
+            c = classifier(a)
+            if c in best:
+                b = max(best[c])
+                p = self.predictions[i]
+                u = self.uncertainty[i]
+                res['cdf'].append(self._cdf_fit(x=b, m=p, v=u))
+                res['optimistic'].append(self._optimistic_fit(x=b, m=p, v=u))
+            else:
+                res['cdf'].append(float('inf'))
+                res['optimistic'].append(float('inf'))
 
         return res
 
