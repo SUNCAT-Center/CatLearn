@@ -80,9 +80,11 @@ def gp_test(train_features, train_targets, train_atoms, test_features,
     print('gaussian prediction (rmse):',
           pred['validation_error']['rmse_average'])
 
-    af = AcquisitionFunctions(targets=train_targets,
-                              predictions=pred['prediction'],
-                              uncertainty=pred['uncertainty'])
+    af = AcquisitionFunctions(
+        targets=train_targets, predictions=pred['prediction'],
+        uncertainty=pred['uncertainty'], train_features=train_features,
+        test_features=test_features
+        )
     acq = af.rank()
     assert len(acq['cdf']) == len(pred['prediction'])
     assert len(acq['optimistic']) == len(pred['prediction'])

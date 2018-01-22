@@ -4,27 +4,39 @@ from __future__ import division
 
 import numpy as np
 from scipy.special import erf
-from collections import defaultdict
+from collections import defaultdict, Counter
+
+from .clustering import cluster_features
 
 
 class AcquisitionFunctions(object):
     """Base class for acquisition functions."""
 
-    def __init__(self, targets, predictions, uncertainty):
+    def __init__(self, targets, predictions, uncertainty, train_features=None,
+                 test_features=None, k=3):
         """Initialization of class.
 
         Parameters
         ----------
         targets : list
-            List of knowns.
+            List of known target values.
         predictions : list
             List of predictions from the GP.
         uncertainty : list
             List of variance on the GP predictions.
+        train_features : array
+            Feature matrix for the training data.
+        test_features : array
+            Feature matrix for the test data.
+        k : int
+            Number of cluster to generate with clustering.
         """
         self.targets = targets
         self.predictions = predictions
         self.uncertainty = uncertainty
+        self.train_features = train_features
+        self.test_features = test_features
+        self.k = k
 
     def rank(self):
         """Rank predictions based on acquisition function.
@@ -42,6 +54,8 @@ class AcquisitionFunctions(object):
         for i, j in zip(self.predictions, self.uncertainty):
             res['cdf'].append(self._cdf_fit(x=best, m=i, v=j))
             res['optimistic'].append(self._optimistic_fit(x=best, m=i, v=j))
+
+        res['cluster'] = self._cluster_fit()
 
         return res
 
@@ -65,7 +79,7 @@ class AcquisitionFunctions(object):
             A dictionary of lists containg the fitness of each test point for
             the different acquisition functions.
         """
-        res = {'cdf': [], 'optimistic': []}
+        res = {'cdf': [], 'optimistic': [], 'cluster': []}
         best = defaultdict(list)
 
         # start by classifying the training data.
@@ -119,3 +133,20 @@ class AcquisitionFunctions(object):
         a = m + v - x
 
         return a
+
+    def _cluster_fit(self):
+        """Penalize test points that are too clustered."""
+        fit = []
+
+        cf = cluster_features(
+            train_matrix=self.train_features, train_target=self.targets,
+            k=self.k, test_matrix=self.test_features,
+            test_target=self.predictions
+            )
+
+        train_count = Counter(cf['train_order'])
+
+        for i, c in enumerate(cf['test_order']):
+            fit.append(self.predictions[i] / train_count[c])
+
+        return fit
