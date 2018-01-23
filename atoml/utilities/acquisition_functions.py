@@ -47,13 +47,14 @@ class AcquisitionFunctions(object):
             A dictionary of lists containg the fitness of each test point for
             the different acquisition functions.
         """
-        res = {'cdf': [], 'optimistic': []}
+        res = {'cdf': [], 'optimistic': [], 'gaussian': []}
         best = max(self.targets)
 
         # Calcuate fitness based on acquisition functions.
         for i, j in zip(self.predictions, self.uncertainty):
             res['cdf'].append(self._cdf_fit(x=best, m=i, v=j))
             res['optimistic'].append(self._optimistic_fit(x=best, m=i, v=j))
+            res['gaussian'].append(self._gaussian_fit(x=best, m=i, v=j))
 
         res['cluster'] = self._cluster_fit()
 
@@ -79,7 +80,7 @@ class AcquisitionFunctions(object):
             A dictionary of lists containg the fitness of each test point for
             the different acquisition functions.
         """
-        res = {'cdf': [], 'optimistic': [], 'cluster': []}
+        res = {'cdf': [], 'optimistic': [], 'gaussian': [], 'cluster': []}
         best = defaultdict(list)
 
         # start by classifying the training data.
@@ -96,10 +97,11 @@ class AcquisitionFunctions(object):
                 u = self.uncertainty[i]
                 res['cdf'].append(self._cdf_fit(x=b, m=p, v=u))
                 res['optimistic'].append(self._optimistic_fit(x=b, m=p, v=u))
+                res['gaussian'].append(self._gaussian_fit(x=b, m=p, v=u))
             else:
                 res['cdf'].append(float('inf'))
                 res['optimistic'].append(float('inf'))
-
+                res['gaussian'].append(float('inf'))
         return res
 
     def _cdf_fit(self, x, m, v):
@@ -133,6 +135,21 @@ class AcquisitionFunctions(object):
         a = m + v - x
 
         return a
+
+    def _gaussian_fit(self, x, m, v):
+        """Find predictions that have the highest probability at x,
+        assuming a gaussian posterior.
+
+        Parameters
+        ----------
+        x : float
+            Known value.
+        m : float
+            Predicted mean.
+        v : float
+            Variance on prediction.
+        """
+        return np.exp(-np.abs(m - x)/(2.*v**2))
 
     def _cluster_fit(self):
         """Penalize test points that are too clustered."""
