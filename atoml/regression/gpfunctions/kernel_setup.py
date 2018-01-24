@@ -172,7 +172,7 @@ def _laplacian_setup(kdict_param, bounds, N_D, default_bounds):
     for k in kdict_param:
         assert k in allowed_keys, msg1+k+msg2
 
-    # Format the slope parameter.
+    # Format the width parameter.
     theta = kdict_param['width']
     try:
         theta = float(theta)
