@@ -11,7 +11,7 @@ from atoml.regression.gpfunctions import kernels as ak
 
 
 def log_marginal_likelihood(theta, train_matrix, targets, kernel_dict,
-                            scale_optimizer, eval_gradients, eval_jac):
+                            scale_optimizer, eval_gradients, eval_jac=False):
     """Return the negative of the log marginal likelyhood.
 
     Equation 5.8 in C. E. Rasmussen and C. K. I. Williams, 2006
@@ -101,6 +101,7 @@ def dK_dtheta_j(theta, train_matrix, kernel_dict, Q):
         kdict = kernel_dict[key]
         ktype = kdict['type']
         if 'scaling' in kdict:
+            raise NotImplementedError("jacobian for kernel scaling factor")
             scaling, hyperparameters = kdict2list(kdict, N_D)
             k = eval(
                 'ak.{}_kernel(m1=train_matrix, m2=None, theta=hyperparameters, \
@@ -116,6 +117,8 @@ def dK_dtheta_j(theta, train_matrix, kernel_dict, Q):
                 dKdtheta_j = ak.gaussian_dk_dtheta(train_matrix[:, j],
                                                    kwidth[j])
                 jac.append(0.5*np.sum(inner1d(Q, dKdtheta_j.T)))
-        if kdict['type'] == 'constant':
+        elif kdict['type'] == 'constant':
                 jac.append(1)
+        else:
+            raise NotImplementedError("jacobian for " + ktype)
     return jac
