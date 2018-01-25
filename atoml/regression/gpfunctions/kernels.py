@@ -103,7 +103,7 @@ def gaussian_kernel(theta, log_scale, m1, m2=None, eval_gradients=False):
     return k
 
 
-def gaussian_dk_dtheta(fpm_j, width_j, log_scale=False, m2=None,
+def gaussian_dk_dtheta(k, fpm_j, width_j, log_scale=False, m2=None,
                        eval_gradients=False):
     n = len(fpm_j)
     gram = np.zeros([n, n])
@@ -116,7 +116,7 @@ def gaussian_dk_dtheta(fpm_j, width_j, log_scale=False, m2=None,
             gram[i, j] = d_ij
             gram[j, i] = d_ij
     # Insert gram matrix in differentiated kernel.
-    dkdw_j = np.exp(-.5 * gram**2 / (width_j**2)) * (gram**2 / (width_j**3))
+    dkdw_j = np.multiply(k, gram**2 / (width_j**3))
     return dkdw_j
 
 

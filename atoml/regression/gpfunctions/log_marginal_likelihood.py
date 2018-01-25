@@ -40,8 +40,8 @@ def log_marginal_likelihood(theta, train_matrix, targets, kernel_dict,
     y = targets.reshape([n, 1])
 
     # Calculate the various terms in likelihood.
-    L = cholesky(K, lower=True)
-    a = cho_solve((L, True), y)
+    L = cholesky(K, overwrite_a=False, lower=True, check_finite=True)
+    a = cho_solve((L, True), y, check_finite=True)
     datafit = -.5*np.dot(y.T, a)
     complexity = -np.log(np.diag(L)).sum()  # (A.18) in R. & W.
     normalization = -.5*n*np.log(2*np.pi)
@@ -51,10 +51,13 @@ def log_marginal_likelihood(theta, train_matrix, targets, kernel_dict,
     if not eval_jac:
         return -p
     else:
-        C = cho_solve((L, True), np.eye(n))
+        # Get jacobian of log marginal likelyhood wrt. hyperparameters.
+        C = cho_solve((L, True), np.eye(n), check_finite=True)
         aa = a*a.T  # inner1d(a,a)
         Q = aa - C
+        # Get the list of gradients.
         jac = dK_dtheta_j(theta, train_matrix, kernel_dict, Q)
+        # Append gradient with respect to regularization.
         dKdnoise = np.identity(n)
         jac.append(0.5*np.sum(inner1d(Q, dKdnoise.T)))
         return -p, -np.array(jac)
@@ -72,23 +75,20 @@ def dlml(theta, train_matrix, targets, kernel_dict,
             noise: float
             y: vector of length n
     """
-    kwidth = theta[:-1]
     K = get_covariance(
         kernel_dict=kernel_dict, matrix1=train_matrix,
         regularization=theta[-1], log_scale=scale_optimizer,
         eval_gradients=eval_gradients)
-    m = len(kwidth)
     n = len(targets)
     y = targets.reshape([n, 1])
-    L = cholesky(K, lower=True)
-    a = cho_solve((L, True), y)
-    C = cho_solve((L, True), np.eye(n))
+    L = cholesky(K, overwrite_a=False, lower=True, check_finite=True)
+    a = cho_solve((L, True), y, overwrite_b=False, check_finite=True)
+    C = cho_solve((L, True), np.eye(n), check_finite=True)
     aa = a*a.T  # inner1d(a,a)
     Q = aa - C
-    jac = []
-    for j in range(0, m):
-        dKdtheta_j = ak.gaussian_dk_dtheta(train_matrix[:, j], kwidth[j])
-        jac.append(0.5*np.sum(inner1d(Q, dKdtheta_j.T)))
+    # Get the list of gradients.
+    jac = dK_dtheta_j(theta, train_matrix, kernel_dict, Q)
+    # Append gradient with respect to regularization.
     dKdnoise = np.identity(n)
     jac.append(0.5*np.sum(inner1d(Q, dKdnoise.T)))
     return -np.array(jac)
@@ -96,29 +96,34 @@ def dlml(theta, train_matrix, targets, kernel_dict,
 
 def dK_dtheta_j(theta, train_matrix, kernel_dict, Q):
     jac = []
-    N_D = np.shape(train_matrix)[1]
+    N, N_D = np.shape(train_matrix)
+    ki = 0
     for key in kernel_dict.keys():
         kdict = kernel_dict[key]
         ktype = kdict['type']
-        if 'scaling' in kdict:
-            raise NotImplementedError("jacobian for kernel scaling factor")
+        if 'scaling' in kdict or kdict['type'] == 'gaussian':
             scaling, hyperparameters = kdict2list(kdict, N_D)
             k = eval(
                 'ak.{}_kernel(m1=train_matrix, m2=None, theta=hyperparameters, \
                 eval_gradients=False, log_scale=False)'.format(ktype))
-            jac.append(k)
-        if kdict['type'] == 'gaussian':
-            if 'scaling' in kdict:
-                kwidth = theta[1:-1]
-            else:
-                kwidth = theta[:-1]
+        if 'scaling' in kdict:
+            jac.append(0.5*np.sum(inner1d(Q, k.T)))
+            ki += 1
+        if kdict['type'] == 'constant':
+            jac.append(0.5*np.sum(inner1d(Q, np.ones([N, N]))))
+            ki += 1
+        elif ktype == 'linear':
+            continue
+        elif kdict['type'] == 'gaussian':
+            kwidth = theta[ki:ki+N_D]
             m = len(kwidth)
             for j in range(0, m):
-                dKdtheta_j = ak.gaussian_dk_dtheta(train_matrix[:, j],
+                dKdtheta_j = ak.gaussian_dk_dtheta(k, train_matrix[:, j],
                                                    kwidth[j])
+                if 'scaling' in 'scaling' in kdict:
+                    dKdtheta_j *= scaling
                 jac.append(0.5*np.sum(inner1d(Q, dKdtheta_j.T)))
-        elif kdict['type'] == 'constant':
-                jac.append(1)
+            ki += N_D
         else:
             raise NotImplementedError("jacobian for " + ktype)
     return jac

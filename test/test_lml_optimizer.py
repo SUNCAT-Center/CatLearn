@@ -14,14 +14,13 @@ from scipy.optimize import minimize, basinhopping
 
 
 wkdir = os.getcwd()
-
 train_size, test_size = 45, 5
-n_features = 6
+n_features = 20
 global_opt = False
 eval_gradients = False
 scale_optimizer = False
-plot_lml = False
 eval_jac = True
+plot_lml = False
 
 
 def get_data():
@@ -38,9 +37,9 @@ def get_data():
                              (np.shape(feature_data)[0], ))
 
     # Split the data into so test and training sets.
-    train_features = feature_data[:train_size, -n_features:]
+    train_features = feature_data[:train_size, :n_features]
     train_targets = target_data[:train_size]
-    test_features = feature_data[test_size:, -n_features:]
+    test_features = feature_data[test_size:, :n_features]
     test_targets = target_data[test_size:]
 
     return train_features, train_targets, test_features, test_targets
@@ -86,14 +85,15 @@ def scale_test(train_matrix, train_targets, test_matrix):
 
 
 def lml_plotter(train_features, train_targets, test_features, kernel_dict,
-                regularization):
+                regularization, d_max=4):
     print('Plotting log marginal likelihood.')
-    N_D = np.shape(train_features)[1]
-    for d in range(N_D):
-        theta = np.array(kdicts2list(kernel_dict, N_D=N_D))
-        theta = np.append(theta, regularization)
-        x0 = kernel_dict[kernel_dict.keys()[0]]['width'][d]
-        X = 10 ** np.linspace(np.log10(x0)-3, np.log10(x0)+3, 65)
+    N, N_D = np.shape(train_features)
+    hyperparameters = np.array(kdicts2list(kernel_dict, N_D=N_D))
+    hyperparameters = np.append(hyperparameters, regularization)
+    for d in range(min(len(hyperparameters), d_max)):
+        theta = hyperparameters.copy()
+        x0 = hyperparameters[d]
+        X = 10 ** np.linspace(np.log10(x0)-3, np.log10(x0)+3, 17)
         Y = []
         dY = []
         for x in X:
@@ -112,23 +112,25 @@ def lml_plotter(train_features, train_targets, test_features, kernel_dict,
                                np.array(train_targets),
                                kernel_dict, scale_optimizer,
                                eval_gradients, False))
-        if plot_lml:
-            ax = plt.subplot(3, 2, d+1)
-            ax.semilogx(X, Y, marker='o', linestyle='none')
-            for i in range(len(X)):
-                dx = X[i] / 10.
-                ax.semilogx([X[i]+dx, X[i]-dx],
-                            [Y[i]+dY[i][d]*dx, Y[i]-dY[i][d]*dx], c='r')
-            ax.axvline(x0)
-            ax.set_ylabel('lml')
-            ax.set_xlabel('Hyperparameter ' + str(d))
+        n_x = np.ceil(np.sqrt(len(theta)))
+        n_y = n_x + 1
+        ax = plt.subplot(n_x, n_y, d+1)
+        ax.semilogx(X, Y, marker='o', linestyle='none')
+        for i in range(len(X)):
+            dx = X[i] / 10.
+            ax.semilogx([X[i]+dx, X[i]-dx],
+                        [Y[i]+dY[i][d]*dx, Y[i]-dY[i][d]*dx], c='r')
+        ax.axvline(x0)
+        ax.set_ylabel('lml')
+        ax.set_xlabel('Hyperparameter ' + str(d))
 
 if __name__ == '__main__':
     from pyinstrument import Profiler
 
     profiler = Profiler()
     profiler.start()
-    kernel_dict = {'k1': {'type': 'gaussian', 'width': 1.}}  # ,'scaling': 1.}}
+    kernel_dict = {'k1': {'type': 'gaussian', 'width': 0.5, 'scaling': 0.8},
+                   'c1': {'type': 'constant', 'const': 1.e-3}}
     train_matrix, train_targets, test_matrix, test_targets = get_data()
     train_features, targets, test_features = scale_test(train_matrix,
                                                         train_targets,
@@ -140,9 +142,10 @@ if __name__ == '__main__':
     regularization = popt['x'][-1]
     profiler.stop()
     print(profiler.output_text(unicode=True, color=True))
-    if plot_lml:
-        import matplotlib.pyplot as plt
-        lml_plotter(train_features, targets, test_features,
-                    kernel_dict, regularization)
-        plt.tight_layout()
-        plt.show()
+
+if plot_lml:
+    import matplotlib.pyplot as plt
+    lml_plotter(train_features, targets, test_features,
+                kernel_dict, regularization)
+    plt.tight_layout()
+    plt.show()
