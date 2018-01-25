@@ -202,8 +202,8 @@ def gp_test(train_features, train_targets, test_features, test_targets):
         test_matrix=test_features[:, :5], kernel_dict=kdict, init_reg=0.001,
         init_width=10.)
 
-    sel = sen.backward_selection(predict=True, test_targets=test_targets,
-                                 selection=3)
+    sen.backward_selection(
+        predict=True, test_targets=test_targets, selection=3)
 
 
 if __name__ == '__main__':

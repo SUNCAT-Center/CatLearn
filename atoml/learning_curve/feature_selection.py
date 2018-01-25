@@ -30,7 +30,7 @@ class feature_selection(object):
         """Select the the feture/s that works best wtig L1."""
         feat_vec, alpha_vec, _ = self.feature_inspection()
         selected_features = OrderedDict()
-        for feat in range(1, np.shape(self.train_features)[-1]+1):
+        for feat in range(1, np.shape(self.train_features)[-1] + 1):
             if select_limit[0] < feat and feat < select_limit[1]:
                 splits = 10
                 found_alpha = False
@@ -41,7 +41,7 @@ class feature_selection(object):
                     if found_alpha:
                         # alpha = self.alpha_refinment(alpha, feat)
                         _, _, feature_index = self.feature_inspection(
-                                                            alpha_list=[alpha])
+                            alpha_list=[alpha])
                         selected_features[str(feat)] = feature_index
                     else:
                         if int_expand < 1:
@@ -50,8 +50,8 @@ class feature_selection(object):
                                                        feat, splits,
                                                        int_expand)
                             feat_vec, alpha_vec, _ = self.feature_inspection(
-                                                            upper=alpha_vec[0],
-                                                            interval=splits)
+                                upper=alpha_vec[0],
+                                interval=splits)
                         else:
                             found_alpha = True
         return selected_features
@@ -122,10 +122,10 @@ class feature_selection(object):
         """
         index = [i for i, x in enumerate(feat_vec) if x > feat][0]
         if index > 2:
-            feat_vec = feat_vec[index-3:]
-            alpha_vec = alpha_vec[index-3:]
+            feat_vec = feat_vec[index - 3:]
+            alpha_vec = alpha_vec[index - 3:]
         if index - 1 < 3:
-            splits = 2*splits
+            splits = 2 * splits
             int_expand += 1
         return feat_vec, alpha_vec, splits, int_expand
 
@@ -150,11 +150,12 @@ class feature_selection(object):
            limit should be.
         """
         for steps in range(1, refsteps + 1):
-            feat_vec, alpha_vec, _ = self.feature_inspection(upper=upper*alpha,
-                                                             lower=alpha,
-                                                             interval=splits)
-            found_alpha, refalpha = self.alpha_finder(feat_vec, alpha_vec,
-                                                      feat)
+            feat_vec, alpha_vec, _ = self.feature_inspection(
+                upper=upper * alpha, lower=alpha, interval=splits
+            )
+            found_alpha, refalpha = self.alpha_finder(
+                feat_vec, alpha_vec, feat
+            )
             if found_alpha:
                 alpha = refalpha
         return alpha

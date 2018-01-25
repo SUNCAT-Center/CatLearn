@@ -1,5 +1,7 @@
-"""This tutorial is intended to help you get familiar with using AtoML to set
-up a model and do predictions.
+"""Fifth AtoML tutorial.
+
+This tutorial is intended to help you get familiar with using AtoML to set up a
+model and do predictions.
 
 First we set up a known underlying function in one dimension (including
 first derivative). Then, we pick some values to train.
@@ -17,10 +19,10 @@ from atoml.regression import GaussianProcess
 # A known underlying 2D function (z) and first derivatives (dx,dy).
 def afunc(x, y):
     """S FUNCTION."""
-    z = -(12.0)*(x**2.0) + (1.0/3.0)*(x**4.0)
-    z = z - (12.0)*(y**2.0) + (1.0/2.0)*(y**4.0)
-    dx = -24.0*x + (4.0/3.0)*x**3.0
-    dy = -24.0*y + 2.0*y**3.0
+    z = -(12.0) * (x**2.0) + (1.0 / 3.0) * (x**4.0)
+    z = z - (12.0) * (y**2.0) + (1.0 / 2.0) * (y**4.0)
+    dx = -24.0 * x + (4.0 / 3.0) * x**3.0
+    dy = -24.0 * y + 2.0 * y**3.0
     return [z, dx, dy]
 
 
@@ -83,7 +85,7 @@ gp = GaussianProcess(
     kernel_dict=kdict, regularization=sdt1**2, train_fp=train,
     train_target=target, optimize_hyperparameters=False, gradients=gradients,
     scale_optimizer=False, scale_data=True
-    )
+)
 
 # Hyperaparam optimization algorithms change from default.
 gp.optimize_hyperparameters(algomin='TNC', global_opt=False)
@@ -112,12 +114,14 @@ plt.subplot(131)
 x = np.linspace(-5.0, 5.0, test_points)
 y = np.linspace(-5.0, 5.0, test_points)
 X, Y = np.meshgrid(x, y)
-plt.contourf(X, Y, afunc(X, Y)[0]-np.min(afunc(X, Y)[0]), 6, alpha=.70,
+plt.contourf(X, Y, afunc(X, Y)[0] - np.min(afunc(X, Y)[0]), 6, alpha=.70,
              cmap='PRGn')
 cbar = plt.colorbar(orientation="horizontal", pad=0.15)
 cbar.set_label('Response', rotation=0)
-C = plt.contour(X, Y, afunc(X, Y)[0]-np.min(afunc(X, Y)[0]), 6, colors='black',
-                linewidths=1)
+C = plt.contour(
+    X, Y, afunc(X, Y)[0] - np.min(afunc(X, Y)[0]), 6, colors='black',
+    linewidths=1
+)
 plt.clabel(C, inline=1, fontsize=9)
 plt.title('Real function', fontsize=10)
 plt.xlabel('Descriptor 1')
@@ -136,7 +140,7 @@ for i in range(len(test)):
     t = org_test[i][1]
     t = y.append(t)
 
-zi = plt.mlab.griddata(x, y, prediction-np.min(prediction), testx, testy,
+zi = plt.mlab.griddata(x, y, prediction - np.min(prediction), testx, testy,
                        interp='linear')
 plt.contourf(testx, testy, zi, 6, alpha=.70, cmap='PRGn')
 cbar = plt.colorbar(orientation="horizontal", pad=0.15)

@@ -46,7 +46,7 @@ def simple_learning_curve(gp, testx, testy, step=1, min_data=2,
     mae = []
     signed_mean = []
     Ndata = []
-    for low in range(min_data, len(trainx)+1, step):
+    for low in range(min_data, len(trainx) + 1, step):
         # Update the training data in the gp. Targets are standardized again.
         gp.update_data(train_fp=trainx[:low, :],
                        train_target=trainy[:low],

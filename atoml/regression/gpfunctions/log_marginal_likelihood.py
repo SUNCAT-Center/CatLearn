@@ -35,16 +35,17 @@ def log_marginal_likelihood(theta, train_matrix, targets, kernel_dict,
         kernel_dict=kernel_dict, matrix1=train_matrix,
         regularization=theta[-1], log_scale=scale_optimizer,
         eval_gradients=eval_gradients)
+
     # Setup the data.
     n = len(targets)
     y = targets.reshape([n, 1])
 
     # Calculate the various terms in likelihood.
-    L = cholesky(K, overwrite_a=False, lower=True, check_finite=True)
-    a = cho_solve((L, True), y, check_finite=True)
-    datafit = -.5*np.dot(y.T, a)
+    L = cholesky(K, overwrite_a=False, lower=True, check_finite=False)
+    a = cho_solve((L, True), y, check_finite=False)
+    datafit = -.5 * np.dot(y.T, a)
     complexity = -np.log(np.diag(L)).sum()  # (A.18) in R. & W.
-    normalization = -.5*n*np.log(2*np.pi)
+    normalization = -.5 * n * np.log(2 * np.pi)
 
     # Get the log marginal likelihood.
     p = (datafit + complexity + normalization).sum()
@@ -52,7 +53,7 @@ def log_marginal_likelihood(theta, train_matrix, targets, kernel_dict,
         return -p
     else:
         # Get jacobian of log marginal likelyhood wrt. hyperparameters.
-        C = cho_solve((L, True), np.eye(n), check_finite=True)
+        C = cho_solve((L, True), np.eye(n), check_finite=False)
         aa = a*a.T  # inner1d(a,a)
         Q = aa - C
         # Get the list of gradients.

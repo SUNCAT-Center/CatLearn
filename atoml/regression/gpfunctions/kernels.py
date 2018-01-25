@@ -15,20 +15,15 @@ def constant_kernel(theta, log_scale, m1, m2=None, eval_gradients=False):
     else:
         size_m1 = np.shape(m1)
         if m2 is None:
-            k = np.zeros((size_m1[0]+size_m1[0]*size_m1[1],
-                          size_m1[0]+size_m1[0]*size_m1[1]))
+            k = np.zeros((size_m1[0] + size_m1[0] * size_m1[1],
+                          size_m1[0] + size_m1[0] * size_m1[1]))
             k[0:size_m1[0], 0:size_m1[0]] = np.ones([len(m1), len(m1)]) * theta
         else:
             size_m2 = np.shape(m2)
-            k = np.zeros((size_m1[0], size_m2[0]+size_m2[0]*size_m2[1]))
+            k = np.zeros((size_m1[0], size_m2[0] + size_m2[0] * size_m2[1]))
             k[0:size_m1[0], 0:size_m2[0]] = np.ones([size_m1[0], size_m2[0]]) \
                 * theta
         return k
-
-
-def constant_dk_dtheta(theta, log_scale, m1, m2=None, eval_gradients=False):
-    n = np.shape(m1)[0]
-    return np.ones([n, n])
 
 
 def gaussian_kernel(theta, log_scale, m1, m2=None, eval_gradients=False):
@@ -64,21 +59,21 @@ def gaussian_kernel(theta, log_scale, m1, m2=None, eval_gradients=False):
             invsqkwidth = kwidth**(-2)
             I_m = np.identity(size[1]) * invsqkwidth
             for i in range(size[0]):
-                ldist = (invsqkwidth * (m1[:, :]-m1[i, :]))
+                ldist = (invsqkwidth * (m1[:, :] - m1[i, :]))
                 big_kgd_i = ((ldist).T * k[i]).T
-                big_kgd[:, (size[1]*i):(size[1]+size[1]*i)] = big_kgd_i
+                big_kgd[:, (size[1] * i):(size[1] + size[1] * i)] = big_kgd_i
                 if size[1] <= 30:  # Broadcasting requires large memory.
-                    k_dd = ((I_m - (ldist[:, None, :]*ldist[:, :, None])) *
+                    k_dd = ((I_m - (ldist[:, None, :] * ldist[:, :, None])) *
                             (k[i, None, None].T)).reshape(-1, size[1])
-                    big_kdd[:, size[1]*i:size[1]+size[1]*i] = k_dd
+                    big_kdd[:, size[1] * i:size[1] + size[1] * i] = k_dd
                 elif size[1] > 30:  # Loop when large number of features.
                     for j in range(i, size[0]):
                         k_dd = (I_m - np.outer(ldist[j], ldist[j].T)) * k[i, j]
-                        big_kdd[i*size[1]:(i+1)*size[1],
-                                j*size[1]:(j+1)*size[1]] = k_dd
+                        big_kdd[i * size[1]:(i + 1) * size[1],
+                                j * size[1]:(j + 1) * size[1]] = k_dd
                         if j != i:
-                            big_kdd[j*size[1]:(j+1)*size[1],
-                                    i*size[1]:(i+1)*size[1]] = k_dd.T
+                            big_kdd[j * size[1]:(j + 1) * size[1],
+                                    i * size[1]:(i + 1) * size[1]] = k_dd.T
 
             return np.block([[k, big_kgd], [np.transpose(big_kgd), big_kdd]])
 
@@ -92,9 +87,9 @@ def gaussian_kernel(theta, log_scale, m1, m2=None, eval_gradients=False):
             kgd_tilde = np.zeros((size_m1[0], size_m2[0] * size_m2[1]))
             invsqkwidth = kwidth**(-2)
             for i in range(size_m1[0]):
-                kgd_tilde_i = -((invsqkwidth * (m2[:, :]-m1[i, :]) *
+                kgd_tilde_i = -((invsqkwidth * (m2[:, :] - m1[i, :]) *
                                  k[i, :].reshape(size_m2[0], 1)).reshape(
-                                     1, size_m2[0]*size_m2[1])
+                                     1, size_m2[0] * size_m2[1])
                                 )
                 kgd_tilde[i, :] = kgd_tilde_i
 
@@ -208,7 +203,7 @@ def AA_kernel(theta, log_scale, m1, m2=None, eval_gradients=False):
 
     if not eval_gradients:
         n = np.shape(m1)[1]
-        q = (1 - l)/(c - l)
+        q = (1 - l) / (c - l)
         if m2 is None:
             m2 = m1
 
@@ -250,7 +245,7 @@ def linear_kernel(theta, log_scale, m1, m2=None, eval_gradients=False):
                 [[np.inner(m1, m1), np.tile(m1, len(m1))],
                  [np.transpose(np.tile(m1, len(m1))),
                   np.ones([np.shape(m1)[0] * np.shape(m1)[1],
-                           np.shape(m1)[0]*np.shape(m1)[1]])]])
+                           np.shape(m1)[0] * np.shape(m1)[1]])]])
         else:
             return np.block([[np.inner(m1, m2), np.tile(m1, len(m2))]])
 
@@ -276,17 +271,17 @@ def quadratic_kernel(theta, log_scale, m1, m2=None, eval_gradients=False):
 
     if not eval_gradients:
         if m2 is None:
-            k = distance.pdist(m1 / slope*degree, metric='sqeuclidean')
-            k = distance.squareform((1. + .5*k)**-degree)
+            k = distance.pdist(m1 / slope * degree, metric='sqeuclidean')
+            k = distance.squareform((1. + .5 * k)**-degree)
             np.fill_diagonal(k, 1)
 
             return k
 
         else:
-            k = distance.cdist(m1 / slope*degree, m2 / slope*degree,
+            k = distance.cdist(m1 / slope * degree, m2 / slope * degree,
                                metric='sqeuclidean')
 
-            return (1. + .5*k)**-degree
+            return (1. + .5 * k)**-degree
 
     else:
         msg = 'Evaluation of the gradients for this kernel is not yet '
