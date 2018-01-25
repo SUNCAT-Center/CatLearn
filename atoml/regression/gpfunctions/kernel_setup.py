@@ -99,9 +99,20 @@ def _gaussian_setup(kdict_param, bounds, N_D, default_bounds):
     for k in kdict_param:
         assert k in allowed_keys, msg1+k+msg2
 
+    # Format the width parameter.
     theta = kdict_param['width']
-    if type(theta) is float or type(theta) is int:
+    try:
+        theta = float(theta)
+    except TypeError:
+        pass
+    if type(theta) is float:
         kdict_param['width'] = [theta] * N_D
+    else:
+        msg = 'Expected width dimensions ({}) do not match '.format(N_D)
+        msg += 'those provided ({})'.format(len(theta))
+        assert len(theta) == N_D, msg
+
+    # Format the bounds if provided.
     if 'bounds' in kdict_param:
         bounds += kdict_param['bounds']
     else:
@@ -122,9 +133,20 @@ def _quadratic_setup(kdict_param, bounds, N_D, default_bounds):
     for k in kdict_param:
         assert k in allowed_keys, msg1+k+msg2
 
+    # Format the slope parameter.
     theta = kdict_param['slope']
-    if type(theta) is float or type(theta) is int:
+    try:
+        theta = float(theta)
+    except TypeError:
+        pass
+    if type(theta) is float:
         kdict_param['slope'] = [theta] * N_D
+    else:
+        msg = 'Expected slope dimensions ({}) do not match '.format(N_D)
+        msg += 'those provided ({})'.format(len(theta))
+        assert len(theta) == N_D, msg
+
+    # Format the bounds if provided.
     if 'bounds' in kdict_param:
         bounds += kdict_param['bounds']
     else:
@@ -150,9 +172,20 @@ def _laplacian_setup(kdict_param, bounds, N_D, default_bounds):
     for k in kdict_param:
         assert k in allowed_keys, msg1+k+msg2
 
+    # Format the width parameter.
     theta = kdict_param['width']
-    if type(theta) is float or type(theta) is int:
+    try:
+        theta = float(theta)
+    except TypeError:
+        pass
+    if type(theta) is float:
         kdict_param['width'] = [theta] * N_D
+    else:
+        msg = 'Expected width dimensions ({}) do not match '.format(N_D)
+        msg += 'those provided ({})'.format(len(theta))
+        assert len(theta) == N_D, msg
+
+    # Format the bounds if provided.
     if 'bounds' in kdict_param:
         bounds += kdict_param['bounds']
     else:
