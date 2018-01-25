@@ -7,10 +7,10 @@ import numpy as np
 
 from atoml.utilities import DescriptorDatabase
 from atoml.preprocess.feature_preprocess import (standardize, normalize,
-                                                 min_max, unit_length,
-                                                 cluster_features)
+                                                 min_max, unit_length)
 from atoml.preprocess.scale_target import (target_standardize,
                                            target_normalize, target_center)
+from atoml.utilities.clustering import cluster_features
 
 wkdir = os.getcwd()
 
