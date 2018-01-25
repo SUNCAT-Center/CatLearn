@@ -4,9 +4,10 @@ from __future__ import absolute_import
 
 import os
 import numpy as np
-
+from sys import argv
 from atoml.utilities import DescriptorDatabase
-from atoml.regression.gpfunctions.kernel_setup import prepare_kernels, kdicts2list, list2kdict
+from atoml.regression.gpfunctions.kernel_setup import (prepare_kernels,
+                                                       kdicts2list, list2kdict)
 from atoml.regression.gpfunctions.log_marginal_likelihood import log_marginal_likelihood, dlml
 from atoml.preprocess.feature_preprocess import standardize
 from atoml.preprocess.scale_target import target_standardize
@@ -16,12 +17,8 @@ from scipy.optimize import minimize, basinhopping
 wkdir = os.getcwd()
 train_size, test_size = 45, 5
 n_features = 20
-global_opt = False
 eval_gradients = False
 scale_optimizer = False
-eval_jac = True
-plot_lml = False
-
 
 def get_data():
     """Simple function to pull some training and test data."""
@@ -46,7 +43,7 @@ def get_data():
 
 
 def lml_test(train_features, train_targets, test_features,
-             kernel_dict, global_opt=global_opt, algomin='L-BFGS-B'):
+             kernel_dict, global_opt=False, algomin='L-BFGS-B', eval_jac=True):
     """Test Gaussian process predictions."""
     # Test prediction routine with linear kernel.
     regularization = 1.e-3
@@ -73,7 +70,7 @@ def lml_test(train_features, train_targets, test_features,
         minimizer_kwargs = {'method': algomin, 'args': args,
                             'bounds': bounds, 'jac': eval_jac}
         popt = basinhopping(log_marginal_likelihood, theta,
-                            minimizer_kwargs=minimizer_kwargs)
+                            minimizer_kwargs=minimizer_kwargs, disp=True)
     return popt
 
 
@@ -102,16 +99,9 @@ def lml_plotter(train_features, train_targets, test_features, kernel_dict,
                                                np.array(train_targets),
                                                kernel_dict, scale_optimizer,
                                                eval_gradients,
-                                               eval_jac=eval_jac)
-            if eval_jac:
-                Y.append(function[0])
-                dY.append(function[1])
-            else:
-                Y.append(function)
-                dY.append(dlml(theta, np.array(train_features),
-                               np.array(train_targets),
-                               kernel_dict, scale_optimizer,
-                               eval_gradients, False))
+                                               eval_jac=True)
+            Y.append(function[0])
+            dY.append(function[1])
         n_x = np.ceil(np.sqrt(len(theta)))
         n_y = n_x + 1
         ax = plt.subplot(n_x, n_y, d+1)
@@ -135,15 +125,19 @@ if __name__ == '__main__':
     train_features, targets, test_features = scale_test(train_matrix,
                                                         train_targets,
                                                         test_matrix)
-    popt = lml_test(train_features, targets, test_features,
-                    kernel_dict)
-    print(popt)
-    kernel_dict = list2kdict(popt['x'][:-1], kernel_dict)
-    regularization = popt['x'][-1]
+    popt_no_jac = lml_test(train_features, targets, test_features,
+                           kernel_dict, global_opt=False, eval_jac=False)
+    popt_local = lml_test(train_features, targets, test_features,
+                          kernel_dict, global_opt=False)
+    popt_global = lml_test(train_features, targets, test_features,
+                           kernel_dict, global_opt=True)
+    kernel_dict = list2kdict(popt_global['x'][:-1], kernel_dict)
+    regularization = popt_global['x'][-1]
     profiler.stop()
     print(profiler.output_text(unicode=True, color=True))
 
-if plot_lml:
+# If a user argument 'plot' is passed, display the lml and gradients.
+if 'plot' in argv[-1]:
     import matplotlib.pyplot as plt
     lml_plotter(train_features, targets, test_features,
                 kernel_dict, regularization)

@@ -239,7 +239,8 @@ class GaussianProcess(object):
         # Invert the covariance matrix.
         self.cinv = np.linalg.inv(cvm)
 
-    def optimize_hyperparameters(self, global_opt=False, algomin='L-BFGS-B'):
+    def optimize_hyperparameters(self, global_opt=False, algomin='L-BFGS-B',
+                                 eval_jac=False):
         """Optimize hyperparameters of the Gaussian Process.
 
         This function assumes that the descriptors in the feature set remain
@@ -261,7 +262,8 @@ class GaussianProcess(object):
 
         # Define fixed arguments for log_marginal_likelihood
         args = (np.array(self.train_fp), np.array(self.train_target),
-                self.kernel_dict, self.scale_optimizer, self.eval_gradients)
+                self.kernel_dict, self.scale_optimizer, self.eval_gradients,
+                eval_jac)
         # Optimize
         if not global_opt:
             self.theta_opt = minimize(log_marginal_likelihood, theta,
