@@ -78,7 +78,7 @@ class GaussianProcess(object):
         self.kernel_dict, self.bounds = prepare_kernels(
             kernel_dict, regularization_bounds=regularization_bounds,
             eval_gradients=self.eval_gradients, N_D=self.N_D
-            )
+        )
 
         self.update_data(train_fp, train_target, gradients=self.gradients,
                          scale_optimizer=scale_optimizer)
@@ -155,14 +155,14 @@ class GaussianProcess(object):
             # Calculate predictions for the training data.
             data['train_prediction'] = self._make_prediction(
                 ktb=kt_train, cinv=self.cinv, target=self.train_target
-                )
+            )
 
             # Calculated the error for the prediction on the training data.
             train_target = self.train_target
             data['training_error'] = get_error(
                 prediction=data['train_prediction'], target=train_target,
                 epsilon=epsilon
-                )
+            )
 
         # Calculate uncertainty associated with prediction on test data.
         if uncertainty:
@@ -170,7 +170,7 @@ class GaussianProcess(object):
                 kernel_dict=self.kernel_dict, test_fp=test_fp,
                 reg=self.regularization, ktb=ktb, cinv=self.cinv,
                 log_scale=self.scale_optimizer
-                )
+            )
             # Rescale uncertainty if needed.
             if self.scale_data:
                 data['uncertainty'] *= self.scaling.target_data['std']
@@ -180,7 +180,7 @@ class GaussianProcess(object):
                 train=self.train_fp, test=test_fp, ktb=ktb, cinv=self.cinv,
                 target=self.train_target, test_target=test_target, basis=basis,
                 epsilon=epsilon
-                )
+            )
 
         return data
 
@@ -330,7 +330,7 @@ class GaussianProcess(object):
             self.kernel_dict, self.bounds = prepare_kernels(
                 kernel_dict, regularization_bounds=regularization_bounds,
                 eval_gradients=eval_gradients, N_D=self.N_D
-                )
+            )
         if train_target is not None:
             msg = 'To update the data, both train_fp and train_target must be '
             msg += 'defined.'

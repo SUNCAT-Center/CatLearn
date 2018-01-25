@@ -85,7 +85,7 @@ class StandardFingerprintGenerator(object):
                     for k, l in zip(an, pos):
                         if k == at and all(j != l):
                             co += 1
-                            ad += np.linalg.norm(j-l)
+                            ad += np.linalg.norm(j - l)
             if co != 0:
                 fp.append(ad / co)
             else:

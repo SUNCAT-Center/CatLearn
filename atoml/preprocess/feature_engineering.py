@@ -48,7 +48,7 @@ def get_order_2(A):
     new_features = np.zeros([shapeA[0], sum(range(shapeA[1] + 1))])
     for f1 in range(shapeA[1]):
         for f2 in range(f1, shapeA[1]):
-            new_feature = A[:, f1]*A[:, f2]
+            new_feature = A[:, f1] * A[:, f2]
             new_features[:, nfi] = new_feature
             nfi += 1
     return new_features
@@ -190,7 +190,7 @@ def get_ablog(A, a, b):
     new_features = np.zeros([shapeA[0], sum(range(shapeA[1] + 1))])
     for f1 in range(shapeA[1]):
         for f2 in range(f1, shapeA[1]):
-            new_feature = a*np.log(A[:, f1]) + b*np.log(A[:, f2])
+            new_feature = a * np.log(A[:, f1]) + b * np.log(A[:, f2])
             new_features[:, nfi] = new_feature
             nfi += 1
     return new_features
@@ -238,7 +238,7 @@ def _separate_list(p):
         tuple elements have no intersection, their union is p.
     """
     num_elements = len(p)
-    num_combinations = (2**num_elements - 2)/2
+    num_combinations = (2**num_elements - 2) / 2
     key = '0%db' % num_elements
     combinations = []
     for i in range(1, num_combinations + 1):
@@ -292,7 +292,7 @@ def _decode_key(p, key):
         if count == 1:
             ele_list.append(ele)
         if count >= 2:
-            ele_list.append(ele+'^%d' % count)
+            ele_list.append(ele + '^%d' % count)
     p_prime = '*'.join(ele_list)
     return p_prime
 
@@ -332,9 +332,9 @@ def generate_positive_features(p, N, exclude=False, s=False):
     elif N == 0 and not s:
         return [1]
     elif N == 1 and not exclude and s:
-        return p+["1"]
+        return p + ["1"]
     elif N == 1 and not exclude and not s:
-        return p+[1]
+        return p + [1]
     if N == 1 and exclude:
         return p
     else:
@@ -401,10 +401,10 @@ def generate_features(p, max_num=2, max_den=1, log=False, sqrt=False,
                                                       exclude=exclude, s=True)
         features = []
         for key in dup_feature_keys:
-            val = '1/('+key+')'
+            val = '1/(' + key + ')'
             features.append(val)
         if not s:
-            features = [eval('1.*'+i) for i in features]
+            features = [eval('1.*' + i) for i in features]
         return features
     else:
         num_p = len(p)
@@ -417,12 +417,12 @@ def generate_features(p, max_num=2, max_den=1, log=False, sqrt=False,
         for key1 in feature_keys:
             l1 = key1.split('*')
             for key2 in dup_feature_keys:
-                    l2 = key2.split('*')
-                    intersect = list(set.intersection(set(l1), set(l2)))
-                    if not intersect:
-                        val = _decode_key(p, key1) + '/(' + \
-                         _decode_key(p, key2) + ')'
-                        features.append(val)
+                l2 = key2.split('*')
+                intersect = list(set.intersection(set(l1), set(l2)))
+                if not intersect:
+                    val = _decode_key(p, key1) + '/(' + \
+                        _decode_key(p, key2) + ')'
+                    features.append(val)
         for key1 in feature_keys:
             features.append(_decode_key(p, key1) + '/(1)')
         for key2 in dup_feature_keys:
