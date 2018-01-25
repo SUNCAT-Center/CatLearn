@@ -26,6 +26,11 @@ def constant_kernel(theta, log_scale, m1, m2=None, eval_gradients=False):
         return k
 
 
+def constant_dk_dtheta(theta, log_scale, m1, m2=None, eval_gradients=False):
+    n = np.shape(m1)[0]
+    return np.ones([n, n])
+
+
 def gaussian_kernel(theta, log_scale, m1, m2=None, eval_gradients=False):
     """Return covariance between data m1 & m2 with a gaussian kernel.
 
@@ -98,6 +103,23 @@ def gaussian_kernel(theta, log_scale, m1, m2=None, eval_gradients=False):
     return k
 
 
+def gaussian_dk_dtheta(fpm_j, width_j, log_scale=False, m2=None,
+                       eval_gradients=False):
+    n = len(fpm_j)
+    gram = np.zeros([n, n])
+    # Construct Gram matrix.
+    for i, x1 in enumerate(fpm_j):
+        for j, x2 in enumerate(fpm_j):
+            if j >= i:
+                break
+            d_ij = abs(x1-x2)
+            gram[i, j] = d_ij
+            gram[j, i] = d_ij
+    # Insert gram matrix in differentiated kernel.
+    dkdw_j = np.exp(-.5 * gram**2 / (width_j**2)) * (gram**2 / (width_j**3))
+    return dkdw_j
+
+
 def sqe_kernel(theta, log_scale, m1, m2=None, eval_gradients=False):
     """Return covariance between data m1 & m2 with a gaussian kernel.
 
@@ -157,8 +179,8 @@ def scaled_sqe_kernel(theta, log_scale, m1, m2=None, eval_gradients=False):
             m2 = m1
 
         return distance.cdist(
-            m1, m2, lambda u, v: scaling * np.exp(np.sqrt((u - v)**2
-                                                          / kwidth)))
+            m1, m2, lambda u, v: scaling * np.exp(np.sqrt((u - v)**2 /
+                                                  kwidth)))
     else:
         msg = 'Evaluation of the gradients for this kernel is not yet '
         msg += 'implemented'
