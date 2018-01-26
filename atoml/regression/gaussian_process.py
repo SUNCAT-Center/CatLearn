@@ -269,11 +269,11 @@ class GaussianProcess(object):
             self.theta_opt = minimize(log_marginal_likelihood, theta,
                                       args=args,
                                       method=algomin,
-                                      # options={'disp': True},
+                                      jac=eval_jac,
                                       bounds=self.bounds)
         else:
             minimizer_kwargs = {'method': algomin, 'args': args,
-                                'bounds': self.bounds}
+                                'bounds': self.bounds, 'jac': eval_jac}
             self.theta_opt = basinhopping(log_marginal_likelihood, theta,
                                           minimizer_kwargs=minimizer_kwargs)
 

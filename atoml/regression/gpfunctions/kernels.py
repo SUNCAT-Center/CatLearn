@@ -98,20 +98,26 @@ def gaussian_kernel(theta, log_scale, m1, m2=None, eval_gradients=False):
     return k
 
 
-def gaussian_dk_dtheta(k, fpm_j, width_j, log_scale=False, m2=None,
+def gaussian_dk_dtheta(k, j, train_matrix, kwidth, log_scale=False, m2=None,
                        eval_gradients=False):
-    n = len(fpm_j)
-    gram = np.zeros([n, n])
+    N, N_D = np.shape(train_matrix)
+    # gram = np.zeros([n, n])
+    j_matrix = np.zeros([N, N_D])
+    j_matrix[:, j] = train_matrix[:, j]
+    dk = distance.pdist(j_matrix, metric='sqeuclidean')
+    dk = distance.squareform(dk / kwidth[j] ** 3)
+    np.fill_diagonal(dk, 0)
     # Construct Gram matrix.
-    for i, x1 in enumerate(fpm_j):
-        for j, x2 in enumerate(fpm_j):
-            if j >= i:
-                break
-            d_ij = abs(x1-x2)
-            gram[i, j] = d_ij
-            gram[j, i] = d_ij
+    # for i, x1 in enumerate(m1):
+    #    for j, x2 in enumerate(m1):
+    #        if j >= i:
+    #            break
+    #        d_ij = abs(x1-x2)
+    #        gram[i, j] = d_ij
+    #        gram[j, i] = d_ij
+    # dk = gram**2 / (width_j**3)
     # Insert gram matrix in differentiated kernel.
-    dkdw_j = np.multiply(k, gram**2 / (width_j**3))
+    dkdw_j = np.multiply(k, dk)
     return dkdw_j
 
 

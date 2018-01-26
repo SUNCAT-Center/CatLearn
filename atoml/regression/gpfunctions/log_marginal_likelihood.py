@@ -41,7 +41,7 @@ def log_marginal_likelihood(theta, train_matrix, targets, kernel_dict,
     y = targets.reshape([n, 1])
 
     # Calculate the various terms in likelihood.
-    L = cholesky(K, overwrite_a=False, lower=True, check_finite=False)
+    L = cholesky(K, overwrite_a=False, lower=True, check_finite=True)
     a = cho_solve((L, True), y, check_finite=False)
     datafit = -.5 * np.dot(y.T, a)
     complexity = -np.log(np.diag(L)).sum()  # (A.18) in R. & W.
@@ -53,7 +53,7 @@ def log_marginal_likelihood(theta, train_matrix, targets, kernel_dict,
         return -p
     else:
         # Get jacobian of log marginal likelyhood wrt. hyperparameters.
-        C = cho_solve((L, True), np.eye(n), check_finite=False)
+        C = cho_solve((L, True), np.eye(n), check_finite=True)
         aa = a*a.T  # inner1d(a,a)
         Q = aa - C
         # Get the list of gradients.
@@ -119,8 +119,7 @@ def dK_dtheta_j(theta, train_matrix, kernel_dict, Q):
             kwidth = theta[ki:ki+N_D]
             m = len(kwidth)
             for j in range(0, m):
-                dKdtheta_j = ak.gaussian_dk_dtheta(k, train_matrix[:, j],
-                                                   kwidth[j])
+                dKdtheta_j = ak.gaussian_dk_dtheta(k, j, train_matrix, kwidth)
                 if 'scaling' in 'scaling' in kdict:
                     dKdtheta_j *= scaling
                 jac.append(0.5*np.sum(inner1d(Q, dKdtheta_j.T)))
