@@ -25,6 +25,10 @@ def get_mendeleev_params(atomic_number, extra_params=[]):
         All parameters of the element with specified atomic number.
     """
     # Type check atomic_number var. Switch to list if needed.
+    try:
+        atomic_number = int(atomic_number)
+    except TypeError:
+        pass
     if type(atomic_number) is int:
         atomic_number = [atomic_number]
 
