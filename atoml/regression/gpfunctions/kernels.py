@@ -98,7 +98,7 @@ def gaussian_kernel(theta, log_scale, m1, m2=None, eval_gradients=False):
     return k
 
 
-def gaussian_dk_dtheta(k, j, train_matrix, kwidth, log_scale=False, m2=None,
+def gaussian_dk_dtheta(k, j, train_matrix, kwidth, log_scale=False,
                        eval_gradients=False):
     N, N_D = np.shape(train_matrix)
     # gram = np.zeros([n, n])

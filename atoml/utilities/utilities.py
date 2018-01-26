@@ -45,6 +45,7 @@ def simple_learning_curve(gp, trainx, trainy, testx, testy, step=1, min_data=2,
     Ndata = []
     opt_time = []
     pred_time = []
+    lml = []
     kernel_dict = dict(gp.kernel_dict)
     regularization = float(gp.regularization)
     for low in range(min_data, len(trainx) + 1, step)[::-1]:
@@ -71,12 +72,14 @@ def simple_learning_curve(gp, trainx, trainy, testx, testy, step=1, min_data=2,
         signed_mean.append(pred['validation_error']['signed_mean'])
         opt_time.append(end_opt - start)
         pred_time.append(end_pred - end_opt)
+        lml.append(gp.log_marginal_likelihood)
     output = {'N_data': Ndata,
               'rmse_average': rmse,
               'absolute_average': mae,
               'signed_mean': signed_mean,
               'opt_time': opt_time,
-              'pred_time': pred_time}
+              'pred_time': pred_time,
+              'log_marginal_likelihood': lml}
     return output
 
 
