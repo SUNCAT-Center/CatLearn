@@ -119,11 +119,26 @@ def dK_dtheta_j(theta, train_matrix, kernel_dict, Q):
             kwidth = theta[ki:ki+N_D]
             m = len(kwidth)
             for j in range(0, m):
-                dKdtheta_j = ak.gaussian_dk_dtheta(k, j, train_matrix, kwidth)
-                if 'scaling' in 'scaling' in kdict:
+                dKdtheta_j = ak.gaussian_dk_dwidth(k, j, train_matrix,
+                                                   kwidth)
+                if 'scaling' in kdict:
                     dKdtheta_j *= scaling
                 jac.append(0.5*np.sum(inner1d(Q, dKdtheta_j.T)))
             ki += N_D
+        elif kdict['type'] == 'quadratic':
+            slope = theta[ki:ki+N_D]
+            m = len(slope)
+            for j in range(0, m):
+                dKdtheta_j = ak.quadratic_dk_dslope(k, j, train_matrix,
+                                                    slope)
+                if 'scaling' in kdict:
+                    dKdtheta_j *= scaling
+                jac.append(0.5*np.sum(inner1d(Q, dKdtheta_j.T)))
+            degree = theta[ki+N_D]
+            dKdtheta_degree = ak.quadratic_dk_ddegree(k, j, train_matrix,
+                                                      degree)
+            jac.append(0.5*np.sum(inner1d(Q, dKdtheta_degree.T)))
+            ki += N_D + 1
         else:
             raise NotImplementedError("jacobian for " + ktype)
     return jac

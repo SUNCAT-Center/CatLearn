@@ -87,7 +87,8 @@ def lml_plotter(train_features, train_targets, test_features, kernel_dict,
     N, N_D = np.shape(train_features)
     hyperparameters = np.array(kdicts2list(kernel_dict, N_D=N_D))
     hyperparameters = np.append(hyperparameters, regularization)
-    for d in range(min(len(hyperparameters), d_max)):
+    d_max = min(len(hyperparameters), d_max)
+    for d in range(d_max):
         theta = hyperparameters.copy()
         x0 = hyperparameters[d]
         X = 10 ** np.linspace(np.log10(x0)-3, np.log10(x0)+3, 17)
@@ -102,7 +103,7 @@ def lml_plotter(train_features, train_targets, test_features, kernel_dict,
                                                eval_jac=True)
             Y.append(function[0])
             dY.append(function[1])
-        n_x = np.ceil(np.sqrt(len(theta)))
+        n_x = np.ceil(np.sqrt(d_max))
         n_y = n_x + 1
         ax = plt.subplot(n_x, n_y, d+1)
         ax.semilogx(X, Y, marker='o', linestyle='none')
@@ -125,12 +126,16 @@ if __name__ == '__main__':
     train_features, targets, test_features = scale_test(train_matrix,
                                                         train_targets,
                                                         test_matrix)
+    print('Optimizing without analytical jacobian.')
     popt_no_jac = lml_test(train_features, targets, test_features,
                            kernel_dict, global_opt=False, eval_jac=False)
+    print('Optimizing with analytical jacobian.')
     popt_local = lml_test(train_features, targets, test_features,
                           kernel_dict, global_opt=False)
+    print('Running global optimization.')
     popt_global = lml_test(train_features, targets, test_features,
                            kernel_dict, global_opt=True)
+    print(popt_global)
     kernel_dict = list2kdict(popt_global['x'][:-1], kernel_dict)
     regularization = popt_global['x'][-1]
     profiler.stop()
@@ -141,5 +146,5 @@ if 'plot' in argv[-1]:
     import matplotlib.pyplot as plt
     lml_plotter(train_features, targets, test_features,
                 kernel_dict, regularization)
-    plt.tight_layout()
+    # plt.tight_layout()
     plt.show()
