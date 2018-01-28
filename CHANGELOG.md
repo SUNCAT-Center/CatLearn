@@ -1,5 +1,6 @@
 # Version 0.1.1 (January 2018)
 
+-   Gradients added to hyperparameter optimization.
 -   More features added to the adsorbate fingerprint generator.
 -   Acquisition function structure updated. Added new functions.
 -   The kernel setup has been made more modular.
