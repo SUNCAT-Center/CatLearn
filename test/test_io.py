@@ -5,6 +5,8 @@ from atoml.regression import GaussianProcess
 from atoml.utilities import io
 from common import get_data
 
+wkdir = os.getcwd()
+
 
 def train_model(train_features, train_targets):
     """Function to train a Gaussian process."""
@@ -40,7 +42,7 @@ def test_load(original, test_features, test_targets):
     assert all(pred['validation_error']['rmse_all'] ==
                original['validation_error']['rmse_all'])
 
-    os.remove('test-model.pkl')
+    os.remove('{}/test-model.pkl'.format(wkdir))
 
 
 if __name__ == '__main__':
