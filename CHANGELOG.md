@@ -3,6 +3,7 @@
 -   Gradients added to hyperparameter optimization.
 -   More features added to the adsorbate fingerprint generator.
 -   Acquisition function structure updated. Added new functions.
+-   Add some standardized input/output functions to save and load models.
 -   The kernel setup has been made more modular.
 -   Better test coverage, the tests have also been optimized for speed.
 -   Better CI configuration. New method is much faster and more flexible.
