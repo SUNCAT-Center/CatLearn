@@ -11,7 +11,11 @@ wkdir = os.getcwd()
 
 def train_model(train_features, train_targets):
     """Function to train a Gaussian process."""
-    kdict = {'k1': {'type': 'gaussian', 'width': 1., 'scaling': 1.}}
+    kdict = {
+        'k1': {'type': 'gaussian', 'width': 1., 'scaling': 1.},
+        'k2': {'type': 'linear', 'scaling': 1.},
+        'c1': {'type': 'constant', 'const': 1.}
+        }
     gp = GaussianProcess(train_fp=train_features, train_target=train_targets,
                          kernel_dict=kdict, regularization=1e-3,
                          optimize_hyperparameters=True, scale_data=True)
@@ -46,12 +50,13 @@ def test_load(original, test_features, test_targets):
     os.remove('{}/test-model.pkl'.format(wkdir))
 
 
-def test_raw(train_features, train_targets, kernel_dict):
+def test_raw(train_features, train_targets, regularization, kernel_dict):
     """Function to test raw data save."""
     io.write_train_data('train_data', train_features, train_targets,
-                        kernel_dict)
-    tf, tt, kdict = io.read_train_data('train_data')
+                        regularization, kernel_dict)
+    tf, tt, r, kdict = io.read_train_data('train_data')
     assert np.allclose(train_features, tf) and np.allclose(train_targets, tt)
+    assert r == regularization
     os.remove('{}/train_data.hdf5'.format(wkdir))
 
 
@@ -65,7 +70,8 @@ if __name__ == '__main__':
     model = train_model(train_features, train_targets)
     original = test_model(model, test_features, test_targets)
     test_load(original, test_features, test_targets)
-    test_raw(train_features, train_targets, model.kernel_dict)
+    test_raw(train_features, train_targets, model.regularization,
+             model.kernel_dict)
 
     profiler.stop()
 

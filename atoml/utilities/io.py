@@ -35,7 +35,8 @@ def read(filename):
         return pickle.load(infile)
 
 
-def write_train_data(filename, train_features, train_targets, kernel_dict):
+def write_train_data(filename, train_features, train_targets, regularization,
+                     kernel_dict):
     """Function to write raw training data.
 
     Parameters
@@ -46,12 +47,17 @@ def write_train_data(filename, train_features, train_targets, kernel_dict):
         Arry of the training features.
     train_targets : list
         A list of the training targets.
+    regularization : float
+        The regularization parameter.
+    kernel_dict : dict
+        The dictionary containing parameters for the kernels.
     """
     f = h5py.File('{}.hdf5'.format(filename), 'w')
     f.create_dataset('train_features', data=train_features, compression='gzip',
                      compression_opts=9)
     f.create_dataset('train_targets', data=train_targets, compression='gzip',
                      compression_opts=9)
+    f.create_dataset('regularization', data=regularization)
     _dict_to_group(f, '/', kernel_dict)
 
 
@@ -69,13 +75,18 @@ def read_train_data(filename):
         Arry of the training features.
     train_targets : list
         A list of the training targets.
+    regularization : float
+        The regularization parameter.
+    kernel_dict : dict
+        The dictionary containing parameters for the kernels.
     """
     f = h5py.File('{}.hdf5'.format(filename), 'r')
     train_features = np.asarray(f['train_features'])
     train_targets = np.asarray(f['train_targets'])
+    regularization = float(np.asarray(f['regularization']))
     kernel_dict = _load_dict_from_group(f, '/')
 
-    return train_features, train_targets, kernel_dict
+    return train_features, train_targets, regularization, kernel_dict
 
 
 def _dict_to_group(h5file, path, sdict):
@@ -117,7 +128,8 @@ def _load_dict_from_group(h5file, path):
     """
     rdict = {}
     for key, item in h5file[path].items():
-        if key != 'train_features' and key != 'train_targets':
+        if key != 'train_features' and key != 'train_targets' and \
+         key != 'regularization':
             if isinstance(item, h5py._hl.dataset.Dataset):
                 rdict[key] = item.value
             elif isinstance(item, h5py._hl.group.Group):
