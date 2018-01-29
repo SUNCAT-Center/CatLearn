@@ -43,7 +43,7 @@ def prepare_kernels(kernel_dict, regularization_bounds, eval_gradients, N_D):
             bounds = _scaling_setup(kdict, bounds, default_bounds)
 
         ktype = kdict['type']
-        if ktype is not 'user' and ktype is not 'linear':
+        if ktype != 'user' and ktype != 'linear':
             cmd = '_{}_setup(kdict, bounds, N_D, default_bounds)'.format(ktype)
             try:
                 bounds = eval(cmd)

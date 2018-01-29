@@ -14,13 +14,15 @@ def train_model(train_features, train_targets):
     kdict = {
         'k1': {'type': 'gaussian', 'width': 1., 'scaling': 1.},
         'k2': {'type': 'linear', 'scaling': 1.},
-        'c1': {'type': 'constant', 'const': 1.}
-        }
+        # 'k3': {'type': 'constant', 'const': 1.},
+        'k4': {'type': 'quadratic', 'slope': 1., 'degree': 1., 'scaling': 1.},
+    }
     gp = GaussianProcess(train_fp=train_features, train_target=train_targets,
                          kernel_dict=kdict, regularization=1e-3,
-                         optimize_hyperparameters=True, scale_data=True)
+                         optimize_hyperparameters=True, scale_data=False)
 
-    io.write(filename='test-model', model=gp)
+    io.write(filename='test-model', model=gp, ext='pkl')
+    io.write(filename='test-model', model=gp, ext='hdf5')
 
     return gp
 
@@ -37,17 +39,28 @@ def test_model(gp, test_features, test_targets):
 
 def test_load(original, test_features, test_targets):
     """Function to teast loading a pre-generated model."""
-    gp = io.read(filename='test-model')
+    gp = io.read(filename='test-model', ext='pkl')
 
     pred = gp.predict(test_fp=test_features,
                       test_target=test_targets,
                       get_validation_error=True,
                       get_training_error=True)
 
-    assert all(pred['validation_error']['rmse_all'] ==
-               original['validation_error']['rmse_all'])
+    assert np.allclose(pred['validation_error']['rmse_all'],
+                       original['validation_error']['rmse_all'])
+
+    gp = io.read(filename='test-model', ext='hdf5')
+
+    pred = gp.predict(test_fp=test_features,
+                      test_target=test_targets,
+                      get_validation_error=True,
+                      get_training_error=True)
+
+    assert np.allclose(pred['validation_error']['rmse_all'],
+                       original['validation_error']['rmse_all'])
 
     os.remove('{}/test-model.pkl'.format(wkdir))
+    os.remove('{}/test-model.hdf5'.format(wkdir))
 
 
 def test_raw(train_features, train_targets, regularization, kernel_dict):
@@ -57,6 +70,13 @@ def test_raw(train_features, train_targets, regularization, kernel_dict):
     tf, tt, r, kdict = io.read_train_data('train_data')
     assert np.allclose(train_features, tf) and np.allclose(train_targets, tt)
     assert r == regularization
+    for i in kernel_dict:
+        for j in kernel_dict[i]:
+            if type(kernel_dict[i][j]) != list and \
+                    type(kernel_dict[i][j]) != np.ndarray:
+                assert kdict[i][j] == kernel_dict[i][j]
+            else:
+                assert np.allclose(kdict[i][j], kernel_dict[i][j])
     os.remove('{}/train_data.hdf5'.format(wkdir))
 
 

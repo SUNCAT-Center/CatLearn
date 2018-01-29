@@ -3,8 +3,10 @@ import pickle
 import h5py
 import numpy as np
 
+from atoml.regression import GaussianProcess
 
-def write(filename, model):
+
+def write(filename, model, ext='pkl'):
     """Function to write a pickle of model object.
 
     Parameters
@@ -13,26 +15,54 @@ def write(filename, model):
         The name of the save file.
     model : obj
         Python GaussianProcess object.
+    ext : str
+        Format to save GP, can be pkl or hdf5. Default is pkl.
     """
-    with open('{}.pkl'.format(filename), 'wb') as outfile:
-        pickle.dump(model, outfile, pickle.HIGHEST_PROTOCOL)
+    if ext is 'pkl':
+        with open('{}.pkl'.format(filename), 'wb') as outfile:
+            pickle.dump(model, outfile, pickle.HIGHEST_PROTOCOL)
+    elif ext is 'hdf5':
+        train_features = model.train_fp
+        train_targets = model.train_target
+        regularization = model.regularization
+        kernel_dict = model.kernel_dict
+        write_train_data(
+            filename, train_features, train_targets, regularization,
+            kernel_dict)
+    else:
+        raise NotImplementedError('{} file extension not implemented.'.format(
+            ext))
 
 
-def read(filename):
+def read(filename, ext='pkl'):
     """Function to read a pickle of model object.
 
     Parameters
     ----------
     filename : str
         The name of the save file.
+    ext : str
+        Format to save GP, can be pkl or hdf5. Default is pkl.
 
     Returns
     -------
     model : obj
         Python GaussianProcess object.
     """
-    with open('{}.pkl'.format(filename), 'rb') as infile:
-        return pickle.load(infile)
+    if ext is 'pkl':
+        with open('{}.pkl'.format(filename), 'rb') as infile:
+            return pickle.load(infile)
+    elif ext is 'hdf5':
+        train_features, train_targets, regularization, kernel_dict = \
+         read_train_data(filename)
+        gp = GaussianProcess(
+            train_fp=train_features, train_target=train_targets,
+            kernel_dict=kernel_dict, regularization=regularization,
+            optimize_hyperparameters=False)
+        return gp
+    else:
+        raise NotImplementedError('{} file extension not implemented.'.format(
+            ext))
 
 
 def write_train_data(filename, train_features, train_targets, regularization,
