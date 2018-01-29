@@ -70,6 +70,7 @@ class ConfigTestCase(unittest.TestCase):
         model = tio.train_model(train_features, train_targets)
         original = tio.test_model(model, test_features, test_targets)
         tio.test_load(original, test_features, test_targets)
+        tio.test_raw(train_features, train_targets)
 
 
 if __name__ == '__main__':

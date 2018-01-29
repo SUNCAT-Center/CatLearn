@@ -45,6 +45,12 @@ def test_load(original, test_features, test_targets):
     os.remove('{}/test-model.pkl'.format(wkdir))
 
 
+def test_raw(train_features, train_targets):
+    """Function to test raw data save."""
+    io.write_train_data('train_data', train_features, train_targets)
+    os.remove('{}/train_data.hdf5'.format(wkdir))
+
+
 if __name__ == '__main__':
     from pyinstrument import Profiler
 
@@ -55,6 +61,7 @@ if __name__ == '__main__':
     model = train_model(train_features, train_targets)
     original = test_model(model, test_features, test_targets)
     test_load(original, test_features, test_targets)
+    test_raw(train_features, train_targets)
 
     profiler.stop()
 
