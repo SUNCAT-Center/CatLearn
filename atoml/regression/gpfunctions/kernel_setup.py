@@ -23,28 +23,30 @@ def prepare_kernels(kernel_dict, regularization_bounds, eval_gradients, N_D):
         default_bounds = ((1e-6, 1e6),)
 
     for key in kernel_dict:
+        cN_D = N_D
         kdict = kernel_dict[key]
         msg = 'A kernel type should be set, e.g. "linear", "gaussian", etc'
         assert 'type' in kdict, msg
 
         if 'features' in kdict:
-            N_D, f = len(kdict['features']), N_D
+            cN_D, f = len(kdict['features']), cN_D
             msg = 'Trying to use greater number of features than available.'
-            assert N_D <= f, msg
+            assert cN_D <= f, msg
 
         if 'dimension' in kdict:
             msg = 'Can assign parameters in "single" dimension, or in the '
             msg += 'number of "features".'
             assert kdict['dimension'] in ['single', 'features'], msg
             if kdict['dimension'] is 'single':
-                N_D = 1
+                cN_D = 1
 
         if 'scaling' in kdict:
             bounds = _scaling_setup(kdict, bounds, default_bounds)
 
         ktype = kdict['type']
         if ktype != 'user' and ktype != 'linear':
-            cmd = '_{}_setup(kdict, bounds, N_D, default_bounds)'.format(ktype)
+            cmd = '_{}_setup(kdict, bounds, cN_D, default_bounds)'.format(
+                ktype)
             try:
                 bounds = eval(cmd)
             except NameError:
