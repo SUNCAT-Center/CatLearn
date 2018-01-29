@@ -10,7 +10,7 @@ some tests to ensure functionality doesn't break over time.
 -   [`test_data_setup.py`](#data-setup)
 -   [`test_feature_optimization.py`](#feature-optimization)
 -   [`test_predict.py`](#predictions)
--   [`test_suit.py`](#test-suit)
+-   [`test_suite.py`](#test-suite)
 
 ### Data Cleaning
 [(Back to top)](#atoml-tests)
@@ -54,10 +54,10 @@ There are also scripts to test the hyperparameter scaling routines in the
 utilities module with `test_hypot_scaling.py`. Further, tests for predictions
 within the hierarchy CV routines are included in `test_hierarchy_cv.py`.
 
-### Test Suit
+### Test Suite
 [(Back to top)](#atoml-tests)
 
-All tests are run in the `test_suit.py` script. This just iterates through all
+All tests are run in the `test_suite.py` script. This just iterates through all
 tests in the correct order, using the unittest framework. This should be
 updated when any new tests are added.
 
@@ -68,7 +68,7 @@ Continuous Integration (CI) is used so test are run whenever a new commit is
 pushed to the origin. For our purposes, we use
 [GitLab CI](https://docs.gitlab.com/ce/ci/) which checks whether tests run and
 the coverage of the tests. The tests for the AtoML code are imported and run in
-`test_suit.py`. This can be extended with any new tests that may be written to
+`test_suite.py`. This can be extended with any new tests that may be written to
 cover new functionality.
 
 ## Command Line
