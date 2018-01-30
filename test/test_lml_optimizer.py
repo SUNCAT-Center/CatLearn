@@ -20,6 +20,7 @@ n_features = 20
 eval_gradients = False
 scale_optimizer = False
 
+
 def get_data():
     """Simple function to pull some training and test data."""
     # Attach the database.
@@ -42,13 +43,34 @@ def get_data():
     return train_features, train_targets, test_features, test_targets
 
 
-def lml_test(train_features, train_targets, test_features,
-             kernel_dict, global_opt=False, algomin='L-BFGS-B', eval_jac=True):
+def lml_test(train_matrix, train_targets, test_matrix, test_targets):
+    kernel_dict = {'k1': {'type': 'gaussian', 'width': 0.5, 'scaling': 0.8},
+                   'c1': {'type': 'constant', 'const': 1.e-3}}
+    regularization = 1.e-3
+    train_matrix, train_targets, test_matrix, test_targets = get_data()
+    train_features, targets, test_features = scale_test(train_matrix,
+                                                        train_targets,
+                                                        test_matrix)
+    print('Optimizing without analytical jacobian.')
+    lml_opt(train_features, targets, test_features,
+            kernel_dict, regularization, global_opt=False, eval_jac=False)
+    print('Optimizing with analytical jacobian.')
+    lml_opt(train_features, targets, test_features,
+            kernel_dict, regularization, global_opt=False)
+    print('Running global optimization.')
+    popt_global = lml_opt(train_features, targets, test_features,
+                          kernel_dict, regularization, global_opt=True)
+    print(popt_global)
+    kernel_dict = list2kdict(popt_global['x'][:-1], kernel_dict)
+
+
+def lml_opt(train_features, train_targets, test_features,
+            kernel_dict, regularization,
+            global_opt=False, algomin='L-BFGS-B', eval_jac=True):
     """Test Gaussian process predictions."""
     # Test prediction routine with linear kernel.
-    regularization = 1.e-3
-    regularization_bounds = ((1.e-6, None))
     N, N_D = np.shape(train_features)
+    regularization_bounds = (1e-3, None)
     kdict, bounds = prepare_kernels(kernel_dict, regularization_bounds,
                                     eval_gradients, N_D)
     print(bounds)
@@ -122,19 +144,21 @@ if __name__ == '__main__':
     profiler.start()
     kernel_dict = {'k1': {'type': 'gaussian', 'width': 0.5, 'scaling': 0.8},
                    'c1': {'type': 'constant', 'const': 1.e-3}}
+    regularization = 1.e-3
     train_matrix, train_targets, test_matrix, test_targets = get_data()
     train_features, targets, test_features = scale_test(train_matrix,
                                                         train_targets,
                                                         test_matrix)
     print('Optimizing without analytical jacobian.')
-    popt_no_jac = lml_test(train_features, targets, test_features,
-                           kernel_dict, global_opt=False, eval_jac=False)
+    popt_no_jac = lml_opt(train_features, targets, test_features,
+                          kernel_dict, regularization,
+                          global_opt=False, eval_jac=False)
     print('Optimizing with analytical jacobian.')
-    popt_local = lml_test(train_features, targets, test_features,
-                          kernel_dict, global_opt=False)
+    popt_local = lml_opt(train_features, targets, test_features,
+                         kernel_dict, regularization, global_opt=False)
     print('Running global optimization.')
-    popt_global = lml_test(train_features, targets, test_features,
-                           kernel_dict, global_opt=True)
+    popt_global = lml_opt(train_features, targets, test_features,
+                          kernel_dict, regularization, global_opt=True)
     print(popt_global)
     kernel_dict = list2kdict(popt_global['x'][:-1], kernel_dict)
     regularization = popt_global['x'][-1]
