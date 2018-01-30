@@ -11,6 +11,7 @@ import test_hierarchy_cv as ht
 import test_hypot_scaling as hs
 import test_acquisition as ta
 import test_io as tio
+import test_lml_optimizer as lo
 from common import get_data
 
 wkdir = os.getcwd()
@@ -51,6 +52,11 @@ class ConfigTestCase(unittest.TestCase):
         pt.rr_test(train_features, train_targets, test_features, test_targets)
         pt.gp_test(train_features, train_targets, test_features, test_targets)
         hs.gp_test(train_features, train_targets, test_features, test_targets)
+
+    def test_lml_optimizer(self):
+        train_features, train_targets, test_features, \
+            test_targets = get_data()
+        lo.lml_test(train_features, train_targets, test_features, test_targets)
 
     def test_acquisition_func(self):
         """Test acquisition routines."""

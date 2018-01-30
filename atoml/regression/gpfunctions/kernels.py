@@ -98,6 +98,41 @@ def gaussian_kernel(theta, log_scale, m1, m2=None, eval_gradients=False):
     return k
 
 
+def gaussian_dk_dwidth(k, j, m1, kwidth, log_scale=False):
+    """Return the gradient of the gaussian kernel
+    with respect to the j'th width.
+
+    Parameters
+    ----------
+    k : array
+        The (not scaled) gaussian kernel.
+    j : int
+        Index of the width to derive wrt.
+    m1 : list
+        A list of the training fingerprint vectors.
+    kwidth : float
+        The full list of widths
+    log_scale : boolean
+        Scaling hyperparameters in kernel can be useful for optimization.
+    """
+    if log_scale:
+        raise NotImplementedError("Log scale hyperparameters in jacobian.")
+    # Get dimensions
+    N, N_D = np.shape(m1)
+    # Set features other than the j'th to zero.
+    j_matrix = np.zeros([N, N_D])
+    j_matrix[:, j] = m1[:, j]
+    # Calculate the Gram matrix
+    gram = distance.pdist(j_matrix, metric='sqeuclidean')
+    dgdw = distance.squareform(gram / kwidth[j] ** 3)
+    # dgdw is the derivative of the nested function.
+    np.fill_diagonal(dgdw, 0)
+    # Use the chain rule to get the gradient.
+    dfdg = k
+    dkdw_j = np.multiply(dfdg, dgdw)
+    return dkdw_j
+
+
 def sqe_kernel(theta, log_scale, m1, m2=None, eval_gradients=False):
     """Return covariance between data m1 & m2 with a gaussian kernel.
 
@@ -157,8 +192,8 @@ def scaled_sqe_kernel(theta, log_scale, m1, m2=None, eval_gradients=False):
             m2 = m1
 
         return distance.cdist(
-            m1, m2, lambda u, v: scaling * np.exp(np.sqrt((u - v)**2
-                                                          / kwidth)))
+            m1, m2, lambda u, v: scaling * np.exp(np.sqrt((u - v)**2 /
+                                                  kwidth)))
     else:
         msg = 'Evaluation of the gradients for this kernel is not yet '
         msg += 'implemented'
@@ -270,6 +305,14 @@ def quadratic_kernel(theta, log_scale, m1, m2=None, eval_gradients=False):
         msg = 'Evaluation of the gradients for this kernel is not yet '
         msg += 'implemented'
         raise NotImplementedError(msg)
+
+
+def quadratic_dk_dslope(k, j, m1, kwidth_j, log_scale=False):
+    raise NotImplementedError("Quadratic kernel gradient wrt. slope.")
+
+
+def quadratic_dk_ddegree(k, j, m1, kwidth_j, log_scale=False):
+    raise NotImplementedError("Quadratic kernel gradient wrt. degree.")
 
 
 def laplacian_kernel(theta, log_scale, m1, m2=None, eval_gradients=False):
