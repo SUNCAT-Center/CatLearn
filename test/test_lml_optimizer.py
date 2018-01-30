@@ -51,9 +51,6 @@ def lml_test(train_matrix, train_targets, test_matrix, test_targets):
     train_features, targets, test_features = scale_test(train_matrix,
                                                         train_targets,
                                                         test_matrix)
-    print('Optimizing without analytical jacobian.')
-    lml_opt(train_features, targets, test_features,
-            kernel_dict, regularization, global_opt=False, eval_jac=False)
     print('Optimizing with analytical jacobian.')
     lml_opt(train_features, targets, test_features,
             kernel_dict, regularization, global_opt=False)
