@@ -67,7 +67,7 @@ def atoml_pca(components, train_fpv, test_fpv=None, cleanup=False,
     eig_pairs = [(np.abs(s[i]), u[:, i]) for i in range(len(s))]
 
     # Get the variance as percentage.
-    data['variance'] = [(i / sum(s))*100 for i in sorted(s, reverse=True)]
+    data['variance'] = [(i / sum(s)) * 100 for i in sorted(s, reverse=True)]
 
     # Form the projection matrix.
     features = len(train_fpv[0])

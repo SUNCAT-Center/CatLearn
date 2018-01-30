@@ -23,28 +23,30 @@ def prepare_kernels(kernel_dict, regularization_bounds, eval_gradients, N_D):
         default_bounds = ((1e-6, 1e6),)
 
     for key in kernel_dict:
+        cN_D = N_D
         kdict = kernel_dict[key]
         msg = 'A kernel type should be set, e.g. "linear", "gaussian", etc'
         assert 'type' in kdict, msg
 
         if 'features' in kdict:
-            N_D, f = len(kdict['features']), N_D
+            cN_D, f = len(kdict['features']), cN_D
             msg = 'Trying to use greater number of features than available.'
-            assert N_D <= f, msg
+            assert cN_D <= f, msg
 
         if 'dimension' in kdict:
             msg = 'Can assign parameters in "single" dimension, or in the '
             msg += 'number of "features".'
             assert kdict['dimension'] in ['single', 'features'], msg
             if kdict['dimension'] is 'single':
-                N_D = 1
+                cN_D = 1
 
         if 'scaling' in kdict:
             bounds = _scaling_setup(kdict, bounds, default_bounds)
 
         ktype = kdict['type']
-        if ktype is not 'user' and ktype is not 'linear':
-            cmd = '_{}_setup(kdict, bounds, N_D, default_bounds)'.format(ktype)
+        if ktype != 'user' and ktype != 'linear':
+            cmd = '_{}_setup(kdict, bounds, cN_D, default_bounds)'.format(
+                ktype)
             try:
                 bounds = eval(cmd)
             except NameError:
@@ -74,7 +76,7 @@ def _constant_setup(kdict_param, bounds, N_D, default_bounds):
     msg1 = "An undefined key, '"
     msg2 = "', has been provided in a 'constant' type kernel dict."
     for k in kdict_param:
-        assert k in allowed_keys, msg1+k+msg2
+        assert k in allowed_keys, msg1 + k + msg2
 
     msg = 'Constant parameter should be a float.'
     assert isinstance(kdict_param['const'], float), msg
@@ -97,11 +99,22 @@ def _gaussian_setup(kdict_param, bounds, N_D, default_bounds):
     msg1 = "An undefined key, '"
     msg2 = "', has been provided in a 'gaussian' type kernel dict"
     for k in kdict_param:
-        assert k in allowed_keys, msg1+k+msg2
+        assert k in allowed_keys, msg1 + k + msg2
 
+    # Format the width parameter.
     theta = kdict_param['width']
-    if type(theta) is float or type(theta) is int:
+    try:
+        theta = float(theta)
+    except TypeError:
+        pass
+    if type(theta) is float:
         kdict_param['width'] = [theta] * N_D
+    else:
+        msg = 'Expected width dimensions ({}) do not match '.format(N_D)
+        msg += 'those provided ({})'.format(len(theta))
+        assert len(theta) == N_D, msg
+
+    # Format the bounds if provided.
     if 'bounds' in kdict_param:
         bounds += kdict_param['bounds']
     else:
@@ -120,11 +133,22 @@ def _quadratic_setup(kdict_param, bounds, N_D, default_bounds):
     msg1 = "An undefined key, '"
     msg2 = "', has been provided in a 'quadratic' type kernel dict"
     for k in kdict_param:
-        assert k in allowed_keys, msg1+k+msg2
+        assert k in allowed_keys, msg1 + k + msg2
 
+    # Format the slope parameter.
     theta = kdict_param['slope']
-    if type(theta) is float or type(theta) is int:
+    try:
+        theta = float(theta)
+    except TypeError:
+        pass
+    if type(theta) is float:
         kdict_param['slope'] = [theta] * N_D
+    else:
+        msg = 'Expected slope dimensions ({}) do not match '.format(N_D)
+        msg += 'those provided ({})'.format(len(theta))
+        assert len(theta) == N_D, msg
+
+    # Format the bounds if provided.
     if 'bounds' in kdict_param:
         bounds += kdict_param['bounds']
     else:
@@ -148,11 +172,22 @@ def _laplacian_setup(kdict_param, bounds, N_D, default_bounds):
     msg1 = "An undefined key, '"
     msg2 = "', has been provided in a 'laplacian' type kernel dict."
     for k in kdict_param:
-        assert k in allowed_keys, msg1+k+msg2
+        assert k in allowed_keys, msg1 + k + msg2
 
+    # Format the width parameter.
     theta = kdict_param['width']
-    if type(theta) is float or type(theta) is int:
+    try:
+        theta = float(theta)
+    except TypeError:
+        pass
+    if type(theta) is float:
         kdict_param['width'] = [theta] * N_D
+    else:
+        msg = 'Expected width dimensions ({}) do not match '.format(N_D)
+        msg += 'those provided ({})'.format(len(theta))
+        assert len(theta) == N_D, msg
+
+    # Format the bounds if provided.
     if 'bounds' in kdict_param:
         bounds += kdict_param['bounds']
     else:
@@ -225,7 +260,7 @@ def kdict2list(kdict, N_D=None):
         elif N_D is None:
             N_D = len(theta)
         if type(theta) is float:
-            theta = [theta]*N_D
+            theta = [theta] * N_D
 
     if 'constrained' in kdict:
         constrained = kdict['constrained']
@@ -234,7 +269,7 @@ def kdict2list(kdict, N_D=None):
         elif N_D is None:
             N_D = len(constrained)
         if type(theta) is float:
-            constrained = [constrained]*N_D
+            constrained = [constrained] * N_D
     else:
         constrained = []
 
@@ -295,20 +330,21 @@ def list2kdict(hyperparameters, kernel_dict):
             # scaling = hyperparameters[ki]
             # kernel_dict[key]['scaling'] = scaling
             # theta = hyperparameters[ki+1:ki+1+N_D]
-            theta = hyperparameters[ki:ki+N_D]
+            theta = hyperparameters[ki:ki + N_D]
             kernel_dict[key]['width'] = list(theta)
             ki += N_D
 
         elif (ktype == 'scaled_sqe'):
             N_D = len(kernel_dict[key]['width'])
-            kernel_dict[key]['d_scaling'] = list(hyperparameters[ki:ki+N_D])
-            kernel_dict[key]['width'] = list(hyperparameters[ki+N_D:ki+2*N_D])
+            kernel_dict[key]['d_scaling'] = list(hyperparameters[ki:ki + N_D])
+            kernel_dict[key]['width'] = list(
+                hyperparameters[ki + N_D:ki + 2 * N_D])
             ki += 2 * N_D
 
         # Quadratic have pairs of hyperparamters slope, degree
         elif ktype == 'quadratic':
             N_D = len(kernel_dict[key]['slope'])
-            theta = hyperparameters[ki:ki+N_D+1]
+            theta = hyperparameters[ki:ki + N_D + 1]
             kernel_dict[key]['slope'] = theta[:N_D]
             kernel_dict[key]['degree'] = theta[N_D:]
             ki += N_D + 1
@@ -325,7 +361,7 @@ def list2kdict(hyperparameters, kernel_dict):
         # Default hyperparameter keys for other kernels
         else:
             N_D = len(kernel_dict[key]['hyperparameters'])
-            theta = hyperparameters[ki:ki+N_D]
+            theta = hyperparameters[ki:ki + N_D]
             kernel_dict[key]['hyperparameters'] = list(theta)
 
     return kernel_dict

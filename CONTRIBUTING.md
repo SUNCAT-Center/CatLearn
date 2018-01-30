@@ -104,7 +104,7 @@ This will load up the AtoML directory. To check that everything is working
 correctly simply run the following:
 
   ```shell
-    $ python test/test_suit.py
+    $ python test/test_suite.py
   ```
 
 To make changes to this, it is possibly to simply edit the `Dockerfile`. The

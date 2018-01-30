@@ -131,7 +131,7 @@ class DescriptorDatabase(object):
                 data.append(row)
         else:
             sql = "SELECT %(desc)s FROM %(table)s WHERE uuid=?" \
-             % {'desc': names, 'table': self.table}
+                % {'desc': names, 'table': self.table}
             self.cursor.execute(sql, [('%s' % unique_id)])
             data = self.cursor.fetchall()[0]
 
@@ -169,7 +169,6 @@ class FingerprintDB():
         self.db_name = db_name
         self.verbose = verbose
 
-
     def __enter__(self):
         """ This function is automatically called whenever the class
         is used together with a 'with' statement.
@@ -181,14 +180,12 @@ class FingerprintDB():
 
         return self
 
-
     def __exit__(self, type, value, tb):
         """ Upon exiting the 'with' statement, __exit__ is called.
         """
 
         self.con.commit()
         self.con.close()
-
 
     def create_table(self):
         """ Creates the database table framework used in SQLite.
@@ -229,7 +226,6 @@ class FingerprintDB():
         UNIQUE(image_id, param_id)
         )""")
 
-
     def image_entry(self, asedb_entry=None, identity=None):
         """ Enters a single ase-db image into the fingerprint database.
 
@@ -242,7 +238,6 @@ class FingerprintDB():
         Returns:
             int: The ase ID colleted for the ase-db object.
         """
-
         atoms = asedb_entry.toatoms()
 
         # ase-db ID with identity must be unique. If not, it will be skipped.
@@ -256,7 +251,6 @@ class FingerprintDB():
                     identity))
 
         return d.id
-
 
     def parameter_entry(self, symbol=None, description=None):
         """ A function for entering unique parameters into the database.
@@ -284,7 +278,6 @@ class FingerprintDB():
         # Each instance needs to be commited to ensure no overwriting.
         # This could potentially result in slowdown.
         self.con.commit()
-
 
     def get_parameters(self, selection=None, display=False):
         """ Get an array of integer values which correspond to the
@@ -320,7 +313,6 @@ class FingerprintDB():
 
         return np.array(res).T[0].astype(int)
 
-
     def fingerprint_entry(self, ase_id, param_id, value):
         """ Enters a fingerprint value to the database for a
         given ase and parameter ID.
@@ -355,7 +347,6 @@ class FingerprintDB():
             if self.verbose:
                 print('Fingerprint already defined: {}, {}, {}'.format(
                     image_id, param_id, value))
-
 
     def get_fingerprints(self, ase_ids, params=[]):
         """ Get the array of values associated with the provided parameters
