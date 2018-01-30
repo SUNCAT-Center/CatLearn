@@ -1,4 +1,4 @@
-# Version 0.1.1 (January 2018)
+# Version 0.2.0 (January 2018)
 
 -   Gradients added to hyperparameter optimization.
 -   More features added to the adsorbate fingerprint generator.
