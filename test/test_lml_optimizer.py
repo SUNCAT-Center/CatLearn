@@ -8,7 +8,7 @@ from sys import argv
 from atoml.utilities import DescriptorDatabase
 from atoml.regression.gpfunctions.kernel_setup import (prepare_kernels,
                                                        kdicts2list, list2kdict)
-from atoml.regression.gpfunctions.log_marginal_likelihood import log_marginal_likelihood, dlml
+import atoml.regression.gpfunctions.log_marginal_likelihood as lml
 from atoml.preprocess.feature_preprocess import standardize
 from atoml.preprocess.scale_target import target_standardize
 from scipy.optimize import minimize, basinhopping
@@ -44,6 +44,7 @@ def get_data():
 
 
 def lml_test(train_matrix, train_targets, test_matrix, test_targets):
+    """Function to test log_marginal_likelihood."""
     kernel_dict = {'k1': {'type': 'gaussian', 'width': 0.5, 'scaling': 0.8},
                    'c1': {'type': 'constant', 'const': 1.e-3}}
     regularization = 1.e-3
@@ -79,7 +80,7 @@ def lml_opt(train_features, train_targets, test_features,
             kdict, scale_optimizer, eval_gradients, eval_jac)
     # Optimize
     if not global_opt:
-        popt = minimize(log_marginal_likelihood, theta,
+        popt = minimize(lml.log_marginal_likelihood, theta,
                         args=args,
                         method=algomin,
                         jac=eval_jac,
@@ -88,7 +89,7 @@ def lml_opt(train_features, train_targets, test_features,
     else:
         minimizer_kwargs = {'method': algomin, 'args': args,
                             'bounds': bounds, 'jac': eval_jac}
-        popt = basinhopping(log_marginal_likelihood, theta,
+        popt = basinhopping(lml.log_marginal_likelihood, theta,
                             minimizer_kwargs=minimizer_kwargs, disp=True)
     return popt
 
@@ -102,6 +103,7 @@ def scale_test(train_matrix, train_targets, test_matrix):
 
 def lml_plotter(train_features, train_targets, test_features, kernel_dict,
                 regularization, d_max=4):
+    """Function to plot log_marginal_likelihood."""
     print('Plotting log marginal likelihood.')
     N, N_D = np.shape(train_features)
     hyperparameters = np.array(kdicts2list(kernel_dict, N_D=N_D))
@@ -110,29 +112,28 @@ def lml_plotter(train_features, train_targets, test_features, kernel_dict,
     for d in range(d_max):
         theta = hyperparameters.copy()
         x0 = hyperparameters[d]
-        X = 10 ** np.linspace(np.log10(x0)-3, np.log10(x0)+3, 17)
+        X = 10 ** np.linspace(np.log10(x0) - 3, np.log10(x0) + 3, 17)
         Y = []
         dY = []
         for x in X:
             theta[d] = x
-            function = log_marginal_likelihood(theta, np.array(train_features),
-                                               np.array(train_targets),
-                                               kernel_dict, scale_optimizer,
-                                               eval_gradients,
-                                               eval_jac=True)
+            function = lml.log_marginal_likelihood(
+                theta, np.array(train_features), np.array(train_targets),
+                kernel_dict, scale_optimizer, eval_gradients, eval_jac=True)
             Y.append(function[0])
             dY.append(function[1])
         n_x = np.ceil(np.sqrt(d_max))
         n_y = n_x + 1
-        ax = plt.subplot(n_x, n_y, d+1)
+        ax = plt.subplot(n_x, n_y, d + 1)
         ax.semilogx(X, Y, marker='o', linestyle='none')
         for i in range(len(X)):
             dx = X[i] / 10.
-            ax.semilogx([X[i]+dx, X[i]-dx],
-                        [Y[i]+dY[i][d]*dx, Y[i]-dY[i][d]*dx], c='r')
+            ax.semilogx([X[i] + dx, X[i] - dx],
+                        [Y[i] + dY[i][d] * dx, Y[i] - dY[i][d] * dx], c='r')
         ax.axvline(x0)
         ax.set_ylabel('lml')
         ax.set_xlabel('Hyperparameter ' + str(d))
+
 
 if __name__ == '__main__':
     from pyinstrument import Profiler
