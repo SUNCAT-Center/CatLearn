@@ -54,6 +54,7 @@ class ConfigTestCase(unittest.TestCase):
         hs.gp_test(train_features, train_targets, test_features, test_targets)
 
     def test_lml_optimizer(self):
+        """Test log_marginal_likelihood optimization."""
         train_features, train_targets, test_features, \
             test_targets = get_data()
         lo.lml_test(train_features, train_targets, test_features, test_targets)

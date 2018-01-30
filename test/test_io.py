@@ -11,10 +11,11 @@ wkdir = os.getcwd()
 
 def train_model(train_features, train_targets):
     """Function to train a Gaussian process."""
+    stg = np.std(train_features, axis=0)
     kdict = {
-        'k1': {'type': 'gaussian', 'width': 1., 'scaling': 1.},
+        'k1': {'type': 'gaussian', 'width': stg, 'scaling': 1.},
         'k2': {'type': 'linear', 'scaling': 1.},
-        # 'k3': {'type': 'constant', 'const': 1.},
+        'k3': {'type': 'constant', 'const': 1.},
         'k4': {'type': 'quadratic', 'slope': 1., 'degree': 1., 'scaling': 1.},
     }
     gp = GaussianProcess(train_fp=train_features, train_target=train_targets,
@@ -49,21 +50,18 @@ def test_load(original, test_features, test_targets):
     assert np.allclose(pred['validation_error']['rmse_all'],
                        original['validation_error']['rmse_all'])
 
-    # gp = io.read(filename='test-model', ext='hdf5')
+    gp = io.read(filename='test-model', ext='hdf5')
 
-    # pred = gp.predict(test_fp=test_features,
-    #                  test_target=test_targets,
-    #                  get_validation_error=True,
-    #                  get_training_error=True)
+    pred = gp.predict(test_fp=test_features,
+                      test_target=test_targets,
+                      get_validation_error=True,
+                      get_training_error=True)
 
-    # print(pred['validation_error']['rmse_all'])
-    # print(original['validation_error']['rmse_all'])
-
-    # assert np.allclose(pred['validation_error']['rmse_all'],
-    #                   original['validation_error']['rmse_all'])
+    assert np.allclose(pred['validation_error']['rmse_all'],
+                       original['validation_error']['rmse_all'])
 
     os.remove('{}/test-model.pkl'.format(wkdir))
-    # os.remove('{}/test-model.hdf5'.format(wkdir))
+    os.remove('{}/test-model.hdf5'.format(wkdir))
 
 
 def test_raw(train_features, train_targets, regularization, kernel_dict):

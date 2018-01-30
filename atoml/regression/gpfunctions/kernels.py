@@ -99,8 +99,7 @@ def gaussian_kernel(theta, log_scale, m1, m2=None, eval_gradients=False):
 
 
 def gaussian_dk_dwidth(k, j, m1, kwidth, log_scale=False):
-    """Return the gradient of the gaussian kernel
-    with respect to the j'th width.
+    """Return gradient of the gaussian kernel with respect to the j'th width.
 
     Parameters
     ----------
@@ -193,7 +192,7 @@ def scaled_sqe_kernel(theta, log_scale, m1, m2=None, eval_gradients=False):
 
         return distance.cdist(
             m1, m2, lambda u, v: scaling * np.exp(np.sqrt((u - v)**2 /
-                                                  kwidth)))
+                                                          kwidth)))
     else:
         msg = 'Evaluation of the gradients for this kernel is not yet '
         msg += 'implemented'
