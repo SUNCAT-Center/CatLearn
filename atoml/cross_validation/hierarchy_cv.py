@@ -20,7 +20,8 @@ class Hierarchy(object):
     averaged error and certainty at each data size.
     """
 
-    def __init__(self, file_name, db_name, table, file_format='pickle'):
+    def __init__(self, file_name, db_name, table='FingerVector',
+                 file_format='pickle'):
         """Hierarchy crossvalidation setup.
 
         Parameters
