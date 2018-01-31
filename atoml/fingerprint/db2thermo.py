@@ -13,18 +13,22 @@ import numpy as np
 import ase.db
 from ase.atoms import string2symbols
 from ase.geometry import get_layers
+from ase.data import atomic_numbers
 from .periodic_table_data import get_mendeleev_params
+
+addsyms = ['H', 'C', 'O', 'N', 'S']
 
 
 def get_radius(z):
-    p = get_mendeleev_params(z, ['atomic_radius'])
+    if isinstance(z, int):
+        p = get_mendeleev_params(z, ['atomic_radius'])
+    elif isinstance(z, str):
+        p = get_mendeleev_params(atomic_numbers[z], ['atomic_radius'])
     if p[-1] is None:
         r = p[-1]
     else:
         r = p[-4]
     return float(r) / 100.
-
-addsyms = ['H', 'C', 'O', 'N', 'S']
 
 
 def slab_index(atoms):
@@ -87,7 +91,7 @@ def formula2ads_index(atoms, formula):
     ----------
     atoms : ase atoms object.
         atoms.info must be a dictionary containing the key 'key_value_pairs',
-        which is expected to contain CATMAP standard adsorbate structure
+        which is expected to contain CatMAP standard adsorbate structure
         key value pairs. See the ase db to catmap module in catmap.
         the key value pair 'species' must be the
         chemical formula of the adsorbate.
@@ -99,7 +103,7 @@ def formula2ads_index(atoms, formula):
     return ads_atoms
 
 
-def layers2ads_index(atoms, formula):
+def layers2ads_index(atoms, formula=None):
     """ Returns the indexes of atoms in layers exceeding the number of layers
     stored in the key value pair 'layers'.
 
@@ -187,9 +191,9 @@ def info2primary_index(atoms, rtol=1.3):
     surf_atoms = atoms.info['surf_atoms']
     add_atoms = atoms.info['ads_atoms']
     for m in surf_atoms:
-        dM = get_radius(m)
+        dM = get_radius(atoms.numbers[m])
         for a in add_atoms:
-            dA = get_radius(a)
+            dA = get_radius(atoms.numbers[a])
             # Covalent radii are subtracted in distance comparison.
             d = atoms.get_distance(m, a, mic=True, vector=False)-dM-dA
             liste.append([a, m, d])
@@ -336,7 +340,7 @@ def get_formation_energies(energy_dict, ref_dict):  # adapted from CATMAP wiki
     return formation_energies
 
 
-def db2labeled_atoms(fname, id_dict, formation_energies=None):
+def db2surf_info(fname, id_dict, formation_energies=None):
     """ Returns a list of atoms objects including only the most stable
         species state for each key in the dict self.dbids.
 
@@ -375,7 +379,7 @@ def db2labeled_atoms(fname, id_dict, formation_energies=None):
     return traj
 
 
-def db2unlabeled_atoms(fname, selection=[]):
+def db2atoms_info(fname, selection=[]):
     """ Returns a list of atoms objects.
         Attaches the required atoms.info to species states.
     """
@@ -390,6 +394,53 @@ def db2unlabeled_atoms(fname, selection=[]):
         atoms.info['dbid'] = int(d.id)
         species = atoms.info['key_value_pairs']['species']
         atoms.info['ads_atoms'] = formula2ads_index(atoms, species)
+        atoms.info['surf_atoms'] = slab_index(atoms)
+        i_add1, i_surf1, Z_add1, Z_surf1, i_surfnn = info2primary_index(atoms)
+        atoms.info['i_add1'] = i_add1
+        atoms.info['i_surf1'] = i_surf1
+        atoms.info['Z_add1'] = Z_add1
+        atoms.info['Z_surf1'] = Z_surf1
+        atoms.info['i_surfnn'] = i_surfnn
+        traj.append(atoms)
+    return traj
+
+
+def db2unlabeled_atoms(fname, selection=[]):
+    """ Returns a list of atoms objects.
+    """
+    c = ase.db.connect(fname)
+    s = c.select(selection)
+    traj = []
+    for d in s:
+        dbid = int(d.id)
+        atoms = c.get_atoms(dbid)
+        traj.append(atoms)
+    return traj
+
+
+def attach_adsorbate_info(images):
+    """Returns an atoms object with essential neighbor information attached.
+
+    Todo: checks for attached graph representations or neighborlists.
+
+    Parameters
+    ----------
+        traj : list
+            List of ASE atoms objects."""
+    traj = []
+    for i, atoms in enumerate(images):
+        if 'key_value_pairs' not in atoms.info:
+            atoms.info['key_value_pairs'] = {}
+            if 'species' in atoms.info:
+                atoms.info['key_value_pairs']['species'] = \
+                    atoms.info['species']
+            if 'layers' in atoms.info:
+                atoms.info['key_value_pairs']['layers'] = atoms.info['layers']
+        species = atoms.info['key_value_pairs']['species']
+        try:
+            atoms.info['ads_atoms'] = formula2ads_index(atoms, species)
+        except AssertionError:
+            atoms.info['ads_atoms'] = last2ads_index(atoms, species)
         atoms.info['surf_atoms'] = slab_index(atoms)
         i_add1, i_surf1, Z_add1, Z_surf1, i_surfnn = info2primary_index(atoms)
         atoms.info['i_add1'] = i_add1

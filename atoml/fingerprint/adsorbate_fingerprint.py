@@ -95,7 +95,15 @@ class AdsorbateFingerprintGenerator(object):
                     'ionenergy_term',
                     'ground_state_magmom_term']
         else:
-            name = atoms.info['key_value_pairs']['term']
+            if 'key_value_pairs' in atoms.info:
+                if 'term' in atoms.info['key_value_pairs']:
+                    name = atoms.info['key_value_pairs']['term']
+                elif 'termination' in atoms.info['termination']:
+                    name = atoms.info['terminaion']
+                else:
+                    raise NotImplementedError("termination fingerprint.")
+            else:
+                raise NotImplementedError("termination fingerprint.")
             # A = float(atoms.cell[0, 0]) * float(atoms.cell[1, 1])
             comp = string2symbols(name)
             dat = []
@@ -155,7 +163,15 @@ class AdsorbateFingerprintGenerator(object):
                     'ionenergy_bulk',
                     'ground_state_magmom_bulk']
         else:
-            name = atoms.info['key_value_pairs']['bulk']
+            if 'key_value_pairs' in atoms.info:
+                if 'bulk' in atoms.info['key_value_pairs']:
+                    name = atoms.info['key_value_pairs']['bulk']
+                elif 'bulk' in atoms.info['bulk']:
+                    name = atoms.info['bulk']
+                else:
+                    raise NotImplementedError("bulk fingerprint.")
+            else:
+                raise NotImplementedError("bulk fingerprint.")
             bulkcomp = string2symbols(name)
             dat = []
             # np.unique could be used.
