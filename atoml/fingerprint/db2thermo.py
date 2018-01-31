@@ -12,10 +12,17 @@ Input:
 import numpy as np
 import ase.db
 from ase.atoms import string2symbols
-from ase.data import covalent_radii, atomic_numbers
 from ase.geometry import get_layers
-# from ase.data import chemical_symbols
+from .periodic_table_data import get_mendeleev_params
 
+
+def get_radius(z):
+    p = get_mendeleev_params(z, ['atomic_radius'])
+    if p[-1] is None:
+        r = p[-1]
+    else:
+        r = p[-4]
+    return float(r) / 100.
 
 addsyms = ['H', 'C', 'O', 'N', 'S']
 
@@ -108,7 +115,7 @@ def layers2ads_index(atoms, formula):
     composition = string2symbols(formula)
     n_ads = len(composition)
     natoms = len(atoms)
-    radii = [covalent_radii[atomic_numbers[s]] for s in composition]
+    radii = [get_radius(s) for s in composition]
     lz, li = get_layers(atoms, (0, 0, 1), tolerance=2 * min(radii))
     layers = int(atoms.info['key_value_pairs']['layers'])
     ads_atoms = [a.index for a in atoms if li[a.index] > layers-1]
@@ -150,8 +157,9 @@ def layers_info(atoms):
     ----------
     atoms : ase atoms object.
     """
+    radius = get_radius(atoms.info['Z_surf1'])
     il, z = get_layers(atoms, (0, 0, 1),
-                       tolerance=covalent_radii[atoms.info['Z_surf1']])
+                       tolerance=radius)
     layers = atoms.info['key_value_pairs']['layers']
     if len(z) < layers or len(z) > layers * 2:
         top_atoms = atoms.info['surf_atoms']
@@ -179,9 +187,9 @@ def info2primary_index(atoms, rtol=1.3):
     surf_atoms = atoms.info['surf_atoms']
     add_atoms = atoms.info['ads_atoms']
     for m in surf_atoms:
-        dM = covalent_radii[atoms.numbers[m]]
+        dM = get_radius(m)
         for a in add_atoms:
-            dA = covalent_radii[atoms.numbers[a]]
+            dA = get_radius(a)
             # Covalent radii are subtracted in distance comparison.
             d = atoms.get_distance(m, a, mic=True, vector=False)-dM-dA
             liste.append([a, m, d])
@@ -192,13 +200,13 @@ def info2primary_index(atoms, rtol=1.3):
     i_surf1 = L[i, 1]
     Z_add1 = atoms.numbers[int(i_add1)]
     Z_surf1 = atoms.numbers[int(i_surf1)]
-    dadd = covalent_radii[Z_add1]
+    dadd = get_radius(Z_add1)
     # i_surfnn = [a.index for a in atoms if a.symbol not in addsyms and
     #            atoms.get_distance(int(i_add1),
     #                               int(a.index), mic=True) < dmin * rtol]
     i_surfnn = [a.index for a in atoms if a.symbol not in addsyms and
                 atoms.get_distance(int(i_add1), int(a.index), mic=True) <
-                (covalent_radii[a.number]+dadd) * rtol]
+                (get_radius(a.number) + dadd) * rtol]
     return i_add1, i_surf1, Z_add1, Z_surf1, i_surfnn
 
 
@@ -328,7 +336,7 @@ def get_formation_energies(energy_dict, ref_dict):  # adapted from CATMAP wiki
     return formation_energies
 
 
-def db2surf_info(fname, id_dict, formation_energies=None):
+def db2labeled_atoms(fname, id_dict, formation_energies=None):
     """ Returns a list of atoms objects including only the most stable
         species state for each key in the dict self.dbids.
 
@@ -367,7 +375,7 @@ def db2surf_info(fname, id_dict, formation_energies=None):
     return traj
 
 
-def db2atoms_info(fname, selection=[]):
+def db2unlabeled_atoms(fname, selection=[]):
     """ Returns a list of atoms objects.
         Attaches the required atoms.info to species states.
     """

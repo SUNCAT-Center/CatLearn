@@ -11,8 +11,8 @@ from __future__ import print_function
 
 import numpy as np
 from ase.atoms import string2symbols
-from ase.data import ground_state_magnetic_moments, covalent_radii
-from ase.data import atomic_numbers
+from ase.data import (ground_state_magnetic_moments, covalent_radii,
+                      atomic_numbers)
 from .periodic_table_data import get_mendeleev_params
 from .db2thermo import layers_info
 from .neighbor_matrix import connection_matrix
