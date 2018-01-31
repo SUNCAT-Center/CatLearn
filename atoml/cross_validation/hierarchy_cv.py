@@ -6,8 +6,9 @@ import pickle
 import numpy as np
 from random import shuffle
 from collections import OrderedDict
+import uuid
 
-from atoml.preprocess.feature_preprocess import standardize, normalize
+from atoml.utilities import DescriptorDatabase
 
 
 class Hierarchy(object):
@@ -36,10 +37,29 @@ class Hierarchy(object):
             type. Default is binary pickle file.
         """
         self.file_name = file_name
-        self.conn = sqlite3.connect(db_name)
+        self.db_name = db_name
+        self.conn = sqlite3.connect(self.db_name)
         self.cursor = self.conn.cursor()
         self.table = table
         self.file_format = file_format
+
+    def todb(self, features, targets):
+        """Function to convert numpy arrays to basic db."""
+        data = np.concatenate(
+            (features, np.reshape(targets, (len(targets), 1))), axis=1)
+        uid = [str(uuid.uuid4()) for _ in range(len(targets))]
+        data = np.concatenate((np.reshape(uid, (len(uid), 1)), data), axis=1)
+
+        descriptors = ['f' + str(i) for i in range(np.shape(features)[1])]
+        targets = ['target']
+        names = descriptors + targets
+
+        # Set up the database to save system descriptors.
+        dd = DescriptorDatabase(db_name=self.db_name, table=self.table)
+        dd.create_db(names=names)
+
+        # Fill the database with the data.
+        dd.fill_db(descriptor_names=names, data=data)
 
     def split_index(self, min_split, max_split=None, all_index=None):
         """Function to split up the db index to form subsets of data.
@@ -102,56 +122,6 @@ class Hierarchy(object):
                 data = pickle.load(textfile)
 
         return data
-
-    def global_scale_data(self, index_split, scale='standardize',
-                          features=None,):
-        """Find scaling for all available data.
-
-        Parameters
-        ----------
-        index_split : array
-            Array with the index data.
-        scale : string
-            Method of scaling, can be either 'standardize' or 'normalize'.
-        features : int
-            Number of features to be scaled. Default is all.
-        """
-        if features is None:
-            features = -1
-        data1 = self._compile_split(index_split['1_1'])
-        data2 = self._compile_split(index_split['1_2'])
-        feat1 = np.array(data1[:, 1:features], np.float64)
-        feat2 = np.array(data2[:, 1:features], np.float64)
-
-        if scale is 'standardize':
-            s = standardize(train_matrix=feat1, test_matrix=feat2, local=False)
-            mean, scalar = s['mean'], s['std']
-        if scale is 'normalize':
-            s = normalize(train_matrix=feat1, test_matrix=feat2, local=False)
-            mean, scalar = s['mean'], s['dif']
-
-        return mean, scalar
-
-    def globalscaledata(self, index_split):
-        """Make an array with all data.
-
-        Parameters
-        ----------
-        index_split : array
-            Array with the index data.
-        """
-        global_data1 = self._compile_split(index_split["1" + '_' + "1"])
-        global_data2 = self._compile_split(index_split["1" + '_' + "2"])
-        global_feat1 = np.array(global_data1[:, 1:-1], np.float64)
-        global_tar1 = np.array(global_data1[:, -1:], np.float64)
-        d1, d2 = np.shape(global_tar1)
-        global_tar1 = global_tar1.reshape(d2, d1)[0]
-        global_feat2 = np.array(global_data2[:, 1:-1], np.float64)
-        global_tar2 = np.array(global_data2[:, -1:], np.float64)
-        d1, d2 = np.shape(global_tar2)
-        global_tar2 = global_tar2.reshape(d2, d1)[0]
-        globaldata = np.concatenate((global_feat1, global_feat2), axis=0)
-        return globaldata, global_feat1, global_tar1
 
     def get_subset_data(self, index_split, indicies, split=None):
         """Make array with training data according to index.
