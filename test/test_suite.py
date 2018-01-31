@@ -10,6 +10,9 @@ import test_predict as pt
 import test_hierarchy_cv as ht
 import test_hypot_scaling as hs
 import test_acquisition as ta
+import test_io as tio
+import test_lml_optimizer as lo
+from common import get_data
 
 wkdir = os.getcwd()
 
@@ -45,10 +48,16 @@ class ConfigTestCase(unittest.TestCase):
     def test_predict_func(self):
         """Test prediction routines."""
         train_features, train_targets, test_features, \
-            test_targets = pt.get_data()
+            test_targets = get_data()
         pt.rr_test(train_features, train_targets, test_features, test_targets)
         pt.gp_test(train_features, train_targets, test_features, test_targets)
         hs.gp_test(train_features, train_targets, test_features, test_targets)
+
+    def test_lml_optimizer(self):
+        """Test log_marginal_likelihood optimization."""
+        train_features, train_targets, test_features, \
+            test_targets = get_data()
+        lo.lml_test(train_features, train_targets, test_features, test_targets)
 
     def test_acquisition_func(self):
         """Test acquisition routines."""
@@ -60,6 +69,16 @@ class ConfigTestCase(unittest.TestCase):
     def test_hierarchy_func(self):
         """Test hierarchy routines."""
         ht.hierarchy_test()
+
+    def test_io_func(self):
+        """Test the io routines."""
+        train_features, train_targets, test_features, \
+            test_targets = get_data()
+        model = tio.train_model(train_features, train_targets)
+        original = tio.test_model(model, test_features, test_targets)
+        tio.test_load(original, test_features, test_targets)
+        tio.test_raw(train_features, train_targets, model.regularization,
+                     model.kernel_dict)
 
 
 if __name__ == '__main__':

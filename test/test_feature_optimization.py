@@ -63,7 +63,7 @@ def test_extend():
 
     extend = fe.get_order_2(train_features)
     ext_n = fe.get_labels_order_2(names, div=False)
-    assert np.shape(extend) == (d, f*(f+1)/2)
+    assert np.shape(extend) == (d, f * (f + 1) / 2)
     assert len(ext_n) == np.shape(extend)[1]
 
     extend = fe.get_div_order_2(train_features)
@@ -73,19 +73,19 @@ def test_extend():
 
     extend = fe.get_order_2ab(train_features, a=2, b=4)
     ext_n = fe.get_labels_order_2ab(names, a=2, b=4)
-    assert np.shape(extend) == (d, f*(f+1)/2)
+    assert np.shape(extend) == (d, f * (f + 1) / 2)
     assert len(ext_n) == np.shape(extend)[1]
 
     extend = fe.get_ablog(train_features, a=2, b=4)
     ext_n = fe.get_labels_ablog(names, a=2, b=4)
-    assert np.shape(extend) == (d, f*(f+1)/2)
+    assert np.shape(extend) == (d, f * (f + 1) / 2)
     assert len(ext_n) == np.shape(extend)[1]
 
     p = train_features[:3, :10]
-    extend = fe.generate_features(p, max_num=2, max_den=0, log=False,
-                                  sqrt=False, exclude=False, s=True)
-    extend = fe.generate_features(p, max_num=2, max_den=1, log=True, sqrt=True,
-                                  exclude=True, s=True)
+    fe.generate_features(p, max_num=2, max_den=0, log=False,
+                         sqrt=False, exclude=False, s=True)
+    fe.generate_features(p, max_num=2, max_den=1, log=True,
+                         sqrt=True, exclude=True, s=True)
 
     return train_features, train_targets, test_features
 

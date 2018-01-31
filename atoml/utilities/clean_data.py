@@ -32,7 +32,7 @@ def remove_outliers(features, targets, con=1.4826, dev=3., constraint=None):
     # get median
     med = np.median(targets)
     # get median absolute deviation
-    data['mad'] = con*(np.median(np.abs(targets - med)))
+    data['mad'] = con * (np.median(np.abs(targets - med)))
 
     if constraint is 'high' or constraint is None:
         m = np.ma.masked_less(targets, med + data['mad'])

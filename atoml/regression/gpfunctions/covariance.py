@@ -25,17 +25,19 @@ def get_covariance(kernel_dict, log_scale, matrix1, matrix2=None,
         Smoothing parameter for the Gramm matrix.
     """
     n1, n1_D = np.shape(matrix1)
+    # Make a copy of the feature matrix.
+    store1, store2 = matrix1.copy(), None
 
     if matrix2 is not None:
         assert n1_D == np.shape(matrix2)[1]
+        store2 = matrix2.copy()
     cov = None
-
-    # Keep copies of original matrices.
-    store1, store2 = matrix1, matrix2
 
     # Loop over kernels in kernel_dict
     for key in kernel_dict:
-        matrix1, matrix2 = store1, store2
+        matrix1 = store1.copy()
+        if store2 is not None:
+            matrix2 = store2.copy()
         ktype = kernel_dict[key]['type']
 
         # Select a subset of features for the kernel

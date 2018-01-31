@@ -94,14 +94,14 @@ class placeholder(object):
             # Reset when entering a new hierarchy level.
             p_error, set_size = [], []
             self.hier_level -= 1
-        for split in range(1, 2**int(index1)+1):
+        for split in range(1, 2**int(index1) + 1):
             # Take a set and train, and test on the rest.
             if split != int(index2):
                 (set_size, p_error, result)\
-                 = self.get_data_scale(
-                 split, set_size=set_size,
-                 p_error=p_error,
-                 result=result)
+                    = self.get_data_scale(
+                    split, set_size=set_size,
+                    p_error=p_error,
+                    result=result)
                 if (set_size and p_error and result) == []:
                     # Did not find alpha for feature-set.
                     index2 = 0
@@ -131,7 +131,7 @@ class placeholder(object):
         # Dont want the targtes to be scaled with global.
         self.s_tar, self.m_tar = None, None
         train_targets, train_features, _, _ = self.hv.get_subset_data(
-                                              self.index_split, self.indicies)
+            self.index_split, self.indicies)
 
         test_targets, test_features, _, _ =\
             self.hv.get_subset_data(self.index_split, self.indicies, split)
@@ -159,10 +159,10 @@ class placeholder(object):
 
         if self.featselect_featvar:
             (set_size, p_error, result) = self.reg_feat_var(
-                                          train_features, train_targets,
-                                          test_features, test_targets, ridge,
-                                          set_size, p_error,
-                                          result)
+                train_features, train_targets,
+                test_features, test_targets, ridge,
+                set_size, p_error,
+                result)
             return (set_size, p_error, result)
         else:
             if self.featselect_featconst:
@@ -171,13 +171,13 @@ class placeholder(object):
                     train_features,
                     self.selected_features[str(self.feat_sub)][0], axis=1)
                 test_features = np.take(
-                   test_features,
-                   self.selected_features[str(self.feat_sub)][0], axis=1)
+                    test_features,
+                    self.selected_features[str(self.feat_sub)][0], axis=1)
             set_size, p_error, result \
                 = self.reg_data_var(
-                                    train_features, train_targets,
-                                    test_features, test_targets, ridge,
-                                    set_size, p_error, result)
+                    train_features, train_targets,
+                    test_features, test_targets, ridge,
+                    set_size, p_error, result)
             return (set_size, p_error, result)
 
     def reg_feat_var(self, train_features, train_targets, test_features,
@@ -209,7 +209,7 @@ class placeholder(object):
         result = []
         i = 0
         for sel_feat in self.selected_features:
-            if len(result)+1 > len(self.selected_features):
+            if len(result) + 1 > len(self.selected_features):
                 result_x = result[i]
                 i += 1
             else:
@@ -228,7 +228,7 @@ class placeholder(object):
             self.new_training = True
             result.append(result_x)
             set_size.append(np.shape(
-                               self.selected_features[str(sel_feat)][0])[0])
+                self.selected_features[str(sel_feat)][0])[0])
         return (set_size, p_error, result)
 
     def reg_data_var(self, train_features, train_targets, test_features,
@@ -256,8 +256,8 @@ class placeholder(object):
         """
         if self.new_training:
             reg_data = ridge.regularization(
-                        train_targets, train_features, coef=None,
-                        featselect_featvar=self.featselect_featvar)
+                train_targets, train_features, coef=None,
+                featselect_featvar=self.featselect_featvar)
         if self.new_training:
             coef = reg_data['result'][0]
         else:
@@ -284,7 +284,7 @@ class placeholder(object):
             self.hv.get_subset_data(self.index_split, self.indicies)
         # get the data
         train_targets, train_features, _, _ = self.hv.get_subset_data(
-                                              self.index_split, self.indicies)
+            self.index_split, self.indicies)
 
         test_targets, test_features, _, _ =\
             self.hv.get_subset_data(self.index_split, self.indicies, split)

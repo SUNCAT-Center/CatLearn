@@ -150,7 +150,7 @@ class data_process(object):
 
         if self.scale:
             for tf, tt, in zip(test_features, test_targets):
-                sumd += (np.dot(coef, tf)*s_tar + m_tar - tt)**2
+                sumd += (np.dot(coef, tf) * s_tar + m_tar - tt)**2
                 p_corr.append(np.dot(coef, tf))
         else:
             for tf, tt, in zip(test_features, test_targets):
@@ -179,7 +179,7 @@ class data_process(object):
         p_error_list, data_size_list = [], []
         p_error_mean, data_size_mean, k = [], [], 0
         for size, error in zip(data_size, p_error):
-            if size > k+1:
+            if size > k + 1:
                 k = size
                 p_error_list.append(p_error_mean)
                 data_size_list.append(data_size_mean)
@@ -207,12 +207,12 @@ class data_process(object):
         """
         corrected_std, Y_mean, X_mean = [], [], []
         for listx, listy in zip(X, Y):
-            X_mean.append(sum(listx)/len(listx))
-            Y_mean.append(sum(listy)/len(listy))
+            X_mean.append(sum(listx) / len(listx))
+            Y_mean.append(sum(listy) / len(listy))
             summa = 0
             for y in listy:
                 summa += (y - Y_mean[-1])**2
 
-            corrected_std.append((summa/(len(listy)-1))**0.5)
+            corrected_std.append((summa / (len(listy) - 1))**0.5)
 
         return Y_mean, X_mean, corrected_std

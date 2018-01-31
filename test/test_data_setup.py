@@ -151,7 +151,7 @@ def db_test(all_cand, data):
     names = descriptors + targets
 
     # Set up the database to save system descriptors.
-    dd = DescriptorDatabase(db_name=wkdir+db_name, table='FingerVector')
+    dd = DescriptorDatabase(db_name=wkdir + db_name, table='FingerVector')
     dd.create_db(names=names)
 
     # Put data in correct format to be inserted into database.
