@@ -97,24 +97,22 @@ def get_keyvaluepair(c=[], fpv_name='None'):
         return out
 
 
-def return_fpv(candidates, fpv_names, use_prior=True):
-    """ Sequentially combine fingerprint vectors. Padding is
-    handled automatically.
+def return_fpv(candidates, fpv_names):
+    """Sequentially combine fingerprint vectors. Padding handled automatically.
 
-   Parameters:
-      candidates: list or dict of atoms-object(s)
+    Parameters
+    ----------
+    candidates : list or dict
         Atoms objects to construct fingerprints for.
-      fpv_name: list of / single fpv class(es)
-        List of fingerprinting classes
-      use_prior: bool
-        (requires documentation)
+    fpv_name : list of / single fpv class(es)
+        List of fingerprinting classes.
 
-    Returns: ndarray (n, m)
-      Fingerprint array where n is the number of candidates
-      and m is the number of atoms times the length of fingerprint
-      classes supplied.
+    Returns
+    -------
+    fingerprint_vector : ndarray
+      Fingerprint array (n, m) where n is the number of candidates and m is the
+      summed number of features from all fingerprint classes supplied.
     """
-
     if not isinstance(candidates, (list, defaultdict)):
         raise TypeError("return_fpv requires a list or dict of atoms")
 
@@ -122,57 +120,74 @@ def return_fpv(candidates, fpv_names, use_prior=True):
         fpv_names = [fpv_names]
     fpvn = len(fpv_names)
 
-    # PATCH: Ideally fp_length would be called from a property.
+    maxatoms = np.argmax([len(atoms) for atoms in candidates])
+    maxcomp = np.argmax(
+        [len(set(atoms.get_chemical_symbols())) for atoms in candidates])
+
+    # PATCH: Ideally fp length would be called from a property.
     fps = np.zeros(fpvn, dtype=int)
     for i, fp in enumerate(fpv_names):
-        fp_length = len(_get_fpv(candidates[0], [fp], use_prior))
-        fps[i] = int(fp_length / len(candidates[0]))
+        fps[i] = max(len(fp(candidates[maxatoms])),
+                     len(fp(candidates[maxcomp])))
 
-    maxatoms = max([len(atoms) for atoms in candidates])
-    maxm = sum(maxatoms * fps)
-
-    fingerprint_vector = np.zeros((len(candidates), maxm))
+    fingerprint_vector = np.zeros((len(candidates), sum(fps)))
     for i, atoms in enumerate(candidates):
-        m = len(atoms) * fpvn
-        fingerprint_vector[i, :m] = _get_fpv(atoms, fpv_names, use_prior)
+        fingerprint_vector[i] = _get_fpv(atoms, fpv_names, fps)
 
     return fingerprint_vector
 
 
-def _get_fpv(atoms, fpv_names, use_prior):
+def _get_fpv(atoms, fpv_names, fps):
     """Get the fingerprint vector as an array.
 
-    If a fingerprint vector is saved in info['data']['fpv'] it is returned
-    otherwise saved in the data dictionary.
+    Parameters
+    ----------
+    atoms : object
+        A single atoms object.
+    fpv_name : list of / single fpv class(es)
+        List of fingerprinting classes.
+    fps : list
+        List of expected feature vector lengths.
+
+    Returns
+    -------
+    fingerprint_vector : list
+        A feature vector.
     """
-
     if len(fpv_names) == 1:
-        if not use_prior:
-            return fpv_names[0](atoms=atoms)
+        fp = fpv_names[0](atoms=atoms)
+        fingerprint_vector = np.zeros((fps[0]))
+        fingerprint_vector[:len(fp)] = fp
 
-        if 'data' not in atoms.info:
-            atoms.info['data'] = {'fpv': fpv_names[0](atoms=atoms)}
-        elif 'fpv' not in atoms.info['data']:
-            atoms.info['data']['fpv'] = fpv_names[0](atoms=atoms)
+    else:
+        fingerprint_vector = _concatenate_fpv(atoms, fpv_names, fps)
 
-        return atoms.info['data']['fpv']
-
-    if not use_prior:
-        return _concatenate_fpv(atoms, fpv_names)
-
-    if 'data' not in atoms.info:
-        atoms.info['data'] = {'fpv': _concatenate_fpv(atoms, fpv_names)}
-    elif 'fpv' not in atoms.info['data']:
-        atoms.info['data']['fpv'] = _concatenate_fpv(atoms, fpv_names)
-
-    return atoms.info['data']['fpv']
+    return fingerprint_vector
 
 
-def _concatenate_fpv(atoms, fpv_name):
-    """Join multiple fingerprint vectors."""
+def _concatenate_fpv(atoms, fpv_names, fps):
+    """Join multiple fingerprint vectors.
 
-    fpv = fpv_name[0](atoms=atoms)
-    for i in fpv_name[1:]:
-        fpv = np.concatenate((i(atoms=atoms), fpv))
+    Parameters
+    ----------
+    atoms : object
+        A single atoms object.
+    fpv_name : list of / single fpv class(es)
+        List of fingerprinting classes.
+    fps : list
+        List of expected feature vector lengths.
 
-    return fpv
+    Returns
+    -------
+    fingerprint_vector : list
+        A feature vector.
+    """
+    fingerprint_vector = np.zeros((sum(fps)))
+    st = 0
+    for i, name in enumerate(fpv_names):
+        fi = sum(fps[:i+1])
+        fp = name(atoms=atoms)
+        fingerprint_vector[st:fi] = fp
+        st = fi
+
+    return fingerprint_vector
