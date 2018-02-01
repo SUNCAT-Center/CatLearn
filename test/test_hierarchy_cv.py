@@ -45,7 +45,7 @@ def hierarchy_test():
     ind = hv.load_split()
 
     # Make the predictions for each subset.
-    res = hv.split_predict(index_split=ind, predict=predict)
+    hv.split_predict(index_split=ind, predict=predict)
 
     os.remove('hierarchy.pickle')
 

@@ -88,7 +88,7 @@ def get_combined_descriptors(fpv_list):
 def get_keyvaluepair(c=[], fpv_name='None'):
     """Get a list of the key_value_pairs target names/values."""
     if len(c) == 0:
-        return ['kvp_'+fpv_name]
+        return ['kvp_' + fpv_name]
     else:
         out = []
         for atoms in c:
@@ -97,7 +97,7 @@ def get_keyvaluepair(c=[], fpv_name='None'):
         return out
 
 
-def return_fpv(candidates, fpv_name, use_prior=True):
+def return_fpv(candidates, fpv_name, use_prior=True, max_length=None):
     """Sequentially combine fingerprint vectors."""
     # Put fpv_name in a list, if it is not already.
     if not isinstance(fpv_name, list):
@@ -108,12 +108,18 @@ def return_fpv(candidates, fpv_name, use_prior=True):
     if type(candidates) is defaultdict or type(candidates) is list:
         list_fp = []
         for c in candidates:
-            list_fp.append(_get_fpv(c, fpv_name, use_prior))
+            fpv = list(_get_fpv(c, fpv_name, use_prior))
+            if max_length is not None:
+                fpv = _pad_zero(fpv, max_length)
+            list_fp.append(fpv)
         return np.asarray(list_fp)
     # Do the same but for a single atoms object.
     else:
         c = candidates
-        return np.asarray([_get_fpv(c, fpv_name, use_prior)])
+        fpv = list(_get_fpv(c, fpv_name, use_prior))
+        if max_length is not None:
+            fpv = _pad_zero(fpv, max_length)
+        return np.asarray([fpv])
 
 
 def _get_fpv(c, fpv_name, use_prior):
@@ -145,3 +151,10 @@ def _concatenate_fpv(c, fpv_name):
     for i in fpv_name[1:]:
         fpv = np.concatenate((i(atoms=c), fpv))
     return fpv
+
+
+def _pad_zero(fpv, max_length):
+    """Function to pad features with zeros."""
+    if len(fpv) < max_length:
+        p = [0.] * (max_length - len(fpv))
+        return fpv + p

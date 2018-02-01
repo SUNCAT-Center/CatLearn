@@ -37,7 +37,7 @@ def hierarchy(cv, features, min_split, max_split, new_data=True,
     """
     result, set_size, p_error = [], [], []
     # Determines how many hier_level there will be.
-    hier_level = int(np.log(max_split/min_split)/np.log(2))
+    hier_level = int(np.log(max_split / min_split) / np.log(2))
     PC = data_process(features, min_split, max_split, scale=scale,
                       ridge=ridge, normalization=normalization)
     selected_features = None
@@ -49,7 +49,7 @@ def hierarchy(cv, features, min_split, max_split, new_data=True,
     if globalscale:
         # Get all the data, and one of the largest sub-set.
         globalscaledata, glob_feat1, glob_tar1 = cv.globalscaledata(
-                                                 index_split)
+            index_split)
         # Statistics for global scaling, and scales largest sub-set.
         s_feat, m_feat, glob_feat1 = PC.globalscaling(globalscaledata,
                                                       glob_feat1)
@@ -69,9 +69,9 @@ def hierarchy(cv, features, min_split, max_split, new_data=True,
                          glob_tar1=glob_tar1)
         (set_size, p_error, result,
          index2, selected_features) = ph.predict_subsets(
-                                  set_size=set_size,
-                                  p_error=p_error,
-                                  result=result)
+            set_size=set_size,
+            p_error=p_error,
+            result=result)
         if int(index2) == 1:
             # When gone through all data within hier_level a plot is made
             # for varying feature with const. data size.
@@ -113,7 +113,7 @@ def feature_frequency(cv, features, min_split, max_split,
     select_limit : int
        Up to have many number of features used for feature selection.
     """
-    hier_level = int(np.log(max_split/min_split)/np.log(2))
+    hier_level = int(np.log(max_split / min_split) / np.log(2))
     # Determines how many hier_level there will be.
     PC = data_process(features, min_split, max_split, scale=scale,
                       ridge=ridge, normalization=normalization)
@@ -128,7 +128,7 @@ def feature_frequency(cv, features, min_split, max_split,
     if globalscale:
         # Get all the data, and one of the largest sub-set.
         globalscaledata, glob_feat1, glob_tar1 = cv.globalscaledata(
-                                                 index_split)
+            index_split)
         # Statistics for global scaling, and scales largest sub-set.
         s_feat, m_feat, glob_feat1 = PC.globalscaling(globalscaledata,
                                                       glob_feat1)
@@ -138,12 +138,11 @@ def feature_frequency(cv, features, min_split, max_split,
         # Uses the smallest subset data possible for feature selection.
         glob_feat1 = None
         glob_tar1 = None
-    ph = placeholder(globalscale, PC, index_split, cv,
-                     indicies, hier_level, featselect_featvar,
-                     featselect_featconst, s_feat, m_feat,
-                     select_limit=select_limit,
-                     selected_features=selected_features,
-                     feat_sub=feat_sub, glob_feat1=glob_feat1,
-                     glob_tar1=glob_tar1)
+    ph = placeholder(
+        globalscale, PC, index_split, cv, indicies, hier_level,
+        featselect_featvar, featselect_featconst, s_feat, m_feat,
+        select_limit=select_limit, selected_features=selected_features,
+        feat_sub=feat_sub, glob_feat1=glob_feat1, glob_tar1=glob_tar1
+    )
     selected_features = ph.getstats()
     return selected_features

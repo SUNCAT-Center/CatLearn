@@ -1,4 +1,7 @@
 # AtoML
+
+> An environment for atomistic machine learning in Python.
+
 [![pipeline status](https://gitlab.com/atoML/AtoML/badges/master/pipeline.svg)](https://gitlab.com/atoML/AtoML/commits/master)
 [![coverage report](https://gitlab.com/atoML/AtoML/badges/master/coverage.svg)](https://gitlab.com/atoML/AtoML/commits/master)
 
@@ -26,14 +29,14 @@ generation of descriptors through use of the many ASE functions.
 The easiest way to install the code is with:
 
   ```shell
-    pip install git+https://gitlab.com/atoML/AtoML.git
+    $ pip install git+https://gitlab.com/atoML/AtoML.git
   ```
 
 This will automatically install the code as well as the dependencies.
 Alternatively, you can clone the repository to a local directory with:
 
   ```shell
-    git clone https://gitlab.com/atoML/AtoML.git
+    $ git clone https://gitlab.com/atoML/AtoML.git
   ```
 
 And then put the `<install_dir>/` into your `$PYTHONPATH` environment variable.
@@ -41,7 +44,7 @@ And then put the `<install_dir>/` into your `$PYTHONPATH` environment variable.
 Be sure to install dependencies in with:
 
   ```shell
-    pip install -r requirements.txt
+    $ pip install -r requirements.txt
   ```
 
 #### Docker
@@ -50,8 +53,8 @@ Then it is possible to run AtoML inside a docker image. After cloning the
 project, build and run the image as follows:
 
   ```shell
-    docker build -t atoml .
-    docker run -it atoml bash
+    $ docker build -t atoml .
+    $ docker run -it atoml bash
   ```
 
 Use ctrl + d to exit the docker image when done.
@@ -63,7 +66,7 @@ the results etc. For these scripts, it is advisable to have at least
 `matplotlib` installed:
 
   ```shell
-    pip install matplotlib pandas seaborn
+    $ pip install matplotlib pandas seaborn
   ```
 
 ## Usage

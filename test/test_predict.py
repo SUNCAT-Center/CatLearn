@@ -5,35 +5,13 @@ from __future__ import absolute_import
 import os
 import numpy as np
 
-from atoml.utilities import DescriptorDatabase
 from atoml.regression import RidgeRegression, GaussianProcess
 from atoml.regression.gpfunctions.sensitivity import SensitivityAnalysis
+from common import get_data
 
 wkdir = os.getcwd()
 
 train_size, test_size = 45, 5
-
-
-def get_data():
-    """Simple function to pull some training and test data."""
-    # Attach the database.
-    dd = DescriptorDatabase(db_name='{}/fpv_store.sqlite'.format(wkdir),
-                            table='FingerVector')
-
-    # Pull the features and targets from the database.
-    names = dd.get_column_names()
-    features, targets = names[1:-1], names[-1:]
-    feature_data = dd.query_db(names=features)
-    target_data = np.reshape(dd.query_db(names=targets),
-                             (np.shape(feature_data)[0], ))
-
-    # Split the data into so test and training sets.
-    train_features = feature_data[:train_size, :50]
-    train_targets = target_data[:train_size]
-    test_features = feature_data[test_size:, :50]
-    test_targets = target_data[test_size:]
-
-    return train_features, train_targets, test_features, test_targets
 
 
 def rr_test(train_features, train_targets, test_features, test_targets):
@@ -102,7 +80,7 @@ def gp_test(train_features, train_targets, test_features, test_targets):
                       get_training_error=True,
                       uncertainty=True,
                       epsilon=0.1)
-    no_scale = pred['prediction']
+    mult_dim = pred['prediction']
     assert len(pred['prediction']) == len(test_features)
     print('gaussian prediction (rmse):',
           pred['validation_error']['rmse_average'])
@@ -125,7 +103,7 @@ def gp_test(train_features, train_targets, test_features, test_targets):
                       uncertainty=True,
                       epsilon=0.1)
     assert len(pred['prediction']) == len(test_features)
-    assert np.sum(pred['prediction']) != np.sum(no_scale)
+    assert np.sum(pred['prediction']) != np.sum(mult_dim)
     print('gaussian single width (rmse):',
           pred['validation_error']['rmse_average'])
 
@@ -202,8 +180,8 @@ def gp_test(train_features, train_targets, test_features, test_targets):
         test_matrix=test_features[:, :5], kernel_dict=kdict, init_reg=0.001,
         init_width=10.)
 
-    sel = sen.backward_selection(predict=True, test_targets=test_targets,
-                                 selection=3)
+    sen.backward_selection(
+        predict=True, test_targets=test_targets, selection=3)
 
 
 if __name__ == '__main__':

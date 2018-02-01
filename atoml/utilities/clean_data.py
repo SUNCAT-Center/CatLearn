@@ -6,6 +6,12 @@ from collections import defaultdict
 def remove_outliers(features, targets, con=1.4826, dev=3., constraint=None):
     """Preprocessing routine to remove outliers by median absolute deviation.
 
+    This will take the training feature and target arrays, calculate any
+    outliers, then return the reduced arrays. It is possible to set a
+    constraint key ('high', 'low', None) in order to allow for outliers that
+    are e.g. very low in energy, as this may be the desired outcome of the
+    study.
+
     Parameters
     ----------
     features : array
@@ -26,7 +32,7 @@ def remove_outliers(features, targets, con=1.4826, dev=3., constraint=None):
     # get median
     med = np.median(targets)
     # get median absolute deviation
-    data['mad'] = con*(np.median(np.abs(targets - med)))
+    data['mad'] = con * (np.median(np.abs(targets - med)))
 
     if constraint is 'high' or constraint is None:
         m = np.ma.masked_less(targets, med + data['mad'])
@@ -43,15 +49,21 @@ def remove_outliers(features, targets, con=1.4826, dev=3., constraint=None):
     return data
 
 
-def clean_variance(train, test=None, labels=None):
+def clean_variance(train, test=None, labels=None, mask=None):
     """Remove features that contribute nothing to the model.
+
+    Removes a feature if there is zero variance in the training data. If this
+    is the case, then the model won't learn anything new from adding this
+    feature as it will just act as a scalar.
 
     Parameters
     ----------
     train : array
         Feature matrix for the traing data.
     test : array
-        Optional feature matrix for the test data.
+        Optional feature matrix for the test data. Default is None passed.
+    labels : array
+        Optional list of feature labels. Default is None passed.
     """
     train = np.asarray(train)
     if test is not None:
@@ -61,6 +73,9 @@ def clean_variance(train, test=None, labels=None):
     m = train.T
     # Find features that provide no input for model.
     for i in list(range(len(m))):
+        if mask is not None:
+            if np.allclose(m[i], m[i][0]) and i not in mask:
+                clean['index'].append(i)
         if np.allclose(m[i], m[i][0]):
             clean['index'].append(i)
     # Remove bad data from feature matrix.
@@ -77,7 +92,7 @@ def clean_variance(train, test=None, labels=None):
     return clean
 
 
-def clean_infinite(train, test=None, labels=None):
+def clean_infinite(train, test=None, labels=None, mask=None):
     """Remove features that have non finite values in the training data.
 
     Optionally removes features in test data with non fininte values. Returns
@@ -89,7 +104,9 @@ def clean_infinite(train, test=None, labels=None):
     train : array
         Feature matrix for the traing data.
     test : array
-        Optional feature matrix for the test data.
+        Optional feature matrix for the test data. Default is None passed.
+    labels : array
+        Optional list of feature labels. Default is None passed.
     """
     train = np.asarray(train)
     if test is not None:
@@ -98,6 +115,9 @@ def clean_infinite(train, test=None, labels=None):
     clean = defaultdict(list)
     # Find features that have only finite values.
     bool_test = np.isfinite(train).all(axis=0)
+    # Also accept features, that are masked.
+    if mask is not None:
+        bool_test[mask] = True
     # Save the indices of columns that contain non-finite values.
     clean['index'] = list(np.where(~bool_test)[0])
     # Save a cleaned training data matrix.

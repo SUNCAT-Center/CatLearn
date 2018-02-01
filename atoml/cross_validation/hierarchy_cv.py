@@ -65,22 +65,22 @@ class Hierarchy(object):
             all_index = all_index[:max_split]
 
         assert len(all_index) > min_split
-        size = int(len(all_index)/2)
+        size = int(len(all_index) / 2)
         data['1_1'], data['1_2'] = all_index[:size], all_index[size:]
 
         # TODO fix no_split because it is way too large.
         no_split = int(min(len(data['1_1']), len(data['1_2'])) / min_split)
 
-        for i in range(1, no_split+1):
+        for i in range(1, no_split + 1):
             subsplit = 2 ** i
             sn = 1
-            for j in range(1, subsplit+1):
+            for j in range(1, subsplit + 1):
                 current_split = data[str(i) + '_' + str(j)]
                 shuffle(current_split)
                 new_split = int(len(current_split) / 2)
                 if new_split >= min_split:
-                    first_name, sn = str(i+1) + '_' + str(sn), sn + 1
-                    second_name, sn = str(i+1) + '_' + str(sn), sn + 1
+                    first_name, sn = str(i + 1) + '_' + str(sn), sn + 1
+                    second_name, sn = str(i + 1) + '_' + str(sn), sn + 1
                     data[first_name] = current_split[:new_split]
                     data[second_name] = current_split[new_split:]
                 else:
@@ -215,12 +215,13 @@ class Hierarchy(object):
         """
         if len(id_list) > 999:
             store_data = self._get_data(id_list[:999])
-            for i in range(1, int(len(id_list) / 999)+1):
+            for i in range(1, int(len(id_list) / 999) + 1):
                 start_index = i * 999
                 if len(id_list[start_index:]) < 999:
                     more_data = self._get_data(id_list[start_index:])
                 else:
-                    more_data = self._get_data(id_list[start_index:(i+1)*999])
+                    more_data = self._get_data(
+                        id_list[start_index:(i + 1) * 999])
                 store_data = np.concatenate((store_data, more_data), axis=0)
         else:
             store_data = np.asarray(self._get_data(id_list))

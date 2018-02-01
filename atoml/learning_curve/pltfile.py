@@ -18,8 +18,8 @@ def violinplot(set_size, p_error, subplot, i):
        Which iteration in the featureselection.
     """
     plt.figure(1)
-    plt.subplot(int("22"+str(subplot))).set_title('Feature size '+str(i),
-                                                  loc='left')
+    plt.subplot(int("22" + str(subplot))).set_title('Feature size ' + str(i),
+                                                    loc='left')
     plt.legend(loc='upper right')
     plt.ylabel('Prediction error')
     plt.xlabel('Data size')
@@ -48,8 +48,8 @@ def originalplot(set_size, p_error, PC, subplot, i):
     p_error_mean_list, set_size_mean_list, corrected_std =\
         PC.get_statistic(set_size, p_error)
     plt.figure(1)
-    plt.subplot(int("22"+str(subplot))).set_title('Feature size '+str(i),
-                                                  loc='left')
+    plt.subplot(int("22" + str(subplot))).set_title('Feature size ' + str(i),
+                                                    loc='left')
     plt.legend(loc='upper right')
     plt.ylabel('Prediction error')
     plt.xlabel('Data size')

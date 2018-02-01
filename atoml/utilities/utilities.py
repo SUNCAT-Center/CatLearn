@@ -1,10 +1,11 @@
 """Some useful utilities."""
 import numpy as np
 import hashlib
+import time
 
 
-def simple_learning_curve(gp, testx, testy, step=1, min_data=2,
-                          optimize_interval=None):
+def simple_learning_curve(gp, trainx, trainy, testx, testy, step=1, min_data=2,
+                          optimize_interval=None, eval_jac=False):
     """Evaluate validation error versus training data size.
 
     Parameters
@@ -37,22 +38,26 @@ def simple_learning_curve(gp, testx, testy, step=1, min_data=2,
     if min_data < 2:
         raise ValueError("min_data must be at least 2.")
     # Retrieve the full training data and training targets from gp.
-    trainx = (gp.train_fp).copy()
     # If the targets are standardized, convert back to the raw targets.
-    trainy = (gp.train_target).copy() * \
-        gp.standardize_data['std'] + \
-        gp.standardize_data['mean']
     rmse = []
     mae = []
     signed_mean = []
     Ndata = []
-    for low in range(min_data, len(trainx)+1, step):
+    opt_time = []
+    pred_time = []
+    lml = []
+    kernel_dict = dict(gp.kernel_dict)
+    regularization = float(gp.regularization)
+    for low in range(min_data, len(trainx) + 1, step)[::-1]:
         # Update the training data in the gp. Targets are standardized again.
-        gp.update_data(train_fp=trainx[:low, :],
-                       train_target=trainy[:low],
-                       standardize_target=True, normalize_target=False)
+        gp.update_gp(train_fp=trainx[:low, :],
+                     train_target=trainy[:low],
+                     kernel_dict=kernel_dict)
+        gp.regularization = regularization
+        start = time.time()
         if optimize_interval is not None and low % optimize_interval == 0:
-            gp._optimize_hyperparameters()
+            gp.optimize_hyperparameters(eval_jac=eval_jac)
+        end_opt = time.time()
         # Do the prediction
         pred = gp.predict(test_fp=testx,
                           get_validation_error=True,
@@ -60,14 +65,21 @@ def simple_learning_curve(gp, testx, testy, step=1, min_data=2,
                           uncertainty=True,
                           test_target=testy)
         # Store the error associated with the predictions in lists.
+        end_pred = time.time()
         Ndata.append(len(trainy[:low]))
         rmse.append(pred['validation_error']['rmse_average'])
         mae.append(pred['validation_error']['absolute_average'])
         signed_mean.append(pred['validation_error']['signed_mean'])
+        opt_time.append(end_opt - start)
+        pred_time.append(end_pred - end_opt)
+        lml.append(gp.log_marginal_likelihood)
     output = {'N_data': Ndata,
               'rmse_average': rmse,
               'absolute_average': mae,
-              'signed_mean': signed_mean}
+              'signed_mean': signed_mean,
+              'opt_time': opt_time,
+              'pred_time': pred_time,
+              'log_marginal_likelihood': lml}
     return output
 
 
