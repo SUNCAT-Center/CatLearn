@@ -6,65 +6,6 @@ from __future__ import division
 import numpy as np
 from collections import defaultdict
 
-import ase.db
-from .particle_fingerprint import ParticleFingerprintGenerator
-from .adsorbate_fingerprint import AdsorbateFingerprintGenerator
-
-
-def db_sel2fp(calctype, fname, selection, moldb=None, bulkdb=None,
-              slabref=None):
-    """Return array of fingerprints from ase.db files and selection.
-
-    Parameters
-    ----------
-    calctype : str
-    fname : str
-    selection : list
-    moldb : str
-    bulkdb : str
-    DFT_parameters : dict
-    """
-    keys = {}
-    c = ase.db.connect(fname)
-    s = c.select(selection)
-    for d in s:
-        keys.update(d.key_value_pairs)
-    k = list(keys)
-    print(k)
-    fpv = []
-    if calctype == 'adsorption':
-        assert moldb is not None
-        if 'enrgy' in k:
-            if slabref is None:
-                slabs = fname
-            fpv_gen = AdsorbateFingerprintGenerator(moldb=moldb, bulkdb=bulkdb,
-                                                    slabs=slabs)
-            cand = fpv_gen.db2adds_info(fname=fname, selection=selection)
-            fpv += [fpv_gen.get_Ef]
-        else:
-            fpv_gen = AdsorbateFingerprintGenerator(moldb=moldb, bulkdb=bulkdb)
-            cand = fpv_gen.db2adds_info(fname=fname, selection=selection)
-        fpv += [fpv_gen.Z_add,
-                fpv_gen.primary_addatom,
-                fpv_gen.primary_adds_nn,
-                fpv_gen.adds_sum,
-                fpv_gen.primary_surfatom]
-        if bulkdb is not None:
-            fpv += [fpv_gen.primary_surf_nn,
-                    fpv_gen.elemental_dft_properties]
-        cfpv = return_fpv(cand, fpv)
-    elif calctype == 'nanoparticle':
-        fpv_gen = ParticleFingerprintGenerator()
-        fpv += [fpv_gen.atom_numbers,
-                fpv_gen.bond_count_fpv,
-                fpv_gen.connections_fpv,
-                fpv_gen.distribution_fpv,
-                fpv_gen.nearestneighbour_fpv,
-                fpv_gen.rdf_fpv]
-        cfpv = return_fpv(cand, fpv)
-    fpv_labels = get_combined_descriptors(fpv)
-    return cfpv, fpv_labels
-
 
 def get_combined_descriptors(fpv_list):
     """Sequentially combine feature label vectors.
@@ -120,6 +61,7 @@ def return_fpv(candidates, fpv_names):
         fpv_names = [fpv_names]
     fpvn = len(fpv_names)
 
+    # Find the maximum number of atoms and atomic species.
     maxatoms = np.argmax([len(atoms) for atoms in candidates])
     maxcomp = np.argmax(
         [len(set(atoms.get_chemical_symbols())) for atoms in candidates])
