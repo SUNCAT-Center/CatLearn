@@ -46,8 +46,22 @@ class StandardFingerprintGenerator(object):
         return np.array(fp)
 
     def _get_coulomb(self, atoms):
-        """Function to generate the coulomb matrix."""
-        # Get distances
+        """ Generate the coulomb matrix.
+        (could use reference for why 2.4)
+
+        Parameters: atoms-objects
+          Atoms object with Cartesian coordinates available.
+
+        Returns: ndarray (n, n)
+          The coulomb matrix, n atoms is size.
+        """
+
+        if len(atoms) < 2:
+            raise ValueError(
+                ("Columb matrix requires atoms "
+                 "object with at least 2 atoms")
+            )
+
         dm = atoms.get_all_distances()
         np.fill_diagonal(dm, 1.)
 
@@ -61,12 +75,19 @@ class StandardFingerprintGenerator(object):
         return coulomb
 
     def eigenspectrum_fpv(self, atoms):
-        """Sorted eigenspectrum of the Coulomb matrix."""
-        # Get the Coulomb matrix.
+        """ Sorted eigenspectrum of the Coulomb matrix.
+
+        Parameters: atoms-objects
+          Atoms object with Cartesian coordinates available.
+
+        Returns: ndarray (n,)
+          Sorted Eigen values of the coulomb matrix, n atoms is size.
+        """
+
         coulomb = self._get_coulomb(atoms)
-        # Get eigenvalues and vectors
-        w, v = np.linalg.eig((np.array(coulomb)))
-        # Return sort eigenvalues from largest to smallest
+
+        w, _ = np.linalg.eig(coulomb)
+
         return np.sort(w)[::-1]
 
     def distance_fpv(self, atoms):
