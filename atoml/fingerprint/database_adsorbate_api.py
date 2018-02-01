@@ -20,10 +20,7 @@ addsyms = ['H', 'C', 'O', 'N', 'S']
 
 
 def get_radius(z):
-    if isinstance(z, int):
-        p = get_mendeleev_params(z, ['atomic_radius'])
-    elif isinstance(z, str):
-        p = get_mendeleev_params(atomic_numbers[z], ['atomic_radius'])
+    p = get_mendeleev_params(z, ['atomic_radius'])
     if p[-1] is not None:
         r = p[-1]
     elif p[-4] is not None:
