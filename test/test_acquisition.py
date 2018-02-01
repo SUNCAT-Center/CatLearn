@@ -47,10 +47,8 @@ def get_data():
                                         get_nl=False, dx=0.2, cell_size=30.,
                                         nbin=4)
 
-    train_features = return_fpv(trainset['atoms'], [pfpv.nearestneighbour_fpv],
-                                use_prior=False)
-    test_features = return_fpv(testset['atoms'], [pfpv.nearestneighbour_fpv],
-                               use_prior=False)
+    train_features = return_fpv(trainset['atoms'], [pfpv.nearestneighbour_fpv])
+    test_features = return_fpv(testset['atoms'], [pfpv.nearestneighbour_fpv])
 
     train_targets = []
     for a in trainset['atoms']:
