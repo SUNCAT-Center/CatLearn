@@ -147,6 +147,89 @@ class Hierarchy(object):
 
         return data_targets, data_features, index1, index2
 
+    def split_predict(self, index_split, predict, **kwargs):
+        """Function to make predictions looping over all subsets of data.
+
+        Parameters
+        ----------
+        index_split : dict
+            All data for the split.
+        predict : function
+            The prediction function. Must return dict with 'result' in it.
+
+        Returns
+        -------
+        result : list
+            A list of averaged errors for each subset of data.
+        size : list
+            A list of data sizes corresponding to the errors list.
+        """
+        result = []
+        size = []
+        for i in reversed(index_split):
+            j, k = i.split('_')
+            train_data = self._compile_split(index_split[i])
+            train_features = np.array(train_data[:, 1:-1], np.float64)
+            train_targets = np.array(train_data[:, -1:], np.float64)
+            d1, d2 = np.shape(train_targets)
+            train_targets = train_targets.reshape(d2, d1)[0]
+
+            for m in reversed(index_split):
+                n, o = m.split('_')
+                if n == j:
+                    if k != o:
+                        test_data = self._compile_split(
+                            index_split[m])
+
+                        test_features = np.array(test_data[:, 1:-1],
+                                                 np.float64)
+                        test_targets = np.array(test_data[:, -1:], np.float64)
+                        d1, d2 = np.shape(test_targets)
+                        test_targets = test_targets.reshape(d2, d1)[0]
+
+                        pred = predict(train_features=train_features,
+                                       train_targets=train_targets,
+                                       test_features=test_features,
+                                       test_targets=test_targets, **kwargs)
+
+                        if 'size' in pred:
+                            size.append(pred['size'])
+                        result.append(pred['result'])
+
+        return result, size
+
+    def transform_output(self, data):
+        """Function to compile results in a format for plotting average error.
+
+        Parameters
+        ----------
+        data : dict
+            The dictionary output from the split_predict function.
+
+        Returns
+        -------
+        size : list
+            A list of the data sizes used in the CV.
+        error : list
+            A list of the mean errors at each data size.
+        """
+        # Calculate mean error at each data size.
+        s = set(data[1])
+        d = {}
+        for i, j in enumerate(data[1]):
+            c = j
+            if c + 1 in s:
+                c = j + 1
+            if c not in d:
+                d[c] = []
+            d[c].append(data[0][i])
+        error, size = [], []
+        for i in d:
+            size.append(i)
+            error.append(sum(d[i]) / len(d[i]))
+
+        return size, error
+
     def _get_index(self):
         """Function to get the list of possible indices."""
         data = []
@@ -215,48 +298,3 @@ class Hierarchy(object):
         self.cursor.execute(query, id_list)
 
         return self.cursor.fetchall()
-
-    def split_predict(self, index_split, predict, **kwargs):
-        """Function to make predictions looping over all subsets of data.
-
-        Parameters
-        ----------
-        index_split : dict
-            All data for the split.
-        predict : function
-            The prediction function. Must return dict with 'result' in it.
-
-        """
-        result = []
-        size = []
-        for i in reversed(index_split):
-            j, k = i.split('_')
-            train_data = self._compile_split(index_split[i])
-            train_features = np.array(train_data[:, 1:-1], np.float64)
-            train_targets = np.array(train_data[:, -1:], np.float64)
-            d1, d2 = np.shape(train_targets)
-            train_targets = train_targets.reshape(d2, d1)[0]
-
-            for m in reversed(index_split):
-                n, o = m.split('_')
-                if n == j:
-                    if k != o:
-                        test_data = self._compile_split(
-                            index_split[m])
-
-                        test_features = np.array(test_data[:, 1:-1],
-                                                 np.float64)
-                        test_targets = np.array(test_data[:, -1:], np.float64)
-                        d1, d2 = np.shape(test_targets)
-                        test_targets = test_targets.reshape(d2, d1)[0]
-
-                        pred = predict(train_features=train_features,
-                                       train_targets=train_targets,
-                                       test_features=test_features,
-                                       test_targets=test_targets, **kwargs)
-
-                        if 'size' in pred:
-                            size.append(pred['size'])
-                        result.append(pred['result'])
-
-        return result, size
