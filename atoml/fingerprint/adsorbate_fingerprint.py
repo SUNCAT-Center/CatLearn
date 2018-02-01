@@ -14,7 +14,7 @@ from ase.atoms import string2symbols
 from ase.data import (ground_state_magnetic_moments, covalent_radii,
                       atomic_numbers)
 from .periodic_table_data import get_mendeleev_params
-from .db2thermo import layers_info
+from .db2thermo import layers_info, get_radius
 from .neighbor_matrix import connection_matrix
 import collections
 
@@ -332,10 +332,10 @@ class AdsorbateFingerprintGenerator(object):
             primary_add = int(atoms.info['i_add1'])
             # Z_surf1 = int(atoms.info['Z_surf1'])
             Z_add1 = int(atoms.info['Z_add1'])
-            dH = covalent_radii[1]
-            dC = covalent_radii[6]
+            dadd = get_radius(Z_add1)
+            dH = get_radius(1)
+            dC = get_radius(6)
             # dM = covalent_radii[Z_surf1]
-            dadd = covalent_radii[Z_add1]
             nH1 = len([a.index for a in atoms if a.symbol == 'H' and
                        atoms.get_distance(primary_add, a.index, mic=True) <
                        (dH+dadd)*rtol and a.index != primary_add])

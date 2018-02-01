@@ -24,9 +24,9 @@ def get_radius(z):
         p = get_mendeleev_params(z, ['atomic_radius'])
     elif isinstance(z, str):
         p = get_mendeleev_params(atomic_numbers[z], ['atomic_radius'])
-    if p[-1] is None:
+    if p[-1] is not None:
         r = p[-1]
-    else:
+    elif p[-4] is not None:
         r = p[-4]
     return float(r) / 100.
 
@@ -96,7 +96,11 @@ def formula2ads_index(atoms, formula):
         the key value pair 'species' must be the
         chemical formula of the adsorbate.
     """
-    composition = string2symbols(formula)
+    try:
+        composition = string2symbols(formula)
+    except ValueError:
+        print(formula)
+        raise
     ads_atoms = [a.index for a in atoms if a.symbol in composition]
     if len(ads_atoms) != len(composition):
         raise AssertionError("ads atoms identification by formula failed.")
