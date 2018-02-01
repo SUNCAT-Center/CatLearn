@@ -139,19 +139,3 @@ def geometry_hash(atoms):
     _hash = md5.hexdigest()
 
     return _hash
-
-
-def gp2json(fname, gp):
-    """ Function to save a GP model to a json file."""
-    f = open(fname, 'w')
-    model = {'kdict': gp.kernel_dict, 'regularization': gp.regularization}
-    json.dump(model, f)
-    f.close()
-
-
-def json2gp(fname):
-    """ Function to load a GP model from a json file."""
-    f = open(fname)
-    model = json.load(f)
-    f.close()
-    return model['kdict'], model['regularization']
