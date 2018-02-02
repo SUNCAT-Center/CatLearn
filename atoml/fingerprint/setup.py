@@ -6,65 +6,6 @@ from __future__ import division
 import numpy as np
 from collections import defaultdict
 
-import ase.db
-from .particle_fingerprint import ParticleFingerprintGenerator
-from .adsorbate_fingerprint import AdsorbateFingerprintGenerator
-
-
-def db_sel2fp(calctype, fname, selection, moldb=None, bulkdb=None,
-              slabref=None):
-    """Return array of fingerprints from ase.db files and selection.
-
-    Parameters
-    ----------
-    calctype : str
-    fname : str
-    selection : list
-    moldb : str
-    bulkdb : str
-    DFT_parameters : dict
-    """
-    keys = {}
-    c = ase.db.connect(fname)
-    s = c.select(selection)
-    for d in s:
-        keys.update(d.key_value_pairs)
-    k = list(keys)
-    print(k)
-    fpv = []
-    if calctype == 'adsorption':
-        assert moldb is not None
-        if 'enrgy' in k:
-            if slabref is None:
-                slabs = fname
-            fpv_gen = AdsorbateFingerprintGenerator(moldb=moldb, bulkdb=bulkdb,
-                                                    slabs=slabs)
-            cand = fpv_gen.db2adds_info(fname=fname, selection=selection)
-            fpv += [fpv_gen.get_Ef]
-        else:
-            fpv_gen = AdsorbateFingerprintGenerator(moldb=moldb, bulkdb=bulkdb)
-            cand = fpv_gen.db2adds_info(fname=fname, selection=selection)
-        fpv += [fpv_gen.Z_add,
-                fpv_gen.primary_addatom,
-                fpv_gen.primary_adds_nn,
-                fpv_gen.adds_sum,
-                fpv_gen.primary_surfatom]
-        if bulkdb is not None:
-            fpv += [fpv_gen.primary_surf_nn,
-                    fpv_gen.elemental_dft_properties]
-        cfpv = return_fpv(cand, fpv)
-    elif calctype == 'nanoparticle':
-        fpv_gen = ParticleFingerprintGenerator()
-        fpv += [fpv_gen.atom_numbers,
-                fpv_gen.bond_count_fpv,
-                fpv_gen.connections_fpv,
-                fpv_gen.distribution_fpv,
-                fpv_gen.nearestneighbour_fpv,
-                fpv_gen.rdf_fpv]
-        cfpv = return_fpv(cand, fpv)
-    fpv_labels = get_combined_descriptors(fpv)
-    return cfpv, fpv_labels
-
 
 def get_combined_descriptors(fpv_list):
     """Sequentially combine feature label vectors.
@@ -97,65 +38,99 @@ def get_keyvaluepair(c=[], fpv_name='None'):
         return out
 
 
-def return_fpv(candidates, fpv_name, use_prior=True, max_length=None):
-    """Sequentially combine fingerprint vectors."""
-    # Put fpv_name in a list, if it is not already.
-    if not isinstance(fpv_name, list):
-        fpv_name = [fpv_name]
+def return_fpv(candidates, fpv_names):
+    """Sequentially combine fingerprint vectors. Padding handled automatically.
 
-    # Check to see if we are dealing with a list of candidates or a single
-    # atoms object.
-    if type(candidates) is defaultdict or type(candidates) is list:
-        list_fp = []
-        for c in candidates:
-            fpv = list(_get_fpv(c, fpv_name, use_prior))
-            if max_length is not None:
-                fpv = _pad_zero(fpv, max_length)
-            list_fp.append(fpv)
-        return np.asarray(list_fp)
-    # Do the same but for a single atoms object.
-    else:
-        c = candidates
-        fpv = list(_get_fpv(c, fpv_name, use_prior))
-        if max_length is not None:
-            fpv = _pad_zero(fpv, max_length)
-        return np.asarray([fpv])
+    Parameters
+    ----------
+    candidates : list or dict
+        Atoms objects to construct fingerprints for.
+    fpv_name : list of / single fpv class(es)
+        List of fingerprinting classes.
+
+    Returns
+    -------
+    fingerprint_vector : ndarray
+      Fingerprint array (n, m) where n is the number of candidates and m is the
+      summed number of features from all fingerprint classes supplied.
+    """
+    if not isinstance(candidates, (list, defaultdict)):
+        raise TypeError("return_fpv requires a list or dict of atoms")
+
+    if not isinstance(fpv_names, list):
+        fpv_names = [fpv_names]
+    fpvn = len(fpv_names)
+
+    # Find the maximum number of atoms and atomic species.
+    maxatoms = np.argmax([len(atoms) for atoms in candidates])
+    maxcomp = np.argmax(
+        [len(set(atoms.get_chemical_symbols())) for atoms in candidates])
+
+    # PATCH: Ideally fp length would be called from a property.
+    fps = np.zeros(fpvn, dtype=int)
+    for i, fp in enumerate(fpv_names):
+        fps[i] = max(len(fp(candidates[maxatoms])),
+                     len(fp(candidates[maxcomp])))
+
+    fingerprint_vector = np.zeros((len(candidates), sum(fps)))
+    for i, atoms in enumerate(candidates):
+        fingerprint_vector[i] = _get_fpv(atoms, fpv_names, fps)
+
+    return fingerprint_vector
 
 
-def _get_fpv(c, fpv_name, use_prior):
+def _get_fpv(atoms, fpv_names, fps):
     """Get the fingerprint vector as an array.
 
-    If a fingerprint vector is saved in info['data']['fpv'] it is returned
-    otherwise saved in the data dictionary.
+    Parameters
+    ----------
+    atoms : object
+        A single atoms object.
+    fpv_name : list of / single fpv class(es)
+        List of fingerprinting classes.
+    fps : list
+        List of expected feature vector lengths.
+
+    Returns
+    -------
+    fingerprint_vector : list
+        A feature vector.
     """
-    if len(fpv_name) == 1:
-        if not use_prior:
-            return fpv_name[0](atoms=c)
-        if 'data' not in c.info:
-            c.info['data'] = {'fpv': fpv_name[0](atoms=c)}
-        elif 'fpv' not in c.info['data']:
-            c.info['data']['fpv'] = fpv_name[0](atoms=c)
-        return c.info['data']['fpv']
-    if not use_prior:
-        return _concatenate_fpv(c, fpv_name)
-    if 'data' not in c.info:
-        c.info['data'] = {'fpv': _concatenate_fpv(c, fpv_name)}
-    elif 'fpv' not in c.info['data']:
-        c.info['data']['fpv'] = _concatenate_fpv(c, fpv_name)
-    return c.info['data']['fpv']
+    if len(fpv_names) == 1:
+        fp = fpv_names[0](atoms=atoms)
+        fingerprint_vector = np.zeros((fps[0]))
+        fingerprint_vector[:len(fp)] = fp
+
+    else:
+        fingerprint_vector = _concatenate_fpv(atoms, fpv_names, fps)
+
+    return fingerprint_vector
 
 
-def _concatenate_fpv(c, fpv_name):
-    """Join multiple fingerprint vectors."""
-    fpv = fpv_name[0](atoms=c)
-    for i in fpv_name[1:]:
-        fpv = np.concatenate((i(atoms=c), fpv))
-    return fpv
+def _concatenate_fpv(atoms, fpv_names, fps):
+    """Join multiple fingerprint vectors.
 
+    Parameters
+    ----------
+    atoms : object
+        A single atoms object.
+    fpv_name : list of / single fpv class(es)
+        List of fingerprinting classes.
+    fps : list
+        List of expected feature vector lengths.
 
-def _pad_zero(fpv, max_length):
-    """Function to pad features with zeros."""
-    if len(fpv) < max_length:
-        p = [0.] * (max_length - len(fpv))
-        fpv += p
-    return np.asarray(fpv)
+    Returns
+    -------
+    fingerprint_vector : list
+        A feature vector.
+    """
+    # Define full feature vector.
+    fingerprint_vector = np.zeros((sum(fps)))
+    start = 0
+    # Iterate through the feature generators and update feature vector.
+    for i, name in enumerate(fpv_names):
+        fp = name(atoms=atoms)
+        fingerprint_vector[start:start + len(fp)] = fp
+        start = sum(fps[:i + 1])
+
+    return fingerprint_vector

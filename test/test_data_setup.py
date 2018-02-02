@@ -57,54 +57,47 @@ def feature_test():
                                         nbin=4)
     sfpv = StandardFingerprintGenerator(atom_types=[78, 79])
 
-    data = return_fpv(trainset['atoms'], [pfpv.nearestneighbour_fpv],
-                      use_prior=False)
+    data = return_fpv(trainset['atoms'], [pfpv.nearestneighbour_fpv])
     n, d = np.shape(data)
     assert n == train_size, d == 4
 
-    train_fp = return_fpv(trainset['atoms'], [pfpv.bond_count_fpv],
-                          use_prior=False)
+    train_fp = return_fpv(trainset['atoms'], [pfpv.bond_count_fpv])
     n, d = np.shape(train_fp)
     data = np.concatenate((data, train_fp), axis=1)
     assert n == train_size, d == 52
 
-    train_fp = return_fpv(trainset['atoms'], [pfpv.distribution_fpv],
-                          use_prior=False)
+    train_fp = return_fpv(trainset['atoms'], [pfpv.distribution_fpv])
     n, d = np.shape(train_fp)
     data = np.concatenate((data, train_fp), axis=1)
     assert n == train_size, d == 8
 
     # EXPENSIVE to calculate. Not included in training data.
-    train_fp = return_fpv(testset['atoms'], [pfpv.connections_fpv],
-                          use_prior=False)
+    train_fp = return_fpv(testset['atoms'], [pfpv.connections_fpv])
     n, d = np.shape(train_fp)
     assert n == test_size, d == 26
 
-    train_fp = return_fpv(trainset['atoms'], [pfpv.rdf_fpv], use_prior=False)
+    train_fp = return_fpv(trainset['atoms'], [pfpv.rdf_fpv])
     n, d = np.shape(train_fp)
     data = np.concatenate((data, train_fp), axis=1)
     assert n == train_size, d == 20
 
     # Start testing the standard fingerprint vector generators.
-    train_fp = return_fpv(trainset['atoms'], [sfpv.mass_fpv], use_prior=False)
+    train_fp = return_fpv(trainset['atoms'], [sfpv.mass_fpv])
     n, d = np.shape(train_fp)
     data = np.concatenate((data, train_fp), axis=1)
     assert n == train_size, d == 1
 
-    train_fp = return_fpv(trainset['atoms'], [sfpv.composition_fpv],
-                          use_prior=False)
+    train_fp = return_fpv(trainset['atoms'], [sfpv.composition_fpv])
     n, d = np.shape(train_fp)
     data = np.concatenate((data, train_fp), axis=1)
     assert n == train_size, d == 2
 
-    train_fp = return_fpv(trainset['atoms'], [sfpv.eigenspectrum_fpv],
-                          use_prior=False)
+    train_fp = return_fpv(trainset['atoms'], [sfpv.eigenspectrum_fpv],)
     n, d = np.shape(train_fp)
     data = np.concatenate((data, train_fp), axis=1)
     assert n == train_size, d == 147
 
-    train_fp = return_fpv(trainset['atoms'], [sfpv.distance_fpv],
-                          use_prior=False)
+    train_fp = return_fpv(trainset['atoms'], [sfpv.distance_fpv])
     n, d = np.shape(train_fp)
     data = np.concatenate((data, train_fp), axis=1)
     assert n == train_size, d == 2
