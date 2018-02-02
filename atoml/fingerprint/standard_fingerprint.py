@@ -31,36 +31,33 @@ class StandardFingerprintGenerator(object):
 
     def composition_fpv(self, atoms):
         """Basic function to take atoms object and return the composition."""
+        cs = atoms.get_chemical_symbols()
         # Generate a list of atom types if not supplied.
         if self.atom_types is None:
-            self.atom_types = frozenset(atoms.get_chemical_symbols())
+            self.atom_types = sorted(frozenset(cs))
 
         # Add count of each atom type to the fingerprint vector.
-        fp = []
-        for i in self.atom_types:
-            count = 0.
-            for j in atoms.get_chemical_symbols():
-                if i == j:
-                    count += 1.
-            fp.append(count)
-        return np.array(fp)
+        return np.array([cs.count(i) for i in self.atom_types])
 
     def _get_coulomb(self, atoms):
-        """ Generate the coulomb matrix.
-        (could use reference for why 2.4)
+        """Generate the coulomb matrix.
 
-        Parameters: atoms-objects
+        A more detailed discussion of the coulomb features can be found here:
+        https://doi.org/10.1103/PhysRevLett.108.058301
+
+        Parameters
+        ----------
+        atoms : object
           Atoms object with Cartesian coordinates available.
 
-        Returns: ndarray (n, n)
-          The coulomb matrix, n atoms is size.
+        Returns
+        -------
+        coulomb : ndarray
+          The coulomb matrix, (n, n) atoms in size.
         """
-
         if len(atoms) < 2:
             raise ValueError(
-                ("Columb matrix requires atoms "
-                 "object with at least 2 atoms")
-            )
+                ("Columb matrix requires atoms object with at least 2 atoms"))
 
         dm = atoms.get_all_distances()
         np.fill_diagonal(dm, 1.)
@@ -75,15 +72,18 @@ class StandardFingerprintGenerator(object):
         return coulomb
 
     def eigenspectrum_fpv(self, atoms):
-        """ Sorted eigenspectrum of the Coulomb matrix.
+        """Sorted eigenspectrum of the Coulomb matrix.
 
-        Parameters: atoms-objects
+        Parameters
+        ----------
+        atoms : object
           Atoms object with Cartesian coordinates available.
 
-        Returns: ndarray (n,)
+        Returns
+        -------
+        result : ndarray
           Sorted Eigen values of the coulomb matrix, n atoms is size.
         """
-
         coulomb = self._get_coulomb(atoms)
 
         w, _ = np.linalg.eig(coulomb)
