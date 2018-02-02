@@ -157,4 +157,5 @@ def _pad_zero(fpv, max_length):
     """Function to pad features with zeros."""
     if len(fpv) < max_length:
         p = [0.] * (max_length - len(fpv))
-        return fpv + p
+        fpv += p
+    return np.asarray(fpv)

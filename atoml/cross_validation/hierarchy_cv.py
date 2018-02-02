@@ -231,7 +231,13 @@ class Hierarchy(object):
         return size, error
 
     def _get_index(self):
-        """Function to get the list of possible indices."""
+        """Function to get the list of possible indices.
+
+        Returns
+        -------
+        data : array
+            The index data that has been extracted from the db.
+        """
         data = []
         for row in self.cursor.execute("SELECT uuid FROM %(table)s"
                                        % {'table': self.table}):
@@ -266,6 +272,11 @@ class Hierarchy(object):
         ----------
         id_list : list
             The uuids to pull data.
+
+        Returns
+        -------
+        store_data : array
+            The subset of data.
         """
         if len(id_list) > 999:
             store_data = self._get_data(id_list[:999])
