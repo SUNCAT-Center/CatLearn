@@ -124,12 +124,13 @@ def _concatenate_fpv(atoms, fpv_names, fps):
     fingerprint_vector : list
         A feature vector.
     """
+    # Define full feature vector.
     fingerprint_vector = np.zeros((sum(fps)))
-    st = 0
+    start = 0
+    # Iterate through the feature generators and update feature vector.
     for i, name in enumerate(fpv_names):
-        fi = sum(fps[:i+1])
         fp = name(atoms=atoms)
-        fingerprint_vector[st:fi] = fp
-        st = fi
+        fingerprint_vector[start:start + len(fp)] = fp
+        start = sum(fps[:i + 1])
 
     return fingerprint_vector
