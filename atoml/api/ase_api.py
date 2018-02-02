@@ -10,8 +10,8 @@ def extend_class(atoms):
     atoms : class
         An ase atoms object.
     """
-    atoms.store_fp_in_atoms = types.MethodType(store_fp_in_atoms, atoms)
-    atoms.load_fp_in_atoms = types.MethodType(load_fp_in_atoms, atoms)
+    atoms.set_features = types.MethodType(set_features, atoms)
+    atoms.get_features = types.MethodType(get_features, atoms)
 
 
 def set_features(self, fp):
