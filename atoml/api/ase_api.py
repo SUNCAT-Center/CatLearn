@@ -14,11 +14,11 @@ def extend_class(atoms):
     atoms.load_fp_in_atoms = types.MethodType(load_fp_in_atoms, atoms)
 
 
-def store_fp_in_atoms(self, fp):
+def set_features(self, fp):
     """Function to write feature vector to ase atoms object.
 
     This function provides a uniform way in which to attach a feature vector to
-    an atoms object. Can be used in conjunction with the `load_fp_in_atoms`
+    an atoms object. Can be used in conjunction with the `get_features`
     function.
 
     Parameters
@@ -33,11 +33,11 @@ def store_fp_in_atoms(self, fp):
     self.info['atoml']['features'] = fp
 
 
-def load_fp_in_atoms(self):
+def get_features(self):
     """Function to read feature vector from ase atoms object.
 
     This function provides a uniform way in which to attach a feature vector to
-    an atoms object. Can be used in conjunction with the `load_fp_in_atoms`
+    an atoms object. Can be used in conjunction with the `set_features`
     function.
 
     Parameters
