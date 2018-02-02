@@ -1,3 +1,10 @@
+# Version 0.2.1 (February 2018)
+
+-   Update functions to compile features allowing for variable length of atoms
+objects.
+-   Added some tutorials for hierarchy cross-validation and prediction on
+organic molecules.
+
 # Version 0.2.0 (January 2018)
 
 -   Gradients added to hyperparameter optimization.
