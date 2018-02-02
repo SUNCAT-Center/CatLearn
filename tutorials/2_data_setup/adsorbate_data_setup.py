@@ -3,7 +3,7 @@ import numpy as np
 import ase.io
 from atoml.fingerprint.setup import return_fpv, get_combined_descriptors
 from atoml.fingerprint import AdsorbateFingerprintGenerator
-from atoml.fingerprint.db2thermo import slab_index, info2primary_index
+from atoml.fingerprint.database_adsorbate_api import slab_index, info2primary_index
 try:
     import matplotlib.pyplot as plt
     import seaborn as sns
