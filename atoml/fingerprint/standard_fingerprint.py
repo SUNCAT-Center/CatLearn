@@ -4,6 +4,8 @@ from __future__ import division
 
 import numpy as np
 
+from .base import FeatureGenerator
+
 no_asap = False
 try:
     from asap3.analysis import PTM
@@ -11,10 +13,10 @@ except ImportError:
     no_asap = True
 
 
-class StandardFingerprintGenerator(object):
+class StandardFingerprintGenerator(FeatureGenerator):
     """Function to build a fingerprint vector based on an atoms object."""
 
-    def __init__(self, atom_types=None):
+    def __init__(self, atom_types=None, dtype='atoms'):
         """Standard fingerprint generator setup.
 
         Parameters
@@ -23,15 +25,16 @@ class StandardFingerprintGenerator(object):
             Unique atomic types in the systems.
         """
         self.atom_types = atom_types
+        FeatureGenerator.__init__(self, dtype=dtype)
 
-    def mass_fpv(self, atoms):
+    def mass_fpv(self, candidate):
         """Function that takes a list of atoms objects and returns the mass."""
         # Return the summed mass of the atoms object.
-        return np.array([sum(atoms.get_masses())])
+        return np.array([sum(self.get_masses(candidate))])
 
-    def composition_fpv(self, atoms):
+    def composition_fpv(self, candidate):
         """Basic function to take atoms object and return the composition."""
-        cs = atoms.get_chemical_symbols()
+        cs = self.get_chemical_symbols(candidate)
         # Generate a list of atom types if not supplied.
         if self.atom_types is None:
             self.atom_types = sorted(frozenset(cs))
@@ -39,7 +42,7 @@ class StandardFingerprintGenerator(object):
         # Add count of each atom type to the fingerprint vector.
         return np.array([cs.count(i) for i in self.atom_types])
 
-    def _get_coulomb(self, atoms):
+    def _get_coulomb(self, candidate):
         """Generate the coulomb matrix.
 
         A more detailed discussion of the coulomb features can be found here:
@@ -47,57 +50,58 @@ class StandardFingerprintGenerator(object):
 
         Parameters
         ----------
-        atoms : object
-          Atoms object with Cartesian coordinates available.
+        candidate : object
+          Data object with Cartesian coordinates and atomic numbers available.
 
         Returns
         -------
         coulomb : ndarray
           The coulomb matrix, (n, n) atoms in size.
         """
-        if len(atoms) < 2:
+        if len(candidate) < 2:
             raise ValueError(
                 ("Columb matrix requires atoms object with at least 2 atoms"))
 
-        dm = atoms.get_all_distances()
+        dm = self.get_all_distances(candidate)
         np.fill_diagonal(dm, 1.)
 
         # Make coulomb matrix
-        coulomb = np.outer(atoms.numbers, atoms.numbers) / dm
+        an = self.get_atomic_numbers(candidate)
+        coulomb = np.outer(an, an) / dm
 
         # Set diagonal elements
-        r = range(len(atoms))
-        coulomb[r, r] = 0.5 * atoms.numbers ** 2.4
+        r = range(len(an))
+        coulomb[r, r] = 0.5 * an ** 2.4
 
         return coulomb
 
-    def eigenspectrum_fpv(self, atoms):
+    def eigenspectrum_fpv(self, candidate):
         """Sorted eigenspectrum of the Coulomb matrix.
 
         Parameters
         ----------
-        atoms : object
-          Atoms object with Cartesian coordinates available.
+        candidate : object
+          Data object with Cartesian coordinates and atomic numbers available.
 
         Returns
         -------
         result : ndarray
           Sorted Eigen values of the coulomb matrix, n atoms is size.
         """
-        coulomb = self._get_coulomb(atoms)
+        coulomb = self._get_coulomb(candidate)
 
         w, _ = np.linalg.eig(coulomb)
 
         return np.sort(w)[::-1]
 
-    def distance_fpv(self, atoms):
+    def distance_fpv(self, candidate):
         """Averaged distance between e.g. A-A atomic pairs."""
         fp = []
-        an = atoms.get_atomic_numbers()
-        pos = atoms.get_positions()
+        an = self.get_atomic_numbers(candidate)
+        pos = self.get_positions(candidate)
         if self.atom_types is None:
             # Get unique atom types.
-            self.atom_types = frozenset(an)
+            self.atom_types = sorted(frozenset(an))
         for at in self.atom_types:
             ad = 0.
             co = 0

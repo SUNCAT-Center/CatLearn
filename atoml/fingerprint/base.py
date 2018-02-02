@@ -65,6 +65,76 @@ class FeatureGenerator(object):
 
         return nl
 
+    def get_positions(self, candidate):
+        """Function to return the atomic coordinates.
+
+        Parameters
+        ----------
+        candidate : object
+            Target data object from which to get the atomic coordinates.
+        """
+        if self.dtype == 'atoms':
+            return candidate.get_positions()
+        else:
+            raise NotImplementedError('{} data type not implemented.'.format(
+                self.dtype))
+
+    def get_atomic_numbers(self, candidate):
+        """Function to return the atomic numbers.
+
+        Parameters
+        ----------
+        candidate : object
+            Target data object from which to get the atomic numbers.
+        """
+        if self.dtype == 'atoms':
+            return candidate.get_atomic_numbers()
+        else:
+            raise NotImplementedError('{} data type not implemented.'.format(
+                self.dtype))
+
+    def get_chemical_symbols(self, candidate):
+        """Function to return the atomic symbols.
+
+        Parameters
+        ----------
+        candidate : object
+            Target data object from which to get the atomic symbols.
+        """
+        if self.dtype == 'atoms':
+            return candidate.get_chemical_symbols()
+        else:
+            raise NotImplementedError('{} data type not implemented.'.format(
+                self.dtype))
+
+    def get_masses(self, candidate):
+        """Function to return the atomic masses.
+
+        Parameters
+        ----------
+        candidate : object
+            Target data object from which to get the atomic masses.
+        """
+        if self.dtype == 'atoms':
+            return candidate.get_masses()
+        else:
+            raise NotImplementedError('{} data type not implemented.'.format(
+                self.dtype))
+
+    def get_all_distances(self, candidate):
+        """Function to return the atomic distances.
+
+        Parameters
+        ----------
+        candidate : object
+            Target data object from which to get the atomic distances.
+        """
+        if self.dtype == 'atoms':
+            return candidate.get_all_distances()
+        else:
+            raise NotImplementedError('{} data type not implemented.'.format(
+                self.dtype))
+
     def atoms_neighborlist(self, atoms, dx=None, neighbor_number=1):
         """Make dict of neighboring atoms for discrete system.
 

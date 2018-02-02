@@ -97,7 +97,7 @@ def _get_fpv(atoms, fpv_names, fps):
         A feature vector.
     """
     if len(fpv_names) == 1:
-        fp = fpv_names[0](atoms=atoms)
+        fp = fpv_names[0](atoms)
         fingerprint_vector = np.zeros((fps[0]))
         fingerprint_vector[:len(fp)] = fp
 
@@ -129,7 +129,7 @@ def _concatenate_fpv(atoms, fpv_names, fps):
     start = 0
     # Iterate through the feature generators and update feature vector.
     for i, name in enumerate(fpv_names):
-        fp = name(atoms=atoms)
+        fp = name(atoms)
         fingerprint_vector[start:start + len(fp)] = fp
         start = sum(fps[:i + 1])
 
