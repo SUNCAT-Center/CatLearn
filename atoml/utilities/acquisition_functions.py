@@ -120,11 +120,13 @@ class AcquisitionFunctions(object):
                 u = self.uncertainty[i]
                 res['cdf'].append(self._cdf_fit(x=b, m=p, v=u))
                 res['optimistic'].append(self._optimistic_fit(x=b, m=p, v=u))
-                res['gaussian'].append(self._gaussian_fit(x=b, m=p, v=u))
+                if 'gaussian' in metrics:
+                    res['gaussian'].append(self._gaussian_fit(x=b, m=p, v=u))
             else:
                 res['cdf'].append(float('inf'))
                 res['optimistic'].append(float('inf'))
-                res['gaussian'].append(float('inf'))
+                if 'gaussian' in metrics:
+                    res['gaussian'].append(float('inf'))
         return res
 
     def _cdf_fit(self, x, m, v):
