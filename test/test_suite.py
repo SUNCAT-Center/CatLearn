@@ -3,6 +3,7 @@ import os
 import unittest
 
 import test_data_setup as ds
+import test_feature_base as fb
 import test_scale as st
 import test_data_clean as dc
 import test_feature_optimization as ft
@@ -24,6 +25,7 @@ class ConfigTestCase(unittest.TestCase):
     def test_data_setup_func(self):
         """Test data setup routines."""
         # Test data setup functions.
+        fb.feature_base_test()
         all_cand, data = ds.feature_test()
         ds.cv_test(data)
         ds.db_test(all_cand, data)

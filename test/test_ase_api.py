@@ -2,25 +2,25 @@
 from __future__ import print_function
 from __future__ import absolute_import
 
-import os
 import numpy as np
 
 from ase.ga.data import DataConnection
 
-from atoml.api.ase_api import extend_class
+from atoml import __path__ as atoml_path
+from atoml.api.ase_api import extend_atoms_class
 from atoml.fingerprint import StandardFingerprintGenerator
 
-wkdir = os.getcwd()
+atoml_path = '/'.join(atoml_path[0].split('/')[:-1])
 
 
 def ase_api_test():
     """Test the ase api."""
-    gadb = DataConnection('{}/data/gadb.db'.format(wkdir))
+    gadb = DataConnection('{}/data/gadb.db'.format(atoml_path))
     all_cand = gadb.get_all_relaxed_candidates()
 
     cf = all_cand[0].get_chemical_formula()
 
-    extend_class(all_cand[0])
+    extend_atoms_class(all_cand[0])
     assert isinstance(all_cand[0], type(all_cand[1]))
 
     sf = StandardFingerprintGenerator()
@@ -30,7 +30,7 @@ def ase_api_test():
     assert np.allclose(all_cand[0].get_features(), fp)
     assert all_cand[0].get_chemical_formula() == cf
 
-    extend_class(all_cand[1])
+    extend_atoms_class(all_cand[1])
     assert all_cand[1].get_features() is None
 
 
