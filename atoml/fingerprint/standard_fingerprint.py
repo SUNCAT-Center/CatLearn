@@ -31,13 +31,14 @@ class StandardFingerprintGenerator(object):
 
     def composition_fpv(self, atoms):
         """Basic function to take atoms object and return the composition."""
+
         cs = atoms.get_chemical_symbols()
-        # Generate a list of atom types if not supplied.
+
+        # WARNING: Will be set permanently whichever atom is first passed.
         if self.atom_types is None:
             self.atom_types = sorted(frozenset(cs))
 
-        # Add count of each atom type to the fingerprint vector.
-        return np.array([cs.count(i) for i in self.atom_types])
+        return np.array([cs.count(sym) for sym in self.atom_types])
 
     def _get_coulomb(self, atoms):
         """Generate the coulomb matrix.
@@ -55,19 +56,19 @@ class StandardFingerprintGenerator(object):
         coulomb : ndarray
           The coulomb matrix, (n, n) atoms in size.
         """
+
         if len(atoms) < 2:
             raise ValueError(
-                ("Columb matrix requires atoms object with at least 2 atoms"))
+                "Columb matrix requires atoms object with at least 2 atoms")
 
         dm = atoms.get_all_distances()
-        np.fill_diagonal(dm, 1.)
+        np.fill_diagonal(dm, 1)
 
         # Make coulomb matrix
         coulomb = np.outer(atoms.numbers, atoms.numbers) / dm
 
-        # Set diagonal elements
-        r = range(len(atoms))
-        coulomb[r, r] = 0.5 * atoms.numbers ** 2.4
+        diagonal = 0.5 * atoms.numbers ** 2.4
+        np.fill_diagonal(coulomb, diagonal)
 
         return coulomb
 
@@ -86,9 +87,10 @@ class StandardFingerprintGenerator(object):
         """
         coulomb = self._get_coulomb(atoms)
 
-        w, _ = np.linalg.eig(coulomb)
+        v = np.linalg.eigvals(coulomb)
+        v[::-1].sort()
 
-        return np.sort(w)[::-1]
+        return v
 
     def distance_fpv(self, atoms):
         """Averaged distance between e.g. A-A atomic pairs."""
