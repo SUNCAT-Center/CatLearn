@@ -12,12 +12,20 @@ Input:
 import numpy as np
 import ase.db
 from ase.atoms import string2symbols
-from ase.data import covalent_radii
 from ase.geometry import get_layers
-# from ase.data import chemical_symbols
-
+from ase.data import atomic_numbers
+from .periodic_table_data import get_mendeleev_params
 
 addsyms = ['H', 'C', 'O', 'N', 'S']
+
+
+def get_radius(z):
+    p = get_mendeleev_params(z, ['atomic_radius'])
+    if p[-1] is not None:
+        r = p[-1]
+    elif p[-4] is not None:
+        r = p[-4]
+    return float(r) / 100.
 
 
 def slab_index(atoms):
@@ -47,57 +55,102 @@ def sym2ads_index(atoms):
 
 def last2ads_index(atoms, formula):
     """ Returns the indexes of the last n atoms in the atoms object, where n is
-    the length of the composition of the species field.
+    the length of the composition of the adsorbate species. This function will
+    work on atoms objects, where the slab was set up first,
+    and the adsorbate was added after.
 
     Parameters
     ----------
     atoms : ase atoms object.
         atoms.info must be a dictionary containing the key 'key_value_pairs',
-        which is expected to contain standard adsorbate structure
-        key value pairs. 'species' should be the chemical formula of an
-        adsorbate.
-
-    Parameters
-    ----------
-    atoms : ase atoms object.
+        which is expected to contain CATMAP standard adsorbate structure
+        key value pairs. See the ase db to catmap module in catmap.
+        the key value pair 'species' must be the
+        chemical formula of the adsorbate.
     """
     n_ads = len(string2symbols(formula))
     natoms = len(atoms)
     add_atoms = list(range(natoms-n_ads, natoms))
+    composition = string2symbols(formula)
+    for a in add_atoms:
+        if atoms[a].symbol not in composition:
+            raise AssertionError("last index adsorbate identification failed.")
     return add_atoms
 
 
 def formula2ads_index(atoms, formula):
-    composition = string2symbols(formula)
-    ads_atoms = [a.index for a in atoms if a.symbol in composition]
-    assert len(ads_atoms) == len(composition)
-    return ads_atoms
-
-
-def layers2ads_index(atoms, formula):
-    """ Returns the indexes of the last n atoms in the atoms object, where n is
-    the length of the composition of the species field.
+    """ Returns the indexes of atoms,
+    which have symbols matching the chemical formula of the adsorbate. This
+    function will not work for adsorbates containing the same elements as the
+    slab.
 
     Parameters
     ----------
     atoms : ase atoms object.
         atoms.info must be a dictionary containing the key 'key_value_pairs',
-        which is expected to contain standard adsorbate structure
-        key value pairs. 'species' should be the chemical formula of an
-        adsorbate.
+        which is expected to contain CatMAP standard adsorbate structure
+        key value pairs. See the ase db to catmap module in catmap.
+        the key value pair 'species' must be the
+        chemical formula of the adsorbate.
+    """
+    try:
+        composition = string2symbols(formula)
+    except ValueError:
+        print(formula)
+        raise
+    ads_atoms = [a.index for a in atoms if a.symbol in composition]
+    if len(ads_atoms) != len(composition):
+        raise AssertionError("ads atoms identification by formula failed.")
+    return ads_atoms
+
+
+def layers2ads_index(atoms, formula=None):
+    """ Returns the indexes of atoms in layers exceeding the number of layers
+    stored in the key value pair 'layers'.
 
     Parameters
     ----------
     atoms : ase atoms object.
+        atoms.info must be a dictionary containing the key 'key_value_pairs',
+        which is expected to contain CATMAP standard adsorbate structure
+        key value pairs. See the ase db to catmap module in catmap.
+        the key value pair 'species' must be the
+        chemical formula of the adsorbate and 'layers' must be an integer.
     """
     composition = string2symbols(formula)
-    n_ads = len()
+    n_ads = len(composition)
     natoms = len(atoms)
-    lz, li = get_layers(atoms, (0, 0, 1), tolerance=0.3)
+    radii = [get_radius(s) for s in composition]
+    lz, li = get_layers(atoms, (0, 0, 1), tolerance=2 * min(radii))
     layers = int(atoms.info['key_value_pairs']['layers'])
     ads_atoms = [a.index for a in atoms if li[a.index] > layers-1]
     ads_atoms = list(range(natoms-n_ads, natoms))
-    assert len(ads_atoms) == len(composition)
+    if len(ads_atoms) != len(composition):
+        raise AssertionError("ads atoms identification by layers failed.")
+    return ads_atoms
+
+
+def z2ads_index(atoms, formula):
+    """ Returns the indexes of the n atoms with the highest position
+    in the z direction,
+    where n is the number of atoms in the chemical formula from the species
+    key value pair.
+
+    Parameters
+    ----------
+    atoms : ase atoms object.
+        atoms.info must be a dictionary containing the key 'key_value_pairs',
+        which is expected to contain CATMAP standard adsorbate structure
+        key value pairs. See the ase db to catmap module in catmap.
+        the key value pair 'species'.
+    """
+    composition = string2symbols(formula)
+    n_ads = len(composition)
+    z = atoms.get_positions()[:, 2]
+    ads_atoms = np.argsort(z)[:n_ads]
+    for a in ads_atoms:
+        if atoms[a].symbol not in composition:
+            raise AssertionError("adsorbate identification by z coord failed.")
     return ads_atoms
 
 
@@ -109,8 +162,9 @@ def layers_info(atoms):
     ----------
     atoms : ase atoms object.
     """
+    radius = get_radius(atoms.info['Z_surf1'])
     il, z = get_layers(atoms, (0, 0, 1),
-                       tolerance=covalent_radii[atoms.info['Z_surf1']])
+                       tolerance=radius)
     layers = atoms.info['key_value_pairs']['layers']
     if len(z) < layers or len(z) > layers * 2:
         top_atoms = atoms.info['surf_atoms']
@@ -138,9 +192,9 @@ def info2primary_index(atoms, rtol=1.3):
     surf_atoms = atoms.info['surf_atoms']
     add_atoms = atoms.info['ads_atoms']
     for m in surf_atoms:
-        dM = covalent_radii[atoms.numbers[m]]
+        dM = get_radius(atoms.numbers[m])
         for a in add_atoms:
-            dA = covalent_radii[atoms.numbers[a]]
+            dA = get_radius(atoms.numbers[a])
             # Covalent radii are subtracted in distance comparison.
             d = atoms.get_distance(m, a, mic=True, vector=False)-dM-dA
             liste.append([a, m, d])
@@ -151,13 +205,13 @@ def info2primary_index(atoms, rtol=1.3):
     i_surf1 = L[i, 1]
     Z_add1 = atoms.numbers[int(i_add1)]
     Z_surf1 = atoms.numbers[int(i_surf1)]
-    dadd = covalent_radii[Z_add1]
+    dadd = get_radius(Z_add1)
     # i_surfnn = [a.index for a in atoms if a.symbol not in addsyms and
     #            atoms.get_distance(int(i_add1),
     #                               int(a.index), mic=True) < dmin * rtol]
     i_surfnn = [a.index for a in atoms if a.symbol not in addsyms and
                 atoms.get_distance(int(i_add1), int(a.index), mic=True) <
-                (covalent_radii[a.number]+dadd) * rtol]
+                (get_radius(a.number) + dadd) * rtol]
     return i_add1, i_surf1, Z_add1, Z_surf1, i_surfnn
 
 
@@ -341,6 +395,53 @@ def db2atoms_info(fname, selection=[]):
         atoms.info['dbid'] = int(d.id)
         species = atoms.info['key_value_pairs']['species']
         atoms.info['ads_atoms'] = formula2ads_index(atoms, species)
+        atoms.info['surf_atoms'] = slab_index(atoms)
+        i_add1, i_surf1, Z_add1, Z_surf1, i_surfnn = info2primary_index(atoms)
+        atoms.info['i_add1'] = i_add1
+        atoms.info['i_surf1'] = i_surf1
+        atoms.info['Z_add1'] = Z_add1
+        atoms.info['Z_surf1'] = Z_surf1
+        atoms.info['i_surfnn'] = i_surfnn
+        traj.append(atoms)
+    return traj
+
+
+def db2unlabeled_atoms(fname, selection=[]):
+    """ Returns a list of atoms objects.
+    """
+    c = ase.db.connect(fname)
+    s = c.select(selection)
+    traj = []
+    for d in s:
+        dbid = int(d.id)
+        atoms = c.get_atoms(dbid)
+        traj.append(atoms)
+    return traj
+
+
+def attach_adsorbate_info(images):
+    """Returns an atoms object with essential neighbor information attached.
+
+    Todo: checks for attached graph representations or neighborlists.
+
+    Parameters
+    ----------
+        traj : list
+            List of ASE atoms objects."""
+    traj = []
+    for i, atoms in enumerate(images):
+        if 'key_value_pairs' not in atoms.info:
+            atoms.info['key_value_pairs'] = {}
+            if 'species' in atoms.info:
+                atoms.info['key_value_pairs']['species'] = \
+                    atoms.info['species']
+            if 'layers' in atoms.info:
+                atoms.info['key_value_pairs']['layers'] = atoms.info['layers']
+        species = atoms.info['key_value_pairs']['species']
+        try:
+            atoms.info['ads_atoms'] = formula2ads_index(atoms, species)
+        except AssertionError:
+            atoms.info['ads_atoms'] = last2ads_index(atoms, species)
         atoms.info['surf_atoms'] = slab_index(atoms)
         i_add1, i_surf1, Z_add1, Z_surf1, i_surfnn = info2primary_index(atoms)
         atoms.info['i_add1'] = i_add1

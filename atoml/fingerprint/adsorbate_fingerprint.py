@@ -11,10 +11,10 @@ from __future__ import print_function
 
 import numpy as np
 from ase.atoms import string2symbols
-from ase.data import ground_state_magnetic_moments, covalent_radii
-from ase.data import atomic_numbers
+from ase.data import (ground_state_magnetic_moments, covalent_radii,
+                      atomic_numbers)
 from .periodic_table_data import get_mendeleev_params
-from .db2thermo import layers_info
+from .database_adsorbate_api import layers_info, get_radius
 from .neighbor_matrix import connection_matrix
 import collections
 
@@ -95,7 +95,15 @@ class AdsorbateFingerprintGenerator(object):
                     'ionenergy_term',
                     'ground_state_magmom_term']
         else:
-            name = atoms.info['key_value_pairs']['term']
+            if 'key_value_pairs' in atoms.info:
+                if 'term' in atoms.info['key_value_pairs']:
+                    name = atoms.info['key_value_pairs']['term']
+                elif 'termination' in atoms.info['termination']:
+                    name = atoms.info['terminaion']
+                else:
+                    raise NotImplementedError("termination fingerprint.")
+            else:
+                raise NotImplementedError("termination fingerprint.")
             # A = float(atoms.cell[0, 0]) * float(atoms.cell[1, 1])
             comp = string2symbols(name)
             dat = []
@@ -155,12 +163,20 @@ class AdsorbateFingerprintGenerator(object):
                     'ionenergy_bulk',
                     'ground_state_magmom_bulk']
         else:
-            name = atoms.info['key_value_pairs']['bulk']
+            if 'key_value_pairs' in atoms.info:
+                if 'bulk' in atoms.info['key_value_pairs']:
+                    name = atoms.info['key_value_pairs']['bulk']
+                elif 'bulk' in atoms.info['bulk']:
+                    name = atoms.info['bulk']
+                else:
+                    raise NotImplementedError("bulk fingerprint.")
+            else:
+                raise NotImplementedError("bulk fingerprint.")
             bulkcomp = string2symbols(name)
             dat = []
             # np.unique could be used.
             for symb in bulkcomp:
-                Z = atomic_numbers[symb]
+                Z = int(atomic_numbers[symb])
                 mnlv = get_mendeleev_params(Z,
                                             extra_params=['heat_of_formation',
                                                           'dft_bulk_modulus',
@@ -316,10 +332,10 @@ class AdsorbateFingerprintGenerator(object):
             primary_add = int(atoms.info['i_add1'])
             # Z_surf1 = int(atoms.info['Z_surf1'])
             Z_add1 = int(atoms.info['Z_add1'])
-            dH = covalent_radii[1]
-            dC = covalent_radii[6]
+            dadd = get_radius(Z_add1)
+            dH = get_radius(1)
+            dC = get_radius(6)
             # dM = covalent_radii[Z_surf1]
-            dadd = covalent_radii[Z_add1]
             nH1 = len([a.index for a in atoms if a.symbol == 'H' and
                        atoms.get_distance(primary_add, a.index, mic=True) <
                        (dH+dadd)*rtol and a.index != primary_add])
@@ -442,7 +458,7 @@ class AdsorbateFingerprintGenerator(object):
             q_self = []
             for nn in ai:
                 q = nn[0]
-                Znn = numbers[q]
+                Znn = int(numbers[q])
                 r_bond_nn = covalent_radii[Znn]
                 if q != primary_surf and nn[1] < rtol * (r_bond_nn+r_bond):
                     sym = symbols[q]
@@ -578,7 +594,7 @@ class AdsorbateFingerprintGenerator(object):
             ads_atoms = atoms.info['ads_atoms']
             dat = []
             for a in ads_atoms:
-                Z = atoms.numbers[a]
+                Z = int(atoms.numbers[a])
                 mnlv = get_mendeleev_params(Z, extra_params=['econf',
                                                              'ionenergies'])
                 dat.append(mnlv[:-2] + list(n_outer(mnlv[-2])) +
@@ -802,11 +818,3 @@ class AdsorbateFingerprintGenerator(object):
             return ['ctime']
         else:
             return [int(atoms.info['ctime'])]
-
-    def get_keyvaluepair(self, atoms=None, field_name='None'):
-        if atoms is None:
-            return ['kvp_'+field_name]
-        else:
-            field_value = float(atoms.info['key_value_pairs'][field_name])
-            [field_value]
-            return
