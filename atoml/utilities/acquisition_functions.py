@@ -38,7 +38,7 @@ class AcquisitionFunctions(object):
         self.test_features = test_features
         self.k = k
 
-    def rank(self):
+    def rank(self, x='max', metrics=['cdf', 'optimistic']):
         """Rank predictions based on acquisition function.
 
         Returns
@@ -46,21 +46,35 @@ class AcquisitionFunctions(object):
         res : dict
             A dictionary of lists containg the fitness of each test point for
             the different acquisition functions.
+        metrics : list
+            list of strings. 
+            Accepted values are 'cdf', 'optimistic' and 'gaussian'.
         """
-        res = {'cdf': [], 'optimistic': [], 'gaussian': []}
-        best = max(self.targets)
+        # Create dictionary with a list for each acquisition function.
+        res = {}
+        for key in metrics:
+            res.update({key: []})
+        # Select a fitness reference.
+        if x == 'max':
+            best = max(self.targets)
+        elif x == 'min':
+            best = min(self.targets)
+        elif isinstance(x, float):
+            best = x
 
         # Calcuate fitness based on acquisition functions.
         for i, j in zip(self.predictions, self.uncertainty):
             res['cdf'].append(self._cdf_fit(x=best, m=i, v=j))
             res['optimistic'].append(self._optimistic_fit(x=best, m=i, v=j))
-            res['gaussian'].append(self._gaussian_fit(x=best, m=i, v=j))
+            if 'gaussian' in metrics:
+                res['gaussian'].append(self._gaussian_fit(x=best, m=i, v=j))
 
         res['cluster'] = self._cluster_fit()
 
         return res
 
-    def classify(self, classifier, train_atoms, test_atoms):
+    def classify(self, classifier, train_atoms, test_atoms, x='max',
+                 metrics=['cdf', 'optimistic']):
         """Classify ranked predictions based on acquisition function.
 
         Parameters
@@ -80,7 +94,10 @@ class AcquisitionFunctions(object):
             A dictionary of lists containg the fitness of each test point for
             the different acquisition functions.
         """
-        res = {'cdf': [], 'optimistic': [], 'gaussian': [], 'cluster': []}
+        # Create dictionary with a list for each acquisition function.
+        res = {}
+        for key in metrics:
+            res.update({key: []})
         best = defaultdict(list)
 
         # start by classifying the training data.
@@ -92,7 +109,13 @@ class AcquisitionFunctions(object):
         for i, a in enumerate(test_atoms):
             c = classifier(a)
             if c in best:
-                b = max(best[c])
+                # Select a fitness reference.
+                if x == 'max':
+                    b = max(self.targets)
+                elif x == 'min':
+                    b = min(self.targets)
+                elif isinstance(x, float):
+                    b = x
                 p = self.predictions[i]
                 u = self.uncertainty[i]
                 res['cdf'].append(self._cdf_fit(x=b, m=p, v=u))
