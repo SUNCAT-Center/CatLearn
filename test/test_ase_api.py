@@ -30,6 +30,9 @@ def ase_api_test():
     assert np.allclose(all_cand[0].get_features(), fp)
     assert all_cand[0].get_chemical_formula() == cf
 
+    extend_class(all_cand[1])
+    assert all_cand[1].get_features() is None
+
 
 if __name__ == '__main__':
     from pyinstrument import Profiler

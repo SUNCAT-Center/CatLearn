@@ -10,6 +10,7 @@ def extend_class(atoms):
     atoms : class
         An ase atoms object.
     """
+    atoms._initialize_atoml = types.MethodType(_initialize_atoml, atoms)
     atoms.set_features = types.MethodType(set_features, atoms)
     atoms.get_features = types.MethodType(get_features, atoms)
 
@@ -28,9 +29,8 @@ def set_features(self, fp):
     fp : array
         The feature vector to attach.
     """
-    if 'atoml' not in self.info:
-        self.info['atoml'] = {}
-    self.info['atoml']['features'] = fp
+    self._initialize_atoml()
+    self.atoml['features'] = fp
 
 
 def get_features(self):
@@ -50,4 +50,16 @@ def get_features(self):
     fp : array
         The feature vector attach to the atoms object.
     """
-    return self.info['atoml']['features']
+    self._initialize_atoml()
+    try:
+        return self.atoml['features']
+    except KeyError:
+        return None
+
+
+def _initialize_atoml(self):
+    """A base function to initialize the atoml functionality."""
+    try:
+        self.atoml
+    except AttributeError:
+        self.atoml = {}
