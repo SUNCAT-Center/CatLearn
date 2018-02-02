@@ -1,4 +1,7 @@
 """Simple tests for the ase api."""
+from __future__ import print_function
+from __future__ import absolute_import
+
 import os
 
 from ase.ga.data import DataConnection
