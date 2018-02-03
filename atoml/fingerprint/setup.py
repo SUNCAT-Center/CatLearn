@@ -69,8 +69,8 @@ def return_fpv(candidates, fpv_names):
     # PATCH: Ideally fp length would be called from a property.
     fps = np.zeros(fpvn, dtype=int)
     for i, fp in enumerate(fpv_names):
-        fps[i] = max(len(fp(candidates[maxatoms])),
-                     len(fp(candidates[maxcomp])))
+        fps[i] = max(len(fp(candidates[maxcomp])),
+                     len(fp(candidates[maxatoms])))
 
     fingerprint_vector = np.zeros((len(candidates), sum(fps)))
     for i, atoms in enumerate(candidates):

@@ -16,7 +16,8 @@ class StandardFingerprintGenerator(FeatureGenerator):
         Parameters
         ----------
         atom_types : list
-            Unique atomic types in the systems.
+            Unique atomic types in the systems. Types are denoted by atomic
+            number e.g. for CH4 set [1, 6].
         """
         self.atom_types = atom_types
         FeatureGenerator.__init__(self, dtype=dtype)
@@ -29,12 +30,12 @@ class StandardFingerprintGenerator(FeatureGenerator):
     def composition_fpv(self, candidate):
         """Basic function to take atoms object and return the composition."""
         an = self.get_atomic_numbers(candidate)
-        # Generate a list of atom types if not supplied.
+
+        # WARNING: Will be set permanently whichever atom is first passed.
         if self.atom_types is None:
             self.atom_types = sorted(frozenset(an))
 
-        # Add count of each atom type to the fingerprint vector.
-        return np.array([an.count(i) for i in self.atom_types])
+        return np.array([an.count(sym) for sym in self.atom_types])
 
     def _get_coulomb(self, candidate):
         """Generate the coulomb matrix.
@@ -54,18 +55,17 @@ class StandardFingerprintGenerator(FeatureGenerator):
         """
         if len(candidate) < 2:
             raise ValueError(
-                ("Columb matrix requires atoms object with at least 2 atoms"))
+                "Columb matrix requires atoms object with at least 2 atoms")
 
         dm = self.get_all_distances(candidate)
-        np.fill_diagonal(dm, 1.)
+        np.fill_diagonal(dm, 1)
 
         # Make coulomb matrix
-        an = self.get_atomic_numbers(candidate)
-        coulomb = np.outer(an, an) / dm
+        ano = self.get_atomic_numbers(candidate)
+        coulomb = np.outer(ano, ano) / dm
 
-        # Set diagonal elements
-        r = range(len(an))
-        coulomb[r, r] = 0.5 * an ** 2.4
+        diagonal = 0.5 * ano ** 2.4
+        np.fill_diagonal(coulomb, diagonal)
 
         return coulomb
 
@@ -84,9 +84,10 @@ class StandardFingerprintGenerator(FeatureGenerator):
         """
         coulomb = self._get_coulomb(candidate)
 
-        w, _ = np.linalg.eig(coulomb)
+        v = np.linalg.eigvals(coulomb)
+        v[::-1].sort()
 
-        return np.sort(w)[::-1]
+        return v
 
     def distance_fpv(self, candidate):
         """Averaged distance between e.g. A-A atomic pairs."""
