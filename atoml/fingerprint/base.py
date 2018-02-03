@@ -93,20 +93,6 @@ class FeatureGenerator(object):
             raise NotImplementedError('{} data type not implemented.'.format(
                 self.dtype))
 
-    def get_chemical_symbols(self, candidate):
-        """Function to return the atomic symbols.
-
-        Parameters
-        ----------
-        candidate : object
-            Target data object from which to get the atomic symbols.
-        """
-        if self.dtype == 'atoms':
-            return candidate.get_chemical_symbols()
-        else:
-            raise NotImplementedError('{} data type not implemented.'.format(
-                self.dtype))
-
     def get_masses(self, candidate):
         """Function to return the atomic masses.
 

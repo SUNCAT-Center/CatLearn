@@ -6,12 +6,6 @@ import numpy as np
 
 from .base import FeatureGenerator
 
-no_asap = False
-try:
-    from asap3.analysis import PTM
-except ImportError:
-    no_asap = True
-
 
 class StandardFingerprintGenerator(FeatureGenerator):
     """Function to build a fingerprint vector based on an atoms object."""
@@ -34,13 +28,13 @@ class StandardFingerprintGenerator(FeatureGenerator):
 
     def composition_fpv(self, candidate):
         """Basic function to take atoms object and return the composition."""
-        cs = self.get_chemical_symbols(candidate)
+        an = self.get_atomic_numbers(candidate)
         # Generate a list of atom types if not supplied.
         if self.atom_types is None:
-            self.atom_types = sorted(frozenset(cs))
+            self.atom_types = sorted(frozenset(an))
 
         # Add count of each atom type to the fingerprint vector.
-        return np.array([cs.count(i) for i in self.atom_types])
+        return np.array([an.count(i) for i in self.atom_types])
 
     def _get_coulomb(self, candidate):
         """Generate the coulomb matrix.
@@ -116,19 +110,3 @@ class StandardFingerprintGenerator(FeatureGenerator):
             else:
                 fp.append(0.)
         return fp
-
-    def ptm_structure_fpv(self, atoms):
-        """Polyhedral Template Matching wrapper for ASAP."""
-        msg = "ASAP must be installed to use this function:"
-        msg += " https://wiki.fysik.dtu.dk/asap"
-        assert not no_asap, msg
-        ptmdata = PTM(atoms)
-        return ptmdata['structure']
-
-    def ptm_alloy_fpv(self, atoms):
-        """Polyhedral Template Matching wrapper for ASAP."""
-        msg = "ASAP must be installed to use this function:"
-        msg += " https://wiki.fysik.dtu.dk/asap"
-        assert not no_asap, msg
-        ptmdata = PTM(atoms)
-        return ptmdata['alloytype']
