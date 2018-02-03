@@ -29,13 +29,13 @@ class StandardFingerprintGenerator(FeatureGenerator):
 
     def composition_fpv(self, candidate):
         """Basic function to take atoms object and return the composition."""
-        an = self.get_atomic_numbers(candidate)
+        ano = self.get_atomic_numbers(candidate)
 
         # WARNING: Will be set permanently whichever atom is first passed.
         if self.atom_types is None:
-            self.atom_types = sorted(frozenset(an))
+            self.atom_types = sorted(frozenset(ano))
 
-        return np.array([an.count(sym) for sym in self.atom_types])
+        return np.array([ano.count(sym) for sym in self.atom_types])
 
     def _get_coulomb(self, candidate):
         """Generate the coulomb matrix.
