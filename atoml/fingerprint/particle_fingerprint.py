@@ -45,6 +45,8 @@ class ParticleFingerprintGenerator(object):
         self.nbins = nbins
         self.rmax = rmax
 
+        super(ParticleFingerprintGenerator, self).__init__()
+
     def nearestneighbour_fpv(self, atoms):
         """Nearest neighbour average, Topics in Catalysis, 2014, 57, 33."""
         if 'data' not in atoms.info or 'nnmat' not in atoms.info['data']:

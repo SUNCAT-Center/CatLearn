@@ -6,10 +6,10 @@ import json
 import numpy as np
 
 from atoml import __path__ as atoml_path
-from .base import FeatureGenerator
+from .base import BaseGenerator
 
 
-class StandardFingerprintGenerator(FeatureGenerator):
+class StandardFingerprintGenerator(BaseGenerator):
     """Function to build a fingerprint vector based on an atoms object."""
 
     def __init__(self, atom_types=None, dtype='atoms'):
@@ -22,12 +22,14 @@ class StandardFingerprintGenerator(FeatureGenerator):
             number e.g. for CH4 set [1, 6].
         """
         self.atom_types = atom_types
-        FeatureGenerator.__init__(self, dtype=dtype)
+        self.dtype = dtype
 
         # Load the Mendeleev parameter data into memory
         with open('/'.join(atoml_path[0].split('/')[:-1]) +
                   '/atoml/data/proxy-mendeleev.json') as f:
-            self.data = json.load(f)
+            self.element_data = json.load(f)
+
+        super(StandardFingerprintGenerator, self).__init__()
 
     def mass_fpv(self, candidate):
         """Function to return a vector based on mass parameter."""
@@ -56,7 +58,7 @@ class StandardFingerprintGenerator(FeatureGenerator):
         """
         comp = self.composition_fpv(candidate)
 
-        plist = [self.data[str(an)].get(param) for an in
+        plist = [self.element_data[str(an)].get(param) for an in
                  self.atom_types]
 
         features = np.zeros(len(comp)+1)
