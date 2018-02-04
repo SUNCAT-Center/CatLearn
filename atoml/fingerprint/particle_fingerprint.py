@@ -18,7 +18,7 @@ class ParticleFingerprintGenerator(object):
     """Function to build a fingerprint vector based on an atoms object."""
 
     def __init__(self, atom_numbers=None, max_bonds=13, get_nl=False, dx=0.2,
-                 cell_size=50., nbin=4, rmax=8., nbins=5):
+                 cell_size=50., nbin=4, rmax=8., nbins=5, *args, **kwargs):
         """Particle fingerprint generator setup.
 
         Parameters
@@ -45,7 +45,7 @@ class ParticleFingerprintGenerator(object):
         self.nbins = nbins
         self.rmax = rmax
 
-        super(ParticleFingerprintGenerator, self).__init__()
+        super(ParticleFingerprintGenerator, self).__init__(*args, **kwargs)
 
     def nearestneighbour_fpv(self, atoms):
         """Nearest neighbour average, Topics in Catalysis, 2014, 57, 33."""

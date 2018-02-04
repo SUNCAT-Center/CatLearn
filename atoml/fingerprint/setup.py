@@ -14,7 +14,8 @@ class FeatureGenerator(
         ParticleFingerprintGenerator, StandardFingerprintGenerator):
     """Feature generator class."""
 
-    def __init__(self, atom_types=None, atom_len=None, dtype='atoms'):
+    def __init__(self, atom_types=None, atom_len=None, dtype='atoms', *args,
+                 **kwargs):
         """Initialize feature generator.
 
         Parameters
@@ -27,7 +28,7 @@ class FeatureGenerator(
         self.atom_len = atom_len
         self.dtype = dtype
 
-        super(FeatureGenerator, self).__init__()
+        super(FeatureGenerator, self).__init__(*args, **kwargs)
 
     def get_combined_descriptors(self, fpv_list):
         """Sequentially combine feature label vectors.

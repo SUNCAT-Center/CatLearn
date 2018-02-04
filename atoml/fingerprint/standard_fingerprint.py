@@ -12,7 +12,8 @@ from .base import BaseGenerator
 class StandardFingerprintGenerator(BaseGenerator):
     """Function to build a fingerprint vector based on an atoms object."""
 
-    def __init__(self, atom_types=None, atom_len=None, dtype='atoms'):
+    def __init__(self, atom_types=None, atom_len=None, dtype='atoms', *args,
+                 **kwargs):
         """Standard fingerprint generator setup.
 
         Parameters
@@ -26,24 +27,30 @@ class StandardFingerprintGenerator(BaseGenerator):
         dtype : str
             A string defining the data type being passed. Default is ase atoms
             objects.
+        element_parameters : str, list
+            Optional variable to be passed if element_parameter_fpv is to be
+            called. Type of atomic parameter upon which to compile the feature
+            vector. A full list of atomic parameters can be found here:
+            https://pypi.python.org/pypi/mendeleev/
         """
         self.atom_types = atom_types
         self.atom_len = atom_len
         self.dtype = dtype
+        self.element_parameters = kwargs.get('element_parameters')
 
         # Load the Mendeleev parameter data into memory
         with open('/'.join(atoml_path[0].split('/')[:-1]) +
                   '/atoml/data/proxy-mendeleev.json') as f:
             self.element_data = json.load(f)
 
-        super(StandardFingerprintGenerator, self).__init__()
+        super(StandardFingerprintGenerator, self).__init__(*args, **kwargs)
 
     def mass_fpv(self, candidate):
         """Function to return a vector based on mass parameter."""
         # Return the summed mass of the atoms object.
         return np.array([sum(self.get_masses(candidate))])
 
-    def element_parameter_fpv(self, candidate, param='atomic_radius'):
+    def element_parameter_fpv(self, candidate):
         """Function to return a vector based on a defined paramter.
 
         The vector is compiled based on the summed parameters for each
@@ -53,23 +60,23 @@ class StandardFingerprintGenerator(BaseGenerator):
         ----------
         candidate : object
             Data object with atomic numbers available.
-        param : str
-            Type of atomic parameter upon which to compile the feature vector.
-            A full list of atomic parameters can be found here:
-            https://goo.gl/G4eTvu
 
         Returns
         -------
         features : array
             An n + 1 array where n in the length of self.atom_types.
         """
-        if not isinstance(param, list):
-            param = [param]
+        msg = 'The variable element_parameters must be set in the feature '
+        msg += 'generator class.'
+        assert self.element_parameters is not None, msg
+
+        if not isinstance(self.element_parameters, list):
+            self.element_parameters = [self.element_parameters]
 
         comp = self.composition_fpv(candidate)
 
         features = np.asarray([])
-        for p in param:
+        for p in self.element_parameters:
             plist = [self.element_data[str(an)].get(p) for an in
                      self.atom_types]
 

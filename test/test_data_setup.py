@@ -52,7 +52,7 @@ def feature_test():
 
     # Initiate the fingerprint generators with relevant input variables.
     print('Getting the fingerprints')
-    f = FeatureGenerator()
+    f = FeatureGenerator(element_parameters='atomic_radius')
 
     data = f.return_fpv(trainset['atoms'], [f.nearestneighbour_fpv])
     n, d = np.shape(data)

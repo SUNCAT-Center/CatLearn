@@ -10,7 +10,7 @@ from atoml.api.ase_api import extend_atoms_class
 class BaseGenerator(object):
     """Base class for feature generation."""
 
-    def __init__(self, dtype='atoms'):
+    def __init__(self, dtype='atoms', *args, **kwargs):
         """Initialize the class.
 
         Parameters
@@ -19,8 +19,6 @@ class BaseGenerator(object):
             Expected data type. Currently only supports ase atoms objects.
         """
         self.dtype = dtype
-
-        super(BaseGenerator, self).__init__()
 
     def make_neighborlist(self, candidate, dx=None, neighbor_number=1):
         """Function to generate the neighborlist.
