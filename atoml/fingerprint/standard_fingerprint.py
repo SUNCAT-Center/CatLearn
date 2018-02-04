@@ -12,8 +12,7 @@ from .base import BaseGenerator
 class StandardFingerprintGenerator(BaseGenerator):
     """Function to build a fingerprint vector based on an atoms object."""
 
-    def __init__(self, atom_types=None, atom_len=None, dtype='atoms', *args,
-                 **kwargs):
+    def __init__(self, **kwargs):
         """Standard fingerprint generator setup.
 
         Parameters
@@ -24,18 +23,16 @@ class StandardFingerprintGenerator(BaseGenerator):
         atom_len : int
             The maximum length of all atomic systems that will be passed in a
             data set.
-        dtype : str
-            A string defining the data type being passed. Default is ase atoms
-            objects.
         element_parameters : str, list
             Optional variable to be passed if element_parameter_fpv is to be
             called. Type of atomic parameter upon which to compile the feature
             vector. A full list of atomic parameters can be found here:
             https://pypi.python.org/pypi/mendeleev/
         """
-        self.atom_types = atom_types
-        self.atom_len = atom_len
-        self.dtype = dtype
+        if not hasattr(self, 'atom_types'):
+            self.atom_types = kwargs.get('atom_types')
+        if not hasattr(self, 'atom_len'):
+            self.atom_len = kwargs.get('atom_len')
         self.element_parameters = kwargs.get('element_parameters')
 
         # Load the Mendeleev parameter data into memory
@@ -43,7 +40,7 @@ class StandardFingerprintGenerator(BaseGenerator):
                   '/atoml/data/proxy-mendeleev.json') as f:
             self.element_data = json.load(f)
 
-        super(StandardFingerprintGenerator, self).__init__(*args, **kwargs)
+        super(StandardFingerprintGenerator, self).__init__(**kwargs)
 
     def mass_fpv(self, candidate):
         """Function to return a vector based on mass parameter."""
