@@ -134,3 +134,27 @@ def _concatenate_fpv(atoms, fpv_names, fps):
         start = sum(fps[:i + 1])
 
     return fingerprint_vector
+
+
+def get_atomic_types(train_candidates, test_candidates=None):
+    """Function to get all potential atomic types in data.
+
+    Parameters
+    ----------
+    train_candidates : list
+        List of atoms objects.
+    test_candidates : list
+        List of atoms objects.
+
+    Returns
+    -------
+    atom_types : list
+        Full list of atomic numbers in data.
+    """
+    if test_candidates is not None:
+        train_candidates += test_candidates
+    atom_types = set()
+    for a in train_candidates:
+        atom_types.update(set(a.get_atomic_numbers()))
+
+    return sorted(list(atom_types))
