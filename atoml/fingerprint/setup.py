@@ -14,7 +14,7 @@ class FeatureGenerator(
         ParticleFingerprintGenerator, StandardFingerprintGenerator):
     """Feature generator class."""
 
-    def __init__(self, atom_types=None, dtype='atoms'):
+    def __init__(self, atom_types=None, atom_len=None, dtype='atoms'):
         """Initialize feature generator.
 
         Parameters
@@ -24,6 +24,7 @@ class FeatureGenerator(
             number e.g. for CH4 set [1, 6].
         """
         self.atom_types = atom_types
+        self.atom_len = atom_len
         self.dtype = dtype
 
         super(FeatureGenerator, self).__init__()
@@ -78,26 +79,21 @@ class FeatureGenerator(
 
         if not isinstance(fpv_names, list):
             fpv_names = [fpv_names]
-        fpvn = len(fpv_names)
 
-        # Find the maximum number of atoms and atomic species.
-        maxatoms = np.argmax([len(atoms) for atoms in candidates])
-        maxcomp = np.argmax(
-            [len(set(atoms.get_chemical_symbols())) for atoms in candidates])
+        # Find the maximum number of atomic species in data if needed.
+        if self.atom_types is None:
+            self._get_atom_types(candidates)
+        # Find the maximum number of atoms in data if needed.
+        if self.atom_len is None:
+            self._get_atom_length(candidates)
 
-        # PATCH: Ideally fp length would be called from a property.
-        fps = np.zeros(fpvn, dtype=int)
-        for i, fp in enumerate(fpv_names):
-            fps[i] = max(len(fp(candidates[maxcomp])),
-                         len(fp(candidates[maxatoms])))
+        fingerprint_vector = []
+        for atoms in candidates:
+            fingerprint_vector.append(self._get_fpv(atoms, fpv_names))
 
-        fingerprint_vector = np.zeros((len(candidates), sum(fps)))
-        for i, atoms in enumerate(candidates):
-            fingerprint_vector[i] = self._get_fpv(atoms, fpv_names, fps)
+        return np.asarray(fingerprint_vector)
 
-        return fingerprint_vector
-
-    def _get_fpv(self, atoms, fpv_names, fps):
+    def _get_fpv(self, atoms, fpv_names):
         """Get the fingerprint vector as an array.
 
         Parameters
@@ -115,16 +111,11 @@ class FeatureGenerator(
             A feature vector.
         """
         if len(fpv_names) == 1:
-            fp = fpv_names[0](atoms)
-            fingerprint_vector = np.zeros((fps[0]))
-            fingerprint_vector[:len(fp)] = fp
-
+            return fpv_names[0](atoms)
         else:
-            fingerprint_vector = self._concatenate_fpv(atoms, fpv_names, fps)
+            return self._concatenate_fpv(atoms, fpv_names)
 
-        return fingerprint_vector
-
-    def _concatenate_fpv(self, atoms, fpv_names, fps):
+    def _concatenate_fpv(self, atoms, fpv_names):
         """Join multiple fingerprint vectors.
 
         Parameters
@@ -141,18 +132,28 @@ class FeatureGenerator(
         fingerprint_vector : list
             A feature vector.
         """
-        # Define full feature vector.
-        fingerprint_vector = np.zeros((sum(fps)))
-        start = 0
+        fingerprint_vector = np.array([])
         # Iterate through the feature generators and update feature vector.
-        for i, name in enumerate(fpv_names):
-            fp = name(atoms)
-            fingerprint_vector[start:start + len(fp)] = fp
-            start = sum(fps[:i + 1])
+        for name in fpv_names:
+            fingerprint_vector = np.concatenate((fingerprint_vector,
+                                                 name(atoms)))
 
         return fingerprint_vector
 
-    def get_atomic_types(self, train_candidates, test_candidates=None):
+    def normalize_features(self, train_candidates, test_candidates=None):
+        """Function to attach feature data to class.
+
+        Parameters
+        ----------
+        train_candidates : list
+            List of atoms objects.
+        test_candidates : list
+            List of atoms objects.
+        """
+        self._get_atom_types(train_candidates, test_candidates)
+        self._get_atom_length(train_candidates, test_candidates)
+
+    def _get_atom_types(self, train_candidates, test_candidates=None):
         """Function to get all potential atomic types in data.
 
         Parameters
@@ -167,10 +168,38 @@ class FeatureGenerator(
         atom_types : list
             Full list of atomic numbers in data.
         """
+        train_candidates = list(train_candidates)
         if test_candidates is not None:
-            train_candidates += test_candidates
+            train_candidates += list(test_candidates)
         atom_types = set()
         for a in train_candidates:
             atom_types.update(set(a.get_atomic_numbers()))
+        atom_types = sorted(list(atom_types))
 
-        return sorted(list(atom_types))
+        self.atom_types = atom_types
+
+    def _get_atom_length(self, train_candidates, test_candidates=None):
+        """Function to get all potential atomic types in data.
+
+        Parameters
+        ----------
+        train_candidates : list
+            List of atoms objects.
+        test_candidates : list
+            List of atoms objects.
+
+        Returns
+        -------
+        atom_types : list
+            Full list of atomic numbers in data.
+        """
+        train_candidates = list(train_candidates)
+        if test_candidates is not None:
+            train_candidates += list(test_candidates)
+
+        max_len = 0
+        for a in train_candidates:
+            if max_len < len(a):
+                max_len = len(a)
+
+        self.atom_len = max_len

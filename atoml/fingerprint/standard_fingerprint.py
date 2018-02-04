@@ -12,7 +12,7 @@ from .base import BaseGenerator
 class StandardFingerprintGenerator(BaseGenerator):
     """Function to build a fingerprint vector based on an atoms object."""
 
-    def __init__(self, atom_types=None, dtype='atoms'):
+    def __init__(self, atom_types=None, atom_len=None, dtype='atoms'):
         """Standard fingerprint generator setup.
 
         Parameters
@@ -22,6 +22,7 @@ class StandardFingerprintGenerator(BaseGenerator):
             number e.g. for CH4 set [1, 6].
         """
         self.atom_types = atom_types
+        self.atom_len = atom_len
         self.dtype = dtype
 
         # Load the Mendeleev parameter data into memory
@@ -132,15 +133,17 @@ class StandardFingerprintGenerator(BaseGenerator):
 
         Returns
         -------
-        result : ndarray
+        features : ndarray
           Sorted Eigen values of the coulomb matrix, n atoms is size.
         """
+        features = np.zeros(self.atom_len)
         coulomb = self._get_coulomb(candidate)
 
         v = np.linalg.eigvals(coulomb)
         v[::-1].sort()
+        features[:len(v)] = v
 
-        return v
+        return features
 
     def distance_fpv(self, candidate):
         """Averaged distance between e.g. A-A atomic pairs."""
