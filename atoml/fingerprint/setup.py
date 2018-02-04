@@ -6,8 +6,8 @@ from __future__ import division
 import numpy as np
 from collections import defaultdict
 
-from atoml.fingerprint import ParticleFingerprintGenerator
-from atoml.fingerprint import StandardFingerprintGenerator
+from .particle_fingerprint import ParticleFingerprintGenerator
+from .standard_fingerprint import StandardFingerprintGenerator
 
 
 class FeatureGenerator(

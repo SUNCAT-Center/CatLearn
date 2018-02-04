@@ -7,8 +7,7 @@ import os
 from ase.ga.data import DataConnection
 
 from atoml.utilities.data_setup import get_unique, get_train
-from atoml.fingerprint.setup import return_fpv
-from atoml.fingerprint import ParticleFingerprintGenerator
+from atoml.fingerprint import FeatureGenerator
 from atoml.regression import GaussianProcess
 from atoml.utilities.acquisition_functions import AcquisitionFunctions
 
@@ -43,12 +42,10 @@ def get_data():
 
     # Initiate the fingerprint generators with relevant input variables.
     print('Getting the fingerprints')
-    pfpv = ParticleFingerprintGenerator(atom_numbers=[78, 79], max_bonds=13,
-                                        get_nl=False, dx=0.2, cell_size=30.,
-                                        nbin=4)
+    f = FeatureGenerator()
 
-    train_features = return_fpv(trainset['atoms'], [pfpv.nearestneighbour_fpv])
-    test_features = return_fpv(testset['atoms'], [pfpv.nearestneighbour_fpv])
+    train_features = f.return_fpv(trainset['atoms'], [f.nearestneighbour_fpv])
+    test_features = f.return_fpv(testset['atoms'], [f.nearestneighbour_fpv])
 
     train_targets = []
     for a in trainset['atoms']:
@@ -93,6 +90,7 @@ def gp_test(train_features, train_targets, train_atoms, test_features,
     assert len(acq['cdf']) == len(pred['prediction'])
     assert len(acq['optimistic']) == len(pred['prediction'])
     assert len(acq['gaussian']) == len(pred['prediction'])
+
 
 if __name__ == '__main__':
     from pyinstrument import Profiler
