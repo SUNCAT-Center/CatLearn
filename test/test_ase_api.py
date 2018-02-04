@@ -24,7 +24,7 @@ def ase_api_test():
     assert isinstance(all_cand[0], type(all_cand[1]))
 
     f = FeatureGenerator()
-    fp = f.composition_fpv(all_cand[0])
+    fp = f.composition_vec(all_cand[0])
     all_cand[0].set_features(fp)
 
     assert np.allclose(all_cand[0].get_features(), fp)

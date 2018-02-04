@@ -24,7 +24,7 @@ class StandardFingerprintGenerator(BaseGenerator):
             The maximum length of all atomic systems that will be passed in a
             data set.
         element_parameters : str, list
-            Optional variable to be passed if element_parameter_fpv is to be
+            Optional variable to be passed if element_parameter_vec is to be
             called. Type of atomic parameter upon which to compile the feature
             vector. A full list of atomic parameters can be found here:
             https://pypi.python.org/pypi/mendeleev/
@@ -42,12 +42,12 @@ class StandardFingerprintGenerator(BaseGenerator):
 
         super(StandardFingerprintGenerator, self).__init__(**kwargs)
 
-    def mass_fpv(self, candidate):
+    def mass_vec(self, candidate):
         """Function to return a vector based on mass parameter."""
         # Return the summed mass of the atoms object.
         return np.array([sum(self.get_masses(candidate))])
 
-    def element_parameter_fpv(self, candidate):
+    def element_parameter_vec(self, candidate):
         """Function to return a vector based on a defined paramter.
 
         The vector is compiled based on the summed parameters for each
@@ -70,7 +70,7 @@ class StandardFingerprintGenerator(BaseGenerator):
         if not isinstance(self.element_parameters, list):
             self.element_parameters = [self.element_parameters]
 
-        comp = self.composition_fpv(candidate)
+        comp = self.composition_vec(candidate)
 
         features = np.asarray([])
         for p in self.element_parameters:
@@ -84,7 +84,7 @@ class StandardFingerprintGenerator(BaseGenerator):
 
         return features
 
-    def composition_fpv(self, candidate):
+    def composition_vec(self, candidate):
         """Function to return a feature vector based on the composition.
 
         Parameters
@@ -139,7 +139,7 @@ class StandardFingerprintGenerator(BaseGenerator):
 
         return coulomb
 
-    def eigenspectrum_fpv(self, candidate):
+    def eigenspectrum_vec(self, candidate):
         """Sorted eigenspectrum of the Coulomb matrix.
 
         Parameters
@@ -161,7 +161,7 @@ class StandardFingerprintGenerator(BaseGenerator):
 
         return features
 
-    def distance_fpv(self, candidate):
+    def distance_vec(self, candidate):
         """Averaged distance between e.g. A-A atomic pairs."""
         fp = []
         an = self.get_atomic_numbers(candidate)

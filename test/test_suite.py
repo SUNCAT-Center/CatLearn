@@ -91,4 +91,4 @@ class ConfigTestCase(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
-    os.remove('{}/fpv_store.sqlite'.format(wkdir))
+    os.remove('{}/vec_store.sqlite'.format(wkdir))

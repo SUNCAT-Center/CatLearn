@@ -24,7 +24,7 @@ scale_optimizer = False
 def get_data():
     """Simple function to pull some training and test data."""
     # Attach the database.
-    dd = DescriptorDatabase(db_name='{}/fpv_store.sqlite'.format(wkdir),
+    dd = DescriptorDatabase(db_name='{}/vec_store.sqlite'.format(wkdir),
                             table='FingerVector')
 
     # Pull the features and targets from the database.

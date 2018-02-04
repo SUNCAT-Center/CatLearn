@@ -44,8 +44,8 @@ def get_data():
     print('Getting the fingerprints')
     f = FeatureGenerator()
 
-    train_features = f.return_fpv(trainset['atoms'], [f.nearestneighbour_fpv])
-    test_features = f.return_fpv(testset['atoms'], [f.nearestneighbour_fpv])
+    train_features = f.return_vec(trainset['atoms'], [f.nearestneighbour_vec])
+    test_features = f.return_vec(testset['atoms'], [f.nearestneighbour_vec])
 
     train_targets = []
     for a in trainset['atoms']:

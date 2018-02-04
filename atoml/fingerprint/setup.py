@@ -31,43 +31,43 @@ class FeatureGenerator(
 
         super(FeatureGenerator, self).__init__(**kwargs)
 
-    def get_combined_descriptors(self, fpv_list):
+    def get_combined_descriptors(self, vec_list):
         """Sequentially combine feature label vectors.
 
         Parameters
         ----------
-        fpv_list : list
+        vec_list : list
             Functions that return fingerprints.
         """
         # Check that there are at least two fingerprint descriptors to combine.
         msg = "This functions combines various fingerprint"
         msg += " vectors, there must be at least two to combine"
-        assert len(fpv_list) >= 2, msg
-        labels = fpv_list[::-1]
+        assert len(vec_list) >= 2, msg
+        labels = vec_list[::-1]
         L_F = []
         for j in range(len(labels)):
             L_F.append(labels[j]())
         return np.hstack(L_F)
 
-    def get_keyvaluepair(self, c=[], fpv_name='None'):
+    def get_keyvaluepair(self, c=[], vec_name='None'):
         """Get a list of the key_value_pairs target names/values."""
         if len(c) == 0:
-            return ['kvp_' + fpv_name]
+            return ['kvp_' + vec_name]
         else:
             out = []
             for atoms in c:
-                field_value = float(atoms['key_value_pairs'][fpv_name])
+                field_value = float(atoms['key_value_pairs'][vec_name])
                 out.append(field_value)
             return out
 
-    def return_fpv(self, candidates, fpv_names):
+    def return_vec(self, candidates, vec_names):
         """Sequentially combine feature vectors. Padding handled automatically.
 
         Parameters
         ----------
         candidates : list or dict
             Atoms objects to construct fingerprints for.
-        fpv_name : list of / single fpv class(es)
+        vec_name : list of / single vec class(es)
             List of fingerprinting classes.
 
         Returns
@@ -77,10 +77,10 @@ class FeatureGenerator(
           the summed number of features from all fingerprint classes supplied.
         """
         if not isinstance(candidates, (list, defaultdict)):
-            raise TypeError("return_fpv requires a list or dict of atoms")
+            raise TypeError("return_vec requires a list or dict of atoms")
 
-        if not isinstance(fpv_names, list):
-            fpv_names = [fpv_names]
+        if not isinstance(vec_names, list):
+            vec_names = [vec_names]
 
         # Find the maximum number of atomic species in data if needed.
         if self.atom_types is None:
@@ -91,18 +91,18 @@ class FeatureGenerator(
 
         fingerprint_vector = []
         for atoms in candidates:
-            fingerprint_vector.append(self._get_fpv(atoms, fpv_names))
+            fingerprint_vector.append(self._get_vec(atoms, vec_names))
 
         return np.asarray(fingerprint_vector)
 
-    def _get_fpv(self, atoms, fpv_names):
+    def _get_vec(self, atoms, vec_names):
         """Get the fingerprint vector as an array.
 
         Parameters
         ----------
         atoms : object
             A single atoms object.
-        fpv_name : list of / single fpv class(es)
+        vec_name : list of / single vec class(es)
             List of fingerprinting classes.
         fps : list
             List of expected feature vector lengths.
@@ -112,19 +112,19 @@ class FeatureGenerator(
         fingerprint_vector : list
             A feature vector.
         """
-        if len(fpv_names) == 1:
-            return fpv_names[0](atoms)
+        if len(vec_names) == 1:
+            return vec_names[0](atoms)
         else:
-            return self._concatenate_fpv(atoms, fpv_names)
+            return self._concatenate_vec(atoms, vec_names)
 
-    def _concatenate_fpv(self, atoms, fpv_names):
+    def _concatenate_vec(self, atoms, vec_names):
         """Join multiple fingerprint vectors.
 
         Parameters
         ----------
         atoms : object
             A single atoms object.
-        fpv_name : list of / single fpv class(es)
+        vec_name : list of / single vec class(es)
             List of fingerprinting classes.
         fps : list
             List of expected feature vector lengths.
@@ -136,7 +136,7 @@ class FeatureGenerator(
         """
         fingerprint_vector = np.array([])
         # Iterate through the feature generators and update feature vector.
-        for name in fpv_names:
+        for name in vec_names:
             fingerprint_vector = np.concatenate((fingerprint_vector,
                                                  name(atoms)))
 

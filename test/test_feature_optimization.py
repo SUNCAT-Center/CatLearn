@@ -19,7 +19,7 @@ train_size, test_size = 30, 20
 def test_importance():
     """Test feature importance helper functions."""
     # Attach the database.
-    dd = DescriptorDatabase(db_name='{}/fpv_store.sqlite'.format(wkdir),
+    dd = DescriptorDatabase(db_name='{}/vec_store.sqlite'.format(wkdir),
                             table='FingerVector')
 
     # Pull the features and targets from the database.
@@ -37,7 +37,7 @@ def test_importance():
 def test_extend():
     """Generate an extended feature space."""
     # Attach the database.
-    dd = DescriptorDatabase(db_name='{}/fpv_store.sqlite'.format(wkdir),
+    dd = DescriptorDatabase(db_name='{}/vec_store.sqlite'.format(wkdir),
                             table='FingerVector')
 
     # Pull the features and targets from the database.
@@ -109,10 +109,10 @@ def test_extract(train_features, train_targets, test_features):
                test_matrix=test_features[:, :5])
     assert np.shape(ext[0]) == (td, nc) and np.shape(ext[1]) == (td, nc)
 
-    ext = atoml_pca(components=nc, train_fpv=train_features,
-                    test_fpv=test_features, cleanup=True, scale=True)
-    assert np.shape(ext['train_fpv']) == (d, nc) and \
-        np.shape(ext['test_fpv']) == (td, nc)
+    ext = atoml_pca(components=nc, train_features=train_features,
+                    test_features=test_features, cleanup=True, scale=True)
+    assert np.shape(ext['train_features']) == (d, nc) and \
+        np.shape(ext['test_features']) == (td, nc)
 
 
 def test_screening(train_features, train_targets, test_features):

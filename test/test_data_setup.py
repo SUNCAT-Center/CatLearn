@@ -54,68 +54,68 @@ def feature_test():
     print('Getting the fingerprints')
     f = FeatureGenerator(element_parameters='atomic_radius')
 
-    data = f.return_fpv(trainset['atoms'], [f.nearestneighbour_fpv])
+    data = f.return_vec(trainset['atoms'], [f.nearestneighbour_vec])
     n, d = np.shape(data)
     assert n == train_size and d == 4
-    print('passed nearestneighbour_fpv')
+    print('passed nearestneighbour_vec')
 
-    train_fp = f.return_fpv(trainset['atoms'], [f.bond_count_fpv])
+    train_fp = f.return_vec(trainset['atoms'], [f.bond_count_vec])
     n, d = np.shape(train_fp)
     data = np.concatenate((data, train_fp), axis=1)
     assert n == train_size and d == 52
-    print('passed bond_count_fpv')
+    print('passed bond_count_vec')
 
-    train_fp = f.return_fpv(trainset['atoms'], [f.distribution_fpv])
+    train_fp = f.return_vec(trainset['atoms'], [f.distribution_vec])
     n, d = np.shape(train_fp)
     data = np.concatenate((data, train_fp), axis=1)
     assert n == train_size and d == 8
-    print('passed distribution_fpv')
+    print('passed distribution_vec')
 
     # EXPENSIVE to calculate. Not included in training data.
-    train_fp = f.return_fpv(testset['atoms'], [f.connections_fpv])
+    train_fp = f.return_vec(testset['atoms'], [f.connections_vec])
     n, d = np.shape(train_fp)
     assert n == test_size and d == 26
-    print('passed connections_fpv')
+    print('passed connections_vec')
 
-    train_fp = f.return_fpv(trainset['atoms'], [f.rdf_fpv])
+    train_fp = f.return_vec(trainset['atoms'], [f.rdf_vec])
     n, d = np.shape(train_fp)
     data = np.concatenate((data, train_fp), axis=1)
     assert n == train_size and d == 20
-    print('passed rdf_fpv')
+    print('passed rdf_vec')
 
     # Start testing the standard fingerprint vector generators.
-    train_fp = f.return_fpv(trainset['atoms'], [f.mass_fpv])
+    train_fp = f.return_vec(trainset['atoms'], [f.mass_vec])
     n, d = np.shape(train_fp)
     data = np.concatenate((data, train_fp), axis=1)
     assert n == train_size and d == 1
-    print('passed mass_fpv')
+    print('passed mass_vec')
 
-    train_fp = f.return_fpv(trainset['atoms'], [f.element_parameter_fpv])
+    train_fp = f.return_vec(trainset['atoms'], [f.element_parameter_vec])
     n, d = np.shape(train_fp)
     data = np.concatenate((data, train_fp), axis=1)
     assert n == train_size and d == 3
-    print('passed element_parameter_fpv')
+    print('passed element_parameter_vec')
 
-    train_fp = f.return_fpv(trainset['atoms'], [f.composition_fpv])
+    train_fp = f.return_vec(trainset['atoms'], [f.composition_vec])
     n, d = np.shape(train_fp)
     data = np.concatenate((data, train_fp), axis=1)
     assert n == train_size and d == 2
-    print('passed composition_fpv')
+    print('passed composition_vec')
 
-    train_fp = f.return_fpv(trainset['atoms'], [f.eigenspectrum_fpv],)
+    train_fp = f.return_vec(trainset['atoms'], [f.eigenspectrum_vec],)
     n, d = np.shape(train_fp)
     data = np.concatenate((data, train_fp), axis=1)
     assert n == train_size and d == 147
-    print('passed eigenspectrum_fpv')
+    print('passed eigenspectrum_vec')
 
-    train_fp = f.return_fpv(trainset['atoms'], [f.distance_fpv])
+    train_fp = f.return_vec(trainset['atoms'], [f.distance_vec])
     n, d = np.shape(train_fp)
     data = np.concatenate((data, train_fp), axis=1)
     assert n == train_size and d == 2
-    print('passed distance_fpv')
+    print('passed distance_vec')
 
-    train_fp = f.return_fpv(trainset['atoms'], [
-        f.nearestneighbour_fpv, f.mass_fpv, f.composition_fpv])
+    train_fp = f.return_vec(trainset['atoms'], [
+        f.nearestneighbour_vec, f.mass_vec, f.composition_vec])
     n, d = np.shape(train_fp)
     data = np.concatenate((data, train_fp), axis=1)
     assert n == train_size and d == 7
@@ -131,7 +131,7 @@ def feature_test():
                                          property=['atomic_number']))
     assert np.shape(no_prop) == (test_size, 15)
     assert np.shape(an_prop) == (test_size, 30)
-    print('passed graph_fpv')
+    print('passed graph_vec')
 
     return all_cand, data
 
@@ -151,7 +151,7 @@ def cv_test(data):
 def db_test(all_cand, data):
     """Test database functions."""
     # Define variables for database to store system descriptors.
-    db_name = '/fpv_store.sqlite'
+    db_name = '/vec_store.sqlite'
     descriptors = ['f' + str(i) for i in range(np.shape(data)[1])]
     targets = ['Energy']
     names = descriptors + targets
