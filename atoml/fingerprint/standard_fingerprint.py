@@ -20,6 +20,12 @@ class StandardFingerprintGenerator(BaseGenerator):
         atom_types : list
             Unique atomic types in the systems. Types are denoted by atomic
             number e.g. for CH4 set [1, 6].
+        atom_len : int
+            The maximum length of all atomic systems that will be passed in a
+            data set.
+        dtype : str
+            A string defining the data type being passed. Default is ase atoms
+            objects.
         """
         self.atom_types = atom_types
         self.atom_len = atom_len
@@ -37,7 +43,7 @@ class StandardFingerprintGenerator(BaseGenerator):
         # Return the summed mass of the atoms object.
         return np.array([sum(self.get_masses(candidate))])
 
-    def element_parameter_fpv(self, candidate, param='atomic_number'):
+    def element_parameter_fpv(self, candidate, param='atomic_radius'):
         """Function to return a vector based on a defined paramter.
 
         The vector is compiled based on the summed parameters for each
@@ -57,14 +63,20 @@ class StandardFingerprintGenerator(BaseGenerator):
         features : array
             An n + 1 array where n in the length of self.atom_types.
         """
+        if not isinstance(param, list):
+            param = [param]
+
         comp = self.composition_fpv(candidate)
 
-        plist = [self.element_data[str(an)].get(param) for an in
-                 self.atom_types]
+        features = np.asarray([])
+        for p in param:
+            plist = [self.element_data[str(an)].get(p) for an in
+                     self.atom_types]
 
-        features = np.zeros(len(comp)+1)
-        features[:len(comp)] = np.multiply(comp, plist)
-        features[-1] = np.sum(features)
+            f = np.zeros(len(comp)+1)
+            f[:len(comp)] = np.multiply(comp, plist)
+            f[-1] = np.sum(features)
+            features = np.concatenate((features, f))
 
         return features
 

@@ -56,69 +56,69 @@ def feature_test():
 
     data = f.return_fpv(trainset['atoms'], [f.nearestneighbour_fpv])
     n, d = np.shape(data)
-    assert n == train_size, d == 4
+    assert n == train_size and d == 4
     print('passed nearestneighbour_fpv')
 
     train_fp = f.return_fpv(trainset['atoms'], [f.bond_count_fpv])
     n, d = np.shape(train_fp)
     data = np.concatenate((data, train_fp), axis=1)
-    assert n == train_size, d == 52
+    assert n == train_size and d == 52
     print('passed bond_count_fpv')
 
     train_fp = f.return_fpv(trainset['atoms'], [f.distribution_fpv])
     n, d = np.shape(train_fp)
     data = np.concatenate((data, train_fp), axis=1)
-    assert n == train_size, d == 8
+    assert n == train_size and d == 8
     print('passed distribution_fpv')
 
     # EXPENSIVE to calculate. Not included in training data.
     train_fp = f.return_fpv(testset['atoms'], [f.connections_fpv])
     n, d = np.shape(train_fp)
-    assert n == test_size, d == 26
+    assert n == test_size and d == 26
     print('passed connections_fpv')
 
     train_fp = f.return_fpv(trainset['atoms'], [f.rdf_fpv])
     n, d = np.shape(train_fp)
     data = np.concatenate((data, train_fp), axis=1)
-    assert n == train_size, d == 20
+    assert n == train_size and d == 20
     print('passed rdf_fpv')
 
     # Start testing the standard fingerprint vector generators.
     train_fp = f.return_fpv(trainset['atoms'], [f.mass_fpv])
     n, d = np.shape(train_fp)
     data = np.concatenate((data, train_fp), axis=1)
-    assert n == train_size, d == 1
+    assert n == train_size and d == 1
     print('passed mass_fpv')
 
     train_fp = f.return_fpv(trainset['atoms'], [f.element_parameter_fpv])
     n, d = np.shape(train_fp)
     data = np.concatenate((data, train_fp), axis=1)
-    assert n == train_size, d == 3
+    assert n == train_size and d == 3
     print('passed element_parameter_fpv')
 
     train_fp = f.return_fpv(trainset['atoms'], [f.composition_fpv])
     n, d = np.shape(train_fp)
     data = np.concatenate((data, train_fp), axis=1)
-    assert n == train_size, d == 2
+    assert n == train_size and d == 2
     print('passed composition_fpv')
 
     train_fp = f.return_fpv(trainset['atoms'], [f.eigenspectrum_fpv],)
     n, d = np.shape(train_fp)
     data = np.concatenate((data, train_fp), axis=1)
-    assert n == train_size, d == 147
+    assert n == train_size and d == 147
     print('passed eigenspectrum_fpv')
 
     train_fp = f.return_fpv(trainset['atoms'], [f.distance_fpv])
     n, d = np.shape(train_fp)
     data = np.concatenate((data, train_fp), axis=1)
-    assert n == train_size, d == 2
+    assert n == train_size and d == 2
     print('passed distance_fpv')
 
     train_fp = f.return_fpv(trainset['atoms'], [
         f.nearestneighbour_fpv, f.mass_fpv, f.composition_fpv])
     n, d = np.shape(train_fp)
     data = np.concatenate((data, train_fp), axis=1)
-    assert n == train_size, d == 7
+    assert n == train_size and d == 7
     print('passed combined generation')
 
     # Do basic check for atomic porperties.
