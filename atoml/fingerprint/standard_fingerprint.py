@@ -35,7 +35,7 @@ class StandardFingerprintGenerator(FeatureGenerator):
         if self.atom_types is None:
             self.atom_types = sorted(frozenset(ano))
 
-        return np.array([ano.count(sym) for sym in self.atom_types])
+        return np.array([list(ano).count(sym) for sym in self.atom_types])
 
     def _get_coulomb(self, candidate):
         """Generate the coulomb matrix.
