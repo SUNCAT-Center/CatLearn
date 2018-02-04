@@ -2,8 +2,10 @@
 from __future__ import absolute_import
 from __future__ import division
 
+import json
 import numpy as np
 
+from atoml import __path__ as atoml_path
 from .base import FeatureGenerator
 
 
@@ -22,13 +24,61 @@ class StandardFingerprintGenerator(FeatureGenerator):
         self.atom_types = atom_types
         FeatureGenerator.__init__(self, dtype=dtype)
 
+        # Load the Mendeleev parameter data into memory
+        with open('/'.join(atoml_path[0].split('/')[:-1]) +
+                  '/atoml/data/proxy-mendeleev.json') as f:
+            self.data = json.load(f)
+
     def mass_fpv(self, candidate):
-        """Function that takes a list of atoms objects and returns the mass."""
+        """Function to return a vector based on mass parameter."""
         # Return the summed mass of the atoms object.
         return np.array([sum(self.get_masses(candidate))])
 
+    def element_parameter_fpv(self, candidate, param='atomic_number'):
+        """Function to return a vector based on a defined paramter.
+
+        The vector is compiled based on the summed parameters for each
+        elemental type as well as the sum for all atoms.
+
+        Parameters
+        ----------
+        candidate : object
+            Data object with atomic numbers available.
+        param : str
+            Type of atomic parameter upon which to compile the feature vector.
+            A full list of atomic parameters can be found here:
+            https://goo.gl/G4eTvu
+
+        Returns
+        -------
+        features : array
+            An n + 1 array where n in the length of self.atom_types.
+        """
+        comp = self.composition_fpv(candidate)
+
+        plist = [self.data[str(an)].get(param) for an in
+                 self.atom_types]
+
+        features = np.zeros(len(comp)+1)
+        features[:len(comp)] = np.multiply(comp, plist)
+        features[-1] = np.sum(features)
+
+        return features
+
     def composition_fpv(self, candidate):
-        """Basic function to take atoms object and return the composition."""
+        """Function to return a feature vector based on the composition.
+
+        Parameters
+        ----------
+        candidate : object
+            Data object with atomic numbers available.
+
+        Returns
+        -------
+        features : array
+            Vector containing a count of the different atomic types, e.g. for
+            CH3OH the vector [1, 4, 1] would be returned.
+        """
         ano = self.get_atomic_numbers(candidate)
 
         # WARNING: Will be set permanently whichever atom is first passed.
@@ -46,16 +96,17 @@ class StandardFingerprintGenerator(FeatureGenerator):
         Parameters
         ----------
         candidate : object
-          Data object with Cartesian coordinates and atomic numbers available.
+            Data object with Cartesian coordinates and atomic numbers
+            available.
 
         Returns
         -------
         coulomb : ndarray
-          The coulomb matrix, (n, n) atoms in size.
+            The coulomb matrix, (n, n) atoms in size.
         """
         if len(candidate) < 2:
             raise ValueError(
-                "Columb matrix requires atoms object with at least 2 atoms")
+                'Columb matrix requires atoms object with at least 2 atoms')
 
         dm = self.get_all_distances(candidate)
         np.fill_diagonal(dm, 1)

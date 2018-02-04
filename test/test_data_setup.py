@@ -59,6 +59,8 @@ def feature_test():
                                         nbin=4)
     sfpv = StandardFingerprintGenerator(atom_types=[78, 79])
 
+    train_fp = return_fpv(trainset['atoms'], [sfpv.mass_fpv])
+
     data = return_fpv(trainset['atoms'], [pfpv.nearestneighbour_fpv])
     n, d = np.shape(data)
     assert n == train_size, d == 4
@@ -94,6 +96,12 @@ def feature_test():
     data = np.concatenate((data, train_fp), axis=1)
     assert n == train_size, d == 1
     print('passed mass_fpv')
+
+    train_fp = return_fpv(trainset['atoms'], [sfpv.element_parameter_fpv])
+    n, d = np.shape(train_fp)
+    data = np.concatenate((data, train_fp), axis=1)
+    assert n == train_size, d == 3
+    print('passed element_parameter_fpv')
 
     train_fp = return_fpv(trainset['atoms'], [sfpv.composition_fpv])
     n, d = np.shape(train_fp)
