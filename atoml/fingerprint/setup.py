@@ -60,6 +60,27 @@ class FeatureGenerator(
                 out.append(field_value)
             return out
 
+    def return_names(self, vec_names):
+        """Function to return a list of feature names.
+
+        Parameters
+        ----------
+        vec_name : list of / single vec class(es)
+            List of fingerprinting classes.
+
+        Returns
+        -------
+        fingerprint_vector : ndarray
+          Name array.
+        """
+        if not isinstance(vec_names, list):
+            vec_names = [vec_names]
+
+        if len(vec_names) == 1:
+            return vec_names[0](None)
+        else:
+            return self._concatenate_vec(None, vec_names)
+
     def return_vec(self, candidates, vec_names):
         """Sequentially combine feature vectors. Padding handled automatically.
 
@@ -76,6 +97,7 @@ class FeatureGenerator(
           Fingerprint array (n, m) where n is the number of candidates and m is
           the summed number of features from all fingerprint classes supplied.
         """
+        # Check for a list or dict of atomic data.
         if not isinstance(candidates, (list, defaultdict)):
             raise TypeError("return_vec requires a list or dict of atoms")
 

@@ -53,6 +53,7 @@ def feature_test():
     # Initiate the fingerprint generators with relevant input variables.
     print('Getting the fingerprints')
     f = FeatureGenerator(element_parameters='atomic_radius')
+    f.normalize_features(trainset['atoms'], testset['atoms'])
 
     data = f.return_vec(trainset['atoms'], [f.nearestneighbour_vec])
     n, d = np.shape(data)
@@ -84,41 +85,47 @@ def feature_test():
     print('passed rdf_vec')
 
     # Start testing the standard fingerprint vector generators.
-    train_fp = f.return_vec(trainset['atoms'], [f.mass_vec])
+    train_fp = f.return_vec(trainset['atoms'], [f.element_mass_vec])
     n, d = np.shape(train_fp)
     data = np.concatenate((data, train_fp), axis=1)
     assert n == train_size and d == 1
-    print('passed mass_vec')
+    assert len(f.return_names([f.element_mass_vec])) == d
+    print('passed element_mass_vec')
 
     train_fp = f.return_vec(trainset['atoms'], [f.element_parameter_vec])
     n, d = np.shape(train_fp)
     data = np.concatenate((data, train_fp), axis=1)
     assert n == train_size and d == 3
+    assert len(f.return_names([f.element_parameter_vec])) == d
     print('passed element_parameter_vec')
 
     train_fp = f.return_vec(trainset['atoms'], [f.composition_vec])
     n, d = np.shape(train_fp)
     data = np.concatenate((data, train_fp), axis=1)
     assert n == train_size and d == 2
+    assert len(f.return_names([f.composition_vec])) == d
     print('passed composition_vec')
 
-    train_fp = f.return_vec(trainset['atoms'], [f.eigenspectrum_vec],)
+    train_fp = f.return_vec(trainset['atoms'], [f.eigenspectrum_vec])
     n, d = np.shape(train_fp)
     data = np.concatenate((data, train_fp), axis=1)
     assert n == train_size and d == 147
+    assert len(f.return_names([f.eigenspectrum_vec])) == d
     print('passed eigenspectrum_vec')
 
     train_fp = f.return_vec(trainset['atoms'], [f.distance_vec])
     n, d = np.shape(train_fp)
     data = np.concatenate((data, train_fp), axis=1)
     assert n == train_size and d == 2
+    assert len(f.return_names([f.distance_vec])) == d
     print('passed distance_vec')
 
     train_fp = f.return_vec(trainset['atoms'], [
-        f.nearestneighbour_vec, f.mass_vec, f.composition_vec])
+        f.eigenspectrum_vec, f.element_mass_vec, f.composition_vec])
     n, d = np.shape(train_fp)
-    data = np.concatenate((data, train_fp), axis=1)
-    assert n == train_size and d == 7
+    assert n == train_size and d == 150
+    assert len(f.return_names(
+        [f.eigenspectrum_vec, f.element_mass_vec, f.composition_vec])) == d
     print('passed combined generation')
 
     # Do basic check for atomic porperties.
