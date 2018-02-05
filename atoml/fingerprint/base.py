@@ -3,10 +3,10 @@ from atoml.api.ase_atoms_api import extend_atoms_class
 from atoml.utilities.neighborlist import atoms_neighborlist
 
 
-class FeatureGenerator(object):
+class BaseGenerator(object):
     """Base class for feature generation."""
 
-    def __init__(self, dtype='atoms'):
+    def __init__(self, **kwargs):
         """Initialize the class.
 
         Parameters
@@ -14,7 +14,7 @@ class FeatureGenerator(object):
         dtype : str
             Expected data type. Currently only supports ase atoms objects.
         """
-        self.dtype = dtype
+        self.dtype = kwargs.get('dtype', 'atoms')
 
     def make_neighborlist(self, candidate, dx=None, neighbor_number=1):
         """Function to generate the neighborlist.
@@ -85,20 +85,6 @@ class FeatureGenerator(object):
         """
         if self.dtype == 'atoms':
             return candidate.get_atomic_numbers()
-        else:
-            raise NotImplementedError('{} data type not implemented.'.format(
-                self.dtype))
-
-    def get_chemical_symbols(self, candidate):
-        """Function to return the atomic symbols.
-
-        Parameters
-        ----------
-        candidate : object
-            Target data object from which to get the atomic symbols.
-        """
-        if self.dtype == 'atoms':
-            return candidate.get_chemical_symbols()
         else:
             raise NotImplementedError('{} data type not implemented.'.format(
                 self.dtype))

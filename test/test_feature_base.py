@@ -7,7 +7,7 @@ import numpy as np
 from ase.ga.data import DataConnection
 
 from atoml import __path__ as atoml_path
-from atoml.fingerprint.base import FeatureGenerator
+from atoml.fingerprint.base import BaseGenerator
 from atoml.utilities.neighborlist import atoms_neighborlist
 
 atoml_path = '/'.join(atoml_path[0].split('/')[:-1])
@@ -18,7 +18,7 @@ def feature_base_test():
     gadb = DataConnection('{}/data/gadb.db'.format(atoml_path))
     all_cand = gadb.get_all_relaxed_candidates()
 
-    f = FeatureGenerator()
+    f = BaseGenerator()
     nl = atoms_neighborlist(all_cand[0])
     assert f.get_neighborlist(all_cand[0]) == nl
 

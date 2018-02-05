@@ -7,8 +7,7 @@ import os
 from ase.ga.data import DataConnection
 
 from atoml.api.ase_data_setup import get_unique, get_train
-from atoml.fingerprint.setup import return_fpv
-from atoml.fingerprint import ParticleFingerprintGenerator
+from atoml.fingerprint import FeatureGenerator
 from atoml.regression import GaussianProcess
 from atoml.regression.acquisition_functions import AcquisitionFunctions
 
@@ -43,12 +42,10 @@ def get_data():
 
     # Initiate the fingerprint generators with relevant input variables.
     print('Getting the fingerprints')
-    pfpv = ParticleFingerprintGenerator(atom_numbers=[78, 79], max_bonds=13,
-                                        get_nl=False, dx=0.2, cell_size=30.,
-                                        nbin=4)
+    f = FeatureGenerator()
 
-    train_features = return_fpv(trainset['atoms'], [pfpv.nearestneighbour_fpv])
-    test_features = return_fpv(testset['atoms'], [pfpv.nearestneighbour_fpv])
+    train_features = f.return_vec(trainset['atoms'], [f.nearestneighbour_vec])
+    test_features = f.return_vec(testset['atoms'], [f.nearestneighbour_vec])
 
     train_targets = []
     for a in trainset['atoms']:

@@ -39,7 +39,7 @@ def spca(components, train_matrix, test_matrix):
     return new_train, new_test
 
 
-def atoml_pca(components, train_fpv, test_fpv=None, cleanup=False,
+def atoml_pca(components, train_features, test_features=None, cleanup=False,
               scale=False):
     """Principal component analysis varient that doesn't require scikit-learn.
 
@@ -53,15 +53,16 @@ def atoml_pca(components, train_fpv, test_fpv=None, cleanup=False,
     data = defaultdict(list)
     data['components'] = components
     if cleanup:
-        c = clean_variance(train=train_fpv, test=test_fpv)
-        test_fpv = c['test']
-        train_fpv = c['train']
+        c = clean_variance(train=train_features, test=test_features)
+        test_features = c['test']
+        train_features = c['train']
     if scale:
-        std = standardize(train_matrix=train_fpv, test_matrix=test_fpv)
-        test_fpv = std['test']
-        train_fpv = std['train']
+        std = standardize(train_matrix=train_features,
+                          test_matrix=test_features)
+        test_features = std['test']
+        train_features = std['train']
 
-    u, s, v = np.linalg.svd(np.transpose(train_fpv))
+    u, s, v = np.linalg.svd(np.transpose(train_features))
 
     # Make a list of (eigenvalue, eigenvector) tuples
     eig_pairs = [(np.abs(s[i]), u[:, i]) for i in range(len(s))]
@@ -70,15 +71,15 @@ def atoml_pca(components, train_fpv, test_fpv=None, cleanup=False,
     data['variance'] = [(i / sum(s)) * 100 for i in sorted(s, reverse=True)]
 
     # Form the projection matrix.
-    features = len(train_fpv[0])
+    features = len(train_features[0])
     pm = eig_pairs[0][1].reshape(features, 1)
     if components > 1:
         for i in range(components - 1):
             pm = np.append(pm, eig_pairs[i][1].reshape(features, 1), axis=1)
 
     # Form feature matrix based on principal components.
-    data['train_fpv'] = train_fpv.dot(pm)
-    if test_fpv is not None:
-        data['test_fpv'] = np.asarray(test_fpv).dot(pm)
+    data['train_features'] = train_features.dot(pm)
+    if test_features is not None:
+        data['test_features'] = np.asarray(test_features).dot(pm)
 
     return data

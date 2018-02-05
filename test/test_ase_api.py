@@ -8,7 +8,7 @@ from ase.ga.data import DataConnection
 
 from atoml import __path__ as atoml_path
 from atoml.api.ase_atoms_api import extend_atoms_class
-from atoml.fingerprint import StandardFingerprintGenerator
+from atoml.fingerprint import FeatureGenerator
 
 atoml_path = '/'.join(atoml_path[0].split('/')[:-1])
 
@@ -23,8 +23,8 @@ def ase_api_test():
     extend_atoms_class(all_cand[0])
     assert isinstance(all_cand[0], type(all_cand[1]))
 
-    sf = StandardFingerprintGenerator()
-    fp = sf.composition_fpv(all_cand[0])
+    f = FeatureGenerator()
+    fp = f.composition_vec(all_cand[0])
     all_cand[0].set_features(fp)
 
     assert np.allclose(all_cand[0].get_features(), fp)

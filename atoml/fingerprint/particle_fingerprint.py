@@ -17,8 +17,8 @@ except ImportError:
 class ParticleFingerprintGenerator(object):
     """Function to build a fingerprint vector based on an atoms object."""
 
-    def __init__(self, atom_numbers=None, max_bonds=13, get_nl=False, dx=0.2,
-                 cell_size=50., nbin=4, rmax=8., nbins=5):
+    def __init__(self, max_bonds=13, get_nl=False, dx=0.2,
+                 cell_size=50., nbin=4, rmax=8., nbins=5, **kwargs):
         """Particle fingerprint generator setup.
 
         Parameters
@@ -36,7 +36,7 @@ class ParticleFingerprintGenerator(object):
         nbin : int
             The number of bins supplied to the get_atoms_distribution function.
         """
-        self.atom_numbers = atom_numbers
+        self.atom_numbers = kwargs.get('atom_numbers')
         self.max_bonds = max_bonds
         self.get_nl = get_nl
         self.dx = dx
@@ -45,13 +45,15 @@ class ParticleFingerprintGenerator(object):
         self.nbins = nbins
         self.rmax = rmax
 
-    def nearestneighbour_fpv(self, atoms):
+        super(ParticleFingerprintGenerator, self).__init__(**kwargs)
+
+    def nearestneighbour_vec(self, atoms):
         """Nearest neighbour average, Topics in Catalysis, 2014, 57, 33."""
         if 'data' not in atoms.info or 'nnmat' not in atoms.info['data']:
             atoms.info['data']['nnmat'] = get_nnmat(atoms)
         return atoms.info['data']['nnmat']
 
-    def bond_count_fpv(self, atoms):
+    def bond_count_vec(self, atoms):
         """Bond counting with a distribution measure for coordination."""
         if self.get_nl:
             # Define the neighborlist.
@@ -77,7 +79,7 @@ class ParticleFingerprintGenerator(object):
 
         return track_nnmat.ravel()
 
-    def distribution_fpv(self, atoms):
+    def distribution_vec(self, atoms):
         """Return atomic distribution measure."""
         # Center the atoms, works better for some utility functions.
         atoms.set_cell([self.cell_size, self.cell_size, self.cell_size])
@@ -98,7 +100,7 @@ class ParticleFingerprintGenerator(object):
                                            no_count_types=[i])
         return dist
 
-    def connections_fpv(self, atoms):
+    def connections_vec(self, atoms):
         """Sum atoms with a certain number of connections."""
         if self.get_nl:
             # Define the neighborlist.
@@ -117,7 +119,7 @@ class ParticleFingerprintGenerator(object):
 
         return fp
 
-    def rdf_fpv(self, atoms):
+    def rdf_vec(self, atoms):
         """Return list of partial rdfs for use as fingerprint vector."""
         if not no_asap:
             rf = RadialDistributionFunction(atoms,
