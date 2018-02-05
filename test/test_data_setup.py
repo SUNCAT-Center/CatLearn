@@ -8,7 +8,7 @@ from random import random
 
 from ase.ga.data import DataConnection
 
-from atoml.utilities.data_setup import get_unique, get_train
+from atoml.api.ase_data_setup import get_unique, get_train
 from atoml.fingerprint.setup import return_fpv
 from atoml.fingerprint import ParticleFingerprintGenerator
 from atoml.fingerprint import StandardFingerprintGenerator

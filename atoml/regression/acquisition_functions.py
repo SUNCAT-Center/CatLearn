@@ -6,7 +6,7 @@ import numpy as np
 from scipy.special import erf
 from collections import defaultdict, Counter
 
-from .clustering import cluster_features
+from atoml.utilities.clustering import cluster_features
 
 
 class AcquisitionFunctions(object):
@@ -47,7 +47,7 @@ class AcquisitionFunctions(object):
             A dictionary of lists containg the fitness of each test point for
             the different acquisition functions.
         metrics : list
-            list of strings. 
+            list of strings.
             Accepted values are 'cdf', 'optimistic' and 'gaussian'.
         """
         # Create dictionary with a list for each acquisition function.
@@ -162,8 +162,9 @@ class AcquisitionFunctions(object):
         return a
 
     def _gaussian_fit(self, x, m, v):
-        """Find predictions that have the highest probability at x,
-        assuming a gaussian posterior.
+        """Find predictions with highest probability at x.
+
+        This acquisition function assumes a gaussian posterior.
 
         Parameters
         ----------

@@ -6,11 +6,11 @@ import os
 
 from ase.ga.data import DataConnection
 
-from atoml.utilities.data_setup import get_unique, get_train
+from atoml.api.ase_data_setup import get_unique, get_train
 from atoml.fingerprint.setup import return_fpv
 from atoml.fingerprint import ParticleFingerprintGenerator
 from atoml.regression import GaussianProcess
-from atoml.utilities.acquisition_functions import AcquisitionFunctions
+from atoml.regression.acquisition_functions import AcquisitionFunctions
 
 wkdir = os.getcwd()
 
@@ -93,6 +93,7 @@ def gp_test(train_features, train_targets, train_atoms, test_features,
     assert len(acq['cdf']) == len(pred['prediction'])
     assert len(acq['optimistic']) == len(pred['prediction'])
     assert len(acq['gaussian']) == len(pred['prediction'])
+
 
 if __name__ == '__main__':
     from pyinstrument import Profiler

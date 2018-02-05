@@ -7,7 +7,7 @@ import numpy as np
 from ase.ga.data import DataConnection
 
 from atoml import __path__ as atoml_path
-from atoml.api.ase_api import extend_atoms_class
+from atoml.api.ase_atoms_api import extend_atoms_class
 from atoml.fingerprint import StandardFingerprintGenerator
 
 atoml_path = '/'.join(atoml_path[0].split('/')[:-1])

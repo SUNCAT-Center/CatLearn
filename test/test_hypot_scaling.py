@@ -7,7 +7,7 @@ import numpy as np
 
 from atoml.utilities import DescriptorDatabase
 from atoml.regression import GaussianProcess
-from atoml.utilities import hyperparameter_scaling as hs
+from atoml.regression.gpfunctions import hyperparameter_scaling as hs
 
 wkdir = os.getcwd()
 

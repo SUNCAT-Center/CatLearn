@@ -1,7 +1,7 @@
 """Simple tests for data cleaning."""
 import numpy as np
 
-from atoml.utilities import clean_data as clean
+from atoml.preprocess import clean_data as clean
 
 
 def outlier_test():

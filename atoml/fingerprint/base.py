@@ -4,7 +4,7 @@ from collections import defaultdict
 
 from ase.data import covalent_radii
 
-from atoml.api.ase_api import extend_atoms_class
+from atoml.api.ase_atoms_api import extend_atoms_class
 
 
 class FeatureGenerator(object):
