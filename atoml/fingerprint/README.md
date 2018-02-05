@@ -13,6 +13,7 @@ The folder contains functions for generating a feature space.
 There are several ways to generate the feature vectors. The easiest way is to use the `FeatureGenerator`. Initially one must initialize the class:
 
   ```python
+    from atoml.fingerprint import FeatureGenerator
     generator = FeatureGenerator()
   ```
 
@@ -42,9 +43,9 @@ It is even possible to pass user defined functions in as well. These should just
 The various generators will also return a name vector if the `return_names` function is called.
 
 ```python
-  names = generator.return_names([generator.bond_count_vec,
-                                  generator.eigenspectrum_vec,
-                                  generator.composition_vec])
+    names = generator.return_names([generator.bond_count_vec,
+                                    generator.eigenspectrum_vec,
+                                    generator.composition_vec])
 ```
 
 ## Available Vector Generators
