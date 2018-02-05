@@ -122,7 +122,18 @@ class StandardFingerprintGenerator(BaseGenerator):
         return features
 
     def element_mass_vec(self, data):
-        """Function to return a vector based on mass parameter."""
+        """Function to return a vector based on mass parameter.
+
+        Parameters
+        ----------
+        data : object
+            Data object with atomic masses available.
+
+        Returns
+        -------
+        features : ndarray
+            Vector of the summed mass.
+        """
         # Return feature names in no atomic data is passed.
         if data is None:
             return ['sum_mass']
@@ -168,12 +179,13 @@ class StandardFingerprintGenerator(BaseGenerator):
         Parameters
         ----------
         data : object
-          Data object with Cartesian coordinates and atomic numbers available.
+            Data object with Cartesian coordinates and atomic numbers
+            available.
 
         Returns
         -------
         features : ndarray
-          Sorted Eigen values of the coulomb matrix, n atoms is size.
+            Sorted Eigen values of the coulomb matrix, n atoms is size.
         """
         # Return feature names in no atomic data is passed.
         if data is None:
@@ -192,7 +204,19 @@ class StandardFingerprintGenerator(BaseGenerator):
         return features
 
     def distance_vec(self, data):
-        """Averaged distance between e.g. A-A atomic pairs."""
+        """Averaged distance between e.g. A-A atomic pairs.
+
+        Parameters
+        ----------
+        data : object
+            Data object with Cartesian coordinates and atomic numbers
+            available.
+
+        Returns
+        -------
+        features : ndarray
+            Vector of averaged distances between homoatomic atoms.
+        """
         # Return feature names in no atomic data is passed.
         if data is None:
             msg = 'Class must have atom_types set to return feature names.'
@@ -200,7 +224,7 @@ class StandardFingerprintGenerator(BaseGenerator):
                 None, msg
             return ['{0}-{0}_dist'.format(n) for n in self.atom_types]
 
-        fp = []
+        features = []
         an = self.get_atomic_numbers(data)
         pos = self.get_positions(data)
         if self.atom_types is None:
@@ -208,15 +232,14 @@ class StandardFingerprintGenerator(BaseGenerator):
             self.atom_types = sorted(frozenset(an))
         for at in self.atom_types:
             ad = 0.
-            co = 0
+            co = 0.
             for i, j in zip(an, pos):
                 if i == at:
                     for k, l in zip(an, pos):
                         if k == at and all(j != l):
-                            co += 1
+                            co += 1.
                             ad += np.linalg.norm(j - l)
             if co != 0:
-                fp.append(ad / co)
-            else:
-                fp.append(0.)
-        return fp
+                co /= ad
+            features.append(co)
+        return features
