@@ -373,7 +373,7 @@ def db2surf_info(fname, id_dict, formation_energies=None):
         atoms.info['Z_surf1'] = Z_surf1
         atoms.info['i_surfnn'] = i_surfnn
         if formation_energies is not None:
-            if 'Ef' in atoms.info:
+            if key in formation_energies.keys():
                 atoms.info['Ef'] = formation_energies[key]
             else:
                 atoms.info['Ef'] = np.NaN

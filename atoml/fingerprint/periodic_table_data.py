@@ -29,12 +29,13 @@ default_params = ['atomic_number',
                   'en_allen',
                   'atomic_weight']
 
+
 def n_outer(econf):
     n_tot = 0
-    ns = 0
-    np = 0
-    nd = 0
-    nf = 0
+    n_s = 0
+    n_p = 0
+    n_d = 0
+    n_f = 0
     for shell in econf.split(' ')[1:]:
         n_shell = 0
         if shell[-1].isalpha():
@@ -45,14 +46,15 @@ def n_outer(econf):
             n_shell = int(shell[-2:])
         n_tot += n_shell
         if 's' in shell:
-            ns += n_shell
+            n_s += n_shell
         elif 'p' in shell:
-            np += n_shell
+            n_p += n_shell
         elif 'd' in shell:
-            nd += n_shell
+            n_d += n_shell
         elif 'f' in shell:
-            nf += n_shell
-    return n_tot, ns, np, nd, nf
+            n_f += n_shell
+    return n_tot, n_s, n_p, n_d, n_f
+
 
 def get_mendeleev_params(atomic_number, params=None, extra_params=[]):
     """Return a list of generic parameters about an atom.
@@ -92,10 +94,11 @@ def get_mendeleev_params(atomic_number, params=None, extra_params=[]):
 
     return var
 
+
 def average_mendeleev_params(numbers, params=None):
     """Returns a list of average parameters weighted to the frequecy of
     occurence in a list of atomic numbers
-    
+
     Parameters
     ----------
         numbers : list
@@ -104,7 +107,7 @@ def average_mendeleev_params(numbers, params=None):
             elemental parameters.
     """
     if params is None:
-        params=list(default_params)
+        params = list(default_params)
     special_params = 0
     for p, param in enumerate(params):
         if param == 'econf':
@@ -128,16 +131,14 @@ def average_mendeleev_params(numbers, params=None):
             elif param == 'ionenergies':
                 line += [mnlv[p]['1']]
         dat.append(line)
-    try:
-        result = list(np.nanmean(dat, axis=0, dtype=float))
-    except:
-        print(dat)
+    result = list(np.nanmean(dat, axis=0, dtype=float))
     return result
+
 
 def sum_mendeleev_params(numbers, params=None):
     """Returns a list of summed parameters weighted to the frequecy of
     occurence in a list of atomic numbers
-    
+
     Parameters
     ----------
         numbers : list
@@ -146,7 +147,7 @@ def sum_mendeleev_params(numbers, params=None):
             elemental parameters.
     """
     if params is None:
-        params=list(default_params)
+        params = list(default_params)
     special_params = 0
     for p, param in enumerate(params):
         if param == 'econf':
@@ -170,8 +171,5 @@ def sum_mendeleev_params(numbers, params=None):
             elif param == 'ionenergies':
                 line += [mnlv[p]['1']]
         dat.append(line)
-    try:
-        result = list(np.nansum(dat, axis=0, dtype=float))
-    except:
-        print(dat)
+    result = list(np.nansum(dat, axis=0, dtype=float))
     return result

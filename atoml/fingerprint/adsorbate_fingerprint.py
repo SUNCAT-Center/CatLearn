@@ -42,12 +42,13 @@ default_extra_params = ['heat_of_formation',
                         'econf',
                         'ionenergies']
 
+
 def n_outer(econf):
     n_tot = 0
-    ns = 0
-    np = 0
-    nd = 0
-    nf = 0
+    n_s = 0
+    n_p = 0
+    n_d = 0
+    n_f = 0
     for shell in econf.split(' ')[1:]:
         n_shell = 0
         if shell[-1].isalpha():
@@ -58,14 +59,14 @@ def n_outer(econf):
             n_shell = int(shell[-2:])
         n_tot += n_shell
         if 's' in shell:
-            ns += n_shell
+            n_s += n_shell
         elif 'p' in shell:
-            np += n_shell
+            n_p += n_shell
         elif 'd' in shell:
-            nd += n_shell
+            n_d += n_shell
         elif 'f' in shell:
-            nf += n_shell
-    return n_tot, ns, np, nd, nf
+            n_f += n_shell
+    return n_tot, n_s, n_p, n_d, n_f
 
 
 class AdsorbateFingerprintGenerator(object):
