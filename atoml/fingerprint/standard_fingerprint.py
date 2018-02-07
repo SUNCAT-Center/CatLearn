@@ -105,7 +105,8 @@ class StandardFingerprintGenerator(BaseGenerator):
             names = []
             for p in self.element_parameters:
                 names += ['sum_{0}_{1}'.format(n, p) for n in self.atom_types]
-                names += ['sum_all_{}'.format(p)]
+                names += ['sum_all_{0},'.format(p)]
+                names += ['mean_all_{0}'.format(p)]
             return names
 
         if not isinstance(self.element_parameters, list):
@@ -119,10 +120,13 @@ class StandardFingerprintGenerator(BaseGenerator):
         for p in self.element_parameters:
             plist = [self.element_data[str(an)].get(p) for an in
                      self.atom_types]
+            # Converts None type to np.nan.
+            plist = np.asarray(plist, dtype=np.float32)
 
-            f = np.zeros(len(comp) + 1)
+            f = np.zeros(len(comp) + 2)
             f[:len(comp)] = np.multiply(comp, plist)
-            f[-1] = np.sum(features)
+            var = [np.nansum(f), np.nanmean(f)]
+            f[len(comp):] = var
             features = np.concatenate((features, f))
 
         return features
