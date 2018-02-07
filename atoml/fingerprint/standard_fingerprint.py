@@ -4,6 +4,7 @@ from __future__ import division
 
 import json
 import numpy as np
+import warnings
 
 from atoml import __path__ as atoml_path
 from .base import BaseGenerator
@@ -33,12 +34,14 @@ class StandardFingerprintGenerator(BaseGenerator):
             self.atom_types = kwargs.get('atom_types')
         if not hasattr(self, 'atom_len'):
             self.atom_len = kwargs.get('atom_len')
-        self.element_parameters = kwargs.get('element_parameters')
+        if not hasattr(self, 'element_parameters'):
+            self.element_parameters = kwargs.get('element_parameters')
 
-        # Load the Mendeleev parameter data into memory
-        with open('/'.join(atoml_path[0].split('/')[:-1]) +
-                  '/atoml/data/proxy-mendeleev.json') as f:
-            self.element_data = json.load(f)
+        if not hasattr(self, 'element_data'):
+            # Load the Mendeleev parameter data into memory
+            with open('/'.join(atoml_path[0].split('/')[:-1]) +
+                      '/atoml/data/proxy-mendeleev.json') as f:
+                self.element_data = json.load(f)
 
         super(StandardFingerprintGenerator, self).__init__(**kwargs)
 
@@ -67,6 +70,9 @@ class StandardFingerprintGenerator(BaseGenerator):
 
         # WARNING: Will be set permanently whichever atom is first passed.
         if self.atom_types is None:
+            msg = 'atom_types variable will be set permanently to whichever '
+            msg += 'atom object is first passed'
+            warnings.warn(msg)
             self.atom_types = sorted(frozenset(ano))
 
         return np.array([list(ano).count(sym) for sym in self.atom_types])
@@ -227,9 +233,14 @@ class StandardFingerprintGenerator(BaseGenerator):
         features = []
         an = self.get_atomic_numbers(data)
         pos = self.get_positions(data)
+
+        # Get unique atom types.
         if self.atom_types is None:
-            # Get unique atom types.
+            msg = 'atom_types variable will be set permanently to whichever '
+            msg += 'atom object is first passed'
+            warnings.warn(msg)
             self.atom_types = sorted(frozenset(an))
+
         for at in self.atom_types:
             ad = 0.
             co = 0.

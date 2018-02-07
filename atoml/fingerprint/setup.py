@@ -8,10 +8,12 @@ from collections import defaultdict
 
 from .particle_fingerprint import ParticleFingerprintGenerator
 from .standard_fingerprint import StandardFingerprintGenerator
+from .neighbor_matrix import NeighborFingerprintGenerator
 
 
 class FeatureGenerator(
-        ParticleFingerprintGenerator, StandardFingerprintGenerator):
+        ParticleFingerprintGenerator, StandardFingerprintGenerator,
+        NeighborFingerprintGenerator):
     """Feature generator class."""
 
     def __init__(self, atom_types=None, atom_len=None, **kwargs):
