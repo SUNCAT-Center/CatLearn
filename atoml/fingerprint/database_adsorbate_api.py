@@ -13,7 +13,6 @@ import numpy as np
 import ase.db
 from ase.atoms import string2symbols
 from ase.geometry import get_layers
-from ase.data import atomic_numbers
 from .periodic_table_data import get_mendeleev_params
 
 addsyms = ['H', 'C', 'O', 'N', 'S']
@@ -315,6 +314,7 @@ def get_refs(energy_dict, mol_dict):
 
 def get_formation_energies(energy_dict, ref_dict):  # adapted from CATMAP wiki
     formation_energies = {}
+    missing_slabs = []
     for key in energy_dict.keys():
         E0 = 0
         if 'gas' in key:
@@ -326,7 +326,7 @@ def get_formation_energies(energy_dict, ref_dict):  # adapted from CATMAP wiki
             if site_name in ref_dict:
                 E0 -= ref_dict[site_name]
             else:
-                print('no slab reference '+site_name)
+                missing_slabs.append(site_name)
                 continue
         if 'slab' not in key:
             try:
@@ -338,6 +338,7 @@ def get_formation_energies(energy_dict, ref_dict):  # adapted from CATMAP wiki
             for atom in composition:
                 E0 -= ref_dict[atom]
             formation_energies[key] = round(E0, 4)
+    print('missing slabs:', missing_slabs)
     return formation_energies
 
 
@@ -349,6 +350,7 @@ def db2surf_info(fname, id_dict, formation_energies=None):
     """
     c = ase.db.connect(fname)
     traj = []
+    failed = []
     for key in id_dict:
         dbid = id_dict[key]
         d = c.get(dbid)
@@ -371,12 +373,13 @@ def db2surf_info(fname, id_dict, formation_energies=None):
         atoms.info['Z_surf1'] = Z_surf1
         atoms.info['i_surfnn'] = i_surfnn
         if formation_energies is not None:
-            try:
+            if 'Ef' in atoms.info:
                 atoms.info['Ef'] = formation_energies[key]
-            except KeyError:
+            else:
                 atoms.info['Ef'] = np.NaN
-                print(key, 'does not have Ef')
+                failed.append(str(dbid))
         traj.append(atoms)
+    print('db ids', ','.join(failed), ' are missing slab reference.')
     return traj
 
 

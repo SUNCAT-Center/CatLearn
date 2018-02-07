@@ -11,9 +11,11 @@ from __future__ import print_function
 
 import numpy as np
 from ase.atoms import string2symbols
-from ase.data import (ground_state_magnetic_moments, covalent_radii,
-                      atomic_numbers)
-from .periodic_table_data import get_mendeleev_params
+from ase.data import ground_state_magnetic_moments as gs_magmom
+from ase.data import covalent_radii, atomic_numbers
+from .periodic_table_data import (get_mendeleev_params,
+                                  average_mendeleev_params,
+                                  default_params)
 from .database_adsorbate_api import layers_info, get_radius
 from .neighbor_matrix import connection_matrix
 import collections
@@ -28,6 +30,17 @@ facetdict = {'001': [1.], '0001step': [2.], '100': [3.],
              '110': [4.], '111': [5.], '211': [6.], '311': [7.],
              '532': [8.]}
 
+default_extra_params = ['heat_of_formation',
+                        'dft_bulk_modulus',
+                        'dft_density',
+                        'dbcenter',
+                        'dbfilling',
+                        'dbwidth',
+                        'dbskew',
+                        'dbkurt',
+                        'block',
+                        'econf',
+                        'ionenergies']
 
 def n_outer(econf):
     n_tot = 0
@@ -60,7 +73,7 @@ class AdsorbateFingerprintGenerator(object):
         """ Class containing functions for fingerprint generation.
         """
 
-    def term(self, atoms=None):  # , adds_dict):
+    def term(self, atoms=None):
         """ Returns a fingerprint vector with propeties of the element name
         saved in the atoms.info['key_value_pairs']['term'] """
         if atoms is None:
@@ -95,38 +108,21 @@ class AdsorbateFingerprintGenerator(object):
                     'ionenergy_term',
                     'ground_state_magmom_term']
         else:
-            if 'key_value_pairs' in atoms.info:
-                if 'term' in atoms.info['key_value_pairs']:
-                    name = atoms.info['key_value_pairs']['term']
-                elif 'termination' in atoms.info['termination']:
-                    name = atoms.info['terminaion']
-                else:
-                    raise NotImplementedError("termination fingerprint.")
+            if ('key_value_pairs' in atoms.info and
+                'term' in atoms.info['key_value_pairs']):
+                term = atoms.info['key_value_pairs']['term']
+            elif 'termination' in atoms.info:
+                term = atoms.info['terminaion']
             else:
                 raise NotImplementedError("termination fingerprint.")
             # A = float(atoms.cell[0, 0]) * float(atoms.cell[1, 1])
-            comp = string2symbols(name)
-            dat = []
-            # np.unique could be used.
-            for symb in comp:
-                Z = atomic_numbers[symb]
-                mnlv = get_mendeleev_params(Z,
-                                            extra_params=['heat_of_formation',
-                                                          'dft_bulk_modulus',
-                                                          'dft_density',
-                                                          'dbcenter',
-                                                          'dbfilling',
-                                                          'dbwidth',
-                                                          'dbskew',
-                                                          'dbkurt',
-                                                          'block',
-                                                          'econf',
-                                                          'ionenergies'])
-                dat.append(mnlv[:-3] + [float(block2number[mnlv[-3]])] +
-                           list(n_outer(mnlv[-2])) +
-                           [mnlv[-1]['1']] +
-                           [float(ground_state_magnetic_moments[Z])])
-            return list(np.nanmean(dat, axis=0, dtype=float))
+            composition = [atomic_numbers[s] for s in string2symbols(term)]
+            result = average_mendeleev_params(composition,
+                                              params=default_params +
+                                              default_extra_params)
+            result += [np.mean([gs_magmom[atomic_numbers[s]] for s in
+                                string2symbols(term)])]
+            return result
 
     def bulk(self, atoms=None):
         """ Returns a fingerprint vector with propeties of the element name
@@ -163,37 +159,20 @@ class AdsorbateFingerprintGenerator(object):
                     'ionenergy_bulk',
                     'ground_state_magmom_bulk']
         else:
-            if 'key_value_pairs' in atoms.info:
-                if 'bulk' in atoms.info['key_value_pairs']:
-                    name = atoms.info['key_value_pairs']['bulk']
-                elif 'bulk' in atoms.info['bulk']:
-                    name = atoms.info['bulk']
-                else:
-                    raise NotImplementedError("bulk fingerprint.")
+            if ('key_value_pairs' in atoms.info and
+                'bulk' in atoms.info['key_value_pairs']):
+                    bulk = atoms.info['key_value_pairs']['bulk']
+            elif 'bulk' in atoms.info:
+                bulk = atoms.info['bulk']
             else:
                 raise NotImplementedError("bulk fingerprint.")
-            bulkcomp = string2symbols(name)
-            dat = []
-            # np.unique could be used.
-            for symb in bulkcomp:
-                Z = int(atomic_numbers[symb])
-                mnlv = get_mendeleev_params(Z,
-                                            extra_params=['heat_of_formation',
-                                                          'dft_bulk_modulus',
-                                                          'dft_density',
-                                                          'dbcenter',
-                                                          'dbfilling',
-                                                          'dbwidth',
-                                                          'dbskew',
-                                                          'dbkurt',
-                                                          'block',
-                                                          'econf',
-                                                          'ionenergies'])
-                dat.append(mnlv[:-3] + [float(block2number[mnlv[-3]])] +
-                           list(n_outer(mnlv[-2])) +
-                           [mnlv[-1]['1']] +
-                           [float(ground_state_magnetic_moments[Z])])
-            return list(np.nanmean(dat, axis=0, dtype=float))
+            composition = [atomic_numbers[s] for s in string2symbols(bulk)]
+            result = average_mendeleev_params(composition,
+                                              params=default_params +
+                                              default_extra_params)
+            result += [np.mean([gs_magmom[atomic_numbers[s]] for s in
+                                string2symbols(bulk)])]
+            return result
 
     def primary_addatom(self, atoms=None):
         """ Function that takes an atoms objects and returns a fingerprint
@@ -201,41 +180,40 @@ class AdsorbateFingerprintGenerator(object):
             metal atom.
         """
         if atoms is None:
-            return ['atomic_number_add1',
-                    'atomic_volume_add1',
-                    'boiling_point_add1',
-                    'density_add1',
-                    'dipole_polarizability_add1',
-                    'electron_affinity_add1',
-                    'group_id_add1',
-                    'lattice_constant_add1',
-                    'melting_point_add1',
-                    'period_add1',
-                    'vdw_radius_add1',
-                    'covalent_radius_cordero_add1',
-                    'en_allen_add1',
-                    'atomic_weight_add1',
-                    'heat_of_formation_add1',
-                    'block_add1',
-                    'ne_outer_add1',
-                    'ne_s_add1',
-                    'ne_p_add1',
-                    'ne_d_add1',
-                    'ne_f_add1',
-                    'ionenergy_add1',
-                    'ground_state_magmom_add1']
+            return ['atomic_number_ads1',
+                    'atomic_volume_ads1',
+                    'boiling_point_ads1',
+                    'density_ads1',
+                    'dipole_polarizability_ads1',
+                    'electron_affinity_ads1',
+                    'group_id_ads1',
+                    'lattice_constant_ads1',
+                    'melting_point_ads1',
+                    'period_ads1',
+                    'vdw_radius_ads1',
+                    'covalent_radius_cordero_ads1',
+                    'en_allen_ads1',
+                    'atomic_weight_ads1',
+                    'heat_of_formation_ads1',
+                    'block_ads1',
+                    'ne_outer_ads1',
+                    'ne_s_ads1',
+                    'ne_p_ads1',
+                    'ne_d_ads1',
+                    'ne_f_ads1',
+                    'ionenergy_ads1',
+                    'ground_state_magmom_ads1']
         else:
             # Get atomic number of alpha adsorbate atom.
             Z0 = int(atoms.info['Z_add1'])
             # Import AtoML data on that element.
-            dat = get_mendeleev_params(Z0, extra_params=['heat_of_formation',
-                                                         'block',
-                                                         'econf',
-                                                         'ionenergies'])
-            result = dat[:-3] + [block2number[dat[-3]]] + \
-                list(n_outer(dat[-2])) + [dat[-1]['1']]
-            # Append ASE data on that element.
-            result += [float(ground_state_magnetic_moments[Z0])]
+            composition = [Z0]
+            extra_params = ['heat_of_formation', 'block', 'econf',
+                            'ionenergies']
+            result = average_mendeleev_params(composition,
+                                              params=default_params +
+                                              extra_params)
+            result += [gs_magmom[Z0]]
             return result
 
     def primary_surfatom(self, atoms=None):
@@ -275,27 +253,13 @@ class AdsorbateFingerprintGenerator(object):
                     'ionenergy_surf1',
                     'ground_state_magmom_surf1']
         else:
-            # Z = int(atoms.info['Z_surf1'])
-            dat = []
-            for j in atoms.info['i_surfnn']:
-                Z = int(atoms[j].number)
-                mnlv = get_mendeleev_params(Z,
-                                            extra_params=['heat_of_formation',
-                                                          'dft_bulk_modulus',
-                                                          'dft_density',
-                                                          'dbcenter',
-                                                          'dbfilling',
-                                                          'dbwidth',
-                                                          'dbskew',
-                                                          # 'dbkurt',
-                                                          'block',
-                                                          'econf',
-                                                          'ionenergies'])
-                dat.append(mnlv[:-3] + [float(block2number[mnlv[-3]])] +
-                           list(n_outer(mnlv[-2])) +
-                           [mnlv[-1]['1']] +
-                           [float(ground_state_magnetic_moments[Z])])
-                return list(np.nanmean(dat, axis=0, dtype=float))
+            composition = [atoms[j].number for j in atoms.info['i_surfnn']]
+            result = average_mendeleev_params(composition,
+                                              params=default_params +
+                                              default_extra_params)
+            result += [np.mean([gs_magmom[atoms[j].number] for j in
+                                atoms.info['i_surfnn']])]
+            return result
 
     def Z_add(self, atoms=None):
         """ Function that takes an atoms objects and returns a fingerprint
@@ -477,7 +441,7 @@ class AdsorbateFingerprintGenerator(object):
                     n += 1
                     dat.append(mnlv[:-3] + [float(block2number[mnlv[-3]])] +
                                list(n_outer(mnlv[-2])) + [mnlv[-1]['1']] +
-                               [float(ground_state_magnetic_moments[Znn])])
+                               [float(gs_magmom[Znn])])
                     if sym == name:
                         q_self.append(q)
             n_self = len(q_self)
@@ -783,7 +747,7 @@ class AdsorbateFingerprintGenerator(object):
                                                     'ionenergies'])
             f1 = f1[:-3] + [float(block2number[f1[-3]])] + \
                 list(n_outer(f1[-2])) + [f1[-1]['1']] + \
-                [float(ground_state_magnetic_moments[z1])]
+                [float(gs_magmom[z1])]
             if z1 == z2:
                 f2 = f1
             else:
@@ -801,7 +765,7 @@ class AdsorbateFingerprintGenerator(object):
                                                         'ionenergies'])
                 f2 = f2[:-3] + [float(block2number[f2[-3]])] + \
                     list(n_outer(f2[-2])) + [f2[-1]['1']] + \
-                    [float(ground_state_magnetic_moments[z2])]
+                    [float(gs_magmom[z2])]
             msum = list(np.nansum([f1, f2], axis=0, dtype=np.float))
             facet = facetdict[kvp['facet'].replace(')', '').replace('(', '')]
             fp = f1 + f2 + msum + [conc] + facet + [site]
