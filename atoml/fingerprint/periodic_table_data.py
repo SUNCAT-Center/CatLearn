@@ -80,7 +80,7 @@ def get_mendeleev_params(atomic_number, params=None):
 
     # Parameters which typically do not contain None
     if params is None:
-        params = list(default_params)
+        params = default_params
 
     var = []
     for an in atomic_number:
@@ -102,7 +102,7 @@ def list_mendeleev_params(numbers, params=None):
             elemental parameters.
     """
     if params is None:
-        params = list(default_params)
+        params = default_params
     special_params = 0
     for p, param in enumerate(params):
         if param == 'econf':
