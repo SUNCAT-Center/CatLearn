@@ -5,7 +5,7 @@ from __future__ import division
 import numpy as np
 from itertools import product
 
-from ase.ga.utilities import (get_nnmat, get_nndist, get_atoms_distribution,
+from ase.ga.utilities import (get_atoms_distribution,
                               get_neighborlist, get_atoms_connections, get_rdf)
 
 from .base import BaseGenerator
@@ -51,34 +51,58 @@ class ParticleFingerprintGenerator(BaseGenerator):
 
         super(ParticleFingerprintGenerator, self).__init__(**kwargs)
 
-    def nearestneighbour_vec(self, atoms):
-        """Nearest neighbour average, Topics in Catalysis, 2014, 57, 33."""
-        if 'data' not in atoms.info or 'nnmat' not in atoms.info['data']:
-            atoms.info['data']['nnmat'] = get_nnmat(atoms)
-        return atoms.info['data']['nnmat']
+    def nearestneighbour_vec(self, data):
+        """Nearest neighbour average, Topics in Catalysis, 2014, 57, 33.
 
-    def bond_count_vec(self, atoms):
+        This is a slightly modified version of the code found in the `ase.ga`
+        module.
+
+        Parameters
+        ----------
+        data : object
+            Data object with atomic numbers available.
+        """
+        elements = sorted(set(self.get_atomic_numbers(data)))
+        nnmat = np.zeros((len(elements), len(elements)))
+        dm = self.get_all_distances(data)
+        rdf, dists = get_rdf(data, 10., 200, dm)
+        nndist = dists[np.argmax(rdf)] + 0.2
+
+        for i in range(len(data)):
+            row = [j for j in range(len(elements))
+                   if data[i].number == elements[j]][0]
+            neighbors = [j for j in range(len(dm[i])) if dm[i][j] < nndist]
+            for n in neighbors:
+                column = [j for j in range(len(elements))
+                          if data[n].number == elements[j]][0]
+                nnmat[row][column] += 1
+
+        for i, el in enumerate(elements):
+            nnmat[i] /= len([j for j in range(len(data))
+                             if data[int(j)].number == el])
+
+        nnlist = np.reshape(nnmat, (len(nnmat)**2))
+
+        return nnlist
+
+    def bond_count_vec(self, data):
         """Bond counting with a distribution measure for coordination."""
-        if self.get_nl:
-            # Define the neighborlist.
-            atoms.info['data']['neighborlist'] = get_neighborlist(atoms,
-                                                                  dx=self.dx)
-
-        elements = sorted(frozenset(atoms.get_chemical_symbols()))
+        elements = sorted(set(self.get_atomic_numbers(data)))
 
         # Get coordination number counting.
-        dm = atoms.get_all_distances()
-        nndist = get_nndist(atoms, dm) + 0.2
+        dm = self.get_all_distances(data)
+        rdf, dists = get_rdf(data, 10., 200, dm)
+        nndist = dists[np.argmax(rdf)] + 0.2
         track_nnmat = np.zeros((self.max_bonds, len(elements), len(elements)))
-        for j in range(len(atoms)):
-            row = elements.index(atoms[j].symbol)
+        for j in range(len(data)):
+            row = elements.index(data[j].number)
             neighbors = [k for k in range(len(dm[j]))
                          if 0.1 < dm[j][k] < nndist]
             ln = len(neighbors)
             if ln > 12:
                 continue
             for l in neighbors:
-                column = elements.index(atoms[l].symbol)
+                column = elements.index(data[l].number)
                 track_nnmat[ln][row][column] += 1
 
         return track_nnmat.ravel()
