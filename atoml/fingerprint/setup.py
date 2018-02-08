@@ -6,14 +6,15 @@ from __future__ import division
 import numpy as np
 from collections import defaultdict
 
+from .adsorbate_fingerprint import AdsorbateFingerprintGenerator
 from .particle_fingerprint import ParticleFingerprintGenerator
 from .standard_fingerprint import StandardFingerprintGenerator
 from .neighbor_matrix import NeighborFingerprintGenerator
 
 
 class FeatureGenerator(
-        ParticleFingerprintGenerator, StandardFingerprintGenerator,
-        NeighborFingerprintGenerator):
+        AdsorbateFingerprintGenerator, ParticleFingerprintGenerator,
+        StandardFingerprintGenerator, NeighborFingerprintGenerator):
     """Feature generator class."""
 
     def __init__(self, atom_types=None, atom_len=None, **kwargs):

@@ -70,7 +70,7 @@ def last2ads_index(atoms, formula):
     """
     n_ads = len(string2symbols(formula))
     natoms = len(atoms)
-    add_atoms = list(range(natoms-n_ads, natoms))
+    add_atoms = list(range(natoms - n_ads, natoms))
     composition = string2symbols(formula)
     for a in add_atoms:
         if atoms[a].symbol not in composition:
@@ -123,8 +123,8 @@ def layers2ads_index(atoms, formula=None):
     radii = [get_radius(s) for s in composition]
     lz, li = get_layers(atoms, (0, 0, 1), tolerance=2 * min(radii))
     layers = int(atoms.info['key_value_pairs']['layers'])
-    ads_atoms = [a.index for a in atoms if li[a.index] > layers-1]
-    ads_atoms = list(range(natoms-n_ads, natoms))
+    ads_atoms = [a.index for a in atoms if li[a.index] > layers - 1]
+    ads_atoms = list(range(natoms - n_ads, natoms))
     if len(ads_atoms) != len(composition):
         raise AssertionError("ads atoms identification by layers failed.")
     return ads_atoms
@@ -171,9 +171,9 @@ def layers_info(atoms):
         bulk_atoms = atoms.info['surf_atoms']
     else:
         bulk_atoms = [a.index for a in atoms
-                      if il[a.index] < layers-2]
+                      if il[a.index] < layers - 2]
         top_atoms = [a.index for a in atoms
-                     if il[a.index] > layers-3 and
+                     if il[a.index] > layers - 3 and
                      a.index not in atoms.info['ads_atoms']]
     assert len(bulk_atoms) > 0 and len(top_atoms) > 0
     return bulk_atoms, top_atoms
@@ -196,7 +196,7 @@ def info2primary_index(atoms, rtol=1.3):
         for a in add_atoms:
             dA = get_radius(atoms.numbers[a])
             # Covalent radii are subtracted in distance comparison.
-            d = atoms.get_distance(m, a, mic=True, vector=False)-dM-dA
+            d = atoms.get_distance(m, a, mic=True, vector=False) - dM - dA
             liste.append([a, m, d])
     L = np.array(liste)
     i = np.argmin(L[:, 2])
@@ -281,22 +281,22 @@ def db2mol(fname, selection=[]):
     for d in smol:
         abinitio_energy = float(d.epot)
         species_name = str(d.formula)
-        if species_name+'_gas' not in abinitio_energies:
-            abinitio_energies[species_name+'_gas'] = abinitio_energy
-            dbids[species_name+'_gas'] = int(d.id)
-        elif abinitio_energies[species_name+'_gas'] > abinitio_energy:
-            abinitio_energies[species_name+'_gas'] = abinitio_energy
-            dbids[species_name+'_gas'] = int(d.id)
+        if species_name + '_gas' not in abinitio_energies:
+            abinitio_energies[species_name + '_gas'] = abinitio_energy
+            dbids[species_name + '_gas'] = int(d.id)
+        elif abinitio_energies[species_name + '_gas'] > abinitio_energy:
+            abinitio_energies[species_name + '_gas'] = abinitio_energy
+            dbids[species_name + '_gas'] = int(d.id)
     return abinitio_energies, dbids
 
 
 def mol2ref(abinitio_energies):
     mol_dict = {}
-    mol_dict['H'] = 0.5*abinitio_energies['H2_gas']
-    mol_dict['O'] = abinitio_energies['H2O_gas'] - 2*mol_dict['H']
-    mol_dict['C'] = abinitio_energies['CH4_gas'] - 4*mol_dict['H']
-    mol_dict['S'] = abinitio_energies['O2S_gas'] - 2*mol_dict['O']
-    mol_dict['N'] = abinitio_energies['H3N_gas'] - 3*mol_dict['H']
+    mol_dict['H'] = 0.5 * abinitio_energies['H2_gas']
+    mol_dict['O'] = abinitio_energies['H2O_gas'] - 2 * mol_dict['H']
+    mol_dict['C'] = abinitio_energies['CH4_gas'] - 4 * mol_dict['H']
+    mol_dict['S'] = abinitio_energies['O2S_gas'] - 2 * mol_dict['O']
+    mol_dict['N'] = abinitio_energies['H3N_gas'] - 3 * mol_dict['H']
     return mol_dict
 
 
@@ -322,7 +322,7 @@ def get_formation_energies(energy_dict, ref_dict):  # adapted from CATMAP wiki
             ser, site_name = key.split('_')
         else:
             n, ser, cat, pha, lattice, fac, size, site = key.split('_')
-            site_name = '0__' + cat + '_' + pha+'_' + lattice + '_' + fac + \
+            site_name = '0__' + cat + '_' + pha + '_' + lattice + '_' + fac + \
                 '_' + size + '_slab'
             if site_name in ref_dict:
                 E0 -= ref_dict[site_name]

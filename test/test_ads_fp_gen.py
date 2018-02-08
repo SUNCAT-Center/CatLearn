@@ -8,12 +8,12 @@ from ase.build import fcc111, add_adsorbate
 from ase.data import atomic_numbers
 from atoml.fingerprint.database_adsorbate_api import (get_radius,
                                                       attach_adsorbate_info)
-from atoml.fingerprint.setup import return_fpv, get_combined_descriptors
-from atoml.fingerprint import AdsorbateFingerprintGenerator
+from atoml.fingerprint import FeatureGenerator
 wkdir = os.getcwd()
 
 
 def setup_atoms():
+    """Get the atoms objects."""
     symbols = ['Ag', 'Au', 'Cu', 'Pt', 'Pd', 'Ir', 'Rh', 'Ni', 'Co']
     images = []
     for s in symbols:
@@ -32,7 +32,8 @@ def setup_atoms():
 
 
 def ads_fg_gen(images):
-    gen = AdsorbateFingerprintGenerator()
+    """Test the feature generation."""
+    gen = FeatureGenerator()
     train_fpv = [gen.ads_nbonds,
                  gen.primary_addatom,
                  gen.primary_adds_nn,
@@ -42,8 +43,8 @@ def ads_fg_gen(images):
                  gen.ads_av,
                  gen.primary_surf_nn,
                  gen.primary_surfatom]
-    labels = get_combined_descriptors(train_fpv)
-    matrix = return_fpv(images, train_fpv)
+    matrix = gen.return_vec(images, train_fpv)
+    labels = gen.return_names(train_fpv)
     assert len(labels) == np.shape(matrix)[1]
 
 
