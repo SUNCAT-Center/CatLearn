@@ -21,9 +21,9 @@ def get_combined_descriptors(fpv_list):
     assert len(fpv_list) >= 2, msg
     labels = fpv_list[::-1]
     L_F = []
-    for j in range(len(labels)):
-        L_F.append(labels[j]())
-    return np.hstack(L_F)
+    for l, fp in enumerate(labels):
+        L_F += fp()
+    return L_F
 
 
 def get_keyvaluepair(c=[], fpv_name='None'):
