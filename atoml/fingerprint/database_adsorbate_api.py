@@ -19,11 +19,12 @@ addsyms = ['H', 'C', 'O', 'N', 'S']
 
 
 def get_radius(z):
-    p = get_mendeleev_params(z, ['atomic_radius'])
-    if p[-1] is not None:
-        r = p[-1]
-    elif p[-4] is not None:
-        r = p[-4]
+    p = get_mendeleev_params(z, params=['atomic_radius',
+                                        'covalen_radius_cordero'])
+    if p[0] is not None:
+        r = p[0]
+    elif p[1] is not None:
+        r = p[1]
     return float(r) / 100.
 
 

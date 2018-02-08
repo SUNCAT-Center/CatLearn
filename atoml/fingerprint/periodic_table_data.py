@@ -1,8 +1,6 @@
 """Function pulling atomic data for elements."""
 import json
 from atoml import __path__ as atoml_path
-from ase.data import ground_state_magnetic_moments
-import numpy as np
 
 # Load the Mendeleev parameter data into memory
 with open('/'.join(atoml_path[0].split('/')[:-1]) +
@@ -56,7 +54,7 @@ def n_outer(econf):
     return n_tot, n_s, n_p, n_d, n_f
 
 
-def get_mendeleev_params(atomic_number, params=None, extra_params=[]):
+def get_mendeleev_params(atomic_number, params=None):
     """Return a list of generic parameters about an atom.
 
     Parameters
@@ -84,9 +82,6 @@ def get_mendeleev_params(atomic_number, params=None, extra_params=[]):
     if params is None:
         params = list(default_params)
 
-    if extra_params:
-        params += extra_params
-
     var = []
     for an in atomic_number:
         for _ in params:
@@ -95,7 +90,7 @@ def get_mendeleev_params(atomic_number, params=None, extra_params=[]):
     return var
 
 
-def average_mendeleev_params(numbers, params=None):
+def list_mendeleev_params(numbers, params=None):
     """Returns a list of average parameters weighted to the frequecy of
     occurence in a list of atomic numbers
 
@@ -131,45 +126,4 @@ def average_mendeleev_params(numbers, params=None):
             elif param == 'ionenergies':
                 line += [mnlv[p]['1']]
         dat.append(line)
-    result = list(np.nanmean(dat, axis=0, dtype=float))
-    return result
-
-
-def sum_mendeleev_params(numbers, params=None):
-    """Returns a list of summed parameters weighted to the frequecy of
-    occurence in a list of atomic numbers
-
-    Parameters
-    ----------
-        numbers : list
-            atomic numbers.
-        params : list
-            elemental parameters.
-    """
-    if params is None:
-        params = list(default_params)
-    special_params = 0
-    for p, param in enumerate(params):
-        if param == 'econf':
-            special_params += 1
-        elif param == 'block':
-            special_params += 1
-        elif param == 'ionenergies':
-            special_params += 1
-    dat = []
-    for Z in numbers:
-        mnlv = get_mendeleev_params(Z, params=params)
-        if special_params > 0:
-            line = mnlv[:-special_params]
-        else:
-            line = mnlv
-        for p, param in enumerate(params):
-            if param == 'econf':
-                line += list(n_outer(mnlv[p]))
-            elif param == 'block':
-                line += [float(block2number[mnlv[p]])]
-            elif param == 'ionenergies':
-                line += [mnlv[p]['1']]
-        dat.append(line)
-    result = list(np.nansum(dat, axis=0, dtype=float))
-    return result
+    return dat
