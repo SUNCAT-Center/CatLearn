@@ -33,24 +33,6 @@ class FeatureGenerator(
 
         super(FeatureGenerator, self).__init__(**kwargs)
 
-    def get_combined_descriptors(self, vec_list):
-        """Sequentially combine feature label vectors.
-
-        Parameters
-        ----------
-        vec_list : list
-            Functions that return fingerprints.
-        """
-        # Check that there are at least two fingerprint descriptors to combine.
-        msg = "This functions combines various fingerprint"
-        msg += " vectors, there must be at least two to combine"
-        assert len(vec_list) >= 2, msg
-        labels = vec_list[::-1]
-        L_F = []
-        for j in range(len(labels)):
-            L_F.append(labels[j]())
-        return np.hstack(L_F)
-
     def get_keyvaluepair(self, c=[], vec_name='None'):
         """Get a list of the key_value_pairs target names/values."""
         if len(c) == 0:

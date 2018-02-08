@@ -1,7 +1,6 @@
 """Some useful utilities."""
 import numpy as np
 import hashlib
-import json
 import time
 from atoml.regression import GaussianProcess
 import copy

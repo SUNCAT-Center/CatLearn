@@ -108,7 +108,7 @@ def clean_infinite(train, test=None, labels=None, mask=None):
     labels : array
         Optional list of feature labels. Default is None passed.
     """
-    train = np.asarray(train)
+    train = np.asarray(train, dtype=float)
     if test is not None:
         test = np.asarray(test)
 

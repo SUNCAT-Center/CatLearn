@@ -4,6 +4,7 @@ import unittest
 
 import test_data_setup as ds
 import test_feature_base as fb
+import test_ads_fp_gen as afp
 import test_scale as st
 import test_data_clean as dc
 import test_feature_optimization as ft
@@ -14,6 +15,7 @@ import test_acquisition as ta
 import test_io as tio
 import test_lml_optimizer as lo
 import test_ase_api as taa
+
 from common import get_data
 
 wkdir = os.getcwd()
@@ -21,6 +23,12 @@ wkdir = os.getcwd()
 
 class ConfigTestCase(unittest.TestCase):
     """Test suite for AtoML code base."""
+
+    def test_ads_fp_funct(self):
+        """Test adsorbate fingerprinting functions."""
+        images = afp.setup_atoms()
+        images = afp.attach_adsorbate_info(images)
+        afp.ads_fg_gen(images)
 
     def test_data_setup_func(self):
         """Test data setup routines."""
