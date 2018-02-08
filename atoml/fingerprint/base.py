@@ -1,6 +1,6 @@
 """Base class for the feature generators."""
 from atoml.api.ase_atoms_api import extend_atoms_class
-from atoml.utilities.neighborlist import atoms_neighborlist
+from atoml.utilities.neighborlist import ase_neighborlist
 
 
 class BaseGenerator(object):
@@ -31,7 +31,7 @@ class BaseGenerator(object):
         """
         if self.dtype == 'atoms':
             extend_atoms_class(candidate)
-            nl = atoms_neighborlist(candidate, dx, neighbor_number)
+            nl = ase_neighborlist(candidate)
         else:
             raise NotImplementedError('{} data type not implemented.'.format(
                 self.dtype))

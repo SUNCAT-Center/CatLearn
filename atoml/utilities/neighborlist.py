@@ -2,7 +2,23 @@
 import numpy as np
 from collections import defaultdict
 
+from ase.neighborlist import NeighborList
 from ase.data import covalent_radii
+
+
+def ase_neighborlist(atoms):
+    """Make dict of neighboring atoms using ase function."""
+    cutoffs = [covalent_radii[a.number] for a in atoms]
+    nl = NeighborList(
+        cutoffs, skin=0.3, sorted=False, self_interaction=False, bothways=True)
+
+    nl.build(atoms)
+
+    neighborlist = {}
+    for i, _ in enumerate(atoms):
+        neighborlist[i] = nl.get_neighbors(i)[0]
+
+    return neighborlist
 
 
 def atoms_neighborlist(atoms, dx=None, neighbor_number=1):
