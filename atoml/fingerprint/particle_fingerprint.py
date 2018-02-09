@@ -68,6 +68,17 @@ class ParticleFingerprintGenerator(BaseGenerator):
             Feature vector that will be n**2 where n is the number of atomic
             species passed to the class.
         """
+        # Return feature names in no atomic data is passed.
+        if data is None:
+            msg = 'Class must have atom_types set to return feature names.'
+            assert hasattr(self, 'atom_types') and self.atom_types is not \
+                None, msg
+            names = []
+            for i in self.atom_types:
+                names += ['{0}_{1}_nnmat'.format(i, j)
+                          for j in self.atom_types]
+            return names
+
         # WARNING: Will be set permanently whichever atom is first passed.
         if self.atom_types is None:
             msg = 'atom_types variable will be set permanently to whichever '

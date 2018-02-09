@@ -60,6 +60,7 @@ def feature_test():
     data = f.return_vec(trainset['atoms'], [f.nearestneighbour_vec])
     n, d = np.shape(data)
     assert n == train_size and d == 4
+    assert len(f.return_names([f.nearestneighbour_vec])) == d
     print('passed nearestneighbour_vec')
 
     train_fp = f.return_vec(trainset['atoms'], [f.bond_count_vec])
