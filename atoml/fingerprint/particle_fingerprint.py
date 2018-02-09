@@ -4,9 +4,10 @@ from __future__ import division
 
 import numpy as np
 from itertools import product
+import warnings
 
-from ase.ga.utilities import (get_atoms_distribution,
-                              get_neighborlist, get_atoms_connections, get_rdf)
+from ase.ga.utilities import (get_atoms_distribution, get_atoms_connections,
+                              get_rdf)
 
 from .base import BaseGenerator
 
@@ -36,7 +37,7 @@ class ParticleFingerprintGenerator(BaseGenerator):
         cell_size : float
             Set unit cell size, default is 50.0 angstroms.
         nbin : int
-            The number of bins supplied to the get_atoms_distribution function.
+            The number of bins supplied for distribution functions.
         """
         if not hasattr(self, 'atom_types'):
             self.atom_types = kwargs.get('atom_types')
@@ -45,8 +46,7 @@ class ParticleFingerprintGenerator(BaseGenerator):
         self.get_nl = kwargs.get('get_nl', False)
         self.dx = kwargs.get('dx', 0.2)
         self.cell_size = kwargs.get('cell_size', 50.)
-        self.nbin = kwargs.get('nbin', 4)
-        self.nbins = kwargs.get('nbins', 5)
+        self.nbin = kwargs.get('nbin', 5)
         self.rmax = kwargs.get('rmax', 8.)
 
         super(ParticleFingerprintGenerator, self).__init__(**kwargs)
@@ -61,27 +61,45 @@ class ParticleFingerprintGenerator(BaseGenerator):
         ----------
         data : object
             Data object with atomic numbers available.
+
+        Returns
+        -------
+        nnlist : list
+            Feature vector that will be n**2 where n is the number of atomic
+            species passed to the class.
         """
-        elements = sorted(set(self.get_atomic_numbers(data)))
-        nnmat = np.zeros((len(elements), len(elements)))
+        # WARNING: Will be set permanently whichever atom is first passed.
+        if self.atom_types is None:
+            msg = 'atom_types variable will be set permanently to whichever '
+            msg += 'atom object is first passed'
+            warnings.warn(msg)
+            self.atom_types = sorted(frozenset(self.get_atomic_numbers(data)))
+
+        # Calculate the distance parameters.
         dm = self.get_all_distances(data)
         rdf, dists = get_rdf(data, 10., 200, dm)
         nndist = dists[np.argmax(rdf)] + 0.2
 
-        for i in range(len(data)):
-            row = [j for j in range(len(elements))
-                   if data[i].number == elements[j]][0]
+        # initialize correct shape feature martix.
+        nnmat = np.zeros((len(self.atom_types), len(self.atom_types)))
+
+        # Calculate the neighbor properties.
+        for i, d in enumerate(data):
+            row = [j for j in range(len(self.atom_types))
+                   if d.number == self.atom_types[j]][0]
             neighbors = [j for j in range(len(dm[i])) if dm[i][j] < nndist]
             for n in neighbors:
-                column = [j for j in range(len(elements))
-                          if data[n].number == elements[j]][0]
+                column = [j for j in range(len(self.atom_types))
+                          if data[n].number == self.atom_types[j]][0]
                 nnmat[row][column] += 1
 
-        for i, el in enumerate(elements):
+        # Normalize the features.
+        for i, el in enumerate(self.atom_types):
             nnmat[i] /= len([j for j in range(len(data))
                              if data[int(j)].number == el])
 
-        nnlist = np.reshape(nnmat, (len(nnmat)**2))
+        # convert matrix to vector and replace np.nan values.
+        nnlist = np.nan_to_num(nnmat.flatten())
 
         return nnlist
 
@@ -107,62 +125,59 @@ class ParticleFingerprintGenerator(BaseGenerator):
 
         return track_nnmat.ravel()
 
-    def distribution_vec(self, atoms):
+    def distribution_vec(self, data):
         """Return atomic distribution measure."""
         # Center the atoms, works better for some utility functions.
-        atoms.set_cell([self.cell_size, self.cell_size, self.cell_size])
-        atoms.center()
+        data.set_cell([self.cell_size, self.cell_size, self.cell_size])
+        data.center()
 
-        if self.get_nl:
-            # Define the neighborlist.
-            atoms.info['data']['neighborlist'] = get_neighborlist(atoms,
-                                                                  dx=self.dx)
-
-        # If unique atomic numbers not supplied. Generate it now.
+        # WARNING: Will be set permanently whichever atom is first passed.
         if self.atom_types is None:
-            self.atom_types = frozenset(atoms.get_atomic_numbers())
+            msg = 'atom_types variable will be set permanently to whichever '
+            msg += 'atom object is first passed'
+            warnings.warn(msg)
+            self.atom_types = sorted(frozenset(self.get_atomic_numbers(data)))
+
         # Get the atomic distribution of each atom type.
         dist = []
         for i in self.atom_types:
-            dist += get_atoms_distribution(atoms, number_of_bins=self.nbin,
+            dist += get_atoms_distribution(data, number_of_bins=self.nbin,
                                            no_count_types=[i])
         return dist
 
-    def connections_vec(self, atoms):
+    def connections_vec(self, data):
         """Sum atoms with a certain number of connections."""
-        if self.get_nl:
-            # Define the neighborlist.
-            atoms.info['data']['neighborlist'] = get_neighborlist(atoms,
-                                                                  dx=self.dx)
-
         fp = []
+        # WARNING: Will be set permanently whichever atom is first passed.
         if self.atom_types is None:
-            # Get unique atom types.
-            self.atom_types = frozenset(atoms.get_atomic_numbers())
+            msg = 'atom_types variable will be set permanently to whichever '
+            msg += 'atom object is first passed'
+            warnings.warn(msg)
+            self.atom_types = sorted(frozenset(self.get_atomic_numbers(data)))
+
         for an in self.atom_types:
-            conn = get_atoms_connections(atoms, max_conn=self.max_bonds,
+            conn = get_atoms_connections(data, max_conn=self.max_bonds,
                                          no_count_types=[an])
             for i in conn:
                 fp.append(i)
 
         return fp
 
-    def rdf_vec(self, atoms):
+    def rdf_vec(self, data):
         """Return list of partial rdfs for use as fingerprint vector."""
         if not no_asap:
-            rf = RadialDistributionFunction(atoms,
-                                            rMax=self.rmax,
-                                            nBins=self.nbins).get_rdf
+            rf = RadialDistributionFunction(
+                data, rMax=self.rmax, nBins=self.nbin).get_rdf
             kwargs = {}
         else:
             rf = get_rdf
-            dm = atoms.get_all_distances()
-            kwargs = {'atoms': atoms, 'rmax': self.rmax,
-                      'nbins': self.nbins, 'no_dists': True,
-                      'distance_matrix': dm}
+            dm = self.get_all_distances(data)
+            kwargs = {
+                'atoms': data, 'rmax': self.rmax, 'nbins': self.nbin,
+                'no_dists': True, 'distance_matrix': dm}
 
         fp = []
-        for c in product(set(atoms.numbers), repeat=2):
+        for c in product(set(data.numbers), repeat=2):
             fp.extend(rf(elements=c, **kwargs))
 
         return fp

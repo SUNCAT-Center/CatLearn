@@ -71,7 +71,7 @@ def feature_test():
     train_fp = f.return_vec(trainset['atoms'], [f.distribution_vec])
     n, d = np.shape(train_fp)
     data = np.concatenate((data, train_fp), axis=1)
-    assert n == train_size and d == 8
+    assert n == train_size and d == 10
     print('passed distribution_vec')
 
     # EXPENSIVE to calculate. Not included in training data.
