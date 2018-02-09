@@ -1,8 +1,23 @@
 """Functions to generate the neighborlist."""
 import numpy as np
-from collections import defaultdict
 
+from ase.neighborlist import NeighborList
 from ase.data import covalent_radii
+
+
+def ase_neighborlist(atoms):
+    """Make dict of neighboring atoms using ase function."""
+    cutoffs = [covalent_radii[a.number] for a in atoms]
+    nl = NeighborList(
+        cutoffs, skin=0.3, sorted=False, self_interaction=False, bothways=True)
+
+    nl.build(atoms)
+
+    neighborlist = {}
+    for i, _ in enumerate(atoms):
+        neighborlist[i] = sorted(list(map(int, nl.get_neighbors(i)[0])))
+
+    return neighborlist
 
 
 def atoms_neighborlist(atoms, dx=None, neighbor_number=1):
@@ -27,8 +42,9 @@ def atoms_neighborlist(atoms, dx=None, neighbor_number=1):
         for i in dx:
             dx[i] = covalent_radii[i] / 2.
 
-    conn = defaultdict(list)
+    conn = {}
     for a1 in atoms:
+        c = []
         for a2 in atoms:
             if a1.index != a2.index:
                 d = np.linalg.norm(np.asarray(a1.position) -
@@ -42,5 +58,7 @@ def atoms_neighborlist(atoms, dx=None, neighbor_number=1):
                     d_max1 = ((neighbor_number - 1) * (r2 + r1)) + dxi
                 d_max2 = (neighbor_number * (r2 + r1)) + dxi
                 if d > d_max1 and d < d_max2:
-                    conn[a1.index].append(a2.index)
+                    c.append(a2.index)
+                conn[a1.index] = sorted(list(map(int, c)))
+
     return conn

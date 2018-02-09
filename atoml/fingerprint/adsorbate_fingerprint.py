@@ -74,7 +74,12 @@ def n_outer(econf):
 
 class AdsorbateFingerprintGenerator(BaseGenerator):
     def __init__(self, **kwargs):
-        """ Class containing functions for fingerprint generation.
+        """Class containing functions for fingerprint generation.
+
+        Parameters
+        ----------
+        params : list
+            An optional list of parameters upon which to generate features.
         """
         if not hasattr(self, 'params'):
             self.slab_params = kwargs.get('params')

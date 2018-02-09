@@ -105,8 +105,7 @@ class StandardFingerprintGenerator(BaseGenerator):
             names = []
             for p in self.element_parameters:
                 names += ['sum_{0}_{1}'.format(n, p) for n in self.atom_types]
-                names += ['sum_all_{0},'.format(p)]
-                names += ['mean_all_{0}'.format(p)]
+                names += ['sum_all_{0},'.format(p), 'mean_all_{0}'.format(p)]
             return names
 
         if not isinstance(self.element_parameters, list):
