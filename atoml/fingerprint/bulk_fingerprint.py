@@ -13,7 +13,9 @@ from ase.data import ground_state_magnetic_moments as gs_magmom
 from .periodic_table_data import (list_mendeleev_params,
                                   default_params)
 
-default_extra_params = ['atomic_radius',
+default_extra_params = ['en_ghosh',
+                        'metallic_radius_c12',
+                        'atomic_radius',
                         'heat_of_formation',
                         'dft_std_modulus',
                         'dft_density',
@@ -55,6 +57,8 @@ class BulkFingerprintGenerator(object):
                     'covalent_radius_cordero_sum',
                     'en_allen_sum',
                     'atomic_weight_sum',
+                    'en_ghosh_sum',
+                    'metallic_radius_sum',
                     'atomic_radius_sum',
                     'heat_of_formation_sum',
                     'dft_sum_modulus_sum',
@@ -99,6 +103,8 @@ class BulkFingerprintGenerator(object):
                     'covalent_radius_cordero_av',
                     'en_allen_av',
                     'atomic_weight_av',
+                    'en_ghosh_av',
+                    'metallic_radius_av',
                     'atomic_radius_av',
                     'heat_of_formation_av',
                     'dft_av_modulus_av',
@@ -143,6 +149,8 @@ class BulkFingerprintGenerator(object):
                     'covalent_radius_cordero_std',
                     'en_allen_std',
                     'atomic_weight_std',
+                    'en_ghosh_std',
+                    'metallic_radius_std',
                     'atomic_radius',
                     'heat_of_formation_std',
                     'dft_std_modulus_std',
@@ -168,3 +176,22 @@ class BulkFingerprintGenerator(object):
             result = list(np.nanstd(np.array(dat, dtype=float), axis=0))
             result += [np.nanstd([gs_magmom[z] for z in numbers])]
             return result
+
+    def abo3_counter(self, atoms=None):
+        if atoms is None:
+            return ['nAl', 'nIn', 'nGa', 'nO', 'n_ions', 'ex_charge']
+        else:
+            nAl = len([a for a in atoms if a.symbol == 'Al'])
+            nIn = len([a for a in atoms if a.symbol == 'In'])
+            nGa = len([a for a in atoms if a.symbol == 'Ga'])
+            nO = len([a for a in atoms if a.symbol == 'O'])
+            ex_charge = -2 * nO + (nAl + nIn + nGa) * 3
+            n_ions = nAl + nIn + nGa
+            result = [nAl, nIn, nGa, nO, ex_charge, n_ions]
+            return result
+
+    def xyz_id(self, atoms=None):
+        if atoms is None:
+            return ['xyz_id']
+        else:
+            return [atoms.info['xyz_id']]
