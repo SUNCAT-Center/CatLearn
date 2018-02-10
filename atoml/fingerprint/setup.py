@@ -15,7 +15,21 @@ from .neighbor_matrix import NeighborFingerprintGenerator
 class FeatureGenerator(
         AdsorbateFingerprintGenerator, ParticleFingerprintGenerator,
         StandardFingerprintGenerator, NeighborFingerprintGenerator):
-    """Feature generator class."""
+    """Feature generator class.
+
+    It is sometimes necessary to normalize the length of feature vectors when
+    data is supplied with variable numbers of atoms or elemental types. If this
+    is the case, use the `normalize_features` function.
+
+    In this class there are functions to take a data object and return a
+    feature vector. This is done with the `return_vec` function. The names of
+    the descriptors in the feature vector can be accessed with the
+    `return_names` function.
+
+    The class inherits the actual generator functions from the
+    [NAME]FingerprintGenerator classes. Additional cariables are passed as
+    kwargs.
+    """
 
     def __init__(self, atom_types=None, atom_len=None, **kwargs):
         """Initialize feature generator.
@@ -34,37 +48,21 @@ class FeatureGenerator(
 
         super(FeatureGenerator, self).__init__(**kwargs)
 
-    def get_keyvaluepair(self, c=[], vec_name='None'):
-        """Get a list of the key_value_pairs target names/values."""
-        if len(c) == 0:
-            return ['kvp_' + vec_name]
-        else:
-            out = []
-            for atoms in c:
-                field_value = float(atoms['key_value_pairs'][vec_name])
-                out.append(field_value)
-            return out
+    def normalize_features(self, train_candidates, test_candidates=None):
+        """Function to attach feature data to class.
 
-    def return_names(self, vec_names):
-        """Function to return a list of feature names.
+        Currently the function attaches data on all elemental types present in
+        the data as well as the maximum number of atoms in a data object.
 
         Parameters
         ----------
-        vec_name : list of / single vec class(es)
-            List of fingerprinting classes.
-
-        Returns
-        -------
-        fingerprint_vector : ndarray
-          Name array.
+        train_candidates : list
+            List of atoms objects.
+        test_candidates : list
+            List of atoms objects.
         """
-        if not isinstance(vec_names, list):
-            vec_names = [vec_names]
-
-        if len(vec_names) == 1:
-            return vec_names[0](None)
-        else:
-            return self._concatenate_vec(None, vec_names)
+        self._get_atom_types(train_candidates, test_candidates)
+        self._get_atom_length(train_candidates, test_candidates)
 
     def return_vec(self, candidates, vec_names):
         """Sequentially combine feature vectors. Padding handled automatically.
@@ -101,6 +99,38 @@ class FeatureGenerator(
             fingerprint_vector.append(self._get_vec(atoms, vec_names))
 
         return np.asarray(fingerprint_vector)
+
+    def return_names(self, vec_names):
+        """Function to return a list of feature names.
+
+        Parameters
+        ----------
+        vec_name : list of / single vec class(es)
+            List of fingerprinting classes.
+
+        Returns
+        -------
+        fingerprint_vector : ndarray
+          Name array.
+        """
+        if not isinstance(vec_names, list):
+            vec_names = [vec_names]
+
+        if len(vec_names) == 1:
+            return vec_names[0](None)
+        else:
+            return self._concatenate_vec(None, vec_names)
+
+    def get_keyvaluepair(self, c=[], vec_name='None'):
+        """Get a list of the key_value_pairs target names/values."""
+        if len(c) == 0:
+            return ['kvp_' + vec_name]
+        else:
+            out = []
+            for atoms in c:
+                field_value = float(atoms['key_value_pairs'][vec_name])
+                out.append(field_value)
+            return out
 
     def _get_vec(self, atoms, vec_names):
         """Get the fingerprint vector as an array.
@@ -148,19 +178,6 @@ class FeatureGenerator(
                                                  name(atoms)))
 
         return fingerprint_vector
-
-    def normalize_features(self, train_candidates, test_candidates=None):
-        """Function to attach feature data to class.
-
-        Parameters
-        ----------
-        train_candidates : list
-            List of atoms objects.
-        test_candidates : list
-            List of atoms objects.
-        """
-        self._get_atom_types(train_candidates, test_candidates)
-        self._get_atom_length(train_candidates, test_candidates)
 
     def _get_atom_types(self, train_candidates, test_candidates=None):
         """Function to get all potential atomic types in data.
