@@ -309,3 +309,24 @@ class Hierarchy(object):
         self.cursor.execute(query, id_list)
 
         return self.cursor.fetchall()
+
+    def globalscaledata(self, index_split):
+        """Make an array with all data.
+
+        Parameters
+        ----------
+        index_split : array
+            Array with the index data.
+        """
+        global_data1 = self._compile_split(index_split["1" + '_' + "1"])
+        global_data2 = self._compile_split(index_split["1" + '_' + "2"])
+        global_feat1 = np.array(global_data1[:, 1:-1], np.float64)
+        global_tar1 = np.array(global_data1[:, -1:], np.float64)
+        d1, d2 = np.shape(global_tar1)
+        global_tar1 = global_tar1.reshape(d2, d1)[0]
+        global_feat2 = np.array(global_data2[:, 1:-1], np.float64)
+        global_tar2 = np.array(global_data2[:, -1:], np.float64)
+        d1, d2 = np.shape(global_tar2)
+        global_tar2 = global_tar2.reshape(d2, d1)[0]
+        globaldata = np.concatenate((global_feat1, global_feat2), axis=0)
+        return globaldata, global_feat1, global_tar1

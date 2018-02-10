@@ -1,6 +1,7 @@
 """Run all tests."""
 import os
 import unittest
+import warnings
 
 import test_data_setup as ds
 import test_feature_base as fb
@@ -15,8 +16,11 @@ import test_acquisition as ta
 import test_io as tio
 import test_lml_optimizer as lo
 import test_ase_api as taa
+import test_learning_curve as tlc
 
 from common import get_data
+
+warnings.filterwarnings("ignore")
 
 wkdir = os.getcwd()
 
@@ -85,6 +89,7 @@ class ConfigTestCase(unittest.TestCase):
     def test_hierarchy_func(self):
         """Test hierarchy routines."""
         ht.hierarchy_test()
+        tlc.learning_curve_test()
 
     def test_io_func(self):
         """Test the io routines."""

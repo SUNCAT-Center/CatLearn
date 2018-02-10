@@ -60,7 +60,7 @@ def hierarchy(cv, features, min_split, max_split, new_data=True,
         s_feat, m_feat = None, None
 
     for indicies in reversed(index_split):
-        ph = placeholder(globalscale, PC, index_split, cv,
+        ph = placeholder(PC, index_split, cv,
                          indicies, hier_level, featselect_featvar,
                          featselect_featconst, s_feat, m_feat,
                          select_limit=select_limit,
@@ -139,7 +139,7 @@ def feature_frequency(cv, features, min_split, max_split,
         glob_feat1 = None
         glob_tar1 = None
     ph = placeholder(
-        globalscale, PC, index_split, cv, indicies, hier_level,
+        PC, index_split, cv, indicies, hier_level,
         featselect_featvar, featselect_featconst, s_feat, m_feat,
         select_limit=select_limit, selected_features=selected_features,
         feat_sub=feat_sub, glob_feat1=glob_feat1, glob_tar1=glob_tar1

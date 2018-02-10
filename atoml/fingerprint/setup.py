@@ -21,13 +21,13 @@ class FeatureGenerator(
     data is supplied with variable numbers of atoms or elemental types. If this
     is the case, use the `normalize_features` function.
 
-    In this class there are functions to take a data object and return a
+    In this class, there are functions to take a data object and return a
     feature vector. This is done with the `return_vec` function. The names of
     the descriptors in the feature vector can be accessed with the
     `return_names` function.
 
     The class inherits the actual generator functions from the
-    [NAME]FingerprintGenerator classes. Additional cariables are passed as
+    [NAME]FingerprintGenerator classes. Additional variables are passed as
     kwargs.
     """
 
