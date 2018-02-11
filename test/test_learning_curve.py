@@ -1,6 +1,5 @@
 """Run the hierarchy with feature selection."""
 import numpy as np
-from astropy.table import Table
 
 from atoml.cross_validation import Hierarchy
 from atoml.learning_curve import hierarchy, feature_frequency
@@ -59,7 +58,7 @@ def frequency_test():
         data1 = np.empty(1,)
         data2 = np.empty(1,)
         hit1, hit2 = 0, 0
-        for k in range(1, 2):
+        for k in range(1, 4):
             selected_features1 = feature_frequency(
                 hv, 370, 3, 8, new_data=True, ridge=True, scale=True,
                 globalscale=True, normalization=True, featselect_featvar=False,
@@ -104,13 +103,6 @@ def frequency_test():
             dif = np.shape(r1_hist1)[0] - np.shape(r1_hist2)[0]
             r1_hist2 = np.concatenate((r1_hist2, np.zeros(dif)), axis=0)
             r2_hist2 = np.concatenate((r2_hist2, np.zeros(dif)), axis=0)
-
-        print("Feature set "+str(i))
-        print("Dataset 2000            Dataset 250")
-        print(Table([r2_hist1, np.around(r1_hist1, 3), r2_hist2,
-              np.around(r1_hist2, 3)],
-              names=('Feat_2000', 'Freq_2000 (%)',
-              'Feat_250', 'Freq_250 (%)')))
 
 
 if __name__ == '__main__':
