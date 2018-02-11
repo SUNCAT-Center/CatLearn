@@ -15,8 +15,8 @@ from ase.data import ground_state_magnetic_moments as gs_magmom
 from ase.data import covalent_radii, atomic_numbers
 from .periodic_table_data import (get_mendeleev_params,
                                   list_mendeleev_params,
-                                  default_params)
-from .database_adsorbate_api import layers_info, get_radius
+                                  default_params, get_radius)
+from .database_adsorbate_api import layers_info
 from .neighbor_matrix import connection_matrix
 import collections
 
