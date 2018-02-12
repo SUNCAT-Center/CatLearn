@@ -293,7 +293,8 @@ class GaussianProcess(object):
 
     def update_gp(self, train_fp=None, train_target=None, kernel_dict=None,
                   scale_optimizer=False, gradients=None,
-                  regularization_bounds=(1e-6, None)):
+                  regularization_bounds=(1e-6, None),
+                  optimize_hyperparameters=False):
         """Potentially optimize the full Gaussian Process again.
 
         This alows for the definition of a new kernel as a result of changing
@@ -341,7 +342,8 @@ class GaussianProcess(object):
             self.update_data(train_fp, train_target, gradients,
                              scale_optimizer)
 
-        self.optimize_hyperparameters()
+        if optimize_hyperparameters:
+            self.optimize_hyperparameters()
 
     def _make_prediction(self, ktb, cinv, target):
         """Function to make the prediction.
