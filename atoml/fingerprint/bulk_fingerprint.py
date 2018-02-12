@@ -387,26 +387,31 @@ class BulkFingerprintGenerator(object):
 
     def igao_counter(self, atoms=None):
         if atoms is None:
-            return ['nAl', 'nIn', 'nGa', 'nO', 'n_ions', 'ex_charge']
+            return ['nAl', 'nIn', 'nGa', 'nO', 'ex_charge', 'n_ions',
+                    'Eg_av', 'Eg_max', 'Eg_min']
         else:
+            dft_Eg_mp = [0.932, 2.008, 5.854]
             nAl = len([a for a in atoms if a.symbol == 'Al'])
             nIn = len([a for a in atoms if a.symbol == 'In'])
             nGa = len([a for a in atoms if a.symbol == 'Ga'])
             nO = len([a for a in atoms if a.symbol == 'O'])
             ex_charge = -2 * nO + (nAl + nIn + nGa) * 3
-            n_ions = nAl + nIn + nGa
-            com = np.sum(atoms.get_center_of_mass())
-            result = [nAl, nIn, nGa, nO, ex_charge, n_ions, com]
+            natoms = len(atoms)
+            n_ions = nIn + nGa + nAl
+            na_l = [nIn, nGa, nAl]
+            Eg_av = np.sum(np.multiply(dft_Eg_mp, na_l)) / natoms
+            Eg_max = np.max(np.multiply(dft_Eg_mp, na_l))
+            Eg_min = np.max(np.multiply(dft_Eg_mp, na_l))
+            result = [nIn, nGa, nAl, nO, ex_charge, n_ions,
+                      Eg_av, Eg_max, Eg_min]
             return result
 
     def igao_dist(self, atoms=None):
         if atoms is None:
-            return ['d_InO_sum', 'd_GaO_sum', 'd_AlO_sum',
-                    'd_InO_av', 'd_GaO_av', 'd_AlO_av',
-                    'd_InO_std', 'd_GaO_std', 'd_AlO_std',
-                    'd_InO_min', 'd_GaO_min', 'd_AlO_min',
-                    'd_InO_max', 'd_GaO_max', 'd_AlO_max',
-                    'hexahedality_In', 'hexahedality_Ga', 'hexahedality_Al']
+            return ['d_cation-O_sum', 'd_cation-O_av', 'd_cationO_std',
+                    'd_cation-O_min', 'd_cation-O_max',
+                    'hex_cation_av', 'hex_av_sum', 'hex_av_std',
+                    'hex-O_min', 'hex-O_max']
         else:
             dm = atoms.get_all_distances(mic=True)
             # Define cutoff radii for neighbors.
@@ -428,21 +433,27 @@ class BulkFingerprintGenerator(object):
             dAlO = dmO[iAl, :]
             dAlOnn = dAlO[dAlO < cutoffs[3]]
             # Calculate ratio of neighbor distances to averages.
-            In_hex = 0.
-            Ga_hex = 0.
-            Al_hex = 0.
+            In_hex = []
+            Ga_hex = []
+            Al_hex = []
             for i, row in enumerate(dInOnn):
-                In_hex += (np.sum(row) / np.average(row))
-            for i, row in enumerate(dInOnn):
-                Ga_hex += (np.sum(row) / np.average(row))
-            for i, row in enumerate(dInOnn):
-                Al_hex += (np.sum(row) / np.average(row))
-            return [np.sum(dInOnn), np.sum(dGaOnn), np.sum(dAlOnn),
-                    np.mean(dInOnn), np.mean(dGaOnn), np.mean(dAlOnn),
-                    np.std(dInOnn), np.std(dGaOnn), np.std(dAlOnn),
-                    np.min(dInOnn), np.min(dGaOnn), np.min(dAlOnn),
-                    np.max(dInOnn), np.max(dGaOnn), np.max(dAlOnn),
-                    In_hex, Ga_hex, Al_hex]
+                In_hex += [np.sum(row - np.mean(row))/np.mean(row)]
+            for i, row in enumerate(dGaOnn):
+                Ga_hex += [np.sum(row - np.mean(row))/np.mean(row)]
+            for i, row in enumerate(dAlOnn):
+                Al_hex += [np.sum(row - np.mean(row))/np.mean(row)]
+            result = [np.nansum(np.hstack([dInOnn, dGaOnn, dAlOnn])),
+                      np.nanmean(np.hstack([dInOnn, dGaOnn, dAlOnn])),
+                      np.nanstd(np.hstack([dInOnn, dGaOnn, dAlOnn])),
+                      np.nanmin(np.hstack([dInOnn, dGaOnn, dAlOnn])),
+                      np.nanmax(np.hstack([dInOnn, dGaOnn, dAlOnn])),
+                      np.nanmean(np.hstack([In_hex, Ga_hex, Al_hex])),
+                      np.nansum(np.hstack([In_hex, Ga_hex, Al_hex])),
+                      np.nanstd(np.hstack([In_hex, Ga_hex, Al_hex])),
+                      np.nanmin(np.hstack([In_hex, Ga_hex, Al_hex])),
+                      np.nanmax(np.hstack([In_hex, Ga_hex, Al_hex]))]
+            return result
+
     def xyz_id(self, atoms=None):
         if atoms is None:
             return ['xyz_id']
