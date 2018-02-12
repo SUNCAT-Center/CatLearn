@@ -1,3 +1,11 @@
+# Version 0.2.2 (February 2018)
+
+-   Update the fingerprint generator functions so there is now a
+`FeatureGenerator` class that wraps round all type specific generators.
+-   Add better handling when passing variable length/composition data objects
+to the feature generators.
+-   Started adding a general api for ASE.
+
 # Version 0.2.1 (February 2018)
 
 -   Update functions to compile features allowing for variable length of atoms
