@@ -10,7 +10,7 @@ from atoml.preprocess import importance_testing as it
 from atoml.preprocess import feature_engineering as fe
 from atoml.preprocess.feature_extraction import pls, pca, spca, atoml_pca
 from atoml.preprocess.feature_elimination import FeatureScreening
-from atoml.preprocess.greedy_elimination import greedy_elimination
+from atoml.preprocess.greedy_elimination import GreedyElimination
 from atoml.regression import RidgeRegression
 
 from common import get_data
@@ -153,7 +153,7 @@ def test_screening(train_features, train_targets, test_features):
 
 
 def prediction(train_features, train_targets, test_features, test_targets):
-    """Test ridge regression predictions."""
+    """Ridge regression predictions."""
     # Test ridge regression predictions.
     rr = RidgeRegression(cv='loocv')
     reg = rr.find_optimal_regularization(X=train_features, Y=train_targets)
@@ -170,7 +170,9 @@ def prediction(train_features, train_targets, test_features, test_targets):
 
 
 def test_greedy(prediction, features, targets):
-    return greedy_elimination(prediction, features, targets)
+    """Test greedy feature selection."""
+    ge = GreedyElimination()
+    return ge.greedy_elimination(prediction, features, targets)
 
 
 if __name__ == '__main__':
