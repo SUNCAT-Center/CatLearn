@@ -5,7 +5,8 @@ from __future__ import absolute_import
 import copy
 import warnings
 import multiprocessing
-from tqdm import tqdm
+import time
+from tqdm import trange, tqdm
 import numpy as np
 
 from atoml.cross_validation import k_fold
@@ -15,8 +16,18 @@ warnings.filterwarnings("ignore")
 
 
 class GreedyElimination(object):
-    def __init__(self, direction='backward'):
-        self.direction = direction
+    """The greedy feature elimination class."""
+
+    def __init__(self, nprocs=1):
+        """Initialize the class.
+
+        Parameters
+        ----------
+        nprocs : int
+            Number of processers used in parallel implementation. Default is 1
+            e.g. serial.
+        """
+        self.nprocs = nprocs
 
     def greedy_elimination(self, predict, features, targets, nsplit=2):
         """Greedy feature elimination.
@@ -49,10 +60,10 @@ class GreedyElimination(object):
 
         print('starting greedy feature elimination')
         # The tqdm package is used for tracking progress.
-        for fnum in tqdm(range(total_features - 1),
-                         desc='features eliminated'):
+        for fnum in trange(total_features - 1, desc='features eliminated '):
             self.result = np.zeros((nsplit, total_features))
-            for self.index in range(nsplit):
+            for self.index in trange(nsplit, desc='k-folds             ',
+                                     leave=False):
                 # Sort out training and testing data.
                 train_features = copy.deepcopy(features)
                 train_targets = copy.deepcopy(targets)
@@ -65,20 +76,22 @@ class GreedyElimination(object):
                 _, d = np.shape(train_features)
 
                 # Iterate through features and find error for removing it.
-                pool = multiprocessing.Pool(None)
+                pool = multiprocessing.Pool(self.nprocs)
                 tasks = np.arange(d)
                 args = (
                     (x, train_features, test_features, train_targets,
                      test_targets, predict) for x in tasks)
-                parallel_iterate = pool.map_async(
-                    self._single_elimination, args,
-                    callback=self._elim_callback)
-                parallel_iterate.wait()
-                # print(self.result)
-                # for f in range(d):
-                #    result[index][f] = _single_elimination(
-                #        f, train_features, test_features, train_targets,
-                #        test_targets, predict)
+                for r in tqdm(pool.imap_unordered(
+                        self._single_elimination, args), total=d,
+                        desc='nested              ', leave=False):
+                    self.result[self.index][r[0]] = r[1]
+                    time.sleep(0.001)
+                pool.close()
+
+                # parallel_iterate = pool.map_async(
+                #     self._single_elimination, args,
+                #     callback=self._elim_callback)
+                # parallel_iterate.wait()
 
             # Delete feature that gives largest error.
             for self.index in range(nsplit):
@@ -92,7 +105,20 @@ class GreedyElimination(object):
         return size_result
 
     def _single_elimination(self, args):
-        """Function to eliminate a single feature and make a prediction."""
+        """Function to eliminate a single feature and make a prediction.
+
+        Parameters
+        ----------
+        args : tuple
+            Parameters and data to be passed to elimination function.
+
+        Returns
+        -------
+        f : int
+            Feature index being eliminated.
+        error : float
+            The averaged error for the test data.
+        """
         f = args[0]
         train_features = args[1]
         test_features = args[2]
