@@ -61,6 +61,9 @@ class ConfigTestCase(unittest.TestCase):
         ft.test_extract(train_features, train_targets, test_features)
         ft.test_screening(train_features, train_targets, test_features)
 
+        train_features, train_targets, _, _ = get_data()
+        ft.test_greedy(ft.prediction, train_features[:, :20], train_targets)
+
     def test_predict_func(self):
         """Test prediction routines."""
         train_features, train_targets, test_features, \

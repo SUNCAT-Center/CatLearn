@@ -10,6 +10,10 @@ from atoml.preprocess import importance_testing as it
 from atoml.preprocess import feature_engineering as fe
 from atoml.preprocess.feature_extraction import pls, pca, spca, atoml_pca
 from atoml.preprocess.feature_elimination import FeatureScreening
+from atoml.preprocess.greedy_elimination import greedy_elimination
+from atoml.regression import RidgeRegression
+
+from common import get_data
 
 wkdir = os.getcwd()
 
@@ -148,6 +152,27 @@ def test_screening(train_features, train_targets, test_features):
         # Difficult to test this one as it is inherently random.
 
 
+def prediction(train_features, train_targets, test_features, test_targets):
+    """Test ridge regression predictions."""
+    # Test ridge regression predictions.
+    rr = RidgeRegression(cv='loocv')
+    reg = rr.find_optimal_regularization(X=train_features, Y=train_targets)
+    coef = rr.RR(X=train_features, Y=train_targets, omega2=reg)[0]
+
+    # Test the model.
+    sumd = 0.
+    for tf, tt in zip(test_features, test_targets):
+        p = (np.dot(coef, tf))
+        sumd += (p - tt) ** 2
+    error = (sumd / len(test_features)) ** 0.5
+
+    return error
+
+
+def test_greedy(prediction, features, targets):
+    return greedy_elimination(prediction, features, targets)
+
+
 if __name__ == '__main__':
     from pyinstrument import Profiler
 
@@ -158,6 +183,9 @@ if __name__ == '__main__':
     train_features, train_targets, test_features = test_extend()
     test_extract(train_features, train_targets, test_features)
     test_screening(train_features, train_targets, test_features)
+
+    train_features, train_targets, _, _ = get_data()
+    result = test_greedy(prediction, train_features[:, :20], train_targets)
 
     profiler.stop()
 
