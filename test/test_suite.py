@@ -1,5 +1,4 @@
 """Run all tests."""
-import os
 import unittest
 import warnings
 
@@ -10,7 +9,7 @@ import test_scale as st
 import test_data_clean as dc
 import test_feature_optimization as ft
 import test_predict as pt
-import test_hierarchy_cv as ht
+import test_cv as cv
 import test_hypot_scaling as hs
 import test_acquisition as ta
 import test_io as tio
@@ -21,8 +20,6 @@ import test_learning_curve as tlc
 from common import get_data
 
 warnings.filterwarnings("ignore")
-
-wkdir = os.getcwd()
 
 
 class ConfigTestCase(unittest.TestCase):
@@ -39,7 +36,6 @@ class ConfigTestCase(unittest.TestCase):
         # Test data setup functions.
         fb.feature_base_test()
         all_cand, data = ds.feature_test()
-        ds.cv_test(data)
         ds.db_test(all_cand, data)
 
         # Test scale data functions.
@@ -88,7 +84,8 @@ class ConfigTestCase(unittest.TestCase):
 
     def test_hierarchy_func(self):
         """Test hierarchy routines."""
-        ht.hierarchy_test()
+        cv.hierarchy_test()
+        cv.kfold_test()
         tlc.learning_curve_test()
 
     def test_io_func(self):
@@ -104,4 +101,3 @@ class ConfigTestCase(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
-    os.remove('{}/vec_store.sqlite'.format(wkdir))

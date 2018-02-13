@@ -5,7 +5,7 @@ from __future__ import absolute_import
 import os
 import numpy as np
 
-from atoml.cross_validation import Hierarchy
+from atoml.cross_validation import Hierarchy, k_fold
 from atoml.regression import RidgeRegression
 from common import get_data
 
@@ -54,6 +54,19 @@ def hierarchy_test():
     os.remove('test.sqlite')
 
 
+def kfold_test():
+    """Test some cross-validation."""
+    features, targets, _, _ = get_data()
+    f, t = k_fold(features, targets, nsplit=5)
+    assert len(f) == 5 and len(t) == 5
+    for s in f:
+        assert np.shape(s) == (9, 100)
+    f, t = k_fold(features, targets, nsplit=4, fix_size=5)
+    assert len(f) == 4 and len(t) == 4
+    for s in f:
+        assert np.shape(s) == (5, 100)
+
+
 if __name__ == '__main__':
     from pyinstrument import Profiler
 
@@ -61,6 +74,7 @@ if __name__ == '__main__':
     profiler.start()
 
     hierarchy_test()
+    kfold_test()
 
     profiler.stop()
 

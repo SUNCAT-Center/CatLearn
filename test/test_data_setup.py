@@ -14,7 +14,6 @@ from atoml.fingerprint import FeatureGenerator
 from atoml.fingerprint.neighbor_matrix import neighbor_features
 from atoml.fingerprint.periodic_table_data import (get_mendeleev_params,
                                                    default_params)
-from atoml.cross_validation import k_fold
 from atoml.utilities import DescriptorDatabase
 
 atoml_path = '/'.join(atoml_path[0].split('/')[:-1])
@@ -146,18 +145,6 @@ def feature_test():
     return all_cand, data
 
 
-def cv_test(data):
-    """Test some cross-validation."""
-    split = k_fold(data, nsplit=5)
-    assert len(split) == 5
-    for s in split:
-        assert len(s) == 10
-    split = k_fold(data, nsplit=5, fix_size=5)
-    assert len(split) == 5
-    for s in split:
-        assert len(s) == 5
-
-
 def db_test(all_cand, data):
     """Test database functions."""
     # Define variables for database to store system descriptors.
@@ -210,7 +197,6 @@ if __name__ == '__main__':
     profiler.start()
 
     all_cand, data = feature_test()
-    cv_test(data)
     db_test(all_cand, data)
 
     profiler.stop()
