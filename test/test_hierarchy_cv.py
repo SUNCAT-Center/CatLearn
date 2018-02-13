@@ -7,6 +7,7 @@ import numpy as np
 
 from atoml.cross_validation import Hierarchy
 from atoml.regression import RidgeRegression
+from common import get_data
 
 
 def predict(train_features, train_targets, test_features, test_targets):
@@ -37,8 +38,10 @@ def predict(train_features, train_targets, test_features, test_targets):
 def hierarchy_test():
     """Function to test the hierarchy with ridge regression predictions."""
     # Define the hierarchy cv class method.
-    hv = Hierarchy(db_name='fpv_store.sqlite', table='FingerVector',
+    train_features, train_targets, test_features, test_targets = get_data()
+    hv = Hierarchy(db_name='test.sqlite', table='FingerVector',
                    file_name='hierarchy')
+    hv.todb(features=train_features, targets=train_targets)
     # Split the data into subsets.
     hv.split_index(min_split=5, max_split=None)
     # Load data back in from save file.
@@ -48,6 +51,7 @@ def hierarchy_test():
     hv.split_predict(index_split=ind, predict=predict)
 
     os.remove('hierarchy.pickle')
+    os.remove('test.sqlite')
 
 
 if __name__ == '__main__':

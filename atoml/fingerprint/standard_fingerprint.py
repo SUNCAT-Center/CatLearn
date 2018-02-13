@@ -31,43 +31,66 @@ class StandardFingerprintGenerator(object):
 
     def composition_fpv(self, atoms):
         """Basic function to take atoms object and return the composition."""
-        # Generate a list of atom types if not supplied.
-        if self.atom_types is None:
-            self.atom_types = frozenset(atoms.get_chemical_symbols())
 
-        # Add count of each atom type to the fingerprint vector.
-        fp = []
-        for i in self.atom_types:
-            count = 0.
-            for j in atoms.get_chemical_symbols():
-                if i == j:
-                    count += 1.
-            fp.append(count)
-        return np.array(fp)
+        cs = atoms.get_chemical_symbols()
+
+        # WARNING: Will be set permanently whichever atom is first passed.
+        if self.atom_types is None:
+            self.atom_types = sorted(frozenset(cs))
+
+        return np.array([cs.count(sym) for sym in self.atom_types])
 
     def _get_coulomb(self, atoms):
-        """Function to generate the coulomb matrix."""
-        # Get distances
+        """Generate the coulomb matrix.
+
+        A more detailed discussion of the coulomb features can be found here:
+        https://doi.org/10.1103/PhysRevLett.108.058301
+
+        Parameters
+        ----------
+        atoms : object
+          Atoms object with Cartesian coordinates available.
+
+        Returns
+        -------
+        coulomb : ndarray
+          The coulomb matrix, (n, n) atoms in size.
+        """
+
+        if len(atoms) < 2:
+            raise ValueError(
+                "Columb matrix requires atoms object with at least 2 atoms")
+
         dm = atoms.get_all_distances()
-        np.fill_diagonal(dm, 1.)
+        np.fill_diagonal(dm, 1)
 
         # Make coulomb matrix
         coulomb = np.outer(atoms.numbers, atoms.numbers) / dm
 
-        # Set diagonal elements
-        r = range(len(atoms))
-        coulomb[r, r] = 0.5 * atoms.numbers ** 2.4
+        diagonal = 0.5 * atoms.numbers ** 2.4
+        np.fill_diagonal(coulomb, diagonal)
 
         return coulomb
 
     def eigenspectrum_fpv(self, atoms):
-        """Sorted eigenspectrum of the Coulomb matrix."""
-        # Get the Coulomb matrix.
+        """Sorted eigenspectrum of the Coulomb matrix.
+
+        Parameters
+        ----------
+        atoms : object
+          Atoms object with Cartesian coordinates available.
+
+        Returns
+        -------
+        result : ndarray
+          Sorted Eigen values of the coulomb matrix, n atoms is size.
+        """
         coulomb = self._get_coulomb(atoms)
-        # Get eigenvalues and vectors
-        w, v = np.linalg.eig((np.array(coulomb)))
-        # Return sort eigenvalues from largest to smallest
-        return np.sort(w)[::-1]
+
+        v = np.linalg.eigvals(coulomb)
+        v[::-1].sort()
+
+        return v
 
     def distance_fpv(self, atoms):
         """Averaged distance between e.g. A-A atomic pairs."""

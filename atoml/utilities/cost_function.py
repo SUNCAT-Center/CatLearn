@@ -52,6 +52,11 @@ def get_error(prediction, target, epsilon=None, return_percentiles=True):
     error['absolute_average'] = np.mean(e_abs)
     error['absolute_percentiles'] = _get_percentiles(error['absolute_all'])
 
+    # Root mean squared logarithmic error.
+    error['log_all'] = (np.log(prediction + 1) - np.log(target + 1)) ** 2.
+    error['rmsle_all'] = np.sqrt(error['log_all'])
+    error['rmsle_average'] = np.sqrt(np.mean(error['log_all']))
+
     # Epsilon-insensitive error function.
     if epsilon is not None:
         e_epsilon = np.abs(res) - epsilon

@@ -2,9 +2,12 @@
 import numpy as np
 import hashlib
 import time
+from atoml.regression import GaussianProcess
+import copy
 
-
-def simple_learning_curve(gp, trainx, trainy, testx, testy, step=1, min_data=2,
+def simple_learning_curve(trainx, trainy, testx, testy,
+                          kernel_dict, regularization,
+                          step=1, min_data=2,
                           optimize_interval=None, eval_jac=False):
     """Evaluate validation error versus training data size.
 
@@ -46,24 +49,34 @@ def simple_learning_curve(gp, trainx, trainy, testx, testy, step=1, min_data=2,
     opt_time = []
     pred_time = []
     lml = []
-    kernel_dict = dict(gp.kernel_dict)
-    regularization = float(gp.regularization)
+    gp = GaussianProcess(train_fp=copy.deepcopy(trainx),
+                         train_target=copy.deepcopy(trainy),
+                         kernel_dict=kernel_dict.copy(),
+                         regularization=float(regularization),
+                         optimize_hyperparameters=False)
     for low in range(min_data, len(trainx) + 1, step)[::-1]:
-        # Update the training data in the gp. Targets are standardized again.
-        gp.update_gp(train_fp=trainx[:low, :],
-                     train_target=trainy[:low],
-                     kernel_dict=kernel_dict)
-        gp.regularization = regularization
+        # Update the training data in the gp.
+        print('reset.')
+        print(kernel_dict, regularization)
+        print('update.')
+        gp.update_gp(train_fp=copy.deepcopy(trainx[:low, :]),
+                     train_target=copy.deepcopy(trainy[:low]),
+                     kernel_dict=copy.deepcopy(kernel_dict))
+                     # regularization=copy.deepcopy(regularization))
+        gp.regularization = float(regularization)
+        print(gp.kernel_dict, gp.regularization)
         start = time.time()
         if optimize_interval is not None and low % optimize_interval == 0:
             gp.optimize_hyperparameters(eval_jac=eval_jac)
         end_opt = time.time()
+        print(end_opt - start, 'seconds')
         # Do the prediction
-        pred = gp.predict(test_fp=testx,
+        print(np.mean(trainy), np.std(trainy))
+        pred = gp.predict(test_fp=copy.deepcopy(testx),
                           get_validation_error=True,
                           get_training_error=False,
                           uncertainty=True,
-                          test_target=testy)
+                          test_target=copy.deepcopy(testy))
         # Store the error associated with the predictions in lists.
         end_pred = time.time()
         Ndata.append(len(trainy[:low]))

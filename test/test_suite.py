@@ -12,6 +12,7 @@ import test_hypot_scaling as hs
 import test_acquisition as ta
 import test_io as tio
 import test_lml_optimizer as lo
+import test_ads_fp_gen as afp
 from common import get_data
 
 wkdir = os.getcwd()
@@ -19,6 +20,11 @@ wkdir = os.getcwd()
 
 class ConfigTestCase(unittest.TestCase):
     """Test suite for AtoML code base."""
+
+    def test_ads_fp_funct(self):
+        images = afp.setup_atoms()
+        images = afp.attach_adsorbate_info(images)
+        afp.ads_fg_gen(images)
 
     def test_data_setup_func(self):
         """Test data setup routines."""

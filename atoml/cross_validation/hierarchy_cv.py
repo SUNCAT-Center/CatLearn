@@ -6,8 +6,9 @@ import pickle
 import numpy as np
 from random import shuffle
 from collections import OrderedDict
+import uuid
 
-from atoml.preprocess.feature_preprocess import standardize, normalize
+from atoml.utilities import DescriptorDatabase
 
 
 class Hierarchy(object):
@@ -19,7 +20,8 @@ class Hierarchy(object):
     averaged error and certainty at each data size.
     """
 
-    def __init__(self, file_name, db_name, table, file_format='pickle'):
+    def __init__(self, file_name, db_name, table='FingerVector',
+                 file_format='pickle'):
         """Hierarchy crossvalidation setup.
 
         Parameters
@@ -36,10 +38,29 @@ class Hierarchy(object):
             type. Default is binary pickle file.
         """
         self.file_name = file_name
-        self.conn = sqlite3.connect(db_name)
+        self.db_name = db_name
+        self.conn = sqlite3.connect(self.db_name)
         self.cursor = self.conn.cursor()
         self.table = table
         self.file_format = file_format
+
+    def todb(self, features, targets):
+        """Function to convert numpy arrays to basic db."""
+        data = np.concatenate(
+            (features, np.reshape(targets, (len(targets), 1))), axis=1)
+        uid = [str(uuid.uuid4()) for _ in range(len(targets))]
+        data = np.concatenate((np.reshape(uid, (len(uid), 1)), data), axis=1)
+
+        descriptors = ['f' + str(i) for i in range(np.shape(features)[1])]
+        targets = ['target']
+        names = descriptors + targets
+
+        # Set up the database to save system descriptors.
+        dd = DescriptorDatabase(db_name=self.db_name, table=self.table)
+        dd.create_db(names=names)
+
+        # Fill the database with the data.
+        dd.fill_db(descriptor_names=names, data=data)
 
     def split_index(self, min_split, max_split=None, all_index=None):
         """Function to split up the db index to form subsets of data.
@@ -103,56 +124,6 @@ class Hierarchy(object):
 
         return data
 
-    def global_scale_data(self, index_split, scale='standardize',
-                          features=None,):
-        """Find scaling for all available data.
-
-        Parameters
-        ----------
-        index_split : array
-            Array with the index data.
-        scale : string
-            Method of scaling, can be either 'standardize' or 'normalize'.
-        features : int
-            Number of features to be scaled. Default is all.
-        """
-        if features is None:
-            features = -1
-        data1 = self._compile_split(index_split['1_1'])
-        data2 = self._compile_split(index_split['1_2'])
-        feat1 = np.array(data1[:, 1:features], np.float64)
-        feat2 = np.array(data2[:, 1:features], np.float64)
-
-        if scale is 'standardize':
-            s = standardize(train_matrix=feat1, test_matrix=feat2, local=False)
-            mean, scalar = s['mean'], s['std']
-        if scale is 'normalize':
-            s = normalize(train_matrix=feat1, test_matrix=feat2, local=False)
-            mean, scalar = s['mean'], s['dif']
-
-        return mean, scalar
-
-    def globalscaledata(self, index_split):
-        """Make an array with all data.
-
-        Parameters
-        ----------
-        index_split : array
-            Array with the index data.
-        """
-        global_data1 = self._compile_split(index_split["1" + '_' + "1"])
-        global_data2 = self._compile_split(index_split["1" + '_' + "2"])
-        global_feat1 = np.array(global_data1[:, 1:-1], np.float64)
-        global_tar1 = np.array(global_data1[:, -1:], np.float64)
-        d1, d2 = np.shape(global_tar1)
-        global_tar1 = global_tar1.reshape(d2, d1)[0]
-        global_feat2 = np.array(global_data2[:, 1:-1], np.float64)
-        global_tar2 = np.array(global_data2[:, -1:], np.float64)
-        d1, d2 = np.shape(global_tar2)
-        global_tar2 = global_tar2.reshape(d2, d1)[0]
-        globaldata = np.concatenate((global_feat1, global_feat2), axis=0)
-        return globaldata, global_feat1, global_tar1
-
     def get_subset_data(self, index_split, indicies, split=None):
         """Make array with training data according to index.
 
@@ -176,75 +147,6 @@ class Hierarchy(object):
 
         return data_targets, data_features, index1, index2
 
-    def _get_index(self):
-        """Function to get the list of possible indices."""
-        data = []
-        for row in self.cursor.execute("SELECT uuid FROM %(table)s"
-                                       % {'table': self.table}):
-            data.append(row[0])
-
-        return data
-
-    def _write_split(self, data):
-        """Function to write the split to file.
-
-        Parameters
-        ----------
-        data : dict
-            Index dict generated within the split_index function.
-        """
-        if self.file_format is not 'pickle':
-            with open(self.file_name + '.' +
-                      self.file_format, 'w') as textfile:
-                if self.file_format is 'json':
-                    json.dump(data, textfile)
-                if self.file_format is 'yaml':
-                    yaml.dump(data, textfile)
-        else:
-            with open(self.file_name + '.' +
-                      self.file_format, 'wb') as textfile:
-                pickle.dump(data, textfile, protocol=pickle.HIGHEST_PROTOCOL)
-
-    def _compile_split(self, id_list):
-        """Function to get actual data from database.
-
-        Parameters
-        ----------
-        id_list : list
-            The uuids to pull data.
-        """
-        if len(id_list) > 999:
-            store_data = self._get_data(id_list[:999])
-            for i in range(1, int(len(id_list) / 999) + 1):
-                start_index = i * 999
-                if len(id_list[start_index:]) < 999:
-                    more_data = self._get_data(id_list[start_index:])
-                else:
-                    more_data = self._get_data(
-                        id_list[start_index:(i + 1) * 999])
-                store_data = np.concatenate((store_data, more_data), axis=0)
-        else:
-            store_data = np.asarray(self._get_data(id_list))
-
-        assert np.shape(store_data)[0] == len(id_list)
-
-        return store_data
-
-    def _get_data(self, id_list):
-        """Function to extract raw data from the database.
-
-        Parameters
-        ----------
-        id_list : list
-            The uuids to pull data.
-        """
-        qu = ','.join('?' for i in id_list)
-        query = 'SELECT * FROM %(table)s WHERE uuid IN (%(uid)s)' \
-            % {'table': self.table, 'uid': qu}
-        self.cursor.execute(query, id_list)
-
-        return self.cursor.fetchall()
-
     def split_predict(self, index_split, predict, **kwargs):
         """Function to make predictions looping over all subsets of data.
 
@@ -255,6 +157,12 @@ class Hierarchy(object):
         predict : function
             The prediction function. Must return dict with 'result' in it.
 
+        Returns
+        -------
+        result : list
+            A list of averaged errors for each subset of data.
+        size : list
+            A list of data sizes corresponding to the errors list.
         """
         result = []
         size = []
@@ -289,3 +197,115 @@ class Hierarchy(object):
                         result.append(pred['result'])
 
         return result, size
+
+    def transform_output(self, data):
+        """Function to compile results in a format for plotting average error.
+
+        Parameters
+        ----------
+        data : dict
+            The dictionary output from the split_predict function.
+
+        Returns
+        -------
+        size : list
+            A list of the data sizes used in the CV.
+        error : list
+            A list of the mean errors at each data size.
+        """
+        # Calculate mean error at each data size.
+        s = set(data[1])
+        d = {}
+        for i, j in enumerate(data[1]):
+            c = j
+            if c + 1 in s:
+                c = j + 1
+            if c not in d:
+                d[c] = []
+            d[c].append(data[0][i])
+        error, size = [], []
+        for i in d:
+            size.append(i)
+            error.append(sum(d[i]) / len(d[i]))
+
+        return size, error
+
+    def _get_index(self):
+        """Function to get the list of possible indices.
+
+        Returns
+        -------
+        data : array
+            The index data that has been extracted from the db.
+        """
+        data = []
+        for row in self.cursor.execute("SELECT uuid FROM %(table)s"
+                                       % {'table': self.table}):
+            data.append(row[0])
+
+        return data
+
+    def _write_split(self, data):
+        """Function to write the split to file.
+
+        Parameters
+        ----------
+        data : dict
+            Index dict generated within the split_index function.
+        """
+        if self.file_format is not 'pickle':
+            with open(self.file_name + '.' +
+                      self.file_format, 'w') as textfile:
+                if self.file_format is 'json':
+                    json.dump(data, textfile)
+                if self.file_format is 'yaml':
+                    yaml.dump(data, textfile)
+        else:
+            with open(self.file_name + '.' +
+                      self.file_format, 'wb') as textfile:
+                pickle.dump(data, textfile, protocol=pickle.HIGHEST_PROTOCOL)
+
+    def _compile_split(self, id_list):
+        """Function to get actual data from database.
+
+        Parameters
+        ----------
+        id_list : list
+            The uuids to pull data.
+
+        Returns
+        -------
+        store_data : array
+            The subset of data.
+        """
+        if len(id_list) > 999:
+            store_data = self._get_data(id_list[:999])
+            for i in range(1, int(len(id_list) / 999) + 1):
+                start_index = i * 999
+                if len(id_list[start_index:]) < 999:
+                    more_data = self._get_data(id_list[start_index:])
+                else:
+                    more_data = self._get_data(
+                        id_list[start_index:(i + 1) * 999])
+                store_data = np.concatenate((store_data, more_data), axis=0)
+        else:
+            store_data = np.asarray(self._get_data(id_list))
+
+        assert np.shape(store_data)[0] == len(id_list)
+
+        return store_data
+
+    def _get_data(self, id_list):
+        """Function to extract raw data from the database.
+
+        Parameters
+        ----------
+        id_list : list
+            The uuids to pull data.
+        """
+        qu = ','.join('?' for i in id_list)
+        query = 'SELECT * FROM %(table)s WHERE uuid IN (%(uid)s)' \
+            % {'table': self.table, 'uid': qu}
+        self.cursor.execute(query, id_list)
+
+        return self.cursor.fetchall()
