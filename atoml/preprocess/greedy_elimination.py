@@ -76,22 +76,26 @@ class GreedyElimination(object):
                 _, d = np.shape(train_features)
 
                 # Iterate through features and find error for removing it.
-                pool = multiprocessing.Pool(self.nprocs)
-                tasks = np.arange(d)
-                args = (
-                    (x, train_features, test_features, train_targets,
-                     test_targets, predict) for x in tasks)
-                for r in tqdm(pool.imap_unordered(
-                        self._single_elimination, args), total=d,
-                        desc='nested              ', leave=False):
-                    self.result[self.index][r[0]] = r[1]
-                    time.sleep(0.001)
-                pool.close()
+                if self.nprocs != 1:
+                    pool = multiprocessing.Pool(self.nprocs)
+                    tasks = np.arange(d)
+                    args = (
+                        (x, train_features, test_features, train_targets,
+                         test_targets, predict) for x in tasks)
+                    for r in tqdm(pool.imap_unordered(
+                            self._single_elimination, args), total=d,
+                            desc='nested              ', leave=False):
+                        self.result[self.index][r[0]] = r[1]
+                        time.sleep(0.001)
+                    pool.close()
 
-                # parallel_iterate = pool.map_async(
-                #     self._single_elimination, args,
-                #     callback=self._elim_callback)
-                # parallel_iterate.wait()
+                else:
+                    for x in trange(
+                            nsplit, desc='nested              ', leave=False):
+                        args = (x, train_features, test_features,
+                                train_targets, test_targets, predict)
+                        r = self._single_elimination(args)
+                        self.result[self.index][r[0]] = r[1]
 
             # Delete feature that gives largest error.
             for self.index in range(nsplit):
