@@ -100,7 +100,7 @@ class FeatureGenerator(
             self._get_atom_length(candidates)
 
         fingerprint_vector = []
-        args = ((atoms, vec_names) for atoms in candidates)
+        args = tuple((atoms, vec_names) for atoms in candidates)
 
         # Check for parallelized feature generation.
         if self.nprocs != 1:

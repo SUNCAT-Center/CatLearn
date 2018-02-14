@@ -17,7 +17,7 @@ There are several ways to generate the feature vectors. The easiest way is to us
     generator = FeatureGenerator(nprocs=None)
   ```
 
-It is possible to generate feature vectors with parallelization when `nprocs` is set. This can either be an int to define the number of cores to use. If `nprocs=None` is set then all available cores are used. The default is `nprocs=1`, running in serial.
+It is possible to generate feature vectors with parallelization when `nprocs` is set. This can either be an int to define the number of cores to use. If `nprocs=None` is set then all available cores are used. The default is `nprocs=1`, running in serial. **This is an experimental feature and only available with Python3.**
 
 The feature generation is handled by some setup functions. Once the class has been initialized, it is then possible to call any of the generator functions.
 
