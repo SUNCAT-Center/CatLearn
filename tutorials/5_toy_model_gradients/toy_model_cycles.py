@@ -14,6 +14,7 @@ import matplotlib.pyplot as plt
 from atoml.regression import GaussianProcess
 from atoml.utilities.cost_function import get_error
 from atoml.utilities.acquisition_functions import AcquisitionFunctions
+from atoml.utilities.penalty_functions import PenaltyFunctions
 
 # A known underlying function in one dimension [y] and first derivative [dy].
 def afunc(x):
@@ -96,18 +97,22 @@ for iteration in range(1, number_of_iterations+1):
     """A new training point is added using the UCB acquisition function:"""
     y_best = np.min(target)
 
-    acq = AcquisitionFunctions(targets=target,predictions=prediction,
-    uncertainty=uncertainty).UCB(kappa=1.5)
+    # acq = AcquisitionFunctions(targets=target,predictions=prediction,
+    # uncertainty=uncertainty).UCB(kappa=1.5)
     # acq = AcquisitionFunctions(targets=target,predictions=prediction,
     # uncertainty=uncertainty,y_best=y_best).EI()
-    # acq = AcquisitionFunctions(targets=target,predictions=prediction,
-    # uncertainty=uncertainty, y_best=y_best).PI()
+    acq = AcquisitionFunctions(targets=target,predictions=prediction,
+    uncertainty=uncertainty, y_best=y_best).PI()
 
-    new_train_point = test[np.argmax(acq)]
+
+    penalty_min = PenaltyFunctions(train_features=train,
+    test_features=test).penalty_close(c_min_crit=1e5,d_min_crit=1e-2)
+    objective = acq - penalty_min
+    new_train_point = test[np.argmax(objective)]
     new_train_point = np.reshape(
         new_train_point, (np.shape(new_train_point)[0], 1))
     train = np.concatenate((org_train, new_train_point))
-
+    print(train)
     # Plots.
 
     # Store the known underlying function for plotting.
