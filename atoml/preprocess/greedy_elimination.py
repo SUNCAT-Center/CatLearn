@@ -53,6 +53,7 @@ class GreedyElimination(object):
             The dictionary contains the averaged error over the specified
             k-fold data sets.
         """
+        # Make some k-fold splits.
         features, targets = k_fold(features, targets, nsplit)
         _, total_features = np.shape(features[0])
 
@@ -77,6 +78,7 @@ class GreedyElimination(object):
 
                 # Iterate through features and find error for removing it.
                 if self.nprocs != 1:
+                    # First a parallel implementation.
                     pool = multiprocessing.Pool(self.nprocs)
                     tasks = np.arange(d)
                     args = (
@@ -86,10 +88,12 @@ class GreedyElimination(object):
                             self._single_elimination, args), total=d,
                             desc='nested              ', leave=False):
                         self.result[self.index][r[0]] = r[1]
+                        # Wait to make things more stable.
                         time.sleep(0.001)
                     pool.close()
 
                 else:
+                    # Then a more clear serial implementation.
                     for x in trange(
                             nsplit, desc='nested              ', leave=False):
                         args = (x, train_features, test_features,
@@ -104,6 +108,7 @@ class GreedyElimination(object):
                         np.sum(self.result, axis=0)), axis=1)
             total_features -= 1
 
+            # Average the error over the k-fold data.
             size_result[d] = np.sum(self.result) / (d * nsplit)
 
         return size_result
@@ -123,6 +128,7 @@ class GreedyElimination(object):
         error : float
             The averaged error for the test data.
         """
+        # Unpack args tuple.
         f = args[0]
         train_features = args[1]
         test_features = args[2]
@@ -130,13 +136,11 @@ class GreedyElimination(object):
         test_targets = args[4]
         predict = args[5]
 
+        # Delete required index.
         train = np.delete(train_features, f, axis=1)
         test = np.delete(test_features, f, axis=1)
 
+        # Calculate the error on predictions.
         error = predict(train, train_targets, test, test_targets)
 
         return f, error
-
-    def _elim_callback(self, x):
-        for i in x:
-            self.result[self.index][i[0]] = i[1]
