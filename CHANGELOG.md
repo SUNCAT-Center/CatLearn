@@ -1,3 +1,9 @@
+# Version 0.2.3 (February 2018)
+
+-   Added a parallel version of the greedy feature selection.
+-   Updated the k-fold cross-validation function to handle features and targets
+explicitly.
+
 # Version 0.2.2 (February 2018)
 
 -   Update the fingerprint generator functions so there is now a
