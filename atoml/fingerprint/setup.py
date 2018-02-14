@@ -78,7 +78,7 @@ class FeatureGenerator(
 
         Returns
         -------
-        fingerprint_vector : ndarray
+        vector : ndarray
           Fingerprint array (n, m) where n is the number of candidates and m is
           the summed number of features from all fingerprint classes supplied.
         """
@@ -99,12 +99,18 @@ class FeatureGenerator(
         fingerprint_vector = []
         args = ((atoms, vec_names) for atoms in candidates)
 
-        pool = multiprocessing.Pool(self.nprocs)
-        parallel_iterate = pool.map_async(
-            self._get_vec, args, callback=fingerprint_vector.append)
-        parallel_iterate.wait()
+        if self.nprocs != 1:
+            pool = multiprocessing.Pool(self.nprocs)
+            parallel_iterate = pool.map_async(
+                self._get_vec, args, callback=fingerprint_vector.append)
+            parallel_iterate.wait()
+            vector = np.asarray(fingerprint_vector, dtype=np.float64)[0]
+        else:
+            for a in args:
+                fingerprint_vector.append(self._get_vec(a))
+            vector = np.asarray(fingerprint_vector, dtype=np.float64)
 
-        return np.asarray(fingerprint_vector, dtype=np.float64)[0]
+        return vector
 
     def return_names(self, vec_names):
         """Function to return a list of feature names.
