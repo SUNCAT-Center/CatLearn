@@ -8,12 +8,11 @@ from collections import defaultdict, Counter
 from scipy.stats import norm
 from .clustering import cluster_features
 
-
 class AcquisitionFunctions(object):
     """Base class for acquisition functions."""
 
     def __init__(self, targets, predictions, uncertainty, train_features=None,
-                 test_features=None, y_best=None, k=3):
+                 test_features=None, k=3):
         """Initialization of class.
 
         Parameters
@@ -41,7 +40,7 @@ class AcquisitionFunctions(object):
         self.test_features = test_features
         self.k = k
         self.noise = 1e-6
-        self.y_best = y_best
+        self.y_best = np.min(self.targets)
 
     def rank(self, x='max', metrics=['cdf', 'optimistic']):
         """Rank predictions based on acquisition function.
@@ -203,10 +202,8 @@ class AcquisitionFunctions(object):
         Expected improvement acq. function.
 
         """
-        msg = 'The best know function evaluation value must be passed for EI.'
-        assert self.y_best is not None, msg
-
         z = -(self.predictions - self.y_best - self.noise) / (self.uncertainty + self.noise)
+
         return (self.predictions - self.y_best) * norm.cdf(z) + self.uncertainty * norm.pdf(z)[0]
 
 
@@ -227,9 +224,7 @@ class AcquisitionFunctions(object):
         """
         Probability of improvement acq. function.
         """
-        msg = 'The best know function evaluation value must be passed for PI.'
-        assert self.y_best is not None, msg
-
         z = (self.predictions - self.y_best - self.noise) / (self.uncertainty +
         self.noise)
+
         return -norm.cdf(z)

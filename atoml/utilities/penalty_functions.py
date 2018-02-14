@@ -53,3 +53,27 @@ class PenaltyFunctions(object):
                p = 0.0
            penalty_min.append(p)
         return penalty_min
+
+    def penalty_far(self, c_max_crit=1e2, d_max_crit=0.2):
+        """ Pass an array of test features and train features and
+        returns an array of penalties due to 'too far distance'.
+        This prevents to explore configurations that are unrealistic.
+
+        Parameters
+        ----------
+        d_max_crit : float
+            Critical distance.
+        c_max_crit : float
+            Constant for penalty minimum distance.
+        penalty_max: array
+            Array containing the penalty to add.
+        """
+        penalty_max = []
+        for i in self.test_features:
+           d_max = np.max(distance.cdist([i],self.train_features,'euclidean'))
+           if d_max > d_max_crit:
+               p = c_max_crit * (d_max-d_max_crit)**2
+           else:
+               p = 0.0
+           penalty_max.append(p)
+        return penalty_max

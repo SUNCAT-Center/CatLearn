@@ -29,7 +29,7 @@ def afunc(x):
 
 
 # Define initial and final state.
-train = np.array([[0.01],[3.0], [6.0]])
+train = np.array([[0.01],[1.0]])
 
 # Define initial prediction parameters.
 reg = 0.01
@@ -94,25 +94,28 @@ for iteration in range(1, number_of_iterations+1):
     error = get_error(prediction, afunc(test)[0])
     print('Gaussian linear regression prediction:', error['absolute_average'])
 
-    """A new training point is added using the UCB acquisition function:"""
-    y_best = np.min(target)
+    """A new training point is added using the UCB, EI or PI acquisition 
+    functions:"""
 
-    # acq = AcquisitionFunctions(targets=target,predictions=prediction,
-    # uncertainty=uncertainty).UCB(kappa=1.5)
-    # acq = AcquisitionFunctions(targets=target,predictions=prediction,
-    # uncertainty=uncertainty,y_best=y_best).EI()
     acq = AcquisitionFunctions(targets=target,predictions=prediction,
-    uncertainty=uncertainty, y_best=y_best).PI()
+    uncertainty=uncertainty).UCB(kappa=1.5)
+    # acq = AcquisitionFunctions(targets=target,predictions=prediction,
+    # uncertainty=uncertainty).EI()
+    # acq = AcquisitionFunctions(targets=target,predictions=prediction,
+    # uncertainty=uncertainty).PI()
 
 
     penalty_min = PenaltyFunctions(train_features=train,
-    test_features=test).penalty_close(c_min_crit=1e5,d_min_crit=1e-2)
-    objective = acq - penalty_min
+    test_features=test).penalty_close(c_min_crit=1e2, d_min_crit=1e-3)
+    penalty_max = PenaltyFunctions(train_features=train,
+    test_features=test).penalty_far(c_max_crit=1e1, d_max_crit=6.0)
+    objective = acq - penalty_min - penalty_max
     new_train_point = test[np.argmax(objective)]
+
     new_train_point = np.reshape(
         new_train_point, (np.shape(new_train_point)[0], 1))
     train = np.concatenate((org_train, new_train_point))
-    print(train)
+
     # Plots.
 
     # Store the known underlying function for plotting.
