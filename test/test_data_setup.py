@@ -54,7 +54,7 @@ def feature_test():
 
     # Initiate the fingerprint generators with relevant input variables.
     print('Getting the fingerprints')
-    f = FeatureGenerator(element_parameters='atomic_radius')
+    f = FeatureGenerator(element_parameters='atomic_radius', nprocs=1)
     f.normalize_features(trainset['atoms'], testset['atoms'])
 
     data = f.return_vec(trainset['atoms'], [f.nearestneighbour_vec])
