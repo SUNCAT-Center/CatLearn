@@ -28,7 +28,7 @@ def afunc(x):
 
 
 # Define initial and final state.
-train = np.array([[0.01], [6.0]])
+train = np.array([[0.01],[3.0], [6.0]])
 
 # Define initial prediction parameters.
 reg = 0.01
@@ -37,7 +37,7 @@ scaling_exp = 1.0
 constant = 1.0
 
 # Create figure.
-fig = plt.figure(figsize=(13.0, 6.0))
+fig = plt.figure(figsize=(13.0, 7.0))
 
 # Times that we train the model, in each iteration we add a new training point.
 number_of_iterations = 10
@@ -99,9 +99,9 @@ for iteration in range(1, number_of_iterations+1):
     acq = AcquisitionFunctions(targets=target,predictions=prediction,
     uncertainty=uncertainty).UCB(kappa=1.5)
     # acq = AcquisitionFunctions(targets=target,predictions=prediction,
-    # uncertainty=uncertainty).EI(y_best=y_best)
+    # uncertainty=uncertainty,y_best=y_best).EI()
     # acq = AcquisitionFunctions(targets=target,predictions=prediction,
-    # uncertainty=uncertainty).PI(y_best=y_best)
+    # uncertainty=uncertainty, y_best=y_best).PI()
 
     new_train_point = test[np.argmax(acq)]
     new_train_point = np.reshape(
@@ -126,7 +126,7 @@ for iteration in range(1, number_of_iterations+1):
     ax.plot(org_test, prediction, 'g-', lw=1, alpha=0.4)
     ax.fill_between(org_test[:, 0], upper, lower, interpolate=True,
                     color='blue', alpha=0.2)
-    plt.title('GP iteration'+str(number_of_plot), fontsize=9)
+    plt.title('GP iteration'+str(number_of_plot), fontsize=8)
     plt.xlabel('Descriptor', fontsize=5)
     plt.ylabel('Response', fontsize=5)
     plt.axis('tight')

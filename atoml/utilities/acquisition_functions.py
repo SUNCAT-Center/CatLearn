@@ -13,7 +13,7 @@ class AcquisitionFunctions(object):
     """Base class for acquisition functions."""
 
     def __init__(self, targets, predictions, uncertainty, train_features=None,
-                 test_features=None, k=3):
+                 test_features=None, y_best=None, k=3):
         """Initialization of class.
 
         Parameters
@@ -41,6 +41,7 @@ class AcquisitionFunctions(object):
         self.test_features = test_features
         self.k = k
         self.noise = 1e-6
+        self.y_best = y_best
 
     def rank(self, x='max', metrics=['cdf', 'optimistic']):
         """Rank predictions based on acquisition function.
@@ -197,19 +198,16 @@ class AcquisitionFunctions(object):
 
         return fit
 
-    def EI(self,y_best):
+    def EI(self):
         """
         Expected improvement acq. function.
 
-        Parameters
-        ----------
-        y_best : float
-            Best known function evaluation value.
         """
+        msg = 'The best know function evaluation value must be passed for EI.'
+        assert self.y_best is not None, msg
 
-        z = -(self.predictions - y_best - self.noise) / (self.uncertainty +
-        self.noise)
-        return (self.predictions - y_best) * norm.cdf(z) + self.uncertainty * norm.pdf(z)[0]
+        z = -(self.predictions - self.y_best - self.noise) / (self.uncertainty + self.noise)
+        return (self.predictions - self.y_best) * norm.cdf(z) + self.uncertainty * norm.pdf(z)[0]
 
 
     def UCB(self, kappa=1.5):
@@ -225,15 +223,13 @@ class AcquisitionFunctions(object):
         return -self.predictions + kappa * self.uncertainty
 
 
-    def PI(self, y_best):
+    def PI(self):
         """
         Probability of improvement acq. function.
-
-        Parameters
-        ----------
-        y_best : float
-            Best known function evaluation value.
         """
-        z = (self.predictions - y_best - self.noise) / (self.uncertainty + self.noise)
+        msg = 'The best know function evaluation value must be passed for PI.'
+        assert self.y_best is not None, msg
 
+        z = (self.predictions - self.y_best - self.noise) / (self.uncertainty +
+        self.noise)
         return -norm.cdf(z)
