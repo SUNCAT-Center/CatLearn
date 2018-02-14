@@ -43,6 +43,9 @@ class FeatureGenerator(
         atom_len : int
             The maximum length of all atomic systems that will be passed in a
             data set.
+        nprocs : int
+            Number of cores available for parallelization. Default is 1, e.g.
+            serial. Set None to use all available cores.
         """
         self.atom_types = atom_types
         self.atom_len = atom_len
@@ -99,6 +102,7 @@ class FeatureGenerator(
         fingerprint_vector = []
         args = ((atoms, vec_names) for atoms in candidates)
 
+        # Check for parallelized feature generation.
         if self.nprocs != 1:
             pool = multiprocessing.Pool(self.nprocs)
             parallel_iterate = pool.map_async(
