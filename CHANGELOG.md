@@ -1,6 +1,6 @@
 # Version 0.2.3 (February 2018)
 
--   Added a parallel version of the greedy feature selection.
+-   Added a parallel version of the greedy feature selection. **Python3 only!**
 -   Updated the k-fold cross-validation function to handle features and targets
 explicitly.
 
