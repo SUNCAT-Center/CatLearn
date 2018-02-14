@@ -30,7 +30,7 @@ class PenaltyFunctions(object):
         self.test_features = test_features
 
 
-    def penalty_close(self, c_min_crit=1e5, d_min_crit=1e-3):
+    def penalty_close(self, c_min_crit=1e5, d_min_crit=1e-5):
         """ Pass an array of test features and train features and
         returns an array of penalties due to 'too short distance' ensuring
         no duplicates are added.
@@ -54,7 +54,7 @@ class PenaltyFunctions(object):
            penalty_min.append(p)
         return penalty_min
 
-    def penalty_far(self, c_max_crit=1e2, d_max_crit=0.2):
+    def penalty_far(self, c_max_crit=1e2, d_max_crit=10.0):
         """ Pass an array of test features and train features and
         returns an array of penalties due to 'too far distance'.
         This prevents to explore configurations that are unrealistic.
@@ -70,7 +70,7 @@ class PenaltyFunctions(object):
         """
         penalty_max = []
         for i in self.test_features:
-           d_max = np.max(distance.cdist([i],self.train_features,'euclidean'))
+           d_max = np.min(distance.cdist([i],self.train_features,'euclidean'))
            if d_max > d_max_crit:
                p = c_max_crit * (d_max-d_max_crit)**2
            else:

@@ -202,9 +202,11 @@ class AcquisitionFunctions(object):
         Expected improvement acq. function.
 
         """
-        z = -(self.predictions - self.y_best - self.noise) / (self.uncertainty + self.noise)
+        z = (-self.predictions + self.y_best) / (
+        self.uncertainty + self.noise)
 
-        return (self.predictions - self.y_best) * norm.cdf(z) + self.uncertainty * norm.pdf(z)[0]
+        return (self.predictions - self.y_best) * norm.cdf(z) - \
+        self.uncertainty * norm.pdf(z)
 
 
     def UCB(self, kappa=1.5):
@@ -217,14 +219,15 @@ class AcquisitionFunctions(object):
             Parameter that controls exploitation/exploration.
         """
 
-        return -self.predictions + kappa * self.uncertainty
+        return self.predictions - kappa * self.uncertainty
 
 
     def PI(self):
         """
         Probability of improvement acq. function.
         """
-        z = (self.predictions - self.y_best - self.noise) / (self.uncertainty +
+
+        z = (self.predictions - self.y_best) / (self.uncertainty +
         self.noise)
 
-        return -norm.cdf(z)
+        return norm.cdf(z)
