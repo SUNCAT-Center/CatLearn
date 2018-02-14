@@ -98,6 +98,7 @@ def feature_test():
     train_fp = f.return_vec(trainset['atoms'], [f.element_parameter_vec])
     n, d = np.shape(train_fp)
     data = np.concatenate((data, train_fp), axis=1)
+    # print(f.return_names([f.element_parameter_vec]))
     assert n == train_size and d == 4
     assert len(f.return_names([f.element_parameter_vec])) == d
     print('passed element_parameter_vec')

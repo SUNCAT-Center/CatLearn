@@ -5,6 +5,7 @@ from __future__ import division
 
 import numpy as np
 from collections import defaultdict
+import multiprocessing
 
 from .adsorbate_fingerprint import AdsorbateFingerprintGenerator
 from .particle_fingerprint import ParticleFingerprintGenerator
@@ -31,7 +32,7 @@ class FeatureGenerator(
     kwargs.
     """
 
-    def __init__(self, atom_types=None, atom_len=None, **kwargs):
+    def __init__(self, atom_types=None, atom_len=None, nprocs=1, **kwargs):
         """Initialize feature generator.
 
         Parameters
@@ -45,6 +46,7 @@ class FeatureGenerator(
         """
         self.atom_types = atom_types
         self.atom_len = atom_len
+        self.nprocs = nprocs
 
         super(FeatureGenerator, self).__init__(**kwargs)
 
@@ -95,10 +97,14 @@ class FeatureGenerator(
             self._get_atom_length(candidates)
 
         fingerprint_vector = []
-        for atoms in candidates:
-            fingerprint_vector.append(self._get_vec(atoms, vec_names))
+        args = ((atoms, vec_names) for atoms in candidates)
 
-        return np.asarray(fingerprint_vector)
+        pool = multiprocessing.Pool(self.nprocs)
+        parallel_iterate = pool.map_async(
+            self._get_vec, args, callback=fingerprint_vector.append)
+        parallel_iterate.wait()
+
+        return np.asarray(fingerprint_vector, dtype=np.float64)[0]
 
     def return_names(self, vec_names):
         """Function to return a list of feature names.
@@ -132,7 +138,7 @@ class FeatureGenerator(
                 out.append(field_value)
             return out
 
-    def _get_vec(self, atoms, vec_names):
+    def _get_vec(self, args):
         """Get the fingerprint vector as an array.
 
         Parameters
@@ -149,6 +155,7 @@ class FeatureGenerator(
         fingerprint_vector : list
             A feature vector.
         """
+        atoms, vec_names = args
         if len(vec_names) == 1:
             return vec_names[0](atoms)
         else:

@@ -97,6 +97,9 @@ class StandardFingerprintGenerator(BaseGenerator):
         msg += 'generator class.'
         assert self.element_parameters is not None, msg
 
+        if not isinstance(self.element_parameters, list):
+            self.element_parameters = [self.element_parameters]
+
         # Return feature names in no atomic data is passed.
         if data is None:
             msg = 'Class must have atom_types set to return feature names.'
@@ -107,9 +110,6 @@ class StandardFingerprintGenerator(BaseGenerator):
                 names += ['sum_{0}_{1}'.format(n, p) for n in self.atom_types]
                 names += ['sum_all_{0},'.format(p), 'mean_all_{0}'.format(p)]
             return names
-
-        if not isinstance(self.element_parameters, list):
-            self.element_parameters = [self.element_parameters]
 
         # Get the composition data.
         comp = self.composition_vec(data)
