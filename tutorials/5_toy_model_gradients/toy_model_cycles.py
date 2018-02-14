@@ -13,7 +13,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from atoml.regression import GaussianProcess
 from atoml.utilities.cost_function import get_error
-
+from atoml.utilities.acquisition_functions import AcquisitionFunctions
 
 # A known underlying function in one dimension [y] and first derivative [dy].
 def afunc(x):
@@ -69,12 +69,7 @@ for iteration in range(1, number_of_iterations+1):
     # Gaussian Process.
 
     # Set up the prediction routine and optimize hyperparameters.
-    """" Note that in this example we used a combination of two kernels (squared
-    # exponential and constant kernels)."""
-
-    kdict = {'k1': {'type': 'gaussian', 'width': w1, 'scaling': scaling_exp},
-             'k2': {'type': 'constant', 'const': constant,
-                    }
+    kdict = {'k1': {'type': 'gaussian', 'width': w1, 'scaling': scaling_exp}
              }
 
     gp = GaussianProcess(
@@ -98,42 +93,20 @@ for iteration in range(1, number_of_iterations+1):
     error = get_error(prediction, afunc(test)[0])
     print('Gaussian linear regression prediction:', error['absolute_average'])
 
-    """A new training point is added following:
+    """A new training point is added using the UCB acquisition function:"""
+    y_best = np.min(target)
 
-    Firstly, we calculate the gradients of the predicted function.
+    acq = AcquisitionFunctions(targets=target,predictions=prediction,
+    uncertainty=uncertainty).UCB(kappa=1.5)
+    # acq = AcquisitionFunctions(targets=target,predictions=prediction,
+    # uncertainty=uncertainty).EI(y_best=y_best)
+    # acq = AcquisitionFunctions(targets=target,predictions=prediction,
+    # uncertainty=uncertainty).PI(y_best=y_best)
 
-    Secondly, we ask for the points which the value of their gradients are
-    below grad_prediction_interval.
-
-    Thirdly, within the previous set of points we ask for the one which
-    has the maximum uncertainty.
-
-    Finally, the "interesting" point is added to the list of training
-    points."""
-
-    grad_prediction = np.abs(np.gradient(prediction))
-    grad_prediction_interval = (np.max(grad_prediction) -
-                                np.min(grad_prediction))/1e10
-    while not np.all(grad_prediction < grad_prediction_interval):
-        grad_prediction_interval = grad_prediction_interval*10.0
-    index = (np.linspace(1, len(prediction)/1, len(prediction/1))-1)/1
-    index_grad = index[grad_prediction < grad_prediction_interval]
-    index_new = np.int(index_grad[np.argmax(
-        uncertainty[grad_prediction < grad_prediction_interval])])
-
-    new_train_point = org_test[index_new]
+    new_train_point = test[np.argmax(acq)]
     new_train_point = np.reshape(
         new_train_point, (np.shape(new_train_point)[0], 1))
     train = np.concatenate((org_train, new_train_point))
-
-    # Update hyperarameters with the optimised ones after "n" iterations.
-
-    if iteration > 5:
-        reg = gp.regularization
-        w1 = gp.kernel_dict['k1']['width']
-        scaling_exp = float(gp.kernel_dict['k1']['scaling'])
-        constant = float(gp.kernel_dict['k2']['const'])
-
 
     # Plots.
 
@@ -154,9 +127,8 @@ for iteration in range(1, number_of_iterations+1):
     ax.fill_between(org_test[:, 0], upper, lower, interpolate=True,
                     color='blue', alpha=0.2)
     plt.title('GP iteration'+str(number_of_plot), fontsize=9)
-    # plt.xlabel('Descriptor')
-    # plt.ylabel('Response')
-    # plt.title('Iteration')
+    plt.xlabel('Descriptor', fontsize=5)
+    plt.ylabel('Response', fontsize=5)
     plt.axis('tight')
     plt.xticks(fontsize=6)
 

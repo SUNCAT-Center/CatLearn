@@ -5,7 +5,7 @@ from __future__ import division
 import numpy as np
 from scipy.special import erf
 from collections import defaultdict, Counter
-
+from scipy.stats import norm
 from .clustering import cluster_features
 
 
@@ -30,6 +30,9 @@ class AcquisitionFunctions(object):
             Feature matrix for the test data.
         k : int
             Number of cluster to generate with clustering.
+        noise: float
+            Small number is added to the denominator because of numerical
+            stability.
         """
         self.targets = targets
         self.predictions = predictions
@@ -37,6 +40,7 @@ class AcquisitionFunctions(object):
         self.train_features = train_features
         self.test_features = test_features
         self.k = k
+        self.noise = 1e-6
 
     def rank(self, x='max', metrics=['cdf', 'optimistic']):
         """Rank predictions based on acquisition function.
@@ -192,3 +196,44 @@ class AcquisitionFunctions(object):
             fit.append(self.predictions[i] / train_count[c])
 
         return fit
+
+    def EI(self,y_best):
+        """
+        Expected improvement acq. function.
+
+        Parameters
+        ----------
+        y_best : float
+            Best known function evaluation value.
+        """
+
+        z = -(self.predictions - y_best - self.noise) / (self.uncertainty +
+        self.noise)
+        return (self.predictions - y_best) * norm.cdf(z) + self.uncertainty * norm.pdf(z)[0]
+
+
+    def UCB(self, kappa=1.5):
+        """
+        Upper-confidence bound acq. function.
+
+        Parameters
+        ----------
+        kappa : float
+            Parameter that controls exploitation/exploration.
+        """
+
+        return -self.predictions + kappa * self.uncertainty
+
+
+    def PI(self, y_best):
+        """
+        Probability of improvement acq. function.
+
+        Parameters
+        ----------
+        y_best : float
+            Best known function evaluation value.
+        """
+        z = (self.predictions - y_best - self.noise) / (self.uncertainty + self.noise)
+
+        return -norm.cdf(z)
