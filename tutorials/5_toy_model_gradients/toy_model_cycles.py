@@ -34,7 +34,6 @@ train = np.array([[0.01], [6.0]])
 reg = 0.01
 w1 = 1.0  # Too large widths results in a biased model.
 scaling_exp = 1.0
-scaling_const = 1.0
 constant = 1.0
 
 # Create figure.
@@ -75,13 +74,13 @@ for iteration in range(1, number_of_iterations+1):
 
     kdict = {'k1': {'type': 'gaussian', 'width': w1, 'scaling': scaling_exp},
              'k2': {'type': 'constant', 'const': constant,
-                    'scaling': scaling_const}
+                    }
              }
 
     gp = GaussianProcess(
         kernel_dict=kdict, regularization=reg**2, train_fp=train,
         train_target=target, optimize_hyperparameters=True,
-        gradients=gradients)
+        gradients=gradients,scale_data=True)
     print('Optimized kernel:', gp.kernel_dict)
 
     # Do the optimized predictions.
@@ -132,9 +131,9 @@ for iteration in range(1, number_of_iterations+1):
     if iteration > 5:
         reg = gp.regularization
         w1 = gp.kernel_dict['k1']['width']
-        scaling_exp = gp.kernel_dict['k1']['scaling']
-        constant = gp.kernel_dict['k2']['const']
-        scaling_const = gp.kernel_dict['k2']['scaling']
+        scaling_exp = float(gp.kernel_dict['k1']['scaling'])
+        constant = float(gp.kernel_dict['k2']['const'])
+
 
     # Plots.
 
