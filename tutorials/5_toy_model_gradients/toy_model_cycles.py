@@ -19,8 +19,12 @@ from atoml.utilities.penalty_functions import PenaltyFunctions
 # A known underlying function in one dimension [y] and first derivative [dy].
 def afunc(x):
     """Function [y] and first derivative [dy]."""
-    y = (1/2)*(x-3)**2 - 1/2
-    dy = (x-3)
+    y =  np.sin(x)*np.cos(x)*np.exp(2*x)*x**-2*np.exp(-x)*np.cos(x) * \
+        np.sin(x)
+    dy = (2*np.exp(x)*np.cos(x)**3*np.sin(x))/x**2 - \
+        (2*np.exp(x)*np.cos(x)**2*np.sin(x)**2)/x**3 + \
+        (np.exp(x)*np.cos(x)**2*np.sin(x)**2)/x**2 - \
+        (2*np.exp(x)*np.cos(x)*np.sin(x)**3)/x**2
     return [y, dy]
 
 
@@ -72,51 +76,43 @@ for iteration in range(1, number_of_iterations+1):
     gp = GaussianProcess(
         kernel_dict=kdict, regularization=reg**2, train_fp=train,
         train_target=target, optimize_hyperparameters=True,
-        gradients=gradients,scale_data=True)
+        gradients=gradients, scale_data=True)
     print('Optimized kernel:', gp.kernel_dict)
+
 
     # Do the optimized predictions.
     pred = gp.predict(test_fp=test, uncertainty=True)
     prediction = np.array(pred['prediction'][:, 0])
 
-
-
     # Calculate the uncertainty of the predictions.
     uncertainty = np.array(pred['uncertainty'])
 
     # Penalties.
+    # penalty_max_pred = PenaltyFunctions(train_features=train,
+    # test_features=test).penalty_far(c_max_crit=1e1, d_max_crit=1.0)
 
-    penalty_max_pred = PenaltyFunctions(train_features=train,
-    test_features=test).penalty_far(c_max_crit=1e1, d_max_crit=1.0)
-
-    prediction = prediction + penalty_max_pred
+    prediction = prediction #+ penalty_max_pred
 
 
     # Get confidence interval on predictions.
     upper = prediction + uncertainty
     lower = prediction - uncertainty
 
-    # Get average errors.
-    error = get_error(prediction, afunc(test)[0])
-    print('Gaussian linear regression prediction:', error['absolute_average'])
 
     """A new training point is added using the UCB, EI or PI acquisition 
     functions:"""
 
-    # acq = AcquisitionFunctions(targets=target,predictions=prediction,
-    # uncertainty=uncertainty).UCB(kappa=1.5) # Try with -1.5, 0.0 , 1.5.
-    # acq = AcquisitionFunctions(targets=target,predictions=prediction,
-    # uncertainty=uncertainty).EI()
-    # acq = AcquisitionFunctions(targets=target,predictions=prediction,
-    # uncertainty=uncertainty).PI()
+    acq = AcquisitionFunctions(targets=target,predictions=prediction,
+    uncertainty=uncertainty).UCB(kappa=1.5)
+    # acq = acq['UCB']
+    acq = AcquisitionFunctions(targets=target,predictions=prediction,
+    uncertainty=uncertainty).EI()
+    acq = AcquisitionFunctions(targets=target,predictions=prediction,
+    uncertainty=uncertainty).PI()
 
-    # Add penalty to prevent training points that are too close to each other:
-    # penalty_min = PenaltyFunctions(train_features=train,
-    # test_features=test).penalty_close(c_min_crit=1e2, d_min_crit=1e-3)
-
-
-    new_train_point = test[np.argmin(prediction)]
-
+    # Remember: The acquisition function provides positive scores.
+    new_train_point = test[np.argmin(-acq)]
+    print('Minimum',np.min(target))
     new_train_point = np.reshape(
         new_train_point, (np.shape(new_train_point)[0], 1))
     train = np.concatenate((org_train, new_train_point))
@@ -137,9 +133,9 @@ for iteration in range(1, number_of_iterations+1):
     ax.plot(linex[0], liney[0], '-', lw=1, color='black')
     ax.plot(org_train, org_target, 'o', alpha=0.2, color='black')
     ax.plot(org_test, prediction, 'g-', lw=1, alpha=0.4)
+    ax.plot(org_test, acq, 'g-')
     ax.fill_between(org_test[:, 0], upper, lower, interpolate=True,
                     color='blue', alpha=0.2)
-    # ax.plot(org_test[:,0], acq, color='red', alpha=0.9)
     plt.title('GP iteration'+str(number_of_plot), fontsize=8)
     plt.xlabel('Descriptor', fontsize=5)
     plt.ylabel('Response', fontsize=5)
@@ -165,5 +161,4 @@ for iteration in range(1, number_of_iterations+1):
                                 org_target[i])
             ax.plot(linearx_i, lineary_i, '-', lw=3, alpha=0.5, color='black')
 
-print(gradients)
 plt.show()

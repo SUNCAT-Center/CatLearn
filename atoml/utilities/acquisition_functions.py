@@ -205,8 +205,8 @@ class AcquisitionFunctions(object):
         z = (-self.predictions + self.y_best) / (
         self.uncertainty + self.noise)
 
-        return (self.predictions - self.y_best) * norm.cdf(z) - \
-        self.uncertainty * norm.pdf(z)
+        return -((self.predictions - self.y_best) * norm.cdf(z) - \
+        self.uncertainty * norm.pdf(z))
 
 
     def UCB(self, kappa=1.5):
@@ -219,7 +219,7 @@ class AcquisitionFunctions(object):
             Parameter that controls exploitation/exploration.
         """
 
-        return self.predictions - kappa * self.uncertainty
+        return -(self.predictions - kappa * self.uncertainty)
 
 
     def PI(self):
@@ -227,7 +227,7 @@ class AcquisitionFunctions(object):
         Probability of improvement acq. function.
         """
 
-        z = (self.predictions - self.y_best) / (self.uncertainty +
-        self.noise)
+        z = -((self.predictions - self.y_best) / (self.uncertainty +
+        self.noise))
 
         return norm.cdf(z)
