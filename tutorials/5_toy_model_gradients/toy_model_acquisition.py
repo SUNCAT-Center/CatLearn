@@ -91,12 +91,12 @@ for iteration in range(1, number_of_iterations+1):
     """A new training point is added using the UCB, EI or PI acquisition 
     functions:"""
 
-    acq = (AcquisitionFunctions(x='min', kappa=1.5).rank(
-    predictions=prediction, uncertainty=uncertainty, targets=target))['UCB'][0]
+    acq = (AcquisitionFunctions(objective='min', kappa=1.5).rank(
+    predictions=prediction, uncertainty=uncertainty, targets=target))['UCB']
 
     """ Note: The acquisition function provides positive scores. Therefore, 
-    one must pass the negative of the acq. function (-acq) in order to 
-    optimize it."""
+    one must pass the negative of it (-acq) to optimize the acq. 
+    function."""
 
     new_train_point = test[np.argmin(-acq)]
 
