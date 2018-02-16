@@ -16,6 +16,8 @@ train_size, test_size = 45, 5
 
 
 class TestPrediction(unittest.TestCase):
+    """Test out the various prediction routines."""
+
     def test_rr_loocv(self):
         """Test ridge regression predictions with loocv fitting."""
         train_features, train_targets, test_features, test_targets = get_data()
@@ -68,8 +70,8 @@ class TestPrediction(unittest.TestCase):
         self.assertTrue(len(pred['prediction']) == len(test_features))
         print('linear prediction:', pred['validation_error']['rmse_average'])
 
-    def test_gp(self):
-        """Test Gaussian process predictions."""
+    def test_gp_quadratic_kernel(self):
+        """Test Gaussian process predictions with the quadratic kernel."""
         train_features, train_targets, test_features, test_targets = get_data()
 
         # Test prediction routine with quadratic kernel.
@@ -86,6 +88,10 @@ class TestPrediction(unittest.TestCase):
         self.assertTrue(len(pred['prediction']) == len(test_features))
         print('quadratic prediction:',
               pred['validation_error']['rmse_average'])
+
+    def test_gp_gaussian_kernel(self):
+        """Test Gaussian process predictions with the gaussian kernel."""
+        train_features, train_targets, test_features, test_targets = get_data()
 
         # Test prediction routine with gaussian kernel.
         kdict = {'k1': {'type': 'gaussian', 'width': 1., 'scaling': 1.}}
@@ -127,6 +133,10 @@ class TestPrediction(unittest.TestCase):
         print('gaussian single width (rmse):',
               pred['validation_error']['rmse_average'])
 
+    def test_gp_laplacian_kernel(self):
+        """Test Gaussian process predictions with the laplacian kernel."""
+        train_features, train_targets, test_features, test_targets = get_data()
+
         # Test prediction routine with laplacian kernel.
         kdict = {'k1': {'type': 'laplacian', 'width': 1., 'scaling': 1.}}
         gp = GaussianProcess(
@@ -140,6 +150,10 @@ class TestPrediction(unittest.TestCase):
         self.assertTrue(len(pred['prediction']) == len(test_features))
         print('laplacian prediction:',
               pred['validation_error']['rmse_average'])
+
+    def test_gp_addative_kernel(self):
+        """Test Gaussian process predictions with the addative kernel."""
+        train_features, train_targets, test_features, test_targets = get_data()
 
         # Test prediction with addative linear and gaussian kernel.
         kdict = {'k1': {'type': 'linear', 'features': [0, 1], 'scaling': 1.},
@@ -157,6 +171,10 @@ class TestPrediction(unittest.TestCase):
         self.assertTrue(len(pred['prediction']) == len(test_features))
         print('addition prediction:', pred['validation_error']['rmse_average'])
 
+    def test_gp_multiplication_kernel(self):
+        """Test Gaussian process predictions with the multiplication kernel."""
+        train_features, train_targets, test_features, test_targets = get_data()
+
         # Test prediction with multiplication of linear & gaussian kernel.
         kdict = {'k1': {'type': 'linear', 'features': [0, 1], 'scaling': 1.},
                  'k2': {'type': 'gaussian', 'features': [2, 3], 'width': 1.,
@@ -173,6 +191,19 @@ class TestPrediction(unittest.TestCase):
         self.assertTrue(len(pred['prediction']) == len(test_features))
         print('multiplication prediction:',
               pred['validation_error']['rmse_average'])
+
+    def test_gp_update(self):
+        """Test Gaussian process predictions with the multiplication kernel."""
+        train_features, train_targets, test_features, test_targets = get_data()
+
+        kdict = {'k1': {'type': 'linear', 'scaling': 1.},
+                 'k2': {'type': 'gaussian', 'width': 1., 'scaling': 1.,
+                        'operation': 'multiplication'},
+                 'c1': {'type': 'constant', 'const': 1.}}
+        gp = GaussianProcess(
+            train_fp=train_features, train_target=train_targets,
+            kernel_dict=kdict, regularization=1e-3,
+            optimize_hyperparameters=True, scale_data=True)
 
         # Test updating the last model.
         d, f = np.shape(train_features)
@@ -197,6 +228,10 @@ class TestPrediction(unittest.TestCase):
         self.assertTrue(len(pred['prediction']) == len(test_features))
         print('Update prediction:',
               pred['validation_error']['rmse_average'])
+
+    def test_gp_sensitivity(self):
+        """Test Gaussian process predictions with sensitivity analysis."""
+        train_features, train_targets, test_features, test_targets = get_data()
 
         # Start the sensitivity analysis.
         kdict = {'k1': {'type': 'gaussian', 'width': 30., 'scaling': 5.}}
