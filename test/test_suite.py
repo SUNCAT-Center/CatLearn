@@ -11,6 +11,7 @@ import test_acquisition as ta
 import test_io as tio
 import test_lml_optimizer as lo
 import test_ads_fp_gen as afp
+import test_bulk_fp_gen as bfp
 from common import get_data
 
 wkdir = os.getcwd()
@@ -22,7 +23,11 @@ class ConfigTestCase(unittest.TestCase):
     def test_ads_fp_funct(self):
         images = afp.setup_atoms()
         images = afp.attach_adsorbate_info(images)
-        afp.ads_fg_gen(images)
+        afp.ads_fp_gen(images)
+
+    def test_bulk_fp_funct(self):
+        images = bfp.setup_metal()
+        bfp.bulk_fp_gen(images)
 
     def test_data_setup_func(self):
         """Test data setup routines."""
