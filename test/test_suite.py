@@ -3,10 +3,8 @@ import os
 import unittest
 
 import test_data_setup as ds
-import test_scale as st
 import test_data_clean as dc
 import test_feature_optimization as ft
-import test_predict as pt
 import test_hierarchy_cv as ht
 import test_hypot_scaling as hs
 import test_acquisition as ta
@@ -32,12 +30,6 @@ class ConfigTestCase(unittest.TestCase):
         ds.cv_test(data)
         ds.db_test(all_cand, data)
 
-        train_features, train_targets, test_features, \
-            test_targets = st.get_data()
-        st.scale_test(train_features, train_targets, test_features)
-        st.cluster_test(
-            train_features, train_targets, test_features, test_targets)
-
     def test_data_clean_func(self):
         """Test data cleaning routines."""
         dc.outlier_test()
@@ -50,14 +42,6 @@ class ConfigTestCase(unittest.TestCase):
         train_features, train_targets, test_features = ft.test_extend()
         ft.test_extract(train_features, train_targets, test_features)
         ft.test_screening(train_features, train_targets, test_features)
-
-    def test_predict_func(self):
-        """Test prediction routines."""
-        train_features, train_targets, test_features, \
-            test_targets = get_data()
-        pt.rr_test(train_features, train_targets, test_features, test_targets)
-        pt.gp_test(train_features, train_targets, test_features, test_targets)
-        hs.gp_test(train_features, train_targets, test_features, test_targets)
 
     def test_lml_optimizer(self):
         """Test log_marginal_likelihood optimization."""
