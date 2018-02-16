@@ -5,16 +5,14 @@ First we set up a known underlying function in one dimension.
 Then, we pick some values to train.
 Finally we will use AtoML to make predictions on some unseen fingerprint and
 benchmark those predictions against the known underlying function.
-In this toy model we show that one can improve the resulting estimates by
-including first derivative observations.
+In this toy model we show that one can use different acquisition functions
+to guide us in selecting the next training point in a wise manner.
 """
 
 import numpy as np
 import matplotlib.pyplot as plt
 from atoml.regression import GaussianProcess
-from atoml.utilities.cost_function import get_error
 from atoml.utilities.acquisition_functions import AcquisitionFunctions
-from atoml.utilities.penalty_functions import PenaltyFunctions
 
 # A known underlying function in one dimension [y] and first derivative [dy].
 def afunc(x):
@@ -29,9 +27,7 @@ def afunc(x):
 
 
 # Pick some random points to train:
-train = 0.6 + np.random.rand(2,1)
-print(train)
-
+train = np.array([[0.1], [1.0]])
 
 # Define initial prediction parameters.
 reg = 0.01
@@ -81,7 +77,6 @@ for iteration in range(1, number_of_iterations+1):
         gradients=gradients, scale_data=True)
     print('Optimized kernel:', gp.kernel_dict)
 
-
     # Do the optimized predictions.
     pred = gp.predict(test_fp=test, uncertainty=True)
     prediction = np.array(pred['prediction'][:, 0])
@@ -89,17 +84,9 @@ for iteration in range(1, number_of_iterations+1):
     # Calculate the uncertainty of the predictions.
     uncertainty = np.array(pred['uncertainty'])
 
-    # Penalties.
-    # penalty_max_pred = PenaltyFunctions(train_features=train,
-    # test_features=test).penalty_far(c_max_crit=1e1, d_max_crit=1.0)
-
-    prediction = prediction #+ penalty_max_pred
-
-
     # Get confidence interval on predictions.
     upper = prediction + uncertainty
     lower = prediction - uncertainty
-
 
     """A new training point is added using the UCB, EI or PI acquisition 
     functions:"""
@@ -107,9 +94,12 @@ for iteration in range(1, number_of_iterations+1):
     acq = (AcquisitionFunctions(x='min', kappa=1.5).rank(
     predictions=prediction, uncertainty=uncertainty, targets=target))['UCB'][0]
 
-    # Remember: The acquisition function provides positive scores.
+    """ Note: The acquisition function provides positive scores. Therefore, 
+    one must pass the negative of the acq. function (-acq) in order to 
+    optimize it."""
+
     new_train_point = test[np.argmin(-acq)]
-    print('Minimum',np.min(target))
+
     new_train_point = np.reshape(
         new_train_point, (np.shape(new_train_point)[0], 1))
     train = np.concatenate((org_train, new_train_point))
@@ -133,7 +123,7 @@ for iteration in range(1, number_of_iterations+1):
     ax.plot(org_test, acq, 'g-')
     ax.fill_between(org_test[:, 0], upper, lower, interpolate=True,
                     color='blue', alpha=0.2)
-    plt.title('GP iteration'+str(number_of_plot), fontsize=8)
+    plt.title('GP iteration' + str(number_of_plot), fontsize=8)
     plt.xlabel('Descriptor', fontsize=5)
     plt.ylabel('Response', fontsize=5)
     plt.axis('tight')
