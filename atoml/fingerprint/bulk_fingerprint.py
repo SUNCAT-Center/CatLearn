@@ -9,12 +9,11 @@ Created on Tue Dec  6 14:09:29 2016
 """
 from __future__ import print_function
 import numpy as np
-from scipy.spatial import distance
 from ase.data import ground_state_magnetic_moments as gs_magmom
+from ase.data import atomic_numbers
 from .periodic_table_data import (list_mendeleev_params,
                                   get_radius,
                                   default_params)
-# from atoml.fingerprint import neighbor_matrix as nm
 
 default_extra_params = ['c6',
                         'c6_gb',
@@ -43,7 +42,7 @@ default_extra_params = ['c6',
 
 
 class BulkFingerprintGenerator(object):
-    def __init__(self, extra_params=None, skin=0.2):
+    def __init__(self, ceramic_element=None, extra_params=None, skin=0.2):
         """ Class containing functions for fingerprint generation.
         """
         if extra_params is None:
@@ -51,6 +50,11 @@ class BulkFingerprintGenerator(object):
         else:
             self.extra_params = extra_params
         self.skin = skin
+        # Ceramic datasets can rely on fingerprints of the metal ion only.
+        if isinstance(ceramic_element, str):
+            self.ceramic_element = atomic_numbers[ceramic_element]
+        else:
+            self.ceramic_element = ceramic_element
 
     def summation(self, atoms=None):
         """ Returns a fingerprint vector with propeties of the element name
@@ -217,7 +221,7 @@ class BulkFingerprintGenerator(object):
             result += [np.nanstd([gs_magmom[z] for z in numbers])]
             return result
 
-    def cation_summation(self, atoms=None):
+    def ceramic_summation(self, atoms=None):
         """ Returns a fingerprint vector with propeties of the element name
         saved in the atoms.info['key_value_pairs']['bulk'] """
         if atoms is None:
@@ -266,14 +270,14 @@ class BulkFingerprintGenerator(object):
                     'ground_state_magmom_sum']
         else:
             numbers = atoms.get_atomic_numbers()
-            cations = numbers[numbers != 8]
+            cations = numbers[numbers != self.ceramic_element]
             dat = list_mendeleev_params(cations, params=default_params +
                                         self.extra_params)
             result = list(np.nansum(np.array(dat, dtype=float), axis=0))
             result += [np.nansum([gs_magmom[z] for z in numbers])]
             return result
 
-    def cation_average(self, atoms=None):
+    def ceramic_average(self, atoms=None):
         """ Returns a fingerprint vector with propeties of the element name
         saved in the atoms.info['key_value_pairs']['bulk'] """
         if atoms is None:
@@ -322,14 +326,14 @@ class BulkFingerprintGenerator(object):
                     'ground_state_magmom_av']
         else:
             numbers = atoms.get_atomic_numbers()
-            cations = numbers[numbers != 8]
+            cations = numbers[numbers != self.ceramic_element]
             dat = list_mendeleev_params(cations, params=default_params +
                                         self.extra_params)
             result = list(np.nanmean(np.array(dat, dtype=float), axis=0))
             result += [np.nanmean([gs_magmom[z] for z in numbers])]
             return result
 
-    def cation_std(self, atoms=None):
+    def ceramic_std(self, atoms=None):
         """ Returns a fingerprint vector with propeties of the element name
         saved in the atoms.info['key_value_pairs']['bulk'] """
         if atoms is None:
@@ -378,82 +382,48 @@ class BulkFingerprintGenerator(object):
                     'ground_state_magmom_std']
         else:
             numbers = atoms.get_atomic_numbers()
-            cations = numbers[numbers != 8]
+            cations = numbers[numbers != self.ceramic_element]
             dat = list_mendeleev_params(cations, params=default_params +
                                         self.extra_params)
             result = list(np.nanstd(np.array(dat, dtype=float), axis=0))
             result += [np.nanstd([gs_magmom[z] for z in numbers])]
             return result
 
-    def igao_counter(self, atoms=None):
+    def ceramic_counter(self, atoms=None):
         if atoms is None:
-            return ['nAl', 'nIn', 'nGa', 'nO', 'ex_charge', 'n_ions',
-                    'Eg_av', 'Eg_max', 'Eg_min']
+            return ['n_ions', 'n_ceramic']
         else:
-            dft_Eg_mp = [0.917, 1.996, 5.211]
-            nAl = len([a for a in atoms if a.symbol == 'Al'])
-            nIn = len([a for a in atoms if a.symbol == 'In'])
-            nGa = len([a for a in atoms if a.symbol == 'Ga'])
-            nO = len([a for a in atoms if a.symbol == 'O'])
-            ex_charge = -2 * nO + (nAl + nIn + nGa) * 3
-            natoms = len(atoms)
-            n_ions = nIn + nGa + nAl
-            na_l = [nIn, nGa, nAl]
-            Eg_av = np.sum(np.multiply(dft_Eg_mp, na_l)) / natoms
-            Eg_max = np.max(np.multiply(dft_Eg_mp, na_l))
-            Eg_min = np.min(np.multiply(dft_Eg_mp, na_l))
-            result = [nIn, nGa, nAl, nO, ex_charge, n_ions,
-                      Eg_av, Eg_max, Eg_min]
-            return result
+            n_ceramic = len([a for a in atoms if a.number == self.ceramic])
+            n_ions = len(atoms) - n_ceramic
+            # Append oxidation state or excess charge fingerprint here.
+            return [n_ions, n_ceramic]
 
-    def igao_dist(self, atoms=None):
+    def ceramic_dist(self, atoms=None):
         if atoms is None:
-            return ['d_cation-O_sum', 'd_cation-O_av', 'd_cationO_std',
-                    'd_cation-O_min', 'd_cation-O_max',
-                    'hex_cation_av', 'hex_av_sum', 'hex_av_std',
-                    'hex-O_min', 'hex-O_max',
-                    'd_In-O_sum', 'd_Ga-O_sum', 'd_Al-O_sum']
+            return ['d_ion-ceramic_sum', 'd_ion-ceramic_av',
+                    'd_ion-ceramic_std',
+                    'd_ion-ceramic_min', 'd_ion-ceramic_max']
         else:
             dm = atoms.get_all_distances(mic=True)
             # Define cutoff radii for neighbors.
-            rO = get_radius(8)
-            un = [8, 49, 31, 13]
-            radii = np.array([get_radius(z) for z in un])
-            cutoffs = radii + rO + self.skin
+            r_ceramic = get_radius(self.ceramic_element)
+            all_radii = np.array([get_radius(z) for z, s in
+                                  enumerate(atomic_numbers) if
+                                  z > 0 and z < 93])
+            all_cutoffs = all_radii + r_ceramic + self.skin
             # Get indices for each element.
-            iO = (atoms.numbers == 8)
-            iIn = (atoms.numbers == 49)
-            iGa = (atoms.numbers == 31)
-            iAl = (atoms.numbers == 13)
+            i_ceramic = np.where(atoms.numbers == self.ceramic_element)[0]
+            i_ion = np.where(atoms.numbers != self.ceramic_element)[0]
+            # Get lists of atomic distances to oxygens.
+            dm_ceramic = dm[:, i_ceramic]
             # Get lists of nearest neighbor distances.
-            dmO = dm[:, iO]
-            dInO = dmO[iIn, :]
-            dInOnn = dInO[dInO < cutoffs[1]]
-            dGaO = dmO[iGa, :]
-            dGaOnn = dGaO[dGaO < cutoffs[2]]
-            dAlO = dmO[iAl, :]
-            dAlOnn = dAlO[dAlO < cutoffs[3]]
-            # Calculate ratio of neighbor distances to averages.
-            In_hex = []
-            Ga_hex = []
-            Al_hex = []
-            for i, row in enumerate(dInOnn):
-                In_hex += [np.sum(row - np.mean(row))/np.mean(row)]
-            for i, row in enumerate(dGaOnn):
-                Ga_hex += [np.sum(row - np.mean(row))/np.mean(row)]
-            for i, row in enumerate(dAlOnn):
-                Al_hex += [np.sum(row - np.mean(row))/np.mean(row)]
-            result = [np.nansum(np.hstack([dInOnn, dGaOnn, dAlOnn])),
-                      np.nanmean(np.hstack([dInOnn, dGaOnn, dAlOnn])),
-                      np.nanstd(np.hstack([dInOnn, dGaOnn, dAlOnn])),
-                      np.nanmin(np.hstack([dInOnn, dGaOnn, dAlOnn])),
-                      np.nanmax(np.hstack([dInOnn, dGaOnn, dAlOnn])),
-                      np.nanmean(np.hstack([In_hex, Ga_hex, Al_hex])),
-                      np.nansum(np.hstack([In_hex, Ga_hex, Al_hex])),
-                      np.nanstd(np.hstack([In_hex, Ga_hex, Al_hex])),
-                      np.nanmin(np.hstack([In_hex, Ga_hex, Al_hex])),
-                      np.nanmax(np.hstack([In_hex, Ga_hex, Al_hex])),
-                      np.nansum(dInOnn), np.nansum(dGaOnn), np.nansum(dAlOnn)]
+            ion_numbers = atoms.numbers[i_ion]
+            d_ion_a = dm[i_ion, :]
+            i_ion_nn = (d_ion_a < np.vstack(all_cutoffs[ion_numbers]))
+            d_ion_nn = dm_ceramic[i_ion_nn]
+            result = [np.nansum(d_ion_nn), np.nanmean(d_ion_nn),
+                      np.nanstd(d_ion_nn),
+                      np.nanmin(d_ion_nn), np.nanmax(d_ion_nn)]
             return result
 
     def xyz_id(self, atoms=None):
