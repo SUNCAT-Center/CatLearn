@@ -13,19 +13,9 @@ import numpy as np
 import ase.db
 from ase.atoms import string2symbols
 from ase.geometry import get_layers
-from .periodic_table_data import get_mendeleev_params
+from .periodic_table_data import get_radius
 
 addsyms = ['H', 'C', 'O', 'N', 'S']
-
-
-def get_radius(z):
-    p = get_mendeleev_params(z, params=['atomic_radius',
-                                        'covalen_radius_cordero'])
-    if p[0] is not None:
-        r = p[0]
-    elif p[1] is not None:
-        r = p[1]
-    return float(r) / 100.
 
 
 def slab_index(atoms):

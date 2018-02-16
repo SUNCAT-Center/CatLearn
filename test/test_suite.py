@@ -6,6 +6,7 @@ import warnings
 import test_data_setup as ds
 import test_feature_base as fb
 import test_ads_fp_gen as afp
+import test_bulk_fp_gen as bfp
 import test_scale as st
 import test_data_clean as dc
 import test_feature_optimization as ft
@@ -32,7 +33,11 @@ class ConfigTestCase(unittest.TestCase):
         """Test adsorbate fingerprinting functions."""
         images = afp.setup_atoms()
         images = afp.attach_adsorbate_info(images)
-        afp.ads_fg_gen(images)
+        afp.ads_fp_gen(images)
+
+    def test_bulk_fp_funct(self):
+        images = bfp.setup_metal()
+        bfp.bulk_fp_gen(images)
 
     def test_data_setup_func(self):
         """Test data setup routines."""

@@ -15,8 +15,8 @@ from ase.data import ground_state_magnetic_moments as gs_magmom
 from ase.data import covalent_radii, atomic_numbers
 from .periodic_table_data import (get_mendeleev_params,
                                   list_mendeleev_params,
-                                  default_params)
-from .database_adsorbate_api import layers_info, get_radius
+                                  default_params, get_radius)
+from .database_adsorbate_api import layers_info
 from .neighbor_matrix import connection_matrix
 import collections
 
@@ -232,46 +232,90 @@ class AdsorbateFingerprintGenerator(BaseGenerator):
 
     def primary_surfatom(self, atoms=None):
         """ Function that takes an atoms objects and returns a fingerprint
-            vector with properties of the surface metal atom closest to an add
-            atom.
+            vector with properties averaged over the surface metal atoms
+            closest to an add atom.
         """
         if atoms is None:
-            return ['atomic_number_surf1',
-                    'atomic_volume_surf1',
-                    'boiling_point_surf1',
-                    'density_surf1',
-                    'dipole_polarizability_surf1',
-                    'electron_affinity_surf1',
-                    'group_id_surf1',
-                    'lattice_constant_surf1',
-                    'melting_point_surf1',
-                    'period_surf1',
-                    'vdw_radius_surf1',
-                    'covalent_radius_cordero_surf1',
-                    'en_allen_surf1',
-                    'atomic_weight_surf1',
-                    'atomic_radius_surf1',
-                    'heat_of_formation_surf1',
-                    'dft_bulk_modulus_surf1',
-                    'dft_rhodensity_surf1',
-                    'dbcenter_surf1',
-                    'dbfilling_surf1',
-                    'dbwidth_surf1',
-                    'dbskew_surf1',
-                    'dbkurtosis_surf1',
-                    'block_surf1',
-                    'ne_outer_surf1',
-                    'ne_s_surf1',
-                    'ne_p_surf1',
-                    'ne_d_surf1',
-                    'ne_f_surf1',
-                    'ionenergy_surf1',
-                    'ground_state_magmom_surf1']
+            return ['atomic_number_surf1av',
+                    'atomic_volume_surf1av',
+                    'boiling_point_surf1av',
+                    'density_surf1av',
+                    'dipole_polarizability_surf1av',
+                    'electron_affinity_surf1av',
+                    'group_id_surf1av',
+                    'lattice_constant_surf1av',
+                    'melting_point_surf1av',
+                    'period_surf1av',
+                    'vdw_radius_surf1av',
+                    'covalent_radius_cordero_surf1av',
+                    'en_allen_surf1av',
+                    'atomic_weight_surf1av',
+                    'atomic_radius_surf1av',
+                    'heat_of_formation_surf1av',
+                    'dft_bulk_modulus_surf1av',
+                    'dft_rhodensity_surf1av',
+                    'dbcenter_surf1av',
+                    'dbfilling_surf1av',
+                    'dbwidth_surf1av',
+                    'dbskew_surf1av',
+                    'dbkurtosis_surf1av',
+                    'block_surf1av',
+                    'ne_outer_surf1av',
+                    'ne_s_surf1av',
+                    'ne_p_surf1av',
+                    'ne_d_surf1av',
+                    'ne_f_surf1av',
+                    'ionenergy_surf1av',
+                    'ground_state_magmom_surf1av']
         else:
             numbers = [atoms[j].number for j in atoms.info['i_surfnn']]
             dat = list_mendeleev_params(numbers, params=self.slab_params)
             result = list(np.nanmean(np.array(dat, dtype=float), axis=0))
             result += [np.nanmean([gs_magmom[z] for z in numbers])]
+            return result
+
+    def primary_surfatom_sum(self, atoms=None):
+        """ Function that takes an atoms objects and returns a fingerprint
+            vector with properties summed over the surface metal atoms
+            closest to an add atom.
+        """
+        if atoms is None:
+            return ['atomic_number_surf1sum',
+                    'atomic_volume_surf1sum',
+                    'boiling_point_surf1sum',
+                    'density_surf1sum',
+                    'dipole_polarizability_surf1sum',
+                    'electron_affinity_surf1sum',
+                    'group_id_surf1sum',
+                    'lattice_constant_surf1sum',
+                    'melting_point_surf1sum',
+                    'period_surf1sum',
+                    'vdw_radius_surf1sum',
+                    'covalent_radius_cordero_surf1sum',
+                    'en_allen_surf1sum',
+                    'atomic_weight_surf1sum',
+                    'atomic_radius_surf1sum',
+                    'heat_of_formation_surf1sum',
+                    'dft_bulk_modulus_surf1sum',
+                    'dft_rhodensity_surf1sum',
+                    'dbcenter_surf1sum',
+                    'dbfilling_surf1sum',
+                    'dbwidth_surf1sum',
+                    'dbskew_surf1sum',
+                    'dbkurtosis_surf1sum',
+                    'block_surf1sum',
+                    'ne_outer_surf1sum',
+                    'ne_s_surf1sum',
+                    'ne_p_surf1sum',
+                    'ne_d_surf1sum',
+                    'ne_f_surf1sum',
+                    'ionenergy_surf1sum',
+                    'ground_state_magmom_surf1sum']
+        else:
+            numbers = [atoms[j].number for j in atoms.info['i_surfnn']]
+            dat = list_mendeleev_params(numbers, params=self.slab_params)
+            result = list(np.nansum(np.array(dat, dtype=float), axis=0))
+            result += [np.nansum([gs_magmom[z] for z in numbers])]
             return result
 
     def Z_add(self, atoms=None):

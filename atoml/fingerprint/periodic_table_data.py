@@ -127,3 +127,13 @@ def list_mendeleev_params(numbers, params=None):
                 line += [mnlv[p]['1']]
         dat.append(line)
     return dat
+
+
+def get_radius(z):
+    p = get_mendeleev_params(z, params=['atomic_radius',
+                                        'covalent_radius_cordero'])
+    if p[0] is not None:
+        r = p[0]
+    elif p[1] is not None:
+        r = p[1]
+    return float(r) / 100.

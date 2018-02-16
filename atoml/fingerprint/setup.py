@@ -6,16 +6,19 @@ from __future__ import division
 import numpy as np
 from collections import defaultdict
 import multiprocessing
+from tqdm import tqdm
 
 from .adsorbate_fingerprint import AdsorbateFingerprintGenerator
 from .particle_fingerprint import ParticleFingerprintGenerator
 from .standard_fingerprint import StandardFingerprintGenerator
 from .neighbor_matrix import NeighborFingerprintGenerator
+from .bulk_fingerprint import BulkFingerprintGenerator
 
 
 class FeatureGenerator(
         AdsorbateFingerprintGenerator, ParticleFingerprintGenerator,
-        StandardFingerprintGenerator, NeighborFingerprintGenerator):
+        StandardFingerprintGenerator, NeighborFingerprintGenerator,
+        BulkFingerprintGenerator):
     """Feature generator class.
 
     It is sometimes necessary to normalize the length of feature vectors when
@@ -110,7 +113,7 @@ class FeatureGenerator(
             parallel_iterate.wait()
             vector = np.asarray(fingerprint_vector, dtype=np.float64)[0]
         else:
-            for a in args:
+            for a in tqdm(args):
                 fingerprint_vector.append(self._get_vec(a))
             vector = np.asarray(fingerprint_vector, dtype=np.float64)
 
