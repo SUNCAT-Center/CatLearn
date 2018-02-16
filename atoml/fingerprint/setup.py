@@ -5,7 +5,7 @@ from __future__ import division
 
 import numpy as np
 from collections import defaultdict
-
+from tqdm import tqdm
 
 def get_combined_descriptors(fpv_list):
     """Sequentially combine feature label vectors.
@@ -73,7 +73,7 @@ def return_fpv(candidates, fpv_names):
                      len(fp(candidates[maxatoms])))
 
     fingerprint_vector = np.zeros((len(candidates), sum(fps)))
-    for i, atoms in enumerate(candidates):
+    for i, atoms in tqdm(enumerate(candidates)):
         fingerprint_vector[i] = _get_fpv(atoms, fpv_names, fps)
 
     return fingerprint_vector
