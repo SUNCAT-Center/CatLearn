@@ -3,6 +3,7 @@ build:py2:
   script:
     - python -V
     - pip install ase pytest-cov
+    - pip install tqdm
     - export PYTHONPATH=$PWD/:$PYTHONPATH
     - py.test --cov=atoml test/test_suite.py
 
@@ -11,5 +12,6 @@ build:py3:
   script:
     - python -V
     - pip install ase pytest-cov
+    - pip install tqdm
     - export PYTHONPATH=$PWD/:$PYTHONPATH
     - py.test --cov=atoml test/test_suite.py

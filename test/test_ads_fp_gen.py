@@ -16,7 +16,7 @@ wkdir = os.getcwd()
 def setup_atoms():
     symbols = ['Ag', 'Au', 'Cu', 'Pt', 'Pd', 'Ir', 'Rh', 'Ni', 'Co']
     images = []
-    for s in symbols:
+    for i, s in enumerate(symbols):
         rs = get_radius(atomic_numbers[s])
         a = 2 * rs * 2 ** 0.5
         atoms = fcc111(s, (2, 2, 3), a=a)
@@ -27,6 +27,7 @@ def setup_atoms():
         atoms.info['layers'] = 3
         atoms.info['bulk'] = s
         atoms.info['termination'] = s
+        atoms.info['dbid'] = i
         images.append(atoms)
     return images
 
@@ -41,10 +42,16 @@ def ads_fp_gen(images):
                  gen.Z_add,
                  gen.ads_av,
                  gen.primary_surf_nn,
-                 gen.primary_surfatom]
+                 gen.primary_surfatom,
+                 gen.get_dbid]
     labels = get_combined_descriptors(train_fpv)
     matrix = return_fpv(images, train_fpv)
     assert len(labels) == np.shape(matrix)[1]
+    if __name__ == '__main__':
+        for i, l in enumerate(labels):
+            print(i, l)
+        for dbid in matrix[:, -1]:
+            print('last column:', int(dbid))
 
 
 if __name__ == '__main__':

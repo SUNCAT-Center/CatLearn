@@ -7,7 +7,7 @@ import numpy as np
 from collections import defaultdict
 from tqdm import tqdm
 
-def get_combined_descriptors(fpv_list):
+def get_combined_descriptors(labels):
     """Sequentially combine feature label vectors.
 
     Parameters
@@ -18,8 +18,7 @@ def get_combined_descriptors(fpv_list):
     # Check that there are at least two fingerprint descriptors to combine.
     msg = "This functions combines various fingerprint"
     msg += " vectors, there must be at least two to combine"
-    assert len(fpv_list) >= 2, msg
-    labels = fpv_list[::-1]
+    assert len(labels) >= 2, msg
     L_F = []
     for l, fp in enumerate(labels):
         L_F += fp()
