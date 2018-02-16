@@ -8,7 +8,6 @@ import test_feature_optimization as ft
 import test_hierarchy_cv as ht
 import test_hypot_scaling as hs
 import test_acquisition as ta
-import test_io as tio
 import test_lml_optimizer as lo
 import test_ads_fp_gen as afp
 import test_bulk_fp_gen as bfp
@@ -64,16 +63,6 @@ class ConfigTestCase(unittest.TestCase):
     def test_hierarchy_func(self):
         """Test hierarchy routines."""
         ht.hierarchy_test()
-
-    def test_io_func(self):
-        """Test the io routines."""
-        train_features, train_targets, test_features, \
-            test_targets = get_data()
-        model = tio.train_model(train_features, train_targets)
-        original = tio.test_model(model, test_features, test_targets)
-        tio.test_load(original, test_features, test_targets)
-        tio.test_raw(train_features, train_targets, model.regularization,
-                     model.kernel_dict)
 
 
 if __name__ == '__main__':
