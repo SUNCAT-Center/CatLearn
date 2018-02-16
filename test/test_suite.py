@@ -6,7 +6,6 @@ import test_data_setup as ds
 import test_data_clean as dc
 import test_feature_optimization as ft
 import test_hierarchy_cv as ht
-import test_hypot_scaling as hs
 import test_acquisition as ta
 import test_lml_optimizer as lo
 import test_ads_fp_gen as afp

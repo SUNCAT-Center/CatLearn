@@ -1,16 +1,21 @@
 """Run the full test suite."""
 import unittest
+import os
 
 from test_suite import ConfigTestCase
-from test_scale import TestScaling
+from test_scale import TestScaling, TestHyperparameterScaling
 from test_gradients import TestGaussianKernel
 from test_predict import TestPrediction
 from test_io import TestIO
 
 if __name__ == '__main__':
     # Add new tests to the following list.
-    test_classes_to_run = [ConfigTestCase, TestScaling, TestGaussianKernel,
-                           TestPrediction, TestIO]
+    test_classes_to_run = [ConfigTestCase,
+                           TestScaling,
+                           TestHyperparameterScaling,
+                           TestGaussianKernel,
+                           TestPrediction,
+                           TestIO]
 
     # Load in all the unittests.
     loader = unittest.TestLoader()
@@ -25,3 +30,5 @@ if __name__ == '__main__':
     # Runn all the tests.
     runner = unittest.TextTestRunner()
     results = runner.run(suite)
+
+    os.remove('fpv_store.sqlite')
