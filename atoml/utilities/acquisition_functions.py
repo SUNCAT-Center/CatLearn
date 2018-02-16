@@ -11,9 +11,28 @@ from .clustering import cluster_features
 class AcquisitionFunctions(object):
     """Base class for acquisition functions."""
 
-    def __init__(self, targets, predictions, uncertainty, train_features=None,
-                 test_features=None, k=3):
+    def __init__(self, x='max', k=3, kappa=1.5):
         """Initialization of class.
+
+        x : string
+            The user defines the objective of the acq. function to minimize
+            ('min') or maximize ('max').
+        k : int
+            Number of cluster to generate with clustering.
+        kappa: int
+            Constant that controls the explotation/exploration ratio in UCB.
+        noise: float
+            Small number must be added in the denominator for stability.
+        """
+        self.x = x
+        self.k = k
+        self.noise = 1e-6
+        self.kappa = kappa
+
+    def rank(self,targets, predictions, uncertainty, train_features=None,
+             test_features=None, metrics=['cdf', 'optimistic','UCB', 'EI',
+             'PI']):
+        """Rank predictions based on acquisition function.
 
         Parameters
         ----------
@@ -27,23 +46,6 @@ class AcquisitionFunctions(object):
             Feature matrix for the training data.
         test_features : array
             Feature matrix for the test data.
-        k : int
-            Number of cluster to generate with clustering.
-        noise: float
-            Small number is added to the denominator because of numerical
-            stability.
-        """
-        self.targets = targets
-        self.predictions = predictions
-        self.uncertainty = uncertainty
-        self.train_features = train_features
-        self.test_features = test_features
-        self.k = k
-        self.noise = 1e-6
-        self.y_best = np.min(self.targets)
-
-    def rank(self, x='max', metrics=['cdf', 'optimistic']):
-        """Rank predictions based on acquisition function.
 
         Returns
         -------
@@ -52,28 +54,36 @@ class AcquisitionFunctions(object):
             the different acquisition functions.
         metrics : list
             list of strings. 
-            Accepted values are 'cdf', 'optimistic' and 'gaussian'.
+            Accepted values are 'cdf','ucb, 'ei', 'pi', 'optimistic' and
+            'gaussian'.
         """
         # Create dictionary with a list for each acquisition function.
+        self.targets = targets
+        self.predictions = predictions
+        self.uncertainty = uncertainty
+        self.train_features = train_features
+        self.test_features = test_features
         res = {}
         for key in metrics:
             res.update({key: []})
         # Select a fitness reference.
-        if x == 'max':
+        if self.x == 'max':
             best = max(self.targets)
-        elif x == 'min':
+        elif self.x == 'min':
             best = min(self.targets)
-        elif isinstance(x, float):
-            best = x
+        elif isinstance(self.x, float):
+            best = self.x
 
-        # Calcuate fitness based on acquisition functions.
-        for i, j in zip(self.predictions, self.uncertainty):
-            res['cdf'].append(self._cdf_fit(x=best, m=i, v=j))
-            res['optimistic'].append(self._optimistic_fit(x=best, m=i, v=j))
-            if 'gaussian' in metrics:
-                res['gaussian'].append(self._gaussian_fit(x=best, m=i, v=j))
-
-        res['cluster'] = self._cluster_fit()
+        # Calculate fitness based on acquisition functions.
+        res['cdf'].append(self._cdf_fit(x=best))
+        res['optimistic'].append(self._optimistic_fit(x=best))
+        res['UCB'].append(self._UCB())
+        res['EI'].append(self._EI(x=best))
+        res['PI'].append(self._PI(x=best))
+        if 'gaussian' in metrics:
+            res['gaussian'].append(self._gaussian_fit(x=best))
+        if 'cluster' in metrics:
+            res['cluster'] = self._cluster_fit()
 
         return res
 
@@ -104,12 +114,12 @@ class AcquisitionFunctions(object):
             res.update({key: []})
         best = defaultdict(list)
 
-        # start by classifying the training data.
+        # Start by classifying the training data.
         for i, a in enumerate(train_atoms):
             c = classifier(a)
             best[c].append(self.targets[i])
 
-        # Calcuate fitness based on acquisition functions.
+        # Calculate fitness based on acquisition functions.
         for i, a in enumerate(test_atoms):
             c = classifier(a)
             if c in best:
@@ -133,39 +143,34 @@ class AcquisitionFunctions(object):
                     res['gaussian'].append(float('inf'))
         return res
 
-    def _cdf_fit(self, x, m, v):
+    def _cdf_fit(self, x):
         """Calculate the cumulative distribution function.
 
         Parameters
         ----------
         x : float
             Known value.
-        m : float
-            Predicted mean.
-        v : float
-            Variance on prediction.
+
         """
-        cdf = 0.5 * (1 + erf((m - x) / np.sqrt(2 * v ** 2)))
+        cdf = 0.5 * (1 + erf((self.predictions - x) / np.sqrt(2 * self.uncertainty **
+        2)))
 
         return cdf
 
-    def _optimistic_fit(self, x, m, v):
+    def _optimistic_fit(self, x):
         """Find predictions that will optimistically lead to progress.
 
         Parameters
         ----------
         x : float
             Known value.
-        m : float
-            Predicted mean.
-        v : float
-            Variance on prediction.
+
         """
-        a = m + v - x
+        a = self.predictions + self.uncertainty - x
 
         return a
 
-    def _gaussian_fit(self, x, m, v):
+    def _gaussian_fit(self, x):
         """Find predictions that have the highest probability at x,
         assuming a gaussian posterior.
 
@@ -173,12 +178,9 @@ class AcquisitionFunctions(object):
         ----------
         x : float
             Known value.
-        m : float
-            Predicted mean.
-        v : float
-            Variance on prediction.
+
         """
-        return np.exp(-np.abs(m - x)/(2.*v**2))
+        return np.exp(-np.abs(self.predictions - x)/(2.*self.uncertainty**2))
 
     def _cluster_fit(self):
         """Penalize test points that are too clustered."""
@@ -197,19 +199,7 @@ class AcquisitionFunctions(object):
 
         return fit
 
-    def EI(self):
-        """
-        Expected improvement acq. function.
-
-        """
-        z = (-self.predictions + self.y_best) / (
-        self.uncertainty + self.noise)
-
-        return -((self.predictions - self.y_best) * norm.cdf(z) - \
-        self.uncertainty * norm.pdf(z))
-
-
-    def UCB(self, kappa=1.5):
+    def _UCB(self):
         """
         Upper-confidence bound acq. function.
 
@@ -218,16 +208,44 @@ class AcquisitionFunctions(object):
         kappa : float
             Parameter that controls exploitation/exploration.
         """
+        if self.x == 'max':
+            return -(self.predictions - self.kappa * self.uncertainty)
 
-        return -(self.predictions - kappa * self.uncertainty)
+        if self.x == 'min':
+            return -self.predictions + self.kappa * self.uncertainty
 
+    def _EI(self, x):
+        """
+        Expected improvement acq. function.
 
-    def PI(self):
+        Parameters
+        ----------
+        x : float
+            Best known value.
+
+        """
+        if self.x == 'max':
+            z = (self.predictions - x) / (self.uncertainty + self.noise)
+            return (self.predictions - x) * norm.cdf(z) + self.uncertainty * norm.pdf(
+            z)
+
+        if self.x == 'min':
+            z = (-self.predictions + x) / (self.uncertainty + self.noise)
+            return -((self.predictions - x) * norm.cdf(z) -
+            self.uncertainty * norm.pdf(z))
+
+    def _PI(self, x):
         """
         Probability of improvement acq. function.
+        Parameters
+        ----------
+        x : float
+            Best known value.
         """
+        if self.x == 'max':
+            z = (self.predictions - x) / (self.uncertainty + self.noise)
+            return norm.cdf(z)
 
-        z = -((self.predictions - self.y_best) / (self.uncertainty +
-        self.noise))
-
-        return norm.cdf(z)
+        if self.x == 'min':
+            z = -((self.predictions - x) / (self.uncertainty + self.noise))
+            return norm.cdf(z)

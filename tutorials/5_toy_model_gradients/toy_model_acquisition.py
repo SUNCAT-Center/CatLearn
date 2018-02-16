@@ -19,7 +19,7 @@ from atoml.utilities.penalty_functions import PenaltyFunctions
 # A known underlying function in one dimension [y] and first derivative [dy].
 def afunc(x):
     """Function [y] and first derivative [dy]."""
-    y =  np.sin(x)*np.cos(x)*np.exp(2*x)*x**-2*np.exp(-x)*np.cos(x) * \
+    y =  0.3+np.sin(x)*np.cos(x)*np.exp(2*x)*x**-2*np.exp(-x)*np.cos(x) * \
         np.sin(x)
     dy = (2*np.exp(x)*np.cos(x)**3*np.sin(x))/x**2 - \
         (2*np.exp(x)*np.cos(x)**2*np.sin(x)**2)/x**3 + \
@@ -28,8 +28,10 @@ def afunc(x):
     return [y, dy]
 
 
-# Define initial and final state.
-train = np.array([[0.01], [1.0]])
+# Pick some random points to train:
+train = 0.6 + np.random.rand(2,1)
+print(train)
+
 
 # Define initial prediction parameters.
 reg = 0.01
@@ -38,7 +40,7 @@ scaling_exp = 1.0
 constant = 1.0
 
 # Create figure.
-fig = plt.figure(figsize=(13.0, 7.0))
+fig = plt.figure(figsize=(18.0, 8.0))
 
 # Times that we train the model, in each iteration we add a new training point.
 number_of_iterations = 10
@@ -52,7 +54,7 @@ for iteration in range(1, number_of_iterations+1):
     target = np.array(afunc(train)[0])
 
     # Generate test datapoints x.
-    test_points = 500
+    test_points = 1000
     test = np.linspace(0.1, 6.0, test_points)
     test = np.reshape(test, (test_points, 1))
 
@@ -102,13 +104,8 @@ for iteration in range(1, number_of_iterations+1):
     """A new training point is added using the UCB, EI or PI acquisition 
     functions:"""
 
-    acq = AcquisitionFunctions(targets=target,predictions=prediction,
-    uncertainty=uncertainty).UCB(kappa=1.5)
-    # acq = acq['UCB']
-    acq = AcquisitionFunctions(targets=target,predictions=prediction,
-    uncertainty=uncertainty).EI()
-    acq = AcquisitionFunctions(targets=target,predictions=prediction,
-    uncertainty=uncertainty).PI()
+    acq = (AcquisitionFunctions(x='min', kappa=1.5).rank(
+    predictions=prediction, uncertainty=uncertainty, targets=target))['UCB'][0]
 
     # Remember: The acquisition function provides positive scores.
     new_train_point = test[np.argmin(-acq)]
@@ -141,7 +138,12 @@ for iteration in range(1, number_of_iterations+1):
     plt.ylabel('Response', fontsize=5)
     plt.axis('tight')
     plt.xticks(fontsize=6)
-    plt.ylim(-1.0, 4.0)
+    plt.ylim(-1.0, 3.0)
+
+    if iteration == 1:
+        plt.legend(['Real function', 'Training example', 'Posterior mean',
+        'Acquisition function', 'Confidence interv. ($\sigma$)'],loc=9,
+        bbox_to_anchor=(0.9, 1.3), ncol=3)
 
     # Gradients
 
