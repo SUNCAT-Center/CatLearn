@@ -14,7 +14,7 @@ import matplotlib.pyplot as plt
 from atoml.preprocess.feature_preprocess import standardize
 from atoml.preprocess.scale_target import target_standardize
 from atoml.regression import GaussianProcess, RidgeRegression
-from atoml.utilities.cost_function import get_error
+from atoml.regression.cost_function import get_error
 from mpl_toolkits.mplot3d import Axes3D
 
 
