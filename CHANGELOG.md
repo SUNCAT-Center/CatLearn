@@ -1,4 +1,4 @@
-# Version 0.2.2 (February 2018)
+# Version 0.3.0 (February 2018)
 
 -   Update the fingerprint generator functions so there is now a
 `FeatureGenerator` class that wraps round all type specific generators.
