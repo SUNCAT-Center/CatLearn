@@ -44,17 +44,13 @@ class TestFeatureGeneration(unittest.TestCase):
 
         # Setup the test and training datasets.
         testset = get_unique(atoms=all_cand, size=test_size, key='raw_score')
-        assert len(testset['atoms']) == test_size
-        assert len(testset['taken']) == test_size
+        self.assertTrue(len(testset['atoms']) == test_size)
+        self.assertTrue(len(testset['taken']) == test_size)
 
         trainset = get_train(atoms=all_cand, size=train_size,
                              taken=testset['taken'], key='raw_score')
-        assert len(trainset['atoms']) == train_size
-        assert len(trainset['target']) == train_size
-
-        # Clear out some old saved data.
-        for i in trainset['atoms']:
-            del i.info['data']['nnmat']
+        self.assertTrue(len(trainset['atoms']) == train_size)
+        self.assertTrue(len(trainset['target']) == train_size)
 
         # Initiate the fingerprint generators with relevant input variables.
         print('Getting the fingerprints')
@@ -63,77 +59,78 @@ class TestFeatureGeneration(unittest.TestCase):
 
         data = f.return_vec(trainset['atoms'], [f.nearestneighbour_vec])
         n, d = np.shape(data)
-        assert n == train_size and d == 4
-        assert len(f.return_names([f.nearestneighbour_vec])) == d
+        self.assertTrue(n == train_size and d == 4)
+        self.assertTrue(len(f.return_names([f.nearestneighbour_vec])) == d)
         print('passed nearestneighbour_vec')
 
         train_fp = f.return_vec(trainset['atoms'], [f.bond_count_vec])
         n, d = np.shape(train_fp)
         data = np.concatenate((data, train_fp), axis=1)
-        assert n == train_size and d == 52
+        self.assertTrue(n == train_size and d == 52)
         print('passed bond_count_vec')
 
         train_fp = f.return_vec(trainset['atoms'], [f.distribution_vec])
         n, d = np.shape(train_fp)
         data = np.concatenate((data, train_fp), axis=1)
-        assert n == train_size and d == 10
+        self.assertTrue(n == train_size and d == 10)
         print('passed distribution_vec')
 
         # EXPENSIVE to calculate. Not included in training data.
         train_fp = f.return_vec(testset['atoms'], [f.connections_vec])
         n, d = np.shape(train_fp)
-        assert n == test_size and d == 26
+        self.assertTrue(n == test_size and d == 26)
         print('passed connections_vec')
 
         train_fp = f.return_vec(trainset['atoms'], [f.rdf_vec])
         n, d = np.shape(train_fp)
         data = np.concatenate((data, train_fp), axis=1)
-        assert n == train_size and d == 20
+        self.assertTrue(n == train_size and d == 20)
         print('passed rdf_vec')
 
         # Start testing the standard fingerprint vector generators.
         train_fp = f.return_vec(trainset['atoms'], [f.element_mass_vec])
         n, d = np.shape(train_fp)
         data = np.concatenate((data, train_fp), axis=1)
-        assert n == train_size and d == 1
-        assert len(f.return_names([f.element_mass_vec])) == d
+        self.assertTrue(n == train_size and d == 1)
+        self.assertTrue(len(f.return_names([f.element_mass_vec])) == d)
         print('passed element_mass_vec')
 
         train_fp = f.return_vec(trainset['atoms'], [f.element_parameter_vec])
         n, d = np.shape(train_fp)
         data = np.concatenate((data, train_fp), axis=1)
         # print(f.return_names([f.element_parameter_vec]))
-        assert n == train_size and d == 4
-        assert len(f.return_names([f.element_parameter_vec])) == d
+        self.assertTrue(n == train_size and d == 4)
+        self.assertTrue(len(f.return_names([f.element_parameter_vec])) == d)
         print('passed element_parameter_vec')
 
         train_fp = f.return_vec(trainset['atoms'], [f.composition_vec])
         n, d = np.shape(train_fp)
         data = np.concatenate((data, train_fp), axis=1)
-        assert n == train_size and d == 2
-        assert len(f.return_names([f.composition_vec])) == d
+        self.assertTrue(n == train_size and d == 2)
+        self.assertTrue(len(f.return_names([f.composition_vec])) == d)
         print('passed composition_vec')
 
         train_fp = f.return_vec(trainset['atoms'], [f.eigenspectrum_vec])
         n, d = np.shape(train_fp)
         data = np.concatenate((data, train_fp), axis=1)
-        assert n == train_size and d == 147
-        assert len(f.return_names([f.eigenspectrum_vec])) == d
+        self.assertTrue(n == train_size and d == 147)
+        self.assertTrue(len(f.return_names([f.eigenspectrum_vec])) == d)
         print('passed eigenspectrum_vec')
 
         train_fp = f.return_vec(trainset['atoms'], [f.distance_vec])
         n, d = np.shape(train_fp)
         data = np.concatenate((data, train_fp), axis=1)
-        assert n == train_size and d == 2
-        assert len(f.return_names([f.distance_vec])) == d
+        self.assertTrue(n == train_size and d == 2)
+        self.assertTrue(len(f.return_names([f.distance_vec])) == d)
         print('passed distance_vec')
 
         train_fp = f.return_vec(trainset['atoms'], [
             f.eigenspectrum_vec, f.element_mass_vec, f.composition_vec])
         n, d = np.shape(train_fp)
-        assert n == train_size and d == 150
-        assert len(f.return_names(
-            [f.eigenspectrum_vec, f.element_mass_vec, f.composition_vec])) == d
+        self.assertTrue(n == train_size and d == 150)
+        self.assertTrue(len(f.return_names(
+            [f.eigenspectrum_vec, f.element_mass_vec, f.composition_vec]))
+                        == d)
         print('passed combined generation')
 
         # Do basic check for atomic porperties.
@@ -144,8 +141,8 @@ class TestFeatureGeneration(unittest.TestCase):
             no_prop.append(neighbor_features(atoms=atoms))
             an_prop.append(neighbor_features(atoms=atoms,
                                              property=['atomic_number']))
-        assert np.shape(no_prop) == (test_size, 15)
-        assert np.shape(an_prop) == (test_size, 30)
+        self.assertTrue(np.shape(no_prop) == (test_size, 15))
+        self.assertTrue(np.shape(an_prop) == (test_size, 30))
         print('passed graph_vec')
 
         self.__class__.all_cand = all_cand
@@ -154,13 +151,13 @@ class TestFeatureGeneration(unittest.TestCase):
     def test_2_cv(self):
         """Test some cross-validation."""
         split = k_fold(self.data, nsplit=5)
-        assert len(split) == 5
+        self.assertTrue(len(split) == 5)
         for s in split:
-            assert len(s) == 10
+            self.assertTrue(len(s) == 10)
         split = k_fold(self.data, nsplit=5, fix_size=5)
-        assert len(split) == 5
+        self.assertTrue(len(split) == 5)
         for s in split:
-            assert len(s) == 5
+            self.assertTrue(len(s) == 5)
 
     def test_3_db(self):
         """Test database functions."""
