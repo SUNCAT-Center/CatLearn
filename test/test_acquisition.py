@@ -75,21 +75,31 @@ def gp_test(train_features, train_targets, train_atoms, test_features,
     print('gaussian prediction (rmse):',
           pred['validation_error']['rmse_average'])
 
-    af = AcquisitionFunctions(
+    af = AcquisitionFunctions()
+    acq = af.rank(
         targets=train_targets, predictions=pred['prediction'],
         uncertainty=pred['uncertainty'], train_features=train_features,
-        test_features=test_features
-        )
-    acq = af.rank(metrics=['cdf', 'optimistic', 'gaussian'])
+        test_features=test_features, metrics=['cdf', 'optimistic', 'gaussian',
+                                              'UCB', 'EI', 'PI'])
     assert len(acq['cdf']) == len(pred['prediction'])
     assert len(acq['optimistic']) == len(pred['prediction'])
     assert len(acq['gaussian']) == len(pred['prediction'])
+    assert len(acq['UCB']) == len(pred['prediction'])
+    assert len(acq['EI']) == len(pred['prediction'])
+    assert len(acq['PI']) == len(pred['prediction'])
 
-    acq = af.classify(classifier, train_atoms, test_atoms,
-                      metrics=['cdf', 'optimistic', 'gaussian'])
+    acq = af.classify(
+        classifier, train_atoms, test_atoms, targets=train_targets,
+        predictions=pred['prediction'], uncertainty=pred['uncertainty'],
+        train_features=train_features, test_features=test_features, metrics=[
+            'cdf', 'optimistic', 'gaussian', 'UCB', 'EI', 'PI'])
     assert len(acq['cdf']) == len(pred['prediction'])
     assert len(acq['optimistic']) == len(pred['prediction'])
     assert len(acq['gaussian']) == len(pred['prediction'])
+    assert len(acq['UCB']) == len(pred['prediction'])
+    assert len(acq['EI']) == len(pred['prediction'])
+    assert len(acq['PI']) == len(pred['prediction'])
+
 
 
 if __name__ == '__main__':
