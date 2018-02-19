@@ -6,7 +6,11 @@
 variable in the `FeatureGenerator` class. **Python3 only!**
 -   Add better handling when passing variable length/composition data objects
 to the feature generators.
+-   More acquisition functions added.
+-   Penalty functions added.
 -   Started adding a general api for ASE.
+-   Added some more test.
+-   A number of minor bugs have been fixed.
 
 # Version 0.2.1 (February 2018)
 
