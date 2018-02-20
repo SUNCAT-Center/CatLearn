@@ -4,6 +4,7 @@ from __future__ import absolute_import
 
 import os
 import numpy as np
+import unittest
 
 from atoml.cross_validation import Hierarchy
 from atoml.regression import RidgeRegression
@@ -35,33 +36,31 @@ def predict(train_features, train_targets, test_features, test_targets):
     return data
 
 
-def hierarchy_test():
-    """Function to test the hierarchy with ridge regression predictions."""
-    # Define the hierarchy cv class method.
-    train_features, train_targets, test_features, test_targets = get_data()
-    hv = Hierarchy(db_name='test.sqlite', table='FingerVector',
-                   file_name='hierarchy')
-    hv.todb(features=train_features, targets=train_targets)
-    # Split the data into subsets.
-    hv.split_index(min_split=5, max_split=None)
-    # Load data back in from save file.
-    ind = hv.load_split()
+class TestHierarchy(unittest.TestCase):
+    """Test out the hierarchy cv."""
 
-    # Make the predictions for each subset.
-    hv.split_predict(index_split=ind, predict=predict)
+    def test_hierarchy(self):
+        """Function to test the hierarchy with ridge regression predictions."""
+        # Define the hierarchy cv class method.
+        train_features, train_targets, test_features, test_targets = get_data()
 
-    os.remove('hierarchy.pickle')
-    os.remove('test.sqlite')
+        hv = Hierarchy(db_name='test.sqlite', table='FingerVector',
+                       file_name='hierarchy')
+        hv.todb(features=train_features, targets=train_targets)
+        # Split the data into subsets.
+        split = hv.split_index(min_split=5, max_split=25)
+        self.assertTrue(len(split) == 6)
+        # Load data back in from save file.
+        ind = hv.load_split()
+        self.assertTrue(len(ind) == 6)
+
+        # Make the predictions for each subset.
+        pred = hv.split_predict(index_split=ind, predict=predict)
+        self.assertTrue(len(pred[0]) == 14 and len(pred[1]) == 14)
+
+        os.remove('hierarchy.pickle')
+        os.remove('test.sqlite')
 
 
 if __name__ == '__main__':
-    from pyinstrument import Profiler
-
-    profiler = Profiler()
-    profiler.start()
-
-    hierarchy_test()
-
-    profiler.stop()
-
-    print(profiler.output_text(unicode=True, color=True))
+    unittest.main()

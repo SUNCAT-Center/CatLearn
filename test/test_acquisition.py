@@ -63,10 +63,10 @@ class TestAcquisition(unittest.TestCase):
         return train_features, train_targets, trainset['atoms'], \
             test_features, test_targets, testset['atoms']
 
-    def gp_test(self):
+    def test_acquisition(self):
         """Test acquisition functions."""
         train_features, train_targets, train_atoms, test_features, \
-            test_targets, test_atoms = self.get_data
+            test_targets, test_atoms = self.get_data()
         # Test prediction routine with gaussian kernel.
         kdict = {'k1': {'type': 'gaussian', 'width': 1., 'scaling': 1.}}
         gp = GaussianProcess(
