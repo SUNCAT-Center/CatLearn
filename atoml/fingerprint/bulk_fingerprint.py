@@ -9,11 +9,14 @@ Created on Tue Dec  6 14:09:29 2016
 """
 from __future__ import print_function
 import numpy as np
+
 from ase.data import ground_state_magnetic_moments as gs_magmom
 from ase.data import atomic_numbers
+
 from .periodic_table_data import (list_mendeleev_params,
                                   get_radius,
                                   default_params)
+from .base import BaseGenerator
 
 default_extra_params = ['c6',
                         'c6_gb',
@@ -41,20 +44,23 @@ default_extra_params = ['c6',
                         'ionenergies']
 
 
-class BulkFingerprintGenerator(object):
-    def __init__(self, ceramic_element=None, extra_params=None, skin=0.2):
+class BulkFingerprintGenerator(BaseGenerator):
+    def __init__(self, **kwargs):
         """ Class containing functions for fingerprint generation.
         """
-        if extra_params is None:
+        if not hasattr(self, 'extra_params'):
+            self.extra_params = kwargs.get('extra_params', None)
+        if self.extra_params is None:
             self.extra_params = default_extra_params
-        else:
-            self.extra_params = extra_params
-        self.skin = skin
+        if not hasattr(self, 'skin'):
+            self.skin = kwargs.get('skin', 0.2)
         # Ceramic datasets can rely on fingerprints of the metal ion only.
-        if isinstance(ceramic_element, str):
-            self.ceramic_element = atomic_numbers[ceramic_element]
-        else:
-            self.ceramic_element = ceramic_element
+        if not hasattr(self, 'ceramic_element'):
+            self.ceramic_element = kwargs.get('ceramic_element', None)
+        if isinstance(self.ceramic_element, str):
+            self.ceramic_element = atomic_numbers[self.ceramic_element]
+
+        super(BulkFingerprintGenerator, self).__init__(**kwargs)
 
     def summation(self, atoms=None):
         """ Returns a fingerprint vector with propeties of the element name

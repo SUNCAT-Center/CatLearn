@@ -11,8 +11,10 @@ to guide us in selecting the next training point in a wise manner.
 
 import numpy as np
 import matplotlib.pyplot as plt
+
 from atoml.regression import GaussianProcess
-from atoml.utilities.acquisition_functions import AcquisitionFunctions
+from atoml.regression.acquisition_functions import AcquisitionFunctions
+
 
 # A known underlying function in one dimension [y] and first derivative [dy].
 def afunc(x):
@@ -88,14 +90,14 @@ for iteration in range(1, number_of_iterations+1):
     upper = prediction + uncertainty
     lower = prediction - uncertainty
 
-    """A new training point is added using the UCB, EI or PI acquisition 
+    """A new training point is added using the UCB, EI or PI acquisition
     functions:"""
 
     acq = (AcquisitionFunctions(objective='min', kappa=1.5).rank(
     predictions=prediction, uncertainty=uncertainty, targets=target))['UCB']
 
-    """ Note: The acquisition function provides positive scores. Therefore, 
-    one must pass the negative of it (-acq) to optimize the acq. 
+    """ Note: The acquisition function provides positive scores. Therefore,
+    one must pass the negative of it (-acq) to optimize the acq.
     function."""
 
     new_train_point = test[np.argmin(-acq)]

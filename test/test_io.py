@@ -1,4 +1,5 @@
 """Test io functions."""
+import unittest
 import os
 import numpy as np
 
@@ -9,91 +10,88 @@ from common import get_data
 wkdir = os.getcwd()
 
 
-def train_model(train_features, train_targets):
-    """Function to train a Gaussian process."""
-    stg = np.std(train_features, axis=0)
-    kdict = {
-        'k1': {'type': 'gaussian', 'width': stg, 'scaling': 1.},
-        'k2': {'type': 'linear', 'scaling': 1.},
-        'k3': {'type': 'constant', 'const': 1.},
-        'k4': {'type': 'quadratic', 'slope': 1., 'degree': 1., 'scaling': 1.},
-    }
-    gp = GaussianProcess(train_fp=train_features, train_target=train_targets,
-                         kernel_dict=kdict, regularization=1e-3,
-                         optimize_hyperparameters=True, scale_data=False)
+class TestIO(unittest.TestCase):
 
-    io.write(filename='test-model', model=gp, ext='pkl')
-    io.write(filename='test-model', model=gp, ext='hdf5')
+    def train_model(self, train_features, train_targets):
+        """Function to train a Gaussian process."""
+        stg = np.std(train_features, axis=0)
+        kdict = {
+            'k1': {'type': 'gaussian', 'width': stg, 'scaling': 1.},
+            'k2': {'type': 'linear', 'scaling': 1.},
+            'k3': {'type': 'constant', 'const': 1.},
+            'k4': {'type': 'quadratic', 'slope': 1., 'degree': 1.,
+                   'scaling': 1.},
+        }
+        self.__class__.gp = GaussianProcess(
+            train_fp=train_features, train_target=train_targets,
+            kernel_dict=kdict, regularization=1e-3,
+            optimize_hyperparameters=True, scale_data=False)
 
-    return gp
+        io.write(filename='test-model', model=self.gp, ext='pkl')
+        io.write(filename='test-model', model=self.gp, ext='hdf5')
 
+    def make_test(self, train_features, train_targets, test_features,
+                  test_targets):
+        """Function to test Gaussian process."""
+        self.train_model(train_features, train_targets)
 
-def test_model(gp, test_features, test_targets):
-    """Function to test Gaussian process."""
-    pred = gp.predict(test_fp=test_features,
-                      test_target=test_targets,
-                      get_validation_error=True,
-                      get_training_error=True)
+        self.original = self.gp.predict(
+            test_fp=test_features, test_target=test_targets,
+            get_validation_error=True, get_training_error=True)
 
-    return pred
+    def test_load(self):
+        """Function to test loading a pre-generated model."""
+        train_features, train_targets, test_features, test_targets = get_data()
 
+        self.make_test(
+            train_features, train_targets, test_features, test_targets)
 
-def test_load(original, test_features, test_targets):
-    """Function to teast loading a pre-generated model."""
-    gp = io.read(filename='test-model', ext='pkl')
+        new_gp = io.read(filename='test-model', ext='pkl')
 
-    pred = gp.predict(test_fp=test_features,
-                      test_target=test_targets,
-                      get_validation_error=True,
-                      get_training_error=True)
+        pred = new_gp.predict(
+            test_fp=test_features, test_target=test_targets,
+            get_validation_error=True, get_training_error=True)
 
-    assert np.allclose(pred['validation_error']['rmse_all'],
-                       original['validation_error']['rmse_all'])
+        self.assertTrue(np.allclose(
+            pred['validation_error']['rmse_all'],
+            self.original['validation_error']['rmse_all']))
 
-    gp = io.read(filename='test-model', ext='hdf5')
+        gp = io.read(filename='test-model', ext='hdf5')
 
-    pred = gp.predict(test_fp=test_features,
-                      test_target=test_targets,
-                      get_validation_error=True,
-                      get_training_error=True)
+        pred = gp.predict(test_fp=test_features,
+                          test_target=test_targets,
+                          get_validation_error=True,
+                          get_training_error=True)
 
-    assert np.allclose(pred['validation_error']['rmse_all'],
-                       original['validation_error']['rmse_all'])
+        self.assertTrue(
+            np.allclose(pred['validation_error']['rmse_all'],
+                        self.original['validation_error']['rmse_all']))
 
-    os.remove('{}/test-model.pkl'.format(wkdir))
-    os.remove('{}/test-model.hdf5'.format(wkdir))
+        os.remove('{}/test-model.pkl'.format(wkdir))
+        os.remove('{}/test-model.hdf5'.format(wkdir))
 
+    def test_raw(self):
+        """Function to test raw data save."""
+        regularization = self.gp.regularization
+        kernel_dict = self.gp.kernel_dict
 
-def test_raw(train_features, train_targets, regularization, kernel_dict):
-    """Function to test raw data save."""
-    io.write_train_data('train_data', train_features, train_targets,
-                        regularization, kernel_dict)
-    tf, tt, r, kdict = io.read_train_data('train_data')
-    assert np.allclose(train_features, tf) and np.allclose(train_targets, tt)
-    assert r == regularization
-    for i in kernel_dict:
-        for j in kernel_dict[i]:
-            if type(kernel_dict[i][j]) != list and \
-                    type(kernel_dict[i][j]) != np.ndarray:
-                assert kdict[i][j] == kernel_dict[i][j]
-            else:
-                assert np.allclose(kdict[i][j], kernel_dict[i][j])
-    os.remove('{}/train_data.hdf5'.format(wkdir))
+        train_features, train_targets, test_features, test_targets = get_data()
+        io.write_train_data('train_data', train_features, train_targets,
+                            regularization, kernel_dict)
+        tf, tt, r, kdict = io.read_train_data('train_data')
+        self.assertTrue(np.allclose(train_features, tf) and
+                        np.allclose(train_targets, tt))
+        self.assertTrue(r == regularization)
+        for i in kernel_dict:
+            for j in kernel_dict[i]:
+                if type(kernel_dict[i][j]) != list and \
+                        type(kernel_dict[i][j]) != np.ndarray:
+                    self.assertTrue(kdict[i][j] == kernel_dict[i][j])
+                else:
+                    self.assertTrue(np.allclose(kdict[i][j],
+                                                kernel_dict[i][j]))
+        os.remove('{}/train_data.hdf5'.format(wkdir))
 
 
 if __name__ == '__main__':
-    from pyinstrument import Profiler
-
-    profiler = Profiler()
-    profiler.start()
-
-    train_features, train_targets, test_features, test_targets = get_data()
-    model = train_model(train_features, train_targets)
-    original = test_model(model, test_features, test_targets)
-    test_load(original, test_features, test_targets)
-    test_raw(train_features, train_targets, model.regularization,
-             model.kernel_dict)
-
-    profiler.stop()
-
-    print(profiler.output_text(unicode=True, color=True))
+    unittest.main()

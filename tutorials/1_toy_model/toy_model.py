@@ -13,7 +13,7 @@ import matplotlib.pyplot as plt
 from atoml.preprocess.feature_preprocess import standardize
 from atoml.preprocess.scale_target import target_standardize
 from atoml.regression import GaussianProcess
-from atoml.utilities.cost_function import get_error
+from atoml.regression.cost_function import get_error
 
 
 # A known underlying function in one dimension.
@@ -86,7 +86,7 @@ if True:
     under_uncertainty = np.vstack(under_fit['uncertainty']) * \
         train_targets['std']
     # Get average errors.
-    error = get_error(under_prediction, afunc(test))
+    error = get_error(under_prediction.reshape(-1), afunc(test).reshape(-1))
     print('Gaussian linear regression prediction:', error['absolute_average'])
     # Get confidence interval on predictions.
     upper = under_prediction + under_uncertainty * tstd
@@ -127,7 +127,7 @@ if True:
     over_uncertainty = np.vstack(over_fit['uncertainty']) * \
         train_targets['std']
     # Get average errors.
-    error = get_error(over_prediction, afunc(test))
+    error = get_error(over_prediction.reshape(-1), afunc(test).reshape(-1))
     print('Gaussian kernel regression prediction:', error['absolute_average'])
     # Get confidence interval on predictions.
     over_upper = over_prediction + over_uncertainty * tstd
@@ -177,7 +177,7 @@ if True:
     opt_uncertainty = np.vstack(optimized['uncertainty']) * \
         train_targets['std']
     # Get average errors.
-    error = get_error(opt_prediction, afunc(test))
+    error = get_error(opt_prediction.reshape(-1), afunc(test).reshape(-1))
     print('Gaussian kernel regression prediction:', error['absolute_average'])
     # Get confidence interval on predictions.
     opt_upper = opt_prediction + opt_uncertainty * tstd

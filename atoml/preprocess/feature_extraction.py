@@ -6,11 +6,31 @@ from sklearn.cross_decomposition import PLSRegression
 from sklearn.decomposition import PCA, SparsePCA
 
 from .feature_preprocess import standardize
-from atoml.utilities.clean_data import clean_variance
+from .clean_data import clean_variance
 
 
 def pls(components, train_matrix, target, test_matrix):
-    """Projection of latent structure routine."""
+    """Projection of latent structure routine.
+
+    Parameters
+    ----------
+    components : int
+        The number of components to be returned.
+    train_matrix : array
+        The training features.
+    test_matrix : array
+        The test features.
+
+    Returns
+    -------
+    new_train : array
+        Extracted training features.
+    new_test : array
+        Extracted test features.
+    """
+    msg = 'The number of components must be a positive int greater than 0.'
+    assert components > 0, msg
+
     pls = PLSRegression(n_components=components)
     model = pls.fit(X=train_matrix, Y=target)
     new_train = model.transform(train_matrix)
@@ -20,7 +40,27 @@ def pls(components, train_matrix, target, test_matrix):
 
 
 def pca(components, train_matrix, test_matrix):
-    """Principal component analysis routine."""
+    """Principal component analysis routine.
+
+    Parameters
+    ----------
+    components : int
+        The number of components to be returned.
+    train_matrix : array
+        The training features.
+    test_matrix : array
+        The test features.
+
+    Returns
+    -------
+    new_train : array
+        Extracted training features.
+    new_test : array
+        Extracted test features.
+    """
+    msg = 'The number of components must be a positive int greater than 0.'
+    assert components > 0, msg
+
     pca = PCA(n_components=components)
     model = pca.fit(X=train_matrix)
     new_train = model.transform(train_matrix)
@@ -30,7 +70,27 @@ def pca(components, train_matrix, test_matrix):
 
 
 def spca(components, train_matrix, test_matrix):
-    """Sparse principal component analysis routine."""
+    """Sparse principal component analysis routine.
+
+    Parameters
+    ----------
+    components : int
+        The number of components to be returned.
+    train_matrix : array
+        The training features.
+    test_matrix : array
+        The test features.
+
+    Returns
+    -------
+    new_train : array
+        Extracted training features.
+    new_test : array
+        Extracted test features.
+    """
+    msg = 'The number of components must be a positive int greater than 0.'
+    assert components > 0, msg
+
     pca = SparsePCA(n_components=components)
     model = pca.fit(X=train_matrix)
     new_train = model.transform(train_matrix)
@@ -39,7 +99,7 @@ def spca(components, train_matrix, test_matrix):
     return new_train, new_test
 
 
-def atoml_pca(components, train_fpv, test_fpv=None, cleanup=False,
+def atoml_pca(components, train_features, test_features=None, cleanup=False,
               scale=False):
     """Principal component analysis varient that doesn't require scikit-learn.
 
@@ -50,18 +110,22 @@ def atoml_pca(components, train_fpv, test_fpv=None, cleanup=False,
     test_fpv : array
         The feature matrix for the testing data.
     """
+    msg = 'The number of components must be a positive int greater than 0.'
+    assert components > 0, msg
+
     data = defaultdict(list)
     data['components'] = components
     if cleanup:
-        c = clean_variance(train=train_fpv, test=test_fpv)
-        test_fpv = c['test']
-        train_fpv = c['train']
+        c = clean_variance(train=train_features, test=test_features)
+        test_features = c['test']
+        train_features = c['train']
     if scale:
-        std = standardize(train_matrix=train_fpv, test_matrix=test_fpv)
-        test_fpv = std['test']
-        train_fpv = std['train']
+        std = standardize(train_matrix=train_features,
+                          test_matrix=test_features)
+        test_features = std['test']
+        train_features = std['train']
 
-    u, s, v = np.linalg.svd(np.transpose(train_fpv))
+    u, s, v = np.linalg.svd(np.transpose(train_features))
 
     # Make a list of (eigenvalue, eigenvector) tuples
     eig_pairs = [(np.abs(s[i]), u[:, i]) for i in range(len(s))]
@@ -70,15 +134,15 @@ def atoml_pca(components, train_fpv, test_fpv=None, cleanup=False,
     data['variance'] = [(i / sum(s)) * 100 for i in sorted(s, reverse=True)]
 
     # Form the projection matrix.
-    features = len(train_fpv[0])
+    features = len(train_features[0])
     pm = eig_pairs[0][1].reshape(features, 1)
     if components > 1:
         for i in range(components - 1):
             pm = np.append(pm, eig_pairs[i][1].reshape(features, 1), axis=1)
 
     # Form feature matrix based on principal components.
-    data['train_fpv'] = train_fpv.dot(pm)
-    if test_fpv is not None:
-        data['test_fpv'] = np.asarray(test_fpv).dot(pm)
+    data['train_features'] = train_features.dot(pm)
+    if test_features is not None:
+        data['test_features'] = np.asarray(test_features).dot(pm)
 
     return data

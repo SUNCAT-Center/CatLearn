@@ -11,7 +11,7 @@ class placeholder(object):
     Placeholder for now.
     """
 
-    def __init__(self, globalscale, PC, index_split, hv, indicies,
+    def __init__(self, PC, index_split, hv, indicies,
                  hier_level, featselect_featvar, featselect_featconst,
                  s_feat, m_feat, feat_sub=15, s_tar=None, m_tar=None,
                  select_limit=None, selected_features=None,
@@ -20,8 +20,6 @@ class placeholder(object):
 
         Parameters
         ----------
-        globalscale : stringat
-            Using global scaleing or not.
         PC : object
            Modieifes data such as scaling.
         index_split : array
@@ -57,7 +55,6 @@ class placeholder(object):
         glob_tar1 : array
            Dependent data with the one of the two largest subsets,
         """
-        self.globalscale = globalscale
         self.PC = PC
         self.index_split = index_split
         self.indicies = indicies

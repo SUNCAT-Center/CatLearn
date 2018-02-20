@@ -9,7 +9,7 @@ benchmark those predictions against the known underlying function.
 import numpy as np
 import matplotlib.pyplot as plt
 from atoml.regression import GaussianProcess
-from atoml.utilities.cost_function import get_error
+from atoml.regression.cost_function import get_error
 
 
 # A known underlying function in one dimension (y) and first derivative (dy).

@@ -12,7 +12,7 @@ from .gpfunctions.covariance import get_covariance
 from .gpfunctions.kernel_setup import prepare_kernels, kdicts2list, list2kdict
 from .gpfunctions.uncertainty import get_uncertainty
 from .gpfunctions.default_scale import ScaleData
-from atoml.utilities.cost_function import get_error
+from .cost_function import get_error
 
 
 class GaussianProcess(object):

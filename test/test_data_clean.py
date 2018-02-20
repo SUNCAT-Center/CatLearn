@@ -1,52 +1,44 @@
 """Simple tests for data cleaning."""
 import numpy as np
+import unittest
 
-from atoml.utilities import clean_data as clean
-
-
-def outlier_test():
-    """Test outlier removal from toy features."""
-    f = np.arange(200).reshape(50, 4)
-
-    t = np.random.random_sample((50,))
-    t[2] += 200000.
-    t[0] -= 200000.
-
-    d = clean.remove_outliers(features=f, targets=t, constraint=None)
-
-    assert np.shape(d['features']) != np.shape(f)
-    assert np.shape(d['targets']) != np.shape(t)
-    assert np.shape(d['features'])[0] == np.shape(d['targets'])[0]
+from atoml.preprocess import clean_data as clean
 
 
-def variance_test():
-    """Test cleaning zero variace features."""
-    features = np.random.random_sample((50, 5))
-    features[:, 1:2] = 109.982
-    features = clean.clean_variance(features)['train']
+class TestDataClean(unittest.TestCase):
+    """Test out the data cleaning functions."""
 
-    assert np.shape(features) == (50, 4)
+    def test_outlier(self):
+        """Test outlier removal from toy features."""
+        f = np.arange(200).reshape(50, 4)
 
+        t = np.random.random_sample((50,))
+        t[2] += 200000.
+        t[0] -= 200000.
 
-def inf_test():
-    """Test cleaning inf variable features."""
-    features = np.random.random_sample((50, 5))
-    features[1][0] = np.inf
-    features = clean.clean_infinite(features)['train']
+        d = clean.remove_outliers(features=f, targets=t, constraint=None)
 
-    assert np.shape(features) == (50, 4)
+        self.assertTrue(np.shape(d['features']) != np.shape(f))
+        self.assertTrue(np.shape(d['targets']) != np.shape(t))
+        self.assertTrue(np.shape(d['features'])[0] ==
+                        np.shape(d['targets'])[0])
+
+    def test_variance(self):
+        """Test cleaning zero variace features."""
+        features = np.random.random_sample((50, 5))
+        features[:, 1:2] = 109.982
+        features = clean.clean_variance(features)['train']
+
+        self.assertTrue(np.shape(features) == (50, 4))
+
+    def test_inf(self):
+        """Test cleaning inf variable features."""
+        features = np.random.random_sample((50, 5))
+        features[1][0] = np.inf
+        features = clean.clean_infinite(features)['train']
+
+        self.assertTrue(np.shape(features) == (50, 4))
 
 
 if __name__ == '__main__':
-    from pyinstrument import Profiler
-
-    profiler = Profiler()
-    profiler.start()
-
-    outlier_test()
-    variance_test()
-    inf_test()
-
-    profiler.stop()
-
-    print(profiler.output_text(unicode=True, color=True))
+    unittest.main()

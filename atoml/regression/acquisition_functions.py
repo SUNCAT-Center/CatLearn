@@ -4,9 +4,10 @@ from __future__ import division
 
 import numpy as np
 from scipy.special import erf
-from collections import defaultdict, Counter
 from scipy.stats import norm
-from .clustering import cluster_features
+from collections import defaultdict, Counter
+
+from atoml.utilities.clustering import cluster_features
 
 
 class AcquisitionFunctions(object):

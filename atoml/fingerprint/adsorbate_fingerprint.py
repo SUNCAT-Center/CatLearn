@@ -20,6 +20,8 @@ from .database_adsorbate_api import layers_info
 from .neighbor_matrix import connection_matrix
 import collections
 
+from .base import BaseGenerator
+
 block2number = {'s': 1,
                 'p': 2,
                 'd': 3,
@@ -70,13 +72,22 @@ def n_outer(econf):
     return n_tot, n_s, n_p, n_d, n_f
 
 
+class AdsorbateFingerprintGenerator(BaseGenerator):
+    def __init__(self, **kwargs):
+        """Class containing functions for fingerprint generation.
 
-class AdsorbateFingerprintGenerator(object):
-    def __init__(self, params=None):
-        """ Class containing functions for fingerprint generation.
+        Parameters
+        ----------
+        params : list
+            An optional list of parameters upon which to generate features.
         """
-        if params is None:
+        if not hasattr(self, 'params'):
+            self.slab_params = kwargs.get('params')
+
+        if self.slab_params is None:
             self.slab_params = default_params + extra_slab_params
+
+        super(AdsorbateFingerprintGenerator, self).__init__(**kwargs)
 
     def term(self, atoms=None):
         """ Returns a fingerprint vector with propeties of the element name
@@ -115,8 +126,8 @@ class AdsorbateFingerprintGenerator(object):
                     'ground_state_magmom_term']
         else:
             if ('key_value_pairs' in atoms.info and
-                'term' in atoms.info['key_value_pairs']):
-                    term = atoms.info['key_value_pairs']['term']
+                    'term' in atoms.info['key_value_pairs']):
+                term = atoms.info['key_value_pairs']['term']
             elif 'termination' in atoms.info:
                 term = atoms.info['termination']
             else:
@@ -165,8 +176,8 @@ class AdsorbateFingerprintGenerator(object):
                     'ground_state_magmom_bulk']
         else:
             if ('key_value_pairs' in atoms.info and
-                'bulk' in atoms.info['key_value_pairs']):
-                    bulk = atoms.info['key_value_pairs']['bulk']
+                    'bulk' in atoms.info['key_value_pairs']):
+                bulk = atoms.info['key_value_pairs']['bulk']
             elif 'bulk' in atoms.info:
                 bulk = atoms.info['bulk']
             else:
@@ -348,10 +359,10 @@ class AdsorbateFingerprintGenerator(object):
             # dM = covalent_radii[Z_surf1]
             nH1 = len([a.index for a in atoms if a.symbol == 'H' and
                        atoms.get_distance(primary_add, a.index, mic=True) <
-                       (dH+dadd)*rtol and a.index != primary_add])
+                       (dH + dadd) * rtol and a.index != primary_add])
             nC1 = len([a.index for a in atoms if a.symbol == 'C' and
                        atoms.get_distance(primary_add, a.index, mic=True) <
-                       (dC+dadd)*rtol and a.index != primary_add])
+                       (dC + dadd) * rtol and a.index != primary_add])
             nM = len(atoms.info['i_surfnn'])
             # nM = len([a.index for a in atoms if a.symbol not in addsyms and
             #          atoms.get_distance(primary_add, a.index, mic=True) <
@@ -383,11 +394,11 @@ class AdsorbateFingerprintGenerator(object):
                        atoms.get_distance(secondary_add, a.index, mic=True) <
                        1.15 and a.index != secondary_add])
             nC1 = len([a.index for a in atoms if a.symbol == 'C' and
-                      atoms.get_distance(secondary_add, a.index, mic=True) <
-                      1.15 and a.index != secondary_add])
+                       atoms.get_distance(secondary_add, a.index, mic=True) <
+                       1.15 and a.index != secondary_add])
             nM = len([a.index for a in atoms if a.symbol not in ads_atoms and
-                     atoms.get_distance(secondary_add, a.index, mic=True) <
-                     2.35])
+                      atoms.get_distance(secondary_add, a.index, mic=True) <
+                      2.35])
             return [nC1, nH1, nM]  # , nN, nH]
 
     def primary_surf_nn(self, atoms=None, rtol=1.3):
@@ -471,7 +482,7 @@ class AdsorbateFingerprintGenerator(object):
                 q = nn[0]
                 Znn = int(numbers[q])
                 r_bond_nn = covalent_radii[Znn]
-                if q != primary_surf and nn[1] < rtol * (r_bond_nn+r_bond):
+                if q != primary_surf and nn[1] < rtol * (r_bond_nn + r_bond):
                     sym = symbols[q]
                     mnlv = get_mendeleev_params(Znn, params=self.slab_params)
                     n += 1
@@ -625,7 +636,7 @@ class AdsorbateFingerprintGenerator(object):
     def randomfpv(self, atoms=None):
         n = 20
         if atoms is None:
-            return ['random']*n
+            return ['random'] * n
         else:
             return list(np.random.randint(0, 10, size=n))
 
