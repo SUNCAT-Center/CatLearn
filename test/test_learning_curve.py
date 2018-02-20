@@ -52,7 +52,7 @@ class TestCurve(unittest.TestCase):
                 i += 4
             select_limit = [i - 1, i + 1]
 
-    def test_frequency(self):
+    def frequency(self):
         hv = Hierarchy(db_name='data/train_db.sqlite', file_name='hierarchy')
         # Produce frequency plots between the lower and upp bound.
         for i in range(20, 22):

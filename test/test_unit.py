@@ -1,8 +1,8 @@
 """Run the full test suite."""
 import unittest
 import os
+import warnings
 
-# from test_suite import ConfigTestCase
 from test_ase_api import TestAPI
 from test_feature_base import TestBaseGenerator
 from test_feature_generation import TestFeatureGeneration
@@ -17,6 +17,12 @@ from test_acquisition import TestAcquisition
 from test_hierarchy_cv import TestHierarchy
 from test_learning_curve import TestCurve
 from test_io import TestIO
+
+from test_suite import ConfigTestCase
+
+# Suppress warnings for easier to read output.
+warnings.filterwarnings("ignore")
+
 
 if __name__ == '__main__':
     # Add new tests to the following list.
@@ -34,7 +40,8 @@ if __name__ == '__main__':
                            TestAcquisition,
                            TestHierarchy,
                            TestCurve,
-                           TestIO
+                           TestIO,
+                           ConfigTestCase
                            ]
 
     # Load in all the unittests.
