@@ -58,9 +58,6 @@ class TestCrossValidation(unittest.TestCase):
         pred = hv.split_predict(index_split=ind, predict=predict)
         self.assertTrue(len(pred[0]) == 14 and len(pred[1]) == 14)
 
-        os.remove('hierarchy.pickle')
-        os.remove('test.sqlite')
-
     def test_kfold(self):
         """Test some cross-validation."""
         features, targets, _, _ = get_data()

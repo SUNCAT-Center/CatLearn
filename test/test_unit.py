@@ -46,6 +46,8 @@ if __name__ == '__main__':
 
     # Load in all the unittests.
     loader = unittest.TestLoader()
+    loader.sortTestMethodsUsing = None
+
     suites_list = []
     for test_class in test_classes_to_run:
         suite = loader.loadTestsFromTestCase(test_class)
@@ -54,8 +56,11 @@ if __name__ == '__main__':
     # Compile the test suite.
     suite = unittest.TestSuite(suites_list)
 
-    # Runn all the tests.
+    # Run all the tests.
     runner = unittest.TextTestRunner()
     results = runner.run(suite)
 
+    # Clean everything up.
     os.remove('vec_store.sqlite')
+    os.remove('hierarchy.pickle')
+    os.remove('test.sqlite')
