@@ -24,32 +24,14 @@ from test_suite import ConfigTestCase
 warnings.filterwarnings("ignore")
 
 
-if __name__ == '__main__':
-    # Add new tests to the following list.
-    test_classes_to_run = [TestAPI,
-                           TestBaseGenerator,
-                           TestFeatureGeneration,
-                           TestAdsorbateFeatures,
-                           TestBulkFeatures,
-                           TestDataClean,
-                           TestFeatureOptimization,
-                           TestScaling,
-                           TestHyperparameterScaling,
-                           TestGaussianKernel,
-                           TestPrediction,
-                           TestAcquisition,
-                           TestCrossValidation,
-                           TestCurve,
-                           TestIO,
-                           ConfigTestCase
-                           ]
-
+def setup_suite(class_list):
+    """Basic function to setup unittest test suite."""
     # Load in all the unittests.
     loader = unittest.TestLoader()
     loader.sortTestMethodsUsing = None
 
     suites_list = []
-    for test_class in test_classes_to_run:
+    for test_class in class_list:
         suite = loader.loadTestsFromTestCase(test_class)
         suites_list.append(suite)
 
@@ -58,7 +40,33 @@ if __name__ == '__main__':
 
     # Run all the tests.
     runner = unittest.TextTestRunner()
-    results = runner.run(suite)
+    runner.run(suite)
+
+
+if __name__ == '__main__':
+    # Initialization classes to be run first.
+    setup_suite([
+        TestFeatureGeneration
+    ])
+
+    # Add other tests to the following list.
+    setup_suite([
+        TestAPI,
+        TestBaseGenerator,
+        TestAdsorbateFeatures,
+        TestBulkFeatures,
+        TestDataClean,
+        TestFeatureOptimization,
+        TestScaling,
+        TestHyperparameterScaling,
+        TestGaussianKernel,
+        TestPrediction,
+        TestAcquisition,
+        TestCrossValidation,
+        TestCurve,
+        TestIO,
+        ConfigTestCase
+    ])
 
     # Clean everything up.
     os.remove('vec_store.sqlite')
