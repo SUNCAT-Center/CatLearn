@@ -49,10 +49,10 @@ class TestCrossValidation(unittest.TestCase):
         hv.todb(features=train_features, targets=train_targets)
         # Split the data into subsets.
         split = hv.split_index(min_split=5, max_split=25)
-        self.assertTrue(len(split) == 6)
+        self.assertEqual(len(split), 6)
         # Load data back in from save file.
         ind = hv.load_split()
-        self.assertTrue(len(ind) == 6)
+        self.assertEqual(len(ind), len(split))
 
         # Make the predictions for each subset.
         pred = hv.split_predict(index_split=ind, predict=predict)
@@ -67,11 +67,11 @@ class TestCrossValidation(unittest.TestCase):
         f, t = k_fold(features, targets, nsplit=5)
         self.assertTrue(len(f) == 5 and len(t) == 5)
         for s in f:
-            self.assertTrue(np.shape(s) == (9, 100))
+            self.assertEqual(np.shape(s), (9, 100))
         f, t = k_fold(features, targets, nsplit=4, fix_size=5)
         self.assertTrue(len(f) == 4 and len(t) == 4)
         for s in f:
-            self.assertTrue(np.shape(s) == (5, 100))
+            self.assertEqual(np.shape(s), (5, 100))
 
 
 if __name__ == '__main__':

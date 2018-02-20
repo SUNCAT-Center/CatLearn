@@ -14,7 +14,7 @@ from test_scale import TestScaling, TestHyperparameterScaling
 from test_gradients import TestGaussianKernel
 from test_predict import TestPrediction
 from test_acquisition import TestAcquisition
-from test_hierarchy_cv import TestCrossValidation
+from test_cv import TestCrossValidation
 from test_learning_curve import TestCurve
 from test_io import TestIO
 
