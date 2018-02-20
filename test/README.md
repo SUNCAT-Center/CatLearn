@@ -28,6 +28,13 @@ All tests are run in the `test_suite.py` script, using the unittest framework. T
 
 -   If the new code goes beyond extending pre-existing functionality, it may be necessary to create a new test class. Please look at the current tests to get an idea of how to set this up. When this is ready, it will be necessary to import the class in `test_suite.py` and add it to the `test_classes_to_run` list.
 
+The `pytest-cov` package is used to generate the coverage reports. Unfortunately it appears as though tests are sorted by name when calling this. Therefore, there can be ordering issues when running tests that assume some specific ordering. It is worth being mindful of this if things start failing for seemingly no good reason. To run the server in the same way as on the CI server do the following:
+
+```shell
+  $ pip install --upgrade pytest-cov
+  $ py.test --cov=atoml test/test_suite.py
+```
+
 ## Command Line
 
 [(Back to top)](#atoml-tests)
