@@ -2,6 +2,7 @@
 
 -   Added a parallel version of the greedy feature selection. **Python3 only!**
 -   Updated the k-fold cross-validation function to handle features and targets explicitly.
+-   Added some basic read/write functionality to the k-fold CV.
 
 # Version 0.3.0 (February 2018)
 

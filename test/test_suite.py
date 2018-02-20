@@ -68,3 +68,5 @@ if __name__ == '__main__':
     os.remove('vec_store.sqlite')
     os.remove('hierarchy.pickle')
     os.remove('test.sqlite')
+    os.remove('cvsave.pickle')
+    os.remove('cvsave.json')

@@ -7,6 +7,7 @@ import numpy as np
 import unittest
 
 from atoml.cross_validation import Hierarchy, k_fold
+from atoml.cross_validation.k_fold_cv import write_split, read_split
 from atoml.regression import RidgeRegression
 from common import get_data
 
@@ -71,6 +72,16 @@ class TestValidation(unittest.TestCase):
         self.assertTrue(len(f) == 4 and len(t) == 4)
         for s in f:
             self.assertEqual(np.shape(s), (5, 100))
+
+        write_split(features=f, targets=t, fname='cvsave', fformat='pickle')
+        f1, t1 = read_split(fname='cvsave', fformat='pickle')
+        self.assertEqual(len(f1), len(f))
+        self.assertEqual(len(t1), len(t))
+
+        write_split(features=f, targets=t, fname='cvsave', fformat='json')
+        f1, t1 = read_split(fname='cvsave', fformat='pickle')
+        self.assertEqual(len(f1), len(f))
+        self.assertEqual(len(t1), len(t))
 
 
 if __name__ == '__main__':
