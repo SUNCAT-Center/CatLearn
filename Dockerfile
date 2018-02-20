@@ -15,4 +15,4 @@ WORKDIR /AtoML
 ENV PYTHONPATH=$PWD/:$PYTHONPATH
 
 # Install additional python packages.
-RUN pip install ase pytest-cov pyinstrument
+RUN pip install ase pytest-cov pyinstrument tqdm

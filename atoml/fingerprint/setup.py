@@ -5,16 +5,20 @@ from __future__ import division
 
 import numpy as np
 from collections import defaultdict
+import multiprocessing
+from tqdm import tqdm
 
 from .adsorbate_fingerprint import AdsorbateFingerprintGenerator
 from .particle_fingerprint import ParticleFingerprintGenerator
 from .standard_fingerprint import StandardFingerprintGenerator
 from .neighbor_matrix import NeighborFingerprintGenerator
+from .bulk_fingerprint import BulkFingerprintGenerator
 
 
 class FeatureGenerator(
         AdsorbateFingerprintGenerator, ParticleFingerprintGenerator,
-        StandardFingerprintGenerator, NeighborFingerprintGenerator):
+        StandardFingerprintGenerator, NeighborFingerprintGenerator,
+        BulkFingerprintGenerator):
     """Feature generator class.
 
     It is sometimes necessary to normalize the length of feature vectors when
@@ -31,7 +35,7 @@ class FeatureGenerator(
     kwargs.
     """
 
-    def __init__(self, atom_types=None, atom_len=None, **kwargs):
+    def __init__(self, atom_types=None, atom_len=None, nprocs=1, **kwargs):
         """Initialize feature generator.
 
         Parameters
@@ -42,9 +46,13 @@ class FeatureGenerator(
         atom_len : int
             The maximum length of all atomic systems that will be passed in a
             data set.
+        nprocs : int
+            Number of cores available for parallelization. Default is 1, e.g.
+            serial. Set None to use all available cores.
         """
         self.atom_types = atom_types
         self.atom_len = atom_len
+        self.nprocs = nprocs
 
         super(FeatureGenerator, self).__init__(**kwargs)
 
@@ -76,7 +84,7 @@ class FeatureGenerator(
 
         Returns
         -------
-        fingerprint_vector : ndarray
+        vector : ndarray
           Fingerprint array (n, m) where n is the number of candidates and m is
           the summed number of features from all fingerprint classes supplied.
         """
@@ -95,10 +103,21 @@ class FeatureGenerator(
             self._get_atom_length(candidates)
 
         fingerprint_vector = []
-        for atoms in candidates:
-            fingerprint_vector.append(self._get_vec(atoms, vec_names))
+        args = tuple((atoms, vec_names) for atoms in candidates)
 
-        return np.asarray(fingerprint_vector)
+        # Check for parallelized feature generation.
+        if self.nprocs != 1:
+            pool = multiprocessing.Pool(self.nprocs)
+            parallel_iterate = pool.map_async(
+                self._get_vec, args, callback=fingerprint_vector.append)
+            parallel_iterate.wait()
+            vector = np.asarray(fingerprint_vector, dtype=np.float64)[0]
+        else:
+            for a in tqdm(args):
+                fingerprint_vector.append(self._get_vec(a))
+            vector = np.asarray(fingerprint_vector, dtype=np.float64)
+
+        return vector
 
     def return_names(self, vec_names):
         """Function to return a list of feature names.
@@ -132,7 +151,7 @@ class FeatureGenerator(
                 out.append(field_value)
             return out
 
-    def _get_vec(self, atoms, vec_names):
+    def _get_vec(self, args):
         """Get the fingerprint vector as an array.
 
         Parameters
@@ -149,6 +168,7 @@ class FeatureGenerator(
         fingerprint_vector : list
             A feature vector.
         """
+        atoms, vec_names = args
         if len(vec_names) == 1:
             return vec_names[0](atoms)
         else:

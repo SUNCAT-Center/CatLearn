@@ -10,7 +10,27 @@ from .clean_data import clean_variance
 
 
 def pls(components, train_matrix, target, test_matrix):
-    """Projection of latent structure routine."""
+    """Projection of latent structure routine.
+
+    Parameters
+    ----------
+    components : int
+        The number of components to be returned.
+    train_matrix : array
+        The training features.
+    test_matrix : array
+        The test features.
+
+    Returns
+    -------
+    new_train : array
+        Extracted training features.
+    new_test : array
+        Extracted test features.
+    """
+    msg = 'The number of components must be a positive int greater than 0.'
+    assert components > 0, msg
+
     pls = PLSRegression(n_components=components)
     model = pls.fit(X=train_matrix, Y=target)
     new_train = model.transform(train_matrix)
@@ -20,7 +40,27 @@ def pls(components, train_matrix, target, test_matrix):
 
 
 def pca(components, train_matrix, test_matrix):
-    """Principal component analysis routine."""
+    """Principal component analysis routine.
+
+    Parameters
+    ----------
+    components : int
+        The number of components to be returned.
+    train_matrix : array
+        The training features.
+    test_matrix : array
+        The test features.
+
+    Returns
+    -------
+    new_train : array
+        Extracted training features.
+    new_test : array
+        Extracted test features.
+    """
+    msg = 'The number of components must be a positive int greater than 0.'
+    assert components > 0, msg
+
     pca = PCA(n_components=components)
     model = pca.fit(X=train_matrix)
     new_train = model.transform(train_matrix)
@@ -30,7 +70,27 @@ def pca(components, train_matrix, test_matrix):
 
 
 def spca(components, train_matrix, test_matrix):
-    """Sparse principal component analysis routine."""
+    """Sparse principal component analysis routine.
+
+    Parameters
+    ----------
+    components : int
+        The number of components to be returned.
+    train_matrix : array
+        The training features.
+    test_matrix : array
+        The test features.
+
+    Returns
+    -------
+    new_train : array
+        Extracted training features.
+    new_test : array
+        Extracted test features.
+    """
+    msg = 'The number of components must be a positive int greater than 0.'
+    assert components > 0, msg
+
     pca = SparsePCA(n_components=components)
     model = pca.fit(X=train_matrix)
     new_train = model.transform(train_matrix)
@@ -50,6 +110,9 @@ def atoml_pca(components, train_features, test_features=None, cleanup=False,
     test_fpv : array
         The feature matrix for the testing data.
     """
+    msg = 'The number of components must be a positive int greater than 0.'
+    assert components > 0, msg
+
     data = defaultdict(list)
     data['components'] = components
     if cleanup:

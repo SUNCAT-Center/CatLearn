@@ -4,6 +4,7 @@ from __future__ import absolute_import
 
 import os
 import numpy as np
+import unittest
 
 from atoml.cross_validation import Hierarchy, k_fold
 from atoml.regression import RidgeRegression
@@ -35,47 +36,43 @@ def predict(train_features, train_targets, test_features, test_targets):
     return data
 
 
-def hierarchy_test():
-    """Function to test the hierarchy with ridge regression predictions."""
-    # Define the hierarchy cv class method.
-    train_features, train_targets, test_features, test_targets = get_data()
-    hv = Hierarchy(db_name='test.sqlite', table='FingerVector',
-                   file_name='hierarchy')
-    hv.todb(features=train_features, targets=train_targets)
-    # Split the data into subsets.
-    hv.split_index(min_split=5, max_split=None)
-    # Load data back in from save file.
-    ind = hv.load_split()
+class TestCrossValidation(unittest.TestCase):
+    """Test out the hierarchy cv."""
 
-    # Make the predictions for each subset.
-    hv.split_predict(index_split=ind, predict=predict)
+    def test_hierarchy(self):
+        """Function to test the hierarchy with ridge regression predictions."""
+        # Define the hierarchy cv class method.
+        train_features, train_targets, test_features, test_targets = get_data()
 
-    os.remove('hierarchy.pickle')
-    os.remove('test.sqlite')
+        hv = Hierarchy(db_name='test.sqlite', table='FingerVector',
+                       file_name='hierarchy')
+        hv.todb(features=train_features, targets=train_targets)
+        # Split the data into subsets.
+        split = hv.split_index(min_split=5, max_split=25)
+        self.assertTrue(len(split) == 6)
+        # Load data back in from save file.
+        ind = hv.load_split()
+        self.assertTrue(len(ind) == 6)
 
+        # Make the predictions for each subset.
+        pred = hv.split_predict(index_split=ind, predict=predict)
+        self.assertTrue(len(pred[0]) == 14 and len(pred[1]) == 14)
 
-def kfold_test():
-    """Test some cross-validation."""
-    features, targets, _, _ = get_data()
-    f, t = k_fold(features, targets, nsplit=5)
-    assert len(f) == 5 and len(t) == 5
-    for s in f:
-        assert np.shape(s) == (9, 100)
-    f, t = k_fold(features, targets, nsplit=4, fix_size=5)
-    assert len(f) == 4 and len(t) == 4
-    for s in f:
-        assert np.shape(s) == (5, 100)
+        os.remove('hierarchy.pickle')
+        os.remove('test.sqlite')
+
+    def test_kfold(self):
+        """Test some cross-validation."""
+        features, targets, _, _ = get_data()
+        f, t = k_fold(features, targets, nsplit=5)
+        self.assertTrue(len(f) == 5 and len(t) == 5)
+        for s in f:
+            self.assertTrue(np.shape(s) == (9, 100))
+        f, t = k_fold(features, targets, nsplit=4, fix_size=5)
+        self.assertTrue(len(f) == 4 and len(t) == 4)
+        for s in f:
+            self.assertTrue(np.shape(s) == (5, 100))
 
 
 if __name__ == '__main__':
-    from pyinstrument import Profiler
-
-    profiler = Profiler()
-    profiler.start()
-
-    hierarchy_test()
-    kfold_test()
-
-    profiler.stop()
-
-    print(profiler.output_text(unicode=True, color=True))
+    unittest.main()

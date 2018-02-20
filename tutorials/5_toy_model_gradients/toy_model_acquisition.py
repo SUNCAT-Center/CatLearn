@@ -5,20 +5,21 @@ First we set up a known underlying function in one dimension.
 Then, we pick some values to train.
 Finally we will use AtoML to make predictions on some unseen fingerprint and
 benchmark those predictions against the known underlying function.
-In this toy model we show that one can improve the resulting estimates by
-including first derivative observations.
+In this toy model we show that one can use different acquisition functions
+to guide us in selecting the next training point in a wise manner.
 """
 
 import numpy as np
 import matplotlib.pyplot as plt
+
 from atoml.regression import GaussianProcess
-from atoml.utilities.cost_function import get_error
+from atoml.regression.acquisition_functions import AcquisitionFunctions
 
 
 # A known underlying function in one dimension [y] and first derivative [dy].
 def afunc(x):
     """Function [y] and first derivative [dy]."""
-    y = 3.0+np.sin(x)*np.cos(x)*np.exp(2*x)*x**-2*np.exp(-x)*np.cos(x) * \
+    y =  0.3+np.sin(x)*np.cos(x)*np.exp(2*x)*x**-2*np.exp(-x)*np.cos(x) * \
         np.sin(x)
     dy = (2*np.exp(x)*np.cos(x)**3*np.sin(x))/x**2 - \
         (2*np.exp(x)*np.cos(x)**2*np.sin(x)**2)/x**3 + \
@@ -27,18 +28,17 @@ def afunc(x):
     return [y, dy]
 
 
-# Define initial and final state.
-train = np.array([[0.01], [6.0]])
+# Pick some random points to train:
+train = np.array([[0.1], [1.0]])
 
 # Define initial prediction parameters.
 reg = 0.01
 w1 = 1.0  # Too large widths results in a biased model.
 scaling_exp = 1.0
-scaling_const = 1.0
 constant = 1.0
 
 # Create figure.
-fig = plt.figure(figsize=(13.0, 6.0))
+fig = plt.figure(figsize=(18.0, 8.0))
 
 # Times that we train the model, in each iteration we add a new training point.
 number_of_iterations = 10
@@ -52,7 +52,7 @@ for iteration in range(1, number_of_iterations+1):
     target = np.array(afunc(train)[0])
 
     # Generate test datapoints x.
-    test_points = 500
+    test_points = 1000
     test = np.linspace(0.1, 6.0, test_points)
     test = np.reshape(test, (test_points, 1))
 
@@ -70,18 +70,13 @@ for iteration in range(1, number_of_iterations+1):
     # Gaussian Process.
 
     # Set up the prediction routine and optimize hyperparameters.
-    """" Note that in this example we used a combination of two kernels (squared
-    # exponential and constant kernels)."""
-
-    kdict = {'k1': {'type': 'gaussian', 'width': w1, 'scaling': scaling_exp},
-             'k2': {'type': 'constant', 'const': constant,
-                    'scaling': scaling_const}
+    kdict = {'k1': {'type': 'gaussian', 'width': w1, 'scaling': scaling_exp}
              }
 
     gp = GaussianProcess(
         kernel_dict=kdict, regularization=reg**2, train_fp=train,
         train_target=target, optimize_hyperparameters=True,
-        gradients=gradients)
+        gradients=gradients, scale_data=True)
     print('Optimized kernel:', gp.kernel_dict)
 
     # Do the optimized predictions.
@@ -95,46 +90,21 @@ for iteration in range(1, number_of_iterations+1):
     upper = prediction + uncertainty
     lower = prediction - uncertainty
 
-    # Get average errors.
-    error = get_error(prediction, afunc(test)[0])
-    print('Gaussian linear regression prediction:', error['absolute_average'])
+    """A new training point is added using the UCB, EI or PI acquisition
+    functions:"""
 
-    """A new training point is added following:
+    acq = (AcquisitionFunctions(objective='min', kappa=1.5).rank(
+    predictions=prediction, uncertainty=uncertainty, targets=target))['UCB']
 
-    Firstly, we calculate the gradients of the predicted function.
+    """ Note: The acquisition function provides positive scores. Therefore,
+    one must pass the negative of it (-acq) to optimize the acq.
+    function."""
 
-    Secondly, we ask for the points which the value of their gradients are
-    below grad_prediction_interval.
+    new_train_point = test[np.argmin(-acq)]
 
-    Thirdly, within the previous set of points we ask for the one which
-    has the maximum uncertainty.
-
-    Finally, the "interesting" point is added to the list of training
-    points."""
-
-    grad_prediction = np.abs(np.gradient(prediction))
-    grad_prediction_interval = (np.max(grad_prediction) -
-                                np.min(grad_prediction))/1e10
-    while not np.all(grad_prediction < grad_prediction_interval):
-        grad_prediction_interval = grad_prediction_interval*10.0
-    index = (np.linspace(1, len(prediction)/1, len(prediction/1))-1)/1
-    index_grad = index[grad_prediction < grad_prediction_interval]
-    index_new = np.int(index_grad[np.argmax(
-        uncertainty[grad_prediction < grad_prediction_interval])])
-
-    new_train_point = org_test[index_new]
     new_train_point = np.reshape(
         new_train_point, (np.shape(new_train_point)[0], 1))
     train = np.concatenate((org_train, new_train_point))
-
-    # Update hyperarameters with the optimised ones after "n" iterations.
-
-    if iteration > 5:
-        reg = gp.regularization
-        w1 = gp.kernel_dict['k1']['width']
-        scaling_exp = gp.kernel_dict['k1']['scaling']
-        constant = gp.kernel_dict['k2']['const']
-        scaling_const = gp.kernel_dict['k2']['scaling']
 
     # Plots.
 
@@ -152,14 +122,20 @@ for iteration in range(1, number_of_iterations+1):
     ax.plot(linex[0], liney[0], '-', lw=1, color='black')
     ax.plot(org_train, org_target, 'o', alpha=0.2, color='black')
     ax.plot(org_test, prediction, 'g-', lw=1, alpha=0.4)
+    ax.plot(org_test, acq, 'g-')
     ax.fill_between(org_test[:, 0], upper, lower, interpolate=True,
                     color='blue', alpha=0.2)
-    plt.title('GP iteration'+str(number_of_plot), fontsize=9)
-    # plt.xlabel('Descriptor')
-    # plt.ylabel('Response')
-    # plt.title('Iteration')
+    plt.title('GP iteration' + str(number_of_plot), fontsize=8)
+    plt.xlabel('Descriptor', fontsize=5)
+    plt.ylabel('Response', fontsize=5)
     plt.axis('tight')
     plt.xticks(fontsize=6)
+    plt.ylim(-1.0, 3.0)
+
+    if iteration == 1:
+        plt.legend(['Real function', 'Training example', 'Posterior mean',
+        'Acquisition function', 'Confidence interv. ($\sigma$)'],loc=9,
+        bbox_to_anchor=(0.9, 1.3), ncol=3)
 
     # Gradients
 

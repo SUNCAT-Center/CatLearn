@@ -273,7 +273,8 @@ class GaussianProcess(object):
                                       bounds=self.bounds)
         else:
             minimizer_kwargs = {'method': algomin, 'args': args,
-                                'bounds': self.bounds, 'jac': eval_jac}
+                                'bounds': self.bounds, 'jac': eval_jac,
+                                'T': 10., 'interval': 30., 'niter': 30.}
             self.theta_opt = basinhopping(log_marginal_likelihood, theta,
                                           minimizer_kwargs=minimizer_kwargs)
 
@@ -293,7 +294,8 @@ class GaussianProcess(object):
 
     def update_gp(self, train_fp=None, train_target=None, kernel_dict=None,
                   scale_optimizer=False, gradients=None,
-                  regularization_bounds=(1e-6, None)):
+                  regularization_bounds=(1e-6, None),
+                  optimize_hyperparameters=False):
         """Potentially optimize the full Gaussian Process again.
 
         This alows for the definition of a new kernel as a result of changing
@@ -341,7 +343,8 @@ class GaussianProcess(object):
             self.update_data(train_fp, train_target, gradients,
                              scale_optimizer)
 
-        self.optimize_hyperparameters()
+        if optimize_hyperparameters:
+            self.optimize_hyperparameters()
 
     def _make_prediction(self, ktb, cinv, target):
         """Function to make the prediction.
