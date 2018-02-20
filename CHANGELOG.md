@@ -1,15 +1,12 @@
 # Version 0.3.0 (February 2018)
 
--   Update the fingerprint generator functions so there is now a
-`FeatureGenerator` class that wraps round all type specific generators.
--   Feature generation can now be performed in parallel, setting `nprocs`
-variable in the `FeatureGenerator` class. **Python3 only!**
--   Add better handling when passing variable length/composition data objects
-to the feature generators.
+-   Update the fingerprint generator functions so there is now a `FeatureGenerator` class that wraps round all type specific generators.
+-   Feature generation can now be performed in parallel, setting `nprocs` variable in the `FeatureGenerator` class. **Python3 only!**
+-   Add better handling when passing variable length/composition data objects to the feature generators.
 -   More acquisition functions added.
 -   Penalty functions added.
 -   Started adding a general api for ASE.
--   Added some more test.
+-   Added some more test and changed the way test are called/handled.
 -   A number of minor bugs have been fixed.
 
 # Version 0.2.1 (February 2018)
