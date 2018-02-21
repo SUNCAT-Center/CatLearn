@@ -5,7 +5,7 @@ from collections import defaultdict
 from sklearn.cross_decomposition import PLSRegression
 from sklearn.decomposition import PCA, SparsePCA
 
-from .feature_preprocess import standardize
+from .scaling import standardize
 from .clean_data import clean_variance
 
 

@@ -6,17 +6,17 @@ The folder contains files to scale and optimize the feature space.
 
 [(Back to top)](#data-preprocessing)
 
--   [Feature preprocess](#feature-preprocess)
+-   [Scaling](#scaling)
 -   [Feature engineering](#feature-engineering)
 -   [Feature elimination](#feature-elimination)
 -   [Feature extraction](#feature-extraction)
 -   [Importance testing](#importance-testing)
 
-## Feature preprocess
+## Scaling
 
 [(Back to top)](#data-preprocessing)
 
-This class provide functions to scale the feature data in different ways:
+This class provide functions to scale the feature and target data in different ways:
 
 -   standardize
 -   normalize

@@ -10,8 +10,8 @@ benchmark those predictions against the known underlying function.
 """
 import numpy as np
 import matplotlib.pyplot as plt
-from atoml.preprocess.feature_preprocess import standardize
-from atoml.preprocess.scale_target import target_standardize
+
+from atoml.preprocess.scaling import standardize, target_standardize
 from atoml.regression import GaussianProcess
 from atoml.regression.cost_function import get_error
 

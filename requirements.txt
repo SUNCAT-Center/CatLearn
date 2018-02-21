@@ -1,6 +1,6 @@
 ase==3.15.0
 h5py==2.7.1
-numpy==1.14.0
+numpy==1.14.1
 scikit-learn==0.19.1
 scipy==1.0.0
 tqdm==4.19.5
