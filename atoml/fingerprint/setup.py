@@ -111,11 +111,11 @@ class FeatureGenerator(
             parallel_iterate = pool.map_async(
                 self._get_vec, args, callback=fingerprint_vector.append)
             parallel_iterate.wait()
-            vector = np.asarray(fingerprint_vector, dtype=np.float64)[0]
+            vector = np.asarray(fingerprint_vector)[0]
         else:
             for a in tqdm(args):
                 fingerprint_vector.append(self._get_vec(a))
-            vector = np.asarray(fingerprint_vector, dtype=np.float64)
+            vector = np.asarray(fingerprint_vector)
 
         return vector
 
@@ -194,8 +194,18 @@ class FeatureGenerator(
         fingerprint_vector = np.array([])
         # Iterate through the feature generators and update feature vector.
         for name in vec_names:
+            arr = np.array(name(atoms))
+            # Do not allow concatenation of str types with other types.
+            if len(fingerprint_vector) > 0:
+                if ((arr.dtype.type is np.str_ and
+                     fingerprint_vector.dtype.type is not np.str_) or
+                    (arr.dtype.type is not np.str_ and
+                     fingerprint_vector.dtype.type is np.str_)):
+                        raise AssertionError("Fingerprints should be float" +
+                                             " type, and returned separately" +
+                                             " from str types.")
             fingerprint_vector = np.concatenate((fingerprint_vector,
-                                                 name(atoms)))
+                                                 arr))
 
         return fingerprint_vector
 
