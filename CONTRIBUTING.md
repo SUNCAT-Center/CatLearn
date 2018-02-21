@@ -6,6 +6,8 @@
 -   [Git Setup](#git-setup)
 -   [Development](#development)
 -   [Docker](#docker)
+-   [Testing](#testing)
+-   [Tutorials](#tutorials)
 
 ## General
 
@@ -104,3 +106,17 @@ To make changes to this, it is possible to simply edit the `Dockerfile`. The cur
 ```shell
     FROM continuumio/anaconda3
 ```
+
+## Testing
+
+[(Back to top)](#table-of-contents)
+
+When writing new code, please add some tests to ensure functionality doesn't break over time. We look at test coverage when merge requests are opened and will expect that coverage does not decrease due to large portions of new code not being tested. In AtoML we just use the built in unittest framework.
+
+If changes are being made that change some core functionality, please run the `tutorials/test_notebooks.py` script. In general the tutorials involve more demanding computations and thus are not run with the CI.
+
+## Tutorials
+
+[(Back to top)](#table-of-contents)
+
+Where appropriate please consider adding some tutorials for new functionality. It would be great if they were written in jupyter notebook form, allowing for some detailed discussion of what is going on in the code.
