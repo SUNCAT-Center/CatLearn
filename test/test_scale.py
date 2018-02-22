@@ -7,10 +7,9 @@ import os
 import numpy as np
 
 from atoml.utilities import DescriptorDatabase
-from atoml.preprocess.feature_preprocess import (standardize, normalize,
-                                                 min_max, unit_length)
-from atoml.preprocess.scale_target import (target_standardize,
-                                           target_normalize, target_center)
+from atoml.preprocess.scaling import (
+    standardize, normalize, min_max, unit_length, target_standardize,
+    target_normalize, target_center)
 from atoml.utilities.clustering import cluster_features
 from atoml.regression import GaussianProcess
 from atoml.regression.gpfunctions import hyperparameter_scaling as hs

@@ -9,10 +9,10 @@ Gaussian process with the usual squared exponential kernel.
 """
 import numpy as np
 import matplotlib.pyplot as plt
-from atoml.preprocess.feature_preprocess import standardize
-from atoml.preprocess.scale_target import target_standardize
-from atoml.regression import GaussianProcess
 from mpl_toolkits.mplot3d import Axes3D
+
+from atoml.preprocess.scaling import standardize, target_standardize
+from atoml.regression import GaussianProcess
 
 
 # A known underlying function in two dimensions

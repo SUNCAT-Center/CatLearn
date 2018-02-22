@@ -14,7 +14,7 @@ reqs = [str(req) for req in install_reqs]
 
 setuptools.setup(
     name="AtoML",
-    version="0.3.0",
+    version="0.3.1",
     url="https://gitlab.com/atoML/AtoML",
 
     author="Paul C. Jennings, Martin H. Hansen",

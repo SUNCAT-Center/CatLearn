@@ -9,8 +9,7 @@ from atoml.utilities import DescriptorDatabase
 from atoml.regression.gpfunctions.kernel_setup import (prepare_kernels,
                                                        kdicts2list, list2kdict)
 import atoml.regression.gpfunctions.log_marginal_likelihood as lml
-from atoml.preprocess.feature_preprocess import standardize
-from atoml.preprocess.scale_target import target_standardize
+from atoml.preprocess.scaling import standardize, target_standardize
 from scipy.optimize import minimize, basinhopping
 
 

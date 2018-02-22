@@ -4,8 +4,7 @@ from __future__ import division
 
 import numpy as np
 
-from atoml.preprocess.feature_preprocess import standardize
-from atoml.preprocess.scale_target import target_standardize
+from atoml.preprocess.scaling import standardize, target_standardize
 
 
 class ScaleData(object):

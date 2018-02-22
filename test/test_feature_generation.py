@@ -15,7 +15,6 @@ from atoml.fingerprint import FeatureGenerator
 from atoml.fingerprint.neighbor_matrix import neighbor_features
 from atoml.fingerprint.periodic_table_data import (get_mendeleev_params,
                                                    default_params)
-from atoml.cross_validation import k_fold
 from atoml.utilities import DescriptorDatabase
 
 atoml_path = '/'.join(atoml_path[0].split('/')[:-1])
@@ -28,7 +27,7 @@ train_size, test_size = 50, 3
 class TestFeatureGeneration(unittest.TestCase):
     """Test out the various feature generation routines."""
 
-    def test_1_generators(self):
+    def test_generators(self):
         """Generate features from atoms objects."""
         # Test generic features for Pt then both Pt and Au.
         get_mendeleev_params(atomic_number=78)
@@ -148,18 +147,7 @@ class TestFeatureGeneration(unittest.TestCase):
         self.__class__.all_cand = all_cand
         self.__class__.data = data
 
-    def test_2_cv(self):
-        """Test some cross-validation."""
-        split = k_fold(self.data, nsplit=5)
-        self.assertTrue(len(split) == 5)
-        for s in split:
-            self.assertTrue(len(s) == 10)
-        split = k_fold(self.data, nsplit=5, fix_size=5)
-        self.assertTrue(len(split) == 5)
-        for s in split:
-            self.assertTrue(len(s) == 5)
-
-    def test_3_db(self):
+    def test_storage(self):
         """Test database functions."""
         # Define variables for database to store system descriptors.
         db_name = '/vec_store.sqlite'

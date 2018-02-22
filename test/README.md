@@ -1,69 +1,42 @@
 # AtoML Tests
 
-All the tests for the AtoML code are here. When writing new code, please add some tests to ensure functionality doesn't break over time.
+All the tests for the AtoML code are here. When writing new code, please add some tests to ensure functionality doesn't break over time. We look at test coverage when merge requests are opened and will expect that coverage does not decrease due to large portions of new code not being tested.
 
-## Test Scripts
-
-[(Back to top)](#atoml-tests)
-
--   [`test_data_clean.py`](#data-cleaning)
--   [`test_data_setup.py`](#data-setup)
--   [`test_feature_optimization.py`](#feature-optimization)
--   [`test_predict.py`](#predictions)
--   [`test_suite.py`](#test-suite)
-
-### Data Cleaning
+## Table of Contents
 
 [(Back to top)](#atoml-tests)
 
-Functions used to clean the data are tested in `test_data_clean.py` with some to data. In the current tests, fake data is used so we can ensure messy data outliers. The tests are mostly just checking that we remove select feature or data points from the original dataset.
-
-### Data Setup
-
-[(Back to top)](#atoml-tests)
-
-Functions used to generate features (data), are tested in `test_data_clean.py` with randomly selected atoms objects. This is currently importing nanoparticle data, if different data is required to test out a feature generator, this will need to be imported separately. The tests are mostly testing that features are generated with the correct dimensionality.
-
-**_This script should be called before any of the following can be run._**
-
-The various scaling routines are tested in `test_scale.py`, this set of tests simply scales all the features and checks that we get a change in value.
-
-### Feature Optimization
-
-[(Back to top)](#atoml-tests)
-
-Many of the preprocessing feature optimization functions are tested in the `test_feature_optimization.py` script. The tests are mostly checking that the dimensions of the feature set change in the correct manner, whether elimination or extraction functions are called.
-
-### Predictions
-
-[(Back to top)](#atoml-tests)
-
-The regression functions are tested in the `test_predict.py` script. This mostly just checks that predictions are made for all data points. Further, the predictions are printed in the CI log so it is possible to see if they look reasonable.
-
-There are also scripts to test the hyperparameter scaling routines in the utilities module with `test_hypot_scaling.py`. Further, tests for predictions within the hierarchy CV routines are included in `test_hierarchy_cv.py`.
-
-### Test Suite
-
-[(Back to top)](#atoml-tests)
-
-All tests are run in the `test_suite.py` script. This just iterates through all tests in the correct order, using the unittest framework. This should be updated when any new tests are added.
+-   [Test Suite](#test-suite)
+-   [Continuous Integration](#continuous-integration)
+-   [Command Line](#command-line)
 
 ## Continuous Integration
 
 [(Back to top)](#atoml-tests)
 
-Continuous Integration (CI) is used so test are run whenever a new commit is pushed to the origin. For our purposes, we use [GitLab CI](https://docs.gitlab.com/ce/ci/) which checks whether tests run and the coverage of the tests. The tests for the AtoML code are imported and run in `test_suite.py`. This can be extended with any new tests that may be written to cover new functionality.
+Continuous Integration (CI) is used meaning tests are run whenever a new commit is pushed to the origin. For our purposes, we use [GitLab CI](https://docs.gitlab.com/ce/ci/) which checks whether tests run successfully and the coverage. The tests for the AtoML code are imported and run in `test_suite.py`. This can be extended with any new tests that may be written to cover new functionality.
+
+_Please be mindful of the runtime for new tests._
+
+### Test Suite
+
+[(Back to top)](#atoml-tests)
+
+All tests are run in the `test_suite.py` script, using the unittest framework. There are two ways to add new tests.
+
+-   If new functionality is being added to existing functions, simply append a new testing function to the appropriate `TestCase` class. It is important to remember that the function won't be viewed as a test unless it is defined as `test_something(self)`.
+
+-   If the new code goes beyond extending pre-existing functionality, it may be necessary to create a new test class. Please look at the current tests to get an idea of how to set this up. When this is ready, it will be necessary to import the class in `test_suite.py` and add it to the `test_classes_to_run` list.
+
+The `pytest-cov` package is used to generate the coverage reports. Unfortunately it appears as though tests are sorted by name when calling this. Therefore, there can be ordering issues when running tests that assume some specific ordering. It is worth being mindful of this if things start failing for seemingly no good reason. To run the server in the same way as on the CI server do the following:
+
+```shell
+  $ pip install --upgrade pytest-cov
+  $ py.test --cov=atoml test/test_suite.py
+```
 
 ## Command Line
 
 [(Back to top)](#atoml-tests)
 
-They can also be run on the command line. If this is done, please make sure that `pyinstrument` profiler is installed:
-
-```shell
-  $ pip install --upgrade pyinstrument
-```
-
-The profiler is run to give an indication of how long tests are likely to take and what impact changes are likely to have on the overall test suite. If a function is likely to be expensive, please consider ways in which it may be optimized in the test, e.g. passing slightly less data.
-
-When running on the command line, it is important to run the `test_data_setup.py` script first. This generates data used in most of the other tests.
+The tests can be run on the command line. When running on the command line, it is important to run the `test_feature_generation.py` script first. This produces a database of features and targets used in most of the other tests. This data can be imported in tests using the `common.get_data()` function.
