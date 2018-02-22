@@ -43,7 +43,7 @@ class GreedyElimination(object):
         features : array
             An n, d array of features.
         targets : list
-            A list of the target features.
+            A list of the target values.
         nsplit : int
             Number of folds in k-fold cross-validation.
 
