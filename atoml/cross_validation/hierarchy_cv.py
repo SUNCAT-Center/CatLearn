@@ -6,6 +6,7 @@ import numpy as np
 from random import shuffle
 from collections import OrderedDict
 import uuid
+from tqdm import tqdm
 
 from atoml.utilities import DescriptorDatabase
 
@@ -165,7 +166,8 @@ class Hierarchy(object):
         """
         result = []
         size = []
-        for i in reversed(index_split):
+        for i in tqdm(reversed(index_split), desc='data split        ',
+                      total=len(index_split)):
             j, k = i.split('_')
             train_data = self._compile_split(index_split[i])
             train_features = np.array(train_data[:, 1:-1], np.float64)
@@ -173,7 +175,8 @@ class Hierarchy(object):
             d1, d2 = np.shape(train_targets)
             train_targets = train_targets.reshape(d2, d1)[0]
 
-            for m in reversed(index_split):
+            for m in tqdm(reversed(index_split), desc='nested prediction ',
+                          total=len(index_split), leave=False):
                 n, o = m.split('_')
                 if n == j:
                     if k != o:
