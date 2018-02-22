@@ -6,7 +6,8 @@ import numpy as np
 from collections import defaultdict
 
 
-def get_error(prediction, target, epsilon=None, return_percentiles=True):
+def get_error(prediction, target, metrics=None, epsilon=None,
+              return_percentiles=True):
     """Return error for predicted data.
 
     Discussed in: Rosasco et al, Neural Computation, (2004), 16, 1063-1076.
@@ -17,6 +18,9 @@ def get_error(prediction, target, epsilon=None, return_percentiles=True):
         A list of predicted values.
     target : list
         A list of target values.
+    metrics : list
+        Define a list of additional cost functions to be returned. Can
+        currently be 'log' and 'insensitive'.
     epsilon : float
         insensitivity value.
     return_percentiles : boolean
@@ -28,6 +32,9 @@ def get_error(prediction, target, epsilon=None, return_percentiles=True):
     elif len(prediction) > len(target):
         msg += 'fewer targets than predictions.'
     assert len(prediction) == len(target), msg
+
+    if metrics is None:
+        metrics = []
 
     error = defaultdict(list)
     prediction = np.asarray(prediction)
@@ -52,15 +59,19 @@ def get_error(prediction, target, epsilon=None, return_percentiles=True):
     error['absolute_average'] = np.mean(e_abs)
     error['absolute_percentiles'] = _get_percentiles(error['absolute_all'])
 
-    # Root mean squared logarithmic error.
-    
-    error['log_all'] = (np.log(np.max([prediction, np.zeros(len(prediction))],
-                                      axis=0) + 1) - np.log(target + 1)) ** 2.
-    error['rmsle_all'] = np.sqrt(error['log_all'])
-    error['rmsle_average'] = np.sqrt(np.nanmean(error['log_all']))
+    if 'log' in metrics:
+        # Root mean squared logarithmic error.
+        error['log_all'] = (
+            np.log(np.max([prediction, np.zeros(len(prediction))], axis=0) + 1)
+            - np.log(target + 1)) ** 2.
+        error['rmsle_all'] = np.sqrt(error['log_all'])
+        error['rmsle_average'] = np.sqrt(np.nanmean(error['log_all']))
 
-    # Epsilon-insensitive error function.
-    if epsilon is not None:
+    if 'insensitive' in metrics:
+        # Epsilon-insensitive error function.
+        msg = 'epsilon insensitivity must be defined, currently: {}'.format(
+            epsilon)
+        assert isinstance(epsilon, float)
         e_epsilon = np.abs(res) - epsilon
         np.place(e_epsilon, e_epsilon < 0, 0)
         error['insensitive_all'] = e_epsilon

@@ -1,12 +1,12 @@
 """Cross validation routines to work with feature database."""
 import sqlite3
 import json
-import yaml
 import pickle
 import numpy as np
 from random import shuffle
 from collections import OrderedDict
 import uuid
+from tqdm import tqdm
 
 from atoml.utilities import DescriptorDatabase
 
@@ -110,17 +110,17 @@ class Hierarchy(object):
 
     def load_split(self):
         """Function to load the split from file."""
-        if self.file_format is not 'pickle':
-            with open(self.file_name + '.' +
-                      self.file_format, 'r') as textfile:
-                if self.file_format is 'json':
+        if self.file_format is 'json':
+            with open('{0}.{1}'.format(self.file_name, self.file_format),
+                      'r') as textfile:
                     data = json.load(textfile)
-                if self.file_format is 'yaml':
-                    data = yaml.load(textfile)
-        else:
-            with open(self.file_name + '.' +
-                      self.file_format, 'rb') as textfile:
+        elif self.file_format is 'pickle':
+            with open('{0}.{1}'.format(self.file_name, self.file_format),
+                      'rb') as textfile:
                 data = pickle.load(textfile)
+        else:
+            raise NotImplementedError(
+                '{} format not supported'.format(self.file_format))
 
         return data
 
@@ -166,7 +166,8 @@ class Hierarchy(object):
         """
         result = []
         size = []
-        for i in reversed(index_split):
+        for i in tqdm(reversed(index_split), desc='data split        ',
+                      total=len(index_split)):
             j, k = i.split('_')
             train_data = self._compile_split(index_split[i])
             train_features = np.array(train_data[:, 1:-1], np.float64)
@@ -174,7 +175,8 @@ class Hierarchy(object):
             d1, d2 = np.shape(train_targets)
             train_targets = train_targets.reshape(d2, d1)[0]
 
-            for m in reversed(index_split):
+            for m in tqdm(reversed(index_split), desc='nested prediction ',
+                          total=len(index_split), leave=False):
                 n, o = m.split('_')
                 if n == j:
                     if k != o:
@@ -253,17 +255,17 @@ class Hierarchy(object):
         data : dict
             Index dict generated within the split_index function.
         """
-        if self.file_format is not 'pickle':
-            with open(self.file_name + '.' +
-                      self.file_format, 'w') as textfile:
-                if self.file_format is 'json':
+        if self.file_format == 'json':
+            with open('{0}.{1}'.format(self.file_name, self.file_format),
+                      'w') as textfile:
                     json.dump(data, textfile)
-                if self.file_format is 'yaml':
-                    yaml.dump(data, textfile)
-        else:
-            with open(self.file_name + '.' +
-                      self.file_format, 'wb') as textfile:
+        elif self.file_format == 'pickle':
+            with open('{0}.{1}'.format(self.file_name, self.file_format),
+                      'wb') as textfile:
                 pickle.dump(data, textfile, protocol=pickle.HIGHEST_PROTOCOL)
+        else:
+            raise NotImplementedError(
+                '{} format not supported'.format(self.file_format))
 
     def _compile_split(self, id_list):
         """Function to get actual data from database.

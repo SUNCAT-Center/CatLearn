@@ -11,10 +11,31 @@ from atoml.preprocess import importance_testing as it
 from atoml.preprocess import feature_engineering as fe
 from atoml.preprocess.feature_extraction import pls, pca, spca, atoml_pca
 from atoml.preprocess.feature_elimination import FeatureScreening
+from atoml.preprocess.greedy_elimination import GreedyElimination
+from atoml.regression import RidgeRegression
+
+from common import get_data
 
 wkdir = os.getcwd()
 
 train_size, test_size = 30, 20
+
+
+def prediction(train_features, train_targets, test_features, test_targets):
+    """Ridge regression predictions."""
+    # Test ridge regression predictions.
+    rr = RidgeRegression(cv='loocv')
+    reg = rr.find_optimal_regularization(X=train_features, Y=train_targets)
+    coef = rr.RR(X=train_features, Y=train_targets, omega2=reg)[0]
+
+    # Test the model.
+    sumd = 0.
+    for tf, tt in zip(test_features, test_targets):
+        p = (np.dot(coef, tf))
+        sumd += (p - tt) ** 2
+    error = (sumd / len(test_features)) ** 0.5
+
+    return error
 
 
 class TestFeatureOptimization(unittest.TestCase):
@@ -161,6 +182,13 @@ class TestFeatureOptimization(unittest.TestCase):
                 target=self.train_targets, train_features=self.train_features,
                 test_features=self.test_features, size=d, step=2, order=None)
             # Difficult to test this one as it is inherently random.
+
+    def test_greedy(self):
+        """Test greedy feature selection."""
+        train_features, train_targets, _, _ = get_data()
+        train_features = train_features[:, :20]
+        ge = GreedyElimination()
+        return ge.greedy_elimination(prediction, train_features, train_targets)
 
 
 if __name__ == '__main__':

@@ -73,7 +73,7 @@ class NeighborFingerprintGenerator(BaseGenerator):
             result = np.dot(con, pro)
 
             features[i * self.atom_len:(i + 1) * self.atom_len] = np.sort(
-                np.sum(result, axis=1))
+                np.sum(result, axis=1))[::-1]
 
         return features
 

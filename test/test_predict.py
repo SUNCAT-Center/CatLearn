@@ -2,15 +2,13 @@
 from __future__ import print_function
 from __future__ import absolute_import
 
-import unittest
-import os
 import numpy as np
+import unittest
 
 from atoml.regression import RidgeRegression, GaussianProcess
 from atoml.regression.gpfunctions.sensitivity import SensitivityAnalysis
-from common import get_data
 
-wkdir = os.getcwd()
+from common import get_data
 
 train_size, test_size = 45, 5
 
@@ -67,7 +65,7 @@ class TestPrediction(unittest.TestCase):
                           test_target=test_targets,
                           get_validation_error=True,
                           get_training_error=True)
-        self.assertTrue(len(pred['prediction']) == len(test_features))
+        self.assertEqual(len(pred['prediction']), len(test_features))
         print('linear prediction:', pred['validation_error']['rmse_average'])
 
     def test_gp_quadratic_kernel(self):
@@ -85,7 +83,7 @@ class TestPrediction(unittest.TestCase):
                           test_target=test_targets,
                           get_validation_error=True,
                           get_training_error=True)
-        self.assertTrue(len(pred['prediction']) == len(test_features))
+        self.assertEqual(len(pred['prediction']), len(test_features))
         print('quadratic prediction:',
               pred['validation_error']['rmse_average'])
 
@@ -106,7 +104,7 @@ class TestPrediction(unittest.TestCase):
                           uncertainty=True,
                           epsilon=0.1)
         mult_dim = pred['prediction']
-        self.assertTrue(len(pred['prediction']) == len(test_features))
+        self.assertEqual(len(pred['prediction']), len(test_features))
         print('gaussian prediction (rmse):',
               pred['validation_error']['rmse_average'])
         print('gaussian prediction (ins):',
@@ -121,15 +119,15 @@ class TestPrediction(unittest.TestCase):
             train_fp=train_features, train_target=train_targets,
             kernel_dict=kdict, regularization=1e-3,
             optimize_hyperparameters=True, scale_data=True)
-        self.assertTrue(len(gp.kernel_dict['k1']['width']) == 1)
+        self.assertEqual(len(gp.kernel_dict['k1']['width']), 1)
         pred = gp.predict(test_fp=test_features,
                           test_target=test_targets,
                           get_validation_error=True,
                           get_training_error=True,
                           uncertainty=True,
                           epsilon=0.1)
-        self.assertTrue(len(pred['prediction']) == len(test_features))
-        self.assertTrue(np.sum(pred['prediction']) != np.sum(mult_dim))
+        self.assertEqual(len(pred['prediction']), len(test_features))
+        self.assertNotEqual(np.sum(pred['prediction']), np.sum(mult_dim))
         print('gaussian single width (rmse):',
               pred['validation_error']['rmse_average'])
 
@@ -147,7 +145,7 @@ class TestPrediction(unittest.TestCase):
                           test_target=test_targets,
                           get_validation_error=True,
                           get_training_error=True)
-        self.assertTrue(len(pred['prediction']) == len(test_features))
+        self.assertEqual(len(pred['prediction']), len(test_features))
         print('laplacian prediction:',
               pred['validation_error']['rmse_average'])
 
@@ -168,7 +166,7 @@ class TestPrediction(unittest.TestCase):
                           test_target=test_targets,
                           get_validation_error=True,
                           get_training_error=True)
-        self.assertTrue(len(pred['prediction']) == len(test_features))
+        self.assertEqual(len(pred['prediction']), len(test_features))
         print('addition prediction:', pred['validation_error']['rmse_average'])
 
     def test_gp_multiplication_kernel(self):
@@ -188,7 +186,7 @@ class TestPrediction(unittest.TestCase):
                           test_target=test_targets,
                           get_validation_error=True,
                           get_training_error=True)
-        self.assertTrue(len(pred['prediction']) == len(test_features))
+        self.assertEqual(len(pred['prediction']), len(test_features))
         print('multiplication prediction:',
               pred['validation_error']['rmse_average'])
 
@@ -211,7 +209,7 @@ class TestPrediction(unittest.TestCase):
         new_features = np.random.random_sample(
             (np.shape(train_features)[0], 5))
         train_features = np.concatenate((train_features, new_features), axis=1)
-        self.assertFalse(np.shape(train_features) == (d, f))
+        self.assertNotEqual(np.shape(train_features), (d, f))
         train_targets = np.concatenate((train_targets, test_targets))
         new_features = np.random.random_sample((len(test_features), 5))
         test_features = np.concatenate((test_features, new_features), axis=1)
@@ -225,7 +223,7 @@ class TestPrediction(unittest.TestCase):
                           test_target=test_targets,
                           get_validation_error=True,
                           get_training_error=True)
-        self.assertTrue(len(pred['prediction']) == len(test_features))
+        self.assertEqual(len(pred['prediction']), len(test_features))
         print('Update prediction:',
               pred['validation_error']['rmse_average'])
 

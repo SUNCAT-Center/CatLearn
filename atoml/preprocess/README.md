@@ -6,17 +6,26 @@ The folder contains files to scale and optimize the feature space.
 
 [(Back to top)](#data-preprocessing)
 
--   [Feature preprocess](#feature-preprocess)
+-   [Clean Data](#clean-data)
+-   [Scaling](#scaling)
 -   [Feature engineering](#feature-engineering)
 -   [Feature elimination](#feature-elimination)
+-   [Greedy Elimination](#greedy-elimination)
 -   [Feature extraction](#feature-extraction)
 -   [Importance testing](#importance-testing)
 
-## Feature preprocess
+## Clean Data
 
-[(Back to top)](#data-preprocessing)
+[(Back to top)](#clean-data)
 
-This class provide functions to scale the feature data in different ways:
+This provides a set of functions to remove invariant features, as well as data points or features with none numeric/finite (e.g. NaN, inf) variables.
+
+
+## Scaling
+
+[(Back to top)](#scaling)
+
+This class provide functions to scale the feature and target data in different ways:
 
 -   standardize
 -   normalize
@@ -57,13 +66,24 @@ More costly feature elimination methods, such as sensitivity analysis, exist wit
 
 -   Speed up some of the elimination methods.
 
-# Feature extraction
+## Greedy Elimination
+
+[(Back to top)](#data-preprocessing)
+
+An implementation of greedy backward selection.
+
+### ToDo
+
+-   Add in forward greedy selection.
+
+
+## Feature extraction
 
 [(Back to top)](#data-preprocessing)
 
 When a reasonable feature space has been generated it is potentially useful to perform feature extraction to produce a reduced number of more informative features. This is typically achieved by taking combinations of original features and so can result in less interpretable models. Common methods of extraction include PCA and PLS. A wrapper to scikit-learn has been written for a few of these methods, as well as a fully coded (very) basic PCA function.
 
-# Importance testing
+## Importance testing
 
 [(Back to top)](#data-preprocessing)
 

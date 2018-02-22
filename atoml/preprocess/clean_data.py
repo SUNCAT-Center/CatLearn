@@ -65,9 +65,9 @@ def clean_variance(train, test=None, labels=None, mask=None):
     labels : array
         Optional list of feature labels. Default is None passed.
     """
-    train = np.asarray(train)
+    train = np.asarray(train, dtype=np.float64)
     if test is not None:
-        test = np.asarray(test)
+        test = np.asarray(test, dtype=np.float64)
 
     clean = defaultdict(list)
     m = train.T
@@ -92,7 +92,7 @@ def clean_variance(train, test=None, labels=None, mask=None):
     return clean
 
 
-def clean_infinite(train, test=None, labels=None, mask=None):
+def clean_infinite(train, test=None, targets=None, labels=None, mask=None):
     """Remove features that have non finite values in the training data.
 
     Optionally removes features in test data with non fininte values. Returns
@@ -105,14 +105,23 @@ def clean_infinite(train, test=None, labels=None, mask=None):
         Feature matrix for the traing data.
     test : array
         Optional feature matrix for the test data. Default is None passed.
+    targets : array
+        An array of training targets.
     labels : array
         Optional list of feature labels. Default is None passed.
     """
-    train = np.asarray(train, dtype=float)
-    if test is not None:
-        test = np.asarray(test)
-
     clean = defaultdict(list)
+
+    train = np.asarray(train, dtype=np.float64)
+
+    if targets is not None:
+        bool_test = np.isfinite(targets).all(axis=1)
+        clean['targets'] = targets[bool_test]
+        train = train[bool_test, :]
+
+    if test is not None:
+        test = np.asarray(test, dtype=np.float64)
+
     # Find features that have only finite values.
     bool_test = np.isfinite(train).all(axis=0)
     # Also accept features, that are masked.

@@ -3,7 +3,7 @@ import numpy as np
 
 from .data_process import data_process
 from .placeholder import placeholder
-from atoml.preprocess.scale_target import target_normalize
+from atoml.preprocess.scaling import target_normalize
 
 
 def hierarchy(cv, features, min_split, max_split, new_data=True,
