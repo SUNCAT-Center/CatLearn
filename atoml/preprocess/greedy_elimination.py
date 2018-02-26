@@ -54,7 +54,7 @@ class GreedyElimination(object):
             k-fold data sets.
         """
         # Make some k-fold splits.
-        features, targets = k_fold(features, targets, nsplit)
+        features, targets = k_fold(features, targets=targets, nsplit=nsplit)
         _, total_features = np.shape(features[0])
 
         size_result = {}
