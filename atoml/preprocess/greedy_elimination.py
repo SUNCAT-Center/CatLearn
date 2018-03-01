@@ -95,7 +95,7 @@ class GreedyElimination(object):
                 else:
                     # Then a more clear serial implementation.
                     for x in trange(
-                            nsplit, desc='nested              ', leave=False):
+                            d, desc='nested              ', leave=False):
                         args = (x, train_features, test_features,
                                 train_targets, test_targets, predict)
                         r = self._single_elimination(args)
