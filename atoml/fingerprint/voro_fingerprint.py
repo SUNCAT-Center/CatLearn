@@ -9,7 +9,7 @@ import os
 class VoronoiFingerprintGenerator(object):
     '''Function to build voronoi fingerprint in pandas.DataFrame
     Based on a list of ase.atoms object'''
-    def __init__(self, atoms,system_name='',target='id', delete_temp=True, properties=['e_pa']):
+    def __init__(self, atoms,system_name='',target='id', delete_temp=True, properties=[]):
         '''Initialize voronoi generator.
         
         Parameters

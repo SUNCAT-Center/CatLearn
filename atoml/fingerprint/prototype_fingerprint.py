@@ -28,7 +28,7 @@ class PrototypeSites(object):
 class PrototypeFingerprintGenerator(object):
     '''Function to build prototype fingerprint in pandas.DataFrame
     Based on a list of ase.atoms object'''
-    def __init__(self, atoms,sites, system_name='',target='id', delete_temp=True, properties=['e_pa']):
+    def __init__(self, atoms,sites, system_name='',target='id', delete_temp=True, properties=[]):
         '''Initialize voronoi generator.
         
         Parameters
