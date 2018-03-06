@@ -18,6 +18,18 @@ atoml_path = '/'.join(atoml_path[0].split('/')[:-1])
 class TestAPI(unittest.TestCase):
     """Test out the ASE api."""
 
+    def test_networkx_api(self):
+        """Test the ase api."""
+        gadb = DataConnection('{}/data/gadb.db'.format(atoml_path))
+        all_cand = gadb.get_all_relaxed_candidates()
+        g = ase_to_networkx(all_cand[1])
+
+        self.assertEqual(len(g), len(all_cand[1]))
+
+        matrix = networkx_to_adjacency(g)
+        self.assertEqual(np.shape(matrix),
+                         (len(all_cand[1]), len(all_cand[1])))
+
     def test_ase_api(self):
         """Test the ase api."""
         gadb = DataConnection('{}/data/gadb.db'.format(atoml_path))
@@ -38,17 +50,11 @@ class TestAPI(unittest.TestCase):
         extend_atoms_class(all_cand[1])
         self.assertTrue(all_cand[1].get_features() is None)
 
-    def test_networkx_api(self):
-        """Test the ase api."""
-        gadb = DataConnection('{}/data/gadb.db'.format(atoml_path))
-        all_cand = gadb.get_all_relaxed_candidates()
-        g = ase_to_networkx(all_cand[1])
+        g = ase_to_networkx(all_cand[2])
+        all_cand[2].set_graph(g)
 
-        self.assertEqual(len(g), len(all_cand[1]))
-
-        matrix = networkx_to_adjacency(g)
-        self.assertEqual(np.shape(matrix),
-                         (len(all_cand[1]), len(all_cand[1])))
+        self.assertTrue(all_cand[2].get_graph() == g)
+        self.assertTrue(all_cand[1].get_graph() is None)
 
 
 if __name__ == '__main__':

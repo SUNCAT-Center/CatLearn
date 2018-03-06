@@ -15,6 +15,8 @@ def extend_atoms_class(atoms):
     atoms.get_features = types.MethodType(get_features, atoms)
     atoms.set_neighborlist = types.MethodType(set_neighborlist, atoms)
     atoms.get_neighborlist = types.MethodType(get_neighborlist, atoms)
+    atoms.set_graph = types.MethodType(set_graph, atoms)
+    atoms.get_graph = types.MethodType(get_graph, atoms)
 
 
 def set_features(self, fp):
