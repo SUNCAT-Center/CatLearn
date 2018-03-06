@@ -12,7 +12,7 @@ from .gpfunctions.covariance import get_covariance
 from .gpfunctions.kernel_setup import prepare_kernels, kdicts2list, list2kdict
 from .gpfunctions.uncertainty import get_uncertainty
 from .gpfunctions.default_scale import ScaleData
-from .cost_function import get_error
+from .cost_function import get_error, _cost_function
 
 
 class GaussianProcess(object):
@@ -240,7 +240,7 @@ class GaussianProcess(object):
         self.cinv = np.linalg.inv(cvm)
 
     def optimize_hyperparameters(self, global_opt=False, algomin='L-BFGS-B',
-                                 eval_jac=False):
+                                 eval_jac=False, loss_function='lml'):
         """Optimize hyperparameters of the Gaussian Process.
 
         This function assumes that the descriptors in the feature set remain
@@ -260,13 +260,22 @@ class GaussianProcess(object):
         theta = kdicts2list(self.kernel_dict, N_D=self.N_D)
         theta = np.append(theta, self.regularization)
 
-        # Define fixed arguments for log_marginal_likelihood
-        args = (np.array(self.train_fp), np.array(self.train_target),
-                self.kernel_dict, self.scale_optimizer, self.eval_gradients,
-                eval_jac)
+        if loss_function == 'lml':
+            # Define fixed arguments for log_marginal_likelihood
+            args = (np.array(self.train_fp), np.array(self.train_target),
+                    self.kernel_dict, self.scale_optimizer,
+                    self.eval_gradients, eval_jac)
+            lf = log_marginal_likelihood
+        elif loss_function == 'rmse' or loss_function == 'absolute':
+            # Define fixed arguments for rmse loss function
+            args = (np.array(self.train_fp), np.array(self.train_target),
+                    self.kernel_dict, self.scale_optimizer, loss_function)
+            lf = _cost_function
+        else:
+            raise NotImplementedError(str(loss_function))
         # Optimize
         if not global_opt:
-            self.theta_opt = minimize(log_marginal_likelihood, theta,
+            self.theta_opt = minimize(lf, theta,
                                       args=args,
                                       method=algomin,
                                       jac=eval_jac,
@@ -275,7 +284,7 @@ class GaussianProcess(object):
             minimizer_kwargs = {'method': algomin, 'args': args,
                                 'bounds': self.bounds, 'jac': eval_jac,
                                 'T': 10., 'interval': 30., 'niter': 30.}
-            self.theta_opt = basinhopping(log_marginal_likelihood, theta,
+            self.theta_opt = basinhopping(lf, theta,
                                           minimizer_kwargs=minimizer_kwargs)
 
         # Update kernel_dict and regularization with optimized values.
