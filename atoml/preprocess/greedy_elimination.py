@@ -57,7 +57,6 @@ class GreedyElimination(object):
         features, targets = k_fold(features, targets=targets, nsplit=nsplit)
         _, total_features = np.shape(features[0])
 
-        size_result = {}
         eliminated = []
         survivors = list(range(total_features))
 
@@ -105,15 +104,12 @@ class GreedyElimination(object):
                         self.result[self.index][r[0]] = r[1]
 
             # Scores summed over k.
-            scores = np.sum(self.result, axis=0)
+            scores = np.mean(self.result, axis=0)
             # Delete feature that, while missing gave the smallest error.
-            worst = np.argmin(scores)
-            survivors.pop(int(worst))
-            eliminated.append([worst, scores[worst]])
+            i = np.argmin(scores)
+            worst = survivors.pop(int(i))
+            eliminated.append([worst, scores[i]])
             total_features -= 1
-
-            # Average the error over the k-fold data.
-            size_result[d] = np.sum(self.result) / (d * nsplit)
 
         return eliminated
 
