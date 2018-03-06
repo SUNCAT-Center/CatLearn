@@ -1,9 +1,11 @@
 """Functions to calculate the cost statistics."""
 from __future__ import absolute_import
 from __future__ import division
-
+import functools
 import numpy as np
 from collections import defaultdict
+from .gpfunctions.covariance import get_covariance
+from .gpfunctions.kernel_setup import list2kdict
 
 
 def get_error(prediction, target, metrics=None, epsilon=None,
@@ -100,3 +102,30 @@ def _get_percentiles(residuals):
         data['{0}'.format(p)] = np.percentile(residuals, p)
 
     return data
+
+
+def _cost_function(theta, train_matrix, targets, kernel_dict,
+                   scale_optimizer, lf):
+    """Return cost function on the training data.
+
+    Parameters
+    ----------
+
+    """
+    # Make a new covariance matrix with the given hyperparameters.
+    kernel_dict = list2kdict(theta, kernel_dict)
+    cvm = get_covariance(kernel_dict=kernel_dict,
+                         matrix1=train_matrix,
+                         regularization=theta[-1],
+                         log_scale=scale_optimizer,
+                         eval_gradients=False)
+    # Invert the covariance matrix.
+    cinv = np.linalg.inv(cvm)
+    # Calculate predictions for the training data.
+    # Form list of the actual predictions.
+    alpha = functools.reduce(np.dot, (cinv, targets))
+    prediction = functools.reduce(np.dot, (cvm, alpha))
+    # Calculated the error for the prediction on the training data.
+    train_err = get_error(prediction=prediction,
+                          target=targets)[lf + '_average']
+    return train_err

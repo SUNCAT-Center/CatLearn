@@ -13,7 +13,7 @@ import numpy as np
 from ase.atoms import string2symbols
 from ase.data import ground_state_magnetic_moments as gs_magmom
 from ase.data import covalent_radii, atomic_numbers
-from .periodic_table_data import (get_mendeleev_params,
+from .periodic_table_data import (get_mendeleev_params, n_outer,
                                   list_mendeleev_params,
                                   default_params, get_radius)
 from .database_adsorbate_api import layers_info
@@ -41,35 +41,10 @@ extra_slab_params = ['atomic_radius',
                      'dbwidth',
                      'dbskew',
                      'dbkurt',
+                     'oxistates',
                      'block',
                      'econf',
                      'ionenergies']
-
-
-def n_outer(econf):
-    n_tot = 0
-    n_s = 0
-    n_p = 0
-    n_d = 0
-    n_f = 0
-    for shell in econf.split(' ')[1:]:
-        n_shell = 0
-        if shell[-1].isalpha():
-            n_shell = 1
-        elif len(shell) == 3:
-            n_shell = int(shell[-1])
-        elif len(shell) == 4:
-            n_shell = int(shell[-2:])
-        n_tot += n_shell
-        if 's' in shell:
-            n_s += n_shell
-        elif 'p' in shell:
-            n_p += n_shell
-        elif 'd' in shell:
-            n_d += n_shell
-        elif 'f' in shell:
-            n_f += n_shell
-    return n_tot, n_s, n_p, n_d, n_f
 
 
 class AdsorbateFingerprintGenerator(BaseGenerator):
@@ -109,7 +84,6 @@ class AdsorbateFingerprintGenerator(BaseGenerator):
                     'atomic_weight_term',
                     'atomic_radius_term',
                     'heat_of_formation_term',
-                    'block_term',
                     'dft_bulk_modulus_term',
                     'dft_rhodensity_term',
                     'dbcenter_term',
@@ -117,6 +91,10 @@ class AdsorbateFingerprintGenerator(BaseGenerator):
                     'dbwidth_term',
                     'dbskew_term',
                     'dbkurtosis_term',
+                    'oxi_min_term',
+                    'oxi_med_term',
+                    'oxi_max_term',
+                    'block_term',
                     'ne_outer_term',
                     'ne_s_term',
                     'ne_p_term',
@@ -159,7 +137,6 @@ class AdsorbateFingerprintGenerator(BaseGenerator):
                     'atomic_weight_bulk',
                     'atomic_radius_bulk',
                     'heat_of_formation_bulk',
-                    'block_bulk',
                     'dft_bulk_modulus_bulk',
                     'dft_rhodensity_bulk',
                     'dbcenter_bulk',
@@ -167,6 +144,10 @@ class AdsorbateFingerprintGenerator(BaseGenerator):
                     'dbwidth_bulk',
                     'dbskew_bulk',
                     'dbkurtosis_bulk',
+                    'block_bulk',
+                    'oxi_min_bulk',
+                    'oxi_med_bulk',
+                    'oxi_max_bulk',
                     'ne_outer_bulk',
                     'ne_s_bulk',
                     'ne_p_bulk',
@@ -210,6 +191,9 @@ class AdsorbateFingerprintGenerator(BaseGenerator):
                     'atomic_weight_ads1',
                     'atomic_radius_ads1',
                     'heat_of_formation_ads1',
+                    'oxi_min_ads1',
+                    'oxi_med_ads1',
+                    'oxi_max_ads1',
                     'block_ads1',
                     'ne_outer_ads1',
                     'ne_s_ads1',
@@ -222,8 +206,8 @@ class AdsorbateFingerprintGenerator(BaseGenerator):
             # Get atomic number of alpha adsorbate atom.
             Z0 = int(atoms.info['Z_add1'])
             # Import AtoML data on that element.
-            extra_ads_params = ['atomic_radius', 'heat_of_formation', 'block',
-                                'econf', 'ionenergies']
+            extra_ads_params = ['atomic_radius', 'heat_of_formation',
+                                'oxistates', 'block', 'econf', 'ionenergies']
             numbers = [Z0]
             result = list_mendeleev_params(numbers, params=default_params +
                                            extra_ads_params)[0]
@@ -259,6 +243,9 @@ class AdsorbateFingerprintGenerator(BaseGenerator):
                     'dbwidth_surf1av',
                     'dbskew_surf1av',
                     'dbkurtosis_surf1av',
+                    'oxi_min_surf1av',
+                    'oxi_med_surf1av',
+                    'oxi_max_surf1av',
                     'block_surf1av',
                     'ne_outer_surf1av',
                     'ne_s_surf1av',
@@ -303,6 +290,9 @@ class AdsorbateFingerprintGenerator(BaseGenerator):
                     'dbwidth_surf1sum',
                     'dbskew_surf1sum',
                     'dbkurtosis_surf1sum',
+                    'oxi_min_surf1sum',
+                    'oxi_med_surf1sum',
+                    'oxi_max_surf1sum',
                     'block_surf1sum',
                     'ne_outer_surf1sum',
                     'ne_s_surf1sum',
@@ -324,15 +314,18 @@ class AdsorbateFingerprintGenerator(BaseGenerator):
             adsorbate.
         """
         if atoms is None:
-            return ['total_num_C',
+            return ['total_num_H',
+                    'total_num_C',
                     'total_num_O',
-                    'total_num_H']
+                    'total_num_N',
+                    'total_num_S']
         else:
+            nH = len([a.index for a in atoms if a.symbol == 'H'])
             nC = len([a.index for a in atoms if a.symbol == 'C'])
             nO = len([a.index for a in atoms if a.symbol == 'O'])
-            # nN = len([a.index for a in atoms if a.symbol == 'N'])
-            nH = len([a.index for a in atoms if a.symbol == 'H'])
-            return [nC, nO, nH]  # , nN, nO]
+            nN = len([a.index for a in atoms if a.symbol == 'N'])
+            nS = len([a.index for a in atoms if a.symbol == 'S'])
+            return [nC, nO, nH, nS, nN]
 
     def primary_adds_nn(self, atoms=None, rtol=1.15):
         """ Function that takes an atoms objects and returns a fingerprint
@@ -431,6 +424,9 @@ class AdsorbateFingerprintGenerator(BaseGenerator):
                     'dbwidth_surf2',
                     'dbskew_surf2',
                     'dbkurtosis_surf2',
+                    'oxi_min_surf2',
+                    'oxi_med_surf2',
+                    'oxi_max_surf2',
                     'block_surf2',
                     'ne_outer_surf2',
                     'ne_s_surf2',
@@ -481,12 +477,15 @@ class AdsorbateFingerprintGenerator(BaseGenerator):
             for nn in ai:
                 q = nn[0]
                 Znn = int(numbers[q])
-                r_bond_nn = covalent_radii[Znn]
+                r_bond_nn = get_radius(Znn)
                 if q != primary_surf and nn[1] < rtol * (r_bond_nn + r_bond):
                     sym = symbols[q]
                     mnlv = get_mendeleev_params(Znn, params=self.slab_params)
                     n += 1
-                    dat.append(mnlv[:-3] + [float(block2number[mnlv[-3]])] +
+                    dat.append(mnlv[:-4] + [np.min(mnlv[-4]),
+                                            np.median(mnlv[-4]),
+                                            np.max(mnlv[-4])] +
+                               [float(block2number[mnlv[-3]])] +
                                list(n_outer(mnlv[-2])) + [mnlv[-1]['1']] +
                                [float(gs_magmom[Znn])])
                     if sym == name:
@@ -779,7 +778,7 @@ class AdsorbateFingerprintGenerator(BaseGenerator):
             elif len(termui) == 2:
                 conc = 2.
             else:
-                raise AssertionError("Tertiary surfaces not supported.")
+                raise AssertionError("Ternary surfaces not supported.")
             text_params = default_params + ['heat_of_formation',
                                             #'dft_bulk_modulus',
                                             #'dft_density',

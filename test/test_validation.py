@@ -64,11 +64,11 @@ class TestValidation(unittest.TestCase):
     def test_kfold(self):
         """Test some cross-validation."""
         features, targets, _, _ = get_data()
-        f, t = k_fold(features, targets, nsplit=5)
+        f, t = k_fold(features, nsplit=5, targets=targets)
         self.assertTrue(len(f) == 5 and len(t) == 5)
         for s in f:
             self.assertEqual(np.shape(s), (9, 100))
-        f, t = k_fold(features, targets, nsplit=4, fix_size=5)
+        f, t = k_fold(features, nsplit=4, targets=targets, fix_size=5)
         self.assertTrue(len(f) == 4 and len(t) == 4)
         for s in f:
             self.assertEqual(np.shape(s), (5, 100))
