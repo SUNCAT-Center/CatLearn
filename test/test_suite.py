@@ -3,7 +3,7 @@ import unittest
 import os
 import warnings
 
-from test_ase_api import TestAPI
+from test_api import TestAPI
 from test_feature_base import TestBaseGenerator
 from test_feature_generation import TestFeatureGeneration
 from test_ads_fp_gen import TestAdsorbateFeatures

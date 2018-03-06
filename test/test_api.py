@@ -9,7 +9,7 @@ from ase.ga.data import DataConnection
 
 from atoml import __path__ as atoml_path
 from atoml.api.ase_atoms_api import extend_atoms_class
-from atoml.api.networkx_graph_api import ase_to_networkx
+from atoml.api.networkx_graph_api import ase_to_networkx, networkx_to_adjacency
 from atoml.fingerprint.setup import FeatureGenerator
 
 atoml_path = '/'.join(atoml_path[0].split('/')[:-1])
@@ -45,6 +45,10 @@ class TestAPI(unittest.TestCase):
         g = ase_to_networkx(all_cand[1])
 
         self.assertEqual(len(g), len(all_cand[1]))
+
+        matrix = networkx_to_adjacency(g)
+        self.assertEqual(np.shape(matrix),
+                         (len(all_cand[1]), len(all_cand[1])))
 
 
 if __name__ == '__main__':

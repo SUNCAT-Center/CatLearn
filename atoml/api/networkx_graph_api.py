@@ -9,7 +9,21 @@ from atoml.utilities.neighborlist import ase_neighborlist
 
 
 def ase_to_networkx(atoms):
-    """Make the NetworkX graph."""
+    """Make the NetworkX graph form ASE atoms object.
+
+    The graph is dependent on the generation of the neighborlist. Currently
+    this is handled by the version implemented in ASE.
+
+    Parameters
+    ----------
+    atoms : object
+        An ASE atoms object.
+
+    Returns
+    -------
+    atoms_graph : object
+        A networkx graph object.
+    """
     an = atoms.get_atomic_numbers()
     ats = list(range(len(an)))
 
@@ -28,3 +42,19 @@ def ase_to_networkx(atoms):
         atoms_graph.add_edges_from(tup)
 
     return atoms_graph
+
+
+def networkx_to_adjacency(graph):
+    """Simple wrapper for graph to adjacency matrix.
+
+    Parameters
+    ----------
+    graph : object
+        The networkx graph object.
+
+    Returns
+    -------
+    matrix : array
+        The numpy adjacency matrix.
+    """
+    return nx.to_numpy_matrix(graph, dtype='f')
