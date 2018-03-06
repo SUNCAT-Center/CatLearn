@@ -38,9 +38,8 @@ def set_features(self, fp):
 def get_features(self):
     """Function to read feature vector from ase atoms object.
 
-    This function provides a uniform way in which to attach a feature vector to
-    an atoms object. Can be used in conjunction with the `set_features`
-    function.
+    This function provides a uniform way in which to return a feature vector
+    from an atoms object.
 
     Parameters
     ----------
@@ -80,9 +79,8 @@ def set_neighborlist(self, neighborlist):
 def get_neighborlist(self):
     """Function to read neighborlist from ase atoms object.
 
-    This function provides a uniform way in which to attach a neighborlist to
-    an atoms object. Can be used in conjunction with the `set_neighborlist`
-    function.
+    This function provides a uniform way in which to return a neighborlist from
+    an atoms object.
 
     Parameters
     ----------
@@ -97,6 +95,47 @@ def get_neighborlist(self):
     self._initialize_atoml()
     try:
         return self.atoml['neighborlist']
+    except KeyError:
+        return None
+
+
+def set_graph(self, graph):
+    """Function to write networkx graph to ase atoms object.
+
+    This function provides a uniform way in which to attach a graph object to
+    an atoms object. Can be used in conjunction with the `ase_to_networkx`
+    function.
+
+    Parameters
+    ----------
+    self : class
+        An ase atoms object to attach feature vector to.
+    graph : object
+        The networkx graph object to attach.
+    """
+    self._initialize_atoml()
+    self.atoml['graph'] = graph
+
+
+def get_graph(self):
+    """Function to read networkx graph from ase atoms object.
+
+    This function provides a uniform way in which to return a graph object from
+    an atoms object.
+
+    Parameters
+    ----------
+    self : class
+        An ase atoms object to attach feature vector to.
+
+    Returns
+    -------
+    graph : object
+        The networkx graph object attached to the atoms object.
+    """
+    self._initialize_atoml()
+    try:
+        return self.atoml['graph']
     except KeyError:
         return None
 
