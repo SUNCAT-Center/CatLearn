@@ -4,7 +4,7 @@ import json
 import pickle
 
 
-def k_fold(features, nsplit, targets=None, fix_size=None):
+def k_fold(features, targets=None, nsplit=3, fix_size=None):
     """Routine to split feature matrix and return sublists.
 
     Parameters
