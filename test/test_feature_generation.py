@@ -132,6 +132,18 @@ class TestFeatureGeneration(unittest.TestCase):
                         == d)
         print('passed combined generation')
 
+        train_fp = f.return_vec(trainset['atoms'], [f.neighbor_sum_vec])
+        n, d = np.shape(train_fp)
+        self.assertTrue(n == train_size and d == len(trainset['atoms'][0]))
+        # self.assertTrue(len(f.return_names([f.distance_vec])) == d)
+        print('passed neighbor_sum_vec')
+
+        train_fp = f.return_vec(trainset['atoms'], [f.neighbor_mean_vec])
+        n, d = np.shape(train_fp)
+        self.assertTrue(n == train_size and d == len(trainset['atoms'][0]))
+        # self.assertTrue(len(f.return_names([f.distance_vec])) == d)
+        print('passed neighbor_mean_vec')
+
         # Do basic check for atomic porperties.
         no_prop = []
         an_prop = []

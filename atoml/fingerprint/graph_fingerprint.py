@@ -50,17 +50,14 @@ class GraphFingerprintGenerator(BaseGenerator):
         Parameters
         ----------
         data : object
-            Target data object from which to get the neighborlist dict.
+            Target data object from which to generate features.
+
+        Returns
+        -------
+        features : array
+            A 1d numpy array of the feature vector.
         """
-        msg = 'element_parameters variable must be set.'
-        assert self.element_parameters is not None, msg
-
-        # Check parameters are iterable.
-        if not isinstance(self.element_parameters, list):
-            self.element_parameters = [self.element_parameters]
-
-        # Initialize feature vector.
-        features = np.zeros(self.atom_len * len(self.element_parameters))
+        features = self._initialize_features(data)
 
         # Calculate the matrix representation.
         con = self._dict2matrix(data)
@@ -73,6 +70,58 @@ class GraphFingerprintGenerator(BaseGenerator):
 
         return features
 
+    def neighbor_mean_vec(self, data):
+        """Transform neighborlist into a neighbor averaged feature vector.
+
+        Parameters
+        ----------
+        data : object
+            Target data object from which to generate features.
+
+        Returns
+        -------
+        features : array
+            A 1d numpy array of the feature vector.
+        """
+        # Make checks and initialize empty feature vector.
+        features = self._initialize_features(data)
+
+        # Calculate the matrix representation.
+        con = self._dict2matrix(data)
+        for i, ep in enumerate(self.element_parameters):
+            pro = self._prop2matrix(data, ep)
+            result = np.dot(con, pro)
+
+            features[i * self.atom_len:(i + 1) * self.atom_len] = np.sort(
+                np.mean(result, axis=1))[::-1]
+
+        return features
+
+    def _initialize_features(self, data):
+        """Function to perform some checks and initialize empty feature vector.
+
+        Parameters
+        ----------
+        data : object
+            Target data object from which to generate features.
+
+        Returns
+        -------
+        features : array
+            Empty 1d numpy array for feature vector.
+        """
+        msg = 'element_parameters variable must be set.'
+        assert self.element_parameters is not None, msg
+
+        # Check parameters are iterable.
+        if not isinstance(self.element_parameters, list):
+            self.element_parameters = [self.element_parameters]
+
+        # Initialize feature vector.
+        features = np.zeros(self.atom_len * len(self.element_parameters))
+
+        return features
+
     def _dict2matrix(self, data):
         """Transform neighborlist dict to binary matrix.
 
@@ -80,6 +129,11 @@ class GraphFingerprintGenerator(BaseGenerator):
         ----------
         data : object
             Target data object from which to get the neighborlist dict.
+
+        Returns
+        -------
+        matrix : array
+            The adjacency matrix based on the neighborlist.
         """
         # Generate the setup data first.
         if self.atom_len is None:
@@ -106,6 +160,11 @@ class GraphFingerprintGenerator(BaseGenerator):
             Target data object.
         property : str
             The target property from mendeleev.
+
+        Returns
+        -------
+        matrix : array
+            The adjacency matrix based with atomic properties included.
         """
         ano = self.get_atomic_numbers(data)
 
