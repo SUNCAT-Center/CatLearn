@@ -8,7 +8,7 @@ import unittest
 from ase.ga.data import DataConnection
 
 from atoml.api.ase_data_setup import get_unique, get_train
-from atoml.fingerprint import FeatureGenerator
+from atoml.fingerprint.setup import FeatureGenerator
 from atoml.regression import GaussianProcess
 from atoml.regression.acquisition_functions import AcquisitionFunctions
 

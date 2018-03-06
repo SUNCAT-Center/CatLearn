@@ -9,7 +9,8 @@ from ase.ga.data import DataConnection
 
 from atoml import __path__ as atoml_path
 from atoml.api.ase_atoms_api import extend_atoms_class
-from atoml.fingerprint import FeatureGenerator
+from atoml.api.networkx_graph_api import ase_to_networkx
+from atoml.fingerprint.setup import FeatureGenerator
 
 atoml_path = '/'.join(atoml_path[0].split('/')[:-1])
 
@@ -36,6 +37,14 @@ class TestAPI(unittest.TestCase):
 
         extend_atoms_class(all_cand[1])
         self.assertTrue(all_cand[1].get_features() is None)
+
+    def test_networkx_api(self):
+        """Test the ase api."""
+        gadb = DataConnection('{}/data/gadb.db'.format(atoml_path))
+        all_cand = gadb.get_all_relaxed_candidates()
+        g = ase_to_networkx(all_cand[1])
+
+        self.assertEqual(len(g), len(all_cand[1]))
 
 
 if __name__ == '__main__':

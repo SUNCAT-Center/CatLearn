@@ -11,7 +11,7 @@ from ase.ga.data import DataConnection
 
 from atoml import __path__ as atoml_path
 from atoml.api.ase_data_setup import get_unique, get_train
-from atoml.fingerprint import FeatureGenerator
+from atoml.fingerprint.setup import FeatureGenerator
 from atoml.fingerprint.neighbor_matrix import neighbor_features
 from atoml.fingerprint.periodic_table_data import (get_mendeleev_params,
                                                    default_params)
