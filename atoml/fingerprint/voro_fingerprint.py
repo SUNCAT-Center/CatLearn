@@ -3,7 +3,6 @@ from __future__ import absolute_import
 from __future__ import division
 
 import pandas as pd
-from ase.io import read
 import os
 
 
@@ -26,8 +25,8 @@ class VoronoiFingerprintGenerator(object):
         self.system_name = system_name
         self.temp_path = 'voro_temp' + system_name
         from atoml import __path__
-        if os.path.exists(__path__[0] + '/magpie'):
-            self.magpie_path = __path__[0] + '/magpie'
+        if os.path.exists(__path__[0] + '/api/magpie'):
+            self.magpie_path = __path__[0] + '/api/magpie'
         else:
             raise EnvironmentError('Magpie path not exist!')
         self.cif_path = self.temp_path + '/cif/'
