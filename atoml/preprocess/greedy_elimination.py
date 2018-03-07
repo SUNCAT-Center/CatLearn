@@ -33,7 +33,7 @@ class GreedyElimination(object):
         """Greedy feature elimination.
 
         Function to iterate through feature set, eliminating worst feature in
-        each pass.
+        each pass. This is the backwards greedy algorithm.
 
         Parameters
         ----------
@@ -54,10 +54,11 @@ class GreedyElimination(object):
             k-fold data sets.
         """
         # Make some k-fold splits.
-        features, targets = k_fold(features, targets, nsplit)
+        features, targets = k_fold(features, targets=targets, nsplit=nsplit)
         _, total_features = np.shape(features[0])
 
-        size_result = {}
+        eliminated = []
+        survivors = list(range(total_features))
 
         print('starting greedy feature elimination')
         # The tqdm package is used for tracking progress.
@@ -68,10 +69,11 @@ class GreedyElimination(object):
                 # Sort out training and testing data.
                 train_features = copy.deepcopy(features)
                 train_targets = copy.deepcopy(targets)
-                test_features = train_features.pop(self.index)
+                test_features = train_features.pop(self.index)[:, survivors]
                 test_targets = train_targets.pop(self.index)
 
-                train_features = np.concatenate(train_features, axis=0)
+                train_features = np.concatenate(train_features,
+                                                axis=0)[:, survivors]
                 train_targets = np.concatenate(train_targets, axis=0)
 
                 _, d = np.shape(train_features)
@@ -101,17 +103,15 @@ class GreedyElimination(object):
                         r = self._single_elimination(args)
                         self.result[self.index][r[0]] = r[1]
 
-            # Delete feature that gives largest error.
-            for self.index in range(nsplit):
-                features[self.index] = np.delete(
-                    features[self.index], np.argmin(
-                        np.sum(self.result, axis=0)), axis=1)
+            # Scores summed over k.
+            scores = np.mean(self.result, axis=0)
+            # Delete feature that, while missing gave the smallest error.
+            i = np.argmin(scores)
+            worst = survivors.pop(int(i))
+            eliminated.append([worst, scores[i]])
             total_features -= 1
 
-            # Average the error over the k-fold data.
-            size_result[d] = np.sum(self.result) / (d * nsplit)
-
-        return size_result
+        return eliminated
 
     def _single_elimination(self, args):
         """Function to eliminate a single feature and make a prediction.
