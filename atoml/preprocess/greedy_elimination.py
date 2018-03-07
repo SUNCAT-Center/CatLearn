@@ -38,8 +38,14 @@ class GreedyElimination(object):
         Parameters
         ----------
         predict : object
-            A function that will make the predictions. This should expect to be
-            passed training and testing features and targets.
+            A function that will make the predictions. predict should accept
+            the parameters:
+                train_features : array
+                test_features : array
+                train_targets : list
+                test_targets : list
+            predict should return either a float or a list of floats. The float
+            or the first value of the list will be used as the fitness score.
         features : array
             An n, d array of features.
         targets : list
@@ -49,9 +55,13 @@ class GreedyElimination(object):
 
         Returns
         -------
-        size_result : dict
-            The dictionary contains the averaged error over the specified
-            k-fold data sets.
+        output : array
+            First column is the index of features in the order they were
+            eliminated.
+            Second column are corresponding cost function values, averaged over
+            the k fold split.
+            Following columns are any additional values returned by predict,
+            averaged over the k fold split.
         """
         # Make some k-fold splits.
         features, targets = k_fold(features, targets=targets, nsplit=nsplit)
@@ -140,7 +150,10 @@ class GreedyElimination(object):
         f : int
             Feature index being eliminated.
         error : float
-            The averaged error for the test data.
+            A cost function.
+            Typically the log marginal likelihood or goodness of fit.
+        meta : list
+            Additional optional values. Typically cross validation scores.
         """
         # Unpack args tuple.
         f = args[0]
