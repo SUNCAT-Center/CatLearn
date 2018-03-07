@@ -57,13 +57,14 @@ class GreedyElimination(object):
         features, targets = k_fold(features, targets=targets, nsplit=nsplit)
         _, total_features = np.shape(features[0])
 
-        eliminated = []
+        output = []
         survivors = list(range(total_features))
 
         print('starting greedy feature elimination')
         # The tqdm package is used for tracking progress.
         for fnum in trange(total_features - 1, desc='features eliminated '):
             self.result = np.zeros((nsplit, total_features))
+            meta = []
             for self.index in trange(nsplit, desc='k-folds             ',
                                      leave=False):
                 # Sort out training and testing data.
@@ -77,6 +78,7 @@ class GreedyElimination(object):
                 train_targets = np.concatenate(train_targets, axis=0)
 
                 _, d = np.shape(train_features)
+                meta_k = []
 
                 # Iterate through features and find error for removing it.
                 if self.nprocs != 1:
@@ -90,6 +92,8 @@ class GreedyElimination(object):
                             self._single_elimination, args), total=d,
                             desc='nested              ', leave=False):
                         self.result[self.index][r[0]] = r[1]
+                        if len(r) > 2:
+                            meta_k.append(r[2])
                         # Wait to make things more stable.
                         time.sleep(0.001)
                     pool.close()
@@ -102,16 +106,26 @@ class GreedyElimination(object):
                                 train_targets, test_targets, predict)
                         r = self._single_elimination(args)
                         self.result[self.index][r[0]] = r[1]
+                        if len(r) > 2:
+                            meta_k.append(r[2])
+                if len(meta_k) > 0:
+                    meta.append(meta_k)
 
             # Scores summed over k.
             scores = np.mean(self.result, axis=0)
             # Delete feature that, while missing gave the smallest error.
             i = np.argmin(scores)
             worst = survivors.pop(int(i))
-            eliminated.append([worst, scores[i]])
+            eliminated = [worst, scores[i]]
+            if len(meta) > 0:
+                mean_meta = np.mean(meta, axis=0)
+                output.append(np.concatenate([eliminated, mean_meta[i]],
+                                             axis=0))
+            else:
+                output.append(eliminated)
             total_features -= 1
 
-        return eliminated
+        return output
 
     def _single_elimination(self, args):
         """Function to eliminate a single feature and make a prediction.
@@ -141,6 +155,11 @@ class GreedyElimination(object):
         test = np.delete(test_features, f, axis=1)
 
         # Calculate the error on predictions.
-        error = predict(train, train_targets, test, test_targets)
+        result = predict(train, train_targets, test, test_targets)
 
-        return f, error
+        if isinstance(result, list):
+            error = result[0]
+            meta = result[1:]
+            return f, error, meta
+        else:
+            return f, result
