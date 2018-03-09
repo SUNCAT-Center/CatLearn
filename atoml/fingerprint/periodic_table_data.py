@@ -1,6 +1,7 @@
 """Function pulling atomic data for elements."""
 import json
 from atoml import __path__ as atoml_path
+import numpy as np
 
 # Load the Mendeleev parameter data into memory
 with open('/'.join(atoml_path[0].split('/')[:-1]) +
@@ -105,7 +106,9 @@ def list_mendeleev_params(numbers, params=None):
         params = default_params
     special_params = 0
     for p, param in enumerate(params):
-        if param == 'econf':
+        if param == 'oxistates':
+            special_params += 1
+        elif param == 'econf':
             special_params += 1
         elif param == 'block':
             special_params += 1
@@ -119,7 +122,9 @@ def list_mendeleev_params(numbers, params=None):
         else:
             line = mnlv
         for p, param in enumerate(params):
-            if param == 'econf':
+            if param == 'oxistates':
+                line += [np.min(mnlv[p]), np.median(mnlv[p]), np.max(mnlv[p])]
+            elif param == 'econf':
                 line += list(n_outer(mnlv[p]))
             elif param == 'block':
                 line += [float(block2number[mnlv[p]])]
