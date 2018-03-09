@@ -174,5 +174,4 @@ class GreedyElimination(object):
             error = result[0]
             meta = result[1:]
             return f, error, meta
-        else:
-            return f, result
+        return f, result
