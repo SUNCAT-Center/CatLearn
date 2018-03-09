@@ -1,7 +1,13 @@
+# Python2 container.
 FROM continuumio/anaconda
+# Python3 container.
+# FROM continuumio/anaconda3
 
 # Set environment variables.
 ENV LANG=C.UTF-8 LC_ALL=C.UTF-8
+
+# Add some descriptive labels.
+LABEL Description="This image is used to test AtoML." Version="0.3.1"
 
 # Create the root directory.
 RUN mkdir AtoML
