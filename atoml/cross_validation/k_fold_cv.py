@@ -4,7 +4,7 @@ import json
 import pickle
 
 
-def k_fold(features, targets, nsplit, fix_size=None):
+def k_fold(features, targets=None, nsplit=3, fix_size=None):
     """Routine to split feature matrix and return sublists.
 
     Parameters
@@ -28,10 +28,13 @@ def k_fold(features, targets, nsplit, fix_size=None):
         A list of targets lists of length nsplit.
     """
     # Stick features and targets together.
-    d, f = np.shape(features)
-    X = np.concatenate(
-        (features, np.reshape(targets, (len(targets), 1))), axis=1)
-    assert (d, f + 1) == np.shape(X)
+    if targets is not None:
+        d, f = np.shape(features)
+        X = np.concatenate(
+                (features, np.reshape(targets, (len(targets), 1))), axis=1)
+        assert (d, f + 1) == np.shape(X)
+    else:
+        X = features
 
     # Shuffle the combined array.
     np.random.shuffle(X)  # Shuffle ordering of the array along 0 axis.
@@ -46,13 +49,19 @@ def k_fold(features, targets, nsplit, fix_size=None):
     # Split the feature-targets array.
     X = np.array_split(X, nsplit)
 
-    # Split the features and targets, generating two lists.
-    features, targets = [], []
-    for i in X:
-        features.append(i[:, :-1])
-        targets.append(i[:, -1])
+    if targets is not None:
+        # Split the features and targets, generating two lists.
+        features, targets = [], []
+        for i in X:
+            features.append(i[:, :-1])
+            targets.append(i[:, -1])
 
-    return features, targets
+        return features, targets
+    else:
+        features = []
+        for i in X:
+            features.append(i)
+        return features
 
 
 def write_split(features, targets, fname, fformat='pickle'):
