@@ -38,6 +38,11 @@ class TestNeighborList(unittest.TestCase):
         nl4 = atoml_neighborlist(all_cand[0], max_neighbor=4)
         self.assertFalse(np.allclose(nl1, nl4))
 
+        nl5 = atoml_neighborlist(all_cand[0], max_neighbor=5)
+        nlfull = atoml_neighborlist(all_cand[0], max_neighbor='full')
+        self.assertFalse(np.allclose(nl4, nl5))
+        self.assertTrue(np.allclose(nl5, nlfull))
+
 
 if __name__ == '__main__':
     unittest.main()
