@@ -6,6 +6,7 @@ import json
 import numpy as np
 
 from atoml import __path__ as atoml_path
+from atoml.utilities.neighborlist import atoml_neighborlist
 from .base import BaseGenerator
 
 
@@ -28,6 +29,9 @@ class GraphFingerprintGenerator(BaseGenerator):
             Type of atomic parameter upon which to compile the feature vector.
             A full list of atomic parameters can be found here:
             https://pypi.python.org/pypi/mendeleev/
+        max_neighbors = str, int
+            Maximum number of neighbor shells to account for. Can be int or
+            'full', for all possible shells.
         """
         if not hasattr(self, 'atom_types'):
             self.atom_types = kwargs.get('atom_types')
@@ -35,6 +39,8 @@ class GraphFingerprintGenerator(BaseGenerator):
             self.atom_len = kwargs.get('atom_len')
         if not hasattr(self, 'element_parameters'):
             self.element_parameters = kwargs.get('element_parameters')
+        if not hasattr(self, 'max_neighbors'):
+            self.max_neighbor = kwargs.get('max_neighbors', 1)
 
         if not hasattr(self, 'element_data'):
             # Load the Mendeleev parameter data into memory
@@ -60,7 +66,11 @@ class GraphFingerprintGenerator(BaseGenerator):
         features = self._initialize_features(data)
 
         # Calculate the matrix representation.
-        con = self._dict2matrix(data)
+        if self.max_neighbor == 1:
+            con = self._dict2matrix(data)
+        else:
+            con = atoml_neighborlist(data, max_neighbor=self.max_neighbor)
+
         for i, ep in enumerate(self.element_parameters):
             pro = self._prop2matrix(data, ep)
             result = np.dot(con, pro)
@@ -87,7 +97,11 @@ class GraphFingerprintGenerator(BaseGenerator):
         features = self._initialize_features(data)
 
         # Calculate the matrix representation.
-        con = self._dict2matrix(data)
+        if self.max_neighbor == 1:
+            con = self._dict2matrix(data)
+        else:
+            con = atoml_neighborlist(data, max_neighbor=self.max_neighbor)
+
         for i, ep in enumerate(self.element_parameters):
             pro = self._prop2matrix(data, ep)
             result = np.dot(con, pro)
@@ -143,7 +157,7 @@ class GraphFingerprintGenerator(BaseGenerator):
         nl = self.get_neighborlist(data)
 
         # Initialize the matrix of correct size.
-        matrix = np.zeros((self.atom_len, self.atom_len), dtype=np.float32)
+        matrix = np.zeros((self.atom_len, self.atom_len), dtype='f')
 
         for index in nl:
             for neighbor in nl[index]:
@@ -168,7 +182,7 @@ class GraphFingerprintGenerator(BaseGenerator):
         """
         ano = self.get_atomic_numbers(data)
 
-        matrix = np.zeros((self.atom_len, self.atom_len), dtype=np.float32)
+        matrix = np.zeros((self.atom_len, self.atom_len), dtype='f')
 
         atomic_prop = {}
         for a in set(ano):

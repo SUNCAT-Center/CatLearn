@@ -93,7 +93,7 @@ def atoml_neighborlist(atoms, dx=None, max_neighbor=1):
         msg = 'max_neighbor parameter {} not recognized.'.format(max_neighbor)
         raise NotImplementedError(msg)
 
-    np.fill_diagonal(connection_matrix, np.asarray(atomic_numbers, dtype='f'))
+    np.fill_diagonal(connection_matrix, 0.)
 
     return connection_matrix
 
