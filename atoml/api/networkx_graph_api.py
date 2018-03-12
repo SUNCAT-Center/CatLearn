@@ -2,7 +2,9 @@
 from __future__ import absolute_import
 from __future__ import division
 
+import numpy as np
 import networkx as nx
+
 from ase import Atoms
 
 from atoml.api.ase_atoms_api import extend_atoms_class
@@ -64,4 +66,11 @@ def networkx_to_adjacency(graph):
     msg = 'Please pass an networkx graph object, not a {}'.format(type(graph))
     assert isinstance(graph, nx.Graph), msg
 
-    return nx.to_numpy_matrix(graph, dtype='f')
+    atomic_numbers = list(dict(graph.nodes('atomic_number')).values())
+    adjacency = np.asarray(nx.to_numpy_matrix(graph, dtype='f'))
+
+    assert np.shape(adjacency) == (len(atomic_numbers), len(atomic_numbers))
+
+    adjacency += np.diag(atomic_numbers)
+
+    return adjacency
