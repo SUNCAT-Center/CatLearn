@@ -21,7 +21,7 @@ def ase_neighborlist(atoms):
     return neighborlist
 
 
-def atoms_neighborlist(atoms, dx=None, neighbor_number=1):
+def atoml_neighborlist(atoms, dx=None, max_neighbor=1):
     """Make dict of neighboring atoms for discrete system.
 
     Possible to return neighbors from defined neighbor shell e.g. 1st, 2nd,
@@ -34,32 +34,48 @@ def atoms_neighborlist(atoms, dx=None, neighbor_number=1):
     dx : dict
         Buffer to calculate nearest neighbor pairs in dict format:
         dx = {atomic_number: buffer}.
-    neighbor_number : int
+    max_neighbor : int
         Neighbor shell.
     """
+    atomic_numbers = atoms.get_atomic_numbers()
+
     # Set up buffer dict.
     if dx is None:
-        dx = dict.fromkeys(set(atoms.get_atomic_numbers()), 0)
+        dx = dict.fromkeys(set(atomic_numbers), 0)
         for i in dx:
-            dx[i] = get_radius(i) / 2.
+            dx[i] = get_radius(i) / 10.
 
-    conn = {}
-    for a1 in atoms:
-        c = []
-        for a2 in atoms:
-            if a1.index != a2.index:
-                d = np.linalg.norm(np.asarray(a1.position) -
-                                   np.asarray(a2.position))
-                r1 = get_radius(a1.number)
-                r2 = get_radius(a2.number)
-                dxi = (dx[a1.number] + dx[a2.number]) / 2.
-                if neighbor_number == 1:
-                    d_max1 = 0.
-                else:
-                    d_max1 = ((neighbor_number - 1) * (r2 + r1)) + dxi
-                d_max2 = (neighbor_number * (r2 + r1)) + dxi
-                if d > d_max1 and d < d_max2:
-                    c.append(a2.index)
-                conn[a1.index] = sorted(list(map(int, c)))
+    dist = atoms.get_all_distances(mic=True)
 
-    return conn
+    r_list, b_list = [], []
+    for an in atomic_numbers:
+        r_list.append(get_radius(an))
+        b_list.append(dx[an])
+
+    radius_matrix = np.asarray(r_list) + np.reshape(r_list, (len(r_list), 1))
+    buffer_matrix = np.asarray(b_list) + np.reshape(b_list, (len(b_list), 1))
+
+    connection_matrix = np.zeros((len(atoms), len(atoms)))
+    if type(max_neighbor) == int:
+        for n in range(max_neighbor):
+            connection_matrix += _neighbor_iterator(
+                dist, radius_matrix, buffer_matrix, n, connection_matrix)[0]
+
+    np.fill_diagonal(connection_matrix, np.asarray(atomic_numbers, dtype='f'))
+
+    return connection_matrix
+
+
+def _neighbor_iterator(dist, radius_matrix, buffer_matrix, n,
+                       connection_matrix):
+    res = dist - ((radius_matrix + buffer_matrix) * (n + 1))
+
+    res[res > 0.] = 0.
+    res[res < 0.] = n + 1.
+
+    dist += res * 10000.
+
+    connection_matrix += res
+    unconnected = len(connection_matrix[connection_matrix == 0.])
+
+    return connection_matrix, unconnected

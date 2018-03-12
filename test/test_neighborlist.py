@@ -1,9 +1,11 @@
+"""Tests for neighborlist generation."""
 import unittest
+import numpy as np
 
 from ase.ga.data import DataConnection
 
 from atoml import __path__ as atoml_path
-from atoml.utilities.neighborlist import ase_neighborlist, atoms_neighborlist
+from atoml.utilities.neighborlist import ase_neighborlist, atoml_neighborlist
 
 atoml_path = '/'.join(atoml_path[0].split('/')[:-1])
 
@@ -31,12 +33,10 @@ class TestNeighborList(unittest.TestCase):
         # Get all relaxed candidates from the db file.
         all_cand = gadb.get_all_relaxed_candidates(use_extinct=False)
 
-        nl1 = atoms_neighborlist(all_cand[0], neighbor_number=1)
-        self.assertEqual(len(all_cand[0]), len(nl1))
-
-        nl2 = atoms_neighborlist(all_cand[0], neighbor_number=2)
-        self.assertEqual(len(all_cand[0]), len(nl2))
-        self.assertNotEqual(nl1, nl2)
+        nl1 = atoml_neighborlist(all_cand[0], max_neighbor=1)
+        self.assertEqual((len(all_cand[0]), len(all_cand[0])), np.shape(nl1))
+        nl4 = atoml_neighborlist(all_cand[0], max_neighbor=4)
+        self.assertFalse(np.allclose(nl1, nl4))
 
 
 if __name__ == '__main__':
