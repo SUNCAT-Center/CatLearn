@@ -3,7 +3,7 @@ import unittest
 import os
 import warnings
 
-from test_feature_generation import TestFeatureGeneration as aGeneration
+from test_1_feature_generation import TestFeatureGeneration
 from test_api import TestAPI
 from test_feature_base import TestBaseGenerator
 from test_ads_fp_gen import TestAdsorbateFeatures
@@ -46,7 +46,7 @@ def setup_suite(class_list):
 if __name__ == '__main__':
     # Add other tests to the following list.
     setup_suite([
-        aGeneration,
+        TestFeatureGeneration,
         TestAPI,
         TestBaseGenerator,
         TestAdsorbateFeatures,
