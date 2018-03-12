@@ -8,6 +8,7 @@ from test_api import TestAPI
 from test_feature_base import TestBaseGenerator
 from test_ads_fp_gen import TestAdsorbateFeatures
 from test_bulk_fp_gen import TestBulkFeatures
+from test_neighborlist import TestNeighborList
 from test_data_clean import TestDataClean
 from test_feature_optimization import TestFeatureOptimization
 from test_scale import TestScaling, TestHyperparameterScaling
@@ -51,6 +52,7 @@ if __name__ == '__main__':
         TestBaseGenerator,
         TestAdsorbateFeatures,
         TestBulkFeatures,
+        TestNeighborList,
         TestDataClean,
         TestFeatureOptimization,
         TestScaling,
