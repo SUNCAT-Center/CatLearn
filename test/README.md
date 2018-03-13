@@ -39,4 +39,12 @@ The `pytest-cov` package is used to generate the coverage reports. Unfortunately
 
 [(Back to top)](#atoml-tests)
 
-The tests can be run on the command line. When running on the command line, it is important to run the `test_feature_generation.py` script first. This produces a database of features and targets used in most of the other tests. This data can be imported in tests using the `common.get_data()` function.
+There are two ways of running the tests on the command line. If all the test are run, it is as simple as just using the following:
+
+```shell
+  $ python test/test_suite.py
+```
+
+If the desire is to run individual tests, it can be necessary to have generated some data beforehand. This is handled automatically in the `test_suite.py` script, but must be initialized manually otherwise. It is important to run the `test_feature_generation.py` script to generate a db of feature vectors and targets. This data can be imported in tests using the `common.get_data()` function.
+
+**Therefore, run the `test_feature_generation.py` script before any tests that import from `common.py`.**
