@@ -39,7 +39,7 @@ The `pytest-cov` package is used to generate the coverage reports. Unfortunately
 
 [(Back to top)](#atoml-tests)
 
-There are two ways of running the tests on the command line. If all the test are run, it is as simple as just using the following:
+There are two ways of running the tests on the command line. If all the tests are run, it is as simple as just using the following:
 
 ```shell
   $ python test/test_suite.py
