@@ -4,6 +4,7 @@ from __future__ import division
 
 import json
 import numpy as np
+import warnings
 
 from atoml import __path__ as atoml_path
 from atoml.utilities.neighborlist import atoml_neighborlist
@@ -65,11 +66,7 @@ class GraphFingerprintGenerator(BaseGenerator):
         """
         features = self._initialize_features(data)
 
-        # Calculate the matrix representation.
-        if self.max_neighbor == 1:
-            con = self._dict2matrix(data)
-        else:
-            con = atoml_neighborlist(data, max_neighbor=self.max_neighbor)
+        con = self._normalize_neighbors(data)
 
         for i, ep in enumerate(self.element_parameters):
             pro = self._prop2matrix(data, ep)
@@ -96,11 +93,7 @@ class GraphFingerprintGenerator(BaseGenerator):
         # Make checks and initialize empty feature vector.
         features = self._initialize_features(data)
 
-        # Calculate the matrix representation.
-        if self.max_neighbor == 1:
-            con = self._dict2matrix(data)
-        else:
-            con = atoml_neighborlist(data, max_neighbor=self.max_neighbor)
+        con = self._normalize_neighbors(data)
 
         for i, ep in enumerate(self.element_parameters):
             pro = self._prop2matrix(data, ep)
@@ -136,41 +129,40 @@ class GraphFingerprintGenerator(BaseGenerator):
 
         return features
 
-    def _dict2matrix(self, data):
-        """Transform neighborlist dict to binary matrix.
+    def _normalize_neighbors(self, data):
+        """Function to invert importance of neighbor shells.
 
         Parameters
         ----------
         data : object
-            Target data object from which to get the neighborlist dict.
+            Target data object from which to generate features.
 
         Returns
         -------
-        matrix : array
-            The adjacency matrix based on the neighborlist.
+        connection_matrix : array
+            The shell weighted connection_matrix.
         """
-        # Generate the setup data first.
-        if self.atom_len is None:
-            self.atom_len = len(data)
+        # There will be some divide by zero warnings that are handled later.
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
 
-        # Get the neighbor list.
-        nl = self.get_neighborlist(data)
+            # Calculate the matrix representation.
+            connection_matrix = atoml_neighborlist(
+                data, max_neighbor=self.max_neighbor)
 
-        # Initialize the matrix of correct size.
-        matrix = np.zeros((self.atom_len, self.atom_len), dtype='f')
+            # Invert scale of neighbor shells.
+            connection_matrix = np.max(connection_matrix) / connection_matrix
+            # Replace inf values from zero divide.
+            np.place(connection_matrix, connection_matrix == np.inf, 0.)
 
-        for index in nl:
-            for neighbor in nl[index]:
-                matrix[index][neighbor] = 1.
-
-        return matrix
+        return connection_matrix
 
     def _prop2matrix(self, data, prop):
         """Generate a property matrix based on the atomic types.
 
         Parameters
         ----------
-        aata : object
+        data : object
             Target data object.
         property : str
             The target property from mendeleev.
