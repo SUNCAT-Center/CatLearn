@@ -132,6 +132,11 @@ class GraphFingerprintGenerator(BaseGenerator):
     def _normalize_neighbors(self, data):
         """Function to invert importance of neighbor shells.
 
+        The `atoml_neighborlist` function returns an array with the neighbor
+        shell of atom pairs. The further away two atoms are, the larger the
+        number of the neighbor shell. This inverts this relationship so atoms
+        that are close to oneanother have larger values.
+
         Parameters
         ----------
         data : object
