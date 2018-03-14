@@ -59,9 +59,9 @@ def log_marginal_likelihood(theta, train_matrix, targets, kernel_dict,
     else:
         # Get jacobian of log marginal likelyhood wrt. hyperparameters.
         C = cho_solve((L, True), np.eye(n),
-                      check_finite=True)[:, :, np.newaxis]
-        aa = np.einsum("ik,jk->ijk", a, a)
-        Q = aa - C
+                      check_finite=True)
+        aa = a * a.T  # np.einsum("ik,jk->ijk", a, a)
+        Q = (aa - C)[:, :, np.newaxis]
         # Get the list of gradients.
         dK_dtheta = dK_dtheta_j(theta, train_matrix, kernel_dict, Q)
         jac = 0.5 * np.einsum("ijl,ijk->kl", Q, dK_dtheta)
