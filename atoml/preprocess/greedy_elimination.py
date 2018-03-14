@@ -73,7 +73,8 @@ class GreedyElimination(object):
 
         print('starting greedy feature elimination')
         # The tqdm package is used for tracking progress.
-        for fnum in trange(total_features - 1, desc='features eliminated '):
+        for fnum in trange((total_features - 1) // step,
+                           desc='features eliminated '):
             self.result = np.zeros((nsplit, total_features))
             meta = []
             for self.index in trange(nsplit, desc='k-folds             ',
