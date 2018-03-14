@@ -6,7 +6,6 @@ import numpy as np
 from scipy.linalg import cholesky, cho_solve
 from .covariance import get_covariance
 from .kernel_setup import list2kdict, kdict2list
-from numpy.core.umath_tests import inner1d
 from atoml.regression.gpfunctions import kernels as ak
 
 
