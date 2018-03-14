@@ -69,6 +69,21 @@ def log_marginal_likelihood(theta, train_matrix, targets, kernel_dict,
 
 
 def dK_dtheta_j(theta, train_matrix, kernel_dict, Q):
+    """Return the jacobian of the log marginal likelyhood with respect to
+    the hyperparameters.
+
+    Equation 5.9 in C. E. Rasmussen and C. K. I. Williams, 2006
+
+    Parameters
+    ----------
+    theta : list
+        A list containing the hyperparameters.
+    train_matrix : list
+        A list of the test fingerprint vectors.
+    kernel_dict: dict
+        A dictionary of kernel dictionaries
+    Q : array.
+    """
     jac = []
     N, N_D = np.shape(train_matrix)
     ki = 0
@@ -90,7 +105,6 @@ def dK_dtheta_j(theta, train_matrix, kernel_dict, Q):
             continue
         elif kdict['type'] == 'gaussian':
             kwidth = theta[ki:ki + N_D]
-            m = len(kwidth)
             dKdtheta = ak.gaussian_dk_dwidth(k, train_matrix, kwidth)
             if 'scaling' in kdict:
                 dKdtheta *= scaling
@@ -98,16 +112,12 @@ def dK_dtheta_j(theta, train_matrix, kernel_dict, Q):
             ki += N_D
         elif kdict['type'] == 'quadratic':
             slope = theta[ki:ki + N_D]
-            m = len(slope)
-            for j in range(0, m):
-                dKdtheta_j = ak.quadratic_dk_dslope(k, j, train_matrix,
-                                                    slope)
-                if 'scaling' in kdict:
-                    dKdtheta_j *= scaling
-                jac.append(dKdtheta_j)
+            dKdslope = ak.quadratic_dk_dslope(k, train_matrix, slope)
+            if 'scaling' in kdict:
+                dKdslope *= scaling
+            jac.append(dKdslope)
             degree = theta[ki + N_D]
-            dKdtheta_degree = ak.quadratic_dk_ddegree(k, j, train_matrix,
-                                                      degree)
+            dKdtheta_degree = ak.quadratic_dk_ddegree(k, train_matrix, degree)
             jac.append(dKdtheta_degree)
             ki += N_D + 1
         else:

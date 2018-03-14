@@ -104,9 +104,7 @@ def gaussian_dk_dwidth(k, m1, kwidth, log_scale=False):
     Parameters
     ----------
     k : array
-        The (not scaled) gaussian kernel.
-    j : int
-        Index of the width to derive wrt.
+        n by n array. The (not scaled) gaussian kernel.
     m1 : list
         A list of the training fingerprint vectors.
     kwidth : float
@@ -117,6 +115,7 @@ def gaussian_dk_dwidth(k, m1, kwidth, log_scale=False):
     if log_scale:
         raise NotImplementedError("Log scale hyperparameters in jacobian.")
     dkdw = (m1[:, np.newaxis, :] - m1[np.newaxis, :, :]) ** 2 / (kwidth ** 3)
+    # Chain rule.
     dkdw *= k[..., np.newaxis]
     return dkdw
 
@@ -295,12 +294,21 @@ def quadratic_kernel(theta, log_scale, m1, m2=None, eval_gradients=False):
         raise NotImplementedError(msg)
 
 
-def quadratic_dk_dslope(k, j, m1, kwidth_j, log_scale=False):
-    raise NotImplementedError("Quadratic kernel gradient wrt. slope.")
+def quadratic_dk_dslope(k, m1, slope, log_scale=False):
+    raise NotImplementedError("Quadratic kernel jacobian wrt. slope.")    
+    if log_scale:
+        raise NotImplementedError("Log scale hyperparameters in jacobian.")
+    dkdw = (m1[:, np.newaxis, :] - m1[np.newaxis, :, :]) ** 2 / (slope ** 3)
+    dkdw *= k[..., np.newaxis]
+    return
 
 
-def quadratic_dk_ddegree(k, j, m1, kwidth_j, log_scale=False):
-    raise NotImplementedError("Quadratic kernel gradient wrt. degree.")
+def quadratic_dk_ddegree(k, m1, degree, log_scale=False):
+    raise NotImplementedError("Quadratic kernel jacobian wrt. degree.")
+    if log_scale:
+        raise NotImplementedError("Log scale hyperparameters in jacobian.")
+    dkdw = (m1[:, np.newaxis, :] - m1[np.newaxis, :, :]) ** 2 / (kwidth ** 3)
+    dkdw *= k[..., np.newaxis]
 
 
 def laplacian_kernel(theta, log_scale, m1, m2=None, eval_gradients=False):
