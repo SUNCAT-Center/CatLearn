@@ -98,7 +98,7 @@ def gaussian_kernel(theta, log_scale, m1, m2=None, eval_gradients=False):
     return k
 
 
-def gaussian_dk_dwidth(k, j, m1, kwidth, log_scale=False):
+def gaussian_dk_dwidth(k, m1, kwidth, log_scale=False):
     """Return gradient of the gaussian kernel with respect to the j'th width.
 
     Parameters
@@ -116,20 +116,9 @@ def gaussian_dk_dwidth(k, j, m1, kwidth, log_scale=False):
     """
     if log_scale:
         raise NotImplementedError("Log scale hyperparameters in jacobian.")
-    # Get dimensions
-    N, N_D = np.shape(m1)
-    # Set features other than the j'th to zero.
-    j_matrix = np.zeros([N, N_D])
-    j_matrix[:, j] = m1[:, j]
-    # Calculate the Gram matrix
-    gram = distance.pdist(j_matrix, metric='sqeuclidean')
-    dgdw = distance.squareform(gram / kwidth[j] ** 3)
-    # dgdw is the derivative of the nested function.
-    np.fill_diagonal(dgdw, 0)
-    # Use the chain rule to get the gradient.
-    dfdg = k
-    dkdw_j = np.multiply(dfdg, dgdw)
-    return dkdw_j
+    dkdw = (m1[:, np.newaxis, :] - m1[np.newaxis, :, :]) ** 2 / (kwidth ** 3)
+    dkdw *= k[..., np.newaxis]
+    return dkdw
 
 
 def sqe_kernel(theta, log_scale, m1, m2=None, eval_gradients=False):
