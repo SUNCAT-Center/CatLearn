@@ -119,8 +119,8 @@ def lml_plotter(train_features, train_targets, test_features, kernel_dict,
             function = lml.log_marginal_likelihood(
                 theta, np.array(train_features), np.array(train_targets),
                 kernel_dict, scale_optimizer, eval_gradients, eval_jac=True)
-            Y.append(function[0])
-            dY.append(function[1])
+            Y.append(-function[0])
+            dY.append(-function[1])
         n_x = np.ceil(np.sqrt(d_max))
         n_y = n_x + 1
         ax = plt.subplot(n_x, n_y, d + 1)
