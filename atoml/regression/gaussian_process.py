@@ -85,8 +85,6 @@ class GaussianProcess(object):
 
         if optimize_hyperparameters:
             self.optimize_hyperparameters()
-        else:
-            self._update_lml()
 
     def predict(self, test_fp, test_target=None, uncertainty=False, basis=None,
                 get_validation_error=False, get_training_error=False,

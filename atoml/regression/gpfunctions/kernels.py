@@ -201,19 +201,19 @@ def AA_kernel(theta, log_scale, m1, m2=None, eval_gradients=False):
     m2 : list
         A list of the training fingerprint vectors.
     """
-    l = theta[0]
+    ll = theta[0]
     c = np.vstack(theta[1:])
     if log_scale:
-        l, c = np.exp(l), np.exp(c)
+        ll, c = np.exp(ll), np.exp(c)
 
     if not eval_gradients:
         n = np.shape(m1)[1]
-        q = (1 - l) / (c - l)
+        q = (1 - ll) / (c - ll)
         if m2 is None:
             m2 = m1
 
         return distance.cdist(
-            m1, m2, lambda u, v: (l ** (n - np.sqrt(((u - v) ** 2))) *
+            m1, m2, lambda u, v: (ll ** (n - np.sqrt(((u - v) ** 2))) *
                                   (q ** np.sqrt((u - v) ** 2))).sum())
 
     else:
@@ -295,20 +295,11 @@ def quadratic_kernel(theta, log_scale, m1, m2=None, eval_gradients=False):
 
 
 def quadratic_dk_dslope(k, m1, slope, log_scale=False):
-    raise NotImplementedError("Quadratic kernel jacobian wrt. slope.")    
-    if log_scale:
-        raise NotImplementedError("Log scale hyperparameters in jacobian.")
-    dkdw = (m1[:, np.newaxis, :] - m1[np.newaxis, :, :]) ** 2 / (slope ** 3)
-    dkdw *= k[..., np.newaxis]
-    return
+    raise NotImplementedError("Quadratic kernel jacobian wrt. slope.")
 
 
 def quadratic_dk_ddegree(k, m1, degree, log_scale=False):
     raise NotImplementedError("Quadratic kernel jacobian wrt. degree.")
-    if log_scale:
-        raise NotImplementedError("Log scale hyperparameters in jacobian.")
-    dkdw = (m1[:, np.newaxis, :] - m1[np.newaxis, :, :]) ** 2 / (kwidth ** 3)
-    dkdw *= k[..., np.newaxis]
 
 
 def laplacian_kernel(theta, log_scale, m1, m2=None, eval_gradients=False):
