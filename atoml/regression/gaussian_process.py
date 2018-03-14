@@ -240,6 +240,7 @@ class GaussianProcess(object):
 
         # Invert the covariance matrix.
         self.cinv = np.linalg.inv(cvm)
+        self._update_lml()
 
     def optimize_hyperparameters(self, global_opt=False, algomin='L-BFGS-B',
                                  eval_jac=False, loss_function='lml'):
