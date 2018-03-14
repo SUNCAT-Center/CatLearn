@@ -29,7 +29,8 @@ class GreedyElimination(object):
         """
         self.nprocs = nprocs
 
-    def greedy_elimination(self, predict, features, targets, nsplit=2):
+    def greedy_elimination(self, predict, features, targets, nsplit=2,
+                           step=1):
         """Greedy feature elimination.
 
         Function to iterate through feature set, eliminating worst feature in
@@ -123,17 +124,19 @@ class GreedyElimination(object):
 
             # Scores summed over k.
             scores = np.mean(self.result, axis=0)
-            # Delete feature that, while missing gave the smallest error.
-            i = np.argmin(scores)
-            worst = survivors.pop(int(i))
-            eliminated = [worst, scores[i]]
-            if len(meta) > 0:
-                mean_meta = np.mean(meta, axis=0)
-                output.append(np.concatenate([eliminated, mean_meta[i]],
-                                             axis=0))
-            else:
-                output.append(eliminated)
-            total_features -= 1
+            # Sort features according to score.
+            s = np.argsort(scores)
+            for g in range(step):
+                eliminated = [np.array(survivors)[s][g], np.array(scores)[s][g]]
+                if len(meta) > 0:
+                    mean_meta = np.mean(meta, axis=0)
+                    output.append(np.concatenate([eliminated, mean_meta[g]],
+                                                 axis=0))
+                else:
+                    output.append(eliminated)
+            # Delete features that, while missing gave the smallest error.
+            survivors = [x for i, x in enumerate(survivors) if i not in s[:step]]
+            total_features -= step
 
         return output
 
