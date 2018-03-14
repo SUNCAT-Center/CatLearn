@@ -18,7 +18,7 @@ def prepare_kernels(kernel_dict, regularization_bounds, eval_gradients, N_D):
     """
     # Set some default bounds.
     bounds = ()
-    default_bounds = ((1e-12, None),)
+    default_bounds = ((1e-10, None),)
     if eval_gradients:
         default_bounds = ((1e-6, 1e6),)
 
