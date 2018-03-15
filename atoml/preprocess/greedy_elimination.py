@@ -128,7 +128,8 @@ class GreedyElimination(object):
             # Sort features according to score.
             s = np.argsort(scores)
             for g in range(step):
-                eliminated = [np.array(survivors)[s][g], np.array(scores)[s][g]]
+                eliminated = [np.array(survivors)[s][g],
+                              np.array(scores)[s][g]]
                 if len(meta) > 0:
                     mean_meta = np.mean(meta, axis=0)
                     output.append(np.concatenate([eliminated, mean_meta[g]],
@@ -136,7 +137,8 @@ class GreedyElimination(object):
                 else:
                     output.append(eliminated)
             # Delete features that, while missing gave the smallest error.
-            survivors = [x for i, x in enumerate(survivors) if i not in s[:step]]
+            survivors = [x for i, x in enumerate(survivors) if
+                         i not in s[:step]]
             total_features -= step
 
         return output

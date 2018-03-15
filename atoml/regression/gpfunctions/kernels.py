@@ -114,6 +114,12 @@ def gaussian_dk_dwidth(k, m1, kwidth, log_scale=False):
     """
     if log_scale:
         raise NotImplementedError("Log scale hyperparameters in jacobian.")
+    if len(kwidth) == 1:
+        dkdw = distance.pdist(m1 / kwidth[0] ** 2, metric='sqeuclidean')
+        dkdw = distance.squareform(np.exp(-.5 * dkdw))
+        np.fill_diagonal(dkdw, 1)
+        dkdw *= k
+        return dkdw[..., np.newaxis]
     dkdw = (m1[:, np.newaxis, :] - m1[np.newaxis, :, :]) ** 2 / (kwidth ** 3)
     # Chain rule.
     dkdw *= k[..., np.newaxis]

@@ -103,14 +103,16 @@ def dK_dtheta_j(theta, train_matrix, kernel_dict, Q):
         elif ktype == 'linear':
             continue
         elif kdict['type'] == 'gaussian':
-            kwidth = theta[ki:ki + N_D]
+            N_W = len(kdict['width'])
+            kwidth = theta[ki:ki + N_W]
             dKdtheta = ak.gaussian_dk_dwidth(k, train_matrix, kwidth)
             if 'scaling' in kdict:
                 dKdtheta *= scaling
             jac.append(dKdtheta)
-            ki += N_D
+            ki += N_W
         elif kdict['type'] == 'quadratic':
-            slope = theta[ki:ki + N_D]
+            N_S = len(kdict['slope'])
+            slope = theta[ki:ki + N_S]
             dKdslope = ak.quadratic_dk_dslope(k, train_matrix, slope)
             if 'scaling' in kdict:
                 dKdslope *= scaling
