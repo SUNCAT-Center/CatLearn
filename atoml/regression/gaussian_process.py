@@ -241,7 +241,7 @@ class GaussianProcess(object):
         self._update_lml()
 
     def optimize_hyperparameters(self, global_opt=False, algomin='L-BFGS-B',
-                                 eval_jac=False, loss_function='lml'):
+                                 eval_jac=None, loss_function='lml'):
         """Optimize hyperparameters of the Gaussian Process.
 
         This function assumes that the descriptors in the feature set remain
@@ -262,12 +262,18 @@ class GaussianProcess(object):
         theta = np.append(theta, self.regularization)
 
         if loss_function == 'lml':
+            if eval_jac is None:
+                if self.N_D ** 2 > np.shape(self.train_fp)[1]:
+                    eval_jac = False
+                else:
+                    eval_jac = True
             # Define fixed arguments for log_marginal_likelihood
             args = (np.array(self.train_fp), np.array(self.train_target),
                     self.kernel_dict, self.scale_optimizer,
                     self.eval_gradients, eval_jac)
             lf = log_marginal_likelihood
         elif loss_function == 'rmse' or loss_function == 'absolute':
+            eval_jac = False
             # Define fixed arguments for rmse loss function
             args = (np.array(self.train_fp), np.array(self.train_target),
                     self.kernel_dict, self.scale_optimizer, loss_function)

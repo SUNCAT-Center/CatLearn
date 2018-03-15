@@ -115,9 +115,9 @@ def gaussian_dk_dwidth(k, m1, kwidth, log_scale=False):
     if log_scale:
         raise NotImplementedError("Log scale hyperparameters in jacobian.")
     if len(kwidth) == 1:
-        dkdw = distance.pdist(m1 / kwidth[0] ** 2, metric='sqeuclidean')
-        dkdw = distance.squareform(np.exp(-.5 * dkdw))
-        np.fill_diagonal(dkdw, 1)
+        dkdw = distance.pdist(m1, metric='sqeuclidean')
+        dkdw = distance.squareform(dkdw / (kwidth[0] ** 3))
+        np.fill_diagonal(dkdw, 0)
         dkdw *= k
         return dkdw[..., np.newaxis]
     dkdw = (m1[:, np.newaxis, :] - m1[np.newaxis, :, :]) ** 2 / (kwidth ** 3)
@@ -343,3 +343,18 @@ def laplacian_kernel(theta, log_scale, m1, m2=None, eval_gradients=False):
         msg = 'Evaluation of the gradients for this kernel is not yet '
         msg += 'implemented'
         raise NotImplementedError(msg)
+
+def laplacian_dk_dwidth(k, m1, kwidth, log_scale=False):
+    # raise NotImplementedError("Laplacian kernel jacobian wrt. width.")
+    if log_scale:
+        raise NotImplementedError("Log scale hyperparameters in jacobian.")
+    if len(kwidth) == 1:
+        dkdw = distance.pdist(m1 / (kwidth[0] ** 2), metric='cityblock')
+        dkdw = distance.squareform(dkdw)
+        np.fill_diagonal(dkdw, 0)
+        dkdw *= k
+        return dkdw[..., np.newaxis]
+    dkdw = abs(m1[:, np.newaxis, :] - m1[np.newaxis, :, :]) / (kwidth ** 2)
+    # Chain rule.
+    dkdw *= k[..., np.newaxis]
+    return dkdw

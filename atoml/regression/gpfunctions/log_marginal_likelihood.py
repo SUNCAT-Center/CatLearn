@@ -121,6 +121,14 @@ def dK_dtheta_j(theta, train_matrix, kernel_dict, Q):
             dKdtheta_degree = ak.quadratic_dk_ddegree(k, train_matrix, degree)
             jac.append(dKdtheta_degree)
             ki += N_D + 1
+        elif kdict['type'] == 'laplacian':
+            N_W = len(kdict['width'])
+            kwidth = theta[ki:ki + N_W]
+            dKdtheta = ak.laplacian_dk_dwidth(k, train_matrix, kwidth)
+            if 'scaling' in kdict:
+                dKdtheta *= scaling
+            jac.append(dKdtheta)
+            ki += N_W
         else:
             raise NotImplementedError("jacobian for " + ktype)
     # Append gradient with respect to regularization.
