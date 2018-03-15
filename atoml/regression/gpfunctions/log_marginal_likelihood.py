@@ -89,6 +89,10 @@ def dK_dtheta_j(theta, train_matrix, kernel_dict, Q):
     for key in kernel_dict.keys():
         kdict = kernel_dict[key]
         ktype = kdict['type']
+        if 'operation' in kernel_dict[key] and \
+           kernel_dict[key]['operation'] == 'multiplication':
+            msg = "jacobian of product kernels wrt. hyperparameters."
+            raise NotImplementedError(msg)
         if 'scaling' in kdict or kdict['type'] == 'gaussian':
             scaling, hyperparameters = kdict2list(kdict, N_D)
             k = eval(
