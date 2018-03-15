@@ -115,15 +115,15 @@ To make changes to this, it is possible to simply edit the `Dockerfile`. The cur
 To list the images available on the local system, use the following:
 
 ```shell
-  docker images
-  docker inspect REPOSITORY
+  $ docker images
+  $ docker inspect REPOSITORY
 ```
 
 It is a good idea to remove old images. This can be performed using the following lines:
 
 ```shell
-  docker rm $(docker ps -q -f status=exited)
-  docker rmi $(docker images -q -f "dangling=true")
+  $ docker rm $(docker ps -q -f status=exited)
+  $ docker rmi $(docker images -q -f "dangling=true")
 ```
 
 ## Testing
