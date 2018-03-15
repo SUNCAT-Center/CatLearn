@@ -344,6 +344,7 @@ def laplacian_kernel(theta, log_scale, m1, m2=None, eval_gradients=False):
         msg += 'implemented'
         raise NotImplementedError(msg)
 
+
 def laplacian_dk_dwidth(k, m1, kwidth, log_scale=False):
     # raise NotImplementedError("Laplacian kernel jacobian wrt. width.")
     if log_scale:
