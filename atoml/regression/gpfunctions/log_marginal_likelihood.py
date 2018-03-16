@@ -6,7 +6,6 @@ import numpy as np
 from scipy.linalg import cholesky, cho_solve
 from .covariance import get_covariance
 from .kernel_setup import list2kdict, kdict2list
-from numpy.core.umath_tests import inner1d
 from atoml.regression.gpfunctions import kernels as ak
 
 
@@ -50,108 +49,94 @@ def log_marginal_likelihood(theta, train_matrix, targets, kernel_dict,
     a = cho_solve((L, True), y, check_finite=False)
     datafit = -.5 * np.dot(y.T, a)
     complexity = -np.log(np.diag(L)).sum()  # (A.18) in R. & W.
-    normalization = -.5 * n * np.log(2 * np.pi)
+    normalization = -n * np.log(2 * np.pi) / 2.
 
     # Get the log marginal likelihood.
-    p = (datafit + complexity + normalization).sum()
+    p = (datafit + complexity + normalization).sum(-1)
     if not eval_jac:
         return -p
     else:
         # Get jacobian of log marginal likelyhood wrt. hyperparameters.
-        C = cho_solve((L, True), np.eye(n), check_finite=True)
-        aa = a * a.T  # inner1d(a,a)
-        Q = aa - C
+        C = cho_solve((L, True), np.eye(n),
+                      check_finite=True)
+        aa = a * a.T  # np.einsum("ik,jk->ijk", a, a)
+        Q = (aa - C)[:, :, np.newaxis]
         # Get the list of gradients.
-        jac = dK_dtheta_j(theta, train_matrix, kernel_dict, Q)
-        # Append gradient with respect to regularization.
-        dKdnoise = np.identity(n)
-        jac.append(0.5 * np.sum(inner1d(Q, dKdnoise.T)))
-        return -p, -np.array(jac)
-
-
-def dlml(theta, train_matrix, targets, kernel_dict,
-         scale_optimizer, eval_gradients, eval_jac=True):
-    """Return the gradient of the log marginal likelyhood.
-
-    For a more detailed explanation see Equation 5.9 in C. E. Rasmussen and
-    C. K. I. Williams, 2006.
-
-    Parameters
-    ----------
-    train_fp : array
-        An n x m matrix of the training features.
-    K : array
-       An n x n positive definite covariance matrix.
-    widths : list
-        Vector of length m.
-    noise : float
-        regularization parameter.
-    y : list
-        Vector of length n.
-    """
-    K = get_covariance(
-        kernel_dict=kernel_dict, matrix1=train_matrix,
-        regularization=theta[-1], log_scale=scale_optimizer,
-        eval_gradients=eval_gradients)
-    n = len(targets)
-    y = targets.reshape([n, 1])
-    L = cholesky(K, overwrite_a=False, lower=True, check_finite=True)
-    a = cho_solve((L, True), y, overwrite_b=False, check_finite=True)
-    C = cho_solve((L, True), np.eye(n), check_finite=True)
-    aa = a * a.T  # inner1d(a,a)
-    Q = aa - C
-    # Get the list of gradients.
-    jac = dK_dtheta_j(theta, train_matrix, kernel_dict, Q)
-    # Append gradient with respect to regularization.
-    dKdnoise = np.identity(n)
-    jac.append(0.5 * np.sum(inner1d(Q, dKdnoise.T)))
-    return -np.array(jac)
+        dK_dtheta = dK_dtheta_j(theta, train_matrix, kernel_dict, Q)
+        jac = 0.5 * np.einsum("ijl,ijk->kl", Q, dK_dtheta)
+        return -p, -np.array(jac.sum(-1))
 
 
 def dK_dtheta_j(theta, train_matrix, kernel_dict, Q):
+    """Return the jacobian of the log marginal likelyhood with respect to
+    the hyperparameters.
+
+    Equation 5.9 in C. E. Rasmussen and C. K. I. Williams, 2006
+
+    Parameters
+    ----------
+    theta : list
+        A list containing the hyperparameters.
+    train_matrix : list
+        A list of the test fingerprint vectors.
+    kernel_dict: dict
+        A dictionary of kernel dictionaries
+    Q : array.
+    """
     jac = []
     N, N_D = np.shape(train_matrix)
     ki = 0
     for key in kernel_dict.keys():
         kdict = kernel_dict[key]
         ktype = kdict['type']
+        if 'operation' in kernel_dict[key] and \
+           kernel_dict[key]['operation'] == 'multiplication':
+            msg = "jacobian of product kernels wrt. hyperparameters."
+            raise NotImplementedError(msg)
         if 'scaling' in kdict or kdict['type'] == 'gaussian':
             scaling, hyperparameters = kdict2list(kdict, N_D)
             k = eval(
                 'ak.{}_kernel(m1=train_matrix, m2=None, theta=hyperparameters, \
                 eval_gradients=False, log_scale=False)'.format(ktype))
         if 'scaling' in kdict:
-            jac.append(0.5 * np.sum(inner1d(Q, k.T)))
+            jac.append(k[..., np.newaxis])
             ki += 1
         if kdict['type'] == 'constant':
-            jac.append(0.5 * np.sum(inner1d(Q, np.ones([N, N]))))
+            jac.append(np.ones([N, N, 1]))
             ki += 1
         elif ktype == 'linear':
             continue
         elif kdict['type'] == 'gaussian':
-            kwidth = theta[ki:ki + N_D]
-            m = len(kwidth)
-            for j in range(0, m):
-                dKdtheta_j = ak.gaussian_dk_dwidth(k, j, train_matrix,
-                                                   kwidth)
-                if 'scaling' in kdict:
-                    dKdtheta_j *= scaling
-                jac.append(0.5 * np.sum(inner1d(Q, dKdtheta_j.T)))
-            ki += N_D
+            N_W = len(kdict['width'])
+            kwidth = theta[ki:ki + N_W]
+            dKdtheta = ak.gaussian_dk_dwidth(k, train_matrix, kwidth)
+            if 'scaling' in kdict:
+                dKdtheta *= scaling
+            jac.append(dKdtheta)
+            ki += N_W
         elif kdict['type'] == 'quadratic':
-            slope = theta[ki:ki + N_D]
-            m = len(slope)
-            for j in range(0, m):
-                dKdtheta_j = ak.quadratic_dk_dslope(k, j, train_matrix,
-                                                    slope)
-                if 'scaling' in kdict:
-                    dKdtheta_j *= scaling
-                jac.append(0.5 * np.sum(inner1d(Q, dKdtheta_j.T)))
+            N_S = len(kdict['slope'])
+            slope = theta[ki:ki + N_S]
+            dKdslope = ak.quadratic_dk_dslope(k, train_matrix, slope)
+            if 'scaling' in kdict:
+                dKdslope *= scaling
+            jac.append(dKdslope)
             degree = theta[ki + N_D]
-            dKdtheta_degree = ak.quadratic_dk_ddegree(k, j, train_matrix,
-                                                      degree)
-            jac.append(0.5 * np.sum(inner1d(Q, dKdtheta_degree.T)))
+            dKdtheta_degree = ak.quadratic_dk_ddegree(k, train_matrix, degree)
+            jac.append(dKdtheta_degree)
             ki += N_D + 1
+        elif kdict['type'] == 'laplacian':
+            N_W = len(kdict['width'])
+            kwidth = theta[ki:ki + N_W]
+            dKdtheta = ak.laplacian_dk_dwidth(k, train_matrix, kwidth)
+            if 'scaling' in kdict:
+                dKdtheta *= scaling
+            jac.append(dKdtheta)
+            ki += N_W
         else:
             raise NotImplementedError("jacobian for " + ktype)
+    # Append gradient with respect to regularization.
+    dKdnoise = np.eye(N)[:, :, np.newaxis]
+    jac.append(dKdnoise)
+    jac = np.concatenate(jac, axis=2)
     return jac

@@ -44,9 +44,11 @@ def get_data():
 
 def lml_test(train_matrix, train_targets, test_matrix, test_targets):
     """Function to test log_marginal_likelihood."""
-    kernel_dict = {'k1': {'type': 'gaussian', 'width': 0.5, 'scaling': 0.8},
-                   'c1': {'type': 'constant', 'const': 1.e-3}}
-    regularization = 1.e-3
+    kernel_dict = {'k1': {'type': 'gaussian', 'width': 0.5, 'scaling': 2.},
+                   'c1': {'type': 'constant', 'const': 1.e-6,
+                          'bounds': ((1.e-12, None),)}
+                   }
+    regularization = 1.e-4
     train_matrix, train_targets, test_matrix, test_targets = get_data()
     train_features, targets, test_features = scale_test(train_matrix,
                                                         train_targets,
@@ -119,8 +121,8 @@ def lml_plotter(train_features, train_targets, test_features, kernel_dict,
             function = lml.log_marginal_likelihood(
                 theta, np.array(train_features), np.array(train_targets),
                 kernel_dict, scale_optimizer, eval_gradients, eval_jac=True)
-            Y.append(function[0])
-            dY.append(function[1])
+            Y.append(-function[0])
+            dY.append(-function[1])
         n_x = np.ceil(np.sqrt(d_max))
         n_y = n_x + 1
         ax = plt.subplot(n_x, n_y, d + 1)
@@ -139,9 +141,9 @@ if __name__ == '__main__':
 
     profiler = Profiler()
     profiler.start()
-    kernel_dict = {'k1': {'type': 'gaussian', 'width': 0.5, 'scaling': 0.8},
+    kernel_dict = {'k1': {'type': 'gaussian', 'width': 0.5, 'scaling': 2.},
                    'c1': {'type': 'constant', 'const': 1.e-3,
-                          'bounds': ((1.e-14, None),)}}
+                          'bounds': ((1.e-12, None),)}}
     regularization = 1.e-3
     train_matrix, train_targets, test_matrix, test_targets = get_data()
     train_features, targets, test_features = scale_test(train_matrix,

@@ -14,9 +14,8 @@ class TestIO(unittest.TestCase):
 
     def train_model(self, train_features, train_targets):
         """Function to train a Gaussian process."""
-        stg = np.std(train_features, axis=0)
         kdict = {
-            'k1': {'type': 'gaussian', 'width': stg, 'scaling': 1.},
+            'k1': {'type': 'gaussian', 'width': 0.5, 'scaling': 1.},
             'k2': {'type': 'linear', 'scaling': 1.},
             'k3': {'type': 'constant', 'const': 1.},
             'k4': {'type': 'quadratic', 'slope': 1., 'degree': 1.,
