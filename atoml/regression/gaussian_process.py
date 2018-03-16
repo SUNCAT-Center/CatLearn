@@ -238,6 +238,7 @@ class GaussianProcess(object):
 
         # Invert the covariance matrix.
         self.cinv = np.linalg.inv(cvm)
+        self._update_lml()
 
     def optimize_hyperparameters(self, global_opt=False, algomin='L-BFGS-B',
                                  eval_jac=False, loss_function='lml'):
@@ -354,6 +355,8 @@ class GaussianProcess(object):
 
         if optimize_hyperparameters:
             self.optimize_hyperparameters()
+        else:
+            self._update_lml()
 
     def _make_prediction(self, ktb, cinv, target):
         """Function to make the prediction.
@@ -424,3 +427,17 @@ class GaussianProcess(object):
                                                  epsilon=epsilon)
 
         return data
+
+    def _update_lml(self):
+        # Create a list of all hyperparameters.
+        theta = kdicts2list(self.kernel_dict, N_D=self.N_D)
+        theta = np.append(theta, self.regularization)
+        # Update log marginal likelihood.
+        self.log_marginal_likelihood = log_marginal_likelihood(
+                theta=theta,
+                train_matrix=np.array(self.train_fp),
+                targets=np.array(self.train_target),
+                kernel_dict=self.kernel_dict,
+                scale_optimizer=self.scale_optimizer,
+                eval_gradients=self.eval_gradients,
+                eval_jac=False)

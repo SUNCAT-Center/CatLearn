@@ -98,15 +98,13 @@ def gaussian_kernel(theta, log_scale, m1, m2=None, eval_gradients=False):
     return k
 
 
-def gaussian_dk_dwidth(k, j, m1, kwidth, log_scale=False):
+def gaussian_dk_dwidth(k, m1, kwidth, log_scale=False):
     """Return gradient of the gaussian kernel with respect to the j'th width.
 
     Parameters
     ----------
     k : array
-        The (not scaled) gaussian kernel.
-    j : int
-        Index of the width to derive wrt.
+        n by n array. The (not scaled) gaussian kernel.
     m1 : list
         A list of the training fingerprint vectors.
     kwidth : float
@@ -116,20 +114,16 @@ def gaussian_dk_dwidth(k, j, m1, kwidth, log_scale=False):
     """
     if log_scale:
         raise NotImplementedError("Log scale hyperparameters in jacobian.")
-    # Get dimensions
-    N, N_D = np.shape(m1)
-    # Set features other than the j'th to zero.
-    j_matrix = np.zeros([N, N_D])
-    j_matrix[:, j] = m1[:, j]
-    # Calculate the Gram matrix
-    gram = distance.pdist(j_matrix, metric='sqeuclidean')
-    dgdw = distance.squareform(gram / kwidth[j] ** 3)
-    # dgdw is the derivative of the nested function.
-    np.fill_diagonal(dgdw, 0)
-    # Use the chain rule to get the gradient.
-    dfdg = k
-    dkdw_j = np.multiply(dfdg, dgdw)
-    return dkdw_j
+    if len(kwidth) == 1:
+        dkdw = distance.pdist(m1, metric='sqeuclidean')
+        dkdw = distance.squareform(dkdw / (kwidth[0] ** 3))
+        np.fill_diagonal(dkdw, 0)
+        dkdw *= k
+        return dkdw[..., np.newaxis]
+    dkdw = (m1[:, np.newaxis, :] - m1[np.newaxis, :, :]) ** 2 / (kwidth ** 3)
+    # Chain rule.
+    dkdw *= k[..., np.newaxis]
+    return dkdw
 
 
 def sqe_kernel(theta, log_scale, m1, m2=None, eval_gradients=False):
@@ -213,19 +207,19 @@ def AA_kernel(theta, log_scale, m1, m2=None, eval_gradients=False):
     m2 : list
         A list of the training fingerprint vectors.
     """
-    l = theta[0]
+    ll = theta[0]
     c = np.vstack(theta[1:])
     if log_scale:
-        l, c = np.exp(l), np.exp(c)
+        ll, c = np.exp(ll), np.exp(c)
 
     if not eval_gradients:
         n = np.shape(m1)[1]
-        q = (1 - l) / (c - l)
+        q = (1 - ll) / (c - ll)
         if m2 is None:
             m2 = m1
 
         return distance.cdist(
-            m1, m2, lambda u, v: (l ** (n - np.sqrt(((u - v) ** 2))) *
+            m1, m2, lambda u, v: (ll ** (n - np.sqrt(((u - v) ** 2))) *
                                   (q ** np.sqrt((u - v) ** 2))).sum())
 
     else:
@@ -306,12 +300,12 @@ def quadratic_kernel(theta, log_scale, m1, m2=None, eval_gradients=False):
         raise NotImplementedError(msg)
 
 
-def quadratic_dk_dslope(k, j, m1, kwidth_j, log_scale=False):
-    raise NotImplementedError("Quadratic kernel gradient wrt. slope.")
+def quadratic_dk_dslope(k, m1, slope, log_scale=False):
+    raise NotImplementedError("Quadratic kernel jacobian wrt. slope.")
 
 
-def quadratic_dk_ddegree(k, j, m1, kwidth_j, log_scale=False):
-    raise NotImplementedError("Quadratic kernel gradient wrt. degree.")
+def quadratic_dk_ddegree(k, m1, degree, log_scale=False):
+    raise NotImplementedError("Quadratic kernel jacobian wrt. degree.")
 
 
 def laplacian_kernel(theta, log_scale, m1, m2=None, eval_gradients=False):
@@ -349,3 +343,19 @@ def laplacian_kernel(theta, log_scale, m1, m2=None, eval_gradients=False):
         msg = 'Evaluation of the gradients for this kernel is not yet '
         msg += 'implemented'
         raise NotImplementedError(msg)
+
+
+def laplacian_dk_dwidth(k, m1, kwidth, log_scale=False):
+    # raise NotImplementedError("Laplacian kernel jacobian wrt. width.")
+    if log_scale:
+        raise NotImplementedError("Log scale hyperparameters in jacobian.")
+    if len(kwidth) == 1:
+        dkdw = distance.pdist(m1 / (kwidth[0] ** 2), metric='cityblock')
+        dkdw = distance.squareform(dkdw)
+        np.fill_diagonal(dkdw, 0)
+        dkdw *= k
+        return dkdw[..., np.newaxis]
+    dkdw = abs(m1[:, np.newaxis, :] - m1[np.newaxis, :, :]) / (kwidth ** 2)
+    # Chain rule.
+    dkdw *= k[..., np.newaxis]
+    return dkdw
