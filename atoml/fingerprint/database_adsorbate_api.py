@@ -13,6 +13,7 @@ import numpy as np
 import ase.db
 from ase.atoms import string2symbols
 from ase.geometry import get_layers
+import datetime
 from .periodic_table_data import get_radius
 
 addsyms = ['H', 'C', 'O', 'N', 'S']
@@ -348,7 +349,8 @@ def db2surf_info(fname, id_dict, formation_energies=None):
         atoms = c.get_atoms(dbid)
         atoms.info['key_value_pairs'] = d.key_value_pairs
         atoms.info['dbid'] = dbid
-        atoms.info['ctime'] = float(d.ctime)
+        atoms.info['time'] = (datetime.datetime.fromtimestamp(float(d.ctime)) -
+                              datetime.datetime(1970, 1, 1)).total_seconds()
         species = atoms.info['key_value_pairs']['species']
         if species == '':
             print('Warning: No adsorbate.', fname, dbid)
@@ -385,7 +387,8 @@ def db2atoms_info(fname, selection=[]):
         dbid = int(d.id)
         atoms = c.get_atoms(dbid)
         atoms.info['key_value_pairs'] = d.key_value_pairs
-        atoms.info['ctime'] = float(d.ctime)
+        atoms.info['time'] = (datetime.datetime.fromtimestamp(float(d.ctime)) -
+                              datetime.datetime(1970, 1, 1)).total_seconds()
         atoms.info['dbid'] = int(d.id)
         species = atoms.info['key_value_pairs']['species']
         atoms.info['ads_atoms'] = formula2ads_index(atoms, species)
