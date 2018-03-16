@@ -2,98 +2,117 @@
 import numpy as np
 import hashlib
 import time
-from atoml.regression import GaussianProcess
-import copy
+import multiprocessing
+from tqdm import trange, tqdm
 
-def simple_learning_curve(trainx, trainy, testx, testy,
-                          kernel_dict, regularization,
-                          step=1, min_data=2,
-                          optimize_interval=None, eval_jac=False):
-    """Evaluate validation error versus training data size.
 
-    Parameters
-    ----------
-    gp : GaussianProcess class
-        create it from atoml.GaussianProcess
-    testx : array
-        Feature matrix for the test data.
-    testy : list
-        A list of the the test targets used to generate the prediction
-        errors.
-    step : integer
-        Number of datapoints per prediction iteration.
-    min_data : integer
-        Number of datapoints in first prediction iteration.
-    optimize_interval : integer or None
-        Reoptimize the hyperparameters every this many datapoints.
+class LearningCurve(object):
+    """The simple learning curve class."""
 
-    Returns
-    -------
-    N_data : list
-        Training data size.
-    rmse_average : list
-        Root mean square validation error.
-    absolute_average : list
-        Mean absolute validation error.
-    signed_mean : list
-        Signed mean validation error.
-    """
-    if min_data < 2:
-        raise ValueError("min_data must be at least 2.")
-    # Retrieve the full training data and training targets from gp.
-    # If the targets are standardized, convert back to the raw targets.
-    rmse = []
-    mae = []
-    signed_mean = []
-    Ndata = []
-    opt_time = []
-    pred_time = []
-    lml = []
-    gp = GaussianProcess(train_fp=copy.deepcopy(trainx),
-                         train_target=copy.deepcopy(trainy),
-                         kernel_dict=kernel_dict.copy(),
-                         regularization=float(regularization),
-                         optimize_hyperparameters=False)
-    for low in range(min_data, len(trainx) + 1, step)[::-1]:
-        # Update the training data in the gp.
-        print('reset.')
-        print(kernel_dict, regularization)
-        print('update.')
-        gp.update_gp(train_fp=copy.deepcopy(trainx[:low, :]),
-                     train_target=copy.deepcopy(trainy[:low]),
-                     kernel_dict=copy.deepcopy(kernel_dict))
-                     # regularization=copy.deepcopy(regularization))
-        gp.regularization = float(regularization)
-        print(gp.kernel_dict, gp.regularization)
-        start = time.time()
-        if optimize_interval is not None and low % optimize_interval == 0:
-            gp.optimize_hyperparameters(eval_jac=eval_jac)
-        end_opt = time.time()
-        print(end_opt - start, 'seconds')
-        # Do the prediction
-        print(np.mean(trainy), np.std(trainy))
-        pred = gp.predict(test_fp=copy.deepcopy(testx),
-                          get_validation_error=True,
-                          get_training_error=False,
-                          uncertainty=True,
-                          test_target=copy.deepcopy(testy))
-        # Store the error associated with the predictions in lists.
-        end_pred = time.time()
-        Ndata.append(len(trainy[:low]))
-        rmse.append(pred['validation_error']['rmse_average'])
-        mae.append(pred['validation_error']['absolute_average'])
-        signed_mean.append(pred['validation_error']['signed_mean'])
-        opt_time.append(end_opt - start)
-        pred_time.append(end_pred - end_opt)
-        lml.append(gp.log_marginal_likelihood)
-    output = {'N_data': Ndata,
-              'rmse_average': rmse,
-              'absolute_average': mae,
-              'signed_mean': signed_mean,
-              'opt_time': opt_time,
-              'pred_time': pred_time,
-              'log_marginal_likelihood': lml}
-    return output
+    def __init__(self, nprocs=1):
+        """Initialize the class.
+
+        Parameters
+        ----------
+        nprocs : int
+            Number of processers used in parallel implementation. Default is 1
+            e.g. serial.
+        """
+        self.nprocs = nprocs
+
+    def learning_curve(self, predict, train, target, test, test_target,
+                       step=1, min_data=2):
+        """Evaluate custom metrics versus training data size.
+
+        Parameters
+        ----------
+        predict : object
+            A function that will make the predictions. predict should accept
+            the parameters:
+                train_features : array
+                test_features : array
+                train_targets : list
+                test_targets : list
+            predict should return either a float or a list of floats. The float
+            or the first value of the list will be used as the fitness score.
+        train : array
+            An n, d array of training examples.
+        targets : list
+            A list of the target values.
+        test : array
+            An n, d array of training examples.
+        test targets : list
+            A list of the test target values.
+
+        Returns
+        -------
+        output : array
+            Each row is the output from the predict object.
+        """
+        n, d = np.shape(train)
+        # Get total number of iterations
+        total = (n - min_data) // step
+        output = []
+        # Iterate through the data subset.
+        if self.nprocs != 1:
+            # First a parallel implementation.
+            pool = multiprocessing.Pool(self.nprocs)
+            tasks = np.arange(total)
+            args = (
+                (x, step, train, test, target,
+                 test_target, predict) for x in tasks)
+            for r in tqdm(pool.imap_unordered(
+                    self._single_model, args), total=total,
+                    desc='nested              ', leave=False):
+                output.append(r)
+                # Wait to make things more stable.
+                time.sleep(0.001)
+            pool.close()
+        else:
+            # Then a more clear serial implementation.
+            for x in trange(
+                    total,
+                    desc='nested              ', leave=False):
+                args = (x, step, train, test,
+                        target, test_target, predict)
+                r = self._single_model(args)
+                output.append(r)
+        return output
+
+    def _single_model(self, args):
+        """Run a model on a subset of training data with a fixed test set.
+
+        Parameters
+        ----------
+        args : tuple
+            Parameters and data to be passed to model.
+
+        Returns
+        -------
+        f : int
+            Feature index being eliminated.
+        error : float
+            A cost function.
+            Typically the log marginal likelihood or goodness of fit.
+        meta : list
+            Additional optional values. Typically cross validation scores.
+        """
+        # Unpack args tuple.
+        x = args[0]
+        n = x * args[1]
+        train_features = args[2]
+        test = args[3]
+        train_targets = args[4]
+        test_targets = args[5]
+        predict = args[6]
+
+        # Delete required subset of training examples.
+        train = train_features[-n:, :]
+        targets = train_targets[-n:]
+
+        # Calculate the error or other metrics from the model.
+        result = predict(train, targets, test, test_targets)
+        return result
 
 
 def geometry_hash(atoms):
