@@ -18,7 +18,7 @@ def prepare_kernels(kernel_dict, regularization_bounds, eval_gradients, N_D):
     """
     # Set some default bounds.
     bounds = ()
-    default_bounds = ((1e-12, None),)
+    default_bounds = ((1e-10, None),)
     if eval_gradients:
         default_bounds = ((1e-6, 1e6),)
 
@@ -114,6 +114,9 @@ def _gaussian_setup(kdict_param, bounds, N_D, default_bounds):
         msg = 'Expected width dimensions ({}) do not match '.format(N_D)
         msg += 'those provided ({})'.format(len(theta))
         assert len(theta) == N_D, msg
+    for width in kdict_param['width']:
+        # Require positive widths.
+        assert width > 0
 
     # Format the bounds if provided.
     if 'bounds' in kdict_param:

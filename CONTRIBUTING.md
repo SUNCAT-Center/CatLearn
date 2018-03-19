@@ -101,10 +101,29 @@ This will load up the AtoML directory. To check that everything is working corre
     $ python test/test_suite.py
 ```
 
-To make changes to this, it is possible to simply edit the `Dockerfile`. The current setup uses Python 2.7, to change this to Python 3.6 simply edit the first line of the `Dockerfile` to:
+**Use ctrl+d to exit.**
+
+To make changes to this, it is possible to simply edit the `Dockerfile`. The current setup uses Python 2.7, to change this to Python 3.6 simply edit the appropriate lines of the `Dockerfile` to:
 
 ```shell
-    FROM continuumio/anaconda3
+  # Python2
+  # FROM continuumio/anaconda
+  # Python3
+  FROM continuumio/anaconda3
+```
+
+To list the images available on the local system, use the following:
+
+```shell
+  $ docker images
+  $ docker inspect REPOSITORY
+```
+
+It is a good idea to remove old images. This can be performed using the following lines:
+
+```shell
+  $ docker rm $(docker ps -q -f status=exited)
+  $ docker rmi $(docker images -q -f "dangling=true")
 ```
 
 ## Testing
