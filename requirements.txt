@@ -4,5 +4,4 @@ networkx==2.1.0
 numpy==1.14.2
 scikit-learn==0.19.1
 scipy==1.0.0
-sty==1.0.0b4
 tqdm==4.19.8
