@@ -229,10 +229,33 @@ def kdict2list(kdict, N_D=None):
         N_D = len(kdict['features'])
 
     # Store hyperparameters in single list theta
+    theta = _get_theta(kdict, ktype, N_D)
+
+    return scaling, theta
+
+
+def _get_theta(kdict, ktype, N_D):
+    """Generate the theta parameter.
+
+    Parameters
+    ----------
+    kdict : dict
+        A kernel dictionary containing the keys 'type' and optional keys
+        containing the hyperparameters of the kernel.
+    ktype : str
+        The kernel type.
+    N_D : none or int
+        The number of descriptors if not specified in the kernel dict, by the
+        lenght of the lists of hyperparameters.
+    """
+    # Store hyperparameters in single list theta
+    theta = []
     if 'width' in kdict:
         theta = list(kdict['width'])
 
-    # Store hyperparameters in single list theta
+    if 'const' in kdict:
+        theta = [kdict['const']]
+
     if ktype == 'scaled_sqe':
         theta = list(kdict['d_scaling']) + kdict['width']
 
@@ -240,40 +263,16 @@ def kdict2list(kdict, N_D=None):
     elif ktype == 'quadratic':
         theta = list(kdict['slope']) + [kdict['degree']]
 
-    # Linear kernels have only no hyperparameters
-    elif ktype == 'linear':
-        theta = []
-
-    # Constant kernel
-    elif ktype == 'constant':
-        theta = [kdict['const']]
-
     # Default hyperparameter keys for other kernels
-    elif 'hyperparameters' in kdict:
-        theta = kdict['hyperparameters']
-        if N_D is None:
-            N_D = len(theta)
-        if type(theta) is float:
-            theta = [theta] * N_D
+    for param in ['hyperparameters', 'theta']:
+        if param in kdict:
+            theta = kdict[param]
+            if N_D is None:
+                N_D = len(theta)
+            if type(theta) is float:
+                theta = [theta] * N_D
 
-    elif 'theta' in kdict:
-        theta = kdict['theta']
-        if N_D is None:
-            N_D = len(theta)
-        if type(theta) is float:
-            theta = [theta] * N_D
-
-    constrained = []
-    if 'constrained' in kdict:
-        constrained = kdict['constrained']
-        if 'features' in kdict:
-            N_D = len(kdict['constrained'])
-        elif N_D is None:
-            N_D = len(constrained)
-        if type(theta) is float:
-            constrained = [constrained] * N_D
-
-    return scaling, theta
+    return theta
 
 
 def kdicts2list(kernel_dict, N_D=None):
