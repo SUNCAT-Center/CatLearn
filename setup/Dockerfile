@@ -30,5 +30,5 @@ RUN cd magpie; ./gradlew jar
 
 # Install additional python packages.
 COPY requirements.txt .
-RUN pip2 install -r requirements.txt
-RUN pip3 install -r requirements.txt
+RUN pip2 install -r requirements.txt; pip2 install asap3
+RUN pip3 install -r requirements.txt; pip3 install asap3
