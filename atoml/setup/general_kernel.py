@@ -4,7 +4,7 @@ import numpy as np
 
 def general_kernel(features, dimension='single'):
     """Generate a default kernel."""
-    width = default_width(features, dimension)
+    length = default_lengthscale(features, dimension)
 
     default = {
         'k1': {
@@ -14,15 +14,15 @@ def general_kernel(features, dimension='single'):
             'type': 'constant', 'const': 1.,
         },
         'k3': {
-            'type': 'gaussian', 'width': width, 'scaling': 1.,
+            'type': 'gaussian', 'width': length, 'scaling': 1.,
             'dimension': dimension
         },
         'k4': {
-            'type': 'quadratic', 'slope': 1., 'degree': 1., 'scaling': 1.,
+            'type': 'quadratic', 'slope': length, 'degree': 1., 'scaling': 1.,
             'dimension': dimension
         },
         'k5': {
-            'type': 'laplacian', 'width': width, 'scaling': 1.,
+            'type': 'laplacian', 'width': length, 'scaling': 1.,
             'dimension': dimension
         },
     }
@@ -30,8 +30,8 @@ def general_kernel(features, dimension='single'):
     return default
 
 
-def default_width(features, dimension='single'):
-    """Generate defaults for the kernel width.
+def default_lengthscale(features, dimension='single'):
+    """Generate defaults for the kernel lengthscale.
 
     Parameters
     ----------
