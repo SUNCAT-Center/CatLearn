@@ -9,7 +9,14 @@ class GeneralPrepreprocess(object):
     """A general purpose data preprocessing class."""
 
     def __init__(self, clean_type='eliminate'):
-        """Initialize the class."""
+        """Initialize the class.
+
+        Parameters
+        ----------
+        clean_type : str
+            Define method for handling missing data. Currntly only elimination
+            implemented.
+        """
         self.clean_type = clean_type
 
     def process(self, train_features, train_targets, test_features=None):
