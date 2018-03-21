@@ -6,7 +6,7 @@ from ase.data import covalent_radii
 from atoml.fingerprint.periodic_table_data import get_radius
 
 
-def ase_neighborlist(atoms):
+def ase_neighborlist(atoms, cutoffs=None, skin=0.3):
     """Make dict of neighboring atoms using ase function.
 
     This provides a wrapper for the ASE neighborlist generator. Currently
@@ -16,15 +16,22 @@ def ase_neighborlist(atoms):
     ----------
     atoms : object
         Target ase atoms object on which to get neighbor list.
+    cutoffs : list
+        A list of distance paramteres for each atom.
+    skin : float
+        The buffer to allow for small variation in the distance between
+        neighbors.
 
     Returns
     -------
     neighborlist : dict
         A dictionary containing the atom index and each neighbor index.
     """
-    cutoffs = [covalent_radii[a.number] for a in atoms]
+    if cutoffs is None:
+        cutoffs = [covalent_radii[a.number] for a in atoms]
     nl = NeighborList(
-        cutoffs, skin=0.3, sorted=False, self_interaction=False, bothways=True)
+        cutoffs=cutoffs, skin=skin, sorted=False, self_interaction=False,
+        bothways=True)
 
     nl.build(atoms)
 

@@ -11,7 +11,7 @@ from atoml.api.ase_atoms_api import extend_atoms_class
 from atoml.utilities.neighborlist import ase_neighborlist
 
 
-def ase_to_networkx(atoms):
+def ase_to_networkx(atoms, cutoffs=None, skin=0.3):
     """Make the NetworkX graph form ASE atoms object.
 
     The graph is dependent on the generation of the neighborlist. Currently
@@ -41,7 +41,7 @@ def ase_to_networkx(atoms):
     extend_atoms_class(atoms)
     nl = atoms.get_neighborlist()
     if nl is None:
-        nl = ase_neighborlist(atoms)
+        nl = ase_neighborlist(atoms, cutoffs=None, skin=0.3)
 
     for i in nl:
         tup = ((i, nl[i][j]) for j in range(len(nl[i])))
