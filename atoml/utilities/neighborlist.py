@@ -30,10 +30,10 @@ def ase_neighborlist(atoms, cutoffs=None, skin=0.3):
     if cutoffs is None:
         cutoffs = [covalent_radii[a.number] for a in atoms]
     nl = NeighborList(
-        cutoffs=cutoffs, skin=skin, sorted=False, self_interaction=False,
+        cutoffs, skin=skin, sorted=False, self_interaction=False,
         bothways=True)
 
-    nl.build(atoms)
+    nl.update(atoms)
 
     neighborlist = {}
     for i, _ in enumerate(atoms):
