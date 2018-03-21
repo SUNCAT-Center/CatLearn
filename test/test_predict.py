@@ -257,6 +257,15 @@ class TestPrediction(unittest.TestCase):
         print('GeneralGP error: {0:.3f}'.format(
             get_error(pred['prediction'], test_targets)['rmse_average']))
 
+        ggp = GeneralGaussianProcess(dimension='features')
+
+        ggp.train_gaussian_process(train_features, train_targets)
+        pred = ggp.gaussian_process_predict(test_features)
+        self.assertEqual(len(pred['prediction']), len(test_features))
+
+        print('GeneralGP error: {0:.3f}'.format(
+            get_error(pred['prediction'], test_targets)['rmse_average']))
+
 
 if __name__ == '__main__':
     unittest.main()

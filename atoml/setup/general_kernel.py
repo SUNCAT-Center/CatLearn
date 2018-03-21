@@ -38,18 +38,18 @@ def default_lengthscale(features, dimension='single'):
     features : array
         The feature matrix for the training data.
     dimension : str
-        The number of parameters to return. Can be 'single', or 'all'.
+        The number of parameters to return. Can be 'single', or 'features'.
 
     Returns
     -------
     std : array
         The standard deviation of the features.
     """
-    msg = 'The dimension parameter must be "single" or "all"'
-    assert dimension in ['single', 'all'], msg
+    msg = 'The dimension parameter must be "single" or "features"'
+    assert dimension in ['single', 'features'], msg
     axis = None
     if dimension is not 'single':
-        axis = 1
+        axis = 0
 
     std = np.std(features, axis=axis)
 
