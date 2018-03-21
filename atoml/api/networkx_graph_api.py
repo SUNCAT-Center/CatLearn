@@ -21,6 +21,11 @@ def ase_to_networkx(atoms, cutoffs=None, skin=0.3):
     ----------
     atoms : object
         An ASE atoms object.
+    cutoffs : list
+        A list of distance paramteres for each atom.
+    skin : float
+        The buffer to allow for small variation in the distance between
+        neighbors.
 
     Returns
     -------
