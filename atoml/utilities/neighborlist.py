@@ -35,7 +35,7 @@ def ase_neighborlist(atoms):
     return neighborlist
 
 
-def atoml_neighborlist(atoms, dx=None, max_neighbor=1):
+def atoml_neighborlist(atoms, dx=None, max_neighbor=1, mic=True):
     """Make dict of neighboring atoms for discrete system.
 
     Possible to return neighbors from defined neighbor shell e.g. 1st, 2nd,
@@ -67,7 +67,7 @@ def atoml_neighborlist(atoms, dx=None, max_neighbor=1):
         for i in dx:
             dx[i] = get_radius(i) / 5.
 
-    dist = atoms.get_all_distances(mic=True)
+    dist = atoms.get_all_distances(mic=mic)
 
     r_list, b_list = [], []
     for an in atomic_numbers:
