@@ -40,9 +40,13 @@ class LearningCurve(object):
         targets : list
             A list of the target values.
         test : array
-            An n, d array of training examples.
+            An n, d array of test data.
         test targets : list
             A list of the test target values.
+        step : int
+            Incrementent the data set size by this many examples.
+        min_data : int
+            Smallest number of training examples to test.
 
         Returns
         -------
@@ -80,22 +84,29 @@ class LearningCurve(object):
         return output
 
     def _single_model(self, args):
-        """Run a model on a subset of training data with a fixed test set.
+        """Run a model on a subset of training data with a fixed test set, and
+        Return the output of a function specified by the last argument.
 
         Parameters
         ----------
         args : tuple
             Parameters and data to be passed to model.
-
-        Returns
-        -------
-        f : int
-            Feature index being eliminated.
-        error : float
-            A cost function.
-            Typically the log marginal likelihood or goodness of fit.
-        meta : list
-            Additional optional values. Typically cross validation scores.
+            args[0] : int
+                Increment.
+            args[1] : int
+                Step size. args[1] * args[0] training examples will be passed
+                to the regression model.
+            args[2] : array
+                An n, d array of training examples.
+            args[3] : list
+                A list of the target values.
+            args[4] : array
+                An n, d array of test data.
+            args[5] : list
+                A list of the test target values.
+            args[6] : object
+                custom function testing a regression model.
+                Must accept 4 parameters, which are args[2:5].
         """
         # Unpack args tuple.
         x = args[0]
