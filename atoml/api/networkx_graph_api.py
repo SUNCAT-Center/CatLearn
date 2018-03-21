@@ -46,7 +46,7 @@ def ase_to_networkx(atoms, cutoffs=None, skin=0.3):
     extend_atoms_class(atoms)
     nl = atoms.get_neighborlist()
     if nl is None:
-        nl = ase_neighborlist(atoms, cutoffs=None, skin=0.3)
+        nl = ase_neighborlist(atoms, cutoffs, skin)
 
     for i in nl:
         tup = ((i, nl[i][j]) for j in range(len(nl[i])))
