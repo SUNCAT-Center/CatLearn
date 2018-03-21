@@ -91,20 +91,37 @@ The following workflow is recommended when adding some new functionality:
 A [docker](https://www.docker.com) image is included in the repository. It is sometimes easier to develop within a controlled environment such as this. In particular, it is possible for other developers to attain the same environment. To run AtoML in the docker container, use the following commands:
 
 ```shell
-    $ docker build -t atoml .
-    $ docker run -it atoml bash
+    $ docker build -t atoml-local .
+    $ docker run -it atoml-local bash
 ```
 
 This will load up the AtoML directory. To check that everything is working correctly simply run the following:
 
 ```shell
-    $ python test/test_suite.py
+    $ python2 test/test_suite.py
+    $ python3 test/test_suite.py
 ```
 
-To make changes to this, it is possible to simply edit the `Dockerfile`. The current setup uses Python 2.7, to change this to Python 3.6 simply edit the first line of the `Dockerfile` to:
+This will run the `test_suite.py` script with python version 2 and 3, respectively. If one version of python is preferred over the other, it is possible to create an alias as normal with:
 
 ```shell
-    FROM continuumio/anaconda3
+  $ alias python=python3
+```
+
+**Use ctrl+d to exit.**
+
+To make changes to this, it is possible to simply edit the `Dockerfile`. To list the images available on the local system, use the following:
+
+```shell
+  $ docker images
+  $ docker inspect REPOSITORY
+```
+
+It is a good idea to remove old images. This can be performed using the following lines:
+
+```shell
+  $ docker rm $(docker ps -q -f status=exited)
+  $ docker rmi $(docker images -q -f "dangling=true")
 ```
 
 ## Testing

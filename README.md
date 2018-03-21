@@ -44,8 +44,8 @@ Be sure to install dependencies in with:
 It is necessary to have [docker](https://www.docker.com) installed and running. Then it is possible to run AtoML inside a docker image. After cloning the project, build and run the image as follows:
 
 ```shell
-    $ docker build -t atoml .
-    $ docker run -it atoml bash
+    $ docker build -t atoml-local .
+    $ docker run -it atoml-local bash
 ```
 
 Use Ctrl + d to exit the docker image when done.
