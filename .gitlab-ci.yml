@@ -2,7 +2,7 @@ build:py2:
   image: continuumio/anaconda
   script:
     - python -V
-    - pip install requirements.txt
+    - pip install -r requirements.txt
     - export PYTHONPATH=$PWD/:$PYTHONPATH
     - py.test --cov=atoml test/test_suite.py
 
