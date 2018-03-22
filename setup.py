@@ -14,7 +14,7 @@ reqs = [str(req) for req in install_reqs]
 
 setuptools.setup(
     name="AtoML",
-    version="0.3.1",
+    version="0.3.2",
     url="https://gitlab.com/atoML/AtoML",
 
     author="Paul C. Jennings, Martin H. Hansen",
@@ -22,6 +22,7 @@ setuptools.setup(
 
     description="Machine Learning using atomic-scale calculations.",
     long_description=open('README.md').read(),
+    long_description_content_type="text/markdown",
 
     packages=setuptools.find_packages(),
 
