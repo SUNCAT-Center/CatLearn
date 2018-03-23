@@ -10,7 +10,7 @@ import ase.db
 from atoml.fingerprint.voro_fingerprint import VoronoiFingerprintGenerator
 
 
-class TestBulkFeatures(unittest.TestCase):
+class TestVoronoiFeatures(unittest.TestCase):
     """Test out the adsorbate feature generation."""
 
     def get_data(self):
