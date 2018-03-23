@@ -1,13 +1,10 @@
-# Python2 container.
-FROM continuumio/anaconda
-# Python3 container.
-# FROM continuumio/anaconda3
+FROM jenningspc/atoml:latest
 
 # Set environment variables.
 ENV LANG=C.UTF-8 LC_ALL=C.UTF-8
 
 # Add some descriptive labels.
-LABEL Description="This image is used to test AtoML." Version="0.3.1"
+LABEL Description="This image is used to run AtoML locally." Version="0.3.1"
 
 # Create the root directory.
 RUN mkdir AtoML
@@ -19,6 +16,3 @@ WORKDIR /AtoML
 
 # Set the PYTHONPATH.
 ENV PYTHONPATH=$PWD/:$PYTHONPATH
-
-# Install additional python packages.
-RUN pip install ase pytest-cov pyinstrument tqdm
