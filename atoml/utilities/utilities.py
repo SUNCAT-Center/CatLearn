@@ -66,7 +66,7 @@ class LearningCurve(object):
                 (x, step, train, test, target,
                  test_target, predict) for x in tasks)
             for r in tqdm(pool.imap_unordered(
-                    self._single_model, args), total=total,
+                    _single_model, args), total=total,
                     desc='nested              ', leave=False):
                 output.append(r)
                 # Wait to make things more stable.
@@ -79,51 +79,52 @@ class LearningCurve(object):
                     desc='nested              ', leave=False):
                 args = (x, step, train, test,
                         target, test_target, predict)
-                r = self._single_model(args)
+                r = _single_model(args)
                 output.append(r)
         return output
 
-    def _single_model(self, args):
-        """Run a model on a subset of training data with a fixed test set, and
-        Return the output of a function specified by the last argument.
 
-        Parameters
-        ----------
-        args : tuple
-            Parameters and data to be passed to model.
-            args[0] : int
-                Increment.
-            args[1] : int
-                Step size. args[1] * args[0] training examples will be passed
-                to the regression model.
-            args[2] : array
-                An n, d array of training examples.
-            args[3] : list
-                A list of the target values.
-            args[4] : array
-                An n, d array of test data.
-            args[5] : list
-                A list of the test target values.
-            args[6] : object
-                custom function testing a regression model.
-                Must accept 4 parameters, which are args[2:5].
-        """
-        # Unpack args tuple.
-        x = args[0]
-        n = x * args[1]
-        train_features = args[2]
-        test = args[3]
-        train_targets = args[4]
-        test_targets = args[5]
-        predict = args[6]
+def _single_model(args):
+    """Run a model on a subset of training data with a fixed test set, and
+    Return the output of a function specified by the last argument.
 
-        # Delete required subset of training examples.
-        train = train_features[-n:, :]
-        targets = train_targets[-n:]
+    Parameters
+    ----------
+    args : tuple
+        Parameters and data to be passed to model.
+        args[0] : int
+            Increment.
+        args[1] : int
+            Step size. args[1] * args[0] training examples will be passed
+            to the regression model.
+        args[2] : array
+            An n, d array of training examples.
+        args[3] : list
+            A list of the target values.
+        args[4] : array
+            An n, d array of test data.
+        args[5] : list
+            A list of the test target values.
+        args[6] : object
+            custom function testing a regression model.
+            Must accept 4 parameters, which are args[2:5].
+    """
+    # Unpack args tuple.
+    x = args[0]
+    n = x * args[1]
+    train_features = args[2]
+    test = args[3]
+    train_targets = args[4]
+    test_targets = args[5]
+    predict = args[6]
 
-        # Calculate the error or other metrics from the model.
-        result = predict(train, targets, test, test_targets)
-        return result
+    # Delete required subset of training examples.
+    train = train_features[-n:, :]
+    targets = train_targets[-n:]
+
+    # Calculate the error or other metrics from the model.
+    result = predict(train, targets, test, test_targets)
+    return result
 
 
 def geometry_hash(atoms):
