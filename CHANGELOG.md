@@ -1,12 +1,13 @@
-# Version 0.3.2 (March 2018)
+# dev
 
+-   Voronoi and prototype feature generation added.
+-   Magpie api added.
 -   Add in better neighborlist generation.
     -   Updated wrapper for ase neighborlist.
     -   Updated AtoML neighborlist generator.
 -   Add basic NetworkX api.
 -   Add some general functions to clean data and build a GP.
 -   Clean up some bits of code, fix some bugs.
-
 
 # Version 0.3.1 (February 2018)
 
