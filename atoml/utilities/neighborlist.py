@@ -12,7 +12,7 @@ def ase_neighborlist(atoms):
     nl = NeighborList(
         cutoffs, skin=0.3, sorted=False, self_interaction=False, bothways=True)
 
-    nl.build(atoms)
+    nl.update(atoms)
 
     neighborlist = {}
     for i, _ in enumerate(atoms):

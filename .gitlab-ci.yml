@@ -1,15 +1,17 @@
 build:py2:
-  image: continuumio/anaconda
+  image: jenningspc/atoml:latest
   script:
+    - alias python=python2
     - python -V
-    - pip install ase pytest-cov tqdm
+    - pip2 install -r requirements.txt
     - export PYTHONPATH=$PWD/:$PYTHONPATH
     - py.test --cov=atoml test/test_suite.py
 
 build:py3:
-  image: continuumio/anaconda3
+  image: jenningspc/atoml:latest
   script:
+    - alias python=python3
     - python -V
-    - pip install ase pytest-cov tqdm
+    - pip3 install -r requirements.txt
     - export PYTHONPATH=$PWD/:$PYTHONPATH
     - py.test --cov=atoml test/test_suite.py

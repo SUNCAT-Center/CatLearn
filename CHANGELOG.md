@@ -1,3 +1,8 @@
+# Version 0.3.2 (March 2018)
+
+-   Voronoi and prototype feature generation added.
+-   Magpie api added.
+
 # Version 0.3.1 (February 2018)
 
 -   Added a parallel version of the greedy feature selection. **Python3 only!**

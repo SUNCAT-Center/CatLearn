@@ -41,11 +41,23 @@ Be sure to install dependencies in with:
 
 ### Docker
 
-It is necessary to have [docker](https://www.docker.com) installed and running. Then it is possible to run AtoML inside a docker image. After cloning the project, build and run the image as follows:
+To use the docker image, it is necessary to have [docker](https://www.docker.com) installed and running. After cloning the project, build and run the image as follows:
 
 ```shell
-    $ docker build -t atoml .
-    $ docker run -it atoml bash
+    $ docker build -t atoml-local .
+```
+
+Then it is possible to use the image in two ways. It is possible to run the docker image as a bash environment in which AtoML can be used will all dependencies in place.
+
+```shell
+    $ docker run -it atoml-local bash
+```
+
+Or python can be run from the docker image.
+
+```shell
+    $ docker run -it atoml-local python2 [file.py]
+    $ docker run -it atoml-local python3 [file.py]
 ```
 
 Use Ctrl + d to exit the docker image when done.
@@ -106,6 +118,7 @@ Anyone is welcome to contribute to the project. Please see the contribution guid
 ### Contributors
 
 -   Jose A. Garrido Torres
+-   Ziyun Wang
 -   Jacob Boes
 -   Andrew Doyle
 -   Markus Ekvall
