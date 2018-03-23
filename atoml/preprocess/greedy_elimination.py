@@ -101,7 +101,7 @@ class GreedyElimination(object):
                         (x, train_features, test_features, train_targets,
                          test_targets, predict) for x in tasks)
                     for r in tqdm(pool.imap_unordered(
-                            self._single_elimination, args), total=d,
+                            _single_elimination, args), total=d,
                             desc='nested              ', leave=False):
                         self.result[self.index][r[0]] = r[1]
                         if len(r) > 2:
@@ -116,7 +116,7 @@ class GreedyElimination(object):
                             d, desc='nested              ', leave=False):
                         args = (x, train_features, test_features,
                                 train_targets, test_targets, predict)
-                        r = self._single_elimination(args)
+                        r = _single_elimination(args)
                         self.result[self.index][r[0]] = r[1]
                         if len(r) > 2:
                             meta_k.append(r[2])
@@ -143,41 +143,42 @@ class GreedyElimination(object):
 
         return output
 
-    def _single_elimination(self, args):
-        """Function to eliminate a single feature and make a prediction.
 
-        Parameters
-        ----------
-        args : tuple
-            Parameters and data to be passed to elimination function.
+def _single_elimination(args):
+    """Function to eliminate a single feature and make a prediction.
 
-        Returns
-        -------
-        f : int
-            Feature index being eliminated.
-        error : float
-            A cost function.
-            Typically the log marginal likelihood or goodness of fit.
-        meta : list
-            Additional optional values. Typically cross validation scores.
-        """
-        # Unpack args tuple.
-        f = args[0]
-        train_features = args[1]
-        test_features = args[2]
-        train_targets = args[3]
-        test_targets = args[4]
-        predict = args[5]
+    Parameters
+    ----------
+    args : tuple
+        Parameters and data to be passed to elimination function.
 
-        # Delete required index.
-        train = np.delete(train_features, f, axis=1)
-        test = np.delete(test_features, f, axis=1)
+    Returns
+    -------
+    f : int
+        Feature index being eliminated.
+    error : float
+        A cost function.
+        Typically the log marginal likelihood or goodness of fit.
+    meta : list
+        Additional optional values. Typically cross validation scores.
+    """
+    # Unpack args tuple.
+    f = args[0]
+    train_features = args[1]
+    test_features = args[2]
+    train_targets = args[3]
+    test_targets = args[4]
+    predict = args[5]
 
-        # Calculate the error on predictions.
-        result = predict(train, train_targets, test, test_targets)
+    # Delete required index.
+    train = np.delete(train_features, f, axis=1)
+    test = np.delete(test_features, f, axis=1)
 
-        if isinstance(result, list):
-            error = result[0]
-            meta = result[1:]
-            return f, error, meta
-        return f, result
+    # Calculate the error on predictions.
+    result = predict(train, train_targets, test, test_targets)
+
+    if isinstance(result, list):
+        error = result[0]
+        meta = result[1:]
+        return f, error, meta
+    return f, result
