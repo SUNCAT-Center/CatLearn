@@ -814,6 +814,6 @@ class AdsorbateFingerprintGenerator(BaseGenerator):
 
     def get_ctime(self, atoms=None):
         if atoms is None:
-            return ['ctime']
+            return ['time']
         else:
-            return [int(atoms.info['ctime'])]
+            return [atoms.info['time']]
