@@ -14,6 +14,13 @@ RUN apt-get install -y python2.7 && \
     apt-get install -y python-pip && \
     apt-get install -y python3-pip
 
+# Install additional python packages.
+COPY requirements.txt .
+RUN pip2 install -r requirements.txt; pip2 install asap3
+RUN pip3 install -r requirements.txt; pip3 install asap3
+
+RUN apt-get update
+
 # Install java.
 RUN apt-get -y install software-properties-common && \
     add-apt-repository -y ppa:webupd8team/java && \
@@ -21,14 +28,8 @@ RUN apt-get -y install software-properties-common && \
     echo debconf shared/accepted-oracle-license-v1-1 select true | debconf-set-selections && \
     echo debconf shared/accepted-oracle-license-v1-1 seen true | debconf-set-selections && \
     apt -y install oracle-java8-installer && \
-    apt -y install oracle-java8-set-default && \
-    apt-get -y install git
+    apt -y install oracle-java8-set-default
 
-# Install Magpie.
-RUN git clone --recursive https://bitbucket.org/wolverton/magpie
-RUN cd magpie; ./gradlew jar
-
-# Install additional python packages.
-COPY requirements.txt .
-RUN pip2 install -r requirements.txt; pip2 install asap3
-RUN pip3 install -r requirements.txt; pip3 install asap3
+# Insatll some additional functionality.
+RUN apt-get -y install git && \
+    apt-get -y install vim

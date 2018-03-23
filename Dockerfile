@@ -16,7 +16,3 @@ WORKDIR /AtoML
 
 # Set the PYTHONPATH.
 ENV PYTHONPATH=$PWD/:$PYTHONPATH
-
-# Install additional python packages.
-RUN pip2 install pytest-cov
-RUN pip3 install pytest-cov

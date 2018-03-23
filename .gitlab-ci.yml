@@ -3,7 +3,7 @@ build:py2:
   script:
     - alias python=python2
     - python -V
-    - pip2 install pytest-cov
+    - pip2 install -r requirements.txt
     - export PYTHONPATH=$PWD/:$PYTHONPATH
     - py.test --cov=atoml test/test_suite.py
 
@@ -12,6 +12,6 @@ build:py3:
   script:
     - alias python=python3
     - python -V
-    - pip3 install pytest-cov
+    - pip3 install -r requirements.txt
     - export PYTHONPATH=$PWD/:$PYTHONPATH
     - py.test --cov=atoml test/test_suite.py
