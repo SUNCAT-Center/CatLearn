@@ -1,7 +1,8 @@
 # dev
 
--   Voronoi and prototype feature generation added.
 -   Magpie api added.
+-   Voronoi and prototype feature generation added.
+-   Parallelism updated to be compatable with Python2.
 -   Add in better neighborlist generation.
     -   Updated wrapper for ase neighborlist.
     -   Updated AtoML neighborlist generator.
