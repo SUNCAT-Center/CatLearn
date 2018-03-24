@@ -3,6 +3,9 @@ import numpy as np
 import unittest
 
 from atoml.preprocess import clean_data as clean
+from atoml.setup.general_preprocess import GeneralPrepreprocess
+
+from common import get_data
 
 
 class TestDataClean(unittest.TestCase):
@@ -38,6 +41,21 @@ class TestDataClean(unittest.TestCase):
         features = clean.clean_infinite(features)['train']
 
         self.assertTrue(np.shape(features) == (50, 4))
+
+    def test_general(self):
+        """Test the general cleaning/scaling function."""
+        train_features, train_targets, test_features, _ = get_data()
+
+        clean = GeneralPrepreprocess()
+        clean_train, clean_targets, clean_test = clean.process(
+            train_features, train_targets, test_features)
+
+        self.assertNotEqual(np.shape(train_features), np.shape(clean_train))
+        self.assertEqual(np.shape(train_targets), np.shape(clean_targets))
+
+        transform_test = clean.transform(test_features)
+
+        self.assertTrue(np.allclose(clean_test, transform_test))
 
 
 if __name__ == '__main__':

@@ -113,7 +113,7 @@ class Hierarchy(object):
         if self.file_format is 'json':
             with open('{0}.{1}'.format(self.file_name, self.file_format),
                       'r') as textfile:
-                    data = json.load(textfile)
+                data = json.load(textfile)
         elif self.file_format is 'pickle':
             with open('{0}.{1}'.format(self.file_name, self.file_format),
                       'rb') as textfile:
@@ -258,7 +258,7 @@ class Hierarchy(object):
         if self.file_format == 'json':
             with open('{0}.{1}'.format(self.file_name, self.file_format),
                       'w') as textfile:
-                    json.dump(data, textfile)
+                json.dump(data, textfile)
         elif self.file_format == 'pickle':
             with open('{0}.{1}'.format(self.file_name, self.file_format),
                       'wb') as textfile:

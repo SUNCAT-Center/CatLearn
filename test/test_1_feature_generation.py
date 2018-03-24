@@ -11,7 +11,7 @@ from ase.ga.data import DataConnection
 
 from atoml import __path__ as atoml_path
 from atoml.api.ase_data_setup import get_unique, get_train
-from atoml.fingerprint import FeatureGenerator
+from atoml.fingerprint.setup import FeatureGenerator
 from atoml.fingerprint.neighbor_matrix import neighbor_features
 from atoml.fingerprint.periodic_table_data import (get_mendeleev_params,
                                                    default_params)
@@ -131,6 +131,32 @@ class TestFeatureGeneration(unittest.TestCase):
             [f.eigenspectrum_vec, f.element_mass_vec, f.composition_vec]))
                         == d)
         print('passed combined generation')
+
+        train_fp = f.return_vec(trainset['atoms'], [f.neighbor_sum_vec])
+        n, d = np.shape(train_fp)
+        self.assertTrue(n == train_size and d == len(trainset['atoms'][0]))
+        # self.assertTrue(len(f.return_names([f.distance_vec])) == d)
+        print('passed neighbor_sum_vec')
+
+        train_fp = f.return_vec(trainset['atoms'], [f.neighbor_mean_vec])
+        n, d = np.shape(train_fp)
+        self.assertTrue(n == train_size and d == len(trainset['atoms'][0]))
+        # self.assertTrue(len(f.return_names([f.distance_vec])) == d)
+        print('passed neighbor_mean_vec')
+
+        f = FeatureGenerator(
+            element_parameters='atomic_radius', max_neighbors='full', nprocs=1)
+        f.normalize_features(trainset['atoms'], testset['atoms'])
+
+        train_fp = f.return_vec(trainset['atoms'], [f.neighbor_sum_vec])
+        n, d = np.shape(train_fp)
+        self.assertTrue(n == train_size and d == len(trainset['atoms'][0]))
+        print('passed neighbor_sum_vec all neighbors')
+
+        train_fp = f.return_vec(trainset['atoms'], [f.neighbor_mean_vec])
+        n, d = np.shape(train_fp)
+        self.assertTrue(n == train_size and d == len(trainset['atoms'][0]))
+        print('passed neighbor_mean_vec all neighbors')
 
         # Do basic check for atomic porperties.
         no_prop = []

@@ -5,6 +5,7 @@ build:py2:
     - python -V
     - pip2 install -r requirements.txt
     - export PYTHONPATH=$PWD/:$PYTHONPATH
+    - pip2 install --upgrade pytest-cov
     - py.test --cov=atoml test/test_suite.py
 
 build:py3:

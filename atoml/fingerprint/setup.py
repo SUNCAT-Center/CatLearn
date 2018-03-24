@@ -11,13 +11,13 @@ from tqdm import tqdm
 from .adsorbate_fingerprint import AdsorbateFingerprintGenerator
 from .particle_fingerprint import ParticleFingerprintGenerator
 from .standard_fingerprint import StandardFingerprintGenerator
-from .neighbor_matrix import NeighborFingerprintGenerator
+from .graph_fingerprint import GraphFingerprintGenerator
 from .bulk_fingerprint import BulkFingerprintGenerator
 
 
 class FeatureGenerator(
         AdsorbateFingerprintGenerator, ParticleFingerprintGenerator,
-        StandardFingerprintGenerator, NeighborFingerprintGenerator,
+        StandardFingerprintGenerator, GraphFingerprintGenerator,
         BulkFingerprintGenerator):
     """Feature generator class.
 

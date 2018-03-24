@@ -11,7 +11,7 @@ from ase.data import atomic_numbers
 
 from atoml.fingerprint.database_adsorbate_api import attach_adsorbate_info
 from atoml.fingerprint.periodic_table_data import get_radius
-from atoml.fingerprint import FeatureGenerator
+from atoml.fingerprint.setup import FeatureGenerator
 
 wkdir = os.getcwd()
 

@@ -6,11 +6,32 @@ from ase.data import covalent_radii
 from atoml.fingerprint.periodic_table_data import get_radius
 
 
-def ase_neighborlist(atoms):
-    """Make dict of neighboring atoms using ase function."""
-    cutoffs = [covalent_radii[a.number] for a in atoms]
+def ase_neighborlist(atoms, cutoffs=None, skin=0.3):
+    """Make dict of neighboring atoms using ase function.
+
+    This provides a wrapper for the ASE neighborlist generator. Currently
+    default values are used.
+
+    Parameters
+    ----------
+    atoms : object
+        Target ase atoms object on which to get neighbor list.
+    cutoffs : list
+        A list of distance paramteres for each atom.
+    skin : float
+        The buffer to allow for small variation in the distance between
+        neighbors.
+
+    Returns
+    -------
+    neighborlist : dict
+        A dictionary containing the atom index and each neighbor index.
+    """
+    if cutoffs is None:
+        cutoffs = [covalent_radii[a.number] for a in atoms]
     nl = NeighborList(
-        cutoffs, skin=0.3, sorted=False, self_interaction=False, bothways=True)
+        cutoffs, skin=skin, sorted=False, self_interaction=False,
+        bothways=True)
 
     nl.update(atoms)
 
@@ -21,7 +42,7 @@ def ase_neighborlist(atoms):
     return neighborlist
 
 
-def atoms_neighborlist(atoms, dx=None, neighbor_number=1):
+def atoml_neighborlist(atoms, dx=None, max_neighbor=1, mic=True):
     """Make dict of neighboring atoms for discrete system.
 
     Possible to return neighbors from defined neighbor shell e.g. 1st, 2nd,
@@ -34,32 +55,91 @@ def atoms_neighborlist(atoms, dx=None, neighbor_number=1):
     dx : dict
         Buffer to calculate nearest neighbor pairs in dict format:
         dx = {atomic_number: buffer}.
-    neighbor_number : int
-        Neighbor shell.
+    max_neighbor : int or str
+        Maximum neighbor shell. If int is passed this will define how many
+        shells to consider. If 'full' is passed then all neighbor combinations
+        will be included. This might get expensive for particularly large
+        systems.
+
+    Returns
+    -------
+    connection_matrix : array
+        An array of the neighbor shell each atom index is located in.
     """
+    atomic_numbers = atoms.get_atomic_numbers()
+
     # Set up buffer dict.
     if dx is None:
-        dx = dict.fromkeys(set(atoms.get_atomic_numbers()), 0)
+        dx = dict.fromkeys(set(atomic_numbers), 0)
         for i in dx:
-            dx[i] = get_radius(i) / 2.
+            dx[i] = get_radius(i) / 5.
 
-    conn = {}
-    for a1 in atoms:
-        c = []
-        for a2 in atoms:
-            if a1.index != a2.index:
-                d = np.linalg.norm(np.asarray(a1.position) -
-                                   np.asarray(a2.position))
-                r1 = get_radius(a1.number)
-                r2 = get_radius(a2.number)
-                dxi = (dx[a1.number] + dx[a2.number]) / 2.
-                if neighbor_number == 1:
-                    d_max1 = 0.
-                else:
-                    d_max1 = ((neighbor_number - 1) * (r2 + r1)) + dxi
-                d_max2 = (neighbor_number * (r2 + r1)) + dxi
-                if d > d_max1 and d < d_max2:
-                    c.append(a2.index)
-                conn[a1.index] = sorted(list(map(int, c)))
+    dist = atoms.get_all_distances(mic=mic)
 
-    return conn
+    r_list, b_list = [], []
+    for an in atomic_numbers:
+        r_list.append(get_radius(an))
+        b_list.append(dx[an])
+
+    radius_matrix = np.asarray(r_list) + np.reshape(r_list, (len(r_list), 1))
+    buffer_matrix = np.asarray(b_list) + np.reshape(
+        b_list, (len(b_list), 1)) / 2.
+
+    connection_matrix = np.zeros((len(atoms), len(atoms)))
+    if isinstance(max_neighbor, int):
+        for n in range(max_neighbor):
+            dist, connection_matrix, unconnected = _neighbor_iterator(
+                dist, radius_matrix, buffer_matrix, n, connection_matrix)
+    elif max_neighbor == 'full':
+        n, unconnected = 0, 1
+        while unconnected > 0:
+            dist, connection_matrix, unconnected = _neighbor_iterator(
+                dist, radius_matrix, buffer_matrix, n, connection_matrix)
+            n += 1
+    else:
+        msg = 'max_neighbor parameter {} not recognized.'.format(max_neighbor)
+        raise NotImplementedError(msg)
+
+    np.fill_diagonal(connection_matrix, 0.)
+
+    return connection_matrix
+
+
+def _neighbor_iterator(dist, radius_matrix, buffer_matrix, n,
+                       connection_matrix):
+    """An iterator function to work out neighbor shells.
+
+    Parameters
+    ----------
+    dist : array
+        Distance matrix for the atoms object.
+    radius_matrix : array
+        An NxN matrix of summed radii between each pair of atoms.
+    buffer_matrix : array
+        An NxN matrix of buffer values between each pair of atoms.
+    n : int
+        The current neighbor shell.
+    connection_matrix : array
+        The current connection matrix being built.
+
+    Returns
+    -------
+    dist : array
+        Modified distance matrix for the atoms object. Modified to avoid
+        recounting neighbors.
+    connection_matrix : array
+        Modified current connection matrix. Contains results for current shell.
+    unconnected : int
+        The number of atom pairs that dont have a neighbor shell assigned.
+    """
+    res = dist - ((radius_matrix + buffer_matrix) * (n + 1))
+
+    res[res > 0.] = 0.
+    res[res < 0.] = n + 1.
+
+    dist += res * 10000.
+
+    connection_matrix += res
+    unconnected = len(connection_matrix[connection_matrix == 0.])
+
+    return dist, connection_matrix, unconnected
