@@ -19,6 +19,7 @@ from test_acquisition import TestAcquisition
 from test_validation import TestValidation
 from test_learning_curve import TestCurve
 from test_io import TestIO
+from test_ga import TestGeneticAlgorithm
 
 from test_functions import ConfigTestCase
 
@@ -65,6 +66,7 @@ if __name__ == '__main__':
         TestValidation,
         TestCurve,
         TestIO,
+        TestGeneticAlgorithm,
         ConfigTestCase
     ])
 
