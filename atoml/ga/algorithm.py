@@ -32,7 +32,7 @@ class GeneticAlgorithm(object):
         if self.pop is None:
             self.pop = initialize_population(pop_size, dimension)
 
-    def search(self, steps):
+    def search(self, steps, verbose=False):
         """Do the actual search.
 
         Parameters
@@ -41,6 +41,10 @@ class GeneticAlgorithm(object):
             Maximum number of steps to be taken.
         """
         self.fitness = self._get_fitness(self.pop)
+        if verbose:
+            self._print_data()
+
+        # Define the operators to use.
         operator = [cut_and_splice, random_permutation]
 
         for _ in range(steps):
@@ -71,11 +75,14 @@ class GeneticAlgorithm(object):
                 break
 
             # Combine data sets.
-            extend_fit = self.fitness + new_fit
+            extend_fit = np.concatenate((self.fitness, new_fit))
             extend_pop = np.concatenate((self.pop, offspring_list))
 
             # Perform natural selection.
             self._population_reduction(extend_pop, extend_fit)
+
+            if verbose:
+                self._print_data()
 
     def _selection(self, param_list, fit_list):
         """Perform natural selection.
@@ -177,3 +184,12 @@ class GeneticAlgorithm(object):
             fit[index] = calc_fit
 
         return fit
+
+    def _print_data(self):
+        """Print some output during the search."""
+        msg = 'new generation, current best fitness: {0:.3f} '.format(
+            np.max(self.fitness))
+        msg += 'mean fitness: {0:.3f}, worst fitness: {1:.3f}'.format(
+            np.mean(self.fitness), np.min(self.fitness))
+
+        print(msg)
