@@ -50,6 +50,16 @@ class GeneticAlgorithm(object):
         ----------
         steps : int
             Maximum number of steps to be taken.
+        verbose : bool
+            If True, will print out the progress of the search. Default is
+            False.
+
+        Attributes
+        ----------
+        pop : list
+            The current population.
+        fitness : list
+            The fitness for the current population.
         """
         self.fitness = self._get_fitness(self.pop)
         if verbose:
@@ -101,6 +111,11 @@ class GeneticAlgorithm(object):
             List of parameter sets to consider.
         fit_list : list
             list of fitnesses associated with parameter list.
+
+        Returns
+        -------
+        parameter : array
+            A selected set of parameters from the population.
         """
         length = len(fit_list)
         index = list(range(length))
