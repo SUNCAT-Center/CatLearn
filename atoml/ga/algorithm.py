@@ -10,7 +10,8 @@ from .mutate import random_permutation
 class GeneticAlgorithm(object):
     """Genetic algorithm for parameter optimization."""
 
-    def __init__(self, pop_size, fit_func, dimension, pop=None):
+    def __init__(self, pop_size, fit_func, dimension, pop=None,
+                 operators=None):
         """Initialize the genetic algorithm.
 
         Parameters
@@ -23,14 +24,24 @@ class GeneticAlgorithm(object):
             Dimension of parameters in model.
         pop : list
             The current population. Default is None.
+        operators : list
+            A list of operation functions. These are used for mating and
+            mutation operations.
         """
+        # Set parameters.
         self.pop_size = pop_size
         self.fit_func = fit_func
         self.dimension = dimension
 
+        # Define the starting population.
         self.pop = pop
         if self.pop is None:
             self.pop = initialize_population(pop_size, dimension)
+
+        # Define the operators to use.
+        self.operators = operators
+        if self.operators is None:
+            self.operators = [cut_and_splice, random_permutation]
 
     def search(self, steps, verbose=False):
         """Do the actual search.
@@ -44,9 +55,6 @@ class GeneticAlgorithm(object):
         if verbose:
             self._print_data()
 
-        # Define the operators to use.
-        operator = [cut_and_splice, random_permutation]
-
         for _ in range(steps):
             offspring_list = []
             for c in range(self.pop_size):
@@ -56,7 +64,7 @@ class GeneticAlgorithm(object):
                     p1 = self._selection(self.pop, self.fitness)
 
                 # Select a random operator.
-                op = random.choice(operator)
+                op = random.choice(self.operators)
 
                 # First check for mating.
                 if op is cut_and_splice:
