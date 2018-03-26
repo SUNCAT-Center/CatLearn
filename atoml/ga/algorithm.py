@@ -95,6 +95,7 @@ class GeneticAlgorithm(object):
         # Combine data and sort.
         fit = list(zip(*sorted(zip(fit_list, index), reverse=True)))
 
+        # Define some probability scaling.
         scale, s = [], 0
         for _ in range(length):
             s += 1 / (length + 2)
@@ -102,6 +103,7 @@ class GeneticAlgorithm(object):
 
         fit_list = list(zip(*sorted(zip(fit[1], scale), reverse=False)))[1]
 
+        # Reorder the fitness and parameter lists.
         param_list_shuf, fit_list_shuf = [], []
         for ind in index_shuf:
             param_list_shuf.append(param_list[ind])
