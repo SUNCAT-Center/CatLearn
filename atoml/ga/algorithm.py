@@ -87,29 +87,28 @@ class GeneticAlgorithm(object):
         fit_list : list
             list of fitnesses associated with parameter list.
         """
-        index = list(range(len(fit_list)))
+        length = len(fit_list)
+        index = list(range(length))
+        index_shuf = list(range(length))
+        random.shuffle(index_shuf)
+
+        # Combine data and sort.
         fit = list(zip(*sorted(zip(fit_list, index), reverse=True)))
 
-        scale = []
-        s = 0
-        for i in fit[1]:
-            s += 1 / (len(fit[1]) + 2)
+        scale, s = [], 0
+        for _ in range(length):
+            s += 1 / (length + 2)
             scale.append(s)
 
         fit_list = list(zip(*sorted(zip(fit[1], scale), reverse=False)))[1]
 
-        param_list_shuf = []
-        fit_list_shuf = []
-        index_shuf = list(range(len(param_list)))
-        random.shuffle(index_shuf)
-        for i in index_shuf:
-            param_list_shuf.append(param_list[i])
-            fit_list_shuf.append(fit_list[i])
-
-        param_list, fit_list = param_list_shuf, fit_list_shuf
+        param_list_shuf, fit_list_shuf = [], []
+        for ind in index_shuf:
+            param_list_shuf.append(param_list[ind])
+            fit_list_shuf.append(fit_list[ind])
 
         # Get random probability.
-        for parameter, fitness in zip(param_list, fit_list):
+        for parameter, fitness in zip(param_list_shuf, fit_list_shuf):
             if fitness > np.random.rand(1)[0]:
                 return parameter
 
@@ -124,21 +123,31 @@ class GeneticAlgorithm(object):
             Extended population.
         fit : list
             Extended fitness assignment.
+
+        Attributes
+        ----------
+        pop : list
+            The population after natural selection.
+        fitness : list
+            The fitness for the current population.
         """
+        # Combine parameters and sort.
         global_details = [[i, j] for i, j in zip(pop, fit)]
         global_details.sort(key=lambda x: float(x[1]), reverse=True)
 
+        # Reinitialize everything as empty list.
         self.pop, self.fitness, unique_list = [], [], []
+
+        # Fill the lists with current best candidates.
         for i in global_details:
             if len(self.pop) < self.pop_size:
+                # Round to some tolerance to make sure unique fitness.
                 if round(i[1], 5) not in unique_list:
                     self.pop.append(i[0])
                     self.fitness.append(i[1])
                     unique_list.append(round(i[1], 5))
             else:
                 break
-
-        assert len(self.pop) == len(self.fitness)
 
     def _get_fitness(self, param_list):
         """Function wrapper to calculate the fitness.
@@ -147,12 +156,20 @@ class GeneticAlgorithm(object):
         ----------
         param_list : list
             List of new parameter sets to get fitness for.
+
+        Returns
+        -------
+        fit : array
+            The fitness based on the new parameters.
         """
+        # Initialize array.
         fit = np.zeros(len(param_list))
+
         for index, parameter in enumerate(param_list):
             try:
                 calc_fit = self.fit_func(parameter)
             except ValueError:
+                # If there is a problem calculating fitness assign -inf.
                 calc_fit = float('-inf')
 
             fit[index] = calc_fit
