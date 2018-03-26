@@ -110,18 +110,18 @@ class GeneticAlgorithm(object):
                 p1 = self._selection(self.pop, self.fitness)
 
             # Select a random operator.
-            op = random.choice(self.operators)
+            operator = random.choice(self.operators)
 
             # First check for mating.
-            if op is cut_and_splice:
+            if operator is cut_and_splice:
                 p2 = p1
                 while p2 is p1 or p2 is None:
                     p2 = self._selection(self.pop, self.fitness)
-                offspring_list.append(op(p1, p2))
+                offspring_list.append(operator(p1, p2))
 
             # Otherwise perfrom mutation.
             else:
-                offspring_list.append(op(p1))
+                offspring_list.append(operator(p1))
 
         return offspring_list
 

@@ -26,13 +26,17 @@ class Convergence(object):
         converged : bool
             True if convergence has been reached, False otherwise.
         """
+        # Combine all fitnesses for search.
         self.fitness = np.concatenate((self.fitness, fitness))
+
+        # Work out whether the search has progressed.
         if np.max(self.fitness) > self.previous:
             self.previous = np.max(self.fitness)
             self.count = 0
         else:
             self.count += 1
 
+        # Check if the convergence count has been reached.
         if self.count > repeat:
             return True
 
