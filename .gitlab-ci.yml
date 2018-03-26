@@ -5,8 +5,9 @@ build:py2:
     - python -V
     - pip2 install -r requirements.txt
     - export PYTHONPATH=$PWD/:$PYTHONPATH
-    - pip2 install --upgrade pytest-cov
+    - pip2 install --upgrade pytest-cov piprot
     - py.test --cov=atoml test/test_suite.py
+    - piprot
 
 build:py3:
   image: jenningspc/atoml:latest
@@ -15,4 +16,6 @@ build:py3:
     - python -V
     - pip3 install -r requirements.txt
     - export PYTHONPATH=$PWD/:$PYTHONPATH
+    - pip3 install piprot
     - py.test --cov=atoml test/test_suite.py
+    - piprot
