@@ -4,14 +4,17 @@ import numpy as np
 
 
 def random_permutation(parent_one):
-    """Perform a random permutation on a parameter block.
+    """Perform a random permutation on a parameter index.
 
     Parameters
     ----------
     parent_one : list
         List of params for first parent.
-    mut_op : string
-        String of operator for mutation.
+
+    Returns
+    -------
+    p1 : list
+        Mutated parameter list based on the parent parameters provided.
     """
     p1 = copy.deepcopy(parent_one)
     index = np.random.randint(len(parent_one))

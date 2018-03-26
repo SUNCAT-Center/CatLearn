@@ -5,6 +5,7 @@ import random
 from .initialize import initialize_population
 from .mating import cut_and_splice
 from .mutate import random_permutation
+from .convergence import Convergence
 
 
 class GeneticAlgorithm(object):
@@ -43,7 +44,7 @@ class GeneticAlgorithm(object):
         if self.operators is None:
             self.operators = [cut_and_splice, random_permutation]
 
-    def search(self, steps, verbose=False):
+    def search(self, steps, verbose=False, repeat=5):
         """Do the actual search.
 
         Parameters
@@ -53,6 +54,8 @@ class GeneticAlgorithm(object):
         verbose : bool
             If True, will print out the progress of the search. Default is
             False.
+        repeat : int
+            Number of repeat generations with no progress.
 
         Attributes
         ----------
@@ -65,27 +68,12 @@ class GeneticAlgorithm(object):
         if verbose:
             self._print_data()
 
-        for _ in range(steps):
-            offspring_list = []
-            for c in range(self.pop_size):
-                # Select an initial candidate.
-                p1 = None
-                while p1 is None:
-                    p1 = self._selection(self.pop, self.fitness)
+        # Initialixe the convergence check.
+        converge_check = Convergence()
+        converge_check.no_progress(self.fitness, repeat=repeat)
 
-                # Select a random operator.
-                op = random.choice(self.operators)
-
-                # First check for mating.
-                if op is cut_and_splice:
-                    p2 = p1
-                    while p2 is p1 or p2 is None:
-                        p2 = self._selection(self.pop, self.fitness)
-                    offspring_list.append(op(p1, p2))
-
-                # Otherwise perfrom mutation.
-                else:
-                    offspring_list.append(op(p1))
+        for step in range(steps):
+            offspring_list = self._new_generation()
 
             # Keep track of fitness for new candidates.
             new_fit = self._get_fitness(offspring_list)
@@ -101,6 +89,41 @@ class GeneticAlgorithm(object):
 
             if verbose:
                 self._print_data()
+
+            if converge_check.no_progress(self.fitness, repeat=repeat):
+                print('CONVERGED on step {}'.format(step + 1))
+                break
+
+    def _new_generation(self):
+        """Create a new generation of candidates.
+
+        Returns
+        -------
+        offspring_list : list
+            A list of paramteres for the new generation.
+        """
+        offspring_list = []
+        for c in range(self.pop_size):
+            # Select an initial candidate.
+            p1 = None
+            while p1 is None:
+                p1 = self._selection(self.pop, self.fitness)
+
+            # Select a random operator.
+            op = random.choice(self.operators)
+
+            # First check for mating.
+            if op is cut_and_splice:
+                p2 = p1
+                while p2 is p1 or p2 is None:
+                    p2 = self._selection(self.pop, self.fitness)
+                offspring_list.append(op(p1, p2))
+
+            # Otherwise perfrom mutation.
+            else:
+                offspring_list.append(op(p1))
+
+        return offspring_list
 
     def _selection(self, param_list, fit_list):
         """Perform natural selection.
