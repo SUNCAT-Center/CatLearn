@@ -220,7 +220,8 @@ class GeneticAlgorithm(object):
         # Initialize array.
         fit = np.zeros(len(param_list))
 
-        for index, parameter in enumerate(param_list):
+        bool_list = np.asarray(param_list, dtype=np.bool)
+        for index, parameter in enumerate(bool_list):
             try:
                 calc_fit = self.fit_func(parameter)
             except ValueError:
