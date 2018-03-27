@@ -12,13 +12,18 @@ There is a custom docker image used for testing that contains an environment wit
   $ docker push jenningspc/atoml:latest
 ```
 
-To use the image, simply do:
+It is assumed that there is an up-to-date version of the `requirements.txt` file in the directory. Then to use the image, simply do:
 
 ```
   FROM jenningspc/atoml:latest
 ```
 
+There is a bash script that will run these commands and clean up after:
+
+```shell
+  $ ./build_docker.sh
+```
+
 ### Limitations
 
--   To build the docker image an up to date version of the requirements is needed.
 -   Versioning not really handled.
