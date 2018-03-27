@@ -3,19 +3,22 @@ build:py2:
   script:
     - alias python=python2
     - python -V
-    - pip2 install --upgrade -r requirements.txt
+    - pip2 install -r requirements.txt
     - export PYTHONPATH=$PWD/:$PYTHONPATH
-    - pip2 install --upgrade pytest-cov piprot
+    - pip2 install --upgrade pytest-cov
     - py.test --cov=atoml test/test_suite.py
-    - piprot
 
 build:py3:
   image: jenningspc/atoml:latest
   script:
     - alias python=python3
     - python -V
-    - pip3 install --upgrade -r requirements.txt
+    - pip3 install -r requirements.txt
     - export PYTHONPATH=$PWD/:$PYTHONPATH
-    - pip3 install piprot
     - py.test --cov=atoml test/test_suite.py
+
+build:depend:
+  image: jenningspc/atoml:latest
+  script:
+    - pip install piprot
     - piprot
