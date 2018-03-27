@@ -16,8 +16,8 @@ RUN apt-get install -y python2.7 && \
 
 # Install additional python packages.
 COPY requirements.txt .
-RUN pip2 install -r requirements.txt; pip2 install asap3
-RUN pip3 install -r requirements.txt; pip3 install asap3
+RUN pip2 install --upgrade -r requirements.txt; pip2 install asap3
+RUN pip3 install --upgrade -r requirements.txt; pip3 install asap3
 
 RUN apt-get update
 
