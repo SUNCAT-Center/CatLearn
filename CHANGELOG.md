@@ -1,13 +1,14 @@
 # dev
 
--   Magpie api added.
--   Voronoi and prototype feature generation added.
+-   Magpie api added, allows for Voronoi and prototype feature generation.
+-   A genetic algorithm added for feature optimization.
 -   Parallelism updated to be compatable with Python2.
--   Add in better neighborlist generation.
+-   Added in better neighborlist generation.
     -   Updated wrapper for ase neighborlist.
     -   Updated AtoML neighborlist generator.
--   Add basic NetworkX api.
--   Add some general functions to clean data and build a GP.
+-   Added basic NetworkX api.
+-   Added some general functions to clean data and build a GP.
+-   Added a test for dependencies. Will raise a warning in the CI if things get out of date.
 -   Clean up some bits of code, fix some bugs.
 
 # Version 0.3.1 (February 2018)

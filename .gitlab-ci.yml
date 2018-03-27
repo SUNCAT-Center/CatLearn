@@ -1,18 +1,28 @@
 build:py2:
-  image: jenningspc/atoml:latest
+  stage:         test
+  image:         jenningspc/atoml:latest
   script:
-    - alias python=python2
-    - python -V
-    - pip2 install -r requirements.txt
-    - export PYTHONPATH=$PWD/:$PYTHONPATH
-    - pip2 install --upgrade pytest-cov
-    - py.test --cov=atoml test/test_suite.py
+  - alias python=python2
+  - python -V
+  - pip2 install -r requirements.txt
+  - export PYTHONPATH=$PWD/:$PYTHONPATH
+  - pip2 install --upgrade pytest-cov
+  - py.test --cov=atoml test/test_suite.py
 
 build:py3:
-  image: jenningspc/atoml:latest
+  stage:         test
+  image:         jenningspc/atoml:latest
   script:
-    - alias python=python3
-    - python -V
-    - pip3 install -r requirements.txt
-    - export PYTHONPATH=$PWD/:$PYTHONPATH
-    - py.test --cov=atoml test/test_suite.py
+  - alias python=python3
+  - python -V
+  - pip3 install -r requirements.txt
+  - export PYTHONPATH=$PWD/:$PYTHONPATH
+  - py.test --cov=atoml test/test_suite.py
+
+build:depend:
+  stage:         test
+  image:         jenningspc/atoml:latest
+  script:
+  - pip install piprot
+  - piprot
+  allow_failure: true
