@@ -22,3 +22,4 @@ build:depend:
   script:
     - pip install piprot
     - piprot
+  allow_failure: true
