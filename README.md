@@ -12,6 +12,7 @@ In general, any data prepared in this fashion can be fed to the GP routines, a n
 
 -   [Installation](#installation)
 -   [Usage](#usage)
+-   [Functionality](functionality)
 -   [Contribution](#contribution)
 -   [Authors](#authors)
 
@@ -98,6 +99,38 @@ In the most basic form, it is possible to set up a GP model and make some predic
 ```
 
 The above sample of code will train a GP with the squared exponential kernel, fitting some random function. Of course, this isn't so useful, more helpful examples and test scripts are present for most features.
+
+## Functionality
+
+[(Back to top)](#table-of-contents)
+
+There is much functionality in AtoML to assist in handling atom data and building optimal models. This includes:
+
+-   API to other codes:
+    -   ASE API
+    -   Magpie API
+    -   NetworkX API
+-   Fingerprint generators:
+    -   Bulk systems
+    -   Support/slab systems
+    -   Discrete systems
+-   Preprocessing routines:
+    -   Data cleaning
+    -   Feature elimination
+    -   Feature engineering
+    -   Feature extraction
+    -   Feature scaling
+-   Regression methods:
+    -   Regularized ridge regression
+    -   Gaussian processes regression
+-   Cross-validation:
+    -   K-fold cv
+    -   Ensemble k-fold cv
+-   General utilities:
+    -   K-means clustering
+    -   Neighborlist generators
+    -   Penalty functions
+    -   SQLite db storage
 
 ## Contribution
 
