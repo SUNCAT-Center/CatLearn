@@ -8,6 +8,8 @@ Utilities for building and testing Atomic Machine Learning (AtoML) models. Gauss
 
 In general, any data prepared in this fashion can be fed to the GP routines, a number of additional functions have been added that interface with [ASE](https://wiki.fysik.dtu.dk/ase/). This integration allows for the manipulation of atoms objects through GP predictions, as well as dynamic generation of descriptors through use of the many ASE functions.
 
+Please see the [tutorials](https://gitlab.com/atoML/AtoML/tree/master/tutorials) for a detailed overview of what the code can do and the conventions used in setting up the predictive models.
+
 ## Table of contents
 
 -   [Installation](#installation)
@@ -98,7 +100,7 @@ In the most basic form, it is possible to set up a GP model and make some predic
     prediction = gp.predict(test_fp=test_features)
 ```
 
-The above sample of code will train a GP with the squared exponential kernel, fitting some random function. Of course, this isn't so useful, more helpful examples and test scripts are present for most features.
+The above sample of code will train a GP with the squared exponential kernel, fitting some random function. Of course, this isn't so useful, more helpful examples and test scripts are present for most features; primarily, please see the [tutorials](https://gitlab.com/atoML/AtoML/tree/master/tutorials).
 
 ## Functionality
 
@@ -107,9 +109,9 @@ The above sample of code will train a GP with the squared exponential kernel, fi
 There is much functionality in AtoML to assist in handling atom data and building optimal models. This includes:
 
 -   API to other codes:
-    -   ASE API
-    -   Magpie API
-    -   NetworkX API
+    -   [Atomic simulation environment](https://wiki.fysik.dtu.dk/ase/) API
+    -   [Magpie](https://bitbucket.org/wolverton/magpie) API
+    -   [NetworkX](https://networkx.github.io/) API
 -   Fingerprint generators:
     -   Bulk systems
     -   Support/slab systems
