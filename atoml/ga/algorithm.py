@@ -1,6 +1,7 @@
 """The GeneticAlgorithm class methods."""
 import numpy as np
 import random
+import warnings
 
 from .initialize import initialize_population
 from .mating import cut_and_splice
@@ -11,33 +12,33 @@ from .convergence import Convergence
 class GeneticAlgorithm(object):
     """Genetic algorithm for parameter optimization."""
 
-    def __init__(self, pop_size, fit_func, dimension, pop=None,
+    def __init__(self, population_size, fit_func, dimension, population=None,
                  operators=None):
         """Initialize the genetic algorithm.
 
         Parameters
         ----------
-        pop_size : int
-            Population size.
+        population_size : int
+            Population size, same as generation size.
         fit_func : object
             User defined function to calculate fitness.
         d_param : int
             Dimension of parameters in model.
-        pop : list
+        population : list
             The current population. Default is None.
         operators : list
             A list of operation functions. These are used for mating and
             mutation operations.
         """
         # Set parameters.
-        self.pop_size = pop_size
+        self.population_size = population_size
         self.fit_func = fit_func
         self.dimension = dimension
 
         # Define the starting population.
-        self.pop = pop
-        if self.pop is None:
-            self.pop = initialize_population(pop_size, dimension)
+        self.population = population
+        if self.population is None:
+            self.population = initialize_population(population_size, dimension)
 
         # Define the operators to use.
         self.operators = operators
@@ -59,12 +60,12 @@ class GeneticAlgorithm(object):
 
         Attributes
         ----------
-        pop : list
+        population : list
             The current population.
         fitness : list
             The fitness for the current population.
         """
-        self.fitness = self._get_fitness(self.pop)
+        self.fitness = self._get_fitness(self.population)
         if verbose:
             self._print_data()
 
@@ -82,7 +83,7 @@ class GeneticAlgorithm(object):
 
             # Combine data sets.
             extend_fit = np.concatenate((self.fitness, new_fit))
-            extend_pop = np.concatenate((self.pop, offspring_list))
+            extend_pop = np.concatenate((self.population, offspring_list))
 
             # Perform natural selection.
             self._population_reduction(extend_pop, extend_fit)
@@ -103,11 +104,11 @@ class GeneticAlgorithm(object):
             A list of paramteres for the new generation.
         """
         offspring_list = []
-        for c in range(self.pop_size):
+        for c in range(self.population_size):
             # Select an initial candidate.
             p1 = None
             while p1 is None:
-                p1 = self._selection(self.pop, self.fitness)
+                p1 = self._selection(self.population, self.fitness)
 
             # Select a random operator.
             operator = random.choice(self.operators)
@@ -116,7 +117,7 @@ class GeneticAlgorithm(object):
             if operator is cut_and_splice:
                 p2 = p1
                 while p2 is p1 or p2 is None:
-                    p2 = self._selection(self.pop, self.fitness)
+                    p2 = self._selection(self.population, self.fitness)
                 offspring_list.append(operator(p1, p2))
 
             # Otherwise perfrom mutation.
@@ -191,14 +192,14 @@ class GeneticAlgorithm(object):
         global_details.sort(key=lambda x: float(x[1]), reverse=True)
 
         # Reinitialize everything as empty list.
-        self.pop, self.fitness, unique_list = [], [], []
+        self.population, self.fitness, unique_list = [], [], []
 
         # Fill the lists with current best candidates.
         for i in global_details:
-            if len(self.pop) < self.pop_size:
+            if len(self.population) < self.population_size:
                 # Round to some tolerance to make sure unique fitness.
                 if round(i[1], 5) not in unique_list:
-                    self.pop.append(i[0])
+                    self.population.append(i[0])
                     self.fitness.append(i[1])
                     unique_list.append(round(i[1], 5))
             else:
@@ -227,6 +228,8 @@ class GeneticAlgorithm(object):
             except ValueError:
                 # If there is a problem calculating fitness assign -inf.
                 calc_fit = float('-inf')
+                msg = 'The fitness function is failing. Returning -inf.'
+                warnings.warn(msg)
 
             fit[index] = calc_fit
 

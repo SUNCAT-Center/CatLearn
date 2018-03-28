@@ -9,6 +9,7 @@
 -   Added basic NetworkX api.
 -   Added some general functions to clean data and build a GP.
 -   Added a test for dependencies. Will raise a warning in the CI if things get out of date.
+-   Added a custom docker image for the tests. This is compiled in the `setup/` directory in root.
 -   Clean up some bits of code, fix some bugs.
 
 # Version 0.3.1 (February 2018)
