@@ -197,8 +197,7 @@ class FeatureGenerator(
             arr = np.array(name(atoms))
             # Do not allow concatenation of str types with other types.
             if len(fingerprint_vector) > 0:
-                if ((arr.dtype.type is np.str_ and
-                     fingerprint_vector.dtype.type is not np.str_) or
+                if ((arr.dtype.type is np.str_ and fingerprint_vector.dtype.type is not np.str_) or
                     (arr.dtype.type is not np.str_ and
                      fingerprint_vector.dtype.type is np.str_)):
                         raise AssertionError("Fingerprints should be float" +
