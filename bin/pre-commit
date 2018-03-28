@@ -24,6 +24,7 @@ def system(*args, **kwargs):
 
 
 def style_check():
+    print('Starting pre-commit checks')
     modified = re.compile('^[AM]+\s+(?P<name>.*\.py$)', re.MULTILINE)
     files = system('git', 'status', '--porcelain').decode("utf-8")
     files = modified.findall(files)
@@ -55,9 +56,8 @@ def style_check():
               'or force the commit with "git commit --no-verify".\n')
         print(output.decode("utf-8"),)
         sys.exit(1)
+    print('Finished pre-commit checks')
 
 
 if __name__ == '__main__':
-    print('Starting pre-commit checks')
     style_check()
-    print('Finished pre-commit checks')
