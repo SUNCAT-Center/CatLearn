@@ -10,7 +10,7 @@ from ase.build import bulk
 from ase.data import atomic_numbers
 
 from atoml.fingerprint.database_adsorbate_api import get_radius
-from atoml.fingerprint import FeatureGenerator
+from atoml.fingerprint.setup import FeatureGenerator
 
 wkdir = os.getcwd()
 

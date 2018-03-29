@@ -1,3 +1,4 @@
+"""Class with penalty functions."""
 import numpy as np
 from scipy.spatial import distance
 
@@ -6,7 +7,7 @@ class PenaltyFunctions(object):
     """Base class for penalty functions."""
 
     def __init__(self, targets=None, predictions=None, uncertainty=None,
-    train_features=None, test_features=None):
+                 train_features=None, test_features=None):
         """Initialization of class.
 
         Parameters
@@ -29,11 +30,12 @@ class PenaltyFunctions(object):
         self.train_features = train_features
         self.test_features = test_features
 
-
     def penalty_close(self, c_min_crit=1e5, d_min_crit=1e-5):
-        """ Pass an array of test features and train features and
-        returns an array of penalties due to 'too short distance' ensuring
-        no duplicates are added.
+        """Penalize data that is too close.
+
+        Pass an array of test features and train features and returns an array
+        of penalties due to 'too short distance' ensuring no duplicates are
+        added.
 
         Parameters
         ----------
@@ -46,18 +48,21 @@ class PenaltyFunctions(object):
         """
         penalty_min = []
         for i in self.test_features:
-           d_min = np.min(distance.cdist([i],self.train_features,'euclidean'))
-           if d_min < d_min_crit:
-               p = c_min_crit * (d_min-d_min_crit)**2
-           else:
-               p = 0.0
-           penalty_min.append(p)
+            d_min = np.min(
+                distance.cdist([i], self.train_features, 'euclidean'))
+            p = 0.0
+            if d_min < d_min_crit:
+                p = c_min_crit * (d_min - d_min_crit)**2
+            penalty_min.append(p)
+
         return penalty_min
 
     def penalty_far(self, c_max_crit=1e2, d_max_crit=10.0):
-        """ Pass an array of test features and train features and
-        returns an array of penalties due to 'too far distance'.
-        This prevents to explore configurations that are unrealistic.
+        """Penalize data that is too far.
+
+        Pass an array of test features and train features and returns an array
+        of penalties due to 'too far distance'. This prevents to explore
+        configurations that are unrealistic.
 
         Parameters
         ----------
@@ -70,10 +75,11 @@ class PenaltyFunctions(object):
         """
         penalty_max = []
         for i in self.test_features:
-           d_max = np.min(distance.cdist([i],self.train_features,'euclidean'))
-           if d_max > d_max_crit:
-               p = c_max_crit * (d_max-d_max_crit)**2
-           else:
-               p = 0.0
-           penalty_max.append(p)
+            d_max = np.min(
+                distance.cdist([i], self.train_features, 'euclidean'))
+            p = 0.0
+            if d_max > d_max_crit:
+                p = c_max_crit * (d_max - d_max_crit)**2
+            penalty_max.append(p)
+
         return penalty_max

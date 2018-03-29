@@ -3,11 +3,13 @@ import unittest
 import os
 import warnings
 
-from test_ase_api import TestAPI
+from test_1_feature_generation import TestFeatureGeneration
+from test_api import TestAPI
 from test_feature_base import TestBaseGenerator
-from test_feature_generation import TestFeatureGeneration
 from test_ads_fp_gen import TestAdsorbateFeatures
 from test_bulk_fp_gen import TestBulkFeatures
+from test_voronoi import TestVoronoiFeatures
+from test_neighborlist import TestNeighborList
 from test_data_clean import TestDataClean
 from test_feature_optimization import TestFeatureOptimization
 from test_scale import TestScaling, TestHyperparameterScaling
@@ -17,6 +19,7 @@ from test_acquisition import TestAcquisition
 from test_validation import TestValidation
 from test_learning_curve import TestCurve
 from test_io import TestIO
+from test_ga import TestGeneticAlgorithm
 
 from test_functions import ConfigTestCase
 
@@ -46,11 +49,13 @@ def setup_suite(class_list):
 if __name__ == '__main__':
     # Add other tests to the following list.
     setup_suite([
+        TestFeatureGeneration,
         TestAPI,
         TestBaseGenerator,
-        TestFeatureGeneration,
         TestAdsorbateFeatures,
         TestBulkFeatures,
+        TestVoronoiFeatures,
+        TestNeighborList,
         TestDataClean,
         TestFeatureOptimization,
         TestScaling,
@@ -61,6 +66,7 @@ if __name__ == '__main__':
         TestValidation,
         TestCurve,
         TestIO,
+        TestGeneticAlgorithm,
         ConfigTestCase
     ])
 

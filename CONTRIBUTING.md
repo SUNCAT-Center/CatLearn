@@ -128,9 +128,11 @@ It is a good idea to remove old images. This can be performed using the followin
 
 [(Back to top)](#table-of-contents)
 
-When writing new code, please add some tests to ensure functionality doesn't break over time. We look at test coverage when merge requests are opened and will expect that coverage does not decrease due to large portions of new code not being tested. In AtoML we just use the built in unittest framework.
+When writing new code, please add some tests to ensure functionality doesn't break over time. We look at test coverage when merge requests are opened and will expect that coverage does not decrease due to large portions of new code not being tested. In AtoML we just use the built-in unittest framework.
 
-If changes are being made that change some core functionality, please run the `tutorials/test_notebooks.py` script. In general the tutorials involve more demanding computations and thus are not run with the CI.
+When commits are made, the CI will also automatically test if dependencies are up to date. This test is allowed to fail and will simply return a warning if a module in `requirements.txt` is out of date. This shouldn't be of concern and is mostly in place for us to keep track of changes in other code bases that could cause problems.
+
+If changes are being made that change some core functionality, please run the `tutorials/test_notebooks.py` script. In general, the tutorials involve more demanding computations and thus are not run with the CI. The `test_notebooks.py` script will run through the various tutorials and make sure that they do not fail.
 
 ## Tutorials
 

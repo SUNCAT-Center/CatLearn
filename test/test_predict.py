@@ -7,6 +7,8 @@ import unittest
 
 from atoml.regression import RidgeRegression, GaussianProcess
 from atoml.regression.gpfunctions.sensitivity import SensitivityAnalysis
+from atoml.setup.general_gp import GeneralGaussianProcess
+from atoml.regression.cost_function import get_error
 
 from common import get_data
 
@@ -241,6 +243,28 @@ class TestPrediction(unittest.TestCase):
 
         sen.backward_selection(
             predict=True, test_targets=test_targets, selection=3)
+
+    def test_general_gp(self):
+        """Test the functions to build a general model."""
+        train_features, train_targets, test_features, test_targets = get_data()
+
+        ggp = GeneralGaussianProcess()
+
+        ggp.train_gaussian_process(train_features, train_targets)
+        pred = ggp.gaussian_process_predict(test_features)
+        self.assertEqual(len(pred['prediction']), len(test_features))
+
+        print('GeneralGP error: {0:.3f}'.format(
+            get_error(pred['prediction'], test_targets)['rmse_average']))
+
+        ggp = GeneralGaussianProcess(dimension='features')
+
+        ggp.train_gaussian_process(train_features, train_targets)
+        pred = ggp.gaussian_process_predict(test_features)
+        self.assertEqual(len(pred['prediction']), len(test_features))
+
+        print('GeneralGP error: {0:.3f}'.format(
+            get_error(pred['prediction'], test_targets)['rmse_average']))
 
 
 if __name__ == '__main__':

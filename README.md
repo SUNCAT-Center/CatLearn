@@ -118,7 +118,7 @@ Anyone is welcome to contribute to the project. Please see the contribution guid
 ### Contributors
 
 -   Jose A. Garrido Torres
--   Ziyun Wang
 -   Jacob Boes
--   Andrew Doyle
+-   [Ziyun Wang](https://suncat.stanford.edu/people/ziyun-wang)
+-   [Andrew Doyle](https://suncat.stanford.edu/people/andrew-doyle)
 -   Markus Ekvall

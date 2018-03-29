@@ -31,7 +31,7 @@ def k_fold(features, targets=None, nsplit=3, fix_size=None):
     if targets is not None:
         d, f = np.shape(features)
         X = np.concatenate(
-                (features, np.reshape(targets, (len(targets), 1))), axis=1)
+            (features, np.reshape(targets, (len(targets), 1))), axis=1)
         assert (d, f + 1) == np.shape(X)
     else:
         X = features
@@ -93,7 +93,7 @@ def write_split(features, targets, fname, fformat='pickle'):
         data['targets'] = seralized_targets
 
         with open('{}.json'.format(fname), 'w') as textfile:
-                json.dump(data, textfile)
+            json.dump(data, textfile)
 
     elif fformat == 'pickle':
         with open('{}.pickle'.format(fname), 'wb') as textfile:
@@ -122,7 +122,7 @@ def read_split(fname, fformat='pickle'):
     """
     if fformat == 'json':
         with open('{}.json'.format(fname), 'r') as textfile:
-                data = json.load(textfile)
+            data = json.load(textfile)
     elif fformat == 'pickle':
         with open('{}.pickle'.format(fname), 'rb') as textfile:
             data = pickle.load(textfile)
