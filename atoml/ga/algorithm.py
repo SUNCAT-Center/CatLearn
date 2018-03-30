@@ -13,7 +13,7 @@ class GeneticAlgorithm(object):
     """Genetic algorithm for parameter optimization."""
 
     def __init__(self, population_size, fit_func, dimension, population=None,
-                 operators=None):
+                 operators=None, fitness_parameters=1):
         """Initialize the genetic algorithm.
 
         Parameters
@@ -44,6 +44,11 @@ class GeneticAlgorithm(object):
         self.operators = operators
         if self.operators is None:
             self.operators = [cut_and_splice, random_permutation]
+
+        self.fitness_parameters = fitness_parameters
+        self.pareto = False
+        if self.fitness_parameters > 1:
+            self.pareto = True
 
     def search(self, steps, verbose=False, repeat=5):
         """Do the actual search.
@@ -219,7 +224,7 @@ class GeneticAlgorithm(object):
             The fitness based on the new parameters.
         """
         # Initialize array.
-        fit = np.zeros(len(param_list))
+        fit = np.zeros((len(param_list), self.fitness_parameters))
 
         bool_list = np.asarray(param_list, dtype=np.bool)
         for index, parameter in enumerate(bool_list):
@@ -233,7 +238,55 @@ class GeneticAlgorithm(object):
 
             fit[index] = calc_fit
 
-        return fit
+        if self.pareto:
+            fit = self._pareto_trainsform(fit)
+
+        return np.reshape(fit, (len(fit),))
+
+    def _pareto_trainsform(self, fitness):
+        """Function to transform a variable with fitness to a pareto fitness.
+
+        Parameters
+        ----------
+        fitness : array
+            A multi-dimentional array of fitnesses.
+
+        Returns
+        -------
+        result : array
+            Pareto front ordering for all data points.
+        """
+        fit_copy = fitness.copy()
+        pareto = -1.
+        result = np.zeros(fit_copy.shape[0])
+        while np.sum(fit_copy > -np.inf) != 0:
+            bool_pareto = self._locate_pareto(fit_copy)
+            result[bool_pareto] = pareto
+            fit_copy[bool_pareto] = -np.inf
+            pareto -= 1.
+
+        return result
+
+    def _locate_pareto(self, fitness):
+        """Function to locate the current Pareto optimal set of solutions.
+
+        Parameters
+        ----------
+        fitness : array
+            A multi-dimentional array of fitnesses.
+
+        Returns
+        -------
+        result : array
+            Boolean array with True for data on current Pareto front.
+        """
+        front = np.ones(fitness.shape[0], dtype=bool)
+        for index, fit in enumerate(fitness):
+            if front[index]:
+                front[front] = np.any(
+                    fitness[front] >= fit, axis=1)
+
+        return front
 
     def _print_data(self):
         """Print some output during the search."""
