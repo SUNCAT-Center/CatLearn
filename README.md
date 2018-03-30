@@ -16,7 +16,6 @@ Please see the [tutorials](https://gitlab.com/atoML/AtoML/tree/master/tutorials)
 -   [Usage](#usage)
 -   [Functionality](functionality)
 -   [Contribution](#contribution)
--   [Authors](#authors)
 
 ## Installation
 
@@ -139,21 +138,3 @@ There is much functionality in AtoML to assist in handling atom data and buildin
 [(Back to top)](#table-of-contents)
 
 Anyone is welcome to contribute to the project. Please see the contribution guide for help setting up a local copy of the code. There are some `TODO` items in the README files for the various modules that give suggestions on parts of the code that could be improved.
-
-## Authors
-
-[(Back to top)](#table-of-contents)
-
-### Lead
-
--   [Paul Jennings](http://suncat.stanford.edu/theory/people/paul-jennings)
--   [Martin Hansen](https://suncat.stanford.edu/theory/people/martin-hangaard-hansen)
--   [Thomas Bligaard](https://suncat.stanford.edu/theory/people/thomas-bligaard)
-
-### Contributors
-
--   Jose A. Garrido Torres
--   Jacob Boes
--   [Ziyun Wang](https://suncat.stanford.edu/people/ziyun-wang)
--   [Andrew Doyle](https://suncat.stanford.edu/people/andrew-doyle)
--   Markus Ekvall
