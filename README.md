@@ -8,12 +8,14 @@ Utilities for building and testing Atomic Machine Learning (AtoML) models. Gauss
 
 In general, any data prepared in this fashion can be fed to the GP routines, a number of additional functions have been added that interface with [ASE](https://wiki.fysik.dtu.dk/ase/). This integration allows for the manipulation of atoms objects through GP predictions, as well as dynamic generation of descriptors through use of the many ASE functions.
 
+Please see the [tutorials](https://gitlab.com/atoML/AtoML/tree/master/tutorials) for a detailed overview of what the code can do and the conventions used in setting up the predictive models.
+
 ## Table of contents
 
 -   [Installation](#installation)
 -   [Usage](#usage)
+-   [Functionality](functionality)
 -   [Contribution](#contribution)
--   [Authors](#authors)
 
 ## Installation
 
@@ -97,28 +99,42 @@ In the most basic form, it is possible to set up a GP model and make some predic
     prediction = gp.predict(test_fp=test_features)
 ```
 
-The above sample of code will train a GP with the squared exponential kernel, fitting some random function. Of course, this isn't so useful, more helpful examples and test scripts are present for most features.
+The above sample of code will train a GP with the squared exponential kernel, fitting some random function. Of course, this isn't so useful, more helpful examples and test scripts are present for most features; primarily, please see the [tutorials](https://gitlab.com/atoML/AtoML/tree/master/tutorials).
+
+## Functionality
+
+[(Back to top)](#table-of-contents)
+
+There is much functionality in AtoML to assist in handling atom data and building optimal models. This includes:
+
+-   API to other codes:
+    -   [Atomic simulation environment](https://wiki.fysik.dtu.dk/ase/) API
+    -   [Magpie](https://bitbucket.org/wolverton/magpie) API
+    -   [NetworkX](https://networkx.github.io/) API
+-   Fingerprint generators:
+    -   Bulk systems
+    -   Support/slab systems
+    -   Discrete systems
+-   Preprocessing routines:
+    -   Data cleaning
+    -   Feature elimination
+    -   Feature engineering
+    -   Feature extraction
+    -   Feature scaling
+-   Regression methods:
+    -   Regularized ridge regression
+    -   Gaussian processes regression
+-   Cross-validation:
+    -   K-fold cv
+    -   Ensemble k-fold cv
+-   General utilities:
+    -   K-means clustering
+    -   Neighborlist generators
+    -   Penalty functions
+    -   SQLite db storage
 
 ## Contribution
 
 [(Back to top)](#table-of-contents)
 
 Anyone is welcome to contribute to the project. Please see the contribution guide for help setting up a local copy of the code. There are some `TODO` items in the README files for the various modules that give suggestions on parts of the code that could be improved.
-
-## Authors
-
-[(Back to top)](#table-of-contents)
-
-### Lead
-
--   [Paul Jennings](http://suncat.stanford.edu/theory/people/paul-jennings)
--   [Martin Hansen](https://suncat.stanford.edu/theory/people/martin-hangaard-hansen)
--   [Thomas Bligaard](https://suncat.stanford.edu/theory/people/thomas-bligaard)
-
-### Contributors
-
--   Jose A. Garrido Torres
--   Jacob Boes
--   [Ziyun Wang](https://suncat.stanford.edu/people/ziyun-wang)
--   [Andrew Doyle](https://suncat.stanford.edu/people/andrew-doyle)
--   Markus Ekvall

@@ -168,12 +168,17 @@ class GaussianProcess(object):
         if uncertainty:
             data['uncertainty'] = get_uncertainty(
                 kernel_dict=self.kernel_dict, test_fp=test_fp,
-                reg=self.regularization, ktb=ktb, cinv=self.cinv,
+                ktb=ktb, cinv=self.cinv,
                 log_scale=self.scale_optimizer
             )
+
+            data['uncertainty_with_reg'] = data['uncertainty'] + \
+                self.regularization
+
             # Rescale uncertainty if needed.
             if self.scale_data:
                 data['uncertainty'] *= self.scaling.target_data['std']
+                data['uncertainty_with_reg'] *= self.scaling.target_data['std']
 
         if basis is not None:
             data['basis'] = self._fixed_basis(

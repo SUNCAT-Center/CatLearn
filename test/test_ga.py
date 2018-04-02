@@ -15,14 +15,14 @@ class TestGeneticAlgorithm(unittest.TestCase):
 
     def test_feature_selection(self):
         """Simple test case to make sure it doesn't crash."""
-        ga = GeneticAlgorithm(pop_size=10,
+        ga = GeneticAlgorithm(population_size=10,
                               fit_func=self.ff,
                               dimension=20,
-                              pop=None)
-        self.assertEqual(np.shape(ga.pop), (10, 20))
+                              population=None)
+        self.assertEqual(np.shape(ga.population), (10, 20))
 
         ga.search(50)
-        self.assertTrue(len(ga.pop) == 10)
+        self.assertTrue(len(ga.population) == 10)
         self.assertTrue(len(ga.fitness) == 10)
 
 
