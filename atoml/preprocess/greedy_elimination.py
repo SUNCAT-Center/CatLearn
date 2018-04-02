@@ -18,7 +18,7 @@ warnings.filterwarnings("ignore")
 class GreedyElimination(object):
     """The greedy feature elimination class."""
 
-    def __init__(self, nprocs=1):
+    def __init__(self, nprocs=1, verbose=True):
         """Initialize the class.
 
         Parameters
@@ -26,11 +26,13 @@ class GreedyElimination(object):
         nprocs : int
             Number of processers used in parallel implementation. Default is 1
             e.g. serial.
+        verbose : bool
+            Display some additional metrics on progress when set to True.
         """
         self.nprocs = nprocs
+        self.verbose = verbose
 
-    def greedy_elimination(self, predict, features, targets, nsplit=2,
-                           step=1):
+    def greedy_elimination(self, predict, features, targets, nsplit=2, step=1):
         """Greedy feature elimination.
 
         Function to iterate through feature set, eliminating worst feature in
@@ -59,8 +61,10 @@ class GreedyElimination(object):
         output : array
             First column is the index of features in the order they were
             eliminated.
+
             Second column are corresponding cost function values, averaged over
             the k fold split.
+
             Following columns are any additional values returned by predict,
             averaged over the k fold split.
         """
@@ -71,14 +75,25 @@ class GreedyElimination(object):
         output = []
         survivors = list(range(total_features))
 
-        print('starting greedy feature elimination')
-        # The tqdm package is used for tracking progress.
-        for fnum in trange((total_features - 1) // step,
-                           desc='features eliminated '):
+        if self.verbose:
+            # The tqdm package is used for tracking progress.
+            iterator1 = trange(
+                (total_features - 1) // step, desc='features eliminated ',
+                leave=False)
+        else:
+            iterator1 = range((total_features - 1) // step)
+
+        for fnum in iterator1:
             self.result = np.zeros((nsplit, total_features))
             meta = []
-            for self.index in trange(nsplit, desc='k-folds             ',
-                                     leave=False):
+
+            if self.verbose:
+                iterator2 = trange(nsplit, desc='k-folds             ',
+                                   leave=False)
+            else:
+                iterator2 = range(nsplit)
+
+            for self.index in iterator2:
                 # Sort out training and testing data.
                 train_features = copy.deepcopy(features)
                 train_targets = copy.deepcopy(targets)
@@ -94,32 +109,15 @@ class GreedyElimination(object):
 
                 # Iterate through features and find error for removing it.
                 if self.nprocs != 1:
-                    # First a parallel implementation.
-                    pool = multiprocessing.Pool(self.nprocs)
-                    tasks = np.arange(d)
-                    args = (
-                        (x, train_features, test_features, train_targets,
-                         test_targets, predict) for x in tasks)
-                    for r in tqdm(pool.imap_unordered(
-                            _single_elimination, args), total=d,
-                            desc='nested              ', leave=False):
-                        self.result[self.index][r[0]] = r[1]
-                        if len(r) > 2:
-                            meta_k.append(r[2])
-                        # Wait to make things more stable.
-                        time.sleep(0.001)
-                    pool.close()
+                    meta_k = self._parallel_iterator(
+                        d, train_features, test_features, train_targets,
+                        test_targets, predict, meta_k)
 
                 else:
-                    # Then a more clear serial implementation.
-                    for x in trange(
-                            d, desc='nested              ', leave=False):
-                        args = (x, train_features, test_features,
-                                train_targets, test_targets, predict)
-                        r = _single_elimination(args)
-                        self.result[self.index][r[0]] = r[1]
-                        if len(r) > 2:
-                            meta_k.append(r[2])
+                    meta_k = self._serial_iterator(
+                        d, train_features, test_features, train_targets,
+                        test_targets, predict, meta_k)
+
                 if len(meta_k) > 0:
                     meta.append(meta_k)
 
@@ -142,6 +140,97 @@ class GreedyElimination(object):
             total_features -= step
 
         return output
+
+    def _parallel_iterator(self, d, train_features, test_features,
+                           train_targets, test_targets, predict, meta_k):
+        """Parallel iterator for the predictions.
+
+        Parameters
+        ----------
+        d : int
+            Dimension of the feature set.
+        train_features : array
+            The feature set for the training data.
+        test_features : array
+            The feature set for the test data.
+        train_targets : array
+            The training target data.
+        test_targets : array
+            The test target data:
+        predict : object
+            The prediction function.
+        meta_k : list
+            The metadata for the k-fold.
+
+        Attributes
+        ----------
+        result : array
+            The array holding the error associated with each subset of
+            features.
+
+        Returns
+        -------
+        meta_k : list
+            The metadata for the k-fold.
+        """
+        pool = multiprocessing.Pool(self.nprocs)
+        args = (
+            (x, train_features, test_features, train_targets,
+             test_targets, predict) for x in np.arange(d))
+        for r in tqdm(pool.imap_unordered(
+                _single_elimination, args), total=d,
+                desc='nested              ', leave=False):
+            self.result[self.index][r[0]] = r[1]
+            if len(r) > 2:
+                meta_k.append(r[2])
+            # Wait to make things more stable.
+            time.sleep(0.001)
+        pool.close()
+
+        return meta_k
+
+    def _serial_iterator(self, d, train_features, test_features,
+                         train_targets, test_targets, predict, meta_k):
+        """Serial iterator for the predictions.
+
+        Parameters
+        ----------
+        d : int
+            Dimension of the feature set.
+        train_features : array
+            The feature set for the training data.
+        test_features : array
+            The feature set for the test data.
+        train_targets : array
+            The training target data.
+        test_targets : array
+            The test target data:
+        predict : object
+            The prediction function.
+        meta_k : list
+            The metadata for the k-fold.
+
+        Attributes
+        ----------
+        result : array
+            The array holding the error associated with each subset of
+            features.
+
+        Returns
+        -------
+        meta_k : list
+            The metadata for the k-fold.
+        """
+        for x in trange(
+                d, desc='nested              ', leave=False):
+            args = (x, train_features, test_features,
+                    train_targets, test_targets, predict)
+            r = _single_elimination(args)
+            self.result[self.index][r[0]] = r[1]
+            if len(r) > 2:
+                meta_k.append(r[2])
+
+        return meta_k
 
 
 def _single_elimination(args):
@@ -181,4 +270,5 @@ def _single_elimination(args):
         error = result[0]
         meta = result[1:]
         return f, error, meta
+
     return f, result

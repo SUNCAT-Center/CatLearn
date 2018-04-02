@@ -5,7 +5,7 @@ import warnings
 
 from .initialize import initialize_population
 from .mating import cut_and_splice
-from .mutate import random_permutation
+from .mutate import random_permutation, probability_remove, probability_include
 from .convergence import Convergence
 
 
@@ -43,7 +43,8 @@ class GeneticAlgorithm(object):
         # Define the operators to use.
         self.operators = operators
         if self.operators is None:
-            self.operators = [cut_and_splice, random_permutation]
+            self.operators = [cut_and_splice, random_permutation,
+                              probability_remove, probability_include]
 
         self.fitness_parameters = fitness_parameters
         self.pareto = False
