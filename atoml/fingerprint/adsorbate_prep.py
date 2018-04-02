@@ -14,6 +14,7 @@ from ase.atoms import string2symbols
 from ase.geometry import get_layers
 from .periodic_table_data import get_radius
 from atoml.fingerprint.base import BaseGenerator
+from tqdm import tqdm
 
 
 addsyms = ['H', 'C', 'O', 'N', 'S']
@@ -218,7 +219,7 @@ def autogen_adsorbate_info(images):
         traj : list
             List of ASE atoms objects."""
     traj = []
-    for i, atoms in enumerate(images):
+    for atoms in tqdm(images):
         try:
             species = atoms.info['key_value_pairs']['species']
             try:

@@ -53,7 +53,7 @@ class TestAdsorbateFeatures(unittest.TestCase):
                      gen.strain,
                      gen.Z_add,
                      gen.ads_av,
-                     # gen.primary_surf_nn,
+                     gen.primary_surf_nn,
                      gen.primary_surfatom,
                      gen.get_dbid
                      ]

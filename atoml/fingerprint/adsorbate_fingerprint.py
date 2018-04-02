@@ -425,10 +425,7 @@ class AdsorbateFingerprintGenerator(BaseGenerator):
             ligand_atoms = atoms.info['ligand_atoms']
             numbers = atoms.numbers[ligand_atoms]
             # Import AtoML data on that element.
-            extra_ads_params = ['atomic_radius', 'heat_of_formation',
-                                'oxistates', 'block', 'econf', 'ionenergies']
-            dat = list_mendeleev_params(numbers, params=default_params +
-                                        extra_ads_params)
+            dat = list_mendeleev_params(numbers, params=self.slab_params)
             result = list(np.nanmean(np.array(dat, dtype=float), axis=0))
             result += [np.nanmean([gs_magmom[z] for z in numbers])]
             return [len(ligand_atoms), len(np.unique(numbers))] + result
