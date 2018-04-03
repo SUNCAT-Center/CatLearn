@@ -3,7 +3,7 @@ import types
 import ase.db
 
 
-def database_to_list(fname, selection=[]):
+def database_to_list(fname, selection=None):
     """ Returns a list of atoms objects imported from an ase database.
 
     Parameters
