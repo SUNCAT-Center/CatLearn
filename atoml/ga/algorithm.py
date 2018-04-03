@@ -69,18 +69,22 @@ class GeneticAlgorithm(object):
         self.features, self.targets = k_fold(
             features, targets=targets, nsplit=self.nsplit)
 
-    def search(self, steps, verbose=False, repeat=5):
+    def search(self, steps, convergence_operator=None,
+               repeat=5, verbose=False):
         """Do the actual search.
 
         Parameters
         ----------
         steps : int
             Maximum number of steps to be taken.
+        convergence_operator : object
+            The function to perform the convergence check. If None is passed
+            then the `no_progress` function is used.
+        repeat : int
+            Number of repeat generations with no progress.
         verbose : bool
             If True, will print out the progress of the search. Default is
             False.
-        repeat : int
-            Number of repeat generations with no progress.
 
         Attributes
         ----------
@@ -94,8 +98,10 @@ class GeneticAlgorithm(object):
             self._print_data()
 
         # Initialixe the convergence check.
-        converge_check = Convergence()
-        converge_check.no_progress(self.fitness, repeat=repeat)
+        if convergence_operator is None:
+            convergence_operator = Convergence()
+            convergence_operator = convergence_operator.no_progress
+        convergence_operator(self.fitness, repeat=repeat)
 
         for self.step in range(steps):
             offspring_list = self._new_generation()
@@ -115,7 +121,7 @@ class GeneticAlgorithm(object):
             if verbose:
                 self._print_data()
 
-            if converge_check.no_progress(self.fitness, repeat=repeat):
+            if convergence_operator(self.fitness, repeat=repeat):
                 print('CONVERGED on step {}'.format(self.step + 1))
                 break
 
