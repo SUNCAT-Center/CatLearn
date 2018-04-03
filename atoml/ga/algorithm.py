@@ -222,10 +222,13 @@ class GeneticAlgorithm(object):
         for i in global_details:
             if len(self.population) < self.population_size:
                 # Round to some tolerance to make sure unique fitness.
-                if round(i[1], 5) not in unique_list:
+                if round(i[1], 5) not in unique_list and not self.pareto:
                     self.population.append(i[0])
                     self.fitness.append(i[1])
                     unique_list.append(round(i[1], 5))
+                else:
+                    self.population.append(i[0])
+                    self.fitness.append(i[1])
             else:
                 break
 
@@ -250,7 +253,7 @@ class GeneticAlgorithm(object):
                             desc='working generration {}'.format(self.step + 1)
                             ):
             parameter = bool_list[index]
-            calc_fit = 0.
+            calc_fit = np.zeros(self.fitness_parameters)
             for k in range(self.nsplit):
                 # Sort out training and testing data.
                 train_features = copy.deepcopy(self.features)
@@ -262,9 +265,9 @@ class GeneticAlgorithm(object):
                                                 axis=0)[:, parameter]
                 train_targets = np.concatenate(train_targets, axis=0)
                 try:
-                    calc_fit += self.fit_func(
+                    calc_fit += np.array(self.fit_func(
                         train_features, train_targets, test_features,
-                        test_targets)
+                        test_targets))
                 except ValueError:
                     # If there is a problem calculating fitness assign -inf.
                     calc_fit += np.array(

@@ -4,6 +4,8 @@ import random
 import numpy as np
 
 from atoml.ga import GeneticAlgorithm
+from atoml.ga.predictors import (minimize_error, minimize_error_descriptors,
+                                 minimize_error_time)
 from atoml.regression import RidgeRegression
 
 from common import get_data
@@ -28,7 +30,7 @@ class TestGeneticAlgorithm(unittest.TestCase):
 
         return error
 
-    def test_feature_selection(self):
+    def test_1_feature_selection(self):
         """Simple test case to make sure it doesn't crash."""
         train_features, train_targets, _, _ = get_data()
         train_features = train_features[:, :20]
@@ -38,6 +40,51 @@ class TestGeneticAlgorithm(unittest.TestCase):
                               features=train_features,
                               targets=train_targets,
                               population=None)
+        self.assertEqual(np.shape(ga.population), (10, 20))
+
+        ga.search(50)
+        self.assertTrue(len(ga.population) == 10)
+        self.assertTrue(len(ga.fitness) == 10)
+
+    def test_2_generic_predictors(self):
+        """Simple test case to make sure it doesn't crash."""
+        train_features, train_targets, _, _ = get_data()
+        train_features = train_features[:, :20]
+
+        ga = GeneticAlgorithm(population_size=10,
+                              fit_func=minimize_error,
+                              features=train_features,
+                              targets=train_targets,
+                              population=None)
+        self.assertEqual(np.shape(ga.population), (10, 20))
+
+        ga.search(50)
+        self.assertTrue(len(ga.population) == 10)
+        self.assertTrue(len(ga.fitness) == 10)
+
+    def test_3_pareto(self):
+        """Simple test case to make sure it doesn't crash."""
+        train_features, train_targets, _, _ = get_data()
+        train_features = train_features[:, :20]
+
+        ga = GeneticAlgorithm(population_size=10,
+                              fit_func=minimize_error_descriptors,
+                              features=train_features,
+                              targets=train_targets,
+                              population=None,
+                              fitness_parameters=2)
+        self.assertEqual(np.shape(ga.population), (10, 20))
+
+        ga.search(50)
+        self.assertTrue(len(ga.population) == 10)
+        self.assertTrue(len(ga.fitness) == 10)
+
+        ga = GeneticAlgorithm(population_size=10,
+                              fit_func=minimize_error_time,
+                              features=train_features,
+                              targets=train_targets,
+                              population=None,
+                              fitness_parameters=2)
         self.assertEqual(np.shape(ga.population), (10, 20))
 
         ga.search(50)
