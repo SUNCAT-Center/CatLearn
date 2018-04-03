@@ -112,7 +112,7 @@ class AdsorbateFingerprintGenerator(BaseGenerator):
             # A = float(atoms.cell[0, 0]) * float(atoms.cell[1, 1])
             numbers = [atomic_numbers[s] for s in string2symbols(term)]
             dat = list_mendeleev_params(numbers, params=self.slab_params)
-            result = list(np.nanmean(np.array(dat, dtype=float), axis=0))
+            result = list(np.nanmean(dat, axis=0))
             result += [np.nanmean([gs_magmom[z] for z in numbers])]
             return result
 
@@ -164,7 +164,7 @@ class AdsorbateFingerprintGenerator(BaseGenerator):
                 raise NotImplementedError("bulk fingerprint.")
             numbers = [atomic_numbers[s] for s in string2symbols(bulk)]
             dat = list_mendeleev_params(numbers, params=self.slab_params)
-            result = list(np.nanmean(np.array(dat, dtype=float), axis=0))
+            result = list(np.nanmean(dat, axis=0))
             result += [np.nanmean([gs_magmom[z] for z in numbers])]
             return result
 
@@ -210,7 +210,7 @@ class AdsorbateFingerprintGenerator(BaseGenerator):
                                 'oxistates', 'block', 'econf', 'ionenergies']
             dat = list_mendeleev_params(numbers, params=default_params +
                                         extra_ads_params)
-            result = list(np.nanmean(np.array(dat, dtype=float), axis=0))
+            result = list(np.nanmean(dat, axis=0))
             result += [np.nanmean([gs_magmom[z] for z in numbers])]
             return result
 
@@ -257,7 +257,7 @@ class AdsorbateFingerprintGenerator(BaseGenerator):
         else:
             numbers = [atoms[j].number for j in atoms.info['site_atoms']]
             dat = list_mendeleev_params(numbers, params=self.slab_params)
-            result = list(np.nanmean(np.array(dat, dtype=float), axis=0))
+            result = list(np.nanmean(dat, axis=0))
             result += [np.nanmean([gs_magmom[z] for z in numbers])]
             return result
 
@@ -304,7 +304,7 @@ class AdsorbateFingerprintGenerator(BaseGenerator):
         else:
             numbers = [atoms[j].number for j in atoms.info['site_atoms']]
             dat = list_mendeleev_params(numbers, params=self.slab_params)
-            result = list(np.nansum(np.array(dat, dtype=float), axis=0))
+            result = list(np.nansum(dat))
             result += [np.nansum([gs_magmom[z] for z in numbers])]
             return result
 
@@ -426,7 +426,7 @@ class AdsorbateFingerprintGenerator(BaseGenerator):
             numbers = atoms.numbers[ligand_atoms]
             # Import AtoML data on that element.
             dat = list_mendeleev_params(numbers, params=self.slab_params)
-            result = list(np.nanmean(np.array(dat, dtype=float), axis=0))
+            result = list(np.nanmean(dat, axis=0))
             result += [np.nanmean([gs_magmom[z] for z in numbers])]
             return [len(ligand_atoms), len(np.unique(numbers))] + result
 

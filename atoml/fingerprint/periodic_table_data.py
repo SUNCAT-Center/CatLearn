@@ -92,8 +92,7 @@ def get_mendeleev_params(atomic_number, params=None):
 
 
 def list_mendeleev_params(numbers, params=None):
-    """Returns a list of average parameters weighted to the frequecy of
-    occurence in a list of atomic numbers
+    """Returns an n by p array, containing p parameters of n atoms.
 
     Parameters
     ----------
@@ -131,7 +130,8 @@ def list_mendeleev_params(numbers, params=None):
             elif param == 'ionenergies':
                 line += [mnlv[p]['1']]
         dat.append(line)
-    return dat
+    result = np.array(dat, dtype=float)
+    return result
 
 
 def get_radius(z):
