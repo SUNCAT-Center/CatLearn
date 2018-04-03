@@ -1,6 +1,7 @@
 """Function pulling atomic data for elements."""
 import json
 from atoml import __path__ as atoml_path
+from ase.data import covalent_radii
 import numpy as np
 
 # Load the Mendeleev parameter data into memory
@@ -104,11 +105,14 @@ def list_mendeleev_params(numbers, params=None):
     if params is None:
         params = default_params
     special_params = 0
+    n_params = len(params)
     for p, param in enumerate(params):
         if param == 'oxistates':
             special_params += 1
+            n_params += 2
         elif param == 'econf':
             special_params += 1
+            n_params += 4
         elif param == 'block':
             special_params += 1
         elif param == 'ionenergies':
@@ -130,15 +134,28 @@ def list_mendeleev_params(numbers, params=None):
             elif param == 'ionenergies':
                 line += [mnlv[p]['1']]
         dat.append(line)
+    if len(dat) == 0:
+        dat.append([np.nan] * n_params)
     result = np.array(dat, dtype=float)
+    if result.ndim == 1:
+        result = result[np.newaxis]
+    assert np.shape(result)[1] == n_params
     return result
 
 
-def get_radius(z):
-    p = get_mendeleev_params(z, params=['atomic_radius',
-                                        'covalent_radius_cordero'])
-    if p[0] is not None:
-        r = p[0]
-    elif p[1] is not None:
-        r = p[1]
-    return float(r) / 100.
+def get_radius(z, params=['atomic_radius', 'covalent_radius_cordero']):
+    """ Return a metric of atomic radius.
+
+    Parameters
+    ----------
+        params : list
+            Atomic radius metrics in order of preference. The first element
+            will be tried first.
+    """
+    p = get_mendeleev_params(z, params=params)
+    for r in p:
+        if r is not None:
+            # Return atomic radius in AAngstrom.
+            return float(r) / 100.
+    # Return atomic radius in AAngstrom.
+    return covalent_radii[z]

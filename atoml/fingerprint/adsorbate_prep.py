@@ -8,20 +8,17 @@ Input:
     fname (str) path/filename of ase.db file
     selection (list) ase.db selection
 """
-
+import warnings
 import numpy as np
+from tqdm import tqdm
 from ase.atoms import string2symbols
 from ase.geometry import get_layers
+from atoml.api.ase_atoms_api import extend_atoms_class
+from atoml.utilities.neighborlist import ase_neighborlist
 from .periodic_table_data import get_radius
-from atoml.fingerprint.base import BaseGenerator
-from tqdm import tqdm
 
 
-addsyms = ['H', 'C', 'O', 'N', 'S']
-gen = BaseGenerator()
-dx = {}
-for z in range(1, 93):
-    dx.update({z: get_radius(z)})
+addsyms = ['H', 'C', 'O', 'N', 'S', 'F', 'Cl']
 
 
 def slab_index(atoms):
@@ -151,33 +148,7 @@ def z2ads_index(atoms, formula):
     return ads_atoms
 
 
-def layers_info(atoms):
-    """Returns two lists, the first containing indices of subsurface atoms and
-    the second containing indices of atoms in the two outermost layers.
-
-    Parameters
-    ----------
-    atoms : ase atoms object.
-    """
-    radii = [get_radius(z) for z in atoms.numbers[atoms.info['site_atoms']]]
-    radius = np.average(radii)
-    il, z = get_layers(atoms, (0, 0, 1),
-                       tolerance=radius)
-    layers = atoms.info['key_value_pairs']['layers']
-    if len(z) < layers or len(z) > layers * 2:
-        top_atoms = atoms.info['slab_atoms']
-        bulk_atoms = atoms.info['slab_atoms']
-    else:
-        bulk_atoms = [a.index for a in atoms
-                      if il[a.index] < layers - 2]
-        top_atoms = [a.index for a in atoms
-                     if il[a.index] > layers - 3 and
-                     a.index not in atoms.info['ads_atoms']]
-    assert len(bulk_atoms) > 0 and len(top_atoms) > 0
-    return bulk_atoms, top_atoms
-
-
-def info2primary_index(atoms, rtol=1.3):
+def info2primary_index(atoms):
     """ Returns lists identifying the nearest neighbors of the adsorbate atoms.
 
     Parameters
@@ -188,8 +159,7 @@ def info2primary_index(atoms, rtol=1.3):
     """
     slab_atoms = atoms.info['slab_atoms']
     ads_atoms = atoms.info['ads_atoms']
-    gen.make_neighborlist(atoms, dx=dx)
-    nl = gen.get_neighborlist(atoms)
+    nl = atoms.get_neighborlist()
     chemi = []
     site = []
     ligand = []
@@ -202,26 +172,106 @@ def info2primary_index(atoms, rtol=1.3):
         for a_s in slab_atoms:
             if j in nl[a_s]:
                 ligand.append(a_s)
+    if len(chemi) is 0 or len(site) is 0:
+        print(chemi, site, ligand)
+        msg = 'No adsorption site detected. dbid: ' + str(atoms.info['dbid'])
+        warnings.warn(msg)
+    elif len(ligand) < 2:
+        msg = 'Site has less than 2 nearest neighbors. dbid: ' + \
+            str(atoms.info['dbid'])
+        warnings.warn(msg)
     return chemi, site, ligand
+
+
+def detect_termination(atoms):
+    """ Returns two lists, the first containing indices of bulk atoms and
+    the second containing indices of atoms in the termination.
+
+    Parameters
+    ----------
+    atoms : ase atoms object.
+    """
+    max_coord = 0
+    try:
+        layers = int(atoms.info['key_value_pairs']['layers'])
+        radii = [get_radius(z)
+                 for z in atoms.numbers[atoms.info['slab_atoms']]]
+        radius = np.average(radii)
+        il, zl = get_layers(atoms, (0, 0, 1), tolerance=radius)
+        if len(zl) < layers:
+            # msg = 'dbid: ' + str(atoms.info['dbid'])
+            raise AssertionError()
+        # bulk atoms includes subsurface atoms.
+        bulk = [a.index for a in atoms if il[a.index] <= layers - 2]
+        subsurf = [a.index for a in atoms if il[a.index] == layers - 2]
+        term = [a.index for a in atoms if il[a.index] >= layers - 1 and
+                a.index not in atoms.info['ads_atoms']]
+        if len(bulk) is 0 or len(term) is 0 or len(subsurf) is 0:
+            # print(il, zl)
+            # msg = 'dbid: ' + str(atoms.info['dbid'])
+            raise AssertionError()
+    except (KeyError, AssertionError):
+        nl = atoms.get_neighborlist()
+        for a_s in atoms.info['slab_atoms']:
+            if len(nl[a_s]) > max_coord:
+                max_coord = len(nl[a_s])
+        bulk = []
+        term = []
+        for a_s in atoms.info['slab_atoms']:
+            if (len(nl[a_s]) < max_coord - 2 and
+               a_s not in atoms.constraints[0].get_indices()):
+                term.append(a_s)
+            else:
+                bulk.append(a_s)
+        subsurf = []
+        for a_b in bulk:
+            for a_t in term:
+                if a_b in nl[a_t]:
+                    subsurf.append(a_b)
+        subsurf = list(np.unique(subsurf))
+        try:
+            sx, sy = atoms.info['key_value_pairs']['supercell'].split('x')
+            sx = int(''.join(i for i in sx if i.isdigit()))
+            sy = int(''.join(i for i in sy if i.isdigit()))
+            if int(sx) * int(sy) != len(term):
+                msg = str(len(term)) + ' termination atoms identified.' + \
+                    'size = ' + atoms.info['key_value_pairs']['supercell'] + \
+                    ' db id: ' + str(atoms.info['dbid'])
+                warnings.warn(msg)
+        except KeyError:
+            pass
+    if len(bulk) is 0 or len(term) is 0 or len(subsurf) is 0:
+        print(bulk, term, subsurf)
+        msg = 'Detect bulk/term. dbid: ' + str(atoms.info['dbid'])
+        print(il, zl)
+        raise AssertionError(msg)
+    return bulk, term, subsurf
 
 
 def catalysis_hub_to_info(images):
     raise NotImplementedError("Coming soon.")
 
 
-def autogen_adsorbate_info(images):
-    """Returns an atoms object with essential neighbor information attached.
-
-    Todo: checks for attached graph representations or neighborlists.
+def autogen_info(images):
+    """ Returns a list of atoms objects with group information
+    attached to info.
 
     Parameters
     ----------
-        traj : list
-            List of ASE atoms objects."""
+    images : list
+        List of ASE atoms objects."""
     traj = []
     for atoms in tqdm(images):
+        if not hasattr(atoms, 'atoml') or 'neighborlist' not in atoms.atoml:
+            extend_atoms_class(atoms)
+            nl = ase_neighborlist(atoms, rtol=1.2)
+            atoms.set_neighborlist(nl)
         try:
             species = atoms.info['key_value_pairs']['species']
+            if '-' in species or '+' in species or ',' in species:
+                msg = "Co-adsorption not yet supported. Skipping."
+                warnings.warn(msg)
+                continue
             try:
                 atoms.info['ads_atoms'] = formula2ads_index(atoms, species)
             except AssertionError:
@@ -233,5 +283,9 @@ def autogen_adsorbate_info(images):
         atoms.info['chemisorbed_atoms'] = chemi
         atoms.info['site_atoms'] = site
         atoms.info['ligand_atoms'] = ligand
+        bulk, subsurf, term = detect_termination(atoms)
+        atoms.info['bulk_atoms'] = bulk
+        atoms.info['termination_atoms'] = term
+        atoms.info['subsurf_atoms'] = subsurf
         traj.append(atoms)
     return traj
