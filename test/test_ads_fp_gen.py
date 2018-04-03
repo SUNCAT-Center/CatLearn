@@ -8,7 +8,7 @@ import unittest
 
 from ase.build import fcc111, add_adsorbate
 from ase.data import atomic_numbers
-from atoml.fingerprint.adsorbate_prep import autogen_adsorbate_info
+from atoml.fingerprint.adsorbate_prep import autogen_info
 from atoml.fingerprint.periodic_table_data import get_radius
 from atoml.fingerprint.setup import FeatureGenerator
 
@@ -42,7 +42,7 @@ class TestAdsorbateFeatures(unittest.TestCase):
     def test_ads_fp_gen(self):
         """Test the feature generation."""
         images = self.setup_atoms()
-        images = autogen_adsorbate_info(images)
+        images = autogen_info(images)
         print(str(len(images)) + ' training examples.')
         gen = FeatureGenerator()
         train_fpv = [gen.ads_nbonds,
@@ -59,7 +59,7 @@ class TestAdsorbateFeatures(unittest.TestCase):
                      ]
         matrix = gen.return_vec(images, train_fpv)
         labels = gen.return_names(train_fpv)
-        print(np.shape(matrix))
+        print(np.shape(matrix), type(matrix))
         if __name__ == '__main__':
             for i, l in enumerate(labels):
                 print(i, l)

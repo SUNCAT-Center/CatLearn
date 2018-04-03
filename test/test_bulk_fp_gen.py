@@ -39,6 +39,7 @@ class TestBulkFeatures(unittest.TestCase):
                      gen.std]
         matrix = gen.return_vec(images, train_fpv)
         labels = gen.return_names(train_fpv)
+        print(np.shape(matrix), print(type(matrix)))
         self.assertTrue(len(labels) == np.shape(matrix)[1])
 
 
