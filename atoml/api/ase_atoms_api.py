@@ -21,7 +21,7 @@ def database_to_list(fname, selection=None):
         atoms = c.get_atoms(dbid)
         atoms.info['key_value_pairs'] = dict(d.key_value_pairs)
         atoms.info['unique_id'] = str(d.unique_id)
-        atoms.info['dbid'] = int(d.id)
+        atoms.info['id'] = int(d.id)
         atoms.info['ctime'] = float(d.ctime)
         images.append(atoms)
     return images
