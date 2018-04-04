@@ -21,6 +21,90 @@ from .periodic_table_data import get_radius
 ads_syms = ['H', 'C', 'O', 'N', 'S', 'F', 'Cl']
 
 
+def catalysis_hub_to_info(images):
+    raise NotImplementedError("Coming soon.")
+
+
+def autogen_info(images):
+    """ Returns a list of atoms objects with group information
+    attached to info.
+
+    Parameters
+    ----------
+    images : list
+        List of ASE atoms objects."""
+    traj = []
+    for atoms in tqdm(images):
+        if not hasattr(atoms, 'atoml') or 'neighborlist' not in atoms.atoml:
+            extend_atoms_class(atoms)
+            nl = ase_neighborlist(atoms, rtol=1.2)
+            atoms.set_neighborlist(nl)
+        if 'ads_atoms' not in atoms.info:
+            atoms.info['ads_atoms'] = detect_adsorbate(atoms)
+        atoms.info['slab_atoms'] = slab_index(atoms)
+        chemi, site, ligand = info2primary_index(atoms)
+        atoms.info['chemisorbed_atoms'] = chemi
+        atoms.info['site_atoms'] = site
+        atoms.info['ligand_atoms'] = ligand
+        if ('key_value_pairs' not in atoms.info or
+           'term' not in atoms.info['key_value_pairs'] or
+           'bulk' not in atoms.info['key_value_pairs']):
+            bulk, subsurf, term = detect_termination(atoms)
+            atoms.info['bulk_atoms'] = bulk
+            atoms.info['termination_atoms'] = term
+            atoms.info['subsurf_atoms'] = subsurf
+        traj.append(atoms)
+    return traj
+
+
+def attach_nl(images):
+    traj = []
+    for atoms in tqdm(images):
+        if not hasattr(atoms, 'atoml') or 'neighborlist' not in atoms.atoml:
+            extend_atoms_class(atoms)
+            nl = ase_neighborlist(atoms, rtol=1.2)
+            atoms.set_neighborlist(nl)
+    return traj
+
+
+def attach_connection_matrix(images):
+    traj = []
+    for atoms in tqdm(images):
+        if not hasattr(atoms, 'atoml') or 'neighborlist' not in atoms.atoml:
+            extend_atoms_class(atoms)
+            nl = ase_neighborlist(atoms, rtol=1.2)
+            atoms.set_neighborlist(nl)
+    return traj
+
+
+def detect_adsorbate(atoms):
+    try:
+        species = atoms.info['key_value_pairs']['species']
+    except KeyError:
+        warnings.warn("'species' key missing.")
+        return sym2ads_index(atoms)
+    if species == '':
+        return []
+    elif '-' in species or '+' in species or ',' in species:
+        msg = "Co-adsorption not yet supported."
+        raise NotImplementedError(msg)
+    try:
+        return formula2ads_index(atoms, species)
+    except AssertionError:
+        return last2ads_index(atoms, species)
+
+
+def termination_info(images):
+    traj = []
+    for atoms in tqdm(images):
+        bulk, subsurf, term = detect_termination(atoms)
+        atoms.info['bulk_atoms'] = bulk
+        atoms.info['termination_atoms'] = term
+        atoms.info['subsurf_atoms'] = subsurf
+        traj.append(atoms)
+    return
+
+
 def slab_index(atoms):
     """ Return the index of all atoms that are not in atoms.info['ads_atoms']
 
@@ -148,23 +232,6 @@ def z2ads_index(atoms, formula):
     return ads_atoms
 
 
-def detect_adsorbate(atoms):
-    try:
-        species = atoms.info['key_value_pairs']['species']
-    except KeyError:
-        warnings.warn("'species' key missing.")
-        return sym2ads_index(atoms)
-    if species == '':
-        return []
-    elif '-' in species or '+' in species or ',' in species:
-        msg = "Co-adsorption not yet supported."
-        raise NotImplementedError(msg)
-    try:
-        return formula2ads_index(atoms, species)
-    except AssertionError:
-        return last2ads_index(atoms, species)
-
-
 def info2primary_index(atoms):
     """ Returns lists identifying the nearest neighbors of the adsorbate atoms.
 
@@ -273,50 +340,3 @@ def detect_termination(atoms):
             warnings.warn(msg)
             break
     return bulk, term, subsurf
-
-
-def catalysis_hub_to_info(images):
-    raise NotImplementedError("Coming soon.")
-
-
-def autogen_info(images):
-    """ Returns a list of atoms objects with group information
-    attached to info.
-
-    Parameters
-    ----------
-    images : list
-        List of ASE atoms objects."""
-    traj = []
-    for atoms in tqdm(images):
-        if not hasattr(atoms, 'atoml') or 'neighborlist' not in atoms.atoml:
-            extend_atoms_class(atoms)
-            nl = ase_neighborlist(atoms, rtol=1.1)
-            atoms.set_neighborlist(nl)
-        if 'ads_atoms' not in atoms.info:
-            atoms.info['ads_atoms'] = detect_adsorbate(atoms)
-        atoms.info['slab_atoms'] = slab_index(atoms)
-        chemi, site, ligand = info2primary_index(atoms)
-        atoms.info['chemisorbed_atoms'] = chemi
-        atoms.info['site_atoms'] = site
-        atoms.info['ligand_atoms'] = ligand
-        if ('key_value_pairs' not in atoms.info or
-           'term' not in atoms.info['key_value_pairs'] or
-           'bulk' not in atoms.info['key_value_pairs']):
-            bulk, subsurf, term = detect_termination(atoms)
-            atoms.info['bulk_atoms'] = bulk
-            atoms.info['termination_atoms'] = term
-            atoms.info['subsurf_atoms'] = subsurf
-        traj.append(atoms)
-    return traj
-
-
-def termination_info(images):
-    traj = []
-    for atoms in tqdm(images):
-        bulk, subsurf, term = detect_termination(atoms)
-        atoms.info['bulk_atoms'] = bulk
-        atoms.info['termination_atoms'] = term
-        atoms.info['subsurf_atoms'] = subsurf
-        traj.append(atoms)
-    return

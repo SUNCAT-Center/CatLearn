@@ -591,7 +591,7 @@ class AdsorbateFingerprintGenerator(BaseGenerator):
             return ['Ef']
         else:
             try:
-                delta = float(atoms.info['key_value_pair']['delta_energy'])
+                delta = float(atoms.info['key_value_pairs']['delta_energy'])
             except KeyError:
                 delta = np.nan
             return [delta]
