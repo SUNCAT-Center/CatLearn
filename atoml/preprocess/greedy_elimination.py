@@ -8,6 +8,7 @@ import multiprocessing
 import time
 from tqdm import trange, tqdm
 import numpy as np
+import json
 
 from atoml.cross_validation import k_fold
 
@@ -18,7 +19,7 @@ warnings.filterwarnings("ignore")
 class GreedyElimination(object):
     """The greedy feature elimination class."""
 
-    def __init__(self, nprocs=1, verbose=True):
+    def __init__(self, nprocs=1, verbose=True, save_file=None):
         """Initialize the class.
 
         Parameters
@@ -31,6 +32,7 @@ class GreedyElimination(object):
         """
         self.nprocs = nprocs
         self.verbose = verbose
+        self.save_file = save_file
 
     def greedy_elimination(self, predict, features, targets, nsplit=2, step=1):
         """Greedy feature elimination.
@@ -68,12 +70,8 @@ class GreedyElimination(object):
             Following columns are any additional values returned by predict,
             averaged over the k fold split.
         """
-        # Make some k-fold splits.
-        features, targets = k_fold(features, targets=targets, nsplit=nsplit)
-        _, total_features = np.shape(features[0])
-
-        output = []
-        survivors = list(range(total_features))
+        features, targets, output, survivors, total_features = self._load_data(
+            features, targets, nsplit)
 
         if self.verbose:
             # The tqdm package is used for tracking progress.
@@ -126,12 +124,14 @@ class GreedyElimination(object):
             # Sort features according to score.
             s = np.argsort(scores)
             for g in range(step):
-                eliminated = [np.array(survivors)[s][g],
-                              np.array(scores)[s][g]]
+                eliminated = np.array([np.array(survivors)[s][g],
+                                       np.array(scores)[s][g]]).tolist()
                 if len(meta) > 0:
                     mean_meta = np.mean(meta, axis=0)
-                    output.append(np.concatenate([eliminated, mean_meta[g]],
-                                                 axis=0))
+                    output.append(
+                        np.concatenate([eliminated, float(mean_meta[g])],
+                                       axis=0).tolist()
+                    )
                 else:
                     output.append(eliminated)
             # Delete features that, while missing gave the smallest error.
@@ -139,7 +139,90 @@ class GreedyElimination(object):
                          i not in s[:step]]
             total_features -= step
 
+            if self.save_file is not None:
+                self._write_data(
+                    output, survivors, total_features, features, targets)
+
         return output
+
+    def _load_data(self, features, targets, nsplit):
+        """Function to load or initialize data.
+
+        Parameters
+        ----------
+        features : array
+            The feature set for the training data.
+        targets : array
+            The targets for the traning data.
+        nsplit : int
+            The number of k-folds for the CV.
+
+        Returns
+        -------
+        features : list
+            List of k-fold feature arrays.
+        targets : list
+            List of k-fold target arrays.
+        output : list
+            The current list of output data.
+        survivors : list
+            The current list of surviving features.
+        total_features : int
+            The current number of surviving features.
+        """
+        # Make some k-fold splits.
+        total_features = np.shape(features)[1]
+
+        output = []
+        survivors = list(range(total_features))
+        load_data = False
+        if self.save_file is not None:
+            try:
+                with open(self.save_file) as save_data:
+                    data = json.load(save_data)
+                    output = data['output']
+                    survivors = data['survivors']
+                    total_features = data['total_features']
+                    features = [np.array(f) for f in data['features']]
+                    targets = [np.array(t) for t in data['targets']]
+                print('Resuming greedy search with {} features.'.format(
+                    total_features))
+                load_data = True
+            except FileNotFoundError:
+                print('Starting new greedy search.')
+
+        if not load_data:
+            features, targets = k_fold(
+                features, targets=targets, nsplit=nsplit)
+
+        return features, targets, output, survivors, total_features
+
+    def _write_data(self, output, survivors, total_features, features,
+                    targets):
+        """Function to write data.
+
+        Parameters
+        ----------
+        output : list
+            The current list of output data.
+        survivors : list
+            The current list of surviving features.
+        total_features : int
+            The current number of surviving features.
+        features : list
+            List of k-fold feature arrays.
+        targets : list
+            List of k-fold target arrays.
+        """
+        data = {
+            'output': output,
+            'survivors': survivors,
+            'total_features': total_features,
+            'features': [f.tolist() for f in features],
+            'targets': [t.tolist() for t in targets]
+        }
+        with open(self.save_file, 'w') as save_data:
+            json.dump(data, save_data)
 
     def _parallel_iterator(self, d, train_features, test_features,
                            train_targets, test_targets, predict, meta_k):
