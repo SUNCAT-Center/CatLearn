@@ -14,7 +14,7 @@ from atoml.preprocess import feature_engineering as fe
 from atoml.preprocess.feature_extraction import pls, pca, spca, atoml_pca
 from atoml.preprocess.feature_elimination import FeatureScreening
 from atoml.preprocess.greedy_elimination import GreedyElimination
-from atoml.regression import RidgeRegression
+from atoml.regression import RidgeRegression, GaussianProcess
 
 from common import get_data
 
@@ -38,6 +38,34 @@ def prediction(train_features, train_targets, test_features, test_targets):
     error = (sumd / len(test_features)) ** 0.5
 
     return error
+
+
+def train_predict(train_features, train_targets):
+    """Define the model."""
+    kdict = {'k1':
+             {
+                 'type': 'gaussian', 'width': 1., 'scaling': 1.,
+                 'dimension': 'single'
+             }
+             }
+    gp = GaussianProcess(train_fp=train_features,
+                         train_target=train_targets,
+                         kernel_dict=kdict,
+                         regularization=1e-2,
+                         optimize_hyperparameters=True,
+                         scale_data=True)
+    return gp
+
+
+def test_predict(gp, test_features, test_targets):
+    """Define the test function."""
+    pred = gp.predict(test_fp=test_features, test_target=test_targets,
+                      get_validation_error=True,
+                      get_training_error=True)
+
+    score = pred['validation_error']['rmse_average']
+
+    return score
 
 
 class TestFeatureOptimization(unittest.TestCase):
@@ -182,15 +210,15 @@ class TestFeatureOptimization(unittest.TestCase):
 
         importance = ImportanceElimination(feature_invariance)
         importance.importance_elimination(
-            prediction, train_features, train_targets)
+            train_predict, test_predict, train_features, train_targets)
 
         importance = ImportanceElimination(feature_randomize)
         importance.importance_elimination(
-            prediction, train_features, train_targets)
+            train_predict, test_predict, train_features, train_targets)
 
         importance = ImportanceElimination(feature_shuffle)
         importance.importance_elimination(
-            prediction, train_features, train_targets)
+            train_predict, test_predict, train_features, train_targets)
 
 
 if __name__ == '__main__':
