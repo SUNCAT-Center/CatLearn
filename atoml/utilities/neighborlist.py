@@ -5,7 +5,7 @@ from ase.neighborlist import NeighborList
 from atoml.fingerprint.periodic_table_data import get_radius
 
 
-def ase_neighborlist(atoms, cutoffs=None, rtol=1.15):
+def ase_neighborlist(atoms, cutoffs=None, rtol=1.):
     """Make dict of neighboring atoms using ase function.
 
     This provides a wrapper for the ASE neighborlist generator. Currently

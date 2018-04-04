@@ -92,7 +92,7 @@ exit''' % (self.magpie_path, self.cif_path, 'id', self.temp_path)
             FP = pd.read_csv(self.temp_path + '/voro_FP.csv')
         except:
             raise EnvironmentError(
-                'Pelase install Java! https://java.com/en/download/')
+                'Please install Java! https://java.com/en/download/')
         if self.delete_temp:
             import shutil
             shutil.rmtree(self.temp_path)
