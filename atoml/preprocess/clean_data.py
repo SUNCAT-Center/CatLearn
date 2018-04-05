@@ -64,6 +64,8 @@ def clean_variance(train, test=None, labels=None, mask=None):
         Optional feature matrix for the test data. Default is None passed.
     labels : array
         Optional list of feature labels. Default is None passed.
+    mask : list
+        Indices of features that are not subject to cleaning.
     """
     train = np.asarray(train, dtype=np.float64)
     if test is not None:
@@ -109,6 +111,8 @@ def clean_infinite(train, test=None, targets=None, labels=None, mask=None):
         An array of training targets.
     labels : array
         Optional list of feature labels. Default is None passed.
+    mask : list
+        Indices of features that are not subject to cleaning.
     """
     clean = defaultdict(list)
 

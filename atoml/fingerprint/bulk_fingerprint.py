@@ -113,7 +113,7 @@ class BulkFingerprintGenerator(BaseGenerator):
             numbers = atoms.get_atomic_numbers()
             dat = list_mendeleev_params(numbers, params=default_params +
                                         self.extra_params)
-            result = list(np.nansum(np.array(dat, dtype=float), axis=0))
+            result = list(np.nansum(dat, axis=0))
             result += [np.nansum([gs_magmom[z] for z in numbers])]
             return result
 
@@ -168,7 +168,7 @@ class BulkFingerprintGenerator(BaseGenerator):
             numbers = atoms.get_atomic_numbers()
             dat = list_mendeleev_params(numbers, params=default_params +
                                         self.extra_params)
-            result = list(np.nanmean(np.array(dat, dtype=float), axis=0))
+            result = list(np.nanmean(dat, axis=0))
             result += [np.nanmean([gs_magmom[z] for z in numbers])]
             return result
 
@@ -223,7 +223,7 @@ class BulkFingerprintGenerator(BaseGenerator):
             numbers = atoms.get_atomic_numbers()
             dat = list_mendeleev_params(numbers, params=default_params +
                                         self.extra_params)
-            result = list(np.nanstd(np.array(dat, dtype=float), axis=0))
+            result = list(np.nanstd(dat, axis=0))
             result += [np.nanstd([gs_magmom[z] for z in numbers])]
             return result
 
@@ -279,7 +279,7 @@ class BulkFingerprintGenerator(BaseGenerator):
             cations = numbers[numbers != self.ceramic_element]
             dat = list_mendeleev_params(cations, params=default_params +
                                         self.extra_params)
-            result = list(np.nansum(np.array(dat, dtype=float), axis=0))
+            result = list(np.nansum(dat, axis=0))
             result += [np.nansum([gs_magmom[z] for z in numbers])]
             return result
 
@@ -335,7 +335,7 @@ class BulkFingerprintGenerator(BaseGenerator):
             cations = numbers[numbers != self.ceramic_element]
             dat = list_mendeleev_params(cations, params=default_params +
                                         self.extra_params)
-            result = list(np.nanmean(np.array(dat, dtype=float), axis=0))
+            result = list(np.nanmean(dat, axis=0))
             result += [np.nanmean([gs_magmom[z] for z in numbers])]
             return result
 
@@ -391,7 +391,7 @@ class BulkFingerprintGenerator(BaseGenerator):
             cations = numbers[numbers != self.ceramic_element]
             dat = list_mendeleev_params(cations, params=default_params +
                                         self.extra_params)
-            result = list(np.nanstd(np.array(dat, dtype=float), axis=0))
+            result = list(np.nanstd(dat, axis=0))
             result += [np.nanstd([gs_magmom[z] for z in numbers])]
             return result
 
