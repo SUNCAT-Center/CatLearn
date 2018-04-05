@@ -271,8 +271,9 @@ def info2primary_index(atoms):
 
 
 def detect_termination(atoms):
-    """ Returns two lists, the first containing indices of bulk atoms and
-    the second containing indices of atoms in the termination.
+    """ Returns three lists, the first containing indices of bulk atoms and
+    the second containing indices of atoms in the second outermost layer, and
+    the last denotes atoms in the outermost layer or termination or the slab.
 
     Parameters
     ----------
@@ -281,6 +282,7 @@ def detect_termination(atoms):
     max_coord = 0
     try:
         nl = atoms.get_neighborlist()
+        # List coordination numbers of slab atoms.
         coord = np.empty(len(atoms.info['slab_atoms']), dtype=int)
         for i, a_s in enumerate(atoms.info['slab_atoms']):
             coord[i] = len(nl[a_s])
