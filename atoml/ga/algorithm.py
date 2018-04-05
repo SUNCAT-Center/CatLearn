@@ -10,6 +10,7 @@ from .initialize import initialize_population
 from .mating import cut_and_splice
 from .mutate import random_permutation, probability_remove, probability_include
 from .convergence import Convergence
+from .io import _write_data
 
 
 class GeneticAlgorithm(object):
@@ -124,7 +125,7 @@ class GeneticAlgorithm(object):
                 self._print_data()
 
             if writefile is not None:
-                self._write_data(writefile, self.population, self.fitness)
+                _write_data(writefile, self.population, self.fitness)
 
             if convergence_operator(self.fitness, repeat=repeat):
                 print('CONVERGED on step {}'.format(self.step + 1))
