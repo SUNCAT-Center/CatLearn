@@ -69,8 +69,8 @@ class GeneticAlgorithm(object):
         self.features, self.targets = k_fold(
             features, targets=targets, nsplit=self.nsplit)
 
-    def search(self, steps, convergence_operator=None,
-               repeat=5, verbose=False):
+    def search(self, steps, convergence_operator=None, repeat=5, verbose=False,
+               writefile=None):
         """Do the actual search.
 
         Parameters
@@ -85,6 +85,8 @@ class GeneticAlgorithm(object):
         verbose : bool
             If True, will print out the progress of the search. Default is
             False.
+        writefile : str
+            Name of a json file to save data too.
 
         Attributes
         ----------
@@ -120,6 +122,9 @@ class GeneticAlgorithm(object):
 
             if verbose:
                 self._print_data()
+
+            if writefile is not None:
+                self._write_data(writefile, self.population, self.fitness)
 
             if convergence_operator(self.fitness, repeat=repeat):
                 print('CONVERGED on step {}'.format(self.step + 1))
