@@ -17,9 +17,8 @@ def ase_neighborlist(atoms, cutoffs=None, rtol=1.):
         Target ase atoms object on which to get neighbor list.
     cutoffs : list
         A list of radii for each atom in atoms.
-    skin : float
-        The buffer to allow for small variation in the distance between
-        neighbors.
+    rtol : float
+        The tolerance factor to allow for small variation in the cutoff radii.
 
     Returns
     -------

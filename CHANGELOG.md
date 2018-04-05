@@ -1,11 +1,18 @@
 # dev
 
+-   Added `autogen_info` function for list of atoms objects representing adsorbates.
+    - This can auto-generate all atomic group information and attach it to atoms.info.
+    - Parallelized fingerprinting is not yet supported for output from `autogen_info`.
+-   Added `database_to_list` for import of atoms objects from ase.db with formatted metadata.
+-   Added function to translate a connection matrix to a formatted neighborlist dict.
+-   `periodic_table_data.list_mendeleev_params` now returns a numpy array.
 -   Magpie api added, allows for Voronoi and prototype feature generation.
 -   A genetic algorithm added for feature optimization.
 -   Parallelism updated to be compatable with Python2.
 -   Added in better neighborlist generation.
     -   Updated wrapper for ase neighborlist.
     -   Updated AtoML neighborlist generator.
+    -   Defaults cutoffs changed to `atomic_radius` plus a relative tolerance.
 -   Added basic NetworkX api.
 -   Added some general functions to clean data and build a GP.
 -   Added a test for dependencies. Will raise a warning in the CI if things get out of date.

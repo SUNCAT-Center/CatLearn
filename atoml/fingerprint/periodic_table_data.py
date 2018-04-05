@@ -148,9 +148,11 @@ def get_radius(z, params=['atomic_radius', 'covalent_radius_cordero']):
 
     Parameters
     ----------
-        params : list
-            Atomic radius metrics in order of preference. The first element
-            will be tried first.
+    z : int
+        Atomic number.
+    params : list
+        Atomic radius metrics in order of preference. The first successful
+        value will be returned.
     """
     p = get_mendeleev_params(z, params=params)
     for r in p:
@@ -159,3 +161,20 @@ def get_radius(z, params=['atomic_radius', 'covalent_radius_cordero']):
             return float(r) / 100.
     # Return atomic radius in AAngstrom.
     return covalent_radii[z]
+
+
+def default_atoml_radius(z):
+    """ Return the default AtoML covalent radius of element z.
+
+    Parameters
+    ----------
+    z : int
+        Atomic number.
+    """
+    if z == 1:
+        r = covalent_radii[1]
+    else:
+        r = get_radius(z, params=['atomic_radius', 'covalent_radius_cordero'])
+    # 15% bond streching is allowed.
+    r *= 1.2
+    return r

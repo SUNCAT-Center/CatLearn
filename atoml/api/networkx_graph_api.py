@@ -79,3 +79,25 @@ def networkx_to_adjacency(graph):
     adjacency += np.diag(atomic_numbers)
 
     return adjacency
+
+
+def matrix_to_nl(matrix):
+    """ Returns a neighborlist as a dictionary.
+    Parameters
+    ----------
+        matrix : numpy array
+            symmetric connection matrix.
+
+    Returns
+    -------
+        nl : dict
+            neighborlist.
+    """
+    n, m = np.shape(matrix)
+    nl = {}
+    matrix = matrix.astype(int)
+    np.fill_diagonal(matrix, 0)
+    assert (matrix == matrix.T).all()
+    for i in range(n):
+        nl.update({i: np.where(matrix[i, :] == 1)[0].tolist()})
+    return nl
