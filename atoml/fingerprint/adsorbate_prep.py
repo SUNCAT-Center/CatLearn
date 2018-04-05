@@ -15,7 +15,7 @@ from ase.atoms import string2symbols
 from ase.geometry import get_layers
 from atoml.api.ase_atoms_api import extend_atoms_class
 from atoml.utilities.neighborlist import ase_neighborlist
-from .periodic_table_data import get_radius
+from .periodic_table_data import get_radius, default_atoml_radius
 
 
 ads_syms = ['H', 'C', 'O', 'N', 'S', 'F', 'Cl']
@@ -41,7 +41,8 @@ def autogen_info(images):
     for atoms in tqdm(images):
         if not hasattr(atoms, 'atoml') or 'neighborlist' not in atoms.atoml:
             extend_atoms_class(atoms)
-            nl = ase_neighborlist(atoms, rtol=1.2)
+            radii = [default_atoml_radius(z) for z in atoms.numbers]
+            nl = ase_neighborlist(atoms, cutoffs=radii)
             atoms.set_neighborlist(nl)
         if 'ads_atoms' not in atoms.info:
             atoms.info['ads_atoms'] = detect_adsorbate(atoms)
