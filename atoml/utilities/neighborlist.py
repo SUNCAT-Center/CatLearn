@@ -2,7 +2,7 @@
 import numpy as np
 
 from ase.neighborlist import NeighborList
-from atoml.fingerprint.periodic_table_data import default_atoml_radius
+from atoml.fingerprint.periodic_table_data import get_radius
 
 
 def ase_neighborlist(atoms, cutoffs=None, rtol=1.):
@@ -26,7 +26,7 @@ def ase_neighborlist(atoms, cutoffs=None, rtol=1.):
         A dictionary containing the atom index and each neighbor index.
     """
     if cutoffs is None:
-        cutoffs = [default_atoml_radius(a.number) * rtol for a in atoms]
+        cutoffs = [get_radius(a.number) * rtol for a in atoms]
     nl = NeighborList(
         cutoffs, skin=0., sorted=False, self_interaction=False,
         bothways=True)
@@ -70,13 +70,13 @@ def atoml_neighborlist(atoms, dx=None, max_neighbor=1, mic=True):
     if dx is None:
         dx = dict.fromkeys(set(atomic_numbers), 0)
         for i in dx:
-            dx[i] = default_atoml_radius(i) / 5.
+            dx[i] = get_radius(i) / 5.
 
     dist = atoms.get_all_distances(mic=mic)
 
     r_list, b_list = [], []
     for an in atomic_numbers:
-        r_list.append(default_atoml_radius(an))
+        r_list.append(get_radius(an))
         b_list.append(dx[an])
 
     radius_matrix = np.asarray(r_list) + np.reshape(r_list, (len(r_list), 1))
