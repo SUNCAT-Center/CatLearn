@@ -1,5 +1,7 @@
 # dev
 
+# Version 0.4.0 (April 2018)
+
 -   Added `autogen_info` function for list of atoms objects representing adsorbates.
     - This can auto-generate all atomic group information and attach it to atoms.info.
     - Parallelized fingerprinting is not yet supported for output from `autogen_info`.
