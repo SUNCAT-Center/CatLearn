@@ -26,13 +26,17 @@ def catalysis_hub_to_info(images):
 
 
 def autogen_info(images):
-    """ Returns a list of atoms objects with group information
+    """ Returns a list of atoms objects with atomic group information
     attached to info.
+    This information is  needed by some functions in the
+    AdsorbateFingerprintGenerator.
 
     Parameters
     ----------
     images : list
-        List of ASE atoms objects."""
+        list of atoms objects representing adsorbates on slabs.
+        No further information is required in atoms.info.
+    """
     traj = []
     for atoms in tqdm(images):
         if not hasattr(atoms, 'atoml') or 'neighborlist' not in atoms.atoml:
@@ -41,13 +45,17 @@ def autogen_info(images):
             atoms.set_neighborlist(nl)
         if 'ads_atoms' not in atoms.info:
             atoms.info['ads_atoms'] = detect_adsorbate(atoms)
-        atoms.info['slab_atoms'] = slab_index(atoms)
-        chemi, site, ligand = info2primary_index(atoms)
-        atoms.info['chemisorbed_atoms'] = chemi
-        atoms.info['site_atoms'] = site
-        atoms.info['ligand_atoms'] = ligand
+        if 'slab_atoms' not in atoms.info:
+            atoms.info['slab_atoms'] = slab_index(atoms)
+        if ('chemisorbed_atoms' not in atoms.info or
+            'site_atoms' not in atoms.info or
+           'ligand_atoms' not in atoms.info):
+            chemi, site, ligand = info2primary_index(atoms)
+            atoms.info['chemisorbed_atoms'] = chemi
+            atoms.info['site_atoms'] = site
+            atoms.info['ligand_atoms'] = ligand
         if ('key_value_pairs' not in atoms.info or
-           'term' not in atoms.info['key_value_pairs'] or
+            'term' not in atoms.info['key_value_pairs'] or
            'bulk' not in atoms.info['key_value_pairs']):
             bulk, subsurf, term = detect_termination(atoms)
             atoms.info['bulk_atoms'] = bulk
@@ -58,16 +66,7 @@ def autogen_info(images):
 
 
 def attach_nl(images):
-    traj = []
-    for atoms in tqdm(images):
-        if not hasattr(atoms, 'atoml') or 'neighborlist' not in atoms.atoml:
-            extend_atoms_class(atoms)
-            nl = ase_neighborlist(atoms, rtol=1.2)
-            atoms.set_neighborlist(nl)
-    return traj
-
-
-def attach_connection_matrix(images):
+    """ Return a list of atoms objects with attached neighborlists."""
     traj = []
     for atoms in tqdm(images):
         if not hasattr(atoms, 'atoml') or 'neighborlist' not in atoms.atoml:
@@ -78,6 +77,12 @@ def attach_connection_matrix(images):
 
 
 def detect_adsorbate(atoms):
+    """ Returns a list of indices of atoms belonging to an adsorbate.
+
+    Parameters
+    ----------
+    atoms : ase atoms object
+    """
     try:
         species = atoms.info['key_value_pairs']['species']
     except KeyError:
@@ -95,6 +100,20 @@ def detect_adsorbate(atoms):
 
 
 def termination_info(images):
+    """ Returns a list of atoms objects with attached information about
+    the slab termination, the slab second outermost layer and the bulk slab
+    compositions.
+
+    Parameters
+    ----------
+    images : list
+        list of atoms objects representing adsorbates on slabs.
+        The atoms objects must have the following keys in atoms.info:
+            - 'ads_atoms' : list
+                indices of atoms belonging to the adsorbate
+            - 'slab_atoms' : list
+                indices of atoms belonging to the slab
+    """
     traj = []
     for atoms in tqdm(images):
         bulk, subsurf, term = detect_termination(atoms)
@@ -106,12 +125,15 @@ def termination_info(images):
 
 
 def slab_index(atoms):
-    """ Return the index of all atoms that are not in atoms.info['ads_atoms']
+    """ Returns a list of indices of atoms belonging to the slab.
+    These are defined as atoms that are not belonging to the adsorbate.
 
     Parameters
     ----------
     atoms : ase atoms object
-        atoms.info must be a dictionary containing the key 'ads_atoms'.
+        The atoms object must have the key 'ads_atoms' in atoms.info:
+            - 'ads_atoms' : list
+                indices of atoms belonging to the adsorbate
     """
     chemi = [a.index for a in atoms if a.index not in atoms.info['ads_atoms']]
     return chemi
@@ -238,8 +260,11 @@ def info2primary_index(atoms):
     Parameters
     ----------
     atoms : ase atoms object.
-        atoms.info must be a dictionary containing the keys 'ads_atoms' and
-        'slab_atoms'.
+        The atoms object must have the following keys in atoms.info:
+            - 'ads_atoms' : list
+                indices of atoms belonging to the adsorbate
+            - 'slab_atoms' : list
+                indices of atoms belonging to the slab
     """
     slab_atoms = atoms.info['slab_atoms']
     ads_atoms = atoms.info['ads_atoms']
@@ -278,6 +303,11 @@ def detect_termination(atoms):
     Parameters
     ----------
     atoms : ase atoms object.
+        The atoms object must have the following keys in atoms.info:
+            - 'ads_atoms' : list
+                indices of atoms belonging to the adsorbate
+            - 'slab_atoms' : list
+                indices of atoms belonging to the slab
     """
     max_coord = 0
     try:
