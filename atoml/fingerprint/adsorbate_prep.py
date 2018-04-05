@@ -281,14 +281,20 @@ def detect_termination(atoms):
     max_coord = 0
     try:
         nl = atoms.get_neighborlist()
-        for a_s in atoms.info['slab_atoms']:
-            if len(nl[a_s]) > max_coord:
-                max_coord = len(nl[a_s])
+        coord = np.empty(len(atoms.info['slab_atoms']), dtype=int)
+        for i, a_s in enumerate(atoms.info['slab_atoms']):
+            coord[i] = len(nl[a_s])
+            # Do not count adsorbate atoms.
+            for a_a in atoms.info['ads_atoms']:
+                if a_a in nl[a_s]:
+                    coord[i] -= 1
         bulk = []
         term = []
-        for a_s in atoms.info['slab_atoms']:
-            if (len(nl[a_s]) < max_coord - 2 and
-               a_s not in atoms.constraints[0].get_indices()):
+        max_coord = max(coord)
+        for j, c in enumerate(coord):
+            a_s = atoms.info['slab_atoms'][j]
+            if (c < max_coord and a_s not in
+               atoms.constraints[0].get_indices()):
                 term.append(a_s)
             else:
                 bulk.append(a_s)
@@ -305,7 +311,7 @@ def detect_termination(atoms):
             if int(sx) * int(sy) != len(term):
                 msg = str(len(term)) + ' termination atoms identified.' + \
                     'size = ' + atoms.info['key_value_pairs']['supercell'] + \
-                    ' db id: ' + str(atoms.info['id'])
+                    ' id: ' + str(atoms.info['id'])
                 warnings.warn(msg)
         except KeyError:
             pass
@@ -329,7 +335,9 @@ def detect_termination(atoms):
                 a.index not in atoms.info['ads_atoms']]
     if len(bulk) is 0 or len(term) is 0 or len(subsurf) is 0:
         print(bulk, term, subsurf)
-        msg = 'Detect bulk/term. dbid: ' + str(atoms.info['id'])
+        msg = 'Detect bulk/term.'
+        if 'id' in atoms.info:
+            msg += ' id: ' + str(atoms.info['id'])
         print(il, zl)
         raise AssertionError(msg)
     for a_s in atoms.info['site_atoms']:
