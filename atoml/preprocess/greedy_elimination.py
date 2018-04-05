@@ -8,6 +8,7 @@ import multiprocessing
 import time
 from tqdm import trange, tqdm
 import numpy as np
+import json
 
 from atoml.cross_validation import k_fold
 
@@ -18,7 +19,7 @@ warnings.filterwarnings("ignore")
 class GreedyElimination(object):
     """The greedy feature elimination class."""
 
-    def __init__(self, nprocs=1):
+    def __init__(self, nprocs=1, verbose=True, save_file=None):
         """Initialize the class.
 
         Parameters
@@ -26,11 +27,14 @@ class GreedyElimination(object):
         nprocs : int
             Number of processers used in parallel implementation. Default is 1
             e.g. serial.
+        verbose : bool
+            Display some additional metrics on progress when set to True.
         """
         self.nprocs = nprocs
+        self.verbose = verbose
+        self.save_file = save_file
 
-    def greedy_elimination(self, predict, features, targets, nsplit=2,
-                           step=1):
+    def greedy_elimination(self, predict, features, targets, nsplit=2, step=1):
         """Greedy feature elimination.
 
         Function to iterate through feature set, eliminating worst feature in
@@ -59,26 +63,35 @@ class GreedyElimination(object):
         output : array
             First column is the index of features in the order they were
             eliminated.
+
             Second column are corresponding cost function values, averaged over
             the k fold split.
+
             Following columns are any additional values returned by predict,
             averaged over the k fold split.
         """
-        # Make some k-fold splits.
-        features, targets = k_fold(features, targets=targets, nsplit=nsplit)
-        _, total_features = np.shape(features[0])
+        features, targets, output, survivors, total_features = self._load_data(
+            features, targets, nsplit)
 
-        output = []
-        survivors = list(range(total_features))
+        if self.verbose:
+            # The tqdm package is used for tracking progress.
+            iterator1 = trange(
+                (total_features - 1) // step, desc='features eliminated ',
+                leave=False)
+        else:
+            iterator1 = range((total_features - 1) // step)
 
-        print('starting greedy feature elimination')
-        # The tqdm package is used for tracking progress.
-        for fnum in trange((total_features - 1) // step,
-                           desc='features eliminated '):
+        for fnum in iterator1:
             self.result = np.zeros((nsplit, total_features))
             meta = []
-            for self.index in trange(nsplit, desc='k-folds             ',
-                                     leave=False):
+
+            if self.verbose:
+                iterator2 = trange(nsplit, desc='k-folds             ',
+                                   leave=False)
+            else:
+                iterator2 = range(nsplit)
+
+            for self.index in iterator2:
                 # Sort out training and testing data.
                 train_features = copy.deepcopy(features)
                 train_targets = copy.deepcopy(targets)
@@ -94,32 +107,15 @@ class GreedyElimination(object):
 
                 # Iterate through features and find error for removing it.
                 if self.nprocs != 1:
-                    # First a parallel implementation.
-                    pool = multiprocessing.Pool(self.nprocs)
-                    tasks = np.arange(d)
-                    args = (
-                        (x, train_features, test_features, train_targets,
-                         test_targets, predict) for x in tasks)
-                    for r in tqdm(pool.imap_unordered(
-                            _single_elimination, args), total=d,
-                            desc='nested              ', leave=False):
-                        self.result[self.index][r[0]] = r[1]
-                        if len(r) > 2:
-                            meta_k.append(r[2])
-                        # Wait to make things more stable.
-                        time.sleep(0.001)
-                    pool.close()
+                    meta_k = self._parallel_iterator(
+                        d, train_features, test_features, train_targets,
+                        test_targets, predict, meta_k)
 
                 else:
-                    # Then a more clear serial implementation.
-                    for x in trange(
-                            d, desc='nested              ', leave=False):
-                        args = (x, train_features, test_features,
-                                train_targets, test_targets, predict)
-                        r = _single_elimination(args)
-                        self.result[self.index][r[0]] = r[1]
-                        if len(r) > 2:
-                            meta_k.append(r[2])
+                    meta_k = self._serial_iterator(
+                        d, train_features, test_features, train_targets,
+                        test_targets, predict, meta_k)
+
                 if len(meta_k) > 0:
                     meta.append(meta_k)
 
@@ -128,12 +124,14 @@ class GreedyElimination(object):
             # Sort features according to score.
             s = np.argsort(scores)
             for g in range(step):
-                eliminated = [np.array(survivors)[s][g],
-                              np.array(scores)[s][g]]
+                eliminated = np.array([np.array(survivors)[s][g],
+                                       np.array(scores)[s][g]]).tolist()
                 if len(meta) > 0:
                     mean_meta = np.mean(meta, axis=0)
-                    output.append(np.concatenate([eliminated, mean_meta[g]],
-                                                 axis=0))
+                    output.append(
+                        np.concatenate([eliminated, float(mean_meta[g])],
+                                       axis=0).tolist()
+                    )
                 else:
                     output.append(eliminated)
             # Delete features that, while missing gave the smallest error.
@@ -141,7 +139,181 @@ class GreedyElimination(object):
                          i not in s[:step]]
             total_features -= step
 
+            if self.save_file is not None:
+                self._write_data(
+                    output, survivors, total_features, features, targets)
+
         return output
+
+    def _load_data(self, features, targets, nsplit):
+        """Function to load or initialize data.
+
+        Parameters
+        ----------
+        features : array
+            The feature set for the training data.
+        targets : array
+            The targets for the traning data.
+        nsplit : int
+            The number of k-folds for the CV.
+
+        Returns
+        -------
+        features : list
+            List of k-fold feature arrays.
+        targets : list
+            List of k-fold target arrays.
+        output : list
+            The current list of output data.
+        survivors : list
+            The current list of surviving features.
+        total_features : int
+            The current number of surviving features.
+        """
+        # Make some k-fold splits.
+        total_features = np.shape(features)[1]
+
+        output = []
+        survivors = list(range(total_features))
+        load_data = False
+        if self.save_file is not None:
+            try:
+                with open(self.save_file) as save_data:
+                    data = json.load(save_data)
+                    output = data['output']
+                    survivors = data['survivors']
+                    total_features = data['total_features']
+                    features = [np.array(f) for f in data['features']]
+                    targets = [np.array(t) for t in data['targets']]
+                print('Resuming greedy search with {} features.'.format(
+                    total_features))
+                load_data = True
+            except FileNotFoundError:
+                print('Starting new greedy search.')
+
+        if not load_data:
+            features, targets = k_fold(
+                features, targets=targets, nsplit=nsplit)
+
+        return features, targets, output, survivors, total_features
+
+    def _write_data(self, output, survivors, total_features, features,
+                    targets):
+        """Function to write data.
+
+        Parameters
+        ----------
+        output : list
+            The current list of output data.
+        survivors : list
+            The current list of surviving features.
+        total_features : int
+            The current number of surviving features.
+        features : list
+            List of k-fold feature arrays.
+        targets : list
+            List of k-fold target arrays.
+        """
+        data = {
+            'output': output,
+            'survivors': survivors,
+            'total_features': total_features,
+            'features': [f.tolist() for f in features],
+            'targets': [t.tolist() for t in targets]
+        }
+        with open(self.save_file, 'w') as save_data:
+            json.dump(data, save_data)
+
+    def _parallel_iterator(self, d, train_features, test_features,
+                           train_targets, test_targets, predict, meta_k):
+        """Parallel iterator for the predictions.
+
+        Parameters
+        ----------
+        d : int
+            Dimension of the feature set.
+        train_features : array
+            The feature set for the training data.
+        test_features : array
+            The feature set for the test data.
+        train_targets : array
+            The training target data.
+        test_targets : array
+            The test target data:
+        predict : object
+            The prediction function.
+        meta_k : list
+            The metadata for the k-fold.
+
+        Attributes
+        ----------
+        result : array
+            The array holding the error associated with each subset of
+            features.
+
+        Returns
+        -------
+        meta_k : list
+            The metadata for the k-fold.
+        """
+        pool = multiprocessing.Pool(self.nprocs)
+        args = (
+            (x, train_features, test_features, train_targets,
+             test_targets, predict) for x in np.arange(d))
+        for r in tqdm(pool.imap_unordered(
+                _single_elimination, args), total=d,
+                desc='nested              ', leave=False):
+            self.result[self.index][r[0]] = r[1]
+            if len(r) > 2:
+                meta_k.append(r[2])
+            # Wait to make things more stable.
+            time.sleep(0.001)
+        pool.close()
+
+        return meta_k
+
+    def _serial_iterator(self, d, train_features, test_features,
+                         train_targets, test_targets, predict, meta_k):
+        """Serial iterator for the predictions.
+
+        Parameters
+        ----------
+        d : int
+            Dimension of the feature set.
+        train_features : array
+            The feature set for the training data.
+        test_features : array
+            The feature set for the test data.
+        train_targets : array
+            The training target data.
+        test_targets : array
+            The test target data:
+        predict : object
+            The prediction function.
+        meta_k : list
+            The metadata for the k-fold.
+
+        Attributes
+        ----------
+        result : array
+            The array holding the error associated with each subset of
+            features.
+
+        Returns
+        -------
+        meta_k : list
+            The metadata for the k-fold.
+        """
+        for x in trange(
+                d, desc='nested              ', leave=False):
+            args = (x, train_features, test_features,
+                    train_targets, test_targets, predict)
+            r = _single_elimination(args)
+            self.result[self.index][r[0]] = r[1]
+            if len(r) > 2:
+                meta_k.append(r[2])
+
+        return meta_k
 
 
 def _single_elimination(args):
@@ -181,4 +353,5 @@ def _single_elimination(args):
         error = result[0]
         meta = result[1:]
         return f, error, meta
+
     return f, result

@@ -7,12 +7,14 @@ import numpy as np
 import unittest
 
 from atoml.utilities import DescriptorDatabase
-from atoml.preprocess import importance_testing as it
+from atoml.preprocess.importance_testing import \
+    (ImportanceElimination, feature_invariance, feature_randomize,
+     feature_shuffle)
 from atoml.preprocess import feature_engineering as fe
 from atoml.preprocess.feature_extraction import pls, pca, spca, atoml_pca
 from atoml.preprocess.feature_elimination import FeatureScreening
 from atoml.preprocess.greedy_elimination import GreedyElimination
-from atoml.regression import RidgeRegression
+from atoml.regression import RidgeRegression, GaussianProcess
 
 from common import get_data
 
@@ -38,25 +40,36 @@ def prediction(train_features, train_targets, test_features, test_targets):
     return error
 
 
+def train_predict(train_features, train_targets):
+    """Define the model."""
+    kdict = {'k1':
+             {
+                 'type': 'gaussian', 'width': 1., 'scaling': 1.,
+                 'dimension': 'single'
+             }
+             }
+    gp = GaussianProcess(train_fp=train_features,
+                         train_target=train_targets,
+                         kernel_dict=kdict,
+                         regularization=1e-2,
+                         optimize_hyperparameters=True,
+                         scale_data=True)
+    return gp
+
+
+def test_predict(gp, test_features, test_targets):
+    """Define the test function."""
+    pred = gp.predict(test_fp=test_features, test_target=test_targets,
+                      get_validation_error=True,
+                      get_training_error=True)
+
+    score = pred['validation_error']['rmse_average']
+
+    return score
+
+
 class TestFeatureOptimization(unittest.TestCase):
     """Test out the feature optimization."""
-
-    def test_importance(self):
-        """Test feature importance helper functions."""
-        # Attach the database.
-        dd = DescriptorDatabase(db_name='{}/vec_store.sqlite'.format(wkdir),
-                                table='FingerVector')
-
-        # Pull the features and targets from the database.
-        names = dd.get_column_names()
-        feature_data = dd.query_db(names=names[1:-1])
-
-        nf = it.feature_invariance(feature_data, 1)
-        assert not np.allclose(nf, feature_data)
-        nf = it.feature_randomize(feature_data, 1)
-        assert not np.allclose(nf, feature_data)
-        nf = it.feature_shuffle(feature_data, 1)
-        assert not np.allclose(nf, feature_data)
 
     def test_expand(self):
         """Generate an extended feature space."""
@@ -188,7 +201,24 @@ class TestFeatureOptimization(unittest.TestCase):
         train_features, train_targets, _, _ = get_data()
         train_features = train_features[:, :20]
         ge = GreedyElimination()
-        return ge.greedy_elimination(prediction, train_features, train_targets)
+        ge.greedy_elimination(prediction, train_features, train_targets)
+
+    def test_importance(self):
+        """Test feature importance helper functions."""
+        train_features, train_targets, _, _ = get_data()
+        train_features = train_features[:, :20]
+
+        importance = ImportanceElimination(feature_invariance)
+        importance.importance_elimination(
+            train_predict, test_predict, train_features, train_targets)
+
+        importance = ImportanceElimination(feature_randomize)
+        importance.importance_elimination(
+            train_predict, test_predict, train_features, train_targets)
+
+        importance = ImportanceElimination(feature_shuffle)
+        importance.importance_elimination(
+            train_predict, test_predict, train_features, train_targets)
 
 
 if __name__ == '__main__':

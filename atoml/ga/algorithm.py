@@ -2,18 +2,23 @@
 import numpy as np
 import random
 import warnings
+import copy
+from tqdm import trange
 
+from atoml.cross_validation import k_fold
 from .initialize import initialize_population
 from .mating import cut_and_splice
-from .mutate import random_permutation
+from .mutate import random_permutation, probability_remove, probability_include
 from .convergence import Convergence
+from .io import _write_data
 
 
 class GeneticAlgorithm(object):
     """Genetic algorithm for parameter optimization."""
 
-    def __init__(self, population_size, fit_func, dimension, population=None,
-                 operators=None):
+    def __init__(self, population_size, fit_func, features, targets,
+                 population=None, operators=None, fitness_parameters=1,
+                 nsplit=2):
         """Initialize the genetic algorithm.
 
         Parameters
@@ -22,41 +27,67 @@ class GeneticAlgorithm(object):
             Population size, same as generation size.
         fit_func : object
             User defined function to calculate fitness.
-        d_param : int
-            Dimension of parameters in model.
+        features : array
+            The feature space upon which to optimize.
+        targets : array
+            The targets corresponding to the feature data.
         population : list
-            The current population. Default is None.
+            The current population. Default is None, will generate a random
+            initial population.
         operators : list
             A list of operation functions. These are used for mating and
             mutation operations.
+        fitness_parameters : int
+            The number of variables to optimize. Default is a single variable.
+        nslpit : int
+            Number of data splits for k-fold cv.
         """
         # Set parameters.
+        self.step = -1
         self.population_size = population_size
         self.fit_func = fit_func
-        self.dimension = dimension
+        self.dimension = features.shape[1]
+        self.nsplit = nsplit
 
         # Define the starting population.
         self.population = population
         if self.population is None:
-            self.population = initialize_population(population_size, dimension)
+            self.population = initialize_population(
+                population_size, self.dimension)
 
         # Define the operators to use.
         self.operators = operators
         if self.operators is None:
-            self.operators = [cut_and_splice, random_permutation]
+            self.operators = [cut_and_splice, random_permutation,
+                              probability_remove, probability_include]
 
-    def search(self, steps, verbose=False, repeat=5):
+        self.fitness_parameters = fitness_parameters
+        self.pareto = False
+        if self.fitness_parameters > 1:
+            self.pareto = True
+
+        # Make some k-fold splits.
+        self.features, self.targets = k_fold(
+            features, targets=targets, nsplit=self.nsplit)
+
+    def search(self, steps, convergence_operator=None, repeat=5, verbose=False,
+               writefile=None):
         """Do the actual search.
 
         Parameters
         ----------
         steps : int
             Maximum number of steps to be taken.
+        convergence_operator : object
+            The function to perform the convergence check. If None is passed
+            then the `no_progress` function is used.
+        repeat : int
+            Number of repeat generations with no progress.
         verbose : bool
             If True, will print out the progress of the search. Default is
             False.
-        repeat : int
-            Number of repeat generations with no progress.
+        writefile : str
+            Name of a json file to save data too.
 
         Attributes
         ----------
@@ -70,10 +101,12 @@ class GeneticAlgorithm(object):
             self._print_data()
 
         # Initialixe the convergence check.
-        converge_check = Convergence()
-        converge_check.no_progress(self.fitness, repeat=repeat)
+        if convergence_operator is None:
+            convergence_operator = Convergence()
+            convergence_operator = convergence_operator.no_progress
+        convergence_operator(self.fitness, repeat=repeat)
 
-        for step in range(steps):
+        for self.step in range(steps):
             offspring_list = self._new_generation()
 
             # Keep track of fitness for new candidates.
@@ -91,8 +124,11 @@ class GeneticAlgorithm(object):
             if verbose:
                 self._print_data()
 
-            if converge_check.no_progress(self.fitness, repeat=repeat):
-                print('CONVERGED on step {}'.format(step + 1))
+            if writefile is not None:
+                _write_data(writefile, self.population, self.fitness)
+
+            if convergence_operator(self.fitness, repeat=repeat):
+                print('CONVERGED on step {}'.format(self.step + 1))
                 break
 
     def _new_generation(self):
@@ -198,10 +234,13 @@ class GeneticAlgorithm(object):
         for i in global_details:
             if len(self.population) < self.population_size:
                 # Round to some tolerance to make sure unique fitness.
-                if round(i[1], 5) not in unique_list:
+                if round(i[1], 5) not in unique_list and not self.pareto:
                     self.population.append(i[0])
                     self.fitness.append(i[1])
                     unique_list.append(round(i[1], 5))
+                else:
+                    self.population.append(i[0])
+                    self.fitness.append(i[1])
             else:
                 break
 
@@ -219,21 +258,86 @@ class GeneticAlgorithm(object):
             The fitness based on the new parameters.
         """
         # Initialize array.
-        fit = np.zeros(len(param_list))
+        fit = np.zeros((len(param_list), self.fitness_parameters))
 
         bool_list = np.asarray(param_list, dtype=np.bool)
-        for index, parameter in enumerate(bool_list):
-            try:
-                calc_fit = self.fit_func(parameter)
-            except ValueError:
-                # If there is a problem calculating fitness assign -inf.
-                calc_fit = float('-inf')
-                msg = 'The fitness function is failing. Returning -inf.'
-                warnings.warn(msg)
+        for index in trange(bool_list.shape[0], leave=False,
+                            desc='working generration {}'.format(self.step + 1)
+                            ):
+            parameter = bool_list[index]
+            calc_fit = np.zeros(self.fitness_parameters)
+            for k in range(self.nsplit):
+                # Sort out training and testing data.
+                train_features = copy.deepcopy(self.features)
+                train_targets = copy.deepcopy(self.targets)
+                test_features = train_features.pop(k)[:, parameter]
+                test_targets = train_targets.pop(k)
 
-            fit[index] = calc_fit
+                train_features = np.concatenate(train_features,
+                                                axis=0)[:, parameter]
+                train_targets = np.concatenate(train_targets, axis=0)
+                try:
+                    calc_fit += np.array(self.fit_func(
+                        train_features, train_targets, test_features,
+                        test_targets))
+                except ValueError:
+                    # If there is a problem calculating fitness assign -inf.
+                    calc_fit += np.array(
+                        [float('-inf')] * self.fitness_parameters)
+                    msg = 'The fitness function is failing. Returning -inf.'
+                    warnings.warn(msg)
 
-        return fit
+            fit[index] = calc_fit / float(self.nsplit)
+
+        if self.pareto:
+            fit = self._pareto_trainsform(fit)
+
+        return np.reshape(fit, (len(fit),))
+
+    def _pareto_trainsform(self, fitness):
+        """Function to transform a variable with fitness to a pareto fitness.
+
+        Parameters
+        ----------
+        fitness : array
+            A multi-dimentional array of fitnesses.
+
+        Returns
+        -------
+        result : array
+            Pareto front ordering for all data points.
+        """
+        fit_copy = fitness.copy()
+        pareto = -1.
+        result = np.zeros(fit_copy.shape[0])
+        while np.sum(fit_copy > -np.inf) != 0:
+            bool_pareto = self._locate_pareto(fit_copy)
+            result[bool_pareto] = pareto
+            fit_copy[bool_pareto] = -np.inf
+            pareto -= 1.
+
+        return result
+
+    def _locate_pareto(self, fitness):
+        """Function to locate the current Pareto optimal set of solutions.
+
+        Parameters
+        ----------
+        fitness : array
+            A multi-dimentional array of fitnesses.
+
+        Returns
+        -------
+        result : array
+            Boolean array with True for data on current Pareto front.
+        """
+        front = np.ones(fitness.shape[0], dtype=bool)
+        for index, fit in enumerate(fitness):
+            if front[index]:
+                front[front] = np.any(
+                    fitness[front] >= fit, axis=1)
+
+        return front
 
     def _print_data(self):
         """Print some output during the search."""

@@ -11,7 +11,7 @@ class Convergence(object):
         self.previous = float('-inf')
         self.count = 0
 
-    def no_progress(self, fitness, repeat=5):
+    def no_progress(self, fitness, repeat):
         """Convergence based on a lack of any progress in the search.
 
         Parameters
@@ -26,12 +26,37 @@ class Convergence(object):
         converged : bool
             True if convergence has been reached, False otherwise.
         """
-        # Combine all fitnesses for search.
-        self.fitness = np.concatenate((self.fitness, fitness))
-
         # Work out whether the search has progressed.
-        if np.max(self.fitness) > self.previous:
-            self.previous = np.max(self.fitness)
+        if np.max(fitness) > self.previous:
+            self.previous = np.max(fitness)
+            self.count = 0
+        else:
+            self.count += 1
+
+        # Check if the convergence count has been reached.
+        if self.count > repeat:
+            return True
+
+        return False
+
+    def stagnation(self, fitness, repeat):
+        """Convergence based on a stagnation of the population.
+
+        Parameters
+        ----------
+        fitness : array
+            A List of fitnesses from the search.
+        repeat : int
+            Number of repeat generations with no progress.
+
+        Returns
+        -------
+        converged : bool
+            True if convergence has been reached, False otherwise.
+        """
+        # Work out whether the search has progressed.
+        if (np.min(fitness), np.max(fitness)) != self.previous:
+            self.previous = (np.min(fitness), np.max(fitness))
             self.count = 0
         else:
             self.count += 1
