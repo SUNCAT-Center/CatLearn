@@ -45,7 +45,11 @@ def autogen_info(images):
             nl = ase_neighborlist(atoms, cutoffs=radii)
             atoms.set_neighborlist(nl)
         if 'ads_atoms' not in atoms.info:
-            atoms.info['ads_atoms'] = detect_adsorbate(atoms)
+            ads_atoms = detect_adsorbate(atoms)
+            if ads_atoms is None:
+                continue
+            else:
+                atoms.info['ads_atoms'] = ads_atoms
         if 'slab_atoms' not in atoms.info:
             atoms.info['slab_atoms'] = slab_index(atoms)
         if ('chemisorbed_atoms' not in atoms.info or
@@ -72,7 +76,8 @@ def attach_nl(images):
     for atoms in tqdm(images):
         if not hasattr(atoms, 'atoml') or 'neighborlist' not in atoms.atoml:
             extend_atoms_class(atoms)
-            nl = ase_neighborlist(atoms, rtol=1.2)
+            radii = [default_atoml_radius(z) for z in atoms.numbers]
+            nl = ase_neighborlist(atoms, cutoffs=radii)
             atoms.set_neighborlist(nl)
     return traj
 
@@ -93,7 +98,11 @@ def detect_adsorbate(atoms):
         return []
     elif '-' in species or '+' in species or ',' in species:
         msg = "Co-adsorption not yet supported."
-        raise NotImplementedError(msg)
+        if 'id' in atoms.info:
+            msg += ' id: ' + str(atoms.info['id'])
+        warnings.warn(msg)
+        return None
+        # raise NotImplementedError(msg)
     try:
         return formula2ads_index(atoms, species)
     except AssertionError:
