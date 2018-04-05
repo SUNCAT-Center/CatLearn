@@ -1,8 +1,8 @@
 # dev
 
--   Added `autogen_info` function for list of atoms obejcts representing adsorbates.
+-   Added `autogen_info` function for list of atoms objects representing adsorbates.
     - This can auto-generate all atomic group information and attach it to atoms.info.
-    - Parallelized fingerprinting is not yet supported for output from autogen_info.
+    - Parallelized fingerprinting is not yet supported for output from `autogen_info`.
 -   Added `database_to_list` for import of atoms objects from ase.db with formatted metadata.
 -   Added function to translate a connection matrix to a formatted neighborlist dict.
 -   `periodic_table_data.list_mendeleev_params` now returns a numpy array.
