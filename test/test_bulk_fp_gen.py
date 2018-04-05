@@ -9,7 +9,7 @@ import unittest
 from ase.build import bulk
 from ase.data import atomic_numbers
 
-from atoml.fingerprint.database_adsorbate_api import get_radius
+from atoml.fingerprint.periodic_table_data import get_radius
 from atoml.fingerprint.setup import FeatureGenerator
 
 wkdir = os.getcwd()
@@ -39,6 +39,7 @@ class TestBulkFeatures(unittest.TestCase):
                      gen.std]
         matrix = gen.return_vec(images, train_fpv)
         labels = gen.return_names(train_fpv)
+        print(np.shape(matrix), print(type(matrix)))
         self.assertTrue(len(labels) == np.shape(matrix)[1])
 
 

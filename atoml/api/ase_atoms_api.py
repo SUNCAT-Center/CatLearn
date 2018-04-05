@@ -1,5 +1,30 @@
 """Functions that interface ase with AtoML."""
 import types
+import ase.db
+
+
+def database_to_list(fname, selection=None):
+    """ Returns a list of atoms objects imported from an ase database.
+
+    Parameters
+    ----------
+    fname : str
+        path/filename of ase database.
+    selection : list
+        search filters to limit the import.
+    """
+    c = ase.db.connect(fname)
+    s = c.select(selection)
+    images = []
+    for d in s:
+        dbid = int(d.id)
+        atoms = c.get_atoms(dbid)
+        atoms.info['key_value_pairs'] = dict(d.key_value_pairs)
+        atoms.info['unique_id'] = str(d.unique_id)
+        atoms.info['id'] = int(d.id)
+        atoms.info['ctime'] = float(d.ctime)
+        images.append(atoms)
+    return images
 
 
 def extend_atoms_class(atoms):

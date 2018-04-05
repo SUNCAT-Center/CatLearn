@@ -16,7 +16,7 @@ class BaseGenerator(object):
         """
         self.dtype = kwargs.get('dtype', 'atoms')
 
-    def make_neighborlist(self, candidate, dx=None, neighbor_number=1):
+    def make_neighborlist(self, candidate, rtol=1., neighbor_number=1):
         """Function to generate the neighborlist.
 
         Parameters
@@ -31,7 +31,7 @@ class BaseGenerator(object):
         """
         if self.dtype == 'atoms':
             extend_atoms_class(candidate)
-            nl = ase_neighborlist(candidate)
+            nl = ase_neighborlist(candidate, rtol=rtol)
         else:
             raise NotImplementedError('{} data type not implemented.'.format(
                 self.dtype))

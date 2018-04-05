@@ -140,17 +140,6 @@ class FeatureGenerator(
         else:
             return self._concatenate_vec(None, vec_names)
 
-    def get_keyvaluepair(self, c=[], vec_name='None'):
-        """Get a list of the key_value_pairs target names/values."""
-        if len(c) == 0:
-            return ['kvp_' + vec_name]
-        else:
-            out = []
-            for atoms in c:
-                field_value = float(atoms['key_value_pairs'][vec_name])
-                out.append(field_value)
-            return out
-
     def _get_vec(self, args):
         """Get the fingerprint vector as an array.
 
