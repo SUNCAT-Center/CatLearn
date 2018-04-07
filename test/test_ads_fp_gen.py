@@ -10,7 +10,8 @@ from ase.build import fcc111, add_adsorbate
 from ase.data import atomic_numbers
 from ase.constraints import FixAtoms
 from atoml.fingerprint.adsorbate_prep import autogen_info
-from atoml.fingerprint.periodic_table_data import get_radius
+from atoml.fingerprint.periodic_table_data import (get_radius,
+                                                   default_atoml_radius)
 from atoml.fingerprint.setup import FeatureGenerator
 
 wkdir = os.getcwd()
@@ -21,6 +22,7 @@ class TestAdsorbateFeatures(unittest.TestCase):
 
     def setup_atoms(self):
         """Get the atoms objects."""
+        adsorbates = ['H', 'O', 'C', 'N', 'S', 'Cl', 'P', 'F']
         symbols = ['Ag', 'Au', 'Cu', 'Pt', 'Pd', 'Ir', 'Rh', 'Ni', 'Co']
         images = []
         for i, s in enumerate(symbols):
@@ -31,9 +33,10 @@ class TestAdsorbateFeatures(unittest.TestCase):
             c_atoms = [a.index for a in atoms if
                        a.z < atoms.cell[2, 2]/2. + 0.1]
             atoms.set_constraint(FixAtoms(c_atoms))
-            h = (get_radius(6) + rs) / 2 ** 0.5
-            add_adsorbate(atoms, 'C', h, 'bridge')
-            images.append(atoms)
+            for ads in adsorbates:
+                h = (default_atoml_radius(atomic_numbers[ads]) + rs) / 2 ** 0.5
+                add_adsorbate(atoms, ads, h, 'bridge')
+                images.append(atoms)
         return images
 
     def test_ads_fp_gen(self):
@@ -46,8 +49,8 @@ class TestAdsorbateFeatures(unittest.TestCase):
                      gen.count_chemisorbed_fragment,
                      gen.count_ads_atoms,
                      gen.count_ads_bonds,
-                     gen.ads_av,
-                     gen.ads_sum,
+                     # gen.ads_av,
+                     # gen.ads_sum,
                      gen.bulk,
                      gen.term,
                      gen.strain,
@@ -61,8 +64,6 @@ class TestAdsorbateFeatures(unittest.TestCase):
         if __name__ == '__main__':
             for i, l in enumerate(labels):
                 print(i, l)
-            for dbid in matrix[:, -1]:
-                print('last column:', int(dbid))
         self.assertTrue(len(labels) == np.shape(matrix)[1])
 
 

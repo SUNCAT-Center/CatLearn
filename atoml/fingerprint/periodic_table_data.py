@@ -126,7 +126,9 @@ def list_mendeleev_params(numbers, params=None):
             line = mnlv
         for p, param in enumerate(params):
             if param == 'oxistates':
-                line += [np.min(mnlv[p]), np.median(mnlv[p]), np.max(mnlv[p])]
+                line += [np.nanmin(mnlv[p]),
+                         np.nanmedian(mnlv[p]),
+                         np.nanmax(mnlv[p])]
             elif param == 'econf':
                 line += list(n_outer(mnlv[p]))
             elif param == 'block':
