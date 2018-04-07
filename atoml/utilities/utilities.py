@@ -8,6 +8,40 @@ from scipy.stats import pearsonr, spearmanr, kendalltau
 from atoml.preprocess.scaling import standardize
 
 
+def holdout_set(data, fraction, target=None, seed=None):
+    """ Returns a dataset split in a hold out set and a training set.
+
+    Parameters
+    ----------
+    matrix : array
+        n by d array
+    fraction : float
+        fraction of data to hold out for testing.
+    target : list
+        optional list of targets or separate feature.
+    seed : float
+        optional float for reproducible splits.
+    """
+    matrix = np.array(data)
+
+    # Randomize order.
+    if seed is not None:
+        np.random.seed(seed)
+    np.random.shuffle(matrix)
+
+    index = int(len(matrix) * fraction)
+    holdout = matrix[:index, :]
+    train = matrix[index:, :]
+
+    if target is None:
+        return train, holdout
+
+    train_target = target[:index]
+    test_target = target[:index]
+
+    return train, train_target, holdout, test_target
+
+
 def target_correlation(train, target,
                        correlation=['pearson', 'spearman', 'kendall']):
     """ Returns the correlation of all features.
