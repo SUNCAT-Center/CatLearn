@@ -4,6 +4,44 @@ import hashlib
 import time
 import multiprocessing
 from tqdm import trange, tqdm
+from scipy.stats import pearsonr, spearmanr, kendalltau
+from atoml.preprocess.scaling import standardize
+
+
+def target_correlation(train, target,
+                       correlation=['pearson', 'spearman', 'kendall']):
+    """ Returns the correlation of all features.
+
+    Parameters
+    ----------
+    train : array
+        n by d training data matrix.
+    target : list
+        target for correlation.
+
+    Returns
+    -------
+    metric : array
+        len(metric) by d matrix of correlation coefficients.
+    """
+    # Scale and shape the data.
+    train_data = standardize(train_matrix=train)['train']
+    train_target = target
+    output = []
+    for c in correlation:
+        correlation = c
+        # Find the correlation.
+        row = []
+        for c in train_data.T:
+            if correlation is 'pearson':
+                row.append(pearsonr(c, train_target)[0])
+            elif correlation is 'spearman':
+                row.append(spearmanr(c, train_target)[0])
+            elif correlation is 'kendall':
+                row.append(kendalltau(c, train_target)[0])
+        output.append(row)
+
+    return output
 
 
 class LearningCurve(object):
