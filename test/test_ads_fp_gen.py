@@ -28,12 +28,12 @@ class TestAdsorbateFeatures(unittest.TestCase):
         for i, s in enumerate(symbols):
             rs = get_radius(atomic_numbers[s])
             a = 2 * rs * 2 ** 0.5
-            atoms = fcc111(s, (2, 2, 3), a=a)
-            atoms.center(vacuum=6, axis=2)
-            c_atoms = [a.index for a in atoms if
-                       a.z < atoms.cell[2, 2]/2. + 0.1]
-            atoms.set_constraint(FixAtoms(c_atoms))
             for ads in adsorbates:
+                atoms = fcc111(s, (2, 2, 3), a=a)
+                atoms.center(vacuum=6, axis=2)
+                c_atoms = [a.index for a in atoms if
+                       a.z < atoms.cell[2, 2]/2. + 0.1]
+                atoms.set_constraint(FixAtoms(c_atoms))
                 h = (default_atoml_radius(atomic_numbers[ads]) + rs) / 2 ** 0.5
                 add_adsorbate(atoms, ads, h, 'bridge')
                 images.append(atoms)
@@ -49,14 +49,15 @@ class TestAdsorbateFeatures(unittest.TestCase):
                      gen.count_chemisorbed_fragment,
                      gen.count_ads_atoms,
                      gen.count_ads_bonds,
-                     # gen.ads_av,
-                     # gen.ads_sum,
-                     gen.bulk,
-                     gen.term,
-                     gen.strain,
-                     gen.mean_surf_ligands,
                      gen.mean_site,
                      gen.sum_site,
+                     gen.mean_surf_ligands,
+                     gen.term,
+                     gen.bulk,
+                     gen.strain,
+                     gen.en_difference,
+                     # gen.ads_av,
+                     # gen.ads_sum,
                      ]
         matrix = gen.return_vec(images, train_fpv)
         labels = gen.return_names(train_fpv)

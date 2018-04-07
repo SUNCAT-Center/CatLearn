@@ -29,6 +29,15 @@ default_params = ['atomic_number',
                   'en_allen',
                   'atomic_weight']
 
+electronegativities = ['en_allen',
+                       'en_nagle',
+                       'en_gordy',
+                       'en_martynov-batsanov',
+                       'en_allred-rochow',
+                       'en_cottrell-sutton',
+                       'en_pauling',
+                       'en_mulliken']
+
 
 def n_outer(econf):
     n_tot = 0

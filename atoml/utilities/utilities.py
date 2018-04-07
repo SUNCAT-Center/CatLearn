@@ -44,7 +44,7 @@ def holdout_set(data, fraction, target=None, seed=None):
 
 def target_correlation(train, target,
                        correlation=['pearson', 'spearman', 'kendall']):
-    """ Returns the correlation of all features.
+    """ Returns the correlation of all columns of train with a target feature.
 
     Parameters
     ----------
