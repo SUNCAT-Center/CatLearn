@@ -9,6 +9,7 @@ from atoml.cross_validation import k_fold
 from .initialize import initialize_population
 from .mating import cut_and_splice
 from .mutate import random_permutation, probability_remove, probability_include
+from .natural_selection import population_reduction
 from .convergence import Convergence
 from .io import _write_data
 
@@ -119,7 +120,8 @@ class GeneticAlgorithm(object):
             extend_pop = np.concatenate((self.population, offspring_list))
 
             # Perform natural selection.
-            self._population_reduction(extend_pop, extend_fit)
+            self.population, self.fitness = population_reduction(
+                extend_pop, extend_fit, self.population_size, self.pareto)
 
             if verbose:
                 self._print_data()
@@ -205,44 +207,6 @@ class GeneticAlgorithm(object):
                 return parameter
 
         return None
-
-    def _population_reduction(self, pop, fit):
-        """Method to reduce population size to constant.
-
-        Parameters
-        ----------
-        pop : list
-            Extended population.
-        fit : list
-            Extended fitness assignment.
-
-        Attributes
-        ----------
-        pop : list
-            The population after natural selection.
-        fitness : list
-            The fitness for the current population.
-        """
-        # Combine parameters and sort.
-        global_details = [[i, j] for i, j in zip(pop, fit)]
-        global_details.sort(key=lambda x: float(x[1]), reverse=True)
-
-        # Reinitialize everything as empty list.
-        self.population, self.fitness, unique_list = [], [], []
-
-        # Fill the lists with current best candidates.
-        for i in global_details:
-            if len(self.population) < self.population_size:
-                # Round to some tolerance to make sure unique fitness.
-                if round(i[1], 5) not in unique_list and not self.pareto:
-                    self.population.append(i[0])
-                    self.fitness.append(i[1])
-                    unique_list.append(round(i[1], 5))
-                else:
-                    self.population.append(i[0])
-                    self.fitness.append(i[1])
-            else:
-                break
 
     def _get_fitness(self, param_list):
         """Function wrapper to calculate the fitness.
