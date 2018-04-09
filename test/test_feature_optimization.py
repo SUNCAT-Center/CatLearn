@@ -14,6 +14,7 @@ from atoml.preprocess import feature_engineering as fe
 from atoml.preprocess.feature_extraction import pls, pca, spca, atoml_pca
 from atoml.preprocess.feature_elimination import FeatureScreening
 from atoml.preprocess.greedy_elimination import GreedyElimination
+from atoml.utilities.sammon import sammons_error
 from atoml.regression import RidgeRegression, GaussianProcess
 
 from common import get_data
@@ -219,6 +220,16 @@ class TestFeatureOptimization(unittest.TestCase):
         importance = ImportanceElimination(feature_shuffle)
         importance.importance_elimination(
             train_predict, test_predict, train_features, train_targets)
+
+    def test_sammon(self):
+        """Test calculation of sammon's error."""
+        train_features, _, _, _ = get_data()
+
+        double = np.concatenate((train_features, train_features), axis=1)
+
+        sammons_error(double, train_features)
+
+        self.assertEqual(sammons_error(train_features, train_features), 0.)
 
 
 if __name__ == '__main__':
