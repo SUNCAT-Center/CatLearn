@@ -9,7 +9,7 @@ from atoml.cross_validation import k_fold
 from .initialize import initialize_population
 from .mating import cut_and_splice
 from .mutate import random_permutation, probability_remove, probability_include
-from .natural_selection import population_reduction
+from .natural_selection import population_reduction, remove_duplicates
 from .convergence import Convergence
 from .io import _write_data
 
@@ -19,7 +19,7 @@ class GeneticAlgorithm(object):
 
     def __init__(self, population_size, fit_func, features, targets,
                  population=None, operators=None, fitness_parameters=1,
-                 nsplit=2):
+                 nsplit=2, accuracy=None):
         """Initialize the genetic algorithm.
 
         Parameters
@@ -42,6 +42,10 @@ class GeneticAlgorithm(object):
             The number of variables to optimize. Default is a single variable.
         nslpit : int
             Number of data splits for k-fold cv.
+        accuracy : int
+            Number of decimal places to include when finding unique candidates
+            for duplication removal. If None, duplication removel is not
+            performed.
         """
         # Set parameters.
         self.step = -1
@@ -49,6 +53,7 @@ class GeneticAlgorithm(object):
         self.fit_func = fit_func
         self.dimension = features.shape[1]
         self.nsplit = nsplit
+        self.accuracy = accuracy
 
         # Define the starting population.
         self.population = population
@@ -66,6 +71,10 @@ class GeneticAlgorithm(object):
         self.pareto = False
         if self.fitness_parameters > 1:
             self.pareto = True
+        if self.pareto and self.accuracy is not None:
+            msg = 'Should not set an accuracy parameter for multivariable '
+            msg += 'searches.'
+            raise RuntimeError(msg)
 
         # Make some k-fold splits.
         self.features, self.targets = k_fold(
@@ -120,8 +129,11 @@ class GeneticAlgorithm(object):
             extend_pop = np.concatenate((self.population, offspring_list))
 
             # Perform natural selection.
+            if self.accuracy is not None:
+                self.population, self.fitness = remove_duplicates(
+                    self.population, self.fitness, self.accuracy)
             self.population, self.fitness = population_reduction(
-                extend_pop, extend_fit, self.population_size, self.pareto)
+                extend_pop, extend_fit, self.population_size)
 
             if verbose:
                 self._print_data()
