@@ -29,6 +29,7 @@ def holdout_set(data, fraction, target=None, seed=None):
         np.random.seed(seed)
     np.random.shuffle(matrix)
 
+    # Split data.
     index = int(len(matrix) * fraction)
     holdout = matrix[:index, :]
     train = matrix[index:, :]
@@ -37,7 +38,7 @@ def holdout_set(data, fraction, target=None, seed=None):
         return train, holdout
 
     train_target = target[:index]
-    test_target = target[:index]
+    test_target = target[index:]
 
     return train, train_target, holdout, test_target
 
