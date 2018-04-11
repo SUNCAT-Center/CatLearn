@@ -14,7 +14,7 @@ Please see the [tutorials](https://gitlab.com/atoML/AtoML/tree/master/tutorials)
 
 -   [Installation](#installation)
 -   [Usage](#usage)
--   [Functionality](functionality)
+-   [Functionality](#functionality)
 -   [Contribution](#contribution)
 
 ## Installation
