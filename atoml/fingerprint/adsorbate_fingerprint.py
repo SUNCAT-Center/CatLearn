@@ -346,7 +346,7 @@ class AdsorbateFingerprintGenerator(BaseGenerator):
             nO = len([a.index for a in atoms if a.symbol == 'O'])
             nN = len([a.index for a in atoms if a.symbol == 'N'])
             nS = len([a.index for a in atoms if a.symbol == 'S'])
-            return [nC, nO, nH, nS, nN]
+            return [nH, nC, nO, nN, nS]
 
     def count_chemisorbed_fragment(self, atoms=None):
         """ Function that takes an atoms objects and returns a fingerprint
