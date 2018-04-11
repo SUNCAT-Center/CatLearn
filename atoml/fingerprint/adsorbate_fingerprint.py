@@ -14,10 +14,13 @@ from ase.data import ground_state_magnetic_moments as gs_magmom
 from ase.data import atomic_numbers
 from .periodic_table_data import (get_mendeleev_params, n_outer,
                                   list_mendeleev_params,
-                                  default_params, get_radius)
+                                  default_params, get_radius,
+                                  electronegativities)
 from .neighbor_matrix import connection_matrix
 import collections
 from .base import BaseGenerator
+from scipy.spatial import distance
+
 
 block2number = {'s': 1,
                 'p': 2,
@@ -343,7 +346,7 @@ class AdsorbateFingerprintGenerator(BaseGenerator):
             nO = len([a.index for a in atoms if a.symbol == 'O'])
             nN = len([a.index for a in atoms if a.symbol == 'N'])
             nS = len([a.index for a in atoms if a.symbol == 'S'])
-            return [nC, nO, nH, nS, nN]
+            return [nH, nC, nO, nN, nS]
 
     def count_chemisorbed_fragment(self, atoms=None):
         """ Function that takes an atoms objects and returns a fingerprint
@@ -578,31 +581,24 @@ class AdsorbateFingerprintGenerator(BaseGenerator):
             strain_term = (av_term - av_bulk) / av_bulk
             return [strain_site, strain_term]
 
-    def randomfpv(self, atoms=None):
-        """ Returns alist of n random numbers. """
-        n = 20
+    def en_difference(self, atoms=None):
+        """ Returns a list of summed squared differences in electronegativity
+        between site atoms bonded to adsorbate atoms.
+        """
+        labels = ['dist_' + s for s in electronegativities]
         if atoms is None:
-            return ['random'] * n
-        else:
-            return list(np.random.randint(0, 10, size=n))
-
-    def delta_energy(self, atoms=None):
-        if atoms is None:
-            return ['Ef']
-        else:
-            try:
-                delta = float(atoms.info['key_value_pairs']['delta_energy'])
-            except KeyError:
-                delta = np.nan
-            return [delta]
-
-    def name(self, atoms=None):
-        if atoms is None:
-            return ['catapp_name']
-        else:
-            kvp = atoms.info['key_value_pairs']
-            name = kvp['species'] + '*' + kvp['name'] + kvp['facet']
-            return [name]
+            return labels
+        chemi = atoms.info['chemisorbed_atoms']
+        site = atoms.info['site_atoms']
+        chemi_numbers = atoms.numbers[chemi]
+        site_numbers = atoms.numbers[site]
+        en_chemi = list_mendeleev_params(chemi_numbers, electronegativities)
+        en_site = list_mendeleev_params(site_numbers, electronegativities)
+        delta_en = (en_chemi[:, np.newaxis, :] -
+                    en_site[np.newaxis, :, :]) ** 2
+        en_result = list(np.einsum("ijk->k", delta_en))
+        assert len(en_result) == len(labels)
+        return en_result
 
     def catapp_AB(self, atoms=None):
         if atoms is None:
@@ -757,6 +753,23 @@ class AdsorbateFingerprintGenerator(BaseGenerator):
             fp = f1 + f2 + msum + [conc] + facet + [site]
             return fp
 
+    def delta_energy(self, atoms=None):
+        if atoms is None:
+            return ['Ef']
+        else:
+            try:
+                delta = float(atoms.info['key_value_pairs']['delta_energy'])
+            except KeyError:
+                delta = np.nan
+            return [delta]
+
+    def name(self, atoms=None):
+        if atoms is None:
+            return ['catapp_name']
+        else:
+            kvp = atoms.info['key_value_pairs']
+            name = kvp['species'] + '*' + kvp['name'] + kvp['facet']
+            return [name]
     def dbid(self, atoms=None):
         if atoms is None:
             return ['id']
@@ -772,3 +785,11 @@ class AdsorbateFingerprintGenerator(BaseGenerator):
             return [np.nan]
         else:
             return [atoms.info['ctime']]
+
+    def randomfpv(self, atoms=None):
+        """ Returns alist of n random numbers. """
+        n = 20
+        if atoms is None:
+            return ['random'] * n
+        else:
+            return list(np.random.randint(0, 10, size=n))
