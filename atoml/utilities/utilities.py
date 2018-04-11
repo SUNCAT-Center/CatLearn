@@ -4,6 +4,79 @@ import hashlib
 import time
 import multiprocessing
 from tqdm import trange, tqdm
+from scipy.stats import pearsonr, spearmanr, kendalltau
+from atoml.preprocess.scaling import standardize
+
+
+def holdout_set(data, fraction, target=None, seed=None):
+    """ Returns a dataset split in a hold out set and a training set.
+
+    Parameters
+    ----------
+    matrix : array
+        n by d array
+    fraction : float
+        fraction of data to hold out for testing.
+    target : list
+        optional list of targets or separate feature.
+    seed : float
+        optional float for reproducible splits.
+    """
+    matrix = np.array(data)
+
+    # Randomize order.
+    if seed is not None:
+        np.random.seed(seed)
+    np.random.shuffle(matrix)
+
+    # Split data.
+    index = int(len(matrix) * fraction)
+    holdout = matrix[:index, :]
+    train = matrix[index:, :]
+
+    if target is None:
+        return train, holdout
+
+    train_target = target[:index]
+    test_target = target[index:]
+
+    return train, train_target, holdout, test_target
+
+
+def target_correlation(train, target,
+                       correlation=['pearson', 'spearman', 'kendall']):
+    """ Returns the correlation of all columns of train with a target feature.
+
+    Parameters
+    ----------
+    train : array
+        n by d training data matrix.
+    target : list
+        target for correlation.
+
+    Returns
+    -------
+    metric : array
+        len(metric) by d matrix of correlation coefficients.
+    """
+    # Scale and shape the data.
+    train_data = standardize(train_matrix=train)['train']
+    train_target = target
+    output = []
+    for c in correlation:
+        correlation = c
+        # Find the correlation.
+        row = []
+        for c in train_data.T:
+            if correlation is 'pearson':
+                row.append(pearsonr(c, train_target)[0])
+            elif correlation is 'spearman':
+                row.append(spearmanr(c, train_target)[0])
+            elif correlation is 'kendall':
+                row.append(kendalltau(c, train_target)[0])
+        output.append(row)
+
+    return output
 
 
 class LearningCurve(object):
