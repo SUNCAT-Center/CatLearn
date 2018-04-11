@@ -77,7 +77,7 @@ def remove_duplicates(population, fitness, accuracy):
         else:
             duplicate.append(index)
 
-    population = np.delete(population, duplicate)
-    fitness = np.delete(fitness, duplicate)
+    population = np.delete(population, duplicate, axis=0)
+    fitness = np.delete(fitness, duplicate, axis=0)
 
     return population, fitness

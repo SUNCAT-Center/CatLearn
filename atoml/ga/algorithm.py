@@ -80,14 +80,16 @@ class GeneticAlgorithm(object):
         self.features, self.targets = k_fold(
             features, targets=targets, nsplit=self.nsplit)
 
-    def search(self, steps, convergence_operator=None, repeat=5, verbose=False,
-               writefile=None):
+    def search(self, steps, natural_selection=True, convergence_operator=None,
+               repeat=5, verbose=False, writefile=None):
         """Do the actual search.
 
         Parameters
         ----------
         steps : int
             Maximum number of steps to be taken.
+        natural_selection : bool
+            A flag that when set True will perform natural selection.
         convergence_operator : object
             The function to perform the convergence check. If None is passed
             then the `no_progress` function is used.
@@ -125,15 +127,16 @@ class GeneticAlgorithm(object):
                 break
 
             # Combine data sets.
-            extend_fit = np.concatenate((self.fitness, new_fit))
-            extend_pop = np.concatenate((self.population, offspring_list))
+            self.fitness = np.concatenate((self.fitness, new_fit))
+            self.population = np.concatenate((self.population, offspring_list))
 
             # Perform natural selection.
             if self.accuracy is not None:
                 self.population, self.fitness = remove_duplicates(
                     self.population, self.fitness, self.accuracy)
-            self.population, self.fitness = population_reduction(
-                extend_pop, extend_fit, self.population_size)
+            if natural_selection:
+                self.population, self.fitness = population_reduction(
+                    self.population, self.fitness, self.population_size)
 
             if verbose:
                 self._print_data()
@@ -238,7 +241,7 @@ class GeneticAlgorithm(object):
 
         bool_list = np.asarray(param_list, dtype=np.bool)
         for index in trange(bool_list.shape[0], leave=False,
-                            desc='working generration {}'.format(self.step + 1)
+                            desc='working generation {}'.format(self.step + 1)
                             ):
             parameter = bool_list[index]
             calc_fit = np.zeros(self.fitness_parameters)
