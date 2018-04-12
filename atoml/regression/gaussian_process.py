@@ -270,7 +270,7 @@ class GaussianProcess(object):
             # Define fixed arguments for log_marginal_likelihood
             args = (np.array(self.train_fp), np.array(self.train_target),
                     self.kernel_dict, self.scale_optimizer,
-                    self.eval_gradients, eval_jac)
+                    self.eval_gradients, None, eval_jac)
             lf = log_marginal_likelihood
         elif loss_function == 'rmse' or loss_function == 'absolute':
             # Define fixed arguments for rmse loss function
@@ -445,4 +445,5 @@ class GaussianProcess(object):
                 kernel_dict=self.kernel_dict,
                 scale_optimizer=self.scale_optimizer,
                 eval_gradients=self.eval_gradients,
+                cinv=self.cinv,
                 eval_jac=False)

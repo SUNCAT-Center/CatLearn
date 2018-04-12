@@ -10,7 +10,8 @@ from atoml.regression.gpfunctions import kernels as ak
 
 
 def log_marginal_likelihood(theta, train_matrix, targets, kernel_dict,
-                            scale_optimizer, eval_gradients, eval_jac=False):
+                            scale_optimizer, eval_gradients, cinv=None,
+                            eval_jac=False):
     """Return the negative of the log marginal likelyhood.
 
     Equation 5.8 in C. E. Rasmussen and C. K. I. Williams, 2006
@@ -29,24 +30,31 @@ def log_marginal_likelihood(theta, train_matrix, targets, kernel_dict,
         Flag to define if the hyperparameters are log scale for optimization.
     eval_gradients : boolean
         Flag to specify whether to compute gradients in covariance.
+    cinv : array
+        Pre-computed inverted covariance matrix.
     eval_jac : boolean
         Flag to specify whether to calculate gradients for hyperparameter
         optimization.
     """
+    # Setup the data.
+    n = len(targets)
+    y = targets.reshape([n, 1])
+
     # Get the covariance matrix.
     kernel_dict = list2kdict(theta, kernel_dict)
     K = get_covariance(
         kernel_dict=kernel_dict, matrix1=train_matrix,
         regularization=theta[-1], log_scale=scale_optimizer,
         eval_gradients=eval_gradients)
-
-    # Setup the data.
-    n = len(targets)
-    y = targets.reshape([n, 1])
-
-    # Calculate the various terms in likelihood.
     L = cholesky(K, overwrite_a=False, lower=True, check_finite=True)
-    a = cho_solve((L, True), y, check_finite=False)
+
+    # Invert the covariance matrix.
+    if cinv is None:
+        a = cho_solve((L, True), y, check_finite=False)
+    else:
+        a = np.dot(cinv, y)
+
+    # Calculate the various terms in likelihood.    
     datafit = -.5 * np.dot(y.T, a)
     complexity = -np.log(np.diag(L)).sum()  # (A.18) in R. & W.
     normalization = -n * np.log(2 * np.pi) / 2.
