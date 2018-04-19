@@ -1,5 +1,8 @@
 # dev
 
+-   Fixed a bug that caused the negative log marginal likelihood to be attached to the gp class.
+-   Small speed improvement for initialize and updates to `GaussianProcess` 
+
 # Version 0.4.0 (April 2018)
 
 -   Added `autogen_info` function for list of atoms objects representing adsorbates.

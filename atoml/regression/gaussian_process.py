@@ -270,7 +270,7 @@ class GaussianProcess(object):
             # Define fixed arguments for log_marginal_likelihood
             args = (np.array(self.train_fp), np.array(self.train_target),
                     self.kernel_dict, self.scale_optimizer,
-                    self.eval_gradients, eval_jac)
+                    self.eval_gradients, None, eval_jac)
             lf = log_marginal_likelihood
         elif loss_function == 'rmse' or loss_function == 'absolute':
             # Define fixed arguments for rmse loss function
@@ -297,7 +297,7 @@ class GaussianProcess(object):
         self.kernel_dict = list2kdict(self.theta_opt['x'][:-1],
                                       self.kernel_dict)
         self.regularization = self.theta_opt['x'][-1]
-        self.log_marginal_likelihood = self.theta_opt['fun']
+        self.log_marginal_likelihood = -self.theta_opt['fun']
         # Make a new covariance matrix with the optimized hyperparameters.
         cvm = get_covariance(kernel_dict=self.kernel_dict,
                              matrix1=self.train_fp,
@@ -438,11 +438,12 @@ class GaussianProcess(object):
         theta = kdicts2list(self.kernel_dict, N_D=self.N_D)
         theta = np.append(theta, self.regularization)
         # Update log marginal likelihood.
-        self.log_marginal_likelihood = log_marginal_likelihood(
+        self.log_marginal_likelihood = -log_marginal_likelihood(
                 theta=theta,
                 train_matrix=np.array(self.train_fp),
                 targets=np.array(self.train_target),
                 kernel_dict=self.kernel_dict,
                 scale_optimizer=self.scale_optimizer,
                 eval_gradients=self.eval_gradients,
+                cinv=self.cinv,
                 eval_jac=False)

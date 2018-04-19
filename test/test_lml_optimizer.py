@@ -78,7 +78,7 @@ def lml_opt(train_features, train_targets, test_features,
     theta = np.append(theta, regularization)
     # Define fixed arguments for log_marginal_likelihood
     args = (np.array(train_features), np.array(train_targets),
-            kdict, scale_optimizer, eval_gradients, eval_jac)
+            kdict, scale_optimizer, eval_gradients, None, eval_jac)
     # Optimize
     if not global_opt:
         popt = minimize(lml.log_marginal_likelihood, theta,
