@@ -4,15 +4,15 @@ FROM jenningspc/atoml:latest
 ENV LANG=C.UTF-8 LC_ALL=C.UTF-8
 
 # Add some descriptive labels.
-LABEL Description="This image is used to run AtoML locally." Version="0.3.1"
+LABEL Description="This image is used to run CatLearn locally." Version="0.3.1"
 
 # Create the root directory.
-RUN mkdir AtoML
-COPY . /AtoML/
-ENV HOME=/AtoML
+RUN mkdir CatLearn
+COPY . /CatLearn/
+ENV HOME=/CatLearn
 ENV SHELL=/bin/bash
-VOLUME /AtoML
-WORKDIR /AtoML
+VOLUME /CatLearn
+WORKDIR /CatLearn
 
 # Set the PYTHONPATH.
 ENV PYTHONPATH=$PWD/:$PYTHONPATH
