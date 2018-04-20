@@ -13,7 +13,7 @@
 
 [(Back to top)](#table-of-contents)
 
-There are some general coding conventions that the AtoML repository adheres to. These include the following:
+There are some general coding conventions that the CatLearn repository adheres to. These include the following:
 
 -   Code should support Python 2.7, 3.4 and higher.
 
@@ -27,18 +27,18 @@ There are some general coding conventions that the AtoML repository adheres to. 
 
 [(Back to top)](#table-of-contents)
 
-It is a bad idea to develop directly on the on the main AtoML repository. Instead, fork a version into your own namespace on gitlab with the following:
+It is a bad idea to develop directly on the on the main CatLearn repository. Instead, fork a version into your own namespace on Github with the following:
 
 -   Fork the repository and then clone it to your local machine.
 
     ```shell
-      $ git clone git@gitlab.com:your-user-name/AtoML.git
+      $ git clone https://github.com/SUNCAT-Center/CatLearn.git
     ```
 
 -   Add and track upstream to the local copy.
 
     ```shell
-      $ git remote add upstream git@gitlab.com:atoML/AtoML.git
+      $ git remote add upstream https://github.com/SUNCAT-Center/CatLearn.git
     ```
 
 All development can then be performed on the fork and a merge request opened into the upstream when appropriate. It is normally best to open merge requests as soon as possible, as it will allow everyone to see what is being worked on and comment on any potential issues.
@@ -82,20 +82,20 @@ The following workflow is recommended when adding some new functionality:
       $ git push --set-upstream origin branch-name
     ```
 
--   When the desired changes have been made on your fork of the repository, open up a merge request on GitLab.
+-   When the desired changes have been made on your fork of the repository, open up a merge request on Github.
 
 ## Docker
 
 [(Back to top)](#table-of-contents)
 
-A [docker](https://www.docker.com) image is included in the repository. It is sometimes easier to develop within a controlled environment such as this. In particular, it is possible for other developers to attain the same environment. To run AtoML in the docker container, use the following commands:
+A [docker](https://www.docker.com) image is included in the repository. It is sometimes easier to develop within a controlled environment such as this. In particular, it is possible for other developers to attain the same environment. To run CatLearn in the docker container, use the following commands:
 
 ```shell
-    $ docker build -t atoml-local .
-    $ docker run -it atoml-local bash
+    $ docker build -t catlearn .
+    $ docker run -it catlearn bash
 ```
 
-This will load up the AtoML directory. To check that everything is working correctly simply run the following:
+This will load up the CatLearn directory. To check that everything is working correctly simply run the following:
 
 ```shell
     $ python2 test/test_suite.py
@@ -128,7 +128,7 @@ It is a good idea to remove old images. This can be performed using the followin
 
 [(Back to top)](#table-of-contents)
 
-When writing new code, please add some tests to ensure functionality doesn't break over time. We look at test coverage when merge requests are opened and will expect that coverage does not decrease due to large portions of new code not being tested. In AtoML we just use the built-in unittest framework.
+When writing new code, please add some tests to ensure functionality doesn't break over time. We look at test coverage when merge requests are opened and will expect that coverage does not decrease due to large portions of new code not being tested. In CatLearn we just use the built-in unittest framework.
 
 When commits are made, the CI will also automatically test if dependencies are up to date. This test is allowed to fail and will simply return a warning if a module in `requirements.txt` is out of date. This shouldn't be of concern and is mostly in place for us to keep track of changes in other code bases that could cause problems.
 

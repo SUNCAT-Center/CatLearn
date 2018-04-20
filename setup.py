@@ -1,4 +1,4 @@
-"""The pip setup file for AtoML."""
+"""The pip setup file for CatLearn."""
 import setuptools
 
 
@@ -13,11 +13,11 @@ reqs = [str(req) for req in install_reqs]
 
 
 setuptools.setup(
-    name="AtoML",
+    name="CatLearn",
     version="0.4.0",
-    url="https://gitlab.com/atoML/AtoML",
+    url="https://github.com/SUNCAT-Center/CatLearn",
 
-    author="Paul C. Jennings, Martin H. Hansen",
+    author="Paul C. Jennings",
     author_email="pcjennings@stanford.edu",
 
     description="Machine Learning using atomic-scale calculations.",

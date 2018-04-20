@@ -1,14 +1,12 @@
-# AtoML
+# CatLearn
 
-> An environment for atomistic machine learning in Python.
+> An environment for atomistic machine learning in Python for applications in catalysis.
 
-[![pipeline status](https://gitlab.com/atoML/AtoML/badges/master/pipeline.svg)](https://gitlab.com/atoML/AtoML/commits/master) [![coverage report](https://gitlab.com/atoML/AtoML/badges/master/coverage.svg)](https://gitlab.com/atoML/AtoML/commits/master)
-
-Utilities for building and testing Atomic Machine Learning (AtoML) models. Gaussian Processes (GP) regression machine learning routines are implemented. These will take any numpy array of training and test feature matrices along with a vector of target values.
+Utilities for building and testing atomic machine learning models. Gaussian Processes (GP) regression machine learning routines are implemented. These will take any numpy array of training and test feature matrices along with a vector of target values.
 
 In general, any data prepared in this fashion can be fed to the GP routines, a number of additional functions have been added that interface with [ASE](https://wiki.fysik.dtu.dk/ase/). This integration allows for the manipulation of atoms objects through GP predictions, as well as dynamic generation of descriptors through use of the many ASE functions.
 
-Please see the [tutorials](https://gitlab.com/atoML/AtoML/tree/master/tutorials) for a detailed overview of what the code can do and the conventions used in setting up the predictive models.
+Please see the [tutorials](https://github.com/SUNCAT-Center/CatLearn/tree/master/tutorials) for a detailed overview of what the code can do and the conventions used in setting up the predictive models.
 
 ## Table of contents
 
@@ -24,13 +22,13 @@ Please see the [tutorials](https://gitlab.com/atoML/AtoML/tree/master/tutorials)
 The easiest way to install the code is with:
 
 ```shell
-    $ pip install git+https://gitlab.com/atoML/AtoML.git
+    $ pip install git+https://github.com/SUNCAT-Center/CatLearn.git
 ```
 
 This will automatically install the code as well as the dependencies. Alternatively, you can clone the repository to a local directory with:
 
 ```shell
-    $ git clone https://gitlab.com/atoML/AtoML.git
+    $ git clone https://github.com/SUNCAT-Center/CatLearn.git
 ```
 
 And then put the `<install_dir>/` into your `$PYTHONPATH` environment variable.
@@ -46,20 +44,20 @@ Be sure to install dependencies in with:
 To use the docker image, it is necessary to have [docker](https://www.docker.com) installed and running. After cloning the project, build and run the image as follows:
 
 ```shell
-    $ docker build -t atoml-local .
+    $ docker build -t catlearn .
 ```
 
-Then it is possible to use the image in two ways. It is possible to run the docker image as a bash environment in which AtoML can be used will all dependencies in place.
+Then it is possible to use the image in two ways. It is possible to run the docker image as a bash environment in which CatLearn can be used will all dependencies in place.
 
 ```shell
-    $ docker run -it atoml-local bash
+    $ docker run -it catlearn bash
 ```
 
 Or python can be run from the docker image.
 
 ```shell
-    $ docker run -it atoml-local python2 [file.py]
-    $ docker run -it atoml-local python3 [file.py]
+    $ docker run -it catlearn python2 [file.py]
+    $ docker run -it catlearn python3 [file.py]
 ```
 
 Use Ctrl + d to exit the docker image when done.
@@ -80,7 +78,7 @@ In the most basic form, it is possible to set up a GP model and make some predic
 
 ```python
     import numpy as np
-    from atoml.regression import GaussianProcess
+    from catlearn.regression import GaussianProcess
 
     # Define some input data.
     train_features = np.arange(200).reshape(50, 4)
@@ -99,13 +97,13 @@ In the most basic form, it is possible to set up a GP model and make some predic
     prediction = gp.predict(test_fp=test_features)
 ```
 
-The above sample of code will train a GP with the squared exponential kernel, fitting some random function. Of course, this isn't so useful, more helpful examples and test scripts are present for most features; primarily, please see the [tutorials](https://gitlab.com/atoML/AtoML/tree/master/tutorials).
+The above sample of code will train a GP with the squared exponential kernel, fitting some random function. Of course, this isn't so useful, more helpful examples and test scripts are present for most features; primarily, please see the [tutorials](https://github.com/SUNCAT-Center/CatLearn/tree/master/tutorials).
 
 ## Functionality
 
 [(Back to top)](#table-of-contents)
 
-There is much functionality in AtoML to assist in handling atom data and building optimal models. This includes:
+There is much functionality in CatLearn to assist in handling atom data and building optimal models. This includes:
 
 -   API to other codes:
     -   [Atomic simulation environment](https://wiki.fysik.dtu.dk/ase/) API

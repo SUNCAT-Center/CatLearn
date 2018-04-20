@@ -1,7 +1,7 @@
 # dev
 
 -   Fixed a bug that caused the negative log marginal likelihood to be attached to the gp class.
--   Small speed improvement for initialize and updates to `GaussianProcess` 
+-   Small speed improvement for initialize and updates to `GaussianProcess`.
 
 # Version 0.4.0 (April 2018)
 
@@ -16,7 +16,7 @@
 -   Parallelism updated to be compatable with Python2.
 -   Added in better neighborlist generation.
     -   Updated wrapper for ase neighborlist.
-    -   Updated AtoML neighborlist generator.
+    -   Updated CatLearn neighborlist generator.
     -   Defaults cutoffs changed to `atomic_radius` plus a relative tolerance.
 -   Added basic NetworkX api.
 -   Added some general functions to clean data and build a GP.
