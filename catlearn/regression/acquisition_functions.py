@@ -7,7 +7,7 @@ from scipy.special import erf
 from scipy.stats import norm
 from collections import defaultdict, Counter
 
-from atoml.utilities.clustering import cluster_features
+from catlearn.utilities.clustering import cluster_features
 
 
 class AcquisitionFunctions(object):

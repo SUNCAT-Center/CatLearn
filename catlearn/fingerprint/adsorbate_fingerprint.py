@@ -221,7 +221,7 @@ class AdsorbateFingerprintGenerator(BaseGenerator):
             # Get atomic number of alpha adsorbate atom.
             chemisorbed_atoms = atoms.info['chemisorbed_atoms']
             numbers = atoms.numbers[chemisorbed_atoms]
-            # Import AtoML data on that element.
+            # Import CatLearn data on that element.
             extra_ads_params = ['atomic_radius', 'heat_of_formation',
                                 'oxistates', 'block', 'econf', 'ionenergies']
             dat = list_mendeleev_params(numbers, params=default_params +
@@ -416,7 +416,7 @@ class AdsorbateFingerprintGenerator(BaseGenerator):
         else:
             ligand_atoms = atoms.info['ligand_atoms']
             numbers = atoms.numbers[ligand_atoms]
-            # Import AtoML data on that element.
+            # Import CatLearn data on that element.
             dat = list_mendeleev_params(numbers, params=self.slab_params)
             result = list(np.nanmean(dat, axis=0))
             result += [np.nanmean([gs_magmom[z] for z in numbers])]

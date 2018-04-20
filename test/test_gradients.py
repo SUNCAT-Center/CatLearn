@@ -1,8 +1,8 @@
 import unittest
 import numpy as np
 
-from atoml.regression import GaussianProcess
-from atoml.regression.gpfunctions.kernels import gaussian_kernel
+from catlearn.regression import GaussianProcess
+from catlearn.regression.gpfunctions.kernels import gaussian_kernel
 
 n_train = 5
 D = 10

@@ -13,9 +13,9 @@ import numpy as np
 from tqdm import tqdm
 from ase.atoms import string2symbols
 from ase.geometry import get_layers
-from atoml.api.ase_atoms_api import extend_atoms_class
-from atoml.utilities.neighborlist import ase_neighborlist
-from .periodic_table_data import get_radius, default_atoml_radius
+from catlearn.api.ase_atoms_api import extend_atoms_class
+from catlearn.utilities.neighborlist import ase_neighborlist
+from .periodic_table_data import get_radius, default_catlearn_radius
 
 
 ads_syms = ['H', 'C', 'O', 'N', 'S', 'F', 'Cl']
@@ -26,7 +26,7 @@ def catalysis_hub_to_info(images):
 
 
 def autogen_info(images):
-    """ Returns a list of atoms objects with atomic group information
+    """Return a list of atoms objects with atomic group information
     attached to info.
     This information is  needed by some functions in the
     AdsorbateFingerprintGenerator.
@@ -39,9 +39,10 @@ def autogen_info(images):
     """
     traj = []
     for atoms in tqdm(images):
-        if not hasattr(atoms, 'atoml') or 'neighborlist' not in atoms.atoml:
+        if not hasattr(atoms, 'catlearn') or \
+                'neighborlist' not in atoms.catlearn:
             extend_atoms_class(atoms)
-            radii = [default_atoml_radius(z) for z in atoms.numbers]
+            radii = [default_catlearn_radius(z) for z in atoms.numbers]
             nl = ase_neighborlist(atoms, cutoffs=radii)
             atoms.set_neighborlist(nl)
         if 'ads_atoms' not in atoms.info:
@@ -54,14 +55,14 @@ def autogen_info(images):
             atoms.info['slab_atoms'] = slab_index(atoms)
         if ('chemisorbed_atoms' not in atoms.info or
             'site_atoms' not in atoms.info or
-           'ligand_atoms' not in atoms.info):
+                'ligand_atoms' not in atoms.info):
             chemi, site, ligand = info2primary_index(atoms)
             atoms.info['chemisorbed_atoms'] = chemi
             atoms.info['site_atoms'] = site
             atoms.info['ligand_atoms'] = ligand
         if ('key_value_pairs' not in atoms.info or
             'term' not in atoms.info['key_value_pairs'] or
-           'bulk' not in atoms.info['key_value_pairs']):
+                'bulk' not in atoms.info['key_value_pairs']):
             bulk, subsurf, term = detect_termination(atoms)
             atoms.info['bulk_atoms'] = bulk
             atoms.info['termination_atoms'] = term
@@ -71,19 +72,20 @@ def autogen_info(images):
 
 
 def attach_nl(images):
-    """ Return a list of atoms objects with attached neighborlists."""
+    """Return a list of atoms objects with attached neighborlists."""
     traj = []
     for atoms in tqdm(images):
-        if not hasattr(atoms, 'atoml') or 'neighborlist' not in atoms.atoml:
+        if not hasattr(atoms, 'catlearn') or \
+                'neighborlist' not in atoms.catlearn:
             extend_atoms_class(atoms)
-            radii = [default_atoml_radius(z) for z in atoms.numbers]
+            radii = [default_catlearn_radius(z) for z in atoms.numbers]
             nl = ase_neighborlist(atoms, cutoffs=radii)
             atoms.set_neighborlist(nl)
     return traj
 
 
 def detect_adsorbate(atoms):
-    """ Returns a list of indices of atoms belonging to an adsorbate.
+    """Return a list of indices of atoms belonging to an adsorbate.
 
     Parameters
     ----------
@@ -336,7 +338,7 @@ def detect_termination(atoms):
         for j, c in enumerate(coord):
             a_s = atoms.info['slab_atoms'][j]
             if (c < max_coord and a_s not in
-               atoms.constraints[0].get_indices()):
+                    atoms.constraints[0].get_indices()):
                 term.append(a_s)
             else:
                 bulk.append(a_s)

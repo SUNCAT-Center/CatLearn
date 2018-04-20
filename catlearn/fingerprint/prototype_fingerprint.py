@@ -46,7 +46,7 @@ class PrototypeFingerprintGenerator(object):
         self.sites = sites
         self.system_name = system_name
         self.temp_path = 'proto_temp' + system_name
-        from atoml import __path__
+        from catlearn import __path__
         if os.path.exists(__path__[0] + '/api/magpie'):
             self.magpie_path = __path__[0] + '/api/magpie'
         else:

@@ -22,7 +22,7 @@ class VoronoiFingerprintGenerator(object):
         """
         self.atoms = atoms
         self.temp_path = 'voro_temp'
-        from atoml import __path__
+        from catlearn import __path__
         if os.path.exists(__path__[0] + '/api/magpie'):
             self.magpie_path = __path__[0] + '/api/magpie'
         else:

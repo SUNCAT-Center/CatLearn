@@ -7,8 +7,8 @@ import networkx as nx
 
 from ase import Atoms
 
-from atoml.api.ase_atoms_api import extend_atoms_class
-from atoml.utilities.neighborlist import ase_neighborlist
+from catlearn.api.ase_atoms_api import extend_atoms_class
+from catlearn.utilities.neighborlist import ase_neighborlist
 
 
 def ase_to_networkx(atoms, cutoffs=None, skin=0.3):

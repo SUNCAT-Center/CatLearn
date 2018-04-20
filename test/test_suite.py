@@ -64,7 +64,7 @@ if __name__ == '__main__':
         TestPrediction,
         TestAcquisition,
         TestValidation,
-        TestCurve,
+        # TestCurve,
         TestIO,
         TestGeneticAlgorithm,
         ConfigTestCase

@@ -1,10 +1,10 @@
-"""Functions that interface ase with AtoML."""
+"""Functions that interface ase with CatLearn."""
 import types
 import ase.db
 
 
 def database_to_list(fname, selection=None):
-    """ Returns a list of atoms objects imported from an ase database.
+    """Return a list of atoms objects imported from an ase database.
 
     Parameters
     ----------
@@ -24,6 +24,7 @@ def database_to_list(fname, selection=None):
         atoms.info['id'] = int(d.id)
         atoms.info['ctime'] = float(d.ctime)
         images.append(atoms)
+
     return images
 
 
@@ -35,7 +36,7 @@ def extend_atoms_class(atoms):
     atoms : class
         An ase atoms object.
     """
-    atoms._initialize_atoml = types.MethodType(_initialize_atoml, atoms)
+    atoms._initialize_catlearn = types.MethodType(_initialize_catlearn, atoms)
     atoms.set_features = types.MethodType(set_features, atoms)
     atoms.get_features = types.MethodType(get_features, atoms)
     atoms.set_neighborlist = types.MethodType(set_neighborlist, atoms)
@@ -58,8 +59,8 @@ def set_features(self, fp):
     fp : array
         The feature vector to attach.
     """
-    self._initialize_atoml()
-    self.atoml['features'] = fp
+    self._initialize_catlearn()
+    self.catlearn['features'] = fp
 
 
 def get_features(self):
@@ -78,9 +79,9 @@ def get_features(self):
     fp : array
         The feature vector attached to the atoms object.
     """
-    self._initialize_atoml()
+    self._initialize_catlearn()
     try:
-        return self.atoml['features']
+        return self.catlearn['features']
     except KeyError:
         return None
 
@@ -99,8 +100,8 @@ def set_neighborlist(self, neighborlist):
     neighborlist : dict
         The neighbor list dict to attach.
     """
-    self._initialize_atoml()
-    self.atoml['neighborlist'] = neighborlist
+    self._initialize_catlearn()
+    self.catlearn['neighborlist'] = neighborlist
 
 
 def get_neighborlist(self):
@@ -119,9 +120,9 @@ def get_neighborlist(self):
     neighborlist : dict
         The neighbor list attached to the atoms object.
     """
-    self._initialize_atoml()
+    self._initialize_catlearn()
     try:
-        return self.atoml['neighborlist']
+        return self.catlearn['neighborlist']
     except KeyError:
         return None
 
@@ -140,8 +141,8 @@ def set_graph(self, graph):
     graph : object
         The networkx graph object to attach.
     """
-    self._initialize_atoml()
-    self.atoml['graph'] = graph
+    self._initialize_catlearn()
+    self.catlearn['graph'] = graph
 
 
 def get_graph(self):
@@ -160,16 +161,16 @@ def get_graph(self):
     graph : object
         The networkx graph object attached to the atoms object.
     """
-    self._initialize_atoml()
+    self._initialize_catlearn()
     try:
-        return self.atoml['graph']
+        return self.catlearn['graph']
     except KeyError:
         return None
 
 
-def _initialize_atoml(self):
-    """A base function to initialize the atoml functionality."""
+def _initialize_catlearn(self):
+    """A base function to initialize the catlearn functionality."""
     try:
-        self.atoml
+        self.catlearn
     except AttributeError:
-        self.atoml = {}
+        self.catlearn = {}

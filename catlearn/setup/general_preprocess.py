@@ -1,8 +1,8 @@
 """A default setup for data preprocessing."""
 import numpy as np
 
-from atoml.preprocess.clean_data import clean_variance, clean_infinite
-from atoml.preprocess.scaling import standardize
+from catlearn.preprocess.clean_data import clean_variance, clean_infinite
+from catlearn.preprocess.scaling import standardize
 
 
 class GeneralPrepreprocess(object):

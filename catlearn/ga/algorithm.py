@@ -5,7 +5,7 @@ import warnings
 import copy
 from tqdm import trange
 
-from atoml.cross_validation import k_fold
+from catlearn.cross_validation import k_fold
 from .initialize import initialize_population
 from .mating import cut_and_splice
 from .mutate import random_permutation, probability_remove, probability_include

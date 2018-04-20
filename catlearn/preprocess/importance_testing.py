@@ -8,7 +8,7 @@ import time
 from tqdm import trange, tqdm
 import numpy as np
 
-from atoml.cross_validation import k_fold
+from catlearn.cross_validation import k_fold
 
 
 class ImportanceElimination(object):

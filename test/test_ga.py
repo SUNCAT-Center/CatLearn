@@ -2,11 +2,11 @@
 import unittest
 import numpy as np
 
-from atoml.ga import GeneticAlgorithm
-from atoml.ga.predictors import (minimize_error, minimize_error_descriptors,
-                                 minimize_error_time)
-from atoml.ga.convergence import Convergence
-from atoml.ga.io import read_data
+from catlearn.ga import GeneticAlgorithm
+from catlearn.ga.predictors import (minimize_error, minimize_error_descriptors,
+                                    minimize_error_time)
+from catlearn.ga.convergence import Convergence
+from catlearn.ga.io import read_data
 
 from common import get_data
 

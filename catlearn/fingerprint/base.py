@@ -1,6 +1,6 @@
 """Base class for the feature generators."""
-from atoml.api.ase_atoms_api import extend_atoms_class
-from atoml.utilities.neighborlist import ase_neighborlist
+from catlearn.api.ase_atoms_api import extend_atoms_class
+from catlearn.utilities.neighborlist import ase_neighborlist
 
 
 class BaseGenerator(object):

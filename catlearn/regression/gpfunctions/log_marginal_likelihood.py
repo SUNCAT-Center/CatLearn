@@ -6,7 +6,7 @@ import numpy as np
 from scipy.linalg import cholesky, cho_solve
 from .covariance import get_covariance
 from .kernel_setup import list2kdict, kdict2list
-from atoml.regression.gpfunctions import kernels as ak
+from catlearn.regression.gpfunctions import kernels as ak
 
 
 def log_marginal_likelihood(theta, train_matrix, targets, kernel_dict,
@@ -54,7 +54,7 @@ def log_marginal_likelihood(theta, train_matrix, targets, kernel_dict,
     else:
         a = np.dot(cinv, y)
 
-    # Calculate the various terms in likelihood.    
+    # Calculate the various terms in likelihood.
     datafit = -.5 * np.dot(y.T, a)
     complexity = -np.log(np.diag(L)).sum()  # (A.18) in R. & W.
     normalization = -n * np.log(2 * np.pi) / 2.

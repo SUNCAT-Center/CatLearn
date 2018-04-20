@@ -5,7 +5,7 @@ import time
 import multiprocessing
 from tqdm import trange, tqdm
 from scipy.stats import pearsonr, spearmanr, kendalltau
-from atoml.preprocess.scaling import standardize
+from catlearn.preprocess.scaling import standardize
 
 
 def holdout_set(data, fraction, target=None, seed=None):

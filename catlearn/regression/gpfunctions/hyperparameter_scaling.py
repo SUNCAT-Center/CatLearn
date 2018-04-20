@@ -1,7 +1,7 @@
 """Utility to scale hyperparameters."""
 from __future__ import absolute_import
 
-from atoml.regression.gpfunctions.kernel_scaling import kernel_scaling
+from catlearn.regression.gpfunctions.kernel_scaling import kernel_scaling
 
 
 def hyperparameters(scaling, kernel_dict):

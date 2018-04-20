@@ -2,11 +2,11 @@
 import numpy as np
 import unittest
 import os
-from atoml.cross_validation import Hierarchy
-from atoml.learning_curve import hierarchy, feature_frequency
-from atoml.utilities import DescriptorDatabase
-from atoml.regression import GaussianProcess
-from atoml.utilities.utilities import LearningCurve
+from catlearn.cross_validation import Hierarchy
+from catlearn.learning_curve import hierarchy, feature_frequency
+from catlearn.utilities import DescriptorDatabase
+from catlearn.regression import GaussianProcess
+from catlearn.utilities.utilities import LearningCurve
 
 
 class TestCurve(unittest.TestCase):

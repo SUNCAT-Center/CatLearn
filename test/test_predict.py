@@ -5,10 +5,10 @@ from __future__ import absolute_import
 import numpy as np
 import unittest
 
-from atoml.regression import RidgeRegression, GaussianProcess
-from atoml.regression.gpfunctions.sensitivity import SensitivityAnalysis
-from atoml.setup.general_gp import GeneralGaussianProcess
-from atoml.regression.cost_function import get_error
+from catlearn.regression import RidgeRegression, GaussianProcess
+from catlearn.regression.gpfunctions.sensitivity import SensitivityAnalysis
+from catlearn.setup.general_gp import GeneralGaussianProcess
+from catlearn.regression.cost_function import get_error
 
 from common import get_data
 

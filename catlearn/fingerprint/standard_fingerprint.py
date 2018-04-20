@@ -6,7 +6,7 @@ import json
 import numpy as np
 import warnings
 
-from atoml import __path__ as atoml_path
+from catlearn import __path__ as catlearn_path
 from .base import BaseGenerator
 
 
@@ -39,8 +39,8 @@ class StandardFingerprintGenerator(BaseGenerator):
 
         if not hasattr(self, 'element_data'):
             # Load the Mendeleev parameter data into memory
-            with open('/'.join(atoml_path[0].split('/')[:-1]) +
-                      '/atoml/data/proxy-mendeleev.json') as f:
+            with open('/'.join(catlearn_path[0].split('/')[:-1]) +
+                      '/catlearn/data/proxy-mendeleev.json') as f:
                 self.element_data = json.load(f)
 
         super(StandardFingerprintGenerator, self).__init__(**kwargs)

@@ -3,8 +3,8 @@ from __future__ import absolute_import
 
 import numpy as np
 
-from atoml.regression.gpfunctions.kernel_setup import kdict2list
-from atoml.regression.gpfunctions import kernels as ak
+from catlearn.regression.gpfunctions.kernel_setup import kdict2list
+from catlearn.regression.gpfunctions import kernels as ak
 
 
 def get_covariance(kernel_dict, log_scale, matrix1, matrix2=None,

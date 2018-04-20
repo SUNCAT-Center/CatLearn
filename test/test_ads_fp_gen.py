@@ -9,10 +9,10 @@ import unittest
 from ase.build import fcc111, add_adsorbate
 from ase.data import atomic_numbers
 from ase.constraints import FixAtoms
-from atoml.fingerprint.adsorbate_prep import autogen_info
-from atoml.fingerprint.periodic_table_data import (get_radius,
-                                                   default_atoml_radius)
-from atoml.fingerprint.setup import FeatureGenerator
+from catlearn.fingerprint.adsorbate_prep import autogen_info
+from catlearn.fingerprint.periodic_table_data import (get_radius,
+                                                      default_catlearn_radius)
+from catlearn.fingerprint.setup import FeatureGenerator
 
 wkdir = os.getcwd()
 
@@ -32,9 +32,10 @@ class TestAdsorbateFeatures(unittest.TestCase):
                 atoms = fcc111(s, (2, 2, 3), a=a)
                 atoms.center(vacuum=6, axis=2)
                 c_atoms = [a.index for a in atoms if
-                       a.z < atoms.cell[2, 2]/2. + 0.1]
+                           a.z < atoms.cell[2, 2] / 2. + 0.1]
                 atoms.set_constraint(FixAtoms(c_atoms))
-                h = (default_atoml_radius(atomic_numbers[ads]) + rs) / 2 ** 0.5
+                h = (default_catlearn_radius(
+                    atomic_numbers[ads]) + rs) / 2 ** 0.5
                 add_adsorbate(atoms, ads, h, 'bridge')
                 images.append(atoms)
         return images

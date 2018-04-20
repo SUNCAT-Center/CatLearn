@@ -3,7 +3,7 @@ import pickle
 import h5py
 import numpy as np
 
-from atoml.regression import GaussianProcess
+from catlearn.regression import GaussianProcess
 
 
 def write(filename, model, ext='pkl'):

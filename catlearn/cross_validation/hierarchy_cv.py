@@ -8,7 +8,7 @@ from collections import OrderedDict
 import uuid
 from tqdm import tqdm
 
-from atoml.utilities import DescriptorDatabase
+from catlearn.utilities import DescriptorDatabase
 
 
 class Hierarchy(object):

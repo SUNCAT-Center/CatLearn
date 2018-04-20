@@ -10,7 +10,7 @@ from tqdm import trange, tqdm
 import numpy as np
 import json
 
-from atoml.cross_validation import k_fold
+from catlearn.cross_validation import k_fold
 
 # Ignore warnings from cleaner progress tracking.
 warnings.filterwarnings("ignore")

@@ -1,10 +1,10 @@
-# AtoML Tests
+# CatLearn Tests
 
-All the tests for the AtoML code are here. When writing new code, please add some tests to ensure functionality doesn't break over time. We look at test coverage when merge requests are opened and will expect that coverage does not decrease due to large portions of new code not being tested.
+All the tests for the CatLearn code are here. When writing new code, please add some tests to ensure functionality doesn't break over time. We look at test coverage when merge requests are opened and will expect that coverage does not decrease due to large portions of new code not being tested.
 
 ## Table of Contents
 
-[(Back to top)](#atoml-tests)
+[(Back to top)](#catlearn-tests)
 
 -   [Test Suite](#test-suite)
 -   [Continuous Integration](#continuous-integration)
@@ -12,15 +12,15 @@ All the tests for the AtoML code are here. When writing new code, please add som
 
 ## Continuous Integration
 
-[(Back to top)](#atoml-tests)
+[(Back to top)](#catlearn-tests)
 
-Continuous Integration (CI) is used meaning tests are run whenever a new commit is pushed to the origin. For our purposes, we use [GitLab CI](https://docs.gitlab.com/ce/ci/) which checks whether tests run successfully and the coverage. The tests for the AtoML code are imported and run in `test_suite.py`. This can be extended with any new tests that may be written to cover new functionality.
+Continuous Integration (CI) is used meaning tests are run whenever a new commit is pushed to the origin. For our purposes, we use [GitLab CI](https://docs.gitlab.com/ce/ci/) which checks whether tests run successfully and the coverage. The tests for the CatLearn code are imported and run in `test_suite.py`. This can be extended with any new tests that may be written to cover new functionality.
 
 _Please be mindful of the runtime for new tests._
 
 ### Test Suite
 
-[(Back to top)](#atoml-tests)
+[(Back to top)](#catlearn-tests)
 
 All tests are run in the `test_suite.py` script, using the unittest framework. There are two ways to add new tests.
 
@@ -32,12 +32,12 @@ The `pytest-cov` package is used to generate the coverage reports. Unfortunately
 
 ```shell
   $ pip install --upgrade pytest-cov
-  $ py.test --cov=atoml test/test_suite.py
+  $ py.test --cov=catlearn test/test_suite.py
 ```
 
 ## Command Line
 
-[(Back to top)](#atoml-tests)
+[(Back to top)](#catlearn-tests)
 
 There are two ways of running the tests on the command line. If all the tests are run, it is as simple as just using the following:
 

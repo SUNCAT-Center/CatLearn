@@ -9,7 +9,7 @@ from collections import defaultdict
 from ase.data import covalent_radii
 from ase.ga.utilities import get_mic_distance
 
-from atoml import __path__ as atoml_path
+from catlearn import __path__ as catlearn_path
 
 
 def neighbor_features(atoms, property=None, periodic=False, dx=0.2,
@@ -146,8 +146,8 @@ def property_matrix(atoms, property):
         The target property from mendeleev.
     """
     # Load the Mendeleev parameter data into memory
-    with open('/'.join(atoml_path[0].split('/')[:-1]) +
-              '/atoml/data/proxy-mendeleev.json') as f:
+    with open('/'.join(catlearn_path[0].split('/')[:-1]) +
+              '/catlearn/data/proxy-mendeleev.json') as f:
         data = json.load(f)
 
     an = atoms.get_atomic_numbers()

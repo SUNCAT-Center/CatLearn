@@ -1,7 +1,7 @@
 """Some generic prediction functions."""
 import time
 
-from atoml.regression import GaussianProcess
+from catlearn.regression import GaussianProcess
 
 
 def minimize_error(train_features, train_targets, test_features, test_targets):

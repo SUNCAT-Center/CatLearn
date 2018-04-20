@@ -4,8 +4,8 @@ from __future__ import division
 
 import numpy as np
 
-from atoml.regression import GaussianProcess
-from atoml.regression.gpfunctions.covariance import get_covariance
+from catlearn.regression import GaussianProcess
+from catlearn.regression.gpfunctions.covariance import get_covariance
 
 
 class SensitivityAnalysis(object):

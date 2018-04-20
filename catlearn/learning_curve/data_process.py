@@ -4,7 +4,7 @@ from __future__ import division
 import numpy as np
 from scipy.stats import pearsonr
 
-from atoml.preprocess.scaling import (
+from catlearn.preprocess.scaling import (
     standardize, normalize, target_standardize, target_normalize)
 
 

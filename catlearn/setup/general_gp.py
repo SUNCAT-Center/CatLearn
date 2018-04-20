@@ -1,7 +1,7 @@
 """Function to setup a general GP."""
 from .general_preprocess import GeneralPrepreprocess
 from .general_kernel import general_kernel
-from atoml.regression import GaussianProcess
+from catlearn.regression import GaussianProcess
 
 
 class GeneralGaussianProcess(object):

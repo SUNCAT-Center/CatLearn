@@ -2,7 +2,7 @@
 import numpy as np
 
 from ase.neighborlist import NeighborList
-from atoml.fingerprint.periodic_table_data import get_radius
+from catlearn.fingerprint.periodic_table_data import get_radius
 
 
 def ase_neighborlist(atoms, cutoffs=None, rtol=1.):
@@ -40,7 +40,7 @@ def ase_neighborlist(atoms, cutoffs=None, rtol=1.):
     return neighborlist
 
 
-def atoml_neighborlist(atoms, dx=None, max_neighbor=1, mic=True):
+def catlearn_neighborlist(atoms, dx=None, max_neighbor=1, mic=True):
     """Make dict of neighboring atoms for discrete system.
 
     Possible to return neighbors from defined neighbor shell e.g. 1st, 2nd,

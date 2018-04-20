@@ -6,8 +6,8 @@ import json
 import numpy as np
 import warnings
 
-from atoml import __path__ as atoml_path
-from atoml.utilities.neighborlist import atoml_neighborlist
+from catlearn import __path__ as catlearn_path
+from catlearn.utilities.neighborlist import catlearn_neighborlist
 from .base import BaseGenerator
 
 
@@ -45,8 +45,8 @@ class GraphFingerprintGenerator(BaseGenerator):
 
         if not hasattr(self, 'element_data'):
             # Load the Mendeleev parameter data into memory
-            with open('/'.join(atoml_path[0].split('/')[:-1]) +
-                      '/atoml/data/proxy-mendeleev.json') as f:
+            with open('/'.join(catlearn_path[0].split('/')[:-1]) +
+                      '/catlearn/data/proxy-mendeleev.json') as f:
                 self.element_data = json.load(f)
 
         super(GraphFingerprintGenerator, self).__init__(**kwargs)
@@ -132,7 +132,7 @@ class GraphFingerprintGenerator(BaseGenerator):
     def _normalize_neighbors(self, data):
         """Function to invert importance of neighbor shells.
 
-        The `atoml_neighborlist` function returns an array with the neighbor
+        The `catlearn_neighborlist` function returns an array with the neighbor
         shell of atom pairs. The further away two atoms are, the larger the
         number of the neighbor shell. This inverts this relationship so atoms
         that are close to oneanother have larger values.
@@ -152,7 +152,7 @@ class GraphFingerprintGenerator(BaseGenerator):
             warnings.simplefilter("ignore")
 
             # Calculate the matrix representation.
-            connection_matrix = atoml_neighborlist(
+            connection_matrix = catlearn_neighborlist(
                 data, max_neighbor=self.max_neighbor)
 
             # Invert scale of neighbor shells.

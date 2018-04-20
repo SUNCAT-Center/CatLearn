@@ -1,12 +1,12 @@
 """Function pulling atomic data for elements."""
 import json
-from atoml import __path__ as atoml_path
+from catlearn import __path__ as catlearn_path
 from ase.data import covalent_radii
 import numpy as np
 
 # Load the Mendeleev parameter data into memory
-with open('/'.join(atoml_path[0].split('/')[:-1]) +
-          '/atoml/data/proxy-mendeleev.json') as f:
+with open('/'.join(catlearn_path[0].split('/')[:-1]) +
+          '/catlearn/data/proxy-mendeleev.json') as f:
     data = json.load(f)
 
 block2number = {'s': 1,
@@ -174,8 +174,8 @@ def get_radius(z, params=['atomic_radius', 'covalent_radius_cordero']):
     return covalent_radii[z]
 
 
-def default_atoml_radius(z):
-    """ Return the default AtoML covalent radius of element z.
+def default_catlearn_radius(z):
+    """ Return the default CatLearn covalent radius of element z.
 
     Parameters
     ----------

@@ -99,8 +99,8 @@ def spca(components, train_matrix, test_matrix):
     return new_train, new_test
 
 
-def atoml_pca(components, train_features, test_features=None, cleanup=False,
-              scale=False):
+def catlearn_pca(components, train_features, test_features=None, cleanup=False,
+                 scale=False):
     """Principal component analysis varient that doesn't require scikit-learn.
 
     Parameters
