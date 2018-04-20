@@ -7,11 +7,11 @@ import unittest
 
 from ase.ga.data import DataConnection
 
-from atoml import __path__ as atoml_path
-from atoml.fingerprint.base import BaseGenerator
-from atoml.utilities.neighborlist import ase_neighborlist
+from catlearn import __path__ as catlearn_path
+from catlearn.fingerprint.base import BaseGenerator
+from catlearn.utilities.neighborlist import ase_neighborlist
 
-atoml_path = '/'.join(atoml_path[0].split('/')[:-1])
+catlearn_path = '/'.join(catlearn_path[0].split('/')[:-1])
 
 
 class TestBaseGenerator(unittest.TestCase):
@@ -19,7 +19,7 @@ class TestBaseGenerator(unittest.TestCase):
 
     def test_feature_base(self):
         """Test the base feature generator."""
-        gadb = DataConnection('{}/data/gadb.db'.format(atoml_path))
+        gadb = DataConnection('{}/data/gadb.db'.format(catlearn_path))
         all_cand = gadb.get_all_relaxed_candidates()
 
         f = BaseGenerator()

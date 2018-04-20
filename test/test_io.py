@@ -3,8 +3,8 @@ import unittest
 import os
 import numpy as np
 
-from atoml.regression import GaussianProcess
-from atoml.regression.gpfunctions import io
+from catlearn.regression import GaussianProcess
+from catlearn.regression.gpfunctions import io
 from common import get_data
 
 wkdir = os.getcwd()

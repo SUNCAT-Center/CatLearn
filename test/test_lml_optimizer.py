@@ -5,11 +5,12 @@ from __future__ import absolute_import
 import os
 import numpy as np
 from sys import argv
-from atoml.utilities import DescriptorDatabase
-from atoml.regression.gpfunctions.kernel_setup import (prepare_kernels,
-                                                       kdicts2list, list2kdict)
-import atoml.regression.gpfunctions.log_marginal_likelihood as lml
-from atoml.preprocess.scaling import standardize, target_standardize
+from catlearn.utilities import DescriptorDatabase
+from catlearn.regression.gpfunctions.kernel_setup import (prepare_kernels,
+                                                          kdicts2list,
+                                                          list2kdict)
+import catlearn.regression.gpfunctions.log_marginal_likelihood as lml
+from catlearn.preprocess.scaling import standardize, target_standardize
 from scipy.optimize import minimize, basinhopping
 
 

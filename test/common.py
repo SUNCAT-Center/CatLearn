@@ -5,7 +5,7 @@ from __future__ import absolute_import
 import numpy as np
 import os
 
-from atoml.utilities import DescriptorDatabase
+from catlearn.utilities import DescriptorDatabase
 
 wkdir = os.getcwd()
 

@@ -7,7 +7,7 @@ from common import get_data
 
 
 class ConfigTestCase(unittest.TestCase):
-    """Test suite for AtoML code base."""
+    """Test suite for CatLearn code base."""
 
     def test_lml_optimizer(self):
         """Test log_marginal_likelihood optimization."""

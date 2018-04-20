@@ -7,7 +7,7 @@ import numpy as np
 
 import ase.db
 
-from atoml.fingerprint.voro_fingerprint import VoronoiFingerprintGenerator
+from catlearn.fingerprint.voro_fingerprint import VoronoiFingerprintGenerator
 
 
 class TestVoronoiFeatures(unittest.TestCase):

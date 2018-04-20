@@ -6,13 +6,13 @@ import unittest
 import os
 import numpy as np
 
-from atoml.utilities import DescriptorDatabase
-from atoml.preprocess.scaling import (
+from catlearn.utilities import DescriptorDatabase
+from catlearn.preprocess.scaling import (
     standardize, normalize, min_max, unit_length, target_standardize,
     target_normalize, target_center)
-from atoml.utilities.clustering import cluster_features
-from atoml.regression import GaussianProcess
-from atoml.regression.gpfunctions import hyperparameter_scaling as hs
+from catlearn.utilities.clustering import cluster_features
+from catlearn.regression import GaussianProcess
+from catlearn.regression.gpfunctions import hyperparameter_scaling as hs
 
 from common import get_data
 

@@ -6,16 +6,16 @@ import os
 import numpy as np
 import unittest
 
-from atoml.utilities import DescriptorDatabase
-from atoml.preprocess.importance_testing import \
+from catlearn.utilities import DescriptorDatabase
+from catlearn.preprocess.importance_testing import \
     (ImportanceElimination, feature_invariance, feature_randomize,
      feature_shuffle)
-from atoml.preprocess import feature_engineering as fe
-from atoml.preprocess.feature_extraction import pls, pca, spca, atoml_pca
-from atoml.preprocess.feature_elimination import FeatureScreening
-from atoml.preprocess.greedy_elimination import GreedyElimination
-from atoml.utilities.sammon import sammons_error
-from atoml.regression import RidgeRegression, GaussianProcess
+from catlearn.preprocess import feature_engineering as fe
+from catlearn.preprocess.feature_extraction import pls, pca, spca, catlearn_pca
+from catlearn.preprocess.feature_elimination import FeatureScreening
+from catlearn.preprocess.greedy_elimination import GreedyElimination
+from catlearn.utilities.sammon import sammons_error
+from catlearn.regression import RidgeRegression, GaussianProcess
 
 from common import get_data
 
@@ -155,7 +155,7 @@ class TestFeatureOptimization(unittest.TestCase):
         self.assertTrue(np.shape(ext[0]) == (td, nc) and np.shape(ext[1]) ==
                         (td, nc))
 
-        ext = atoml_pca(
+        ext = catlearn_pca(
             components=nc, train_features=self.train_features,
             test_features=self.test_features, cleanup=True, scale=True)
         self.assertTrue(np.shape(ext['train_features']) == (d, nc) and

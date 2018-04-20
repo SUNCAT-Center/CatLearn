@@ -6,9 +6,9 @@ import os
 import numpy as np
 import unittest
 
-from atoml.cross_validation import Hierarchy, k_fold
-from atoml.cross_validation.k_fold_cv import write_split, read_split
-from atoml.regression import RidgeRegression
+from catlearn.cross_validation import Hierarchy, k_fold
+from catlearn.cross_validation.k_fold_cv import write_split, read_split
+from catlearn.regression import RidgeRegression
 from common import get_data
 
 wkdir = os.getcwd()

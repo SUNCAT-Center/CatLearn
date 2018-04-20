@@ -7,10 +7,10 @@ import unittest
 
 from ase.ga.data import DataConnection
 
-from atoml.api.ase_data_setup import get_unique, get_train
-from atoml.fingerprint.setup import FeatureGenerator
-from atoml.regression import GaussianProcess
-from atoml.regression.acquisition_functions import AcquisitionFunctions
+from catlearn.api.ase_data_setup import get_unique, get_train
+from catlearn.fingerprint.setup import FeatureGenerator
+from catlearn.regression import GaussianProcess
+from catlearn.regression.acquisition_functions import AcquisitionFunctions
 
 wkdir = os.getcwd()
 
