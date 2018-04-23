@@ -4,11 +4,9 @@ python:
   - "3.6"
 
 before_script:
-  - pip install coverage codecov
   - pip install -r requirements.txt
 
 script:
   - python --version
   - export PYTHONPATH=$PWD/:$PYTHONPATH
-  - coverage run test/test_suite.py
-  - codecov
+  - python test/test_suite.py
