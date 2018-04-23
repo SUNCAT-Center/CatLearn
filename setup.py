@@ -1,4 +1,4 @@
-"""The pip setup file for CatLearn."""
+"""The setup file for CatLearn."""
 import setuptools
 
 
@@ -24,12 +24,16 @@ setuptools.setup(
     long_description=open('README.md').read(),
     long_description_content_type="text/markdown",
 
+    license='GPL-3.0',
+
     packages=setuptools.find_packages(),
 
     install_requires=reqs,
 
+    python_requires='>=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, <4',
+
     classifiers=[
-        'Development Status :: 2 - Pre-Alpha',
+        'Development Status :: 4 - Beta',
         'Programming Language :: Python',
         'Programming Language :: Python :: 2',
         'Programming Language :: Python :: 2.7',
