@@ -1,12 +1,22 @@
 language: python
 
 python:
+  - "2.7"
+  - "3.4"
+  - "3.5"
   - "3.6"
 
-before_script:
+notifications:
+  email: false
+
+install:
   - pip install -r requirements.txt
+  - pip install pytest-cov python-coveralls
 
 script:
   - python --version
   - export PYTHONPATH=$PWD/:$PYTHONPATH
-  - python test/test_suite.py
+  - py.test --cov=catlearn test/test_suite.py
+
+after_success:
+  - coveralls
