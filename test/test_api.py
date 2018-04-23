@@ -2,18 +2,18 @@
 from __future__ import print_function
 from __future__ import absolute_import
 
+import os
 import numpy as np
 import unittest
 
 from ase.ga.data import DataConnection
 
-from catlearn import __path__ as catlearn_path
 from catlearn.api.ase_atoms_api import extend_atoms_class
 from catlearn.api.networkx_graph_api import (ase_to_networkx,
                                              networkx_to_adjacency)
 from catlearn.fingerprint.setup import FeatureGenerator
 
-catlearn_path = '/'.join(catlearn_path[0].split('/')[:-1])
+wkdir = os.getcwd()
 
 
 class TestAPI(unittest.TestCase):
@@ -21,7 +21,7 @@ class TestAPI(unittest.TestCase):
 
     def test_networkx_api(self):
         """Test the ase api."""
-        gadb = DataConnection('{}/data/gadb.db'.format(catlearn_path))
+        gadb = DataConnection('{}/data/gadb.db'.format(wkdir))
         all_cand = gadb.get_all_relaxed_candidates()
         g = ase_to_networkx(all_cand[1])
 
@@ -33,7 +33,7 @@ class TestAPI(unittest.TestCase):
 
     def test_ase_api(self):
         """Test the ase api."""
-        gadb = DataConnection('{}/data/gadb.db'.format(catlearn_path))
+        gadb = DataConnection('{}/data/gadb.db'.format(wkdir))
         all_cand = gadb.get_all_relaxed_candidates()
 
         cf = all_cand[0].get_chemical_formula()

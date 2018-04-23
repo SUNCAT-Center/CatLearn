@@ -2,16 +2,16 @@
 from __future__ import print_function
 from __future__ import absolute_import
 
+import os
 import numpy as np
 import unittest
 
 from ase.ga.data import DataConnection
 
-from catlearn import __path__ as catlearn_path
 from catlearn.fingerprint.base import BaseGenerator
 from catlearn.utilities.neighborlist import ase_neighborlist
 
-catlearn_path = '/'.join(catlearn_path[0].split('/')[:-1])
+wkdir = os.getcwd()
 
 
 class TestBaseGenerator(unittest.TestCase):
@@ -19,7 +19,7 @@ class TestBaseGenerator(unittest.TestCase):
 
     def test_feature_base(self):
         """Test the base feature generator."""
-        gadb = DataConnection('{}/data/gadb.db'.format(catlearn_path))
+        gadb = DataConnection('{}/data/gadb.db'.format(wkdir))
         all_cand = gadb.get_all_relaxed_candidates()
 
         f = BaseGenerator()
