@@ -1,19 +1,31 @@
-"""First AtoML tutorial.
+"""First CatLearn tutorial.
 
-This tutorial is intended to help you get familiar with using AtoML to set
+This tutorial is intended to help you get familiar with using CatLearn to set
 up a model and do predictions.
 
 First we set up a known underlying function in one dimension. Then we use it to
 generate some training data, adding a bit of random noise.
-Finally we will use AtoML to make predictions on some unseen fingerprint and
+Finally we will use CatLearn to make predictions on some unseen fingerprint and
 benchmark those predictions against the known underlying function.
 """
 import numpy as np
 import matplotlib.pyplot as plt
 
-from atoml.preprocess.scaling import standardize, target_standardize
-from atoml.regression import GaussianProcess
-from atoml.regression.cost_function import get_error
+from catlearn.preprocess.scaling import standardize, target_standardize
+from catlearn.regression import GaussianProcess
+from catlearn.regression.cost_function import get_error
+
+# Look for alternative GPs.
+try:
+    import gpflow
+    haz_gpflow = True
+except ImportError:
+    haz_gpflow = False
+try:
+    import GPy
+    haz_gpy = True
+except ImportError:
+    haz_gpy = False
 
 
 # A known underlying function in one dimension.
@@ -61,7 +73,13 @@ linex = np.linspace(np.min(test), np.max(test), test_points)
 liney = afunc(linex)
 # Plotting.
 fig = plt.figure(figsize=(15, 8))
-ax224 = fig.add_subplot(224)
+if haz_gpy or haz_gpflow:
+    grid = 230
+    last = 6
+else:
+    grid = 220
+    last = 4
+ax224 = fig.add_subplot(grid+last)
 plt.title('Uncertainty Profiles')
 plt.xlabel('Descriptor')
 plt.ylabel('Uncertainty')
@@ -93,7 +111,7 @@ if True:
     lower = under_prediction - under_uncertainty * tstd
 
     # Plot example 1
-    ax = fig.add_subplot(221)
+    ax = fig.add_subplot(grid+1)
     ax.plot(linex, liney, '-', lw=1, color='black')
     ax.plot(train, target, 'o', alpha=0.2, color='black')
     ax.plot(test, under_prediction, 'b-', lw=1, alpha=0.4)
@@ -138,7 +156,7 @@ if True:
                color='blue')
 
     # Plot example 2
-    ax = fig.add_subplot(222)
+    ax = fig.add_subplot(grid+2)
     ax.plot(linex, liney, '-', lw=1, color='black')
     ax.plot(train, target, 'o', alpha=0.2, color='black')
     ax.plot(test, over_prediction, 'r-', lw=1, alpha=0.4)
@@ -184,7 +202,7 @@ if True:
     opt_lower = opt_prediction - opt_uncertainty * tstd
 
     # Plot eample 3
-    ax = fig.add_subplot(223)
+    ax = fig.add_subplot(grid+3)
     ax.plot(linex, liney, '-', lw=1, color='black')
     ax.plot(train, target, 'o', alpha=0.2, color='black')
     ax.plot(test, opt_prediction, 'g-', lw=1, alpha=0.4)
@@ -201,14 +219,53 @@ if True:
     ax224.plot(test, np.array(opt_uncertainty * tstd), '-', lw=1,
                color='green')
 
-if False:
-    # Model example 4 - GPy.
-    import GPy
-    # Set up the prediction routine and optimize hyperparameters.
+if haz_gpflow:
+    # Model example 4 - GPflow.
+    k = gpflow.kernels.RBF(1, lengthscales=0.1)
+    m = gpflow.models.GPR(np.vstack(std['train']), train_targets['target'],
+                          kern=k)
+    m.likelihood.variance = 0.00003
+    gpflow.train.ScipyOptimizer().minimize(m)
+    mean, var = m.predict_y(std['test'])
+    mean = mean * train_targets['std'] + train_targets['mean']
+    std = (var ** 0.5) * train_targets['std']
+    opt_upper = mean + std * tstd
+    opt_lower = mean - std * tstd
+    ax = fig.add_subplot(grid+4)
+    ax.plot(linex, liney, '-', lw=1, color='black')
+    ax.plot(train, target, 'o', alpha=0.2, color='black')
+    ax.plot(test, mean, 'g-', lw=1, alpha=0.4)
+    ax.fill_between(np.hstack(test), np.hstack(opt_upper),
+                    np.hstack(opt_lower), interpolate=True,
+                    color='purple', alpha=0.2)
+    plt.title('Optimized GPflow')
+    plt.xlabel('Descriptor')
+    plt.ylabel('Response')
+    plt.axis('tight')
+    # Uncertainty profile.
+    ax224.plot(test, np.array(std * tstd), '-', lw=1,
+               color='purple')
+
+if haz_gpy:
+    # Model example 5 - GPy.
     kernel = GPy.kern.RBF(input_dim=1, variance=1., lengthscale=1.)
     m = GPy.models.GPRegression(std['train'], train_targets['target'], kernel)
     m.optimize()
     print(m)
+    ax = fig.add_subplot(grid+5)
+    ax.plot(linex, liney, '-', lw=1, color='black')
+    ax.plot(train, target, 'o', alpha=0.2, color='black')
+    ax.plot(test, opt_prediction, 'g-', lw=1, alpha=0.4)
+    ax.fill_between(np.hstack(test), np.hstack(opt_upper),
+                    np.hstack(opt_lower), interpolate=True,
+                    color='brown', alpha=0.2)
+    plt.title('Optimized GPy')
+    plt.xlabel('Descriptor')
+    plt.ylabel('Response')
+    plt.axis('tight')
+    # Uncertainty profile.
+    ax224.plot(test, np.array(opt_uncertainty * tstd), '-', lw=1,
+               color='brown')
 
 plt.subplots_adjust(left=None, bottom=None, right=None, top=None,
                     wspace=0.4, hspace=0.4)
