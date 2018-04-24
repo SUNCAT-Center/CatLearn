@@ -4,7 +4,7 @@ FROM ubuntu:latest
 ENV LANG=C.UTF-8 LC_ALL=C.UTF-8
 
 # Add some descriptive labels.
-LABEL Description="This image is used to setup the AtoML environment." Version="0.3.1"
+LABEL Description="This image is used to setup the CatLearn environment." Version="0.4.0"
 
 # Install various python versions.
 RUN apt-get update && apt-get install -y \

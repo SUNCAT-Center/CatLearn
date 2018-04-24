@@ -2,8 +2,8 @@
 
 cp ../requirements.txt .
 
-docker build -t atoml:latest .
-docker tag atoml:latest jenningspc/atoml:latest
-docker push jenningspc/atoml:latest
+docker build -t catlearn:latest .
+docker tag catlearn:latest jenningspc/catlearn:latest
+docker push jenningspc/catlearn:latest
 
 rm requirements.txt
