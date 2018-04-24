@@ -1,8 +1,6 @@
 catlearn.setup package
 ======================
 
-Submodules
-----------
 
 catlearn.setup.general\_gp module
 ---------------------------------
@@ -28,9 +26,6 @@ catlearn.setup.general\_preprocess module
     :undoc-members:
     :show-inheritance:
 
-
-Module contents
----------------
 
 .. automodule:: catlearn.setup
     :members:

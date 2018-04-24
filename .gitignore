@@ -1,5 +1,7 @@
 *.pyc
 *.pickle
 
+docs/_*
+
 .idea/
 .ipynb_checkpoints/

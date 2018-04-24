@@ -1,9 +1,6 @@
 catlearn.api package
 ====================
 
-Submodules
-----------
-
 catlearn.api.ase\_atoms\_api module
 -----------------------------------
 
@@ -27,10 +24,6 @@ catlearn.api.networkx\_graph\_api module
     :members:
     :undoc-members:
     :show-inheritance:
-
-
-Module contents
----------------
 
 .. automodule:: catlearn.api
     :members:

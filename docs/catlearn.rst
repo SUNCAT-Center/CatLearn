@@ -1,9 +1,6 @@
 catlearn package
 ================
 
-Subpackages
------------
-
 .. toctree::
 
     catlearn.api
@@ -14,9 +11,6 @@ Subpackages
     catlearn.regression
     catlearn.setup
     catlearn.utilities
-
-Module contents
----------------
 
 .. automodule:: catlearn
     :members:
