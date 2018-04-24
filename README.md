@@ -69,7 +69,7 @@ Use Ctrl + d to exit the docker image when done.
 The tutorial scripts will generally output some graphical representations of the results etc. For these scripts, it is advisable to have at least `matplotlib` installed:
 
 ```shell
-$ pip install matplotlib pandas seaborn
+$ pip install matplotlib seaborn
 ```
 
 ## Usage
