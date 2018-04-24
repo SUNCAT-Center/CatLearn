@@ -2,7 +2,7 @@
 
 > An environment for atomistic machine learning in Python for applications in catalysis.
 
-[![Build Status](https://travis-ci.org/SUNCAT-Center/CatLearn.svg?branch=master)](https://travis-ci.org/SUNCAT-Center/CatLearn) [![Coverage Status](https://coveralls.io/repos/github/SUNCAT-Center/CatLearn/badge.svg?branch=master)](https://coveralls.io/github/SUNCAT-Center/CatLearn?branch=master) [![PyPI version](https://badge.fury.io/py/CatLearn.svg)](https://badge.fury.io/py/CatLearn) [![License: GPL v3](https://img.shields.io/badge/License-GPL%20v3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
+[![Build Status](https://travis-ci.org/SUNCAT-Center/CatLearn.svg?branch=master)](https://travis-ci.org/SUNCAT-Center/CatLearn) [![Coverage Status](https://coveralls.io/repos/github/SUNCAT-Center/CatLearn/badge.svg?branch=master)](https://coveralls.io/github/SUNCAT-Center/CatLearn?branch=master) [![Documentation Status](https://readthedocs.org/projects/catlearn/badge/?version=latest)](http://catlearn.readthedocs.io/en/latest/?badge=latest) [![PyPI version](https://badge.fury.io/py/CatLearn.svg)](https://badge.fury.io/py/CatLearn) [![License: GPL v3](https://img.shields.io/badge/License-GPL%20v3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 
 Utilities for building and testing atomic machine learning models. Gaussian Processes (GP) regression machine learning routines are implemented. These will take any numpy array of training and test feature matrices along with a vector of target values.
 
