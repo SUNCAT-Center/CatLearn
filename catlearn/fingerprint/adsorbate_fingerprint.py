@@ -19,7 +19,6 @@ from .periodic_table_data import (get_mendeleev_params, n_outer,
 from .neighbor_matrix import connection_matrix
 import collections
 from .base import BaseGenerator
-from scipy.spatial import distance
 
 
 block2number = {'s': 1,
@@ -117,8 +116,8 @@ class AdsorbateFingerprintGenerator(BaseGenerator):
                     'term' in atoms.info['key_value_pairs']):
                 term = atoms.info['key_value_pairs']['term']
                 numbers = [atomic_numbers[s] for s in string2symbols(term)]
-            elif 'termination_atoms' in atoms.info:
-                term = atoms.info['termination_atoms']
+            elif 'termination_atoms' in atoms.subsets:
+                term = atoms.subsets['termination_atoms']
                 numbers = atoms.numbers[term]
             else:
                 raise NotImplementedError("termination fingerprint.")
@@ -172,8 +171,8 @@ class AdsorbateFingerprintGenerator(BaseGenerator):
                     'bulk' in atoms.info['key_value_pairs']):
                 bulk = atoms.info['key_value_pairs']['bulk']
                 numbers = [atomic_numbers[s] for s in string2symbols(bulk)]
-            elif 'bulk_atoms' in atoms.info:
-                bulk = atoms.info['bulk_atoms']
+            elif 'bulk_atoms' in atoms.subsets:
+                bulk = atoms.subsets['bulk_atoms']
                 numbers = atoms.numbers[bulk]
             else:
                 raise NotImplementedError("bulk fingerprint.")
@@ -219,7 +218,7 @@ class AdsorbateFingerprintGenerator(BaseGenerator):
             return labels
         else:
             # Get atomic number of alpha adsorbate atom.
-            chemisorbed_atoms = atoms.info['chemisorbed_atoms']
+            chemisorbed_atoms = atoms.subsets['chemisorbed_atoms']
             numbers = atoms.numbers[chemisorbed_atoms]
             # Import CatLearn data on that element.
             extra_ads_params = ['atomic_radius', 'heat_of_formation',
@@ -273,7 +272,7 @@ class AdsorbateFingerprintGenerator(BaseGenerator):
         if atoms is None:
             return labels
         else:
-            numbers = [atoms[j].number for j in atoms.info['site_atoms']]
+            numbers = [atoms[j].number for j in atoms.subsets['site_atoms']]
             dat = list_mendeleev_params(numbers, params=self.slab_params)
             result = list(np.nanmean(dat, axis=0))
             result += [np.nanmean([gs_magmom[z] for z in numbers])]
@@ -322,7 +321,7 @@ class AdsorbateFingerprintGenerator(BaseGenerator):
         if atoms is None:
             return labels
         else:
-            numbers = [atoms[j].number for j in atoms.info['site_atoms']]
+            numbers = [atoms[j].number for j in atoms.subsets['site_atoms']]
             dat = list_mendeleev_params(numbers, params=self.slab_params)
             result = list(np.nansum(dat, axis=0))
             result += [np.nansum([gs_magmom[z] for z in numbers])]
@@ -356,17 +355,17 @@ class AdsorbateFingerprintGenerator(BaseGenerator):
         if atoms is None:
             return ['nn_num_C', 'nn_num_H', 'nn_num_M']
         else:
-            chemi = atoms.info['chemisorbed_atoms']
-            nl = atoms.get_neighborlist()
+            chemi = atoms.subsets['chemisorbed_atoms']
+            cm = atoms.connectivity
             H_atoms = []
             C_atoms = []
             for i in chemi:
-                for b in nl[i]:
+                for b in cm[i]:
                     if atoms.numbers[b] == 1:
                         H_atoms.append(b)
                     elif atoms.numbers[b] == 6:
                         C_atoms.append(b)
-            nM = len(atoms.info['site_atoms'])
+            nM = len(atoms.subsets['site_atoms'])
             nH = len(H_atoms)
             nC = len(C_atoms)
             return [nC, nH, nM]
@@ -414,7 +413,7 @@ class AdsorbateFingerprintGenerator(BaseGenerator):
         if atoms is None:
             return labels
         else:
-            ligand_atoms = atoms.info['ligand_atoms']
+            ligand_atoms = atoms.subsets['ligand_atoms']
             numbers = atoms.numbers[ligand_atoms]
             # Import CatLearn data on that element.
             dat = list_mendeleev_params(numbers, params=self.slab_params)
@@ -429,12 +428,12 @@ class AdsorbateFingerprintGenerator(BaseGenerator):
         """ Function that takes an atoms object and returns a fingerprint
             vector with the number of C-H bonds and C-C bonds in the adsorbate.
             The adsorbate atoms must be specified in advance in
-            atoms.info['ads_atoms']
+            atoms.subsets['ads_atoms']
         """
         if atoms is None:
             return ['nC-C', 'ndouble', 'nC-H', 'nO-H']
         else:
-            ads_atoms = atoms[atoms.info['ads_atoms']]
+            ads_atoms = atoms[atoms.subsets['ads_atoms']]
             A = connection_matrix(ads_atoms, periodic=True, dx=0.2)
             Hindex = [a.index for a in ads_atoms if a.symbol == 'H']
             Cindex = [a.index for a in ads_atoms if a.symbol == 'C']
@@ -494,7 +493,7 @@ class AdsorbateFingerprintGenerator(BaseGenerator):
                     'ne_f_ads_sum',
                     'ionenergy_ads_sum']
         else:
-            ads_atoms = atoms.info['ads_atoms']
+            ads_atoms = atoms.subsets['ads_atoms']
             dat = []
             for a in ads_atoms:
                 Z = atoms.numbers[a]
@@ -530,7 +529,7 @@ class AdsorbateFingerprintGenerator(BaseGenerator):
                     'ne_f_ads_av',
                     'ionenergy_ads_av']
         else:
-            ads_atoms = atoms.info['ads_atoms']
+            ads_atoms = atoms.subsets['ads_atoms']
             dat = []
             for a in ads_atoms:
                 Z = int(atoms.numbers[a])
@@ -544,14 +543,14 @@ class AdsorbateFingerprintGenerator(BaseGenerator):
         if atoms is None:
             return ['strain_site', 'strain_term']
         else:
-            z_chemi = atoms.numbers[atoms.info['chemisorbed_atoms']]
+            z_chemi = atoms.numbers[atoms.subsets['chemisorbed_atoms']]
             if ('key_value_pairs' in atoms.info and
                     'term' in atoms.info['key_value_pairs']):
                 term = atoms.info['key_value_pairs']['term']
                 term_numbers = [atomic_numbers[s] for s in
                                 string2symbols(term)]
-            elif 'termination_atoms' in atoms.info:
-                term = atoms.info['termination_atoms']
+            elif 'termination_atoms' in atoms.subsets:
+                term = atoms.subsets['termination_atoms']
                 term_numbers = atoms.numbers[term]
             else:
                 raise NotImplementedError("strain fingerprint.")
@@ -560,8 +559,8 @@ class AdsorbateFingerprintGenerator(BaseGenerator):
                 bulk = atoms.info['key_value_pairs']['bulk']
                 bulk_numbers = [atomic_numbers[s] for s in
                                 string2symbols(bulk)]
-            elif 'bulk_atoms' in atoms.info:
-                bulk = atoms.info['bulk_atoms']
+            elif 'bulk_atoms' in atoms.subsets:
+                bulk = atoms.subsets['bulk_atoms']
                 bulk_numbers = atoms.numbers[bulk]
             else:
                 raise NotImplementedError("strain fingerprint.")
@@ -588,8 +587,8 @@ class AdsorbateFingerprintGenerator(BaseGenerator):
         labels = ['dist_' + s for s in electronegativities]
         if atoms is None:
             return labels
-        chemi = atoms.info['chemisorbed_atoms']
-        site = atoms.info['site_atoms']
+        chemi = atoms.subsets['chemisorbed_atoms']
+        site = atoms.subsets['site_atoms']
         chemi_numbers = atoms.numbers[chemi]
         site_numbers = atoms.numbers[site]
         en_chemi = list_mendeleev_params(chemi_numbers, electronegativities)
@@ -697,7 +696,7 @@ class AdsorbateFingerprintGenerator(BaseGenerator):
                     'site_catapp']
         else:
             # Atomic numbers in the site.
-            Z_surf1_raw = [atoms.numbers[j] for j in atoms.info['ligand_atoms']]
+            Z_surf1_raw = [atoms.numbers[j] for j in atoms.subsets['ligand_atoms']]
             # Sort by concentration
             counts = collections.Counter(Z_surf1_raw)
             Z_surf1 = sorted(Z_surf1_raw, key=counts.get, reverse=True)
