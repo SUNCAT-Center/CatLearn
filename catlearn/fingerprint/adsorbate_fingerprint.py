@@ -52,7 +52,7 @@ def check_length(labels, result, atoms):
         msg = str(len(labels)) + '/' + str(len(result)) + \
             ' labels/fingerprint mismatch.'
         if 'id' in atoms.info:
-            msg += ' id: '+str(atoms.info['id'])
+            msg += ' id: ' + str(atoms.info['id'])
         raise AssertionError(msg)
 
 
@@ -74,8 +74,10 @@ class AdsorbateFingerprintGenerator(BaseGenerator):
         super(AdsorbateFingerprintGenerator, self).__init__(**kwargs)
 
     def term(self, atoms=None):
-        """ Returns a fingerprint vector with propeties of the element name
-        saved in the atoms.info['key_value_pairs']['term'] """
+        """Return a fingerprint vector with propeties of the element name.
+
+        This is saved in the atoms.info['key_value_pairs']['term']
+        """
         labels = ['atomic_number_term',
                   'atomic_volume_term',
                   'boiling_point_term',
@@ -129,8 +131,10 @@ class AdsorbateFingerprintGenerator(BaseGenerator):
             return result
 
     def bulk(self, atoms=None):
-        """ Returns a fingerprint vector with propeties of the element name
-        saved in the atoms.info['key_value_pairs']['bulk'] """
+        """Return a fingerprint vector with propeties of the element name.
+
+        This is saved in the atoms.info['key_value_pairs']['bulk']
+        """
         labels = ['atomic_number_bulk',
                   'atomic_volume_bulk',
                   'boiling_point_bulk',
@@ -184,9 +188,9 @@ class AdsorbateFingerprintGenerator(BaseGenerator):
             return result
 
     def mean_chemisorbed_atoms(self, atoms=None):
-        """ Function that takes an atoms objects and returns a fingerprint
-            vector containing properties of the closest add atom to a surface
-            metal atom.
+        """Function that takes an atoms objects and returns a fingerprint
+        vector containing properties of the closest add atom to a surface
+        metal atom.
         """
         labels = ['atomic_number_ads1',
                   'atomic_volume_ads1',
@@ -232,9 +236,9 @@ class AdsorbateFingerprintGenerator(BaseGenerator):
             return result
 
     def mean_site(self, atoms=None):
-        """ Function that takes an atoms objects and returns a fingerprint
-            vector with properties averaged over the surface metal atoms
-            closest to an add atom.
+        """Function that takes an atoms objects and returns a fingerprint
+        vector with properties averaged over the surface metal atoms
+        closest to an add atom.
         """
         labels = ['atomic_number_site_av',
                   'atomic_volume_site_av',
@@ -281,9 +285,9 @@ class AdsorbateFingerprintGenerator(BaseGenerator):
             return result
 
     def sum_site(self, atoms=None):
-        """ Function that takes an atoms objects and returns a fingerprint
-            vector with properties summed over the surface metal atoms
-            closest to an add atom.
+        """Function that takes an atoms objects and returns a fingerprint
+        vector with properties summed over the surface metal atoms
+        closest to an add atom.
         """
         labels = ['atomic_number_site_sum',
                   'atomic_volume_site_sum',
@@ -330,9 +334,9 @@ class AdsorbateFingerprintGenerator(BaseGenerator):
             return result
 
     def count_ads_atoms(self, atoms=None):
-        """ Function that takes an atoms objects and returns a fingerprint
-            vector containing the count of C, O, H and N atoms in the
-            adsorbate.
+        """Function that takes an atoms objects and returns a fingerprint
+        vector containing the count of C, O, H and N atoms in the
+        adsorbate.
         """
         if atoms is None:
             return ['total_num_H',
@@ -349,9 +353,9 @@ class AdsorbateFingerprintGenerator(BaseGenerator):
             return [nH, nC, nO, nN, nS]
 
     def count_chemisorbed_fragment(self, atoms=None):
-        """ Function that takes an atoms objects and returns a fingerprint
-            vector containing the count of C, O, H, N and also metal atoms,
-            that are neighbors to the binding atom.
+        """Function that takes an atoms objects and returns a fingerprint
+        vector containing the count of C, O, H, N and also metal atoms,
+        that are neighbors to the binding atom.
         """
         if atoms is None:
             return ['nn_num_C', 'nn_num_H', 'nn_num_M']
@@ -372,9 +376,9 @@ class AdsorbateFingerprintGenerator(BaseGenerator):
             return [nC, nH, nM]
 
     def mean_surf_ligands(self, atoms=None):
-        """ Function that takes an atoms objects and returns a fingerprint
-            vector containing the count of nearest neighbors and properties of
-            the nearest neighbors.
+        """Function that takes an atoms objects and returns a fingerprint
+        vector containing the count of nearest neighbors and properties of
+        the nearest neighbors.
         """
         labels = ['nn_surf_ligands', 'identnn_surf_ligands',
                   'atomic_number_surf_ligands',
@@ -426,10 +430,10 @@ class AdsorbateFingerprintGenerator(BaseGenerator):
             return result
 
     def count_ads_bonds(self, atoms=None):
-        """ Function that takes an atoms object and returns a fingerprint
-            vector with the number of C-H bonds and C-C bonds in the adsorbate.
-            The adsorbate atoms must be specified in advance in
-            atoms.info['ads_atoms']
+        """Function that takes an atoms object and returns a fingerprint
+        vector with the number of C-H bonds and C-C bonds in the adsorbate.
+        The adsorbate atoms must be specified in advance in
+        atoms.info['ads_atoms']
         """
         if atoms is None:
             return ['nC-C', 'ndouble', 'nC-H', 'nO-H']
@@ -469,8 +473,8 @@ class AdsorbateFingerprintGenerator(BaseGenerator):
             return [nCC, nC2, nCH, nOH]
 
     def ads_sum(self, atoms=None):
-        """ Function that takes an atoms objects and returns a fingerprint
-            vector with averages of the atomic properties of the adsorbate.
+        """Function that takes an atoms objects and returns a fingerprint
+        vector with averages of the atomic properties of the adsorbate.
         """
         if atoms is None:
             return ['atomic_number_ads_sum',
@@ -505,8 +509,8 @@ class AdsorbateFingerprintGenerator(BaseGenerator):
             return list(np.nansum(dat, axis=0))
 
     def ads_av(self, atoms=None):
-        """ Function that takes an atoms objects and returns a fingerprint
-            vector with averages of the atomic properties of the adsorbate.
+        """Function that takes an atoms objects and returns a fingerprint
+        vector with averages of the atomic properties of the adsorbate.
         """
         if atoms is None:
             return ['atomic_number_ads_av',
@@ -582,7 +586,7 @@ class AdsorbateFingerprintGenerator(BaseGenerator):
             return [strain_site, strain_term]
 
     def en_difference(self, atoms=None):
-        """ Returns a list of summed squared differences in electronegativity
+        """Returns a list of summed squared differences in electronegativity
         between site atoms bonded to adsorbate atoms.
         """
         labels = ['dist_' + s for s in electronegativities]
@@ -697,7 +701,8 @@ class AdsorbateFingerprintGenerator(BaseGenerator):
                     'site_catapp']
         else:
             # Atomic numbers in the site.
-            Z_surf1_raw = [atoms.numbers[j] for j in atoms.info['ligand_atoms']]
+            Z_surf1_raw = [atoms.numbers[j]
+                           for j in atoms.info['ligand_atoms']]
             # Sort by concentration
             counts = collections.Counter(Z_surf1_raw)
             Z_surf1 = sorted(Z_surf1_raw, key=counts.get, reverse=True)
@@ -770,6 +775,7 @@ class AdsorbateFingerprintGenerator(BaseGenerator):
             kvp = atoms.info['key_value_pairs']
             name = kvp['species'] + '*' + kvp['name'] + kvp['facet']
             return [name]
+
     def dbid(self, atoms=None):
         if atoms is None:
             return ['id']

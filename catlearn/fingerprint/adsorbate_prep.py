@@ -89,7 +89,8 @@ def detect_adsorbate(atoms):
 
     Parameters
     ----------
-    atoms : ase atoms object
+    atoms : object
+        An ase atoms object.
     """
     try:
         species = atoms.info['key_value_pairs']['species']
@@ -112,7 +113,7 @@ def detect_adsorbate(atoms):
 
 
 def termination_info(images):
-    """ Returns a list of atoms objects with attached information about
+    """Return a list of atoms objects with attached information about
     the slab termination, the slab second outermost layer and the bulk slab
     compositions.
 
@@ -121,6 +122,7 @@ def termination_info(images):
     images : list
         list of atoms objects representing adsorbates on slabs.
         The atoms objects must have the following keys in atoms.info:
+
             - 'ads_atoms' : list
                 indices of atoms belonging to the adsorbate
             - 'slab_atoms' : list
@@ -144,6 +146,7 @@ def slab_index(atoms):
     ----------
     atoms : ase atoms object
         The atoms object must have the key 'ads_atoms' in atoms.info:
+
             - 'ads_atoms' : list
                 indices of atoms belonging to the adsorbate
     """
@@ -152,11 +155,12 @@ def slab_index(atoms):
 
 
 def sym2ads_index(atoms):
-    """ Returns the indexes of atoms that are in the global list addsyms.
+    """Return the indexes of atoms that are in the global list addsyms.
 
     Parameters
     ----------
-    atoms : ase atoms object.
+    atoms : object
+        An ase atoms object.
     """
     ads_atoms = [a.index for a in atoms if a.symbol in ads_syms]
 
@@ -164,7 +168,7 @@ def sym2ads_index(atoms):
 
 
 def last2ads_index(atoms, formula):
-    """ Returns the indexes of the last n atoms in the atoms object, where n is
+    """Return the indexes of the last n atoms in the atoms object, where n is
     the length of the composition of the adsorbate species. This function will
     work on atoms objects, where the slab was set up first,
     and the adsorbate was added after.
@@ -189,10 +193,9 @@ def last2ads_index(atoms, formula):
 
 
 def formula2ads_index(atoms, formula):
-    """ Returns the indexes of atoms,
-    which have symbols matching the chemical formula of the adsorbate. This
-    function will not work for adsorbates containing the same elements as the
-    slab.
+    """Return the indexes of atoms, which have symbols matching the chemical
+    formula of the adsorbate. This function will not work for adsorbates
+    containing the same elements as the slab.
 
     Parameters
     ----------
@@ -273,6 +276,7 @@ def info2primary_index(atoms):
     ----------
     atoms : ase atoms object.
         The atoms object must have the following keys in atoms.info:
+
             - 'ads_atoms' : list
                 indices of atoms belonging to the adsorbate
             - 'slab_atoms' : list
@@ -316,6 +320,7 @@ def detect_termination(atoms):
     ----------
     atoms : ase atoms object.
         The atoms object must have the following keys in atoms.info:
+
             - 'ads_atoms' : list
                 indices of atoms belonging to the adsorbate
             - 'slab_atoms' : list

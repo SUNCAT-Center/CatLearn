@@ -1,0 +1,1266 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>catlearn.fingerprint package &#8212; CatLearn  documentation</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="catlearn-fingerprint-package">
+<h1>catlearn.fingerprint package<a class="headerlink" href="#catlearn-fingerprint-package" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-catlearn.fingerprint.adsorbate_fingerprint">
+<span id="catlearn-fingerprint-adsorbate-fingerprint-module"></span><h2>catlearn.fingerprint.adsorbate_fingerprint module<a class="headerlink" href="#module-catlearn.fingerprint.adsorbate_fingerprint" title="Permalink to this headline">¶</a></h2>
+<p>Slab adsorbate fingerprint functions for machine learning.</p>
+<dl class="class">
+<dt id="catlearn.fingerprint.adsorbate_fingerprint.AdsorbateFingerprintGenerator">
+<em class="property">class </em><code class="descclassname">catlearn.fingerprint.adsorbate_fingerprint.</code><code class="descname">AdsorbateFingerprintGenerator</code><span class="sig-paren">(</span><em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#catlearn.fingerprint.adsorbate_fingerprint.AdsorbateFingerprintGenerator" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#catlearn.fingerprint.base.BaseGenerator" title="catlearn.fingerprint.base.BaseGenerator"><code class="xref py py-class docutils literal notranslate"><span class="pre">catlearn.fingerprint.base.BaseGenerator</span></code></a></p>
+<dl class="method">
+<dt id="catlearn.fingerprint.adsorbate_fingerprint.AdsorbateFingerprintGenerator.ads_av">
+<code class="descname">ads_av</code><span class="sig-paren">(</span><em>atoms=None</em><span class="sig-paren">)</span><a class="headerlink" href="#catlearn.fingerprint.adsorbate_fingerprint.AdsorbateFingerprintGenerator.ads_av" title="Permalink to this definition">¶</a></dt>
+<dd><p>Function that takes an atoms objects and returns a fingerprint
+vector with averages of the atomic properties of the adsorbate.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="catlearn.fingerprint.adsorbate_fingerprint.AdsorbateFingerprintGenerator.ads_sum">
+<code class="descname">ads_sum</code><span class="sig-paren">(</span><em>atoms=None</em><span class="sig-paren">)</span><a class="headerlink" href="#catlearn.fingerprint.adsorbate_fingerprint.AdsorbateFingerprintGenerator.ads_sum" title="Permalink to this definition">¶</a></dt>
+<dd><p>Function that takes an atoms objects and returns a fingerprint
+vector with averages of the atomic properties of the adsorbate.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="catlearn.fingerprint.adsorbate_fingerprint.AdsorbateFingerprintGenerator.bulk">
+<code class="descname">bulk</code><span class="sig-paren">(</span><em>atoms=None</em><span class="sig-paren">)</span><a class="headerlink" href="#catlearn.fingerprint.adsorbate_fingerprint.AdsorbateFingerprintGenerator.bulk" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a fingerprint vector with propeties of the element name.</p>
+<p>This is saved in the atoms.info[‘key_value_pairs’][‘bulk’]</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="catlearn.fingerprint.adsorbate_fingerprint.AdsorbateFingerprintGenerator.catapp_AB">
+<code class="descname">catapp_AB</code><span class="sig-paren">(</span><em>atoms=None</em><span class="sig-paren">)</span><a class="headerlink" href="#catlearn.fingerprint.adsorbate_fingerprint.AdsorbateFingerprintGenerator.catapp_AB" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="catlearn.fingerprint.adsorbate_fingerprint.AdsorbateFingerprintGenerator.count_ads_atoms">
+<code class="descname">count_ads_atoms</code><span class="sig-paren">(</span><em>atoms=None</em><span class="sig-paren">)</span><a class="headerlink" href="#catlearn.fingerprint.adsorbate_fingerprint.AdsorbateFingerprintGenerator.count_ads_atoms" title="Permalink to this definition">¶</a></dt>
+<dd><p>Function that takes an atoms objects and returns a fingerprint
+vector containing the count of C, O, H and N atoms in the
+adsorbate.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="catlearn.fingerprint.adsorbate_fingerprint.AdsorbateFingerprintGenerator.count_ads_bonds">
+<code class="descname">count_ads_bonds</code><span class="sig-paren">(</span><em>atoms=None</em><span class="sig-paren">)</span><a class="headerlink" href="#catlearn.fingerprint.adsorbate_fingerprint.AdsorbateFingerprintGenerator.count_ads_bonds" title="Permalink to this definition">¶</a></dt>
+<dd><p>Function that takes an atoms object and returns a fingerprint
+vector with the number of C-H bonds and C-C bonds in the adsorbate.
+The adsorbate atoms must be specified in advance in
+atoms.info[‘ads_atoms’]</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="catlearn.fingerprint.adsorbate_fingerprint.AdsorbateFingerprintGenerator.count_chemisorbed_fragment">
+<code class="descname">count_chemisorbed_fragment</code><span class="sig-paren">(</span><em>atoms=None</em><span class="sig-paren">)</span><a class="headerlink" href="#catlearn.fingerprint.adsorbate_fingerprint.AdsorbateFingerprintGenerator.count_chemisorbed_fragment" title="Permalink to this definition">¶</a></dt>
+<dd><p>Function that takes an atoms objects and returns a fingerprint
+vector containing the count of C, O, H, N and also metal atoms,
+that are neighbors to the binding atom.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="catlearn.fingerprint.adsorbate_fingerprint.AdsorbateFingerprintGenerator.ctime">
+<code class="descname">ctime</code><span class="sig-paren">(</span><em>atoms=None</em><span class="sig-paren">)</span><a class="headerlink" href="#catlearn.fingerprint.adsorbate_fingerprint.AdsorbateFingerprintGenerator.ctime" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="catlearn.fingerprint.adsorbate_fingerprint.AdsorbateFingerprintGenerator.dbid">
+<code class="descname">dbid</code><span class="sig-paren">(</span><em>atoms=None</em><span class="sig-paren">)</span><a class="headerlink" href="#catlearn.fingerprint.adsorbate_fingerprint.AdsorbateFingerprintGenerator.dbid" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="catlearn.fingerprint.adsorbate_fingerprint.AdsorbateFingerprintGenerator.delta_energy">
+<code class="descname">delta_energy</code><span class="sig-paren">(</span><em>atoms=None</em><span class="sig-paren">)</span><a class="headerlink" href="#catlearn.fingerprint.adsorbate_fingerprint.AdsorbateFingerprintGenerator.delta_energy" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="catlearn.fingerprint.adsorbate_fingerprint.AdsorbateFingerprintGenerator.en_difference">
+<code class="descname">en_difference</code><span class="sig-paren">(</span><em>atoms=None</em><span class="sig-paren">)</span><a class="headerlink" href="#catlearn.fingerprint.adsorbate_fingerprint.AdsorbateFingerprintGenerator.en_difference" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a list of summed squared differences in electronegativity
+between site atoms bonded to adsorbate atoms.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="catlearn.fingerprint.adsorbate_fingerprint.AdsorbateFingerprintGenerator.mean_chemisorbed_atoms">
+<code class="descname">mean_chemisorbed_atoms</code><span class="sig-paren">(</span><em>atoms=None</em><span class="sig-paren">)</span><a class="headerlink" href="#catlearn.fingerprint.adsorbate_fingerprint.AdsorbateFingerprintGenerator.mean_chemisorbed_atoms" title="Permalink to this definition">¶</a></dt>
+<dd><p>Function that takes an atoms objects and returns a fingerprint
+vector containing properties of the closest add atom to a surface
+metal atom.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="catlearn.fingerprint.adsorbate_fingerprint.AdsorbateFingerprintGenerator.mean_site">
+<code class="descname">mean_site</code><span class="sig-paren">(</span><em>atoms=None</em><span class="sig-paren">)</span><a class="headerlink" href="#catlearn.fingerprint.adsorbate_fingerprint.AdsorbateFingerprintGenerator.mean_site" title="Permalink to this definition">¶</a></dt>
+<dd><p>Function that takes an atoms objects and returns a fingerprint
+vector with properties averaged over the surface metal atoms
+closest to an add atom.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="catlearn.fingerprint.adsorbate_fingerprint.AdsorbateFingerprintGenerator.mean_surf_ligands">
+<code class="descname">mean_surf_ligands</code><span class="sig-paren">(</span><em>atoms=None</em><span class="sig-paren">)</span><a class="headerlink" href="#catlearn.fingerprint.adsorbate_fingerprint.AdsorbateFingerprintGenerator.mean_surf_ligands" title="Permalink to this definition">¶</a></dt>
+<dd><p>Function that takes an atoms objects and returns a fingerprint
+vector containing the count of nearest neighbors and properties of
+the nearest neighbors.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="catlearn.fingerprint.adsorbate_fingerprint.AdsorbateFingerprintGenerator.name">
+<code class="descname">name</code><span class="sig-paren">(</span><em>atoms=None</em><span class="sig-paren">)</span><a class="headerlink" href="#catlearn.fingerprint.adsorbate_fingerprint.AdsorbateFingerprintGenerator.name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="catlearn.fingerprint.adsorbate_fingerprint.AdsorbateFingerprintGenerator.randomfpv">
+<code class="descname">randomfpv</code><span class="sig-paren">(</span><em>atoms=None</em><span class="sig-paren">)</span><a class="headerlink" href="#catlearn.fingerprint.adsorbate_fingerprint.AdsorbateFingerprintGenerator.randomfpv" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns alist of n random numbers.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="catlearn.fingerprint.adsorbate_fingerprint.AdsorbateFingerprintGenerator.strain">
+<code class="descname">strain</code><span class="sig-paren">(</span><em>atoms=None</em><span class="sig-paren">)</span><a class="headerlink" href="#catlearn.fingerprint.adsorbate_fingerprint.AdsorbateFingerprintGenerator.strain" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="catlearn.fingerprint.adsorbate_fingerprint.AdsorbateFingerprintGenerator.sum_site">
+<code class="descname">sum_site</code><span class="sig-paren">(</span><em>atoms=None</em><span class="sig-paren">)</span><a class="headerlink" href="#catlearn.fingerprint.adsorbate_fingerprint.AdsorbateFingerprintGenerator.sum_site" title="Permalink to this definition">¶</a></dt>
+<dd><p>Function that takes an atoms objects and returns a fingerprint
+vector with properties summed over the surface metal atoms
+closest to an add atom.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="catlearn.fingerprint.adsorbate_fingerprint.AdsorbateFingerprintGenerator.term">
+<code class="descname">term</code><span class="sig-paren">(</span><em>atoms=None</em><span class="sig-paren">)</span><a class="headerlink" href="#catlearn.fingerprint.adsorbate_fingerprint.AdsorbateFingerprintGenerator.term" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a fingerprint vector with propeties of the element name.</p>
+<p>This is saved in the atoms.info[‘key_value_pairs’][‘term’]</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="function">
+<dt id="catlearn.fingerprint.adsorbate_fingerprint.check_length">
+<code class="descclassname">catlearn.fingerprint.adsorbate_fingerprint.</code><code class="descname">check_length</code><span class="sig-paren">(</span><em>labels</em>, <em>result</em>, <em>atoms</em><span class="sig-paren">)</span><a class="headerlink" href="#catlearn.fingerprint.adsorbate_fingerprint.check_length" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+<div class="section" id="module-catlearn.fingerprint.adsorbate_prep">
+<span id="catlearn-fingerprint-adsorbate-prep-module"></span><h2>catlearn.fingerprint.adsorbate_prep module<a class="headerlink" href="#module-catlearn.fingerprint.adsorbate_prep" title="Permalink to this headline">¶</a></h2>
+<p>Created on Mon Feb  6 15:04:38 2017</p>
+<p>This function constructs a dictionary with abinitio_energies.</p>
+<dl class="docutils">
+<dt>Input:</dt>
+<dd>fname (str) path/filename of ase.db file
+selection (list) ase.db selection</dd>
+</dl>
+<dl class="function">
+<dt id="catlearn.fingerprint.adsorbate_prep.attach_nl">
+<code class="descclassname">catlearn.fingerprint.adsorbate_prep.</code><code class="descname">attach_nl</code><span class="sig-paren">(</span><em>images</em><span class="sig-paren">)</span><a class="headerlink" href="#catlearn.fingerprint.adsorbate_prep.attach_nl" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a list of atoms objects with attached neighborlists.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="catlearn.fingerprint.adsorbate_prep.autogen_info">
+<code class="descclassname">catlearn.fingerprint.adsorbate_prep.</code><code class="descname">autogen_info</code><span class="sig-paren">(</span><em>images</em><span class="sig-paren">)</span><a class="headerlink" href="#catlearn.fingerprint.adsorbate_prep.autogen_info" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a list of atoms objects with atomic group information
+attached to info.
+This information is  needed by some functions in the
+AdsorbateFingerprintGenerator.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>images</strong> (<em>list</em>) – list of atoms objects representing adsorbates on slabs.
+No further information is required in atoms.info.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="catlearn.fingerprint.adsorbate_prep.catalysis_hub_to_info">
+<code class="descclassname">catlearn.fingerprint.adsorbate_prep.</code><code class="descname">catalysis_hub_to_info</code><span class="sig-paren">(</span><em>images</em><span class="sig-paren">)</span><a class="headerlink" href="#catlearn.fingerprint.adsorbate_prep.catalysis_hub_to_info" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="catlearn.fingerprint.adsorbate_prep.detect_adsorbate">
+<code class="descclassname">catlearn.fingerprint.adsorbate_prep.</code><code class="descname">detect_adsorbate</code><span class="sig-paren">(</span><em>atoms</em><span class="sig-paren">)</span><a class="headerlink" href="#catlearn.fingerprint.adsorbate_prep.detect_adsorbate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a list of indices of atoms belonging to an adsorbate.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>atoms</strong> (<em>object</em>) – An ase atoms object.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="catlearn.fingerprint.adsorbate_prep.detect_termination">
+<code class="descclassname">catlearn.fingerprint.adsorbate_prep.</code><code class="descname">detect_termination</code><span class="sig-paren">(</span><em>atoms</em><span class="sig-paren">)</span><a class="headerlink" href="#catlearn.fingerprint.adsorbate_prep.detect_termination" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns three lists, the first containing indices of bulk atoms and
+the second containing indices of atoms in the second outermost layer, and
+the last denotes atoms in the outermost layer or termination or the slab.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>atoms</strong> (<em>ase atoms object.</em>) – <p>The atoms object must have the following keys in atoms.info:</p>
+<blockquote>
+<div><ul class="simple">
+<li><dl class="first docutils">
+<dt>’ads_atoms’ <span class="classifier-delimiter">:</span> <span class="classifier">list</span></dt>
+<dd>indices of atoms belonging to the adsorbate</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt>’slab_atoms’ <span class="classifier-delimiter">:</span> <span class="classifier">list</span></dt>
+<dd>indices of atoms belonging to the slab</dd>
+</dl>
+</li>
+</ul>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="catlearn.fingerprint.adsorbate_prep.formula2ads_index">
+<code class="descclassname">catlearn.fingerprint.adsorbate_prep.</code><code class="descname">formula2ads_index</code><span class="sig-paren">(</span><em>atoms</em>, <em>formula</em><span class="sig-paren">)</span><a class="headerlink" href="#catlearn.fingerprint.adsorbate_prep.formula2ads_index" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the indexes of atoms, which have symbols matching the chemical
+formula of the adsorbate. This function will not work for adsorbates
+containing the same elements as the slab.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>atoms</strong> (<em>ase atoms object.</em>) – atoms.info must be a dictionary containing the key ‘key_value_pairs’,
+which is expected to contain CatMAP standard adsorbate structure
+key value pairs. See the ase db to catmap module in catmap.
+the key value pair ‘species’ must be the
+chemical formula of the adsorbate.</li>
+<li><strong>formula</strong> (<em>str</em>) – chemical formula of the adsorbate.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="catlearn.fingerprint.adsorbate_prep.info2primary_index">
+<code class="descclassname">catlearn.fingerprint.adsorbate_prep.</code><code class="descname">info2primary_index</code><span class="sig-paren">(</span><em>atoms</em><span class="sig-paren">)</span><a class="headerlink" href="#catlearn.fingerprint.adsorbate_prep.info2primary_index" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns lists identifying the nearest neighbors of the adsorbate atoms.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>atoms</strong> (<em>ase atoms object.</em>) – <p>The atoms object must have the following keys in atoms.info:</p>
+<blockquote>
+<div><ul class="simple">
+<li><dl class="first docutils">
+<dt>’ads_atoms’ <span class="classifier-delimiter">:</span> <span class="classifier">list</span></dt>
+<dd>indices of atoms belonging to the adsorbate</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt>’slab_atoms’ <span class="classifier-delimiter">:</span> <span class="classifier">list</span></dt>
+<dd>indices of atoms belonging to the slab</dd>
+</dl>
+</li>
+</ul>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="catlearn.fingerprint.adsorbate_prep.last2ads_index">
+<code class="descclassname">catlearn.fingerprint.adsorbate_prep.</code><code class="descname">last2ads_index</code><span class="sig-paren">(</span><em>atoms</em>, <em>formula</em><span class="sig-paren">)</span><a class="headerlink" href="#catlearn.fingerprint.adsorbate_prep.last2ads_index" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the indexes of the last n atoms in the atoms object, where n is
+the length of the composition of the adsorbate species. This function will
+work on atoms objects, where the slab was set up first,
+and the adsorbate was added after.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>atoms</strong> (<em>ase atoms object.</em>) – atoms.info must be a dictionary containing the key ‘key_value_pairs’,
+which is expected to contain CATMAP standard adsorbate structure
+key value pairs. See the ase db to catmap module in catmap.
+the key value pair ‘species’ must be the
+chemical formula of the adsorbate.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="catlearn.fingerprint.adsorbate_prep.layers2ads_index">
+<code class="descclassname">catlearn.fingerprint.adsorbate_prep.</code><code class="descname">layers2ads_index</code><span class="sig-paren">(</span><em>atoms</em>, <em>formula</em><span class="sig-paren">)</span><a class="headerlink" href="#catlearn.fingerprint.adsorbate_prep.layers2ads_index" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the indexes of atoms in layers exceeding the number of layers
+stored in the key value pair ‘layers’.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>atoms</strong> (<em>ase atoms object.</em>) – atoms.info must be a dictionary containing the key ‘key_value_pairs’,
+which is expected to contain CatMAP standard adsorbate structure
+key value pairs. See the ase db to catmap module in catmap.
+the key value pair ‘species’ must be the
+chemical formula of the adsorbate and ‘layers’ must be an integer.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="catlearn.fingerprint.adsorbate_prep.slab_index">
+<code class="descclassname">catlearn.fingerprint.adsorbate_prep.</code><code class="descname">slab_index</code><span class="sig-paren">(</span><em>atoms</em><span class="sig-paren">)</span><a class="headerlink" href="#catlearn.fingerprint.adsorbate_prep.slab_index" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a list of indices of atoms belonging to the slab.
+These are defined as atoms that are not belonging to the adsorbate.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>atoms</strong> (<em>ase atoms object</em>) – <p>The atoms object must have the key ‘ads_atoms’ in atoms.info:</p>
+<blockquote>
+<div><ul class="simple">
+<li><dl class="first docutils">
+<dt>’ads_atoms’ <span class="classifier-delimiter">:</span> <span class="classifier">list</span></dt>
+<dd>indices of atoms belonging to the adsorbate</dd>
+</dl>
+</li>
+</ul>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="catlearn.fingerprint.adsorbate_prep.sym2ads_index">
+<code class="descclassname">catlearn.fingerprint.adsorbate_prep.</code><code class="descname">sym2ads_index</code><span class="sig-paren">(</span><em>atoms</em><span class="sig-paren">)</span><a class="headerlink" href="#catlearn.fingerprint.adsorbate_prep.sym2ads_index" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the indexes of atoms that are in the global list addsyms.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>atoms</strong> (<em>object</em>) – An ase atoms object.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="catlearn.fingerprint.adsorbate_prep.termination_info">
+<code class="descclassname">catlearn.fingerprint.adsorbate_prep.</code><code class="descname">termination_info</code><span class="sig-paren">(</span><em>images</em><span class="sig-paren">)</span><a class="headerlink" href="#catlearn.fingerprint.adsorbate_prep.termination_info" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a list of atoms objects with attached information about
+the slab termination, the slab second outermost layer and the bulk slab
+compositions.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>images</strong> (<em>list</em>) – <p>list of atoms objects representing adsorbates on slabs.
+The atoms objects must have the following keys in atoms.info:</p>
+<blockquote>
+<div><ul class="simple">
+<li><dl class="first docutils">
+<dt>’ads_atoms’ <span class="classifier-delimiter">:</span> <span class="classifier">list</span></dt>
+<dd>indices of atoms belonging to the adsorbate</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt>’slab_atoms’ <span class="classifier-delimiter">:</span> <span class="classifier">list</span></dt>
+<dd>indices of atoms belonging to the slab</dd>
+</dl>
+</li>
+</ul>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="catlearn.fingerprint.adsorbate_prep.z2ads_index">
+<code class="descclassname">catlearn.fingerprint.adsorbate_prep.</code><code class="descname">z2ads_index</code><span class="sig-paren">(</span><em>atoms</em>, <em>formula</em><span class="sig-paren">)</span><a class="headerlink" href="#catlearn.fingerprint.adsorbate_prep.z2ads_index" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the indexes of the n atoms with the highest position
+in the z direction,
+where n is the number of atoms in the chemical formula from the species
+key value pair.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>atoms</strong> (<em>ase atoms object.</em>) – atoms.info must be a dictionary containing the key ‘key_value_pairs’,
+which is expected to contain CatMAP standard adsorbate structure
+key value pairs. See the ase db to catmap module in catmap.
+the key value pair ‘species’.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+<div class="section" id="catlearn-fingerprint-asap-wrapper-module">
+<h2>catlearn.fingerprint.asap_wrapper module<a class="headerlink" href="#catlearn-fingerprint-asap-wrapper-module" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-catlearn.fingerprint.base">
+<span id="catlearn-fingerprint-base-module"></span><h2>catlearn.fingerprint.base module<a class="headerlink" href="#module-catlearn.fingerprint.base" title="Permalink to this headline">¶</a></h2>
+<p>Base class for the feature generators.</p>
+<dl class="class">
+<dt id="catlearn.fingerprint.base.BaseGenerator">
+<em class="property">class </em><code class="descclassname">catlearn.fingerprint.base.</code><code class="descname">BaseGenerator</code><span class="sig-paren">(</span><em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#catlearn.fingerprint.base.BaseGenerator" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Base class for feature generation.</p>
+<dl class="method">
+<dt id="catlearn.fingerprint.base.BaseGenerator.get_all_distances">
+<code class="descname">get_all_distances</code><span class="sig-paren">(</span><em>candidate</em><span class="sig-paren">)</span><a class="headerlink" href="#catlearn.fingerprint.base.BaseGenerator.get_all_distances" title="Permalink to this definition">¶</a></dt>
+<dd><p>Function to return the atomic distances.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>candidate</strong> (<em>object</em>) – Target data object from which to get the atomic distances.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="catlearn.fingerprint.base.BaseGenerator.get_atomic_numbers">
+<code class="descname">get_atomic_numbers</code><span class="sig-paren">(</span><em>candidate</em><span class="sig-paren">)</span><a class="headerlink" href="#catlearn.fingerprint.base.BaseGenerator.get_atomic_numbers" title="Permalink to this definition">¶</a></dt>
+<dd><p>Function to return the atomic numbers.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>candidate</strong> (<em>object</em>) – Target data object from which to get the atomic numbers.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="catlearn.fingerprint.base.BaseGenerator.get_masses">
+<code class="descname">get_masses</code><span class="sig-paren">(</span><em>candidate</em><span class="sig-paren">)</span><a class="headerlink" href="#catlearn.fingerprint.base.BaseGenerator.get_masses" title="Permalink to this definition">¶</a></dt>
+<dd><p>Function to return the atomic masses.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>candidate</strong> (<em>object</em>) – Target data object from which to get the atomic masses.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="catlearn.fingerprint.base.BaseGenerator.get_neighborlist">
+<code class="descname">get_neighborlist</code><span class="sig-paren">(</span><em>candidate</em><span class="sig-paren">)</span><a class="headerlink" href="#catlearn.fingerprint.base.BaseGenerator.get_neighborlist" title="Permalink to this definition">¶</a></dt>
+<dd><p>Function to return the neighborlist.</p>
+<p>It will check to see if the neighbor list is stored in the data object.
+If not it will generate the neighborlist from scratch.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>candidate</strong> (<em>object</em>) – Target data object from which to get the neighbor list.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="catlearn.fingerprint.base.BaseGenerator.get_positions">
+<code class="descname">get_positions</code><span class="sig-paren">(</span><em>candidate</em><span class="sig-paren">)</span><a class="headerlink" href="#catlearn.fingerprint.base.BaseGenerator.get_positions" title="Permalink to this definition">¶</a></dt>
+<dd><p>Function to return the atomic coordinates.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>candidate</strong> (<em>object</em>) – Target data object from which to get the atomic coordinates.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="catlearn.fingerprint.base.BaseGenerator.make_neighborlist">
+<code class="descname">make_neighborlist</code><span class="sig-paren">(</span><em>candidate</em>, <em>rtol=1.0</em>, <em>neighbor_number=1</em><span class="sig-paren">)</span><a class="headerlink" href="#catlearn.fingerprint.base.BaseGenerator.make_neighborlist" title="Permalink to this definition">¶</a></dt>
+<dd><p>Function to generate the neighborlist.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>candidate</strong> (<em>object</em>) – Target data object on which to generate neighbor list.</li>
+<li><strong>dx</strong> (<em>dict</em>) – Buffer to calculate nearest neighbor pairs in dict format:
+dx = {atomic_number: buffer}.</li>
+<li><strong>neighbor_number</strong> (<em>int</em>) – Neighbor shell.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-catlearn.fingerprint.bulk_fingerprint">
+<span id="catlearn-fingerprint-bulk-fingerprint-module"></span><h2>catlearn.fingerprint.bulk_fingerprint module<a class="headerlink" href="#module-catlearn.fingerprint.bulk_fingerprint" title="Permalink to this headline">¶</a></h2>
+<p>Slab adsorbate fingerprint functions for machine learning</p>
+<p>Created on Tue Dec  6 14:09:29 2016</p>
+<p>&#64;author: mhangaard</p>
+<dl class="class">
+<dt id="catlearn.fingerprint.bulk_fingerprint.BulkFingerprintGenerator">
+<em class="property">class </em><code class="descclassname">catlearn.fingerprint.bulk_fingerprint.</code><code class="descname">BulkFingerprintGenerator</code><span class="sig-paren">(</span><em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#catlearn.fingerprint.bulk_fingerprint.BulkFingerprintGenerator" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#catlearn.fingerprint.base.BaseGenerator" title="catlearn.fingerprint.base.BaseGenerator"><code class="xref py py-class docutils literal notranslate"><span class="pre">catlearn.fingerprint.base.BaseGenerator</span></code></a></p>
+<dl class="method">
+<dt id="catlearn.fingerprint.bulk_fingerprint.BulkFingerprintGenerator.average">
+<code class="descname">average</code><span class="sig-paren">(</span><em>atoms=None</em><span class="sig-paren">)</span><a class="headerlink" href="#catlearn.fingerprint.bulk_fingerprint.BulkFingerprintGenerator.average" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a fingerprint vector with propeties of the element name
+saved in the atoms.info[‘key_value_pairs’][‘bulk’]</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="catlearn.fingerprint.bulk_fingerprint.BulkFingerprintGenerator.ceramic_average">
+<code class="descname">ceramic_average</code><span class="sig-paren">(</span><em>atoms=None</em><span class="sig-paren">)</span><a class="headerlink" href="#catlearn.fingerprint.bulk_fingerprint.BulkFingerprintGenerator.ceramic_average" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a fingerprint vector with propeties of the element name
+saved in the atoms.info[‘key_value_pairs’][‘bulk’]</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="catlearn.fingerprint.bulk_fingerprint.BulkFingerprintGenerator.ceramic_counter">
+<code class="descname">ceramic_counter</code><span class="sig-paren">(</span><em>atoms=None</em><span class="sig-paren">)</span><a class="headerlink" href="#catlearn.fingerprint.bulk_fingerprint.BulkFingerprintGenerator.ceramic_counter" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="catlearn.fingerprint.bulk_fingerprint.BulkFingerprintGenerator.ceramic_dist">
+<code class="descname">ceramic_dist</code><span class="sig-paren">(</span><em>atoms=None</em><span class="sig-paren">)</span><a class="headerlink" href="#catlearn.fingerprint.bulk_fingerprint.BulkFingerprintGenerator.ceramic_dist" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="catlearn.fingerprint.bulk_fingerprint.BulkFingerprintGenerator.ceramic_std">
+<code class="descname">ceramic_std</code><span class="sig-paren">(</span><em>atoms=None</em><span class="sig-paren">)</span><a class="headerlink" href="#catlearn.fingerprint.bulk_fingerprint.BulkFingerprintGenerator.ceramic_std" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a fingerprint vector with propeties of the element name
+saved in the atoms.info[‘key_value_pairs’][‘bulk’]</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="catlearn.fingerprint.bulk_fingerprint.BulkFingerprintGenerator.ceramic_summation">
+<code class="descname">ceramic_summation</code><span class="sig-paren">(</span><em>atoms=None</em><span class="sig-paren">)</span><a class="headerlink" href="#catlearn.fingerprint.bulk_fingerprint.BulkFingerprintGenerator.ceramic_summation" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a fingerprint vector with propeties of the element name
+saved in the atoms.info[‘key_value_pairs’][‘bulk’]</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="catlearn.fingerprint.bulk_fingerprint.BulkFingerprintGenerator.std">
+<code class="descname">std</code><span class="sig-paren">(</span><em>atoms=None</em><span class="sig-paren">)</span><a class="headerlink" href="#catlearn.fingerprint.bulk_fingerprint.BulkFingerprintGenerator.std" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a fingerprint vector with propeties of the element name
+saved in the atoms.info[‘key_value_pairs’][‘bulk’]</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="catlearn.fingerprint.bulk_fingerprint.BulkFingerprintGenerator.summation">
+<code class="descname">summation</code><span class="sig-paren">(</span><em>atoms=None</em><span class="sig-paren">)</span><a class="headerlink" href="#catlearn.fingerprint.bulk_fingerprint.BulkFingerprintGenerator.summation" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a fingerprint vector with propeties of the element name
+saved in the atoms.info[‘key_value_pairs’][‘bulk’]</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="catlearn.fingerprint.bulk_fingerprint.BulkFingerprintGenerator.xyz_id">
+<code class="descname">xyz_id</code><span class="sig-paren">(</span><em>atoms=None</em><span class="sig-paren">)</span><a class="headerlink" href="#catlearn.fingerprint.bulk_fingerprint.BulkFingerprintGenerator.xyz_id" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-catlearn.fingerprint.graph_fingerprint">
+<span id="catlearn-fingerprint-graph-fingerprint-module"></span><h2>catlearn.fingerprint.graph_fingerprint module<a class="headerlink" href="#module-catlearn.fingerprint.graph_fingerprint" title="Permalink to this headline">¶</a></h2>
+<p>Functions to build a neighbor matrix feature representation.</p>
+<dl class="class">
+<dt id="catlearn.fingerprint.graph_fingerprint.GraphFingerprintGenerator">
+<em class="property">class </em><code class="descclassname">catlearn.fingerprint.graph_fingerprint.</code><code class="descname">GraphFingerprintGenerator</code><span class="sig-paren">(</span><em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#catlearn.fingerprint.graph_fingerprint.GraphFingerprintGenerator" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#catlearn.fingerprint.base.BaseGenerator" title="catlearn.fingerprint.base.BaseGenerator"><code class="xref py py-class docutils literal notranslate"><span class="pre">catlearn.fingerprint.base.BaseGenerator</span></code></a></p>
+<p>Function to build a fingerprint vector based on an atoms object.</p>
+<dl class="method">
+<dt id="catlearn.fingerprint.graph_fingerprint.GraphFingerprintGenerator.neighbor_mean_vec">
+<code class="descname">neighbor_mean_vec</code><span class="sig-paren">(</span><em>data</em><span class="sig-paren">)</span><a class="headerlink" href="#catlearn.fingerprint.graph_fingerprint.GraphFingerprintGenerator.neighbor_mean_vec" title="Permalink to this definition">¶</a></dt>
+<dd><p>Transform neighborlist into a neighbor averaged feature vector.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>data</strong> (<em>object</em>) – Target data object from which to generate features.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><strong>features</strong> – A 1d numpy array of the feature vector.</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">array</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="catlearn.fingerprint.graph_fingerprint.GraphFingerprintGenerator.neighbor_sum_vec">
+<code class="descname">neighbor_sum_vec</code><span class="sig-paren">(</span><em>data</em><span class="sig-paren">)</span><a class="headerlink" href="#catlearn.fingerprint.graph_fingerprint.GraphFingerprintGenerator.neighbor_sum_vec" title="Permalink to this definition">¶</a></dt>
+<dd><p>Transform neighborlist into a neighbor sum feature vector.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>data</strong> (<em>object</em>) – Target data object from which to generate features.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><strong>features</strong> – A 1d numpy array of the feature vector.</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">array</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-catlearn.fingerprint.neighbor_matrix">
+<span id="catlearn-fingerprint-neighbor-matrix-module"></span><h2>catlearn.fingerprint.neighbor_matrix module<a class="headerlink" href="#module-catlearn.fingerprint.neighbor_matrix" title="Permalink to this headline">¶</a></h2>
+<p>Functions to build a neighbor matrix feature representation.</p>
+<dl class="function">
+<dt id="catlearn.fingerprint.neighbor_matrix.connection_dict">
+<code class="descclassname">catlearn.fingerprint.neighbor_matrix.</code><code class="descname">connection_dict</code><span class="sig-paren">(</span><em>atoms</em>, <em>periodic=False</em>, <em>dx=0.2</em>, <em>neighbor_number=1</em>, <em>reuse_nl=False</em><span class="sig-paren">)</span><a class="headerlink" href="#catlearn.fingerprint.neighbor_matrix.connection_dict" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generate a dict of atom connections.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>atoms</strong> (<em>object</em>) – Target ase atoms object on which to build the connections matrix.</li>
+<li><strong>periodic</strong> (<em>boolean</em>) – Specify whether to use the periodic neighborlist generator. None
+periodic method is faster and used by default.</li>
+<li><strong>dx</strong> (<em>float</em>) – Buffer to calculate nearest neighbor pairs.</li>
+<li><strong>neighbor_number</strong> (<em>int</em>) – Neighbor shell.</li>
+<li><strong>reuse_nl</strong> (<em>boolean</em>) – Whether to reuse a previously stored neighborlist if available.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="catlearn.fingerprint.neighbor_matrix.connection_matrix">
+<code class="descclassname">catlearn.fingerprint.neighbor_matrix.</code><code class="descname">connection_matrix</code><span class="sig-paren">(</span><em>atoms</em>, <em>periodic=False</em>, <em>dx=0.2</em>, <em>neighbor_number=1</em>, <em>reuse_nl=False</em><span class="sig-paren">)</span><a class="headerlink" href="#catlearn.fingerprint.neighbor_matrix.connection_matrix" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generate a connections matrix from an atoms object.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>atoms</strong> (<em>object</em>) – Target ase atoms object on which to build the connections matrix.</li>
+<li><strong>periodic</strong> (<em>boolean</em>) – Specify whether to use the periodic neighborlist generator. None
+periodic method is faster and used by default.</li>
+<li><strong>dx</strong> (<em>float</em>) – Buffer to calculate nearest neighbor pairs.</li>
+<li><strong>neighbor_number</strong> (<em>int</em>) – Neighbor shell.</li>
+<li><strong>reuse_nl</strong> (<em>boolean</em>) – Whether to reuse a previously stored neighborlist if available.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="catlearn.fingerprint.neighbor_matrix.neighbor_features">
+<code class="descclassname">catlearn.fingerprint.neighbor_matrix.</code><code class="descname">neighbor_features</code><span class="sig-paren">(</span><em>atoms</em>, <em>property=None</em>, <em>periodic=False</em>, <em>dx=0.2</em>, <em>neighbor_number=1</em>, <em>reuse_nl=False</em><span class="sig-paren">)</span><a class="headerlink" href="#catlearn.fingerprint.neighbor_matrix.neighbor_features" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generate predefined features from atoms objects.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>atoms</strong> (<em>object</em>) – The target ase atoms object.</li>
+<li><strong>property</strong> (<em>list</em>) – List of the target properties from mendeleev.</li>
+<li><strong>periodic</strong> (<em>boolean</em>) – Specify whether to use the periodic neighborlist generator. None
+periodic method is faster and used by default.</li>
+<li><strong>dx</strong> (<em>float</em>) – Buffer to calculate nearest neighbor pairs.</li>
+<li><strong>neighbor_number</strong> (<em>int</em>) – Neighbor shell.</li>
+<li><strong>reuse_nl</strong> (<em>boolean</em>) – Whether to reuse a previously stored neighborlist if available.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="catlearn.fingerprint.neighbor_matrix.property_matrix">
+<code class="descclassname">catlearn.fingerprint.neighbor_matrix.</code><code class="descname">property_matrix</code><span class="sig-paren">(</span><em>atoms</em>, <em>property</em><span class="sig-paren">)</span><a class="headerlink" href="#catlearn.fingerprint.neighbor_matrix.property_matrix" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generate a property matrix based on the atomic types.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>atoms</strong> (<em>object</em>) – The target ase atoms opject.</li>
+<li><strong>property</strong> (<em>str</em>) – The target property from mendeleev.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+<div class="section" id="module-catlearn.fingerprint.particle_fingerprint">
+<span id="catlearn-fingerprint-particle-fingerprint-module"></span><h2>catlearn.fingerprint.particle_fingerprint module<a class="headerlink" href="#module-catlearn.fingerprint.particle_fingerprint" title="Permalink to this headline">¶</a></h2>
+<p>Particle fingerprint functions.</p>
+<dl class="class">
+<dt id="catlearn.fingerprint.particle_fingerprint.ParticleFingerprintGenerator">
+<em class="property">class </em><code class="descclassname">catlearn.fingerprint.particle_fingerprint.</code><code class="descname">ParticleFingerprintGenerator</code><span class="sig-paren">(</span><em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#catlearn.fingerprint.particle_fingerprint.ParticleFingerprintGenerator" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#catlearn.fingerprint.base.BaseGenerator" title="catlearn.fingerprint.base.BaseGenerator"><code class="xref py py-class docutils literal notranslate"><span class="pre">catlearn.fingerprint.base.BaseGenerator</span></code></a></p>
+<p>Function to build a fingerprint vector based on an atoms object.</p>
+<dl class="method">
+<dt id="catlearn.fingerprint.particle_fingerprint.ParticleFingerprintGenerator.bond_count_vec">
+<code class="descname">bond_count_vec</code><span class="sig-paren">(</span><em>data</em><span class="sig-paren">)</span><a class="headerlink" href="#catlearn.fingerprint.particle_fingerprint.ParticleFingerprintGenerator.bond_count_vec" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bond counting with a distribution measure for coordination.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="catlearn.fingerprint.particle_fingerprint.ParticleFingerprintGenerator.connections_vec">
+<code class="descname">connections_vec</code><span class="sig-paren">(</span><em>data</em><span class="sig-paren">)</span><a class="headerlink" href="#catlearn.fingerprint.particle_fingerprint.ParticleFingerprintGenerator.connections_vec" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sum atoms with a certain number of connections.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="catlearn.fingerprint.particle_fingerprint.ParticleFingerprintGenerator.distribution_vec">
+<code class="descname">distribution_vec</code><span class="sig-paren">(</span><em>data</em><span class="sig-paren">)</span><a class="headerlink" href="#catlearn.fingerprint.particle_fingerprint.ParticleFingerprintGenerator.distribution_vec" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return atomic distribution measure.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="catlearn.fingerprint.particle_fingerprint.ParticleFingerprintGenerator.nearestneighbour_vec">
+<code class="descname">nearestneighbour_vec</code><span class="sig-paren">(</span><em>data</em><span class="sig-paren">)</span><a class="headerlink" href="#catlearn.fingerprint.particle_fingerprint.ParticleFingerprintGenerator.nearestneighbour_vec" title="Permalink to this definition">¶</a></dt>
+<dd><p>Nearest neighbour average, Topics in Catalysis, 2014, 57, 33.</p>
+<p>This is a slightly modified version of the code found in the <cite>ase.ga</cite>
+module.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>data</strong> (<em>object</em>) – Data object with atomic numbers available.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><strong>nnlist</strong> – Feature vector that will be n**2 where n is the number of atomic
+species passed to the class.</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">list</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="catlearn.fingerprint.particle_fingerprint.ParticleFingerprintGenerator.rdf_vec">
+<code class="descname">rdf_vec</code><span class="sig-paren">(</span><em>data</em><span class="sig-paren">)</span><a class="headerlink" href="#catlearn.fingerprint.particle_fingerprint.ParticleFingerprintGenerator.rdf_vec" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return list of partial rdfs for use as fingerprint vector.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-catlearn.fingerprint.periodic_table_data">
+<span id="catlearn-fingerprint-periodic-table-data-module"></span><h2>catlearn.fingerprint.periodic_table_data module<a class="headerlink" href="#module-catlearn.fingerprint.periodic_table_data" title="Permalink to this headline">¶</a></h2>
+<p>Function pulling atomic data for elements.</p>
+<dl class="function">
+<dt id="catlearn.fingerprint.periodic_table_data.default_catlearn_radius">
+<code class="descclassname">catlearn.fingerprint.periodic_table_data.</code><code class="descname">default_catlearn_radius</code><span class="sig-paren">(</span><em>z</em><span class="sig-paren">)</span><a class="headerlink" href="#catlearn.fingerprint.periodic_table_data.default_catlearn_radius" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the default CatLearn covalent radius of element z.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>z</strong> (<em>int</em>) – Atomic number.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="catlearn.fingerprint.periodic_table_data.get_mendeleev_params">
+<code class="descclassname">catlearn.fingerprint.periodic_table_data.</code><code class="descname">get_mendeleev_params</code><span class="sig-paren">(</span><em>atomic_number</em>, <em>params=None</em><span class="sig-paren">)</span><a class="headerlink" href="#catlearn.fingerprint.periodic_table_data.get_mendeleev_params" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a list of generic parameters about an atom.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>atomic_number</strong> (<em>list</em><em> or </em><em>int</em>) – An atomic number.</li>
+<li><strong>extra_params</strong> (<em>list of str</em>) – Extra Mendaleev parameters to be returned in the list.
+For a full list see here - <a class="reference external" href="https://goo.gl/G4eTvu">https://goo.gl/G4eTvu</a></li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>var</strong> – All parameters of the element with specified atomic number.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">list</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="catlearn.fingerprint.periodic_table_data.get_radius">
+<code class="descclassname">catlearn.fingerprint.periodic_table_data.</code><code class="descname">get_radius</code><span class="sig-paren">(</span><em>z, params=['atomic_radius', 'covalent_radius_cordero']</em><span class="sig-paren">)</span><a class="headerlink" href="#catlearn.fingerprint.periodic_table_data.get_radius" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a metric of atomic radius.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>z</strong> (<em>int</em>) – Atomic number.</li>
+<li><strong>params</strong> (<em>list</em>) – Atomic radius metrics in order of preference. The first successful
+value will be returned.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="catlearn.fingerprint.periodic_table_data.list_mendeleev_params">
+<code class="descclassname">catlearn.fingerprint.periodic_table_data.</code><code class="descname">list_mendeleev_params</code><span class="sig-paren">(</span><em>numbers</em>, <em>params=None</em><span class="sig-paren">)</span><a class="headerlink" href="#catlearn.fingerprint.periodic_table_data.list_mendeleev_params" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns an n by p array, containing p parameters of n atoms.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>numbers</strong> (<em>list</em>) – atomic numbers.</li>
+<li><strong>params</strong> (<em>list</em>) – elemental parameters.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="catlearn.fingerprint.periodic_table_data.n_outer">
+<code class="descclassname">catlearn.fingerprint.periodic_table_data.</code><code class="descname">n_outer</code><span class="sig-paren">(</span><em>econf</em><span class="sig-paren">)</span><a class="headerlink" href="#catlearn.fingerprint.periodic_table_data.n_outer" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+<div class="section" id="module-catlearn.fingerprint.prototype_fingerprint">
+<span id="catlearn-fingerprint-prototype-fingerprint-module"></span><h2>catlearn.fingerprint.prototype_fingerprint module<a class="headerlink" href="#module-catlearn.fingerprint.prototype_fingerprint" title="Permalink to this headline">¶</a></h2>
+<p>Prototype fingerprint based on Magpie.</p>
+<dl class="class">
+<dt id="catlearn.fingerprint.prototype_fingerprint.PrototypeFingerprintGenerator">
+<em class="property">class </em><code class="descclassname">catlearn.fingerprint.prototype_fingerprint.</code><code class="descname">PrototypeFingerprintGenerator</code><span class="sig-paren">(</span><em>atoms</em>, <em>sites</em>, <em>system_name=''</em>, <em>target='id'</em>, <em>delete_temp=True</em>, <em>properties=[]</em><span class="sig-paren">)</span><a class="headerlink" href="#catlearn.fingerprint.prototype_fingerprint.PrototypeFingerprintGenerator" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Function to build prototype fingerprint in pandas.DataFrame.</p>
+<p>Based on a list of ase.atoms object.</p>
+<dl class="method">
+<dt id="catlearn.fingerprint.prototype_fingerprint.PrototypeFingerprintGenerator.generate">
+<code class="descname">generate</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#catlearn.fingerprint.prototype_fingerprint.PrototypeFingerprintGenerator.generate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generate Prototype fingerprint and return all the fingerprint.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><strong>FP</strong></td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body">pandas.Frame</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="catlearn.fingerprint.prototype_fingerprint.PrototypeFingerprintGenerator.generate_all">
+<code class="descname">generate_all</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#catlearn.fingerprint.prototype_fingerprint.PrototypeFingerprintGenerator.generate_all" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="catlearn.fingerprint.prototype_fingerprint.PrototypeFingerprintGenerator.run_proto">
+<code class="descname">run_proto</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#catlearn.fingerprint.prototype_fingerprint.PrototypeFingerprintGenerator.run_proto" title="Permalink to this definition">¶</a></dt>
+<dd><p>Call Magpie to generate Prototype FP and write to proto_FP.csv.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="catlearn.fingerprint.prototype_fingerprint.PrototypeFingerprintGenerator.update_str">
+<code class="descname">update_str</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#catlearn.fingerprint.prototype_fingerprint.PrototypeFingerprintGenerator.update_str" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="catlearn.fingerprint.prototype_fingerprint.PrototypeFingerprintGenerator.write_proto_input">
+<code class="descname">write_proto_input</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#catlearn.fingerprint.prototype_fingerprint.PrototypeFingerprintGenerator.write_proto_input" title="Permalink to this definition">¶</a></dt>
+<dd><p>Write Prototype input for Magpie.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="catlearn.fingerprint.prototype_fingerprint.PrototypeSites">
+<em class="property">class </em><code class="descclassname">catlearn.fingerprint.prototype_fingerprint.</code><code class="descname">PrototypeSites</code><span class="sig-paren">(</span><em>site_dict=None</em><span class="sig-paren">)</span><a class="headerlink" href="#catlearn.fingerprint.prototype_fingerprint.PrototypeSites" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Prototype site objective for generating prototype input.</p>
+</dd></dl>
+
+</div>
+<div class="section" id="module-catlearn.fingerprint.setup">
+<span id="catlearn-fingerprint-setup-module"></span><h2>catlearn.fingerprint.setup module<a class="headerlink" href="#module-catlearn.fingerprint.setup" title="Permalink to this headline">¶</a></h2>
+<p>Functions to setup fingerprint vectors.</p>
+<dl class="class">
+<dt id="catlearn.fingerprint.setup.FeatureGenerator">
+<em class="property">class </em><code class="descclassname">catlearn.fingerprint.setup.</code><code class="descname">FeatureGenerator</code><span class="sig-paren">(</span><em>atom_types=None</em>, <em>atom_len=None</em>, <em>nprocs=1</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#catlearn.fingerprint.setup.FeatureGenerator" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#catlearn.fingerprint.adsorbate_fingerprint.AdsorbateFingerprintGenerator" title="catlearn.fingerprint.adsorbate_fingerprint.AdsorbateFingerprintGenerator"><code class="xref py py-class docutils literal notranslate"><span class="pre">catlearn.fingerprint.adsorbate_fingerprint.AdsorbateFingerprintGenerator</span></code></a>, <a class="reference internal" href="#catlearn.fingerprint.particle_fingerprint.ParticleFingerprintGenerator" title="catlearn.fingerprint.particle_fingerprint.ParticleFingerprintGenerator"><code class="xref py py-class docutils literal notranslate"><span class="pre">catlearn.fingerprint.particle_fingerprint.ParticleFingerprintGenerator</span></code></a>, <a class="reference internal" href="#catlearn.fingerprint.standard_fingerprint.StandardFingerprintGenerator" title="catlearn.fingerprint.standard_fingerprint.StandardFingerprintGenerator"><code class="xref py py-class docutils literal notranslate"><span class="pre">catlearn.fingerprint.standard_fingerprint.StandardFingerprintGenerator</span></code></a>, <a class="reference internal" href="#catlearn.fingerprint.graph_fingerprint.GraphFingerprintGenerator" title="catlearn.fingerprint.graph_fingerprint.GraphFingerprintGenerator"><code class="xref py py-class docutils literal notranslate"><span class="pre">catlearn.fingerprint.graph_fingerprint.GraphFingerprintGenerator</span></code></a>, <a class="reference internal" href="#catlearn.fingerprint.bulk_fingerprint.BulkFingerprintGenerator" title="catlearn.fingerprint.bulk_fingerprint.BulkFingerprintGenerator"><code class="xref py py-class docutils literal notranslate"><span class="pre">catlearn.fingerprint.bulk_fingerprint.BulkFingerprintGenerator</span></code></a></p>
+<p>Feature generator class.</p>
+<p>It is sometimes necessary to normalize the length of feature vectors when
+data is supplied with variable numbers of atoms or elemental types. If this
+is the case, use the <cite>normalize_features</cite> function.</p>
+<p>In this class, there are functions to take a data object and return a
+feature vector. This is done with the <cite>return_vec</cite> function. The names of
+the descriptors in the feature vector can be accessed with the
+<cite>return_names</cite> function.</p>
+<p>The class inherits the actual generator functions from the
+[NAME]FingerprintGenerator classes. Additional variables are passed as
+kwargs.</p>
+<dl class="method">
+<dt id="catlearn.fingerprint.setup.FeatureGenerator.normalize_features">
+<code class="descname">normalize_features</code><span class="sig-paren">(</span><em>train_candidates</em>, <em>test_candidates=None</em><span class="sig-paren">)</span><a class="headerlink" href="#catlearn.fingerprint.setup.FeatureGenerator.normalize_features" title="Permalink to this definition">¶</a></dt>
+<dd><p>Function to attach feature data to class.</p>
+<p>Currently the function attaches data on all elemental types present in
+the data as well as the maximum number of atoms in a data object.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>train_candidates</strong> (<em>list</em>) – List of atoms objects.</li>
+<li><strong>test_candidates</strong> (<em>list</em>) – List of atoms objects.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="catlearn.fingerprint.setup.FeatureGenerator.return_names">
+<code class="descname">return_names</code><span class="sig-paren">(</span><em>vec_names</em><span class="sig-paren">)</span><a class="headerlink" href="#catlearn.fingerprint.setup.FeatureGenerator.return_names" title="Permalink to this definition">¶</a></dt>
+<dd><p>Function to return a list of feature names.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>vec_name</strong> (<em>list of / single vec class</em><em>(</em><em>es</em><em>)</em>) – List of fingerprinting classes.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><strong>fingerprint_vector</strong> – Name array.</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">ndarray</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="catlearn.fingerprint.setup.FeatureGenerator.return_vec">
+<code class="descname">return_vec</code><span class="sig-paren">(</span><em>candidates</em>, <em>vec_names</em><span class="sig-paren">)</span><a class="headerlink" href="#catlearn.fingerprint.setup.FeatureGenerator.return_vec" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sequentially combine feature vectors. Padding handled automatically.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>candidates</strong> (<em>list</em><em> or </em><em>dict</em>) – Atoms objects to construct fingerprints for.</li>
+<li><strong>vec_name</strong> (<em>list of / single vec class</em><em>(</em><em>es</em><em>)</em>) – List of fingerprinting classes.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>vector</strong> – Fingerprint array (n, m) where n is the number of candidates and m is
+the summed number of features from all fingerprint classes supplied.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">ndarray</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-catlearn.fingerprint.standard_fingerprint">
+<span id="catlearn-fingerprint-standard-fingerprint-module"></span><h2>catlearn.fingerprint.standard_fingerprint module<a class="headerlink" href="#module-catlearn.fingerprint.standard_fingerprint" title="Permalink to this headline">¶</a></h2>
+<p>Standard fingerprint functions.</p>
+<dl class="class">
+<dt id="catlearn.fingerprint.standard_fingerprint.StandardFingerprintGenerator">
+<em class="property">class </em><code class="descclassname">catlearn.fingerprint.standard_fingerprint.</code><code class="descname">StandardFingerprintGenerator</code><span class="sig-paren">(</span><em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#catlearn.fingerprint.standard_fingerprint.StandardFingerprintGenerator" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#catlearn.fingerprint.base.BaseGenerator" title="catlearn.fingerprint.base.BaseGenerator"><code class="xref py py-class docutils literal notranslate"><span class="pre">catlearn.fingerprint.base.BaseGenerator</span></code></a></p>
+<p>Function to build a fingerprint vector based on an atoms object.</p>
+<dl class="method">
+<dt id="catlearn.fingerprint.standard_fingerprint.StandardFingerprintGenerator.composition_vec">
+<code class="descname">composition_vec</code><span class="sig-paren">(</span><em>data</em><span class="sig-paren">)</span><a class="headerlink" href="#catlearn.fingerprint.standard_fingerprint.StandardFingerprintGenerator.composition_vec" title="Permalink to this definition">¶</a></dt>
+<dd><p>Function to return a feature vector based on the composition.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>data</strong> (<em>object</em>) – Data object with atomic numbers available.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><strong>features</strong> – Vector containing a count of the different atomic types, e.g. for
+CH3OH the vector [1, 4, 1] would be returned.</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">array</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="catlearn.fingerprint.standard_fingerprint.StandardFingerprintGenerator.distance_vec">
+<code class="descname">distance_vec</code><span class="sig-paren">(</span><em>data</em><span class="sig-paren">)</span><a class="headerlink" href="#catlearn.fingerprint.standard_fingerprint.StandardFingerprintGenerator.distance_vec" title="Permalink to this definition">¶</a></dt>
+<dd><p>Averaged distance between e.g. A-A atomic pairs.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>data</strong> (<em>object</em>) – Data object with Cartesian coordinates and atomic numbers
+available.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><strong>features</strong> – Vector of averaged distances between homoatomic atoms.</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">ndarray</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="catlearn.fingerprint.standard_fingerprint.StandardFingerprintGenerator.eigenspectrum_vec">
+<code class="descname">eigenspectrum_vec</code><span class="sig-paren">(</span><em>data</em><span class="sig-paren">)</span><a class="headerlink" href="#catlearn.fingerprint.standard_fingerprint.StandardFingerprintGenerator.eigenspectrum_vec" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sorted eigenspectrum of the Coulomb matrix.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>data</strong> (<em>object</em>) – Data object with Cartesian coordinates and atomic numbers
+available.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><strong>features</strong> – Sorted Eigen values of the coulomb matrix, n atoms is size.</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">ndarray</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="catlearn.fingerprint.standard_fingerprint.StandardFingerprintGenerator.element_mass_vec">
+<code class="descname">element_mass_vec</code><span class="sig-paren">(</span><em>data</em><span class="sig-paren">)</span><a class="headerlink" href="#catlearn.fingerprint.standard_fingerprint.StandardFingerprintGenerator.element_mass_vec" title="Permalink to this definition">¶</a></dt>
+<dd><p>Function to return a vector based on mass parameter.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>data</strong> (<em>object</em>) – Data object with atomic masses available.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><strong>features</strong> – Vector of the summed mass.</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">ndarray</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="catlearn.fingerprint.standard_fingerprint.StandardFingerprintGenerator.element_parameter_vec">
+<code class="descname">element_parameter_vec</code><span class="sig-paren">(</span><em>data</em><span class="sig-paren">)</span><a class="headerlink" href="#catlearn.fingerprint.standard_fingerprint.StandardFingerprintGenerator.element_parameter_vec" title="Permalink to this definition">¶</a></dt>
+<dd><p>Function to return a vector based on a defined paramter.</p>
+<p>The vector is compiled based on the summed parameters for each
+elemental type as well as the sum for all atoms.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>data</strong> (<em>object</em>) – Data object with atomic numbers available.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><strong>features</strong> – An n + 1 array where n in the length of self.atom_types.</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">array</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-catlearn.fingerprint.voro_fingerprint">
+<span id="catlearn-fingerprint-voro-fingerprint-module"></span><h2>catlearn.fingerprint.voro_fingerprint module<a class="headerlink" href="#module-catlearn.fingerprint.voro_fingerprint" title="Permalink to this headline">¶</a></h2>
+<p>Voronoi fingerprint based on Magpie.</p>
+<dl class="class">
+<dt id="catlearn.fingerprint.voro_fingerprint.VoronoiFingerprintGenerator">
+<em class="property">class </em><code class="descclassname">catlearn.fingerprint.voro_fingerprint.</code><code class="descname">VoronoiFingerprintGenerator</code><span class="sig-paren">(</span><em>atoms</em>, <em>delete_temp=True</em><span class="sig-paren">)</span><a class="headerlink" href="#catlearn.fingerprint.voro_fingerprint.VoronoiFingerprintGenerator" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Function to build voronoi fingerprint in pandas.DataFrame.</p>
+<p>Based on a list of ase.atoms object.</p>
+<dl class="method">
+<dt id="catlearn.fingerprint.voro_fingerprint.VoronoiFingerprintGenerator.generate">
+<code class="descname">generate</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#catlearn.fingerprint.voro_fingerprint.VoronoiFingerprintGenerator.generate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generate Voronoi fingerprint and return all the fingerprint.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><strong>FP</strong></td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body">pandas.Frame</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="catlearn.fingerprint.voro_fingerprint.VoronoiFingerprintGenerator.run_voro">
+<code class="descname">run_voro</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#catlearn.fingerprint.voro_fingerprint.VoronoiFingerprintGenerator.run_voro" title="Permalink to this definition">¶</a></dt>
+<dd><p>Call Magpie to generate Voronoi FP and write to voro_FP.csv.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="catlearn.fingerprint.voro_fingerprint.VoronoiFingerprintGenerator.write_voro_input">
+<code class="descname">write_voro_input</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#catlearn.fingerprint.voro_fingerprint.VoronoiFingerprintGenerator.write_voro_input" title="Permalink to this definition">¶</a></dt>
+<dd><p>Write Voronoi input for Magpie.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-catlearn.fingerprint">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-catlearn.fingerprint" title="Permalink to this headline">¶</a></h2>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">catlearn.fingerprint package</a><ul>
+<li><a class="reference internal" href="#submodules">Submodules</a></li>
+<li><a class="reference internal" href="#module-catlearn.fingerprint.adsorbate_fingerprint">catlearn.fingerprint.adsorbate_fingerprint module</a></li>
+<li><a class="reference internal" href="#module-catlearn.fingerprint.adsorbate_prep">catlearn.fingerprint.adsorbate_prep module</a></li>
+<li><a class="reference internal" href="#catlearn-fingerprint-asap-wrapper-module">catlearn.fingerprint.asap_wrapper module</a></li>
+<li><a class="reference internal" href="#module-catlearn.fingerprint.base">catlearn.fingerprint.base module</a></li>
+<li><a class="reference internal" href="#module-catlearn.fingerprint.bulk_fingerprint">catlearn.fingerprint.bulk_fingerprint module</a></li>
+<li><a class="reference internal" href="#module-catlearn.fingerprint.graph_fingerprint">catlearn.fingerprint.graph_fingerprint module</a></li>
+<li><a class="reference internal" href="#module-catlearn.fingerprint.neighbor_matrix">catlearn.fingerprint.neighbor_matrix module</a></li>
+<li><a class="reference internal" href="#module-catlearn.fingerprint.particle_fingerprint">catlearn.fingerprint.particle_fingerprint module</a></li>
+<li><a class="reference internal" href="#module-catlearn.fingerprint.periodic_table_data">catlearn.fingerprint.periodic_table_data module</a></li>
+<li><a class="reference internal" href="#module-catlearn.fingerprint.prototype_fingerprint">catlearn.fingerprint.prototype_fingerprint module</a></li>
+<li><a class="reference internal" href="#module-catlearn.fingerprint.setup">catlearn.fingerprint.setup module</a></li>
+<li><a class="reference internal" href="#module-catlearn.fingerprint.standard_fingerprint">catlearn.fingerprint.standard_fingerprint module</a></li>
+<li><a class="reference internal" href="#module-catlearn.fingerprint.voro_fingerprint">catlearn.fingerprint.voro_fingerprint module</a></li>
+<li><a class="reference internal" href="#module-catlearn.fingerprint">Module contents</a></li>
+</ul>
+</li>
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/catlearn.fingerprint.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2018, SUNCAT.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.7.3</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+      
+      |
+      <a href="_sources/catlearn.fingerprint.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

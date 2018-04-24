@@ -1,0 +1,478 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>catlearn.ga package &#8212; CatLearn  documentation</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="catlearn-ga-package">
+<h1>catlearn.ga package<a class="headerlink" href="#catlearn-ga-package" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-catlearn.ga.algorithm">
+<span id="catlearn-ga-algorithm-module"></span><h2>catlearn.ga.algorithm module<a class="headerlink" href="#module-catlearn.ga.algorithm" title="Permalink to this headline">¶</a></h2>
+<p>The GeneticAlgorithm class methods.</p>
+<dl class="class">
+<dt id="catlearn.ga.algorithm.GeneticAlgorithm">
+<em class="property">class </em><code class="descclassname">catlearn.ga.algorithm.</code><code class="descname">GeneticAlgorithm</code><span class="sig-paren">(</span><em>population_size</em>, <em>fit_func</em>, <em>features</em>, <em>targets</em>, <em>population=None</em>, <em>operators=None</em>, <em>fitness_parameters=1</em>, <em>nsplit=2</em>, <em>accuracy=None</em><span class="sig-paren">)</span><a class="headerlink" href="#catlearn.ga.algorithm.GeneticAlgorithm" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Genetic algorithm for parameter optimization.</p>
+<dl class="method">
+<dt id="catlearn.ga.algorithm.GeneticAlgorithm.search">
+<code class="descname">search</code><span class="sig-paren">(</span><em>steps</em>, <em>natural_selection=True</em>, <em>convergence_operator=None</em>, <em>repeat=5</em>, <em>verbose=False</em>, <em>writefile=None</em><span class="sig-paren">)</span><a class="headerlink" href="#catlearn.ga.algorithm.GeneticAlgorithm.search" title="Permalink to this definition">¶</a></dt>
+<dd><p>Do the actual search.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>steps</strong> (<em>int</em>) – Maximum number of steps to be taken.</li>
+<li><strong>natural_selection</strong> (<em>bool</em>) – A flag that when set True will perform natural selection.</li>
+<li><strong>convergence_operator</strong> (<em>object</em>) – The function to perform the convergence check. If None is passed
+then the <cite>no_progress</cite> function is used.</li>
+<li><strong>repeat</strong> (<em>int</em>) – Number of repeat generations with no progress.</li>
+<li><strong>verbose</strong> (<em>bool</em>) – If True, will print out the progress of the search. Default is
+False.</li>
+<li><strong>writefile</strong> (<em>str</em>) – Name of a json file to save data too.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<dl class="attribute">
+<dt id="catlearn.ga.algorithm.GeneticAlgorithm.population">
+<code class="descname">population</code><a class="headerlink" href="#catlearn.ga.algorithm.GeneticAlgorithm.population" title="Permalink to this definition">¶</a></dt>
+<dd><p><em>list</em> – The current population.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="catlearn.ga.algorithm.GeneticAlgorithm.fitness">
+<code class="descname">fitness</code><a class="headerlink" href="#catlearn.ga.algorithm.GeneticAlgorithm.fitness" title="Permalink to this definition">¶</a></dt>
+<dd><p><em>list</em> – The fitness for the current population.</p>
+</dd></dl>
+
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-catlearn.ga.convergence">
+<span id="catlearn-ga-convergence-module"></span><h2>catlearn.ga.convergence module<a class="headerlink" href="#module-catlearn.ga.convergence" title="Permalink to this headline">¶</a></h2>
+<p>Functions to check for convergence in the GA.</p>
+<dl class="class">
+<dt id="catlearn.ga.convergence.Convergence">
+<em class="property">class </em><code class="descclassname">catlearn.ga.convergence.</code><code class="descname">Convergence</code><a class="headerlink" href="#catlearn.ga.convergence.Convergence" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Class to check convergence.</p>
+<dl class="method">
+<dt id="catlearn.ga.convergence.Convergence.no_progress">
+<code class="descname">no_progress</code><span class="sig-paren">(</span><em>fitness</em>, <em>repeat</em><span class="sig-paren">)</span><a class="headerlink" href="#catlearn.ga.convergence.Convergence.no_progress" title="Permalink to this definition">¶</a></dt>
+<dd><p>Convergence based on a lack of any progress in the search.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>fitness</strong> (<em>array</em>) – A List of fitnesses from the search.</li>
+<li><strong>repeat</strong> (<em>int</em>) – Number of repeat generations with no progress.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>converged</strong> – True if convergence has been reached, False otherwise.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">bool</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="catlearn.ga.convergence.Convergence.stagnation">
+<code class="descname">stagnation</code><span class="sig-paren">(</span><em>fitness</em>, <em>repeat</em><span class="sig-paren">)</span><a class="headerlink" href="#catlearn.ga.convergence.Convergence.stagnation" title="Permalink to this definition">¶</a></dt>
+<dd><p>Convergence based on a stagnation of the population.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>fitness</strong> (<em>array</em>) – A List of fitnesses from the search.</li>
+<li><strong>repeat</strong> (<em>int</em>) – Number of repeat generations with no progress.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>converged</strong> – True if convergence has been reached, False otherwise.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">bool</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-catlearn.ga.initialize">
+<span id="catlearn-ga-initialize-module"></span><h2>catlearn.ga.initialize module<a class="headerlink" href="#module-catlearn.ga.initialize" title="Permalink to this headline">¶</a></h2>
+<p>Function to initialize a population.</p>
+<dl class="function">
+<dt id="catlearn.ga.initialize.initialize_population">
+<code class="descclassname">catlearn.ga.initialize.</code><code class="descname">initialize_population</code><span class="sig-paren">(</span><em>pop_size</em>, <em>dimension</em><span class="sig-paren">)</span><a class="headerlink" href="#catlearn.ga.initialize.initialize_population" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generate a random starting population.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>pop_size</strong> (<em>int</em>) – Population size.</li>
+<li><strong>d_param</strong> (<em>int</em>) – Dimension of parameters in model.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+<div class="section" id="module-catlearn.ga.io">
+<span id="catlearn-ga-io-module"></span><h2>catlearn.ga.io module<a class="headerlink" href="#module-catlearn.ga.io" title="Permalink to this headline">¶</a></h2>
+<p>Functions to read and write GA data.</p>
+<dl class="function">
+<dt id="catlearn.ga.io.read_data">
+<code class="descclassname">catlearn.ga.io.</code><code class="descname">read_data</code><span class="sig-paren">(</span><em>writefile</em><span class="sig-paren">)</span><a class="headerlink" href="#catlearn.ga.io.read_data" title="Permalink to this definition">¶</a></dt>
+<dd><p>Funtion to read population and fitness.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>writefile</strong> (<em>str</em>) – Name of the JSON file to read.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><ul class="simple">
+<li><strong>population</strong> (<em>array</em>) – The population saved from a previous search.</li>
+<li><strong>fitness</strong> (<em>array</em>) – The fitness associated with the saved population.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+<div class="section" id="module-catlearn.ga.mating">
+<span id="catlearn-ga-mating-module"></span><h2>catlearn.ga.mating module<a class="headerlink" href="#module-catlearn.ga.mating" title="Permalink to this headline">¶</a></h2>
+<p>Cut and splice mating function.</p>
+<dl class="function">
+<dt id="catlearn.ga.mating.cut_and_splice">
+<code class="descclassname">catlearn.ga.mating.</code><code class="descname">cut_and_splice</code><span class="sig-paren">(</span><em>parent_one</em>, <em>parent_two</em>, <em>index='random'</em><span class="sig-paren">)</span><a class="headerlink" href="#catlearn.ga.mating.cut_and_splice" title="Permalink to this definition">¶</a></dt>
+<dd><p>Perform cut_and_splice between two parents.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>parent_one</strong> (<em>list</em>) – List of params for first parent.</li>
+<li><strong>parent_two</strong> (<em>list</em>) – List of params for second parent.</li>
+<li><strong>index</strong> (<em>str</em>) – Define how to choose size of each cut index.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>offspring</strong> – A new child candidate from the two parents.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">array</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+<div class="section" id="module-catlearn.ga.mutate">
+<span id="catlearn-ga-mutate-module"></span><h2>catlearn.ga.mutate module<a class="headerlink" href="#module-catlearn.ga.mutate" title="Permalink to this headline">¶</a></h2>
+<p>Define some mutation functions.</p>
+<dl class="function">
+<dt id="catlearn.ga.mutate.probability_include">
+<code class="descclassname">catlearn.ga.mutate.</code><code class="descname">probability_include</code><span class="sig-paren">(</span><em>parent_one</em><span class="sig-paren">)</span><a class="headerlink" href="#catlearn.ga.mutate.probability_include" title="Permalink to this definition">¶</a></dt>
+<dd><p>A mutation that will include features with a certain probability.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>parent_one</strong> (<em>list</em>) – List of params for first parent.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><strong>p1</strong> – Mutated parameter list based on the parent parameters provided.</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">list</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="catlearn.ga.mutate.probability_remove">
+<code class="descclassname">catlearn.ga.mutate.</code><code class="descname">probability_remove</code><span class="sig-paren">(</span><em>parent_one</em><span class="sig-paren">)</span><a class="headerlink" href="#catlearn.ga.mutate.probability_remove" title="Permalink to this definition">¶</a></dt>
+<dd><p>A mutation that will remove features with a certain probability.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>parent_one</strong> (<em>list</em>) – List of params for first parent.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><strong>p1</strong> – Mutated parameter list based on the parent parameters provided.</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">list</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="catlearn.ga.mutate.random_permutation">
+<code class="descclassname">catlearn.ga.mutate.</code><code class="descname">random_permutation</code><span class="sig-paren">(</span><em>parent_one</em><span class="sig-paren">)</span><a class="headerlink" href="#catlearn.ga.mutate.random_permutation" title="Permalink to this definition">¶</a></dt>
+<dd><p>Perform a random permutation on a parameter index.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>parent_one</strong> (<em>list</em>) – List of params for first parent.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><strong>p1</strong> – Mutated parameter list based on the parent parameters provided.</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">list</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+<div class="section" id="module-catlearn.ga.natural_selection">
+<span id="catlearn-ga-natural-selection-module"></span><h2>catlearn.ga.natural_selection module<a class="headerlink" href="#module-catlearn.ga.natural_selection" title="Permalink to this headline">¶</a></h2>
+<p>Functions to perform some natural selection.</p>
+<dl class="function">
+<dt id="catlearn.ga.natural_selection.population_reduction">
+<code class="descclassname">catlearn.ga.natural_selection.</code><code class="descname">population_reduction</code><span class="sig-paren">(</span><em>pop</em>, <em>fit</em>, <em>population_size</em><span class="sig-paren">)</span><a class="headerlink" href="#catlearn.ga.natural_selection.population_reduction" title="Permalink to this definition">¶</a></dt>
+<dd><p>Method to reduce population size to constant.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>pop</strong> (<em>list</em>) – Extended population.</li>
+<li><strong>fit</strong> (<em>list</em>) – Extended fitness assignment.</li>
+<li><strong>population_size</strong> (<em>int</em>) – The population size.</li>
+<li><strong>pareto</strong> (<em>bool</em>) – Flag to specify whether search is for Pareto optimal set.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"><ul class="simple">
+<li><strong>population</strong> (<em>list</em>) – The population after natural selection.</li>
+<li><strong>fitness</strong> (<em>list</em>) – The fitness for the current population.</li>
+</ul>
+</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="catlearn.ga.natural_selection.remove_duplicates">
+<code class="descclassname">catlearn.ga.natural_selection.</code><code class="descname">remove_duplicates</code><span class="sig-paren">(</span><em>population</em>, <em>fitness</em>, <em>accuracy</em><span class="sig-paren">)</span><a class="headerlink" href="#catlearn.ga.natural_selection.remove_duplicates" title="Permalink to this definition">¶</a></dt>
+<dd><p>Function to delete duplicate candidates based on fitness.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>population</strong> (<em>array</em>) – The current population.</li>
+<li><strong>fitness</strong> (<em>array</em>) – The fitness for the current population.</li>
+<li><strong>accuracy</strong> (<em>int</em>) – Number of decimal places to include when finding unique.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"><ul class="simple">
+<li><strong>population</strong> (<em>list</em>) – The population after duplicates deleted.</li>
+<li><strong>fitness</strong> (<em>list</em>) – The fitness for the population after duplicates deleted.</li>
+</ul>
+</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+<div class="section" id="module-catlearn.ga.predictors">
+<span id="catlearn-ga-predictors-module"></span><h2>catlearn.ga.predictors module<a class="headerlink" href="#module-catlearn.ga.predictors" title="Permalink to this headline">¶</a></h2>
+<p>Some generic prediction functions.</p>
+<dl class="function">
+<dt id="catlearn.ga.predictors.minimize_error">
+<code class="descclassname">catlearn.ga.predictors.</code><code class="descname">minimize_error</code><span class="sig-paren">(</span><em>train_features</em>, <em>train_targets</em>, <em>test_features</em>, <em>test_targets</em><span class="sig-paren">)</span><a class="headerlink" href="#catlearn.ga.predictors.minimize_error" title="Permalink to this definition">¶</a></dt>
+<dd><p>A generic fitness function.</p>
+<p>This fitness function will minimize the cost function.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>train_features</strong> (<em>array</em>) – The training features.</li>
+<li><strong>train_targets</strong> (<em>array</em>) – The training targets.</li>
+<li><strong>test_features</strong> (<em>array</em>) – The test feaatures.</li>
+<li><strong>test_targets</strong> (<em>array</em>) – The test targets.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="catlearn.ga.predictors.minimize_error_descriptors">
+<code class="descclassname">catlearn.ga.predictors.</code><code class="descname">minimize_error_descriptors</code><span class="sig-paren">(</span><em>train_features</em>, <em>train_targets</em>, <em>test_features</em>, <em>test_targets</em><span class="sig-paren">)</span><a class="headerlink" href="#catlearn.ga.predictors.minimize_error_descriptors" title="Permalink to this definition">¶</a></dt>
+<dd><p>A generic fitness function.</p>
+<p>This fitness function will minimize the cost function as well as the number
+of descriptors. This will provide a Pareto optimial set of solutions upon
+convergence.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>train_features</strong> (<em>array</em>) – The training features.</li>
+<li><strong>train_targets</strong> (<em>array</em>) – The training targets.</li>
+<li><strong>test_features</strong> (<em>array</em>) – The test feaatures.</li>
+<li><strong>test_targets</strong> (<em>array</em>) – The test targets.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="catlearn.ga.predictors.minimize_error_time">
+<code class="descclassname">catlearn.ga.predictors.</code><code class="descname">minimize_error_time</code><span class="sig-paren">(</span><em>train_features</em>, <em>train_targets</em>, <em>test_features</em>, <em>test_targets</em><span class="sig-paren">)</span><a class="headerlink" href="#catlearn.ga.predictors.minimize_error_time" title="Permalink to this definition">¶</a></dt>
+<dd><p>A generic fitness function.</p>
+<p>This fitness function will minimize the cost function as well as the time
+to train the model. This will provide a Pareto optimial set of solutions
+upon convergence.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>train_features</strong> (<em>array</em>) – The training features.</li>
+<li><strong>train_targets</strong> (<em>array</em>) – The training targets.</li>
+<li><strong>test_features</strong> (<em>array</em>) – The test feaatures.</li>
+<li><strong>test_targets</strong> (<em>array</em>) – The test targets.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+<div class="section" id="module-catlearn.ga">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-catlearn.ga" title="Permalink to this headline">¶</a></h2>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">catlearn.ga package</a><ul>
+<li><a class="reference internal" href="#submodules">Submodules</a></li>
+<li><a class="reference internal" href="#module-catlearn.ga.algorithm">catlearn.ga.algorithm module</a></li>
+<li><a class="reference internal" href="#module-catlearn.ga.convergence">catlearn.ga.convergence module</a></li>
+<li><a class="reference internal" href="#module-catlearn.ga.initialize">catlearn.ga.initialize module</a></li>
+<li><a class="reference internal" href="#module-catlearn.ga.io">catlearn.ga.io module</a></li>
+<li><a class="reference internal" href="#module-catlearn.ga.mating">catlearn.ga.mating module</a></li>
+<li><a class="reference internal" href="#module-catlearn.ga.mutate">catlearn.ga.mutate module</a></li>
+<li><a class="reference internal" href="#module-catlearn.ga.natural_selection">catlearn.ga.natural_selection module</a></li>
+<li><a class="reference internal" href="#module-catlearn.ga.predictors">catlearn.ga.predictors module</a></li>
+<li><a class="reference internal" href="#module-catlearn.ga">Module contents</a></li>
+</ul>
+</li>
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/catlearn.ga.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2018, SUNCAT.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.7.3</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+      
+      |
+      <a href="_sources/catlearn.ga.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>
