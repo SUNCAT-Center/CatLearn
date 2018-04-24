@@ -11,7 +11,7 @@ from catlearn.api.ase_atoms_api import extend_atoms_class
 from catlearn.utilities.neighborlist import ase_neighborlist
 
 
-def ase_to_networkx(atoms, cutoffs=None, skin=0.3):
+def ase_to_networkx(atoms, cutoffs=None):
     """Make the NetworkX graph form ASE atoms object.
 
     The graph is dependent on the generation of the neighborlist. Currently
@@ -23,9 +23,6 @@ def ase_to_networkx(atoms, cutoffs=None, skin=0.3):
         An ASE atoms object.
     cutoffs : list
         A list of distance paramteres for each atom.
-    skin : float
-        The buffer to allow for small variation in the distance between
-        neighbors.
 
     Returns
     -------
@@ -46,7 +43,7 @@ def ase_to_networkx(atoms, cutoffs=None, skin=0.3):
     extend_atoms_class(atoms)
     nl = atoms.get_neighborlist()
     if nl is None:
-        nl = ase_neighborlist(atoms, cutoffs, skin)
+        nl = ase_neighborlist(atoms, cutoffs)
 
     for i in nl:
         tup = ((i, nl[i][j]) for j in range(len(nl[i])))
