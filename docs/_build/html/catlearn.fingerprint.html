@@ -1,34 +1,169 @@
 
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 
-<html xmlns="http://www.w3.org/1999/xhtml">
-  <head>
-    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>catlearn.fingerprint package &#8212; CatLearn  documentation</title>
-    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
-    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-    <script type="text/javascript" src="_static/documentation_options.js"></script>
-    <script type="text/javascript" src="_static/jquery.js"></script>
-    <script type="text/javascript" src="_static/underscore.js"></script>
-    <script type="text/javascript" src="_static/doctools.js"></script>
-    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>catlearn.fingerprint package &mdash; CatLearn  documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+    <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <link rel="index" title="Index" href="genindex.html" />
-    <link rel="search" title="Search" href="search.html" />
+    <link rel="search" title="Search" href="search.html" /> 
+
+  
+  <script src="_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav">
+
    
-  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
-  
-  
-  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+  <div class="wy-grid-for-nav">
 
-  </head><body>
-  
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
 
-    <div class="document">
-      <div class="documentwrapper">
-        <div class="bodywrapper">
-          <div class="body" role="main">
+          
+            <a href="index.html" class="icon icon-home"> CatLearn
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.4.0
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <!-- Local TOC -->
+              <div class="local-toc"><ul>
+<li><a class="reference internal" href="#">catlearn.fingerprint package</a><ul>
+<li><a class="reference internal" href="#submodules">Submodules</a></li>
+<li><a class="reference internal" href="#module-catlearn.fingerprint.adsorbate_fingerprint">catlearn.fingerprint.adsorbate_fingerprint module</a></li>
+<li><a class="reference internal" href="#module-catlearn.fingerprint.adsorbate_prep">catlearn.fingerprint.adsorbate_prep module</a></li>
+<li><a class="reference internal" href="#catlearn-fingerprint-asap-wrapper-module">catlearn.fingerprint.asap_wrapper module</a></li>
+<li><a class="reference internal" href="#module-catlearn.fingerprint.base">catlearn.fingerprint.base module</a></li>
+<li><a class="reference internal" href="#module-catlearn.fingerprint.bulk_fingerprint">catlearn.fingerprint.bulk_fingerprint module</a></li>
+<li><a class="reference internal" href="#module-catlearn.fingerprint.graph_fingerprint">catlearn.fingerprint.graph_fingerprint module</a></li>
+<li><a class="reference internal" href="#module-catlearn.fingerprint.neighbor_matrix">catlearn.fingerprint.neighbor_matrix module</a></li>
+<li><a class="reference internal" href="#module-catlearn.fingerprint.particle_fingerprint">catlearn.fingerprint.particle_fingerprint module</a></li>
+<li><a class="reference internal" href="#module-catlearn.fingerprint.periodic_table_data">catlearn.fingerprint.periodic_table_data module</a></li>
+<li><a class="reference internal" href="#module-catlearn.fingerprint.prototype_fingerprint">catlearn.fingerprint.prototype_fingerprint module</a></li>
+<li><a class="reference internal" href="#module-catlearn.fingerprint.setup">catlearn.fingerprint.setup module</a></li>
+<li><a class="reference internal" href="#module-catlearn.fingerprint.standard_fingerprint">catlearn.fingerprint.standard_fingerprint module</a></li>
+<li><a class="reference internal" href="#module-catlearn.fingerprint.voro_fingerprint">catlearn.fingerprint.voro_fingerprint module</a></li>
+<li><a class="reference internal" href="#module-catlearn.fingerprint">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</div>
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">CatLearn</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="index.html">Docs</a> &raquo;</li>
+        
+      <li>catlearn.fingerprint package</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="_sources/catlearn.fingerprint.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
             
   <div class="section" id="catlearn-fingerprint-package">
 <h1>catlearn.fingerprint package<a class="headerlink" href="#catlearn-fingerprint-package" title="Permalink to this headline">¶</a></h1>
@@ -37,7 +172,9 @@
 </div>
 <div class="section" id="module-catlearn.fingerprint.adsorbate_fingerprint">
 <span id="catlearn-fingerprint-adsorbate-fingerprint-module"></span><h2>catlearn.fingerprint.adsorbate_fingerprint module<a class="headerlink" href="#module-catlearn.fingerprint.adsorbate_fingerprint" title="Permalink to this headline">¶</a></h2>
-<p>Slab adsorbate fingerprint functions for machine learning.</p>
+<p>Slab adsorbate fingerprint functions for machine learning</p>
+<p>Created on Tue Dec  6 14:09:29 2016</p>
+<p>&#64;author: mhangaard</p>
 <dl class="class">
 <dt id="catlearn.fingerprint.adsorbate_fingerprint.AdsorbateFingerprintGenerator">
 <em class="property">class </em><code class="descclassname">catlearn.fingerprint.adsorbate_fingerprint.</code><code class="descname">AdsorbateFingerprintGenerator</code><span class="sig-paren">(</span><em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#catlearn.fingerprint.adsorbate_fingerprint.AdsorbateFingerprintGenerator" title="Permalink to this definition">¶</a></dt>
@@ -82,7 +219,7 @@ adsorbate.</p>
 <dd><p>Function that takes an atoms object and returns a fingerprint
 vector with the number of C-H bonds and C-C bonds in the adsorbate.
 The adsorbate atoms must be specified in advance in
-atoms.info[‘ads_atoms’]</p>
+atoms.subsets[‘ads_atoms’]</p>
 </dd></dl>
 
 <dl class="method">
@@ -188,16 +325,10 @@ closest to an add atom.</p>
 selection (list) ase.db selection</dd>
 </dl>
 <dl class="function">
-<dt id="catlearn.fingerprint.adsorbate_prep.attach_nl">
-<code class="descclassname">catlearn.fingerprint.adsorbate_prep.</code><code class="descname">attach_nl</code><span class="sig-paren">(</span><em>images</em><span class="sig-paren">)</span><a class="headerlink" href="#catlearn.fingerprint.adsorbate_prep.attach_nl" title="Permalink to this definition">¶</a></dt>
-<dd><p>Return a list of atoms objects with attached neighborlists.</p>
-</dd></dl>
-
-<dl class="function">
 <dt id="catlearn.fingerprint.adsorbate_prep.autogen_info">
 <code class="descclassname">catlearn.fingerprint.adsorbate_prep.</code><code class="descname">autogen_info</code><span class="sig-paren">(</span><em>images</em><span class="sig-paren">)</span><a class="headerlink" href="#catlearn.fingerprint.adsorbate_prep.autogen_info" title="Permalink to this definition">¶</a></dt>
 <dd><p>Return a list of atoms objects with atomic group information
-attached to info.
+attached to atoms.subsets.
 This information is  needed by some functions in the
 AdsorbateFingerprintGenerator.</p>
 <table class="docutils field-list" frame="void" rules="none">
@@ -205,7 +336,7 @@ AdsorbateFingerprintGenerator.</p>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>images</strong> (<em>list</em>) – list of atoms objects representing adsorbates on slabs.
-No further information is required in atoms.info.</td>
+No further information is required in atoms.subsets.</td>
 </tr>
 </tbody>
 </table>
@@ -240,7 +371,7 @@ the last denotes atoms in the outermost layer or termination or the slab.</p>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>atoms</strong> (<em>ase atoms object.</em>) – <p>The atoms object must have the following keys in atoms.info:</p>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>atoms</strong> (<em>ase atoms object.</em>) – <p>The atoms object must have the following keys in atoms.subsets:</p>
 <blockquote>
 <div><ul class="simple">
 <li><dl class="first docutils">
@@ -293,7 +424,7 @@ chemical formula of the adsorbate.</li>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>atoms</strong> (<em>ase atoms object.</em>) – <p>The atoms object must have the following keys in atoms.info:</p>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>atoms</strong> (<em>ase atoms object.</em>) – <p>The atoms object must have the following keys in atoms.subsets:</p>
 <blockquote>
 <div><ul class="simple">
 <li><dl class="first docutils">
@@ -363,7 +494,7 @@ These are defined as atoms that are not belonging to the adsorbate.</p>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>atoms</strong> (<em>ase atoms object</em>) – <p>The atoms object must have the key ‘ads_atoms’ in atoms.info:</p>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>atoms</strong> (<em>ase atoms object</em>) – <p>The atoms object must have the key ‘ads_atoms’ in atoms.subsets:</p>
 <blockquote>
 <div><ul class="simple">
 <li><dl class="first docutils">
@@ -382,7 +513,7 @@ These are defined as atoms that are not belonging to the adsorbate.</p>
 <dl class="function">
 <dt id="catlearn.fingerprint.adsorbate_prep.sym2ads_index">
 <code class="descclassname">catlearn.fingerprint.adsorbate_prep.</code><code class="descname">sym2ads_index</code><span class="sig-paren">(</span><em>atoms</em><span class="sig-paren">)</span><a class="headerlink" href="#catlearn.fingerprint.adsorbate_prep.sym2ads_index" title="Permalink to this definition">¶</a></dt>
-<dd><p>Return the indexes of atoms that are in the global list addsyms.</p>
+<dd><p>Return the indexes of atoms from the global list of adsorbate symbols.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -404,7 +535,7 @@ compositions.</p>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>images</strong> (<em>list</em>) – <p>list of atoms objects representing adsorbates on slabs.
-The atoms objects must have the following keys in atoms.info:</p>
+The atoms objects must have the following keys in atoms.subsets:</p>
 <blockquote>
 <div><ul class="simple">
 <li><dl class="first docutils">
@@ -531,7 +662,7 @@ If not it will generate the neighborlist from scratch.</p>
 
 <dl class="method">
 <dt id="catlearn.fingerprint.base.BaseGenerator.make_neighborlist">
-<code class="descname">make_neighborlist</code><span class="sig-paren">(</span><em>candidate</em>, <em>rtol=1.0</em>, <em>neighbor_number=1</em><span class="sig-paren">)</span><a class="headerlink" href="#catlearn.fingerprint.base.BaseGenerator.make_neighborlist" title="Permalink to this definition">¶</a></dt>
+<code class="descname">make_neighborlist</code><span class="sig-paren">(</span><em>candidate</em>, <em>neighbor_number=1</em><span class="sig-paren">)</span><a class="headerlink" href="#catlearn.fingerprint.base.BaseGenerator.make_neighborlist" title="Permalink to this definition">¶</a></dt>
 <dd><p>Function to generate the neighborlist.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -1191,76 +1322,65 @@ elemental type as well as the sum for all atoms.</p>
 </div>
 
 
+           </div>
+           
           </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2018, SUNCAT.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
         </div>
       </div>
-      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
-        <div class="sphinxsidebarwrapper">
-  <h3><a href="index.html">Table Of Contents</a></h3>
-  <ul>
-<li><a class="reference internal" href="#">catlearn.fingerprint package</a><ul>
-<li><a class="reference internal" href="#submodules">Submodules</a></li>
-<li><a class="reference internal" href="#module-catlearn.fingerprint.adsorbate_fingerprint">catlearn.fingerprint.adsorbate_fingerprint module</a></li>
-<li><a class="reference internal" href="#module-catlearn.fingerprint.adsorbate_prep">catlearn.fingerprint.adsorbate_prep module</a></li>
-<li><a class="reference internal" href="#catlearn-fingerprint-asap-wrapper-module">catlearn.fingerprint.asap_wrapper module</a></li>
-<li><a class="reference internal" href="#module-catlearn.fingerprint.base">catlearn.fingerprint.base module</a></li>
-<li><a class="reference internal" href="#module-catlearn.fingerprint.bulk_fingerprint">catlearn.fingerprint.bulk_fingerprint module</a></li>
-<li><a class="reference internal" href="#module-catlearn.fingerprint.graph_fingerprint">catlearn.fingerprint.graph_fingerprint module</a></li>
-<li><a class="reference internal" href="#module-catlearn.fingerprint.neighbor_matrix">catlearn.fingerprint.neighbor_matrix module</a></li>
-<li><a class="reference internal" href="#module-catlearn.fingerprint.particle_fingerprint">catlearn.fingerprint.particle_fingerprint module</a></li>
-<li><a class="reference internal" href="#module-catlearn.fingerprint.periodic_table_data">catlearn.fingerprint.periodic_table_data module</a></li>
-<li><a class="reference internal" href="#module-catlearn.fingerprint.prototype_fingerprint">catlearn.fingerprint.prototype_fingerprint module</a></li>
-<li><a class="reference internal" href="#module-catlearn.fingerprint.setup">catlearn.fingerprint.setup module</a></li>
-<li><a class="reference internal" href="#module-catlearn.fingerprint.standard_fingerprint">catlearn.fingerprint.standard_fingerprint module</a></li>
-<li><a class="reference internal" href="#module-catlearn.fingerprint.voro_fingerprint">catlearn.fingerprint.voro_fingerprint module</a></li>
-<li><a class="reference internal" href="#module-catlearn.fingerprint">Module contents</a></li>
-</ul>
-</li>
-</ul>
-<div class="relations">
-<h3>Related Topics</h3>
-<ul>
-  <li><a href="index.html">Documentation overview</a><ul>
-  </ul></li>
-</ul>
-</div>
-  <div role="note" aria-label="source link">
-    <h3>This Page</h3>
-    <ul class="this-page-menu">
-      <li><a href="_sources/catlearn.fingerprint.rst.txt"
-            rel="nofollow">Show Source</a></li>
-    </ul>
-   </div>
-<div id="searchbox" style="display: none" role="search">
-  <h3>Quick search</h3>
-    <div class="searchformwrapper">
-    <form class="search" action="search.html" method="get">
-      <input type="text" name="q" />
-      <input type="submit" value="Go" />
-      <input type="hidden" name="check_keywords" value="yes" />
-      <input type="hidden" name="area" value="default" />
-    </form>
-    </div>
-</div>
-<script type="text/javascript">$('#searchbox').show(0);</script>
-        </div>
-      </div>
-      <div class="clearer"></div>
-    </div>
-    <div class="footer">
-      &copy;2018, SUNCAT.
-      
-      |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.7.3</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
-      
-      |
-      <a href="_sources/catlearn.fingerprint.rst.txt"
-          rel="nofollow">Page source</a>
-    </div>
 
-    
+    </section>
 
-    
-  </body>
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'./',
+            VERSION:'',
+            LANGUAGE:'None',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="_static/jquery.js"></script>
+      <script type="text/javascript" src="_static/underscore.js"></script>
+      <script type="text/javascript" src="_static/doctools.js"></script>
+      <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          
+          SphinxRtdTheme.Navigation.enableSticky();
+          
+      });
+  </script> 
+
+</body>
 </html>
