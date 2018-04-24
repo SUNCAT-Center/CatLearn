@@ -17,7 +17,7 @@ from test_gradients import TestGaussianKernel
 from test_predict import TestPrediction
 from test_acquisition import TestAcquisition
 from test_validation import TestValidation
-from test_learning_curve import TestCurve
+# from test_learning_curve import TestCurve
 from test_io import TestIO
 from test_ga import TestGeneticAlgorithm
 

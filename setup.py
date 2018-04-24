@@ -1,20 +1,9 @@
-"""The pip setup file for CatLearn."""
+"""The setup file for CatLearn."""
 import setuptools
-
-
-def parse_requirements(filename):
-    """Load requirements from requirements file."""
-    lineiter = (line.strip() for line in open(filename))
-    return [line for line in lineiter if line and not line.startswith("#")]
-
-
-install_reqs = parse_requirements('./requirements.txt')
-reqs = [str(req) for req in install_reqs]
-
 
 setuptools.setup(
     name="CatLearn",
-    version="0.4.0",
+    version="0.4.0.dev3",
     url="https://github.com/SUNCAT-Center/CatLearn",
 
     author="Paul C. Jennings",
@@ -24,12 +13,30 @@ setuptools.setup(
     long_description=open('README.md').read(),
     long_description_content_type="text/markdown",
 
-    packages=setuptools.find_packages(),
+    license='GPL-3.0',
 
-    install_requires=reqs,
+    packages=setuptools.find_packages(),
+    package_data={'catlearn': ['data/*.json',
+                               'api/magpie/*',
+                               'api/magpie/*/*',
+                               'api/magpie/*/*/*',
+                               ]},
+
+    install_requires=['ase==3.16.0',
+                      'h5py==2.7.1',
+                      'networkx==2.1.0',
+                      'numpy==1.14.2',
+                      'pandas==0.22.0',
+                      'pytest-cov==2.5.1',
+                      'scikit-learn==0.19.1',
+                      'scipy==1.0.1',
+                      'tqdm==4.20.0',
+                      ],
+
+    python_requires='>=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, <4',
 
     classifiers=[
-        'Development Status :: 2 - Pre-Alpha',
+        'Development Status :: 4 - Beta',
         'Programming Language :: Python',
         'Programming Language :: Python :: 2',
         'Programming Language :: Python :: 2.7',
