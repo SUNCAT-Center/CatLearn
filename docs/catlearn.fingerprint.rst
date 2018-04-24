@@ -1,9 +1,6 @@
 catlearn.fingerprint package
 ============================
 
-Submodules
-----------
-
 catlearn.fingerprint.adsorbate\_fingerprint module
 --------------------------------------------------
 
@@ -107,10 +104,6 @@ catlearn.fingerprint.voro\_fingerprint module
     :members:
     :undoc-members:
     :show-inheritance:
-
-
-Module contents
----------------
 
 .. automodule:: catlearn.fingerprint
     :members:

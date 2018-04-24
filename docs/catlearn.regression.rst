@@ -52,9 +52,6 @@ catlearn.regression.scikit\_wrapper module
     :show-inheritance:
 
 
-Module contents
----------------
-
 .. automodule:: catlearn.regression
     :members:
     :undoc-members:

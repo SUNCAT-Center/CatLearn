@@ -1,4 +1,4 @@
-catlearn
+CatLearn
 ========
 
 .. toctree::

@@ -1,9 +1,6 @@
 catlearn.preprocess package
 ===========================
 
-Submodules
-----------
-
 catlearn.preprocess.clean\_data module
 --------------------------------------
 
@@ -60,9 +57,6 @@ catlearn.preprocess.scaling module
     :undoc-members:
     :show-inheritance:
 
-
-Module contents
----------------
 
 .. automodule:: catlearn.preprocess
     :members:

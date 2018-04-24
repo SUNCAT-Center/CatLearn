@@ -1,9 +1,6 @@
 catlearn.ga package
 ===================
 
-Submodules
-----------
-
 catlearn.ga.algorithm module
 ----------------------------
 
@@ -67,10 +64,6 @@ catlearn.ga.predictors module
     :members:
     :undoc-members:
     :show-inheritance:
-
-
-Module contents
----------------
 
 .. automodule:: catlearn.ga
     :members:

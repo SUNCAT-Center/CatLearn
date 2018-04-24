@@ -1,8 +1,6 @@
 catlearn.regression.gpfunctions package
 =======================================
 
-Submodules
-----------
 
 catlearn.regression.gpfunctions.covariance module
 -------------------------------------------------
@@ -84,9 +82,6 @@ catlearn.regression.gpfunctions.uncertainty module
     :undoc-members:
     :show-inheritance:
 
-
-Module contents
----------------
 
 .. automodule:: catlearn.regression.gpfunctions
     :members:
