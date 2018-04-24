@@ -1,8 +1,6 @@
 catlearn.utilities package
 ==========================
 
-Submodules
-----------
 
 catlearn.utilities.clustering module
 ------------------------------------
@@ -52,9 +50,6 @@ catlearn.utilities.utilities module
     :undoc-members:
     :show-inheritance:
 
-
-Module contents
----------------
 
 .. automodule:: catlearn.utilities
     :members:

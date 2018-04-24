@@ -1,9 +1,6 @@
 catlearn.cross\_validation package
 ==================================
 
-Submodules
-----------
-
 catlearn.cross\_validation.hierarchy\_cv module
 -----------------------------------------------
 
@@ -19,10 +16,6 @@ catlearn.cross\_validation.k\_fold\_cv module
     :members:
     :undoc-members:
     :show-inheritance:
-
-
-Module contents
----------------
 
 .. automodule:: catlearn.cross_validation
     :members:

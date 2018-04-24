@@ -1,5 +1,4 @@
-Installation
-============
+# Installation
 
 The easiest way to install CatLearn is with:
 
