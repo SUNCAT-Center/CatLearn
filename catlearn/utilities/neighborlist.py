@@ -5,7 +5,7 @@ from ase.neighborlist import NeighborList
 from catlearn.fingerprint.periodic_table_data import get_radius
 
 
-def ase_neighborlist(atoms, cutoffs=None, rtol=1.):
+def ase_neighborlist(atoms, cutoffs=None):
     """Make dict of neighboring atoms using ase function.
 
     This provides a wrapper for the ASE neighborlist generator. Currently
@@ -26,7 +26,7 @@ def ase_neighborlist(atoms, cutoffs=None, rtol=1.):
         A dictionary containing the atom index and each neighbor index.
     """
     if cutoffs is None:
-        cutoffs = [get_radius(a.number) * rtol for a in atoms]
+        cutoffs = [get_radius(a.number) for a in atoms]
     nl = NeighborList(
         cutoffs, skin=0., sorted=False, self_interaction=False,
         bothways=True)
@@ -141,3 +141,27 @@ def _neighbor_iterator(dist, radius_matrix, buffer_matrix, n,
     unconnected = len(connection_matrix[connection_matrix == 0.])
 
     return dist, connection_matrix, unconnected
+
+
+def ase_connectivity(atoms, cutoffs=None):
+    if hasattr(atoms, 'connectivity'):
+        return atoms.connectivity
+
+    if hasattr(atoms, 'neighborlist'):
+        nl = atoms.neighborlist
+    else:
+        nl = ase_neighborlist(atoms, cutoffs=cutoffs)
+
+    conn_mat = []
+    index = range(len(atoms))
+    # Create binary matrix denoting connections.
+    for index1 in index:
+        conn_x = []
+        for index2 in index:
+            if index2 in nl[index1]:
+                conn_x.append(nl[index1].count(index2))
+            else:
+                conn_x.append(0.)
+        conn_mat.append(conn_x)
+
+    return np.asarray(conn_mat, dtype=int)
