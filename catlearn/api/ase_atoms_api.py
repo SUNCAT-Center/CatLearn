@@ -1,6 +1,9 @@
 """Functions that interface ase with CatLearn."""
 import types
 import ase.db
+from catlearn.utilities.neighborlist import ase_connectivity
+from catlearn.fingerprint.periodic_table_data import default_catlearn_radius
+from tqdm import tqdm
 
 
 def database_to_list(fname, selection=None):
@@ -23,8 +26,26 @@ def database_to_list(fname, selection=None):
         atoms.info['unique_id'] = str(d.unique_id)
         atoms.info['id'] = int(d.id)
         atoms.info['ctime'] = float(d.ctime)
+        atoms.subsets = {}
         images.append(atoms)
 
+    return images
+
+
+def images_connectivity(images):
+    """Return a list of atoms objects imported from an ase database.
+
+    Parameters
+    ----------
+    fname : str
+        path/filename of ase database.
+    selection : list
+        search filters to limit the import.
+    """
+    for atoms in tqdm(images):
+        if not hasattr(atoms, 'connectivity'):
+            radii = [default_catlearn_radius(z) for z in atoms.numbers]
+            atoms.connectivity = ase_connectivity(atoms, radii)
     return images
 
 
