@@ -155,7 +155,7 @@ class RidgeRegression(object):
         train_features : array
             Independent data used for training.
         coef : int
-        List of indices in the feature database.
+            List of indices in the feature database.
         """
         reg_data = {'result': None}
 

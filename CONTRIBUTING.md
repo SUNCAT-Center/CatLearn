@@ -32,13 +32,13 @@ It is a bad idea to develop directly on the on the main CatLearn repository. Ins
 -   Fork the repository and then clone it to your local machine.
 
     ```shell
-      $ git clone https://github.com/SUNCAT-Center/CatLearn.git
+    $ git clone https://github.com/SUNCAT-Center/CatLearn.git
     ```
 
 -   Add and track upstream to the local copy.
 
     ```shell
-      $ git remote add upstream https://github.com/SUNCAT-Center/CatLearn.git
+    $ git remote add upstream https://github.com/SUNCAT-Center/CatLearn.git
     ```
 
 All development can then be performed on the fork and a merge request opened into the upstream when appropriate. It is normally best to open merge requests as soon as possible, as it will allow everyone to see what is being worked on and comment on any potential issues.
@@ -52,34 +52,34 @@ The following workflow is recommended when adding some new functionality:
 -   Before starting any new work, always sync with the upstream version.
 
     ```shell
-      $ git fetch upstream
-      $ git checkout master
-      $ git merge upstream/master --ff-only
+    $ git fetch upstream
+    $ git checkout master
+    $ git merge upstream/master --ff-only
     ```
 
 -   It is a good idea to keep the remote repository up to date.
 
     ```shell
-      $ git push origin master
+    $ git push origin master
     ```
 
 -   Start a new branch to do work on.
 
     ```shell
-      $ git checkout -b branch-name
+    $ git checkout -b branch-name
     ```
 
 -   Once a file has been changed/created, add it to the staging area.
 
     ```shell
-      $ git add file-name
+    $ git add file-name
     ```
 
 -   Now commit it to the local repository and push it to the remote.
 
     ```shell
-      $ git commit -m 'some descriptive message'
-      $ git push --set-upstream origin branch-name
+    $ git commit -m 'some descriptive message'
+    $ git push --set-upstream origin branch-name
     ```
 
 -   When the desired changes have been made on your fork of the repository, open up a merge request on Github.
@@ -91,21 +91,21 @@ The following workflow is recommended when adding some new functionality:
 A [docker](https://www.docker.com) image is included in the repository. It is sometimes easier to develop within a controlled environment such as this. In particular, it is possible for other developers to attain the same environment. To run CatLearn in the docker container, use the following commands:
 
 ```shell
-    $ docker build -t catlearn .
-    $ docker run -it catlearn bash
+$ docker build -t catlearn .
+$ docker run -it catlearn bash
 ```
 
 This will load up the CatLearn directory. To check that everything is working correctly simply run the following:
 
 ```shell
-    $ python2 test/test_suite.py
-    $ python3 test/test_suite.py
+$ python2 test/test_suite.py
+$ python3 test/test_suite.py
 ```
 
 This will run the `test_suite.py` script with python version 2 and 3, respectively. If one version of python is preferred over the other, it is possible to create an alias as normal with:
 
 ```shell
-  $ alias python=python3
+$ alias python=python3
 ```
 
 **Use ctrl+d to exit.**
@@ -113,15 +113,15 @@ This will run the `test_suite.py` script with python version 2 and 3, respective
 To make changes to this, it is possible to simply edit the `Dockerfile`. To list the images available on the local system, use the following:
 
 ```shell
-  $ docker images
-  $ docker inspect REPOSITORY
+$ docker images
+$ docker inspect REPOSITORY
 ```
 
 It is a good idea to remove old images. This can be performed using the following lines:
 
 ```shell
-  $ docker rm $(docker ps -q -f status=exited)
-  $ docker rmi $(docker images -q -f "dangling=true")
+$ docker rm $(docker ps -q -f status=exited)
+$ docker rmi $(docker images -q -f "dangling=true")
 ```
 
 ## Testing

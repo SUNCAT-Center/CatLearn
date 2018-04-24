@@ -41,8 +41,10 @@ class ImportanceElimination(object):
         train_predict : object
             A function that will train a model. The function should accept
             the parameters:
+
                 train_features : array
                 train_targets : list
+
             predict should return a function that can be passed to
             test_predict.
         features : array

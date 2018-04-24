@@ -45,10 +45,12 @@ class GreedyElimination(object):
         predict : object
             A function that will make the predictions. predict should accept
             the parameters:
+
                 train_features : array
                 test_features : array
                 train_targets : list
                 test_targets : list
+
             predict should return either a float or a list of floats. The float
             or the first value of the list will be used as the fitness score.
         features : array

@@ -9,7 +9,7 @@ from catlearn.preprocess.scaling import standardize
 
 
 def holdout_set(data, fraction, target=None, seed=None):
-    """ Returns a dataset split in a hold out set and a training set.
+    """Return a dataset split in a hold out set and a training set.
 
     Parameters
     ----------
@@ -45,7 +45,7 @@ def holdout_set(data, fraction, target=None, seed=None):
 
 def target_correlation(train, target,
                        correlation=['pearson', 'spearman', 'kendall']):
-    """ Returns the correlation of all columns of train with a target feature.
+    """Return the correlation of all columns of train with a target feature.
 
     Parameters
     ----------
@@ -102,10 +102,12 @@ class LearningCurve(object):
         predict : object
             A function that will make the predictions. predict should accept
             the parameters:
+
                 train_features : array
                 test_features : array
                 train_targets : list
                 test_targets : list
+
             predict should return either a float or a list of floats. The float
             or the first value of the list will be used as the fitness score.
         train : array
@@ -165,6 +167,7 @@ def _single_model(args):
     ----------
     args : tuple
         Parameters and data to be passed to model.
+
         args[0] : int
             Increment.
         args[1] : int

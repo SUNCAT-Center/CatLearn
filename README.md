@@ -2,7 +2,7 @@
 
 > An environment for atomistic machine learning in Python for applications in catalysis.
 
-[![Build Status](https://travis-ci.org/SUNCAT-Center/CatLearn.svg?branch=master)](https://travis-ci.org/SUNCAT-Center/CatLearn) [![Coverage Status](https://coveralls.io/repos/github/SUNCAT-Center/CatLearn/badge.svg?branch=master)](https://coveralls.io/github/SUNCAT-Center/CatLearn?branch=master) [![PyPI version](https://badge.fury.io/py/CatLearn.svg)](https://badge.fury.io/py/CatLearn)
+[![Build Status](https://travis-ci.org/SUNCAT-Center/CatLearn.svg?branch=master)](https://travis-ci.org/SUNCAT-Center/CatLearn) [![Coverage Status](https://coveralls.io/repos/github/SUNCAT-Center/CatLearn/badge.svg?branch=master)](https://coveralls.io/github/SUNCAT-Center/CatLearn?branch=master) [![PyPI version](https://badge.fury.io/py/CatLearn.svg)](https://badge.fury.io/py/CatLearn) [![License: GPL v3](https://img.shields.io/badge/License-GPL%20v3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 
 Utilities for building and testing atomic machine learning models. Gaussian Processes (GP) regression machine learning routines are implemented. These will take any numpy array of training and test feature matrices along with a vector of target values.
 
@@ -24,13 +24,13 @@ Please see the [tutorials](https://github.com/SUNCAT-Center/CatLearn/tree/master
 The easiest way to install the code is with:
 
 ```shell
-    $ pip install catlearn
+$ pip install catlearn
 ```
 
 This will automatically install the code as well as the dependencies. Alternatively, you can clone the repository to a local directory with:
 
 ```shell
-    $ git clone https://github.com/SUNCAT-Center/CatLearn.git
+$ git clone https://github.com/SUNCAT-Center/CatLearn.git
 ```
 
 And then put the `<install_dir>/` into your `$PYTHONPATH` environment variable.
@@ -38,7 +38,7 @@ And then put the `<install_dir>/` into your `$PYTHONPATH` environment variable.
 Be sure to install dependencies in with:
 
 ```shell
-    $ pip install -r requirements.txt
+$ pip install -r requirements.txt
 ```
 
 ### Docker
@@ -46,20 +46,20 @@ Be sure to install dependencies in with:
 To use the docker image, it is necessary to have [docker](https://www.docker.com) installed and running. After cloning the project, build and run the image as follows:
 
 ```shell
-    $ docker build -t catlearn .
+$ docker build -t catlearn .
 ```
 
 Then it is possible to use the image in two ways. It is possible to run the docker image as a bash environment in which CatLearn can be used will all dependencies in place.
 
 ```shell
-    $ docker run -it catlearn bash
+$ docker run -it catlearn bash
 ```
 
 Or python can be run from the docker image.
 
 ```shell
-    $ docker run -it catlearn python2 [file.py]
-    $ docker run -it catlearn python3 [file.py]
+$ docker run -it catlearn python2 [file.py]
+$ docker run -it catlearn python3 [file.py]
 ```
 
 Use Ctrl + d to exit the docker image when done.
@@ -69,7 +69,7 @@ Use Ctrl + d to exit the docker image when done.
 The tutorial scripts will generally output some graphical representations of the results etc. For these scripts, it is advisable to have at least `matplotlib` installed:
 
 ```shell
-    $ pip install matplotlib pandas seaborn
+$ pip install matplotlib pandas seaborn
 ```
 
 ## Usage
@@ -79,24 +79,24 @@ The tutorial scripts will generally output some graphical representations of the
 In the most basic form, it is possible to set up a GP model and make some predictions using the following lines of code:
 
 ```python
-    import numpy as np
-    from catlearn.regression import GaussianProcess
+import numpy as np
+from catlearn.regression import GaussianProcess
 
-    # Define some input data.
-    train_features = np.arange(200).reshape(50, 4)
-    target = np.random.random_sample((50,))
-    test_features = np.arange(100).reshape(25, 4)
+# Define some input data.
+train_features = np.arange(200).reshape(50, 4)
+target = np.random.random_sample((50,))
+test_features = np.arange(100).reshape(25, 4)
 
-    # Setup the kernel.
-    kernel = {'k1': {'type': 'gaussian', 'width': 0.5}}
+# Setup the kernel.
+kernel = {'k1': {'type': 'gaussian', 'width': 0.5}}
 
-    # Train the GP model.
-    gp = GaussianProcess(kernel_dict=kernel, regularization=1e-3,
-                         train_fp=train_features, train_target=target,
-                         optimize_hyperparameters=True)
+# Train the GP model.
+gp = GaussianProcess(kernel_dict=kernel, regularization=1e-3,
+                     train_fp=train_features, train_target=target,
+                     optimize_hyperparameters=True)
 
-    # Get the predictions.
-    prediction = gp.predict(test_fp=test_features)
+# Get the predictions.
+prediction = gp.predict(test_fp=test_features)
 ```
 
 The above sample of code will train a GP with the squared exponential kernel, fitting some random function. Of course, this isn't so useful, more helpful examples and test scripts are present for most features; primarily, please see the [tutorials](https://github.com/SUNCAT-Center/CatLearn/tree/master/tutorials).
