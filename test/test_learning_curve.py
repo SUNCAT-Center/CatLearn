@@ -2,18 +2,22 @@
 import numpy as np
 import unittest
 import os
+
 from catlearn.cross_validation import Hierarchy
 from catlearn.learning_curve import hierarchy, feature_frequency
 from catlearn.utilities import DescriptorDatabase
 from catlearn.regression import GaussianProcess
 from catlearn.utilities.utilities import LearningCurve
 
+wkdir = os.getcwd()
+
 
 class TestCurve(unittest.TestCase):
     """Test out the learning curve functions."""
 
     def test_learning_curve(self):
-        hv = Hierarchy(db_name='data/train_db.sqlite', file_name='hierarchy')
+        """Test learning curve from DB."""
+        hv = Hierarchy(db_name='vec_store.sqlite', file_name='hierarchy')
 
         # If you want to keep datasize fixed, and vary features.
         featselect_featvar = False
@@ -33,7 +37,7 @@ class TestCurve(unittest.TestCase):
             select_limit = [i - 1, i + 1]
         while i < lim:
             set_size, p_error, result, PC = hierarchy(
-                hv, 370, 10, 50, new_data=True, ridge=True, scale=True,
+                hv, 243, 5, 45, new_data=True, ridge=True, scale=True,
                 globalscale=True, normalization=True,
                 featselect_featvar=featselect_featvar,
                 featselect_featconst=featselect_featconst,
@@ -55,8 +59,8 @@ class TestCurve(unittest.TestCase):
                 i += 4
             select_limit = [i - 1, i + 1]
 
-    def frequency(self):
-        hv = Hierarchy(db_name='data/train_db.sqlite', file_name='hierarchy')
+    def test_frequency(self):
+        hv = Hierarchy(db_name='vec_store.sqlite', file_name='hierarchy')
         # Produce frequency plots between the lower and upp bound.
         for i in range(20, 22):
 
@@ -66,12 +70,12 @@ class TestCurve(unittest.TestCase):
             hit1, hit2 = 0, 0
             for k in range(1, 4):
                 selected_features1 = feature_frequency(
-                    hv, 370, 3, 8, new_data=True, ridge=True, scale=True,
+                    hv, 243, 3, 8, new_data=True, ridge=True, scale=True,
                     globalscale=True, normalization=True,
                     featselect_featvar=False, featselect_featconst=True,
                     select_limit=select_limit, feat_sub=i)
                 selected_features2 = feature_frequency(
-                    hv, 370, 3, 8, smallest=True, new_data=False, ridge=True,
+                    hv, 243, 3, 8, smallest=True, new_data=False, ridge=True,
                     scale=True, globalscale=True, normalization=True,
                     featselect_featvar=False, featselect_featconst=True,
                     select_limit=select_limit, feat_sub=i)

@@ -8,7 +8,7 @@ Utilities for building and testing atomic machine learning models. Gaussian Proc
 
 In general, any data prepared in this fashion can be fed to the GP routines, a number of additional functions have been added that interface with [ASE](https://wiki.fysik.dtu.dk/ase/). This integration allows for the manipulation of atoms objects through GP predictions, as well as dynamic generation of descriptors through use of the many ASE functions.
 
-Please see the [tutorials](https://github.com/SUNCAT-Center/CatLearn/tree/master/tutorials) for a detailed overview of what the code can do and the conventions used in setting up the predictive models.
+Please see the [tutorials](https://github.com/SUNCAT-Center/CatLearn/tree/master/tutorials) for a detailed overview of what the code can do and the conventions used in setting up the predictive models. For an overview of all the functionality available, please read the [documentation](http://catlearn.readthedocs.io/en/latest/).
 
 ## Table of contents
 
@@ -69,7 +69,7 @@ Use Ctrl + d to exit the docker image when done.
 The tutorial scripts will generally output some graphical representations of the results etc. For these scripts, it is advisable to have at least `matplotlib` installed:
 
 ```shell
-$ pip install matplotlib pandas seaborn
+$ pip install matplotlib seaborn
 ```
 
 ## Usage
