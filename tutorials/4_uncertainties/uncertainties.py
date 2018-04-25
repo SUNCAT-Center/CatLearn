@@ -1,4 +1,4 @@
-"""Fourth AtoML tutorial.
+"""Fourth CatLearn tutorial.
 
 This tutorial is intended to give further intuition for Gaussian processes.
 
@@ -11,8 +11,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 
-from atoml.preprocess.scaling import standardize, target_standardize
-from atoml.regression import GaussianProcess
+from catlearn.preprocess.scaling import standardize, target_standardize
+from catlearn.regression import GaussianProcess
 
 
 # A known underlying function in two dimensions

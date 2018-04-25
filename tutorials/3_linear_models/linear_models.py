@@ -13,9 +13,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 
-from atoml.preprocess.scaling import standardize, target_standardize
-from atoml.regression import GaussianProcess, RidgeRegression
-from atoml.regression.cost_function import get_error
+from catlearn.preprocess.scaling import standardize, target_standardize
+from catlearn.regression import GaussianProcess, RidgeRegression
+from catlearn.regression.cost_function import get_error
 
 
 # A known underlying function in two dimensions
@@ -26,9 +26,9 @@ def afunc(x):
 
 # Setting up data.
 # A number of training points in x.
-train_points = 30
+train_points = 17
 # Magnitude of the noise.
-noise_magnitude = 0.1
+noise_magnitude = 0.5
 
 # Randomly generate the training datapoints x.
 train_d1 = 2 * (np.random.random_sample(train_points) - 0.5)
@@ -45,7 +45,7 @@ for i in range(train_points):
     target[i] += noise_magnitude * np.random.normal()
 
 # Generate test datapoints x.
-test_points = 30
+test_points = 16
 test1d = np.vstack(np.linspace(-1.3, 1.3, test_points))
 test_x1, test_x2 = np.meshgrid(test1d, test1d)
 test = np.hstack([np.vstack(test_x1.ravel()), np.vstack(test_x2.ravel())])
