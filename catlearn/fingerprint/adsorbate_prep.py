@@ -218,7 +218,8 @@ def layers2ads_index(atoms, formula):
     n_ads = len(composition)
     natoms = len(atoms)
     radii = [get_radius(s) for s in composition]
-    lz, li = get_layers(atoms, (0, 0, 1), tolerance=np.average(radii))
+    radius = np.sqrt(2.) * np.average(radii)
+    lz, li = get_layers(atoms, (0, 0, 1), tolerance=radius)
     layers = int(atoms.info['key_value_pairs']['layers'])
     ads_atoms = [a.index for a in atoms if li[a.index] > layers - 1]
     ads_atoms = list(range(natoms - n_ads, natoms))
@@ -357,7 +358,7 @@ def detect_termination(atoms):
         layers = int(atoms.info['key_value_pairs']['layers'])
         radii = [get_radius(z)
                  for z in atoms.numbers[atoms.subsets['slab_atoms']]]
-        radius = np.average(radii)
+        radius = radius = np.sqrt(2.) * np.average(radii)
         il, zl = get_layers(atoms, (0, 0, 1), tolerance=radius)
         if len(zl) < layers:
             # msg = 'dbid: ' + str(atoms.info['id'])

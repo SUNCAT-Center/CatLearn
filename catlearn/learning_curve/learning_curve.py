@@ -6,8 +6,8 @@ from .placeholder import placeholder
 from catlearn.preprocess.scaling import target_normalize
 
 
-def hierarchy(cv, features, min_split, max_split, new_data=True,
-              ridge=True, scale=True, globalscale=True, normalization=True,
+def hierarchy(cv, features, min_split, max_split, new_data=True, ridge=True,
+              scale=True, globalscale=True, normalization=True,
               featselect_featvar=False, featselect_featconst=True,
               select_limit=None, feat_sub=15):
     """Start the hierarchy.
@@ -36,16 +36,20 @@ def hierarchy(cv, features, min_split, max_split, new_data=True,
        Up to have many number of features used for feature selection.
     """
     result, set_size, p_error = [], [], []
+
     # Determines how many hier_level there will be.
     hier_level = int(np.log(max_split / min_split) / np.log(2))
     PC = data_process(features, min_split, max_split, scale=scale,
                       ridge=ridge, normalization=normalization)
     selected_features = None
+
     if new_data:
         # Split the data into subsets.
         cv.split_index(min_split, max_split=max_split)
-        # Load data back in from save file.
+
+    # Load data back in from save file.
     index_split = cv.load_split()
+
     if globalscale:
         # Get all the data, and one of the largest sub-set.
         globalscaledata, glob_feat1, glob_tar1 = cv.globalscaledata(
@@ -72,13 +76,16 @@ def hierarchy(cv, features, min_split, max_split, new_data=True,
             set_size=set_size,
             p_error=p_error,
             result=result)
+
         if int(index2) == 1:
             # When gone through all data within hier_level a plot is made
             # for varying feature with const. data size.
             featselect_featvar_plot(p_error, set_size)
+
         if (set_size and p_error and result) == []:
             # If no feature set is found, go to the next feature set.
             return set_size, p_error, result, PC
+
     return set_size, p_error, result, PC
 
 
