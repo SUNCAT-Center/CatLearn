@@ -767,6 +767,17 @@ class AdsorbateFingerprintGenerator(BaseGenerator):
                 delta = np.nan
             return [delta]
 
+    def db_size(self, atoms=None):
+        labels = ['layers', 'size', 'coverage']
+        if atoms is None:
+            return labels
+        else:
+            layers = float(atoms.info['key_value_pairs']['layers'])
+            size = np.prod(float(
+                    atoms.info['key_value_pairs']['supercell']).split(','))
+            coverage = float(atoms.info['key_value_pairs']['n']) / size
+            return layers, size, coverage
+
     def name(self, atoms=None):
         if atoms is None:
             return ['catapp_name']

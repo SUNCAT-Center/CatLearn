@@ -310,7 +310,12 @@ def detect_termination(atoms):
             - 'slab_atoms' : list
                 indices of atoms belonging to the slab
     """
-    max_coord = 0
+    if len(np.unique(atoms.tags)) >= 4:
+        # Layers specified by CatKit are denoted in tags.
+        term = [a.index for a in atoms if a.tag == 1]
+        subsurf = [a.index for a in atoms if a.tag == 2]
+        bulk = [a.index for a in atoms if a.tag > 1]
+        return bulk, term, subsurf
     try:
         cm = atoms.connectivity.copy()
         np.fill_diagonal(cm, 0)
