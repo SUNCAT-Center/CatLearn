@@ -191,7 +191,7 @@ def sym2ads_index(atoms):
     return ads_atoms
 
 
-def last2ads_index(atoms, formula):
+def last2ads_index(atoms, species):
     """Return the indexes of the last n atoms in the atoms object, where n is
     the length of the composition of the adsorbate species. This function will
     work on atoms objects, where the slab was set up first,
@@ -205,18 +205,20 @@ def last2ads_index(atoms, formula):
         key value pairs. See the ase db to catmap module in catmap.
         the key value pair 'species' must be the
         chemical formula of the adsorbate.
+    species : str
+        chemical formula of the adsorbate.
     """
-    n_ads = len(string2symbols(formula))
+    n_ads = len(string2symbols(species))
     natoms = len(atoms)
     ads_atoms = list(range(natoms - n_ads, natoms))
-    composition = string2symbols(formula)
+    composition = string2symbols(species)
     for a in ads_atoms:
         if atoms[a].symbol not in composition:
             raise AssertionError("last index adsorbate identification failed.")
     return ads_atoms
 
 
-def formula2ads_index(atoms, formula):
+def formula2ads_index(atoms, species):
     """Return the indexes of atoms, which have symbols matching the chemical
     formula of the adsorbate. This function will not work for adsorbates
     containing the same elements as the slab.
@@ -229,13 +231,13 @@ def formula2ads_index(atoms, formula):
         key value pairs. See the ase db to catmap module in catmap.
         the key value pair 'species' must be the
         chemical formula of the adsorbate.
-    formula: str
+    species : str
         chemical formula of the adsorbate.
     """
     try:
-        composition = string2symbols(formula)
+        composition = string2symbols(species)
     except ValueError:
-        print(formula)
+        print(species)
         raise
     ads_atoms = [a.index for a in atoms if a.symbol in composition]
     if len(ads_atoms) != len(composition):
@@ -255,6 +257,8 @@ def layers2ads_index(atoms, species):
         key value pairs. See the ase db to catmap module in catmap.
         the key value pair 'species' must be the
         chemical formula of the adsorbate and 'layers' must be an integer.
+    species : str
+        chemical formula of the adsorbate.
     """
     lz, li = auto_layers(atoms)
     layers = int(atoms.info['key_value_pairs']['layers'])
@@ -268,7 +272,7 @@ def layers2ads_index(atoms, species):
     return ads_atoms
 
 
-def z2ads_index(atoms, formula):
+def z2ads_index(atoms, species):
     """ Returns the indexes of the n atoms with the highest position
     in the z direction,
     where n is the number of atoms in the chemical formula from the species
@@ -281,8 +285,10 @@ def z2ads_index(atoms, formula):
         which is expected to contain CatMAP standard adsorbate structure
         key value pairs. See the ase db to catmap module in catmap.
         the key value pair 'species'.
+    species : str
+        chemical formula of the adsorbate.
     """
-    composition = string2symbols(formula)
+    composition = string2symbols(species)
     n_ads = len(composition)
     z = atoms.get_positions()[:, 2]
     ads_atoms = np.argsort(z)[:n_ads]
@@ -300,10 +306,10 @@ def info2primary_index(atoms):
     atoms : ase atoms object.
         The atoms object must have the following keys in atoms.subsets:
 
-            - 'ads_atoms' : list
-                indices of atoms belonging to the adsorbate
-            - 'slab_atoms' : list
-                indices of atoms belonging to the slab
+        'ads_atoms' : list
+            indices of atoms belonging to the adsorbate
+        'slab_atoms' : list
+            indices of atoms belonging to the slab
     """
     slab_atoms = atoms.subsets['slab_atoms']
     ads_atoms = atoms.subsets['ads_atoms']
@@ -344,6 +350,8 @@ def tags_termination(atoms):
     Parameters
     ----------
     atoms : object
+        the termination atoms should have tag=1 and subsequent layers should be
+        tagged in increasing order.
     """
     term = [a.index for a in atoms if a.tag == 1]
     subsurf = [a.index for a in atoms if a.tag == 2]
@@ -361,6 +369,10 @@ def layers_termination(atoms):
     Parameters
     ----------
     atoms : object
+        The atoms object must have the following keys in atoms.subsets:
+
+        'slab_atoms' : list
+            indices of atoms belonging to the slab.
     """
     il, zl = auto_layers(atoms)
     il_slab = list(il)
@@ -399,8 +411,9 @@ def constraints_termination(atoms):
     atoms : object
         atoms.connectivity should be a connectivity matrix.
         The atoms object must have the following keys in atoms.subsets:
+
         'slab_atoms' : list
-            indices of atoms belonging to the slab
+            indices of atoms belonging to the slab.
     """
     cm = atoms.connectivity.copy()
     np.fill_diagonal(cm, 0)
@@ -437,6 +450,7 @@ def connectivity_termination(atoms):
     atoms : object
         atoms.connectivity should be a connectivity matrix.
         The atoms object must have the following keys in atoms.subsets:
+
         'slab_atoms' : list
             indices of atoms belonging to the slab
     """
@@ -466,7 +480,19 @@ def connectivity_termination(atoms):
 
 
 def auto_layers(atoms):
-    radii = [get_radius(z) for z in atoms.numbers]
+    """Returns two arrays describing which layer each atom belongs
+    to and the distance between the layers and origo.
+    Assumes the tolerance corresponds to the average atomic radii of the slab.
+
+    Parameters
+    ----------
+    atoms : object
+        The atoms object must have the following keys in atoms.subsets:
+
+        'slab_atoms' : list
+            indices of atoms belonging to the slab
+    """
+    radii = [get_radius(z) for z in atoms.numbers[atoms.subsets['slab_atoms']]]
     radius = np.average(radii)
     lz, li = get_layers(atoms, (0, 0, 1), tolerance=radius)
     return lz, li

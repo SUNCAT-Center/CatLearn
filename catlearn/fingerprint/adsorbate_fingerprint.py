@@ -73,9 +73,12 @@ class AdsorbateFingerprintGenerator(BaseGenerator):
         super(AdsorbateFingerprintGenerator, self).__init__(**kwargs)
 
     def term(self, atoms=None):
-        """Return a fingerprint vector with propeties of the element name.
+        """Return a fingerprint vector with propeties averaged over the 
+        termination atoms.
 
-        This is saved in the atoms.info['key_value_pairs']['term']
+        Parameters
+        ----------
+            atoms : object                
         """
         labels = ['atomic_number_term',
                   'atomic_volume_term',
@@ -130,9 +133,12 @@ class AdsorbateFingerprintGenerator(BaseGenerator):
             return result
 
     def bulk(self, atoms=None):
-        """Return a fingerprint vector with propeties of the element name.
+        """Return a fingerprint vector with propeties averaged over
+        the bulk atoms.
 
-        This is saved in the atoms.info['key_value_pairs']['bulk']
+        Parameters
+        ----------
+            atoms : object
         """
         labels = ['atomic_number_bulk',
                   'atomic_volume_bulk',
@@ -190,6 +196,10 @@ class AdsorbateFingerprintGenerator(BaseGenerator):
         """Function that takes an atoms objects and returns a fingerprint
         vector containing properties of the closest add atom to a surface
         metal atom.
+
+        Parameters
+        ----------
+            atoms : object
         """
         labels = ['atomic_number_ads1',
                   'atomic_volume_ads1',
@@ -238,6 +248,10 @@ class AdsorbateFingerprintGenerator(BaseGenerator):
         """Function that takes an atoms objects and returns a fingerprint
         vector with properties averaged over the surface metal atoms
         closest to an add atom.
+
+        Parameters
+        ----------
+            atoms : object
         """
         labels = ['atomic_number_site_av',
                   'atomic_volume_site_av',
@@ -287,6 +301,10 @@ class AdsorbateFingerprintGenerator(BaseGenerator):
         """Function that takes an atoms objects and returns a fingerprint
         vector with properties summed over the surface metal atoms
         closest to an add atom.
+
+        Parameters
+        ----------
+            atoms : object
         """
         labels = ['atomic_number_site_sum',
                   'atomic_volume_site_sum',
@@ -336,6 +354,10 @@ class AdsorbateFingerprintGenerator(BaseGenerator):
         """Function that takes an atoms objects and returns a fingerprint
         vector containing the count of C, O, H and N atoms in the
         adsorbate.
+
+        Parameters
+        ----------
+            atoms : object
         """
         if atoms is None:
             return ['total_num_H',
@@ -378,6 +400,10 @@ class AdsorbateFingerprintGenerator(BaseGenerator):
         """Function that takes an atoms objects and returns a fingerprint
         vector containing the count of nearest neighbors and properties of
         the nearest neighbors.
+
+        Parameters
+        ----------
+            atoms : object
         """
         labels = ['nn_surf_ligands', 'identnn_surf_ligands',
                   'atomic_number_surf_ligands',
@@ -433,6 +459,10 @@ class AdsorbateFingerprintGenerator(BaseGenerator):
         vector with the number of C-H bonds and C-C bonds in the adsorbate.
         The adsorbate atoms must be specified in advance in
         atoms.subsets['ads_atoms']
+
+        Parameters
+        ----------
+            atoms : object
         """
         if atoms is None:
             return ['nC-C', 'ndouble', 'nC-H', 'nO-H']
@@ -474,6 +504,10 @@ class AdsorbateFingerprintGenerator(BaseGenerator):
     def ads_sum(self, atoms=None):
         """Function that takes an atoms objects and returns a fingerprint
         vector with averages of the atomic properties of the adsorbate.
+
+        Parameters
+        ----------
+            atoms : object
         """
         if atoms is None:
             return ['atomic_number_ads_sum',
@@ -510,6 +544,10 @@ class AdsorbateFingerprintGenerator(BaseGenerator):
     def ads_av(self, atoms=None):
         """Function that takes an atoms objects and returns a fingerprint
         vector with averages of the atomic properties of the adsorbate.
+
+        Parameters
+        ----------
+            atoms : object
         """
         if atoms is None:
             return ['atomic_number_ads_av',
@@ -544,6 +582,13 @@ class AdsorbateFingerprintGenerator(BaseGenerator):
             return list(np.nanmean(dat, axis=0))
 
     def strain(self, atoms=None):
+        """Return a fingerprint with the espected strain of the
+        site atoms and the termination atoms.
+
+        Parameters
+        ----------
+            atoms : object
+        """
         if atoms is None:
             return ['strain_site', 'strain_term']
         else:
@@ -587,6 +632,10 @@ class AdsorbateFingerprintGenerator(BaseGenerator):
     def en_difference_ads(self, atoms=None):
         """Returns a list of electronegativity metrics, squared and summed over
         bonds within the adsorbate atoms.
+
+        Parameters
+        ----------
+            atoms : object
         """
         labels = ['dist_' + s + '_ads' for s in electronegativities]
         if atoms is None:
@@ -605,6 +654,10 @@ class AdsorbateFingerprintGenerator(BaseGenerator):
     def en_difference_chemi(self, atoms=None):
         """Returns a list of electronegativity metrics, squared and summed over
         adsorbate-site bonds.
+
+        Parameters
+        ----------
+            atoms : object
         """
         labels = ['dist_' + s + '_chemi' for s in electronegativities]
         if atoms is None:
@@ -778,6 +831,13 @@ class AdsorbateFingerprintGenerator(BaseGenerator):
             return fp
 
     def delta_energy(self, atoms=None):
+        """Return the contents of
+        atoms.info['key_value_pairs']['delta_energy'] as a feature.
+
+        Parameters
+        ----------
+            atoms : object
+        """
         if atoms is None:
             return ['Ef']
         else:
@@ -788,6 +848,14 @@ class AdsorbateFingerprintGenerator(BaseGenerator):
             return [delta]
 
     def db_size(self, atoms=None):
+        """Return a fingerprint containing the number of layers in the slab,
+        the number of surface atoms in the unit cell and
+        the adsorbate coverage.
+
+        Parameters
+        ----------
+            atoms : object
+        """
         labels = ['layers', 'size', 'coverage']
         if atoms is None:
             return labels
@@ -798,6 +866,13 @@ class AdsorbateFingerprintGenerator(BaseGenerator):
             return layers, size, coverage
 
     def name(self, atoms=None):
+        """Return a name for a datapoint based on the contents of
+        atoms.info['key_value_pairs'].
+
+        Parameters
+        ----------
+            atoms : object
+        """
         if atoms is None:
             return ['catapp_name']
         else:
@@ -806,6 +881,12 @@ class AdsorbateFingerprintGenerator(BaseGenerator):
             return [name]
 
     def dbid(self, atoms=None):
+        """Return the contents of atoms.info['id'] as a feature.
+
+        Parameters
+        ----------
+            atoms : object
+        """
         if atoms is None:
             return ['id']
         elif 'id' not in atoms.info:
@@ -814,6 +895,12 @@ class AdsorbateFingerprintGenerator(BaseGenerator):
             return [int(atoms.info['id'])]
 
     def ctime(self, atoms=None):
+        """Return the contents of atoms.info['ctime'] as a feature.
+
+        Parameters
+        ----------
+            atoms : object
+        """
         if atoms is None:
             return ['time_float']
         elif 'ctime' not in atoms.info:
