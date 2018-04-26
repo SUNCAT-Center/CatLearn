@@ -383,17 +383,9 @@ class AdsorbateFingerprintGenerator(BaseGenerator):
         else:
             chemi = atoms.subsets['chemisorbed_atoms']
             cm = atoms.connectivity
-            H_atoms = []
-            C_atoms = []
-            for i in chemi:
-                for b in cm[i]:
-                    if atoms.numbers[b] == 1:
-                        H_atoms.append(b)
-                    elif atoms.numbers[b] == 6:
-                        C_atoms.append(b)
-            nM = len(atoms.subsets['site_atoms'])
-            nH = len(H_atoms)
-            nC = len(C_atoms)
+            nH = np.sum(cm[:, chemi] * np.vstack(atoms.numbers == 1))
+            nC = np.sum(cm[:, chemi] * np.vstack(atoms.numbers == 6))
+            nM = np.sum(cm[:, chemi][atoms.subsets['site_atoms'], :])
             return [nC, nH, nM]
 
     def mean_surf_ligands(self, atoms=None):
