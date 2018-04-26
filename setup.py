@@ -3,7 +3,7 @@ import setuptools
 
 setuptools.setup(
     name="CatLearn",
-    version="0.4.0.dev3",
+    version="0.4.1",
     url="https://github.com/SUNCAT-Center/CatLearn",
 
     author="Paul C. Jennings",
