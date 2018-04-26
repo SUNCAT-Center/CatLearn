@@ -91,7 +91,7 @@ def lml_opt(train_features, train_targets, test_features,
     else:
         minimizer_kwargs = {'method': algomin, 'args': args,
                             'bounds': bounds, 'jac': eval_jac}
-        popt = basinhopping(lml.log_marginal_likelihood, theta,
+        popt = basinhopping(lml.log_marginal_likelihood, theta, niter=10,
                             minimizer_kwargs=minimizer_kwargs, disp=True)
     return popt
 
