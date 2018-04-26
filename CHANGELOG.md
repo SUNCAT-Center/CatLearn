@@ -2,7 +2,9 @@
 
 -   AtoML renamed to CatLearn and moved to Github.
 -   Adsorbate fingerprinting again parallelizable.
+-   Adsorbate fingerprinting use atoms.tags to get layers if present.
 -   Adsorbate fingerprinting relies on connectivity matrix before neighborlist.
+-   New bond-electronegativity centered fingerprints for adsorbates.
 -   Fixed a bug that caused the negative log marginal likelihood to be attached to the gp class.
 -   Small speed improvement for initialize and updates to `GaussianProcess`.
 
