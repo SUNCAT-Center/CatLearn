@@ -584,22 +584,42 @@ class AdsorbateFingerprintGenerator(BaseGenerator):
             strain_term = (av_term - av_bulk) / av_bulk
             return [strain_site, strain_term]
 
-    def en_difference(self, atoms=None):
-        """Returns a list of summed squared differences in electronegativity
-        between site atoms bonded to adsorbate atoms.
+    def en_difference_ads(self, atoms=None):
+        """Returns a list of electronegativity metrics, squared and summed over
+        bonds within the adsorbate atoms.
         """
-        labels = ['dist_' + s for s in electronegativities]
+        labels = ['dist_' + s + '_ads' for s in electronegativities]
         if atoms is None:
             return labels
+        cm = atoms.connectivity
+        ads = atoms.subsets['ads_atoms']
+        bonds = cm[ads, :][:, ads]
+        ads_numbers = atoms.numbers[ads]
+        en_ads = list_mendeleev_params(ads_numbers, electronegativities)
+        delta_en = (en_ads[:, np.newaxis, :] -
+                    en_ads[np.newaxis, :, :]) ** 2
+        en_result = list(np.einsum("ij,ijk->k", bonds, delta_en))
+        assert len(en_result) == len(labels)
+        return en_result
+
+    def en_difference_chemi(self, atoms=None):
+        """Returns a list of electronegativity metrics, squared and summed over
+        adsorbate-site bonds.
+        """
+        labels = ['dist_' + s + '_chemi' for s in electronegativities]
+        if atoms is None:
+            return labels
+        cm = atoms.connectivity
         chemi = atoms.subsets['chemisorbed_atoms']
         site = atoms.subsets['site_atoms']
+        bonds = cm[chemi, :][:, site]
         chemi_numbers = atoms.numbers[chemi]
         site_numbers = atoms.numbers[site]
         en_chemi = list_mendeleev_params(chemi_numbers, electronegativities)
         en_site = list_mendeleev_params(site_numbers, electronegativities)
         delta_en = (en_chemi[:, np.newaxis, :] -
                     en_site[np.newaxis, :, :]) ** 2
-        en_result = list(np.einsum("ijk->k", delta_en))
+        en_result = list(np.einsum("ij,ijk->k", bonds, delta_en))
         assert len(en_result) == len(labels)
         return en_result
 
@@ -773,8 +793,7 @@ class AdsorbateFingerprintGenerator(BaseGenerator):
             return labels
         else:
             layers = float(atoms.info['key_value_pairs']['layers'])
-            size = np.prod(float(
-                    atoms.info['key_value_pairs']['supercell']).split(','))
+            size = len(atoms.subsets['termination_atoms'])
             coverage = float(atoms.info['key_value_pairs']['n']) / size
             return layers, size, coverage
 

@@ -45,7 +45,7 @@ class TestAdsorbateFeatures(unittest.TestCase):
         images = self.setup_atoms()
         images = autogen_info(images)
         print(str(len(images)) + ' training examples.')
-        gen = FeatureGenerator()
+        gen = FeatureGenerator(nprocs=None)
         train_fpv = [gen.mean_chemisorbed_atoms,
                      gen.count_chemisorbed_fragment,
                      gen.count_ads_atoms,
@@ -56,7 +56,8 @@ class TestAdsorbateFeatures(unittest.TestCase):
                      gen.term,
                      gen.bulk,
                      gen.strain,
-                     gen.en_difference,
+                     gen.en_difference_ads,
+                     gen.en_difference_chemi,
                      # gen.ads_av,
                      # gen.ads_sum,
                      ]
