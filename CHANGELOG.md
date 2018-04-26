@@ -1,5 +1,7 @@
 # dev
 
+# Version 0.4.1 (April 2018)
+
 -   AtoML renamed to CatLearn and moved to Github.
 -   Adsorbate fingerprinting again parallelizable.
 -   Adsorbate fingerprinting use atoms.tags to get layers if present.
