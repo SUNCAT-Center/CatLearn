@@ -14,7 +14,7 @@ There are some general coding conventions that the CatLearn repository adheres t
 
 ## Git Setup
 
-It is a bad idea to develop directly on the on the main CatLearn repository. Instead, fork a version into your own namespace on Github with the following:
+We adhere to the git workflow described [here](http://nvie.com/posts/a-successful-git-branching-model/), if you are considering contributing, please familiarize yourself with this. It is a bad idea to develop directly on the on the main CatLearn repository. Instead, fork a version into your own namespace on Github with the following:
 
 -   Fork the repository and then clone it to your local machine.
 
