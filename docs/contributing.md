@@ -69,6 +69,36 @@ The following workflow is recommended when adding some new functionality:
 
 -   When the desired changes have been made on your fork of the repository, open up a merge request on Github.
 
+## Environment
+
+It is highly recommended to use `pipenv` for handling dependencies and the virtual environment, more information can be found [here](https://docs.pipenv.org/). Once installed, go to the root directory of CatLearn and use:
+
+```shell
+$ pipenv shell
+```
+
+From here it is possible to install and upgrade all the dependencies:
+
+```shell
+$ pipenv install --dev
+$ pipenv update
+```
+
+There are a number of packages that may be important for the development cycle, these are installed with the `--dev` flag. There are then two ways to install additional dependencies required for new functionality, etc:
+
+```shell
+$ pipenv install package
+$ pipenv install --dev package
+```
+
+The first command will install the package as a dependency for everyone using the code, e.g. people who install CatLearn with `pip` would be expected to also install this dependency. The second line will only install a package for developers. This workflow can even be used to keep the `requirements.txt` file up-to-date:
+
+```shell
+$ pipenv lock -r > requirements.txt
+```
+
+When complete, use `exit` to quit the virtualenv.
+
 ## Docker
 
 A [docker](https://www.docker.com) image is included in the repository. It is sometimes easier to develop within a controlled environment such as this. In particular, it is possible for other developers to attain the same environment. To run CatLearn in the docker container, use the following commands:

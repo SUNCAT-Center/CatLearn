@@ -1,12 +1,31 @@
 # Installation
 
-A number of different methods can be used to run the CatLearn code. The easiest way to install CatLearn is with:
+A number of different methods can be used to run the CatLearn code.
+
+## Requirements
+
+-   ase
+-   h5py
+-   networkx
+-   numpy
+-   pandas
+-   scikit-learn
+-   scipy
+-   tqdm
+
+## Installation using pip
+
+The easiest way to install CatLearn is with:
 
 ```shell
 $ pip install catlearn
 ```
 
-This will automatically install the code as well as the dependencies. To get the most up-to-date development version of the code, you can clone the git repository to a local directory with:
+This will automatically install the code as well as the dependencies.
+
+## Installation from source
+
+To get the most up-to-date development version of the code, you can clone the git repository to a local directory with:
 
 ```shell
 $ git clone https://github.com/SUNCAT-Center/CatLearn.git
