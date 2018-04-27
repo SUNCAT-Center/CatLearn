@@ -104,14 +104,18 @@ There is much functionality in CatLearn to assist in handling atom data and buil
 A more detailed explanation of how to utilize the code can be found in the Tutorials_ folder.
 
 .. toctree::
-   :maxdepth: 2
-   :caption: Contents:
+   :maxdepth: 1
+   :caption: User Guide:
 
    installation
-   modules
    changelog
    contributing
 
+.. toctree::
+  :maxdepth: 10
+  :caption: Code:
+
+  modules
 
 
 Indices and tables
@@ -119,7 +123,7 @@ Indices and tables
 
 * :ref:`genindex`
 * :ref:`modindex`
-* :ref:`search`
+
 
 .. _Catlearn: https://github.com/SUNCAT-Center/CatLearn
 .. _Github: https://github.com/SUNCAT-Center
