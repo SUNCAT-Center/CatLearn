@@ -8,7 +8,11 @@ There are some general coding conventions that the CatLearn repository adheres t
 
 -   Code should adhere to the [pep8](https://www.python.org/dev/peps/pep-0008/) and [pyflakes](https://pypi.python.org/pypi/pyflakes) style guides.
 
+-   Tests are run using [TravisCI](travis-ci.org) and coverage tracked using [Coveralls](coveralls.io).
+
 -   When new functions are added, tests should be written and added to the CI script.
+
+-   Documentation is hosted on Read the Docs at [http://catlearn.readthedocs.io](http://catlearn.readthedocs.io).
 
 -   Should use NumPy style [docstrings](https://github.com/numpy/numpy/blob/master/doc/HOWTO_DOCUMENT.rst.txt).
 
