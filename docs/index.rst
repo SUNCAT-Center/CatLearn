@@ -28,7 +28,7 @@ To featurize ASE atoms objects, the following lines of code can be used::
     import ase
     from ase.cluster.cubic import FaceCenteredCubic
 
-    from catlearn.fingerprint import FeatureGenerator
+    from catlearn.fingerprint.setup import FeatureGenerator
 
     # First generate an atoms object.
     surfaces = [(1, 0, 0), (1, 1, 0), (1, 1, 1)]
