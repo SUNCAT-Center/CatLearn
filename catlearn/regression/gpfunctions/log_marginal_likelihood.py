@@ -76,9 +76,9 @@ def log_marginal_likelihood(theta, train_matrix, targets, kernel_dict,
 
 
 def dK_dtheta_j(theta, train_matrix, kernel_dict, Q):
-    """Return the jacobian of the log marginal likelyhood with respect to
-    the hyperparameters.
+    """Return the jacobian of the log marginal likelyhood.
 
+    This is calculated with respect to the hyperparameters, as in:
     Equation 5.9 in C. E. Rasmussen and C. K. I. Williams, 2006
 
     Parameters
