@@ -1,13 +1,4 @@
-# -*- coding: utf-8 -*-
-"""
-Slab adsorbate fingerprint functions for machine learning
-
-Created on Tue Dec  6 14:09:29 2016
-
-@author: mhangaard
-
-"""
-from __future__ import print_function
+"""Slab adsorbate fingerprint functions for machine learning."""
 import numpy as np
 from ase.atoms import string2symbols
 from ase.data import ground_state_magnetic_moments as gs_magmom
@@ -73,12 +64,12 @@ class AdsorbateFingerprintGenerator(BaseGenerator):
         super(AdsorbateFingerprintGenerator, self).__init__(**kwargs)
 
     def term(self, atoms=None):
-        """Return a fingerprint vector with propeties averaged over the 
+        """Return a fingerprint vector with propeties averaged over the
         termination atoms.
 
         Parameters
         ----------
-            atoms : object                
+            atoms : object
         """
         labels = ['atomic_number_term',
                   'atomic_volume_term',

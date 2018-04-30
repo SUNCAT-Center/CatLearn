@@ -1,4 +1,8 @@
-"""Function pulling atomic data for elements."""
+"""Function pulling atomic data for elements.
+
+This is typically used in conjunction with other fiungerprint generators to
+combine general atomic data with more specific properties.
+"""
 import json
 from catlearn import __path__ as catlearn_path
 from ase.data import covalent_radii
@@ -102,7 +106,7 @@ def get_mendeleev_params(atomic_number, params=None):
 
 
 def list_mendeleev_params(numbers, params=None):
-    """Returns an n by p array, containing p parameters of n atoms.
+    """Return an n by p array, containing p parameters of n atoms.
 
     Parameters
     ----------
@@ -155,7 +159,7 @@ def list_mendeleev_params(numbers, params=None):
 
 
 def get_radius(z, params=['atomic_radius', 'covalent_radius_cordero']):
-    """ Return a metric of atomic radius.
+    """Return a metric of atomic radius.
 
     Parameters
     ----------
@@ -175,7 +179,7 @@ def get_radius(z, params=['atomic_radius', 'covalent_radius_cordero']):
 
 
 def default_catlearn_radius(z):
-    """ Return the default CatLearn covalent radius of element z.
+    """Return the default CatLearn covalent radius of element z.
 
     Parameters
     ----------

@@ -1,12 +1,4 @@
-# -*- coding: utf-8 -*-
-"""
-Slab adsorbate fingerprint functions for machine learning
-
-Created on Tue Dec  6 14:09:29 2016
-
-@author: mhangaard
-
-"""
+"""Slab adsorbate fingerprint functions for machine learning."""
 from __future__ import print_function
 import numpy as np
 
@@ -46,8 +38,7 @@ default_extra_params = ['c6',
 
 class BulkFingerprintGenerator(BaseGenerator):
     def __init__(self, **kwargs):
-        """ Class containing functions for fingerprint generation.
-        """
+        """Class containing functions for fingerprint generation."""
         if not hasattr(self, 'extra_params'):
             self.extra_params = kwargs.get('extra_params', None)
         if self.extra_params is None:
@@ -63,8 +54,8 @@ class BulkFingerprintGenerator(BaseGenerator):
         super(BulkFingerprintGenerator, self).__init__(**kwargs)
 
     def summation(self, atoms=None):
-        """ Returns a fingerprint vector with propeties of the element name
-        saved in the atoms.info['key_value_pairs']['bulk'] """
+        """Return a fingerprint vector with propeties of the element name
+        saved in the atoms.info['key_value_pairs']['bulk']"""
         if atoms is None:
             return ['atomic_number_sum',
                     'atomic_volume_sum',
@@ -118,8 +109,8 @@ class BulkFingerprintGenerator(BaseGenerator):
             return result
 
     def average(self, atoms=None):
-        """ Returns a fingerprint vector with propeties of the element name
-        saved in the atoms.info['key_value_pairs']['bulk'] """
+        """Return a fingerprint vector with propeties of the element name
+        saved in the atoms.info['key_value_pairs']['bulk']"""
         if atoms is None:
             return ['atomic_number_av',
                     'atomic_volume_av',
@@ -173,8 +164,8 @@ class BulkFingerprintGenerator(BaseGenerator):
             return result
 
     def std(self, atoms=None):
-        """ Returns a fingerprint vector with propeties of the element name
-        saved in the atoms.info['key_value_pairs']['bulk'] """
+        """Return a fingerprint vector with propeties of the element name
+        saved in the atoms.info['key_value_pairs']['bulk']"""
         if atoms is None:
             return ['atomic_number_std',
                     'atomic_volume_std',
@@ -228,8 +219,8 @@ class BulkFingerprintGenerator(BaseGenerator):
             return result
 
     def ceramic_summation(self, atoms=None):
-        """ Returns a fingerprint vector with propeties of the element name
-        saved in the atoms.info['key_value_pairs']['bulk'] """
+        """Return a fingerprint vector with propeties of the element name
+        saved in the atoms.info['key_value_pairs']['bulk']"""
         if atoms is None:
             return ['atomic_number_sum',
                     'atomic_volume_sum',
@@ -284,8 +275,8 @@ class BulkFingerprintGenerator(BaseGenerator):
             return result
 
     def ceramic_average(self, atoms=None):
-        """ Returns a fingerprint vector with propeties of the element name
-        saved in the atoms.info['key_value_pairs']['bulk'] """
+        """Return a fingerprint vector with propeties of the element name
+        saved in the atoms.info['key_value_pairs']['bulk']"""
         if atoms is None:
             return ['atomic_number_av',
                     'atomic_volume_av',
@@ -340,8 +331,8 @@ class BulkFingerprintGenerator(BaseGenerator):
             return result
 
     def ceramic_std(self, atoms=None):
-        """ Returns a fingerprint vector with propeties of the element name
-        saved in the atoms.info['key_value_pairs']['bulk'] """
+        """Return a fingerprint vector with propeties of the element name
+        saved in the atoms.info['key_value_pairs']['bulk']"""
         if atoms is None:
             return ['atomic_number_std',
                     'atomic_volume_std',

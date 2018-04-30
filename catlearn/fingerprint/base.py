@@ -1,4 +1,10 @@
-"""Base class for the feature generators."""
+"""Base class for the feature generators.
+
+This is inherited by the other fingerprint generators and allows access to a
+number of useful and commonly used functions. Standard functionality that is
+implemented and applicable to more than one of the other classes should be
+put here.
+"""
 from catlearn.api.ase_atoms_api import extend_atoms_class
 from catlearn.utilities.neighborlist import ase_neighborlist
 
