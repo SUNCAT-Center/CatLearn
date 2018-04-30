@@ -17,7 +17,7 @@ from .io import _write_data
 class GeneticAlgorithm(object):
     """Genetic algorithm for parameter optimization."""
 
-    def __init__(self, population_size, fit_func, features, targets,
+    def __init__(self, fit_func, features, targets, population_size=None,
                  population=None, operators=None, fitness_parameters=1,
                  nsplit=2, accuracy=None, nprocs=1):
         """Initialize the genetic algorithm.
@@ -50,11 +50,20 @@ class GeneticAlgorithm(object):
         # Set parameters.
         self.nprocs = nprocs
         self.step = -1
-        self.population_size = population_size
         self.fit_func = fit_func
         self.dimension = features.shape[1]
         self.nsplit = nsplit
         self.accuracy = accuracy
+
+        if population_size is None:
+            if self.nprocs == 1:
+                self.population_size = 10
+            elif self.nprocs >= 8:
+                self.population_size = self.nprocs
+            else:
+                self.population_size = self.nprocs * 2
+        else:
+            self.population_size = population_size
 
         # Define the starting population.
         self.population = population
