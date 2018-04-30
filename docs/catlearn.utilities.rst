@@ -1,49 +1,49 @@
-catlearn.utilities package
-==========================
+catlearn.utilities
+==================
 
 
-catlearn.utilities.clustering module
-------------------------------------
+catlearn.utilities.clustering
+-----------------------------
 
 .. automodule:: catlearn.utilities.clustering
     :members:
     :undoc-members:
     :show-inheritance:
 
-catlearn.utilities.database\_functions module
----------------------------------------------
+catlearn.utilities.database\_functions
+--------------------------------------
 
 .. automodule:: catlearn.utilities.database_functions
     :members:
     :undoc-members:
     :show-inheritance:
 
-catlearn.utilities.neighborlist module
---------------------------------------
+catlearn.utilities.neighborlist
+-------------------------------
 
 .. automodule:: catlearn.utilities.neighborlist
     :members:
     :undoc-members:
     :show-inheritance:
 
-catlearn.utilities.penalty\_functions module
---------------------------------------------
+catlearn.utilities.penalty\_functions
+-------------------------------------
 
 .. automodule:: catlearn.utilities.penalty_functions
     :members:
     :undoc-members:
     :show-inheritance:
 
-catlearn.utilities.sammon module
---------------------------------
+catlearn.utilities.sammon
+-------------------------
 
 .. automodule:: catlearn.utilities.sammon
     :members:
     :undoc-members:
     :show-inheritance:
 
-catlearn.utilities.utilities module
------------------------------------
+catlearn.utilities.utilities
+----------------------------
 
 .. automodule:: catlearn.utilities.utilities
     :members:

@@ -115,7 +115,21 @@ A more detailed explanation of how to utilize the code can be found in the Tutor
   :maxdepth: 10
   :caption: Code:
 
-  modules
+  catlearn.api
+  catlearn.cross_validation
+  catlearn.fingerprint
+  catlearn.ga
+  catlearn.learning_curve
+  catlearn.preprocess
+  catlearn.regression
+  catlearn.setup
+  catlearn.utilities
+
+
+.. automodule:: catlearn
+    :members:
+    :undoc-members:
+    :show-inheritance:
 
 
 Indices and tables

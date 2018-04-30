@@ -1,25 +1,25 @@
-catlearn.setup package
-======================
+catlearn.setup
+==============
 
 
-catlearn.setup.general\_gp module
----------------------------------
+catlearn.setup.general\_gp
+--------------------------
 
 .. automodule:: catlearn.setup.general_gp
     :members:
     :undoc-members:
     :show-inheritance:
 
-catlearn.setup.general\_kernel module
--------------------------------------
+catlearn.setup.general\_kernel
+------------------------------
 
 .. automodule:: catlearn.setup.general_kernel
     :members:
     :undoc-members:
     :show-inheritance:
 
-catlearn.setup.general\_preprocess module
------------------------------------------
+catlearn.setup.general\_preprocess
+----------------------------------
 
 .. automodule:: catlearn.setup.general_preprocess
     :members:

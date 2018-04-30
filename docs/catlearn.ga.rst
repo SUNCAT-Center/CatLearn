@@ -1,69 +1,71 @@
-catlearn.ga package
-===================
+catlearn.ga
+===========
 
-catlearn.ga.algorithm module
-----------------------------
+
+catlearn.ga.algorithm
+---------------------
 
 .. automodule:: catlearn.ga.algorithm
     :members:
     :undoc-members:
     :show-inheritance:
 
-catlearn.ga.convergence module
-------------------------------
+catlearn.ga.convergence
+-----------------------
 
 .. automodule:: catlearn.ga.convergence
     :members:
     :undoc-members:
     :show-inheritance:
 
-catlearn.ga.initialize module
------------------------------
+catlearn.ga.initialize
+----------------------
 
 .. automodule:: catlearn.ga.initialize
     :members:
     :undoc-members:
     :show-inheritance:
 
-catlearn.ga.io module
----------------------
+catlearn.ga.io
+--------------
 
 .. automodule:: catlearn.ga.io
     :members:
     :undoc-members:
     :show-inheritance:
 
-catlearn.ga.mating module
--------------------------
+catlearn.ga.mating
+------------------
 
 .. automodule:: catlearn.ga.mating
     :members:
     :undoc-members:
     :show-inheritance:
 
-catlearn.ga.mutate module
--------------------------
+catlearn.ga.mutate
+------------------
 
 .. automodule:: catlearn.ga.mutate
     :members:
     :undoc-members:
     :show-inheritance:
 
-catlearn.ga.natural\_selection module
--------------------------------------
+catlearn.ga.natural\_selection
+------------------------------
 
 .. automodule:: catlearn.ga.natural_selection
     :members:
     :undoc-members:
     :show-inheritance:
 
-catlearn.ga.predictors module
------------------------------
+catlearn.ga.predictors
+----------------------
 
 .. automodule:: catlearn.ga.predictors
     :members:
     :undoc-members:
     :show-inheritance:
+
 
 .. automodule:: catlearn.ga
     :members:
