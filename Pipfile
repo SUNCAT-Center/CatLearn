@@ -26,7 +26,8 @@ sphinx-rtd-theme = "*"
 recommonmark = "*"
 matplotlib = "*"
 seaborn = "*"
-sty = "*"
+sty = "==1.0.0b6"
+gpflow = "*"
 
 [requires]
 python_version = "3.6"
