@@ -24,6 +24,9 @@ sphinx-autobuild = "*"
 sphinxcontrib-napoleon = "*"
 sphinx-rtd-theme = "*"
 recommonmark = "*"
+matplotlib = "*"
+seaborn = "*"
+sty = "*"
 
 [requires]
 python_version = "3.6"
