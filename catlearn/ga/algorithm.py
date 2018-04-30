@@ -3,8 +3,8 @@ import numpy as np
 import random
 import warnings
 import copy
-from tqdm import trange
-
+from tqdm import trange, tqdm
+import multiprocessing
 from catlearn.cross_validation import k_fold
 from .initialize import initialize_population
 from .mating import cut_and_splice
@@ -19,7 +19,7 @@ class GeneticAlgorithm(object):
 
     def __init__(self, population_size, fit_func, features, targets,
                  population=None, operators=None, fitness_parameters=1,
-                 nsplit=2, accuracy=None):
+                 nsplit=2, accuracy=None, nprocs=1):
         """Initialize the genetic algorithm.
 
         Parameters
@@ -48,6 +48,7 @@ class GeneticAlgorithm(object):
             performed.
         """
         # Set parameters.
+        self.nprocs = nprocs
         self.step = -1
         self.population_size = population_size
         self.fit_func = fit_func
@@ -237,41 +238,46 @@ class GeneticAlgorithm(object):
             The fitness based on the new parameters.
         """
         # Initialize array.
-        fit = np.zeros((len(param_list), self.fitness_parameters))
+        if self.nprocs == 1:
+            fit = np.zeros((len(param_list), self.fitness_parameters))
 
-        bool_list = np.asarray(param_list, dtype=np.bool)
-        for index in trange(bool_list.shape[0], leave=False,
-                            desc='working generation {}'.format(self.step + 1)
-                            ):
-            parameter = bool_list[index]
-            calc_fit = np.zeros(self.fitness_parameters)
-            for k in range(self.nsplit):
-                # Sort out training and testing data.
-                train_features = copy.deepcopy(self.features)
-                train_targets = copy.deepcopy(self.targets)
-                test_features = train_features.pop(k)[:, parameter]
-                test_targets = train_targets.pop(k)
-
-                train_features = np.concatenate(train_features,
-                                                axis=0)[:, parameter]
-                train_targets = np.concatenate(train_targets, axis=0)
-                try:
-                    calc_fit += np.array(self.fit_func(
-                        train_features, train_targets, test_features,
-                        test_targets))
-                except ValueError:
-                    # If there is a problem calculating fitness assign -inf.
-                    calc_fit += np.array(
-                        [float('-inf')] * self.fitness_parameters)
-                    msg = 'The fitness function is failing. Returning -inf.'
-                    warnings.warn(msg)
-
-            fit[index] = calc_fit / float(self.nsplit)
+            bool_list = np.asarray(param_list, dtype=np.bool)
+            for index in trange(bool_list.shape[0], leave=False,
+                                desc='working generation {}'.format(self.step +
+                                                                    1)):
+                args = (index, bool_list, self.fitness_parameters,
+                        self.features,
+                        self.targets,
+                        self.fit_func,
+                        self.nsplit)
+                calc_fit = _cross_validate(args)[1]
+                fit[index] = calc_fit / float(self.nsplit)
+        else:
+            fit = self._parallel_iterator(param_list)
 
         if self.pareto:
             fit = self._pareto_trainsform(fit)
 
         return np.reshape(fit, (len(fit),))
+
+    def _parallel_iterator(self, param_list):
+        fit = np.zeros((len(param_list), self.fitness_parameters))
+
+        bool_list = np.asarray(param_list, dtype=np.bool)
+        d = bool_list.shape[0]
+        args = (
+            (x, bool_list, self.fitness_parameters,
+             self.features,
+             self.targets,
+             self.fit_func,
+             self.nsplit,
+             ) for x in np.arange(d))
+        pool = multiprocessing.Pool(self.nprocs)
+        for r in tqdm(pool.imap_unordered(
+                _cross_validate, args), total=d,
+                desc='nested              ', leave=False):
+            fit[r[0]] = r[1] / float(self.nsplit)
+        return fit
 
     def _pareto_trainsform(self, fitness):
         """Function to transform a variable with fitness to a pareto fitness.
@@ -326,3 +332,37 @@ class GeneticAlgorithm(object):
             np.mean(self.fitness), np.min(self.fitness))
 
         print(msg)
+
+
+def _cross_validate(args):
+    """  """
+    index = args[0]
+    bool_list = args[1]
+    fitness_parameters = args[2]
+    features = args[3]
+    targets = args[4]
+    fit_func = args[5]
+    nsplit = args[6]
+    parameter = bool_list[index]
+    calc_fit = np.zeros(fitness_parameters)
+    for k in range(nsplit):
+        # Sort out training and testing data.
+        train_features = copy.deepcopy(features)
+        train_targets = copy.deepcopy(targets)
+        test_features = train_features.pop(k)[:, parameter]
+        test_targets = train_targets.pop(k)
+
+        train_features = np.concatenate(train_features,
+                                        axis=0)[:, parameter]
+        train_targets = np.concatenate(train_targets, axis=0)
+        try:
+            calc_fit += np.array(fit_func(
+                train_features, train_targets, test_features,
+                test_targets))
+        except ValueError:
+            # If there is a problem calculating fitness assign -inf.
+            calc_fit += np.array(
+                [float('-inf')] * fitness_parameters)
+            msg = 'The fitness function is failing. Returning -inf.'
+            warnings.warn(msg)
+    return index, calc_fit
