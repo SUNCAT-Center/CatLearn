@@ -6,21 +6,25 @@ from ase.data import atomic_numbers
 from .periodic_table_data import (get_mendeleev_params, n_outer,
                                   list_mendeleev_params,
                                   default_params, get_radius,
-                                  electronegativities)
+                                  electronegativities,
+                                  block2number)
 from .neighbor_matrix import connection_matrix
 import collections
 from .base import BaseGenerator
 
 
-block2number = {'s': 1,
-                'p': 2,
-                'd': 3,
-                'f': 4}
-
-# Text based feature.
-facetdict = {'001': [1.], '0001step': [2.], '100': [3.],
-             '110': [4.], '111': [5.], '211': [6.], '311': [7.],
-             '532': [8.]}
+default_adsorbate_fingerprinters = ['mean_chemisorbed_atoms',
+                                    'count_chemisorbed_fragment',
+                                    'count_ads_atoms',
+                                    'count_ads_bonds',
+                                    'mean_site',
+                                    'sum_site',
+                                    'mean_surf_ligands',
+                                    'term',
+                                    'bulk',
+                                    'strain',
+                                    'en_difference_ads',
+                                    'en_difference_chemi']
 
 extra_slab_params = ['atomic_radius',
                      'heat_of_formation',
@@ -37,12 +41,30 @@ extra_slab_params = ['atomic_radius',
                      'ionenergies']
 
 
+# Text based feature.
+facetdict = {'001': [1.], '0001step': [2.], '100': [3.],
+             '110': [4.], '111': [5.], '211': [6.], '311': [7.],
+             '532': [8.]}
+
+
 def check_length(labels, result, atoms):
+    """Check that two lists have the same length. If not, print an informative
+    error message containing a databse id if present.
+
+    Parameters
+    ----------
+    labels : list
+        A list of feature names.
+    result : list
+        A fingerprint.
+    atoms : object
+        A single atoms object.
+    """
     if len(result) != len(labels):
         msg = str(len(labels)) + '/' + str(len(result)) + \
             ' labels/fingerprint mismatch.'
         if 'id' in atoms.info:
-            msg += ' id: ' + str(atoms.info['id'])
+            msg += ' database id: ' + str(atoms.info['id'])
         raise AssertionError(msg)
 
 

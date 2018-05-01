@@ -13,7 +13,7 @@ from catlearn.api.ase_atoms_api import database_to_list
 from catlearn.fingerprint.adsorbate_prep import autogen_info
 from catlearn.fingerprint.periodic_table_data import (get_radius,
                                                       default_catlearn_radius)
-from catlearn.fingerprint.setup import FeatureGenerator
+from catlearn.fingerprint.setup import FeatureGenerator, default_fingerprinters
 
 wkdir = os.getcwd()
 
@@ -44,19 +44,7 @@ class TestAdsorbateFeatures(unittest.TestCase):
         images = autogen_info(images)
         print(str(len(images)) + ' training examples.')
         gen = FeatureGenerator(nprocs=None)
-        train_fpv = [gen.mean_chemisorbed_atoms,
-                     gen.count_chemisorbed_fragment,
-                     gen.count_ads_atoms,
-                     gen.count_ads_bonds,
-                     gen.mean_site,
-                     gen.sum_site,
-                     gen.mean_surf_ligands,
-                     gen.term,
-                     gen.bulk,
-                     gen.strain,
-                     gen.en_difference_ads,
-                     gen.en_difference_chemi,
-                     ]
+        train_fpv = default_fingerprinters(gen, 'adsorbates')
         matrix = gen.return_vec(images, train_fpv)
         labels = gen.return_names(train_fpv)
         print(np.shape(matrix), type(matrix))
@@ -75,19 +63,7 @@ class TestAdsorbateFeatures(unittest.TestCase):
         images = autogen_info(images)
         print(str(len(images)) + ' training examples.')
         gen = FeatureGenerator(nprocs=None)
-        train_fpv = [gen.mean_chemisorbed_atoms,
-                     gen.count_chemisorbed_fragment,
-                     gen.count_ads_atoms,
-                     gen.count_ads_bonds,
-                     gen.mean_site,
-                     gen.sum_site,
-                     gen.mean_surf_ligands,
-                     gen.term,
-                     gen.bulk,
-                     gen.strain,
-                     gen.en_difference_ads,
-                     gen.en_difference_chemi,
-                     ]
+        train_fpv = default_fingerprinters(gen, 'adsorbates')
         matrix = gen.return_vec(images, train_fpv)
         labels = gen.return_names(train_fpv)
         print(np.shape(matrix), type(matrix))
@@ -102,22 +78,11 @@ class TestAdsorbateFeatures(unittest.TestCase):
         images = autogen_info(images)
         print(str(len(images)) + ' training examples.')
         gen = FeatureGenerator(nprocs=1)
-        train_fpv = [gen.mean_chemisorbed_atoms,
-                     gen.count_chemisorbed_fragment,
-                     gen.count_ads_atoms,
-                     gen.count_ads_bonds,
-                     gen.mean_site,
-                     gen.sum_site,
-                     gen.mean_surf_ligands,
-                     gen.term,
-                     gen.bulk,
-                     gen.strain,
-                     gen.en_difference_ads,
-                     gen.en_difference_chemi,
-                     gen.db_size,
-                     gen.ctime,
-                     gen.dbid,
-                     gen.delta_energy]
+        train_fpv = default_fingerprinters(gen, 'adsorbates')
+        train_fpv += [gen.db_size,
+                      gen.ctime,
+                      gen.dbid,
+                      gen.delta_energy]
         matrix = gen.return_vec(images, train_fpv)
         labels = gen.return_names(train_fpv)
         print(np.shape(matrix), type(matrix))
