@@ -1,5 +1,7 @@
 # dev
 
+-   Genetic algorithm feature selection can parallelize over population within each generation.
+
 # Version 0.4.1 (April 2018)
 
 -   AtoML renamed to CatLearn and moved to Github.

@@ -3,8 +3,8 @@ import numpy as np
 import random
 import warnings
 import copy
-from tqdm import trange
-
+from tqdm import trange, tqdm
+import multiprocessing
 from catlearn.cross_validation import k_fold
 from .initialize import initialize_population
 from .mating import cut_and_splice
@@ -17,9 +17,9 @@ from .io import _write_data
 class GeneticAlgorithm(object):
     """Genetic algorithm for parameter optimization."""
 
-    def __init__(self, population_size, fit_func, features, targets,
+    def __init__(self, fit_func, features, targets, population_size='auto',
                  population=None, operators=None, fitness_parameters=1,
-                 nsplit=2, accuracy=None):
+                 nsplit=2, accuracy=None, nprocs=1):
         """Initialize the genetic algorithm.
 
         Parameters
@@ -40,7 +40,7 @@ class GeneticAlgorithm(object):
             mutation operations.
         fitness_parameters : int
             The number of variables to optimize. Default is a single variable.
-        nslpit : int
+        nsplit : int
             Number of data splits for k-fold cv.
         accuracy : int
             Number of decimal places to include when finding unique candidates
@@ -48,18 +48,32 @@ class GeneticAlgorithm(object):
             performed.
         """
         # Set parameters.
+        if nprocs is None:
+            self.nprocs = multiprocessing.cpu_count()
+        elif isinstance(nprocs, int):
+            self.nprocs = nprocs
+        else:
+            msg = "argument nprocs must be an integer or None."
+            raise ValueError(msg)
         self.step = -1
-        self.population_size = population_size
         self.fit_func = fit_func
         self.dimension = features.shape[1]
         self.nsplit = nsplit
         self.accuracy = accuracy
 
+        if population_size == 'auto':
+            self.population_size = 2 * self.nprocs * ((7 // self.nprocs) + 1)
+        elif isinstance(population_size, int):
+            self.population_size = population_size
+        else:
+            msg = "argument population_size must be an integer or 'auto'."
+            raise ValueError(msg)
+
         # Define the starting population.
         self.population = population
         if self.population is None:
             self.population = initialize_population(
-                population_size, self.dimension)
+                self.population_size, self.dimension)
 
         # Define the operators to use.
         self.operators = operators
@@ -237,41 +251,54 @@ class GeneticAlgorithm(object):
             The fitness based on the new parameters.
         """
         # Initialize array.
-        fit = np.zeros((len(param_list), self.fitness_parameters))
+        if self.nprocs == 1:
+            fit = np.zeros((len(param_list), self.fitness_parameters))
 
-        bool_list = np.asarray(param_list, dtype=np.bool)
-        for index in trange(bool_list.shape[0], leave=False,
-                            desc='working generation {}'.format(self.step + 1)
-                            ):
-            parameter = bool_list[index]
-            calc_fit = np.zeros(self.fitness_parameters)
-            for k in range(self.nsplit):
-                # Sort out training and testing data.
-                train_features = copy.deepcopy(self.features)
-                train_targets = copy.deepcopy(self.targets)
-                test_features = train_features.pop(k)[:, parameter]
-                test_targets = train_targets.pop(k)
-
-                train_features = np.concatenate(train_features,
-                                                axis=0)[:, parameter]
-                train_targets = np.concatenate(train_targets, axis=0)
-                try:
-                    calc_fit += np.array(self.fit_func(
-                        train_features, train_targets, test_features,
-                        test_targets))
-                except ValueError:
-                    # If there is a problem calculating fitness assign -inf.
-                    calc_fit += np.array(
-                        [float('-inf')] * self.fitness_parameters)
-                    msg = 'The fitness function is failing. Returning -inf.'
-                    warnings.warn(msg)
-
-            fit[index] = calc_fit / float(self.nsplit)
+            bool_list = np.asarray(param_list, dtype=np.bool)
+            for index in trange(bool_list.shape[0], leave=False,
+                                desc='working generation {}'.format(self.step +
+                                                                    1)):
+                args = (index, bool_list, self.fitness_parameters,
+                        self.features,
+                        self.targets,
+                        self.fit_func,
+                        self.nsplit)
+                calc_fit = _cross_validate(args)[1]
+                fit[index] = calc_fit / float(self.nsplit)
+        else:
+            fit = self._parallel_iterator(param_list)
 
         if self.pareto:
             fit = self._pareto_trainsform(fit)
 
         return np.reshape(fit, (len(fit),))
+
+    def _parallel_iterator(self, param_list_ordered):
+        fit = np.zeros((len(param_list_ordered), self.fitness_parameters))
+
+        # Order param_list according to size descending.
+        nparams = [sum(p) for p in param_list_ordered]
+        i = np.argsort(nparams)[::-1]
+        param_list = list(np.array(param_list_ordered)[i])
+
+        bool_list = np.asarray(param_list, dtype=np.bool)
+        d = bool_list.shape[0]
+        args = (
+            (x, bool_list, self.fitness_parameters,
+             self.features,
+             self.targets,
+             self.fit_func,
+             self.nsplit,
+             ) for x in np.arange(d))
+        pool = multiprocessing.Pool(self.nprocs)
+        for r in tqdm(pool.imap_unordered(
+                _cross_validate, args), total=d,
+                desc='nested              ', leave=False):
+            fit[r[0]] = r[1] / float(self.nsplit)
+
+        # Return fitness in original order.
+        fit_reordered = fit[np.argsort(i), :]
+        return fit_reordered
 
     def _pareto_trainsform(self, fitness):
         """Function to transform a variable with fitness to a pareto fitness.
@@ -326,3 +353,59 @@ class GeneticAlgorithm(object):
             np.mean(self.fitness), np.min(self.fitness))
 
         print(msg)
+
+
+def _cross_validate(args):
+    """Return fitness metrics from k-fold cross validation of a user defined
+    function fit_func.
+
+    Parameters
+    ----------
+    args : tuple
+        Arguments in a tuple:
+
+        index : int
+            index.
+        bool_list : list
+            Booleans switching descriptors on or off.
+        fitness_parameters : int
+            The number of variables to optimize. Default is a single variable.
+        features : array
+            The feature space upon which to optimize.
+        targets : array
+            The targets corresponding to the feature data.
+        fit_func : object
+            User defined function to calculate fitness.
+        nsplit : int
+            Number of data splits for k-fold cv.
+    """
+    index = args[0]
+    bool_list = args[1]
+    fitness_parameters = args[2]
+    features = args[3]
+    targets = args[4]
+    fit_func = args[5]
+    nsplit = args[6]
+    parameter = bool_list[index]
+    calc_fit = np.zeros(fitness_parameters)
+    for k in range(nsplit):
+        # Sort out training and testing data.
+        train_features = copy.deepcopy(features)
+        train_targets = copy.deepcopy(targets)
+        test_features = train_features.pop(k)[:, parameter]
+        test_targets = train_targets.pop(k)
+
+        train_features = np.concatenate(train_features,
+                                        axis=0)[:, parameter]
+        train_targets = np.concatenate(train_targets, axis=0)
+        try:
+            calc_fit += np.array(fit_func(
+                train_features, train_targets, test_features,
+                test_targets))
+        except ValueError:
+            # If there is a problem calculating fitness assign -inf.
+            calc_fit += np.array(
+                [float('-inf')] * fitness_parameters)
+            msg = 'The fitness function is failing. Returning -inf.'
+            warnings.warn(msg)
+    return index, calc_fit

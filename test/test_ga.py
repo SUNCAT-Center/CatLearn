@@ -26,9 +26,22 @@ class TestGeneticAlgorithm(unittest.TestCase):
                               population=None)
         self.assertEqual(np.shape(ga.population), (10, 20))
 
-        ga.search(50)
+        ga.search(3)
         self.assertTrue(len(ga.population) == 10)
         self.assertTrue(len(ga.fitness) == 10)
+
+    def test_parallel(self):
+        """Simple test case to make sure it doesn't crash."""
+        train_features, train_targets, _, _ = get_data()
+        train_features = train_features[:, :20]
+
+        ga = GeneticAlgorithm(population_size='auto',
+                              fit_func=minimize_error,
+                              features=train_features,
+                              targets=train_targets,
+                              population=None,
+                              nprocs=None)
+        ga.search(3)
 
     def test_pareto(self):
         """Simple test case to make sure it doesn't crash."""
@@ -43,7 +56,7 @@ class TestGeneticAlgorithm(unittest.TestCase):
                               fitness_parameters=2)
         self.assertEqual(np.shape(ga.population), (10, 20))
 
-        ga.search(50)
+        ga.search(3)
         self.assertTrue(len(ga.population) == 10)
         self.assertTrue(len(ga.fitness) == 10)
 
@@ -55,7 +68,7 @@ class TestGeneticAlgorithm(unittest.TestCase):
                               fitness_parameters=2)
         self.assertEqual(np.shape(ga.population), (10, 20))
 
-        ga.search(50)
+        ga.search(3)
         self.assertTrue(len(ga.population) == 10)
         self.assertTrue(len(ga.fitness) == 10)
 
@@ -74,7 +87,7 @@ class TestGeneticAlgorithm(unittest.TestCase):
                               population=None)
         self.assertEqual(np.shape(ga.population), (10, 20))
 
-        ga.search(50, convergence_operator=conv)
+        ga.search(30, convergence_operator=conv)
         self.assertTrue(len(ga.population) == 10)
         self.assertTrue(len(ga.fitness) == 10)
 
@@ -103,7 +116,7 @@ class TestGeneticAlgorithm(unittest.TestCase):
                                population=old_pop)
         self.assertTrue(np.allclose(ga2.population, ga1.population))
 
-        ga2.search(50)
+        ga2.search(3)
         self.assertTrue(len(ga2.population) == 10)
         self.assertTrue(len(ga2.fitness) == 10)
 
