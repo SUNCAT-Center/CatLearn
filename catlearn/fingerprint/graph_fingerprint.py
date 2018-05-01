@@ -102,10 +102,16 @@ class GraphFingerprintGenerator(BaseGenerator):
         con = self._normalize_neighbors(data)
 
         for i, ep in enumerate(self.element_parameters):
+            # Define legth of current descriptor set.
+            start_index = i * self.atom_len
+            end_index = start_index + self.atom_len
+
+            # Generate set of descriptors
             pro = self._prop2matrix(data, ep)
             result = np.dot(con, pro)
 
-            features[i * self.atom_len:(i + 1) * self.atom_len] = np.sort(
+            # Assign results to correct indices in feature array.
+            features[start_index:end_index] = np.sort(
                 np.mean(result, axis=1))[::-1]
 
         return features
