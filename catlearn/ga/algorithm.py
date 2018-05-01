@@ -48,7 +48,13 @@ class GeneticAlgorithm(object):
             performed.
         """
         # Set parameters.
-        self.nprocs = nprocs
+        if nprocs is None:
+            self.nprocs = multiprocessing.cpu_count()
+        elif isinstance(nprocs, int):
+            self.nprocs = nprocs
+        else:
+            msg = "argument nprocs must be an integer or None."
+            raise ValueError(msg)
         self.step = -1
         self.fit_func = fit_func
         self.dimension = features.shape[1]
@@ -56,7 +62,7 @@ class GeneticAlgorithm(object):
         self.accuracy = accuracy
 
         if population_size == 'auto':
-            population_size = 2 * self.nprocs * ((16 // self.nprocs) + 1)
+            self.population_size = 2 * self.nprocs * ((7 // self.nprocs) + 1)
         elif isinstance(population_size, int):
             self.population_size = population_size
         else:
