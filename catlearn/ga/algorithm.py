@@ -17,7 +17,7 @@ from .io import _write_data
 class GeneticAlgorithm(object):
     """Genetic algorithm for parameter optimization."""
 
-    def __init__(self, fit_func, features, targets, population_size=None,
+    def __init__(self, fit_func, features, targets, population_size='auto',
                  population=None, operators=None, fitness_parameters=1,
                  nsplit=2, accuracy=None, nprocs=1):
         """Initialize the genetic algorithm.
@@ -40,7 +40,7 @@ class GeneticAlgorithm(object):
             mutation operations.
         fitness_parameters : int
             The number of variables to optimize. Default is a single variable.
-        nslpit : int
+        nsplit : int
             Number of data splits for k-fold cv.
         accuracy : int
             Number of decimal places to include when finding unique candidates
@@ -55,21 +55,19 @@ class GeneticAlgorithm(object):
         self.nsplit = nsplit
         self.accuracy = accuracy
 
-        if population_size is None:
-            if self.nprocs == 1:
-                self.population_size = 10
-            elif self.nprocs >= 8:
-                self.population_size = self.nprocs
-            else:
-                self.population_size = self.nprocs * 2
-        else:
+        if population_size == 'auto':
+            population_size = 2 * self.nprocs * ((16 // self.nprocs) + 1)
+        elif isinstance(population_size, int):
             self.population_size = population_size
+        else:
+            msg = "argument population_size must be an integer or 'auto'."
+            raise ValueError(msg)
 
         # Define the starting population.
         self.population = population
         if self.population is None:
             self.population = initialize_population(
-                population_size, self.dimension)
+                self.population_size, self.dimension)
 
         # Define the operators to use.
         self.operators = operators
@@ -269,8 +267,13 @@ class GeneticAlgorithm(object):
 
         return np.reshape(fit, (len(fit),))
 
-    def _parallel_iterator(self, param_list):
-        fit = np.zeros((len(param_list), self.fitness_parameters))
+    def _parallel_iterator(self, param_list_ordered):
+        fit = np.zeros((len(param_list_ordered), self.fitness_parameters))
+
+        # Order param_list according to size descending.
+        nparams = [sum(p) for p in param_list_ordered]
+        i = np.argsort(nparams)[::-1]
+        param_list = list(np.array(param_list_ordered)[i])
 
         bool_list = np.asarray(param_list, dtype=np.bool)
         d = bool_list.shape[0]
@@ -286,7 +289,10 @@ class GeneticAlgorithm(object):
                 _cross_validate, args), total=d,
                 desc='nested              ', leave=False):
             fit[r[0]] = r[1] / float(self.nsplit)
-        return fit
+
+        # Return fitness in original order.
+        fit_reordered = fit[np.argsort(i), :]
+        return fit_reordered
 
     def _pareto_trainsform(self, fitness):
         """Function to transform a variable with fitness to a pareto fitness.
@@ -344,7 +350,29 @@ class GeneticAlgorithm(object):
 
 
 def _cross_validate(args):
-    """  """
+    """Return fitness metrics from k-fold cross validation of a user defined
+    function fit_func.
+
+    Parameters
+    ----------
+    args : tuple
+        Arguments in a tuple:
+
+        index : int
+            index.
+        bool_list : list
+            Booleans switching descriptors on or off.
+        fitness_parameters : int
+            The number of variables to optimize. Default is a single variable.
+        features : array
+            The feature space upon which to optimize.
+        targets : array
+            The targets corresponding to the feature data.
+        fit_func : object
+            User defined function to calculate fitness.
+        nsplit : int
+            Number of data splits for k-fold cv.
+    """
     index = args[0]
     bool_list = args[1]
     fitness_parameters = args[2]
