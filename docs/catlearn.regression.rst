@@ -1,50 +1,47 @@
-catlearn.regression package
-===========================
+catlearn.regression
+===================
 
-Subpackages
------------
 
 .. toctree::
 
     catlearn.regression.gpfunctions
 
-Submodules
-----------
 
-catlearn.regression.acquisition\_functions module
--------------------------------------------------
+
+catlearn.regression.acquisition\_functions
+------------------------------------------
 
 .. automodule:: catlearn.regression.acquisition_functions
     :members:
     :undoc-members:
     :show-inheritance:
 
-catlearn.regression.cost\_function module
------------------------------------------
+catlearn.regression.cost\_function
+----------------------------------
 
 .. automodule:: catlearn.regression.cost_function
     :members:
     :undoc-members:
     :show-inheritance:
 
-catlearn.regression.gaussian\_process module
---------------------------------------------
+catlearn.regression.gaussian\_process
+-------------------------------------
 
 .. automodule:: catlearn.regression.gaussian_process
     :members:
     :undoc-members:
     :show-inheritance:
 
-catlearn.regression.ridge\_regression module
---------------------------------------------
+catlearn.regression.ridge\_regression
+-------------------------------------
 
 .. automodule:: catlearn.regression.ridge_regression
     :members:
     :undoc-members:
     :show-inheritance:
 
-catlearn.regression.scikit\_wrapper module
-------------------------------------------
+catlearn.regression.scikit\_wrapper
+-----------------------------------
 
 .. automodule:: catlearn.regression.scikit_wrapper
     :members:

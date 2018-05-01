@@ -145,20 +145,21 @@ def _neighbor_iterator(dist, radius_matrix, buffer_matrix, n,
 
 def ase_connectivity(atoms, cutoffs=None, count_bonds=True):
     """Return a connectivity matrix calculated of an atoms object.
+
     If no neighborlist or connectivity matrix is attached to the atoms object,
     a new one will be generated. Multiple connections are counted.
 
     Parameters
     ----------
     atoms : object
-        ase atoms object.
+        An ase atoms object.
     cutoffs : list
-        list of cutoff radii for the atoms, ordered by atom index.
+        A list of cutoff radii for the atoms, ordered by atom index.
 
     Returns
     -------
-    array
-        n by n, where n is len(atoms).
+    conn : array
+        An n by n, where n is len(atoms).
     """
     if hasattr(atoms, 'connectivity'):
         return atoms.connectivity

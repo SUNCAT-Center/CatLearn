@@ -1,0 +1,33 @@
+[[source]]
+url = "https://pypi.python.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+ase = "==3.16.0"
+"h5py" = "==2.7.1"
+networkx = "==2.1.0"
+numpy = "==1.14.3"
+pandas = "==0.22.0"
+scikit-learn = "==0.19.1"
+scipy = "==1.0.1"
+tqdm = "==4.23.1"
+
+[dev-packages]
+pytest-cov = "*"
+piprot = "*"
+pyinstrument = "*"
+setuptools = "*"
+twine = "*"
+sphinx = "*"
+sphinx-autobuild = "*"
+sphinxcontrib-napoleon = "*"
+sphinx-rtd-theme = "*"
+recommonmark = "*"
+matplotlib = "*"
+seaborn = "*"
+sty = "==1.0.0b6"
+gpflow = "*"
+
+[requires]
+python_version = "3.6"

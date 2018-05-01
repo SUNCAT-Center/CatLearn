@@ -8,13 +8,17 @@ There are some general coding conventions that the CatLearn repository adheres t
 
 -   Code should adhere to the [pep8](https://www.python.org/dev/peps/pep-0008/) and [pyflakes](https://pypi.python.org/pypi/pyflakes) style guides.
 
+-   Tests are run using [TravisCI](travis-ci.org) and coverage tracked using [Coveralls](coveralls.io).
+
 -   When new functions are added, tests should be written and added to the CI script.
+
+-   Documentation is hosted on Read the Docs at [http://catlearn.readthedocs.io](http://catlearn.readthedocs.io).
 
 -   Should use NumPy style [docstrings](https://github.com/numpy/numpy/blob/master/doc/HOWTO_DOCUMENT.rst.txt).
 
 ## Git Setup
 
-It is a bad idea to develop directly on the on the main CatLearn repository. Instead, fork a version into your own namespace on Github with the following:
+We adhere to the git workflow described [here](http://nvie.com/posts/a-successful-git-branching-model/), if you are considering contributing, please familiarize yourself with this. It is a bad idea to develop directly on the on the main CatLearn repository. Instead, fork a version into your own namespace on Github with the following:
 
 -   Fork the repository and then clone it to your local machine.
 
@@ -68,6 +72,36 @@ The following workflow is recommended when adding some new functionality:
     ```
 
 -   When the desired changes have been made on your fork of the repository, open up a merge request on Github.
+
+## Environment
+
+It is highly recommended to use `pipenv` for handling dependencies and the virtual environment, more information can be found [here](https://docs.pipenv.org/). Once installed, go to the root directory of CatLearn and use:
+
+```shell
+$ pipenv shell
+```
+
+From here it is possible to install and upgrade all the dependencies:
+
+```shell
+$ pipenv install --dev
+$ pipenv update
+```
+
+There are a number of packages that may be important for the development cycle, these are installed with the `--dev` flag. There are then two ways to install additional dependencies required for new functionality, etc:
+
+```shell
+$ pipenv install package
+$ pipenv install --dev package
+```
+
+The first command will install the package as a dependency for everyone using the code, e.g. people who install CatLearn with `pip` would be expected to also install this dependency. The second line will only install a package for developers. This workflow can even be used to keep the `requirements.txt` file up-to-date:
+
+```shell
+$ pipenv lock -r > requirements.txt
+```
+
+When complete, use `exit` to quit the virtualenv.
 
 ## Docker
 

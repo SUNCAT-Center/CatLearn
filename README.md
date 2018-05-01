@@ -14,6 +14,7 @@ Please see the [tutorials](https://github.com/SUNCAT-Center/CatLearn/tree/master
 
 -   [Installation](#installation)
 -   [Usage](#usage)
+-   [Tutorials](#tutorials)
 -   [Functionality](#functionality)
 -   [Contribution](#contribution)
 
@@ -98,6 +99,10 @@ gp = GaussianProcess(kernel_dict=kernel, regularization=1e-3,
 # Get the predictions.
 prediction = gp.predict(test_fp=test_features)
 ```
+
+## Tutorials
+
+[(Back to top)](#table-of-contents)
 
 The above sample of code will train a GP with the squared exponential kernel, fitting some random function. Of course, this isn't so useful, more helpful examples and test scripts are present for most features; primarily, please see the [tutorials](https://github.com/SUNCAT-Center/CatLearn/tree/master/tutorials).
 

@@ -1,4 +1,12 @@
-"""Particle fingerprint functions."""
+"""Nanoparticle fingerprint functions.
+
+These functions will typically perform well at describing chemical ordering
+within alloyed nanoparticles. However, they may be applicable to other
+applications where bond counting or coordination numbers are important
+descriptors.
+
+This class inherits from the catlearn.fingerprint.BaseGenerator function.
+"""
 from __future__ import absolute_import
 from __future__ import division
 
@@ -115,7 +123,18 @@ class ParticleFingerprintGenerator(BaseGenerator):
         return nnlist
 
     def bond_count_vec(self, data):
-        """Bond counting with a distribution measure for coordination."""
+        """Bond counting with a distribution measure for coordination.
+
+        Parameters
+        ----------
+        data : object
+            Data object with atomic distances.
+
+        Returns
+        -------
+        track_nnmat : list
+            List with summed number of atoms with given coordination numbers.
+        """
         elements = sorted(set(self.get_atomic_numbers(data)))
 
         # Get coordination number counting.
@@ -158,7 +177,6 @@ class ParticleFingerprintGenerator(BaseGenerator):
 
     def connections_vec(self, data):
         """Sum atoms with a certain number of connections."""
-        fp = []
         # WARNING: Will be set permanently whichever atom is first passed.
         if self.atom_types is None:
             msg = 'atom_types variable will be set permanently to whichever '
@@ -166,6 +184,7 @@ class ParticleFingerprintGenerator(BaseGenerator):
             warnings.warn(msg)
             self.atom_types = sorted(frozenset(self.get_atomic_numbers(data)))
 
+        fp = []
         for an in self.atom_types:
             conn = get_atoms_connections(data, max_conn=self.max_bonds,
                                          no_count_types=[an])

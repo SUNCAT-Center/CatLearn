@@ -1,4 +1,11 @@
-"""Standard fingerprint functions."""
+"""Standard fingerprint functions.
+
+These feature sets should perform relatively well on a variety of different
+systems. They are general descriptors based predominantly on the elemental
+properties and in some cases structure.
+
+This class inherits from the catlearn.fingerprint.BaseGenerator function.
+"""
 from __future__ import absolute_import
 from __future__ import division
 

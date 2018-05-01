@@ -1,8 +1,4 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Mon Feb  6 15:04:38 2017
-
-This function constructs a dictionary with abinitio_energies.
+"""This function constructs a dictionary with abinitio_energies.
 
 Input:
     fname (str) path/filename of ase.db file

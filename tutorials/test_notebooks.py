@@ -1,11 +1,11 @@
-"""Function to test jupyter notebooks."""
+"""Tests for the jupyter notebooks."""
 import os
 import subprocess
 from sty import fg, ef, rs
 
 
 def test_notebooks(notebook):
-    """Function to run a noyebook.
+    """Function to run a notebook.
 
     Parameters
     ----------
@@ -28,7 +28,8 @@ def test_notebooks(notebook):
     try:
         os.remove('{}/out_file.ipynb'.format(dirpath))
     except FileNotFoundError:
-        print(ef.bold + '\n{} failed\n'.format(name) + rs.bold)
+        print(ef.bold + fg(201) + '\n{} failed\n'.format(name) + fg.rs +
+              rs.bold)
         exit()
 
 

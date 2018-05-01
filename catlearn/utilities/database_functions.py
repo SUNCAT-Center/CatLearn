@@ -145,35 +145,34 @@ class DescriptorDatabase(object):
 
 
 class FingerprintDB():
-    """ A class for accessing a temporary SQLite database. This
-    function works as a context manager and should be used as follows:
+    """A class for accessing a temporary SQLite database.
+
+    This function works as a context manager and should be used as follows:
 
     with FingerprintDB() as fpdb:
         (Perform operation here)
 
-    This syntax will automatically construct the temporary database,
-    or access an existing one. Upon exiting the indentation, the
-    changes to the database will be automatically commited.
+    This syntax will automatically construct the temporary database, or access
+    an existing one. Upon exiting the indentation, the changes to the database
+    will be automatically commited.
     """
 
     def __init__(self, db_name='fingerprints.db', verbose=False):
-        """ The __init__ function is automatically called when the
-        class is referenced.
+        """Initialize the class.
 
-        Args:
-            db_name (str): Name of the database fileto access. Will
-            connect to 'fingerprints.db' by default.
-            verbose (bool): Will print additional information.
+        Parameters
+        ----------
+        db_name : str
+            Name of the database file to access. Will connect to
+            'fingerprints.db' by default.
+        verbose : bool
+            Will print additional information.
         """
-
         self.db_name = db_name
         self.verbose = verbose
 
     def __enter__(self):
-        """ This function is automatically called whenever the class
-        is used together with a 'with' statement.
-        """
-
+        """Called whenever the class is used with a 'with' statement."""
         self.con = sqlite3.connect(self.db_name)
         self.c = self.con.cursor()
         self.create_table()
@@ -181,14 +180,13 @@ class FingerprintDB():
         return self
 
     def __exit__(self, type, value, tb):
-        """ Upon exiting the 'with' statement, __exit__ is called.
-        """
-
+        """Upon exiting the 'with' statement, __exit__ is called."""
         self.con.commit()
         self.con.close()
 
     def create_table(self):
-        """ Creates the database table framework used in SQLite.
+        """Create the database table framework used in SQLite.
+
         This includes 3 tables: images, parameters, and fingerprints.
 
         The images table currently stores ase_id information and
@@ -201,7 +199,6 @@ class FingerprintDB():
         The fingerprints table holds a unique image and parmeter ID
         along with a float value for each. The ID pair must be unique.
         """
-
         self.c.execute("""CREATE TABLE IF NOT EXISTS images(
         iid INTEGER PRIMARY KEY AUTOINCREMENT,
         ase_id CHAR(32) UNIQUE NOT NULL,
@@ -227,16 +224,21 @@ class FingerprintDB():
         )""")
 
     def image_entry(self, asedb_entry=None, identity=None):
-        """ Enters a single ase-db image into the fingerprint database.
+        """Enter a single ase-db image into the fingerprint database.
 
         This table can be expanded to contain atoms objects in the future.
 
-        Args:
-            d (object): An ase-db object which can be parsed.
-            identity (str): An identifier of the users choice.
+        Parameters
+        ----------
+        d : object
+            An ase-db object which can be parsed.
+        identity : str
+            An identifier of the users choice.
 
-        Returns:
-            int: The ase ID colleted for the ase-db object.
+        Returns
+        -------
+        d.id : int
+            The ase ID colleted for the ase-db object.
         """
         atoms = asedb_entry.toatoms()
 
@@ -253,15 +255,16 @@ class FingerprintDB():
         return d.id
 
     def parameter_entry(self, symbol=None, description=None):
-        """ A function for entering unique parameters into the database.
+        """Function for entering unique parameters into the database.
 
-        Args:
-            symbol (str): A unique symbol the entry can be referenced
-            by. If None, the symbol will be the ID of the parameter
-            as a string.
-            description (str): A description of the parameter.
+        Paramters
+        ---------
+        symbol : str
+            A unique symbol the entry can be referenced by. If None, the symbol
+            will be the ID of the parameter as a string.
+        description : str
+            A description of the parameter.
         """
-
         # If no symbol is provided, use the parameter ID (str).
         if not symbol:
             self.c.execute("""SELECT MAX(pid) FROM parameters""")
@@ -280,19 +283,23 @@ class FingerprintDB():
         self.con.commit()
 
     def get_parameters(self, selection=None, display=False):
-        """ Get an array of integer values which correspond to the
-        parameter IDs for a set of provided symbols. If no selection
-        is provided, return all symbols.
+        """Return integer values corresponding to parameter IDs.
 
-        Args:
-            selection (list): List of symbols in parameters
-            table to be selected.
-            display (bool): If True, print parameter descriptions.
+        The array returned will be for a set of provided symbols. If no
+        selection is provided, return all symbols.
 
-        Returns:
-            1-d array: Return the integer values of selected parameters.
+        Parameters
+        ----------
+        selection : list
+            List of symbols in parameters table to be selected.
+        display : bool
+            If True, print parameter descriptions.
+
+        Returns
+        -------
+        res : array
+            Return the integer values of selected parameters.
         """
-
         # If no selection is made, return all parameters.
         if not selection:
             self.c.execute("""SELECT pid, symbol, description
@@ -314,17 +321,18 @@ class FingerprintDB():
         return np.array(res).T[0].astype(int)
 
     def fingerprint_entry(self, ase_id, param_id, value):
-        """ Enters a fingerprint value to the database for a
-        given ase and parameter ID.
+        """Enter fingerprint value to database for given ase and parameter ID.
 
-        Args:
-            ase_id (int): The ase unique ID associated with an atoms object
-            in the database.
-            param_id (int or str): The parameter ID or symbol associated
-            with and entry in the paramters table.
-            value (float): The value of the parameter for the atoms object.
+        Parameters
+        ----------
+        ase_id : int
+            The ase unique ID associated with an atoms object in the database.
+        param_id : int or str
+            The parameter ID or symbol associated with and entry in the
+            paramters table.
+        value : float
+            The value of the parameter for the atoms object.
         """
-
         # If parameter symbol is given, get the ID
         if isinstance(param_id, str):
             self.c.execute("""SELECT pid FROM parameters
@@ -349,20 +357,21 @@ class FingerprintDB():
                     image_id, param_id, value))
 
     def get_fingerprints(self, ase_ids, params=[]):
-        """ Get the array of values associated with the provided parameters
-        for each ase_id provided.
+        """Return values of provided parameters for each ase_id provided.
 
-        Args:
-            ase_id (list): The ase ID(s) associated with an atoms object in
-            the database.
-            params (list): List of symbols or int in parameters table to be
-            selected.
+        Parameters
+        ----------
+        ase_id : list
+            The ase ID(s) associated with an atoms object in the database.
+        params : list
+            List of symbols or int in parameters table to be selected.
 
-        Returns:
-            n-d array: An array of values associated with the given
-            parameters (a fingerprint) for each ase_id.
+        Returns
+        -------
+        fingerprint : array
+            An array of values associated with the given parameters (a
+            fingerprint) for each ase_id.
         """
-
         if isinstance(params, np.ndarray):
             params = params.tolist()
 

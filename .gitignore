@@ -1,5 +1,6 @@
 *.pyc
 *.pickle
+Pipfile.lock
 
 docs/_*
 

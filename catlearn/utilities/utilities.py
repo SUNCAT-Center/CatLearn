@@ -160,7 +160,8 @@ class LearningCurve(object):
 
 
 def _single_model(args):
-    """Run a model on a subset of training data with a fixed test set, and
+    """Run a model on a subset of training data with a fixed test set.
+
     Return the output of a function specified by the last argument.
 
     Parameters

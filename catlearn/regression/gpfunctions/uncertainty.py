@@ -29,7 +29,6 @@ def get_uncertainty(kernel_dict, test_fp, ktb, cinv, log_scale):
         The uncertainty on each prediction in the test data. By default, this
         includes a measure of the noise on the data.
     """
-
     # Generate the test covariance matrix.
     kxx = get_covariance(
         kernel_dict=kernel_dict, matrix1=test_fp, log_scale=log_scale,

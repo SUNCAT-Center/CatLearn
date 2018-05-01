@@ -69,10 +69,16 @@ class GraphFingerprintGenerator(BaseGenerator):
         con = self._normalize_neighbors(data)
 
         for i, ep in enumerate(self.element_parameters):
+            # Define legth of current descriptor set.
+            start_index = i * self.atom_len
+            end_index = start_index + self.atom_len
+
+            # Generate set of descriptors
             pro = self._prop2matrix(data, ep)
             result = np.dot(con, pro)
 
-            features[i * self.atom_len:(i + 1) * self.atom_len] = np.sort(
+            # Assign results to correct indices in feature array.
+            features[start_index:end_index] = np.sort(
                 np.sum(result, axis=1))[::-1]
 
         return features
@@ -96,10 +102,16 @@ class GraphFingerprintGenerator(BaseGenerator):
         con = self._normalize_neighbors(data)
 
         for i, ep in enumerate(self.element_parameters):
+            # Define legth of current descriptor set.
+            start_index = i * self.atom_len
+            end_index = start_index + self.atom_len
+
+            # Generate set of descriptors
             pro = self._prop2matrix(data, ep)
             result = np.dot(con, pro)
 
-            features[i * self.atom_len:(i + 1) * self.atom_len] = np.sort(
+            # Assign results to correct indices in feature array.
+            features[start_index:end_index] = np.sort(
                 np.mean(result, axis=1))[::-1]
 
         return features
@@ -160,7 +172,10 @@ class GraphFingerprintGenerator(BaseGenerator):
             # Replace inf values from zero divide.
             np.place(connection_matrix, connection_matrix == np.inf, 0.)
 
-        return connection_matrix
+        con = np.zeros((self.atom_len, self.atom_len))
+        con[:len(data), :len(data)] = connection_matrix
+
+        return con
 
     def _prop2matrix(self, data, prop):
         """Generate a property matrix based on the atomic types.
