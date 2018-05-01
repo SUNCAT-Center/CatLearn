@@ -17,6 +17,10 @@ from catlearn import __path__ as catlearn_path
 from .base import BaseGenerator
 
 
+default_molecule_fingerprinters = ['eigenspectrum_vec',
+                                   'composition_vec']
+
+
 class StandardFingerprintGenerator(BaseGenerator):
     """Function to build a fingerprint vector based on an atoms object."""
 

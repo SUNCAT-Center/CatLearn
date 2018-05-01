@@ -7,19 +7,19 @@ import numpy as np
 from collections import defaultdict
 import multiprocessing
 from tqdm import tqdm
-
 from .adsorbate_fingerprint import (AdsorbateFingerprintGenerator,
                                     default_adsorbate_fingerprinters)
 from .particle_fingerprint import ParticleFingerprintGenerator
-from .standard_fingerprint import StandardFingerprintGenerator
+from .standard_fingerprint import (StandardFingerprintGenerator,
+                                   default_molecule_fingerprinters)
 from .graph_fingerprint import GraphFingerprintGenerator
-from .bulk_fingerprint import BulkFingerprintGenerator
+from .bulk_fingerprint import (BulkFingerprintGenerator,
+                               default_bulk_fingerprinters)
 
 
-default_sets = {'bulk': [],
-                'fragment': [],
-                'adsorbates': default_adsorbate_fingerprinters
-                }
+default_sets = {'bulk': default_bulk_fingerprinters,
+                'fragment': default_molecule_fingerprinters,
+                'adsorbates': default_adsorbate_fingerprinters}
 
 
 def default_fingerprinters(generator, data_type):
@@ -40,6 +40,7 @@ def default_fingerprinters(generator, data_type):
     allowed = ['bulk', 'adsorbates', 'fragment']
     if data_type not in allowed:
         msg = "data type must be " + " or ".join(allowed)
+        msg += ". 'fragment' is for anything without periodic boundary cond."
         raise ValueError(msg)
     return [getattr(generator, name) for name in default_sets[data_type]]
 

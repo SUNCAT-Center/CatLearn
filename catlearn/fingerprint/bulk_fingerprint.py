@@ -36,6 +36,11 @@ default_extra_params = ['c6',
                         'ionenergies']
 
 
+default_bulk_fingerprinters = ['bulk_summation',
+                               'bulk_average',
+                               'bulk_std']
+
+
 class BulkFingerprintGenerator(BaseGenerator):
     def __init__(self, **kwargs):
         """Class containing functions for fingerprint generation."""
@@ -53,7 +58,7 @@ class BulkFingerprintGenerator(BaseGenerator):
 
         super(BulkFingerprintGenerator, self).__init__(**kwargs)
 
-    def summation(self, atoms=None):
+    def bulk_summation(self, atoms=None):
         """Return a fingerprint vector with propeties of the element name
         saved in the atoms.info['key_value_pairs']['bulk']"""
         if atoms is None:
@@ -108,7 +113,7 @@ class BulkFingerprintGenerator(BaseGenerator):
             result += [np.nansum([gs_magmom[z] for z in numbers])]
             return result
 
-    def average(self, atoms=None):
+    def bulk_average(self, atoms=None):
         """Return a fingerprint vector with propeties of the element name
         saved in the atoms.info['key_value_pairs']['bulk']"""
         if atoms is None:
@@ -163,7 +168,7 @@ class BulkFingerprintGenerator(BaseGenerator):
             result += [np.nanmean([gs_magmom[z] for z in numbers])]
             return result
 
-    def std(self, atoms=None):
+    def bulk_std(self, atoms=None):
         """Return a fingerprint vector with propeties of the element name
         saved in the atoms.info['key_value_pairs']['bulk']"""
         if atoms is None:
