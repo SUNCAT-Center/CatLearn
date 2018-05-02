@@ -1,14 +1,14 @@
 # Toy Model
 
-This tutorial is intended to help you get familiar with using AtoML to set up a model and do predictions.
+This tutorial is intended to help you get familiar with using CatLearn to set up a model and do predictions.
 
-First we set up a known underlying function in one dimension. Then we use it to generate some training data, adding a bit of random noise from a Gaussian distribution. Finally we will use AtoML to make predictions on some unseen fingerprint and benchmark those predictions against the known underlying function.
+First we set up a known underlying function in one dimension. Then we use it to generate some training data, adding a bit of random noise from a Gaussian distribution. Finally we will use CatLearn to make predictions on some unseen fingerprint and benchmark those predictions against the known underlying function.
 
 ## Setting up a Gaussian process
 
 [(Back to top)](#toy-model)
 
-AtoML's built-in Gaussian process can be set up like so:
+CatLearn's built-in Gaussian process can be set up like so:
 
 ```python
     gp = GaussianProcess(kernel_dict=kdict,
