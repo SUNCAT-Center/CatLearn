@@ -17,8 +17,12 @@ from catlearn import __path__ as catlearn_path
 from .base import BaseGenerator
 
 
-default_molecule_fingerprinters = ['eigenspectrum_vec',
-                                   'composition_vec']
+default_molecule_fingerprinters = [
+                                   # 'element_parameter_vec',
+                                   'eigenspectrum_vec',
+                                   'composition_vec',
+                                   'distance_vec'
+                                   ]
 
 
 class StandardFingerprintGenerator(BaseGenerator):
@@ -140,25 +144,6 @@ class StandardFingerprintGenerator(BaseGenerator):
             features = np.concatenate((features, f))
 
         return features
-
-    def element_mass_vec(self, data):
-        """Function to return a vector based on mass parameter.
-
-        Parameters
-        ----------
-        data : object
-            Data object with atomic masses available.
-
-        Returns
-        -------
-        features : ndarray
-            Vector of the summed mass.
-        """
-        # Return feature names in no atomic data is passed.
-        if data is None:
-            return ['sum_mass']
-        # Return the summed mass of the atoms object.
-        return np.array([sum(self.get_masses(data))])
 
     def _get_coulomb(self, data):
         """Generate the coulomb matrix.

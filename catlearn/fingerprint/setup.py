@@ -9,7 +9,8 @@ import multiprocessing
 from tqdm import tqdm
 from .adsorbate_fingerprint import (AdsorbateFingerprintGenerator,
                                     default_adsorbate_fingerprinters)
-from .particle_fingerprint import ParticleFingerprintGenerator
+from .particle_fingerprint import (ParticleFingerprintGenerator,
+                                   default_particle_fingerprinters)
 from .standard_fingerprint import (StandardFingerprintGenerator,
                                    default_molecule_fingerprinters)
 from .graph_fingerprint import GraphFingerprintGenerator
@@ -18,7 +19,8 @@ from .bulk_fingerprint import (BulkFingerprintGenerator,
 
 
 default_sets = {'bulk': default_bulk_fingerprinters,
-                'fragment': default_molecule_fingerprinters,
+                'fragment': (default_molecule_fingerprinters +
+                             default_particle_fingerprinters),
                 'adsorbates': default_adsorbate_fingerprinters}
 
 

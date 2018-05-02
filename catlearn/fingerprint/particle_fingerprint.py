@@ -26,6 +26,11 @@ except ImportError:
     no_asap = True
 
 
+default_particle_fingerprinters = [
+                                   'nearestneighbour_vec'
+                                   ]
+
+
 class ParticleFingerprintGenerator(BaseGenerator):
     """Function to build a fingerprint vector based on an atoms object."""
 
