@@ -2,7 +2,7 @@ ase==3.16.0
 click==6.7
 cycler==0.10.0
 decorator==4.3.0
-flask==1.0.1
+flask==1.0.2
 h5py==2.7.1
 itsdangerous==0.24
 jinja2==2.10
@@ -18,5 +18,5 @@ pytz==2018.4
 scikit-learn==0.19.1
 scipy==1.0.1
 six==1.11.0
-tqdm==4.23.1
+tqdm==4.23.2
 werkzeug==0.14.1
