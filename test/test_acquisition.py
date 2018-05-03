@@ -10,7 +10,8 @@ from ase.ga.data import DataConnection
 from catlearn.api.ase_data_setup import get_unique, get_train
 from catlearn.fingerprint.setup import FeatureGenerator
 from catlearn.regression import GaussianProcess
-from catlearn.regression.acquisition_functions import AcquisitionFunctions
+from catlearn.regression.acquisition_functions import rank, classify  # , cdf
+# from catlearn.utilities.surrogate_model import SurrogateModel
 
 wkdir = os.getcwd()
 
@@ -81,8 +82,7 @@ class TestAcquisition(unittest.TestCase):
         print('gaussian prediction (rmse):',
               pred['validation_error']['rmse_average'])
 
-        af = AcquisitionFunctions()
-        acq = af.rank(
+        acq = rank(
             targets=train_targets, predictions=pred['prediction'],
             uncertainty=pred['uncertainty'], train_features=train_features,
             test_features=test_features, metrics=[
@@ -94,7 +94,7 @@ class TestAcquisition(unittest.TestCase):
         self.assertTrue(len(acq['EI']) == len(pred['prediction']))
         self.assertTrue(len(acq['PI']) == len(pred['prediction']))
 
-        acq = af.classify(
+        acq = classify(
             classifier, train_atoms, test_atoms, targets=train_targets,
             predictions=pred['prediction'], uncertainty=pred['uncertainty'],
             train_features=train_features, test_features=test_features,
@@ -106,6 +106,29 @@ class TestAcquisition(unittest.TestCase):
         self.assertTrue(len(acq['EI']) == len(pred['prediction']))
         self.assertTrue(len(acq['PI']) == len(pred['prediction']))
 
+    # def test_surrogate_model(self):
+    #    train_features, train_targets, train_atoms, test_features, \
+    #        test_targets, test_atoms = self.get_data()
+    #    sg = SurrogateModel(_train_model, _predict,
+    #                        train_features, train_targets)
+    #    output = sg.test_acquisition(cdf)
+
+
+# def _train_model(train_features, train_targets):
+#    kdict = {'k1': {'type': 'gaussian', 'width': 1., 'scaling': 1.}}
+#    gp = GaussianProcess(
+#        train_fp=train_features, train_target=train_targets,
+#        kernel_dict=kdict, regularization=1e-3,
+#        optimize_hyperparameters=True, scale_data=True)
+#    return gp
+
+
+# def _predict(model, test_features, test_targets):
+#    pred = model.predict(
+#        test_fp=test_features, test_target=test_targets,
+#        get_validation_error=True, get_training_error=False,
+#        uncertainty=True)
+#    return pred
 
 if __name__ == '__main__':
     unittest.main()
