@@ -111,7 +111,8 @@ class TestAcquisition(unittest.TestCase):
             test_targets, test_atoms = self.get_data()
         sg = SurrogateModel(_train_model, _predict,
                             train_features, train_targets)
-        output = sg.test_acquisition(cdf)
+        sg.test_acquisition(cdf)
+        sg.acquire(cdf, test_features, min(train_targets))
 
 
 def _train_model(train_features, train_targets):
@@ -123,10 +124,15 @@ def _train_model(train_features, train_targets):
     return gp
 
 
-def _predict(model, test_features, test_targets):
+def _predict(model, test_features, test_targets=None):
+    if test_targets is None:
+        get_validation_error = False
+    else:
+        get_validation_error = True
     pred = model.predict(
         test_fp=test_features, test_target=test_targets,
-        get_validation_error=True, get_training_error=False,
+        get_validation_error=get_validation_error,
+        get_training_error=False,
         uncertainty=True)
     return pred
 

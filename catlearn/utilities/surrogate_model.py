@@ -51,7 +51,7 @@ class SurrogateModel(object):
         """Return an array of test results for a surrogate model.
         """
         if initial_subset is None:
-            train_index = list(range(2))
+            train_index = list(range(max(batch_size, 2)))
         else:
             train_index = initial_subset
         output = []
@@ -90,7 +90,7 @@ class SurrogateModel(object):
             output.append(score)
         return output
 
-    def acquire(self, acquisition_function, unlabeled_data, aq_targets,
+    def acquire(self, acquisition_function, unlabeled_data, objective,
                 initial_subset=None, batch_size=1):
         """Return indices of datapoints to acquire, from a known search space.
         """
@@ -101,7 +101,7 @@ class SurrogateModel(object):
         y = score['prediction']
         std = score['uncertainty']
         # Calculate acquisition values.
-        af = acquisition_function(aq_targets, y, std)
+        af = acquisition_function(objective, y, std)
         sample = np.argsort(af)[::-1]
         # Return best candidates and meta data.
         return list(sample[:batch_size]), score
