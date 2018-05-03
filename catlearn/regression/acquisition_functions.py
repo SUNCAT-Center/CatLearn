@@ -23,15 +23,6 @@ def optimistic(y_best, predictions, uncertainty):
     return a
 
 
-def gaussian(y_best, predictions, uncertainty):
-    """Find predictions that have the highest probability at x.
-
-    This function assumes a gaussian posterior.
-    """
-    return np.exp(-np.abs(predictions - y_best) / (
-        2. * uncertainty**2))
-
-
 def UCB(y_best, predictions, uncertainty, objective, kappa=1.5):
     """Upper-confidence bound acq. function."""
     if objective == 'max':
@@ -68,6 +59,15 @@ def PI(y_best, predictions, uncertainty, objective, noise=1.e-6):
         z = -((predictions - y_best) /
               (uncertainty + noise))
         return norm.cdf(z)
+
+
+def probability_density(y_best, predictions, uncertainty):
+    """Find predictions that have the highest probability at x.
+
+    This function assumes a gaussian posterior.
+    """
+    return np.exp(-np.abs(predictions - y_best) / (
+        2. * uncertainty**2))
 
 
 def cluster(train_features, targets, test_features, predictions, k_means=3):
@@ -109,7 +109,7 @@ def rank(targets, predictions, uncertainty, train_features=None,
     metrics : list
         list of strings.
         Accepted values are 'cdf', 'UCB', 'EI', 'PI', 'optimistic' and
-        'gaussian'.
+        'pdf'.
 
     Returns
     -------
@@ -140,8 +140,8 @@ def rank(targets, predictions, uncertainty, train_features=None,
         res['EI'] = EI(y_best, predictions, uncertainty, objective, noise)
     if 'PI' in metrics:
         res['PI'] = PI(y_best, predictions, uncertainty, objective, noise)
-    if 'gaussian' in metrics:
-        res['gaussian'] = gaussian(y_best, predictions, uncertainty)
+    if 'pdf' in metrics:
+        res['pdf'] = probability_density(y_best, predictions, uncertainty)
     if 'cluster' in metrics:
         res['cluster'] = cluster(train_features, targets, test_features,
                                  predictions, k_means)
@@ -179,7 +179,7 @@ def classify(classifier, train_atoms, test_atoms, targets,
     metrics : list
         list of strings.
         Accepted values are 'cdf', 'UCB', 'EI', 'PI', 'optimistic' and
-        'gaussian'.
+        'pdf'.
 
     Returns
     -------
@@ -243,9 +243,9 @@ def classify(classifier, train_atoms, test_atoms, targets,
         if 'PI' in metrics:
             tmp_res[i]['PI'] = PI(y_best, predictions, uncertainty, objective,
                                   noise)
-        if 'gaussian' in metrics:
-            tmp_res[i]['gaussian'] = gaussian(y_best, predictions,
-                                              uncertainty)
+        if 'pdf' in metrics:
+            tmp_res[i]['pdf'] = probability_density(y_best, predictions,
+                                                    uncertainty)
         if 'cluster' in metrics:
             raise NotImplemented
 
@@ -261,8 +261,8 @@ def classify(classifier, train_atoms, test_atoms, targets,
         res['EI'] = np.zeros(size)
     if 'PI' in metrics:
         res['PI'] = np.zeros(size)
-    if 'gaussian' in metrics:
-        res['gaussian'] = np.zeros(size)
+    if 'pdf' in metrics:
+        res['pdf'] = np.zeros(size)
     for i in tmp_res:
         for j, k in enumerate(tmp_res[i]['index']):
             if 'cdf' in metrics:
@@ -275,7 +275,7 @@ def classify(classifier, train_atoms, test_atoms, targets,
                 res['EI'][k] = tmp_res[i]['EI'][j]
             if 'PI' in metrics:
                 res['PI'][k] = tmp_res[i]['PI'][j]
-            if 'gaussian' in metrics:
-                res['gaussian'][k] = tmp_res[i]['gaussian'][j]
+            if 'pdf' in metrics:
+                res['pdf'][k] = tmp_res[i]['pdf'][j]
 
     return res

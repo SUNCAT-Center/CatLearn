@@ -86,10 +86,10 @@ class TestAcquisition(unittest.TestCase):
             targets=train_targets, predictions=pred['prediction'],
             uncertainty=pred['uncertainty'], train_features=train_features,
             test_features=test_features, metrics=[
-                'cdf', 'optimistic', 'gaussian', 'UCB', 'EI', 'PI'])
+                'cdf', 'optimistic', 'pdf', 'UCB', 'EI', 'PI'])
         self.assertTrue(len(acq['cdf']) == len(pred['prediction']))
         self.assertTrue(len(acq['optimistic']) == len(pred['prediction']))
-        self.assertTrue(len(acq['gaussian']) == len(pred['prediction']))
+        self.assertTrue(len(acq['pdf']) == len(pred['prediction']))
         self.assertTrue(len(acq['UCB']) == len(pred['prediction']))
         self.assertTrue(len(acq['EI']) == len(pred['prediction']))
         self.assertTrue(len(acq['PI']) == len(pred['prediction']))
@@ -98,10 +98,10 @@ class TestAcquisition(unittest.TestCase):
             classifier, train_atoms, test_atoms, targets=train_targets,
             predictions=pred['prediction'], uncertainty=pred['uncertainty'],
             train_features=train_features, test_features=test_features,
-            metrics=['cdf', 'optimistic', 'gaussian', 'UCB', 'EI', 'PI'])
+            metrics=['cdf', 'optimistic', 'pdf', 'UCB', 'EI', 'PI'])
         self.assertTrue(len(acq['cdf']) == len(pred['prediction']))
         self.assertTrue(len(acq['optimistic']) == len(pred['prediction']))
-        self.assertTrue(len(acq['gaussian']) == len(pred['prediction']))
+        self.assertTrue(len(acq['pdf']) == len(pred['prediction']))
         self.assertTrue(len(acq['UCB']) == len(pred['prediction']))
         self.assertTrue(len(acq['EI']) == len(pred['prediction']))
         self.assertTrue(len(acq['PI']) == len(pred['prediction']))
