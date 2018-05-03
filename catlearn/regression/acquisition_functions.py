@@ -32,7 +32,7 @@ def gaussian(y_best, predictions, uncertainty):
         2. * uncertainty**2))
 
 
-def UCB(y_best, predictions, uncertainty, objective, kappa):
+def UCB(y_best, predictions, uncertainty, objective, kappa=1.5):
     """Upper-confidence bound acq. function."""
     if objective == 'max':
         return -(predictions - kappa * uncertainty)
@@ -41,7 +41,7 @@ def UCB(y_best, predictions, uncertainty, objective, kappa):
         return -predictions + kappa * uncertainty
 
 
-def EI(y_best, predictions, uncertainty, objective, noise):
+def EI(y_best, predictions, uncertainty, objective, noise=1.e-6):
     """Expected improvement acq. function."""
     if objective == 'max':
         z = (predictions - y_best) / \
@@ -57,7 +57,7 @@ def EI(y_best, predictions, uncertainty, objective, noise):
                  uncertainty * norm.pdf(z))
 
 
-def PI(y_best, predictions, uncertainty, objective, noise):
+def PI(y_best, predictions, uncertainty, objective, noise=1.e-6):
     """Probability of improvement acq. function."""
     if objective == 'max':
         z = (predictions - y_best) / \
@@ -70,7 +70,7 @@ def PI(y_best, predictions, uncertainty, objective, noise):
         return norm.cdf(z)
 
 
-def cluster(train_features, targets, test_features, predictions, k_means):
+def cluster(train_features, targets, test_features, predictions, k_means=3):
     """Penalize test points that are too clustered."""
     fit = []
 
