@@ -4,12 +4,14 @@ AtoML 0.4.1
 """
 from __future__ import print_function
 import numpy as np
+from tqdm import tqdm
 
 
 class SurrogateModel(object):
     """Base class for feature generation."""
 
-    def __init__(self, train_model, predict, train_data, target):
+    def __init__(self, train_model, predict, acquisition_function,
+                 train_data, target):
         """Initialize the class.
 
         Parameters
@@ -35,6 +37,14 @@ class SurrogateModel(object):
                 test data matrix.
             test_target : list
                 test target feature.
+
+            Returns
+            ----------
+            acquition_args : list
+                ordered list of arguments for aqcuisition_function.
+            score : object
+                arbitratry meta data for output.
+
         train_data : array
             training data matrix.
         target : list
@@ -43,11 +53,11 @@ class SurrogateModel(object):
 
         self.train_model = train_model
         self.predict = predict
+        self.acquisition_function = acquisition_function
         self.train_data = train_data
         self.target = target
 
-    def test_acquisition(self, acquisition_function, initial_subset=None,
-                         batch_size=1, objective='max'):
+    def test_acquisition(self, initial_subset=None, batch_size=1):
         """Return an array of test results for a surrogate model.
         """
         if initial_subset is None:
@@ -55,7 +65,7 @@ class SurrogateModel(object):
         else:
             train_index = initial_subset
         output = []
-        for i in np.arange(len(self.target) // batch_size):
+        for i in tqdm(np.arange(len(self.target) // batch_size)):
             # Setup data.
             test_index = np.delete(np.arange(len(self.train_data)),
                                    train_index)
@@ -64,24 +74,16 @@ class SurrogateModel(object):
             test_fp = self.train_data[test_index, :]
             test_target = np.array(self.target)[test_index]
 
-            # Select a fitness reference.
-            if objective == 'max':
-                y_best = max(train_target)
-            elif objective == 'min':
-                y_best = min(train_target)
-            elif isinstance(objective, float):
-                y_best = objective
-
             if len(test_target) == 0:
                 break
             # Do regression.
             model = self.train_model(train_fp, train_target)
+
             # Make predictions.
-            score = self.predict(model, test_fp, test_target)
-            y = score['prediction']
-            std = score['uncertainty']
+            aqcuisition_args, score = self.predict(model, test_fp, test_target)
+
             # Calculate acquisition values.
-            af = acquisition_function(y_best, y, std)
+            af = self.acquisition_function(*aqcuisition_args)
             sample = np.argsort(af)[::-1]
 
             # Append best candidates to be acquired.
@@ -90,18 +92,16 @@ class SurrogateModel(object):
             output.append(score)
         return output
 
-    def acquire(self, acquisition_function, unlabeled_data, objective,
-                initial_subset=None, batch_size=1):
+    def acquire(self, unlabeled_data, initial_subset=None, batch_size=1):
         """Return indices of datapoints to acquire, from a known search space.
         """
         # Do regression.
         model = self.train_model(self.train_data, self.target)
         # Make predictions.
-        score = self.predict(model, unlabeled_data)
-        y = score['prediction']
-        std = score['uncertainty']
+        aqcuisition_args, score = self.predict(model, unlabeled_data)
+
         # Calculate acquisition values.
-        af = acquisition_function(objective, y, std)
+        af = self.acquisition_function(*aqcuisition_args)
         sample = np.argsort(af)[::-1]
         # Return best candidates and meta data.
         return list(sample[:batch_size]), score

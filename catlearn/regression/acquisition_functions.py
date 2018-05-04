@@ -3,28 +3,54 @@ from __future__ import absolute_import
 from __future__ import division
 
 import numpy as np
-from scipy.special import erf
 from scipy.stats import norm
 from collections import defaultdict, Counter
 from catlearn.utilities.clustering import cluster_features
 
 
-def cdf(y_best, predictions, uncertainty):
-    """Calculate the cumulative distribution function."""
-    cdf = 0.5 * (
-        1 + erf((predictions - y_best) / np.sqrt(
-            2 * uncertainty ** 2)))
-    return cdf
+def random_acquisition(y_best, predictions, uncertainty=None):
+    """Return random numbers for control experiments.
+
+    Parameters
+    ----------
+    y_best : float
+        Condition
+    predictions : list
+        Predicted means.
+    uncertainty : list
+        Uncertainties associated with the predictions.
+    """
+    return np.random.rand(len(predictions))
 
 
 def optimistic(y_best, predictions, uncertainty):
-    """Find predictions that will optimistically lead to progress."""
+    """Find predictions that will optimistically lead to progress.
+
+    Parameters
+    ----------
+    y_best : float
+        Condition
+    predictions : list
+        Predicted means.
+    uncertainty : list
+        Uncertainties associated with the predictions.
+    """
     a = predictions + uncertainty - y_best
     return a
 
 
-def UCB(y_best, predictions, uncertainty, objective, kappa=1.5):
-    """Upper-confidence bound acq. function."""
+def UCB(y_best, predictions, uncertainty, objective='max', kappa=1.5):
+    """Upper-confidence bound acq. function.
+
+    Parameters
+    ----------
+    y_best : float
+        Condition
+    predictions : list
+        Predicted means.
+    uncertainty : list
+        Uncertainties associated with the predictions.
+    """
     if objective == 'max':
         return -(predictions - kappa * uncertainty)
 
@@ -33,38 +59,94 @@ def UCB(y_best, predictions, uncertainty, objective, kappa=1.5):
 
 
 def EI(y_best, predictions, uncertainty, objective, noise=1.e-6):
-    """Expected improvement acq. function."""
+    """Expected improvement acq. function.
+
+    Parameters
+    ----------
+    y_best : float
+        Condition
+    predictions : list
+        Predicted means.
+    uncertainty : list
+        Uncertainties associated with the predictions.
+    """
     if objective == 'max':
-        z = (predictions - y_best) / \
-            (uncertainty + noise)
+        z = (predictions - y_best) / (uncertainty + noise)
         return (predictions - y_best) * norm.cdf(z) + \
             uncertainty * norm.pdf(
             z)
 
     if objective == 'min':
-        z = (-predictions + y_best) / \
-            (uncertainty + noise)
+        z = (-predictions + y_best) / (uncertainty + noise)
         return -((predictions - y_best) * norm.cdf(z) -
                  uncertainty * norm.pdf(z))
 
 
 def PI(y_best, predictions, uncertainty, objective, noise=1.e-6):
-    """Probability of improvement acq. function."""
+    """Probability of improvement acq. function.
+
+    Parameters
+    ----------
+    y_best : float
+        Condition
+    predictions : list
+        Predicted means.
+    uncertainty : list
+        Uncertainties associated with the predictions.
+    """
     if objective == 'max':
-        z = (predictions - y_best) / \
-            (uncertainty + noise)
+        z = (predictions - y_best) / (uncertainty + noise)
         return norm.cdf(z)
 
     if objective == 'min':
-        z = -((predictions - y_best) /
-              (uncertainty + noise))
+        z = -((predictions - y_best) / (uncertainty + noise))
         return norm.cdf(z)
+
+
+def proximity(y_best, predictions, uncertainty=None):
+    """Find predictions that have the shortest distance to x.
+
+    Parameters
+    ----------
+    y_best : float
+        Condition
+    predictions : list
+        Predicted means.
+    uncertainty : list
+        Uncertainties associated with the predictions.
+    """
+    return -np.abs(predictions - y_best)
+
+
+def optimistic_proximity(y_best, predictions, uncertainty):
+    """Find predictions that have the shortest distance to x
+    and the highest uncertainty.
+    This function assumes a gaussian posterior.
+
+    Parameters
+    ----------
+    y_best : float
+        Condition
+    predictions : list
+        Predicted means.
+    uncertainty : list
+        Uncertainties associated with the predictions.
+    """
+    return uncertainty - np.abs(predictions - y_best)
 
 
 def probability_density(y_best, predictions, uncertainty):
     """Find predictions that have the highest probability at x.
-
     This function assumes a gaussian posterior.
+
+    Parameters
+    ----------
+    y_best : float
+        Condition
+    predictions : list
+        Predicted means.
+    uncertainty : list
+        Uncertainties associated with the predictions.
     """
     return np.exp(-np.abs(predictions - y_best) / (
         2. * uncertainty**2))
@@ -130,8 +212,6 @@ def rank(targets, predictions, uncertainty, train_features=None,
         y_best = objective
 
     # Calculate fitness based on acquisition functions.
-    if 'cdf' in metrics:
-        res['cdf'] = cdf(y_best, predictions, uncertainty)
     if 'optimistic' in metrics:
         res['optimistic'] = optimistic(y_best, predictions, uncertainty)
     if 'UCB' in metrics:
@@ -229,8 +309,6 @@ def classify(classifier, train_atoms, test_atoms, targets,
         uncertainty = np.asarray(test[i]['uncertainty'])
         train_features = np.asarray(test[i]['train_features'])
         test_features = np.asarray(test[i]['test_features'])
-        if 'cdf' in metrics:
-            tmp_res[i]['cdf'] = cdf(y_best, predictions, uncertainty)
         if 'optimistic' in metrics:
             tmp_res[i]['optimistic'] = optimistic(targets, predictions,
                                                   uncertainty)
@@ -251,8 +329,6 @@ def classify(classifier, train_atoms, test_atoms, targets,
 
     res = {}
     size = len(test_atoms)
-    if 'cdf' in metrics:
-        res['cdf'] = np.zeros(size)
     if 'optimistic' in metrics:
         res['optimistic'] = np.zeros(size)
     if 'UCB' in metrics:
@@ -265,8 +341,6 @@ def classify(classifier, train_atoms, test_atoms, targets,
         res['pdf'] = np.zeros(size)
     for i in tmp_res:
         for j, k in enumerate(tmp_res[i]['index']):
-            if 'cdf' in metrics:
-                res['cdf'][k] = tmp_res[i]['cdf'][j]
             if 'optimistic' in metrics:
                 res['optimistic'][k] = tmp_res[i]['optimistic'][j]
             if 'UCB' in metrics:

@@ -10,7 +10,8 @@ from ase.ga.data import DataConnection
 from catlearn.api.ase_data_setup import get_unique, get_train
 from catlearn.fingerprint.setup import FeatureGenerator
 from catlearn.regression import GaussianProcess
-from catlearn.regression.acquisition_functions import rank, classify, cdf
+from catlearn.regression.acquisition_functions import (rank, classify,
+                                                       random_acquisition)
 from catlearn.utilities.surrogate_model import SurrogateModel
 
 wkdir = os.getcwd()
@@ -87,7 +88,6 @@ class TestAcquisition(unittest.TestCase):
             uncertainty=pred['uncertainty'], train_features=train_features,
             test_features=test_features, metrics=[
                 'cdf', 'optimistic', 'pdf', 'UCB', 'EI', 'PI'])
-        self.assertTrue(len(acq['cdf']) == len(pred['prediction']))
         self.assertTrue(len(acq['optimistic']) == len(pred['prediction']))
         self.assertTrue(len(acq['pdf']) == len(pred['prediction']))
         self.assertTrue(len(acq['UCB']) == len(pred['prediction']))
@@ -98,8 +98,7 @@ class TestAcquisition(unittest.TestCase):
             classifier, train_atoms, test_atoms, targets=train_targets,
             predictions=pred['prediction'], uncertainty=pred['uncertainty'],
             train_features=train_features, test_features=test_features,
-            metrics=['cdf', 'optimistic', 'pdf', 'UCB', 'EI', 'PI'])
-        self.assertTrue(len(acq['cdf']) == len(pred['prediction']))
+            metrics=['optimistic', 'pdf', 'UCB', 'EI', 'PI'])
         self.assertTrue(len(acq['optimistic']) == len(pred['prediction']))
         self.assertTrue(len(acq['pdf']) == len(pred['prediction']))
         self.assertTrue(len(acq['UCB']) == len(pred['prediction']))
@@ -109,10 +108,10 @@ class TestAcquisition(unittest.TestCase):
     def test_surrogate_model(self):
         train_features, train_targets, train_atoms, test_features, \
             test_targets, test_atoms = self.get_data()
-        sg = SurrogateModel(_train_model, _predict,
+        sg = SurrogateModel(_train_model, _predict, random_acquisition,
                             train_features, train_targets)
-        sg.test_acquisition(cdf)
-        sg.acquire(cdf, test_features, min(train_targets))
+        sg.test_acquisition()
+        sg.acquire(test_features)
 
 
 def _train_model(train_features, train_targets):
@@ -129,12 +128,15 @@ def _predict(model, test_features, test_targets=None):
         get_validation_error = False
     else:
         get_validation_error = True
-    pred = model.predict(
+    score = model.predict(
         test_fp=test_features, test_target=test_targets,
         get_validation_error=get_validation_error,
         get_training_error=False,
         uncertainty=True)
-    return pred
+    acquisition_args = [model.scaling.rescale_targets(model.train_target),
+                        score['prediction'],
+                        score['uncertainty']]
+    return acquisition_args, score
 
 
 if __name__ == '__main__':
