@@ -59,7 +59,7 @@ def UCB(y_best, predictions, uncertainty, objective='max', kappa=1.5):
 
 
 def EI(y_best, predictions, uncertainty, objective, noise=1.e-6):
-    """Expected improvement acq. function.
+    """Return expected improvement acq. function.
 
     Parameters
     ----------
@@ -104,7 +104,7 @@ def PI(y_best, predictions, uncertainty, objective, noise=1.e-6):
 
 
 def proximity(y_best, predictions, uncertainty=None):
-    """Find predictions that have the shortest distance to x.
+    """Return negative distances to y_best.
 
     Parameters
     ----------
@@ -119,9 +119,7 @@ def proximity(y_best, predictions, uncertainty=None):
 
 
 def optimistic_proximity(y_best, predictions, uncertainty):
-    """Find predictions that have the shortest distance to x
-    and the highest uncertainty.
-    This function assumes a gaussian posterior.
+    """Return uncertainties minus distances to y_best.
 
     Parameters
     ----------
@@ -136,8 +134,7 @@ def optimistic_proximity(y_best, predictions, uncertainty):
 
 
 def probability_density(y_best, predictions, uncertainty):
-    """Find predictions that have the highest probability at x.
-    This function assumes a gaussian posterior.
+    """Return probability densities at y_best.
 
     Parameters
     ----------
@@ -153,7 +150,21 @@ def probability_density(y_best, predictions, uncertainty):
 
 
 def cluster(train_features, targets, test_features, predictions, k_means=3):
-    """Penalize test points that are too clustered."""
+    """Penalize test points that are too clustered.
+
+    Parameters
+    ----------
+    train_features : array
+        Feature matrix for the training data.
+    targets : list
+        Training targets.
+    test_features : array
+        Feature matrix for the test data.
+    predictions : list
+        Predicted means.
+    k_means : int
+        Number of clusters.
+    """
     fit = []
 
     cf = cluster_features(
@@ -171,8 +182,8 @@ def cluster(train_features, targets, test_features, predictions, k_means=3):
 
 
 def rank(targets, predictions, uncertainty, train_features=None,
-         test_features=None, objective='max',
-         noise=1e-6, kappa=1.5, k_means=3,
+         test_features=None, objective='max', k_means=3,
+         kappa=1.5, noise=1e-6,
          metrics=['cdf', 'optimistic', 'UCB', 'EI', 'PI']):
     """Rank predictions based on acquisition function.
 
@@ -188,6 +199,12 @@ def rank(targets, predictions, uncertainty, train_features=None,
         Feature matrix for the training data.
     test_features : array
         Feature matrix for the test data.
+    k_means : int
+        Number of cluster to generate with clustering.
+    kappa: int
+        Constant that controls the explotation/exploration ratio in UCB.
+    noise: float
+        Small number must be added in the denominator for stability.
     metrics : list
         list of strings.
         Accepted values are 'cdf', 'UCB', 'EI', 'PI', 'optimistic' and
@@ -256,6 +273,12 @@ def classify(classifier, train_atoms, test_atoms, targets,
         Feature matrix for the training data.
     test_features : array
         Feature matrix for the test data.
+    k_means : int
+        Number of cluster to generate with clustering.
+    kappa: int
+        Constant that controls the explotation/exploration ratio in UCB.
+    noise: float
+        Small number must be added in the denominator for stability.
     metrics : list
         list of strings.
         Accepted values are 'cdf', 'UCB', 'EI', 'PI', 'optimistic' and

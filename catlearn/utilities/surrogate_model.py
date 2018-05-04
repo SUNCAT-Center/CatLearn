@@ -26,13 +26,20 @@ class SurrogateModel(object):
                 training data matrix.
             target : list
                 training target feature.
+
+            Returns
+            ----------
+            model : object
+                Trained model object, which can be accepted by predict.
+
         predict : object
             function which returns predictions, error estimates and meta data.
+
             Parameters
             ----------
 
             model : object
-                train_model
+                model returned by train_model.
             test_fp : array
                 test data matrix.
             test_target : list
@@ -44,6 +51,20 @@ class SurrogateModel(object):
                 ordered list of arguments for aqcuisition_function.
             score : object
                 arbitratry meta data for output.
+
+        acquisition_function : object
+            function which returns a list of acquisition function values,
+            where the largest value(s) are to be acquired.
+
+            Parameters
+            ----------
+
+            *aqcuisition_args
+
+            Returns
+            ----------
+            af : list
+                Acquisition function values corresponding.
 
         train_data : array
             training data matrix.
@@ -59,6 +80,14 @@ class SurrogateModel(object):
 
     def test_acquisition(self, initial_subset=None, batch_size=1):
         """Return an array of test results for a surrogate model.
+
+        Parameters
+        ----------
+        initial_subset : list
+            Row indices of data to train on in the first iteration.
+        batch_size : int
+            Number of training points to acquire (move from test to training)
+            in every iteration.
         """
         if initial_subset is None:
             train_index = list(range(max(batch_size, 2)))
@@ -94,6 +123,16 @@ class SurrogateModel(object):
 
     def acquire(self, unlabeled_data, initial_subset=None, batch_size=1):
         """Return indices of datapoints to acquire, from a known search space.
+
+        Parameters
+        ----------
+        unlabeled_data : array
+            Data matrix representing an unlabeled search space.
+        initial_subset : list
+            Row indices of data to train on in the first iteration.
+        batch_size : int
+            Number of training points to acquire (move from test to training)
+            in every iteration.
         """
         # Do regression.
         model = self.train_model(self.train_data, self.target)
