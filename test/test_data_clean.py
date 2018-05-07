@@ -37,8 +37,10 @@ class TestDataClean(unittest.TestCase):
     def test_inf(self):
         """Test cleaning inf variable features."""
         features = np.random.random_sample((50, 5))
-        features[1][0] = np.inf
-        features = clean.clean_infinite(features)['train']
+        features[0, 0] = np.nan
+        features[40:, 1] = np.nan
+        features = clean.clean_infinite(features,
+                                        max_impute_fraction=0.1)['train']
 
         self.assertTrue(np.shape(features) == (50, 4))
 
