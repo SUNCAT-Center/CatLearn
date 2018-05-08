@@ -8,15 +8,18 @@ from catlearn import __path__ as catlearn_path
 from ase.data import covalent_radii
 import numpy as np
 
+
 # Load the Mendeleev parameter data into memory
 with open('/'.join(catlearn_path[0].split('/')[:-1]) +
           '/catlearn/data/proxy-mendeleev.json') as f:
     data = json.load(f)
 
-block2number = {'s': 1,
-                'p': 2,
-                'd': 3,
-                'f': 4}
+
+block2number = {'s': [1, 0, 0, 0],
+                'p': [0, 1, 0, 0],
+                'd': [0, 0, 1, 0],
+                'f': [0, 0, 0, 1]}
+
 
 default_params = ['atomic_number',
                   'atomic_volume',
@@ -128,6 +131,7 @@ def list_mendeleev_params(numbers, params=None):
             n_params += 4
         elif param == 'block':
             special_params += 1
+            n_params += 3
         elif param == 'ionenergies':
             special_params += 1
     dat = []
@@ -145,7 +149,7 @@ def list_mendeleev_params(numbers, params=None):
             elif param == 'econf':
                 line += list(n_outer(mnlv[p]))
             elif param == 'block':
-                line += [float(block2number[mnlv[p]])]
+                line += block2number[mnlv[p]]
             elif param == 'ionenergies':
                 line += [mnlv[p]['1']]
         dat.append(line)
