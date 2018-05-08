@@ -219,7 +219,7 @@ class GeneticAlgorithm(object):
         # Define some probability scaling.
         scale, s = [], 0
         for _ in range(length):
-            s += 1 / (length + 2)
+            s += 1. / (length + 2)
             scale.append(s)
 
         fit_list = list(zip(*sorted(zip(fit[1], scale), reverse=False)))[1]
