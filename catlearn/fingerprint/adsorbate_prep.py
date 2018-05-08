@@ -9,7 +9,9 @@ import numpy as np
 from tqdm import tqdm
 from ase.atoms import string2symbols
 from ase.geometry import get_layers
-from catlearn.api.ase_atoms_api import images_connectivity
+from catlearn.api.ase_atoms_api import (images_connectivity,
+                                        database_to_dictionary,
+                                        images_connectivity_dict)
 from catlearn.fingerprint.periodic_table_data import get_radius
 
 
@@ -141,8 +143,10 @@ def detect_termination(atoms):
         sy = int(''.join(i for i in sy if i.isdigit()))
         if int(sx) * int(sy) != len(term):
             msg = str(len(term)) + ' termination atoms identified.' + \
-                'size = ' + atoms.info['key_value_pairs']['supercell'] + \
-                ' id: ' + str(atoms.info['id'])
+                ' ' + atoms.info['key_value_pairs']['phase'] + \
+                ' ' + atoms.info['key_value_pairs']['facet'] + \
+                ' ' + atoms.info['key_value_pairs']['supercell'] + \
+                '. id=' + str(atoms.info['id'])
             warnings.warn(msg)
     except KeyError:
         pass
@@ -151,10 +155,32 @@ def detect_termination(atoms):
             if a_s not in term:
                 msg = 'site atom not in term.'
                 if 'id' in atoms.info:
-                    msg += str(atoms.info['id'])
+                    msg += ' ' + str(atoms.info['id'])
                 warnings.warn(msg)
                 break
     return bulk, term, subsurf
+
+
+def check_reconstructions(images, reference_db, selection=None):
+    references = database_to_dictionary(reference_db, selection=selection)
+    references = images_connectivity_dict(references)
+    reconstructed = []
+    for atoms in images:
+        slab_id = atoms.info['key_value_pairs']['slab_id']
+        identical = compare_slab_connectivity(atoms, references[int(slab_id)])
+        if not identical:
+            reconstructed.append(atoms.info['id'])
+    return reconstructed
+
+
+def compare_slab_connectivity(atoms, reference_atoms):
+    """Return a boolean for whether an adsorbate has caused a slab to
+    reconstruct and change it's connectivity."""
+    slab_atoms = atoms.subsets['slab_atoms']
+    slab_cm = atoms.connectivity[:, slab_atoms][slab_atoms, :]
+    reference_cm = reference_atoms.connectivity
+    identical = np.allclose(slab_cm, reference_cm)
+    return identical
 
 
 def slab_index(atoms):
@@ -328,12 +354,12 @@ def info2primary_index(atoms):
         print(chemi, site, ligand)
         msg = 'No adsorption site detected.'
         if 'id' in atoms.info:
-            msg += ' dbid: ' + str(atoms.info['id'])
+            msg += ' id=' + str(atoms.info['id'])
         warnings.warn(msg)
     elif len(ligand) < 2:
         msg = 'Site has less than 2 nearest neighbors.'
         if 'id' in atoms.info:
-            msg += ' dbid: ' + str(atoms.info['id'])
+            msg += ' id=' + str(atoms.info['id'])
         warnings.warn(msg)
     return chemi, site, ligand
 
@@ -380,13 +406,13 @@ def layers_termination(atoms):
         if db_layers != nlayers:
             msg = str(db_layers) + ' != ' + str(nlayers)
             if 'id' in atoms.info:
-                msg += ' ' + str(atoms.info['id'])
+                msg += ' id=' + str(atoms.info['id'])
             warnings.warn(msg)
     except(KeyError):
         if nlayers < 3:
             msg = 'nlayers = ' + str(nlayers)
             if 'id' in atoms.info:
-                msg += ' ' + str(atoms.info['id'])
+                msg += ' id=' + str(atoms.info['id'])
             warnings.warn(msg)
     # bulk atoms can include subsurface atoms.
     term = [a.index for a in atoms if il[a.index] >= nlayers - 1 and
