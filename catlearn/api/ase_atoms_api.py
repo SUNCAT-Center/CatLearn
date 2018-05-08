@@ -24,10 +24,36 @@ def database_to_list(fname, selection=None):
         atoms = c.get_atoms(dbid)
         atoms.info['key_value_pairs'] = dict(d.key_value_pairs)
         atoms.info['unique_id'] = str(d.unique_id)
-        atoms.info['id'] = int(d.id)
+        atoms.info['id'] = dbid
         atoms.info['ctime'] = float(d.ctime)
         atoms.subsets = {}
         images.append(atoms)
+
+    return images
+
+
+def database_to_dictionary(fname, selection=None):
+    """Return a list of atoms objects imported from an ase database.
+
+    Parameters
+    ----------
+    fname : str
+        path/filename of ase database.
+    selection : list
+        search filters to limit the import.
+    """
+    c = ase.db.connect(fname)
+    s = c.select(selection)
+    images = {}
+    for d in s:
+        dbid = int(d.id)
+        atoms = c.get_atoms(dbid)
+        atoms.info['key_value_pairs'] = dict(d.key_value_pairs)
+        atoms.info['unique_id'] = str(d.unique_id)
+        atoms.info['id'] = dbid
+        atoms.info['ctime'] = float(d.ctime)
+        atoms.subsets = {}
+        images[dbid] = atoms
 
     return images
 
@@ -46,6 +72,23 @@ def images_connectivity(images):
         if not hasattr(atoms, 'connectivity'):
             radii = [default_catlearn_radius(z) for z in atoms.numbers]
             atoms.connectivity = ase_connectivity(atoms, radii)
+    return images
+
+
+def images_connectivity_dict(images):
+    """Return a list of atoms objects imported from an ase database.
+
+    Parameters
+    ----------
+    fname : str
+        path/filename of ase database.
+    selection : list
+        search filters to limit the import.
+    """
+    for key in tqdm(images):
+        if not hasattr(images[key], 'connectivity'):
+            radii = [default_catlearn_radius(z) for z in images[key].numbers]
+            images[key].connectivity = ase_connectivity(images[key], radii)
     return images
 
 
