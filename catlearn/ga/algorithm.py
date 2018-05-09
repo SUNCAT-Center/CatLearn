@@ -399,9 +399,11 @@ def _cross_validate(args):
                                         axis=0)[:, parameter]
         train_targets = np.concatenate(train_targets, axis=0)
         try:
-            calc_fit += np.array(fit_func(
-                train_features, train_targets, test_features,
-                test_targets))
+            score = fit_func(train_features, train_targets,
+                             test_features, test_targets)
+            if len(score) != fitness_parameters:
+                raise AssertionError("len(fit_func) != fitness_parameters")
+            calc_fit += np.array(score)
         except ValueError:
             # If there is a problem calculating fitness assign -inf.
             calc_fit += np.array(
