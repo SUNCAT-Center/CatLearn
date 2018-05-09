@@ -404,7 +404,7 @@ def _cross_validate(args):
             if len(score) != fitness_parameters:
                 raise AssertionError("len(fit_func) != fitness_parameters")
             calc_fit += np.array(score)
-        except ValueError:
+        except np.linalg.linalg.LinAlgError:
             # If there is a problem calculating fitness assign -inf.
             calc_fit += np.array(
                 [float('-inf')] * fitness_parameters)
