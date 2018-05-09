@@ -50,6 +50,8 @@ def UCB(y_best, predictions, uncertainty, objective='max', kappa=1.5):
         Predicted means.
     uncertainty : list
         Uncertainties associated with the predictions.
+    kappa : float
+        Constant that controls the explotation/exploration ratio in UCB.
     """
     if objective == 'max':
         return -(predictions - kappa * uncertainty)
@@ -58,7 +60,7 @@ def UCB(y_best, predictions, uncertainty, objective='max', kappa=1.5):
         return -predictions + kappa * uncertainty
 
 
-def EI(y_best, predictions, uncertainty, objective, noise=1.e-6):
+def EI(y_best, predictions, uncertainty, objective):
     """Return expected improvement acq. function.
 
     Parameters
@@ -71,18 +73,18 @@ def EI(y_best, predictions, uncertainty, objective, noise=1.e-6):
         Uncertainties associated with the predictions.
     """
     if objective == 'max':
-        z = (predictions - y_best) / (uncertainty + noise)
+        z = (predictions - y_best) / (uncertainty)
         return (predictions - y_best) * norm.cdf(z) + \
             uncertainty * norm.pdf(
             z)
 
     if objective == 'min':
-        z = (-predictions + y_best) / (uncertainty + noise)
+        z = (-predictions + y_best) / (uncertainty)
         return -((predictions - y_best) * norm.cdf(z) -
                  uncertainty * norm.pdf(z))
 
 
-def PI(y_best, predictions, uncertainty, objective, noise=1.e-6):
+def PI(y_best, predictions, uncertainty, objective):
     """Probability of improvement acq. function.
 
     Parameters
@@ -95,11 +97,11 @@ def PI(y_best, predictions, uncertainty, objective, noise=1.e-6):
         Uncertainties associated with the predictions.
     """
     if objective == 'max':
-        z = (predictions - y_best) / (uncertainty + noise)
+        z = (predictions - y_best) / (uncertainty)
         return norm.cdf(z)
 
     if objective == 'min':
-        z = -((predictions - y_best) / (uncertainty + noise))
+        z = -((predictions - y_best) / (uncertainty))
         return norm.cdf(z)
 
 
@@ -183,8 +185,7 @@ def cluster(train_features, targets, test_features, predictions, k_means=3):
 
 def rank(targets, predictions, uncertainty, train_features=None,
          test_features=None, objective='max', k_means=3,
-         kappa=1.5, noise=1e-6,
-         metrics=['optimistic', 'UCB', 'EI', 'PI']):
+         kappa=1.5, metrics=['optimistic', 'UCB', 'EI', 'PI']):
     """Rank predictions based on acquisition function.
 
     Parameters
@@ -201,10 +202,8 @@ def rank(targets, predictions, uncertainty, train_features=None,
         Feature matrix for the test data.
     k_means : int
         Number of cluster to generate with clustering.
-    kappa: int
+    kappa : float
         Constant that controls the explotation/exploration ratio in UCB.
-    noise: float
-        Small number must be added in the denominator for stability.
     metrics : list
         list of strings.
         Accepted values are 'cdf', 'UCB', 'EI', 'PI', 'optimistic' and
@@ -234,9 +233,9 @@ def rank(targets, predictions, uncertainty, train_features=None,
     if 'UCB' in metrics:
         res['UCB'] = UCB(y_best, predictions, uncertainty, objective, kappa)
     if 'EI' in metrics:
-        res['EI'] = EI(y_best, predictions, uncertainty, objective, noise)
+        res['EI'] = EI(y_best, predictions, uncertainty, objective)
     if 'PI' in metrics:
-        res['PI'] = PI(y_best, predictions, uncertainty, objective, noise)
+        res['PI'] = PI(y_best, predictions, uncertainty, objective)
     if 'pdf' in metrics:
         res['pdf'] = probability_density(y_best, predictions, uncertainty)
     if 'cluster' in metrics:
@@ -249,7 +248,7 @@ def rank(targets, predictions, uncertainty, train_features=None,
 def classify(classifier, train_atoms, test_atoms, targets,
              predictions, uncertainty, train_features=None,
              test_features=None, objective='max',
-             k_means=3, kappa=1.5, noise=1.e-6,
+             k_means=3, kappa=1.5,
              metrics=['optimistic', 'UCB', 'EI', 'PI']):
     """Classify ranked predictions based on acquisition function.
 
@@ -275,10 +274,8 @@ def classify(classifier, train_atoms, test_atoms, targets,
         Feature matrix for the test data.
     k_means : int
         Number of cluster to generate with clustering.
-    kappa: int
+    kappa : float
         Constant that controls the explotation/exploration ratio in UCB.
-    noise: float
-        Small number must be added in the denominator for stability.
     metrics : list
         list of strings.
         Accepted values are 'cdf', 'UCB', 'EI', 'PI', 'optimistic' and
@@ -339,11 +336,9 @@ def classify(classifier, train_atoms, test_atoms, targets,
             tmp_res[i]['UCB'] = UCB(y_best, predictions, uncertainty,
                                     objective, kappa)
         if 'EI' in metrics:
-            tmp_res[i]['EI'] = EI(y_best, predictions, uncertainty, objective,
-                                  noise)
+            tmp_res[i]['EI'] = EI(y_best, predictions, uncertainty, objective)
         if 'PI' in metrics:
-            tmp_res[i]['PI'] = PI(y_best, predictions, uncertainty, objective,
-                                  noise)
+            tmp_res[i]['PI'] = PI(y_best, predictions, uncertainty, objective)
         if 'pdf' in metrics:
             tmp_res[i]['pdf'] = probability_density(y_best, predictions,
                                                     uncertainty)
