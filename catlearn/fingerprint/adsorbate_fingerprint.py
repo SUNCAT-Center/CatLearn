@@ -894,9 +894,16 @@ class AdsorbateFingerprintGenerator(BaseGenerator):
         if atoms is None:
             return labels
         else:
-            layers = float(atoms.info['key_value_pairs']['layers'])
+            try:
+                layers = float(atoms.info['key_value_pairs']['layers'])
+            except KeyError:
+                layers = np.nan
+            try:
+                n = float(atoms.info['key_value_pairs']['n'])
+            except KeyError:
+                n = np.nan
             size = len(atoms.subsets['termination_atoms'])
-            coverage = float(atoms.info['key_value_pairs']['n']) / size
+            coverage = n / size
             return layers, size, coverage
 
     def name(self, atoms=None):
