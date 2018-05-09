@@ -81,8 +81,7 @@ class TestAdsorbateFeatures(unittest.TestCase):
         train_fpv = default_fingerprinters(gen, 'adsorbates')
         train_fpv += [gen.db_size,
                       gen.ctime,
-                      gen.dbid,
-                      gen.delta_energy]
+                      gen.dbid]
         matrix = gen.return_vec(images, train_fpv)
         labels = gen.return_names(train_fpv)
         print(np.shape(matrix), type(matrix))
