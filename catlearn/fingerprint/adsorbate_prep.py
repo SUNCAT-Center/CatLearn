@@ -162,6 +162,20 @@ def detect_termination(atoms):
 
 
 def check_reconstructions(images, reference_db, selection=None):
+    """Return a list of database ids, for adsorbate/slab structures, which
+    has a reconstructed slab with respect to the reference slab.
+
+    Parameters
+    ----------
+    images : list
+        List of ASE atoms objects. They must contain the info dictionary with
+        database key_value_pairs, including 'slab_id', referring to the
+        database id of the reference slab.
+    reference_db : str
+        Path and filename to an ASE database containing all the slabs.
+    selection : list
+        Optional list of selection filters for importing the slabs.
+    """
     references = database_to_dictionary(reference_db, selection=selection)
     references = images_connectivity_dict(references)
     reconstructed = []
@@ -175,7 +189,22 @@ def check_reconstructions(images, reference_db, selection=None):
 
 def compare_slab_connectivity(atoms, reference_atoms):
     """Return a boolean for whether an adsorbate has caused a slab to
-    reconstruct and change it's connectivity."""
+    reconstruct and change it's connectivity.
+
+    Parameters
+    ----------
+    atoms : object
+        ASE atoms object with connectivity and 'slab_atoms' subsets attached.
+        This represents an adsorbate/slab structure.
+    refernce_atoms : object
+        ASE atoms object with connectivity and 'slab_atoms' subsets attached.
+        This represents a slab structure.
+
+    Returns
+    ----------
+    identical : boolean
+        Are the connectivity matrices identical or not.
+    """
     slab_atoms = atoms.subsets['slab_atoms']
     slab_cm = atoms.connectivity[:, slab_atoms][slab_atoms, :]
     reference_cm = reference_atoms.connectivity
@@ -440,8 +469,8 @@ def constraints_termination(atoms):
     cm = atoms.connectivity.copy()
     np.fill_diagonal(cm, 0)
     # List coordination numbers of slab atoms.
-    coord = np.count_nonzero(cm[atoms.subsets['slab_atoms'], :], axis=1)
-    coord -= 1
+    slab_atoms = atoms.subsets['slab_atoms']
+    coord = np.count_nonzero(cm[slab_atoms, :][:, slab_atoms], axis=1)
     bulk = []
     term = []
     max_coord = np.max(coord)
@@ -480,8 +509,8 @@ def connectivity_termination(atoms):
     cm = atoms.connectivity.copy()
     np.fill_diagonal(cm, 0)
     # List coordination numbers of slab atoms.
-    coord = np.count_nonzero(cm[atoms.subsets['slab_atoms'], :], axis=1)
-    coord -= 1
+    slab_atoms = atoms.subsets['slab_atoms']
+    coord = np.count_nonzero(cm[slab_atoms, :][:, slab_atoms], axis=1)
     bulk = []
     term = []
     max_coord = np.max(coord)
