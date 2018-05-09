@@ -184,7 +184,7 @@ def cluster(train_features, targets, test_features, predictions, k_means=3):
 def rank(targets, predictions, uncertainty, train_features=None,
          test_features=None, objective='max', k_means=3,
          kappa=1.5, noise=1e-6,
-         metrics=['cdf', 'optimistic', 'UCB', 'EI', 'PI']):
+         metrics=['optimistic', 'UCB', 'EI', 'PI']):
     """Rank predictions based on acquisition function.
 
     Parameters
@@ -250,7 +250,7 @@ def classify(classifier, train_atoms, test_atoms, targets,
              predictions, uncertainty, train_features=None,
              test_features=None, objective='max',
              k_means=3, kappa=1.5, noise=1.e-6,
-             metrics=['cdf', 'optimistic', 'UCB', 'EI', 'PI']):
+             metrics=['optimistic', 'UCB', 'EI', 'PI']):
     """Classify ranked predictions based on acquisition function.
 
     Parameters
