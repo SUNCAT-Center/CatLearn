@@ -194,6 +194,6 @@ def default_catlearn_radius(z):
         r = covalent_radii[z]
     else:
         r = get_radius(z, params=['atomic_radius', 'covalent_radius_cordero'])
-    # 15% bond streching is allowed.
-    r *= 1.17
+    # Some bond streching is allowed.
+    r *= 1.125
     return r
