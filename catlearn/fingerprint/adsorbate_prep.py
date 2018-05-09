@@ -129,12 +129,13 @@ def detect_termination(atoms):
         'slab_atoms' : list
             indices of atoms belonging to the slab
     """
-    if len(np.unique(atoms.get_tags())) >= 4:
-        bulk, term, subsurf = tags_termination(atoms)
-    elif len(atoms.constraints) == 1:
+    if len(atoms.constraints) == 1:
         bulk, term, subsurf = constraints_termination(atoms)
     elif 'key_value_pairs' not in atoms.info:
-        bulk, term, subsurf = connectivity_termination(atoms)
+        if len(np.unique(atoms.get_tags())) >= 4:
+            bulk, term, subsurf = tags_termination(atoms)
+        else:
+            bulk, term, subsurf = connectivity_termination(atoms)
     elif 'layers' in atoms.info['key_value_pairs']:
         bulk, term, subsurf = layers_termination(atoms)
     try:
@@ -143,7 +144,6 @@ def detect_termination(atoms):
         sy = int(''.join(i for i in sy if i.isdigit()))
         if int(sx) * int(sy) != len(term):
             msg = str(len(term)) + ' termination atoms identified.' + \
-                ' ' + atoms.info['key_value_pairs']['phase'] + \
                 ' ' + atoms.info['key_value_pairs']['facet'] + \
                 ' ' + atoms.info['key_value_pairs']['supercell'] + \
                 '. id=' + str(atoms.info['id'])
@@ -154,6 +154,16 @@ def detect_termination(atoms):
         for a_s in atoms.subsets['site_atoms']:
             if a_s not in term:
                 msg = 'site atom not in term.'
+                try:
+                    msg += ' ' + str(atoms.info['key_value_pairs']['phase'])
+                except KeyError:
+                    pass
+                try:
+                    msg += ' ' + str(atoms.info['key_value_pairs']['facet'])
+                    msg += ' ' + str(
+                            atoms.info['key_value_pairs']['supercell'])
+                except KeyError:
+                    pass
                 if 'id' in atoms.info:
                     msg += ' ' + str(atoms.info['id'])
                 warnings.warn(msg)
@@ -180,7 +190,16 @@ def check_reconstructions(images, reference_db, selection=None):
     references = images_connectivity_dict(references)
     reconstructed = []
     for atoms in images:
-        slab_id = atoms.info['key_value_pairs']['slab_id']
+        try:
+            slab_id = atoms.info['key_value_pairs']['slab_id']
+        except KeyError:
+            msg = "slab_id not attached."
+            try:
+                msg += ' id=' + str(atoms.info['id'])
+            except KeyError:
+                pass
+            warnings.warn("slab_id not attached.")
+            continue
         identical = compare_slab_connectivity(atoms, references[int(slab_id)])
         if not identical:
             reconstructed.append(atoms.info['id'])
