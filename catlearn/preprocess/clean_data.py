@@ -1,6 +1,7 @@
 """Functions to clean data."""
 import numpy as np
 from collections import defaultdict
+from sklearn.preprocessing import Imputer
 
 
 def remove_outliers(features, targets, con=1.4826, dev=3., constraint=None):
@@ -94,7 +95,8 @@ def clean_variance(train, test=None, labels=None, mask=None):
     return clean
 
 
-def clean_infinite(train, test=None, targets=None, labels=None, mask=None):
+def clean_infinite(train, test=None, targets=None, labels=None, mask=None,
+                   max_impute_fraction=0, strategy='mean'):
     """Remove features that have non finite values in the training data.
 
     Optionally removes features in test data with non fininte values. Returns
@@ -113,10 +115,29 @@ def clean_infinite(train, test=None, targets=None, labels=None, mask=None):
         Optional list of feature labels. Default is None passed.
     mask : list
         Indices of features that are not subject to cleaning.
+    max_impute_fraction : float
+        Maximum fraction of values in a column that can be imputed.
+        Columns with higher fractions of nans values will be discarded.
+    strategy : str
+        Imputation strategy.
+
+    Returns
+    -------
+    data : dict
+        key value pairs
+        --------
+
+        'train' : array
+            Clean training data matrix.
+        'test' : array
+            Clean test data matrix
+        'targets' : boolean list
+            Whether targets are finite.
+        'labels' : feature labels of clean data set.
     """
     clean = defaultdict(list)
 
-    train = np.asarray(train, dtype=np.float64)
+    train = np.array(train, dtype=np.float64)
 
     if targets is not None:
         bool_test = np.isfinite(targets).all(axis=1)
@@ -126,11 +147,22 @@ def clean_infinite(train, test=None, targets=None, labels=None, mask=None):
     if test is not None:
         test = np.asarray(test, dtype=np.float64)
 
+    # Get the fraction of finite values in each column.
+    if max_impute_fraction > 0:
+        impute = Imputer(missing_values="NaN", strategy=strategy)
+        impute_fraction = 1 - np.isfinite(train).mean(axis=0)
+        to_impute = impute_fraction <= max_impute_fraction
+        train[:, to_impute] = impute.fit_transform(train[:, to_impute])
+        if test is not None:
+            test[:, to_impute] = impute.transform(test[:, to_impute])
+
     # Find features that have only finite values.
     bool_test = np.isfinite(train).all(axis=0)
+
     # Also accept features, that are masked.
     if mask is not None:
         bool_test[mask] = True
+
     # Save the indices of columns that contain non-finite values.
     clean['index'] = list(np.where(~bool_test)[0])
     # Save a cleaned training data matrix.
