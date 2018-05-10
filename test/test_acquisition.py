@@ -16,7 +16,7 @@ from catlearn.regression.acquisition_functions import (rank, classify,
                                                        probability_density)
 from catlearn.utilities.surrogate_model import SurrogateModel
 
-wkdir = '/Users/mhangaard/src/CatLearn/' #os.getcwd()
+wkdir = os.getcwd()
 
 train_size, test_size = 30, 30
 
