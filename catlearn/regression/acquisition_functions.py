@@ -149,8 +149,7 @@ def probability_density(y_best, predictions, uncertainty):
     uncertainty : list
         Uncertainties associated with the predictions.
     """
-    return np.exp(-np.abs(np.ravel(predictions) - y_best) / (
-        2. * np.ravel(uncertainty) ** 2))
+    return norm.pdf(y_best, np.ravel(predictions), np.ravel(uncertainty))
 
 
 def cluster(train_features, targets, test_features, predictions, k_means=3):
