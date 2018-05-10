@@ -11,12 +11,14 @@ from catlearn.api.ase_data_setup import get_unique, get_train
 from catlearn.fingerprint.setup import FeatureGenerator
 from catlearn.regression import GaussianProcess
 from catlearn.regression.acquisition_functions import (rank, classify,
-                                                       random_acquisition)
+                                                       optimistic_proximity,
+                                                       proximity,
+                                                       probability_density)
 from catlearn.utilities.surrogate_model import SurrogateModel
 
-wkdir = os.getcwd()
+wkdir = '/Users/mhangaard/src/CatLearn/' #os.getcwd()
 
-train_size, test_size = 45, 5
+train_size, test_size = 30, 30
 
 
 def classifier(atoms):
@@ -108,18 +110,36 @@ class TestAcquisition(unittest.TestCase):
     def test_surrogate_model(self):
         train_features, train_targets, train_atoms, test_features, \
             test_targets, test_atoms = self.get_data()
-        sg = SurrogateModel(_train_model, _predict, random_acquisition,
-                            train_features, train_targets)
-        sg.test_acquisition()
-        sg.acquire(test_features)
+
+        sg0 = SurrogateModel(_train_model, _predict, probability_density,
+                             train_features, train_targets)
+        batch_size = 10
+        sg0.test_acquisition(batch_size=batch_size)
+        to_acquire, _ = sg0.acquire(test_features, batch_size=batch_size)
+
+        self.assertTrue(len(to_acquire) == batch_size)
+
+        sg1 = SurrogateModel(_train_model, _predict, optimistic_proximity,
+                             train_features, train_targets)
+        batch_size = 3
+        to_acquire, _ = sg1.acquire(test_features, batch_size=batch_size)
+
+        self.assertTrue(len(to_acquire) == batch_size)
+
+        sg2 = SurrogateModel(_train_model, _predict, proximity,
+                             train_features, train_targets)
+        batch_size = 1
+        to_acquire, _ = sg2.acquire(test_features, batch_size=batch_size)
+
+        self.assertTrue(len(to_acquire) == batch_size)
 
 
 def _train_model(train_features, train_targets):
-    kdict = {'k1': {'type': 'gaussian', 'width': 1., 'scaling': 1.}}
+    kdict = {'k1': {'type': 'gaussian', 'width': 0.5}}
     gp = GaussianProcess(
         train_fp=train_features, train_target=train_targets,
         kernel_dict=kdict, regularization=1e-3,
-        optimize_hyperparameters=True, scale_data=True)
+        optimize_hyperparameters=False, scale_data=True)
     return gp
 
 
@@ -133,7 +153,7 @@ def _predict(model, test_features, test_targets=None):
         get_validation_error=get_validation_error,
         get_training_error=False,
         uncertainty=True)
-    acquisition_args = [model.scaling.rescale_targets(model.train_target),
+    acquisition_args = [0.,
                         score['prediction'],
                         score['uncertainty']]
     return acquisition_args, score

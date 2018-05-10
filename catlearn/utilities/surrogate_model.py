@@ -97,14 +97,16 @@ class SurrogateModel(object):
         for i in tqdm(np.arange(len(self.target) // batch_size)):
             # Setup data.
             test_index = np.delete(np.arange(len(self.train_data)),
-                                   train_index)
-            train_fp = self.train_data[train_index, :]
+                                   np.array(train_index))
+            train_fp = np.array(self.train_data)[train_index, :]
             train_target = np.array(self.target)[train_index]
-            test_fp = self.train_data[test_index, :]
+            test_fp = np.array(self.train_data)[test_index, :]
             test_target = np.array(self.target)[test_index]
 
             if len(test_target) == 0:
                 break
+            elif len(test_target) < batch_size:
+                batch_size = len(test_target)
             # Do regression.
             model = self.train_model(train_fp, train_target)
 
@@ -115,8 +117,11 @@ class SurrogateModel(object):
             af = self.acquisition_function(*aqcuisition_args)
             sample = np.argsort(af)[::-1]
 
+            to_acquire = test_index[sample[:batch_size]]
+            assert len(to_acquire) == batch_size
+
             # Append best candidates to be acquired.
-            train_index += list(test_index[sample[:batch_size]])
+            train_index += list(to_acquire)
             # Return meta data.
             output.append(score)
         return output
@@ -142,5 +147,9 @@ class SurrogateModel(object):
         # Calculate acquisition values.
         af = self.acquisition_function(*aqcuisition_args)
         sample = np.argsort(af)[::-1]
+
+        to_acquire = sample[:batch_size]
+        assert len(to_acquire) == batch_size
+
         # Return best candidates and meta data.
-        return list(sample[:batch_size]), score
+        return list(to_acquire), score

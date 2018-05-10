@@ -35,8 +35,8 @@ def optimistic(y_best, predictions, uncertainty):
     uncertainty : list
         Uncertainties associated with the predictions.
     """
-    a = predictions + uncertainty - y_best
-    return a
+    metric = np.ravel(predictions) + np.ravel(uncertainty) - y_best
+    return metric
 
 
 def UCB(y_best, predictions, uncertainty, objective='max', kappa=1.5):
@@ -117,7 +117,8 @@ def proximity(y_best, predictions, uncertainty=None):
     uncertainty : list
         Uncertainties associated with the predictions.
     """
-    return -np.abs(predictions - y_best)
+    metric = -np.abs(np.ravel(predictions) - y_best)
+    return metric
 
 
 def optimistic_proximity(y_best, predictions, uncertainty):
@@ -132,7 +133,8 @@ def optimistic_proximity(y_best, predictions, uncertainty):
     uncertainty : list
         Uncertainties associated with the predictions.
     """
-    return uncertainty - np.abs(predictions - y_best)
+    metric = np.ravel(uncertainty) - np.abs(np.ravel(predictions) - y_best)
+    return metric
 
 
 def probability_density(y_best, predictions, uncertainty):
@@ -147,8 +149,8 @@ def probability_density(y_best, predictions, uncertainty):
     uncertainty : list
         Uncertainties associated with the predictions.
     """
-    return np.exp(-np.abs(predictions - y_best) / (
-        2. * uncertainty**2))
+    return np.exp(-np.abs(np.ravel(predictions) - y_best) / (
+        2. * np.ravel(uncertainty) ** 2))
 
 
 def cluster(train_features, targets, test_features, predictions, k_means=3):
@@ -330,7 +332,7 @@ def classify(classifier, train_atoms, test_atoms, targets,
         train_features = np.asarray(test[i]['train_features'])
         test_features = np.asarray(test[i]['test_features'])
         if 'optimistic' in metrics:
-            tmp_res[i]['optimistic'] = optimistic(targets, predictions,
+            tmp_res[i]['optimistic'] = optimistic(y_best, predictions,
                                                   uncertainty)
         if 'UCB' in metrics:
             tmp_res[i]['UCB'] = UCB(y_best, predictions, uncertainty,
