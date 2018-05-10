@@ -1,9 +1,19 @@
 """The setup file for CatLearn."""
 import setuptools
 
+
+def parse_requirements(filename):
+    """Load requirements from requirements file."""
+    lineiter = (line.strip() for line in open(filename))
+    return [line for line in lineiter if line and not line.startswith("#")]
+
+
+install_reqs = parse_requirements('./requirements.txt')
+reqs = [str(req) for req in install_reqs]
+
 setuptools.setup(
     name="CatLearn",
-    version="0.4.2.dev1",
+    version="0.4.2.dev2",
     url="https://github.com/SUNCAT-Center/CatLearn",
 
     author="Paul C. Jennings",
@@ -22,16 +32,7 @@ setuptools.setup(
                                'api/magpie/*/*/*',
                                ]},
 
-    install_requires=['ase==3.16.0',
-                      'h5py==2.7.1',
-                      'networkx==2.1.0',
-                      'numpy==1.14.2',
-                      'pandas==0.22.0',
-                      'pytest-cov==2.5.1',
-                      'scikit-learn==0.19.1',
-                      'scipy==1.0.1',
-                      'tqdm==4.20.0',
-                      ],
+    install_requires=reqs,
 
     python_requires='>=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, <4',
 
