@@ -129,11 +129,11 @@ def detect_termination(atoms):
         'slab_atoms' : list
             indices of atoms belonging to the slab
     """
-    if len(atoms.constraints) == 1:
-        bulk, term, subsurf = constraints_termination(atoms)
+    if len(np.unique(atoms.get_tags())) >= 4:
+        bulk, term, subsurf = tags_termination(atoms)
     elif 'key_value_pairs' not in atoms.info:
-        if len(np.unique(atoms.get_tags())) >= 4:
-            bulk, term, subsurf = tags_termination(atoms)
+        if len(atoms.constraints) == 1:
+            bulk, term, subsurf = constraints_termination(atoms)
         else:
             bulk, term, subsurf = connectivity_termination(atoms)
     elif 'layers' in atoms.info['key_value_pairs']:
@@ -495,9 +495,9 @@ def constraints_termination(atoms):
     max_coord = np.max(coord)
     for j, c in enumerate(coord):
         a_s = atoms.subsets['slab_atoms'][j]
-        if c == max_coord:
+        if a_s in atoms.constraints[0].get_indices():
             bulk.append(a_s)
-        elif a_s in atoms.constraints[0].get_indices():
+        elif c >= max_coord - 2:
             bulk.append(a_s)
         else:
             term.append(a_s)
@@ -536,7 +536,7 @@ def connectivity_termination(atoms):
     bulk = atoms.subsets['slab_atoms']
     for j, c in enumerate(coord):
         a_s = atoms.subsets['slab_atoms'][j]
-        if c == max_coord:
+        if c >= max_coord - 2:
             bulk.append(a_s)
         else:
             term.append(a_s)
