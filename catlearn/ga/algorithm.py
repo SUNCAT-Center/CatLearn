@@ -219,7 +219,7 @@ class GeneticAlgorithm(object):
         # Define some probability scaling.
         scale, s = [], 0
         for _ in range(length):
-            s += 1 / (length + 2)
+            s += 1. / (length + 2)
             scale.append(s)
 
         fit_list = list(zip(*sorted(zip(fit[1], scale), reverse=False)))[1]
@@ -399,10 +399,12 @@ def _cross_validate(args):
                                         axis=0)[:, parameter]
         train_targets = np.concatenate(train_targets, axis=0)
         try:
-            calc_fit += np.array(fit_func(
-                train_features, train_targets, test_features,
-                test_targets))
-        except ValueError:
+            score = fit_func(train_features, train_targets,
+                             test_features, test_targets)
+            if len(score) != fitness_parameters:
+                raise AssertionError("len(fit_func) != fitness_parameters")
+            calc_fit += np.array(score)
+        except np.linalg.linalg.LinAlgError:
             # If there is a problem calculating fitness assign -inf.
             calc_fit += np.array(
                 [float('-inf')] * fitness_parameters)

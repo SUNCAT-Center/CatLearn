@@ -10,11 +10,15 @@ from ase.ga.data import DataConnection
 from catlearn.api.ase_data_setup import get_unique, get_train
 from catlearn.fingerprint.setup import FeatureGenerator
 from catlearn.regression import GaussianProcess
-from catlearn.regression.acquisition_functions import AcquisitionFunctions
+from catlearn.regression.acquisition_functions import (rank, classify,
+                                                       optimistic_proximity,
+                                                       proximity,
+                                                       probability_density)
+from catlearn.utilities.surrogate_model import SurrogateModel
 
 wkdir = os.getcwd()
 
-train_size, test_size = 45, 5
+train_size, test_size = 30, 30
 
 
 def classifier(atoms):
@@ -81,30 +85,78 @@ class TestAcquisition(unittest.TestCase):
         print('gaussian prediction (rmse):',
               pred['validation_error']['rmse_average'])
 
-        af = AcquisitionFunctions()
-        acq = af.rank(
+        acq = rank(
             targets=train_targets, predictions=pred['prediction'],
             uncertainty=pred['uncertainty'], train_features=train_features,
             test_features=test_features, metrics=[
-                'cdf', 'optimistic', 'gaussian', 'UCB', 'EI', 'PI'])
-        self.assertTrue(len(acq['cdf']) == len(pred['prediction']))
+                'cdf', 'optimistic', 'pdf', 'UCB', 'EI', 'PI'])
         self.assertTrue(len(acq['optimistic']) == len(pred['prediction']))
-        self.assertTrue(len(acq['gaussian']) == len(pred['prediction']))
+        self.assertTrue(len(acq['pdf']) == len(pred['prediction']))
         self.assertTrue(len(acq['UCB']) == len(pred['prediction']))
         self.assertTrue(len(acq['EI']) == len(pred['prediction']))
         self.assertTrue(len(acq['PI']) == len(pred['prediction']))
 
-        acq = af.classify(
+        acq = classify(
             classifier, train_atoms, test_atoms, targets=train_targets,
             predictions=pred['prediction'], uncertainty=pred['uncertainty'],
             train_features=train_features, test_features=test_features,
-            metrics=['cdf', 'optimistic', 'gaussian', 'UCB', 'EI', 'PI'])
-        self.assertTrue(len(acq['cdf']) == len(pred['prediction']))
+            metrics=['optimistic', 'pdf', 'UCB', 'EI', 'PI'])
         self.assertTrue(len(acq['optimistic']) == len(pred['prediction']))
-        self.assertTrue(len(acq['gaussian']) == len(pred['prediction']))
+        self.assertTrue(len(acq['pdf']) == len(pred['prediction']))
         self.assertTrue(len(acq['UCB']) == len(pred['prediction']))
         self.assertTrue(len(acq['EI']) == len(pred['prediction']))
         self.assertTrue(len(acq['PI']) == len(pred['prediction']))
+
+    def test_surrogate_model(self):
+        train_features, train_targets, train_atoms, test_features, \
+            test_targets, test_atoms = self.get_data()
+
+        sg0 = SurrogateModel(_train_model, _predict, probability_density,
+                             train_features, train_targets)
+        batch_size = 10
+        sg0.test_acquisition(batch_size=batch_size)
+        to_acquire, _ = sg0.acquire(test_features, batch_size=batch_size)
+
+        self.assertTrue(len(to_acquire) == batch_size)
+
+        sg1 = SurrogateModel(_train_model, _predict, optimistic_proximity,
+                             train_features, train_targets)
+        batch_size = 3
+        to_acquire, _ = sg1.acquire(test_features, batch_size=batch_size)
+
+        self.assertTrue(len(to_acquire) == batch_size)
+
+        sg2 = SurrogateModel(_train_model, _predict, proximity,
+                             train_features, train_targets)
+        batch_size = 1
+        to_acquire, _ = sg2.acquire(test_features, batch_size=batch_size)
+
+        self.assertTrue(len(to_acquire) == batch_size)
+
+
+def _train_model(train_features, train_targets):
+    kdict = {'k1': {'type': 'gaussian', 'width': 0.5}}
+    gp = GaussianProcess(
+        train_fp=train_features, train_target=train_targets,
+        kernel_dict=kdict, regularization=1e-3,
+        optimize_hyperparameters=False, scale_data=True)
+    return gp
+
+
+def _predict(model, test_features, test_targets=None):
+    if test_targets is None:
+        get_validation_error = False
+    else:
+        get_validation_error = True
+    score = model.predict(
+        test_fp=test_features, test_target=test_targets,
+        get_validation_error=get_validation_error,
+        get_training_error=False,
+        uncertainty=True)
+    acquisition_args = [0.,
+                        score['prediction'],
+                        score['uncertainty']]
+    return acquisition_args, score
 
 
 if __name__ == '__main__':
