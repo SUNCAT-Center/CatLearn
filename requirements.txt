@@ -7,9 +7,11 @@ h5py==2.7.1
 itsdangerous==0.24
 jinja2==2.10
 kiwisolver==1.0.1
+llvmlite==0.23.0
 markupsafe==1.0
 matplotlib==2.2.2
 networkx==2.1.0
+numba==0.38.0
 numpy==1.14.3
 pandas==0.22.0
 pyparsing==2.2.0

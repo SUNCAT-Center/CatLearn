@@ -1,8 +1,10 @@
 """Contains kernel functions and gradients of kernels."""
 import numpy as np
+import numba
 from scipy.spatial import distance
 
 
+@numba.jit(nopython=True)
 def constant_kernel(theta, log_scale, m1, m2=None, eval_gradients=False):
     """Return constant to add to the kernel.
 
@@ -24,6 +26,7 @@ def constant_kernel(theta, log_scale, m1, m2=None, eval_gradients=False):
     k : array
         The covariance matrix.
     """
+    theta = numba.float64(theta)
     if log_scale:
         theta = np.exp(theta)
 
@@ -31,18 +34,18 @@ def constant_kernel(theta, log_scale, m1, m2=None, eval_gradients=False):
     if not eval_gradients:
         if m2 is None:
             m2 = m1
-        return np.ones([len(m1), len(m2)]) * theta
+        return np.ones((len(m1), len(m2))) * theta
 
     # Account for gradients in constant kernel.
-    size_m1 = np.shape(m1)
+    size_m1 = m1.shape
     if m2 is None:
         k = np.zeros((size_m1[0] + size_m1[0] * size_m1[1],
                       size_m1[0] + size_m1[0] * size_m1[1]))
-        k[0:size_m1[0], 0:size_m1[0]] = np.ones([len(m1), len(m1)]) * theta
+        k[0:size_m1[0], 0:size_m1[0]] = np.ones((len(m1), len(m1))) * theta
     else:
-        size_m2 = np.shape(m2)
+        size_m2 = m2.shape
         k = np.zeros((size_m1[0], size_m2[0] + size_m2[0] * size_m2[1]))
-        k[0:size_m1[0], 0:size_m2[0]] = np.ones([size_m1[0], size_m2[0]]) \
+        k[0:size_m1[0], 0:size_m2[0]] = np.ones((size_m1[0], size_m2[0])) \
             * theta
 
     return k
