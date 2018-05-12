@@ -5,6 +5,21 @@ from scipy.spatial import distance
 
 
 @numba.jit(nopython=True)
+def cdist_python(x1, x2, kwidth):
+    n1, p = x1.shape
+    n2, p = x2.shape
+    dist = np.empty((n1, n2))
+    for i in range(n1):
+        for j in range(n2):
+            s = 0.0
+            for k in range(p):
+                tmp = x1[i, k] - x2[j, k]
+                s += tmp * tmp
+            dist[i, j] = s**0.5
+    return dist / kwidth
+
+
+@numba.jit(nopython=True)
 def constant_kernel(theta, log_scale, m1, m2=None, eval_gradients=False):
     """Return constant to add to the kernel.
 
@@ -51,6 +66,7 @@ def constant_kernel(theta, log_scale, m1, m2=None, eval_gradients=False):
     return k
 
 
+@numba.jit(nopython=True)
 def gaussian_kernel(theta, log_scale, m1, m2=None, eval_gradients=False):
     """Generate the covariance between data with a Gaussian kernel.
 
@@ -72,22 +88,19 @@ def gaussian_kernel(theta, log_scale, m1, m2=None, eval_gradients=False):
     k : array
         The covariance matrix.
     """
-    kwidth = np.array(theta)
+    kwidth = numba.float64(theta)
 
     if log_scale:
         kwidth = np.exp(kwidth)
 
     if m2 is None:
-        k = distance.pdist(m1 / kwidth, metric='sqeuclidean')
-        k = distance.squareform(np.exp(-.5 * k))
-        np.fill_diagonal(k, 1)
+        k = np.exp(-.5 * cdist_python(m1, m1, kwidth)**2)
 
         if eval_gradients:
             return gaussian_xx_gradients(m1, kwidth, k)
 
     else:
-        k = distance.cdist(m1 / kwidth, m2 / kwidth, metric='sqeuclidean')
-        k = np.exp(-.5 * k)
+        k = np.exp(-.5 * cdist_python(m1, m2, kwidth)**2)
 
         if eval_gradients:
             return gaussian_xxp_gradients(m1, m2, kwidth, k)
@@ -95,6 +108,7 @@ def gaussian_kernel(theta, log_scale, m1, m2=None, eval_gradients=False):
     return k
 
 
+@numba.jit(nopython=True)
 def gaussian_xx_gradients(m1, kwidth, k):
     """Gradient for k(x, x).
 
@@ -107,7 +121,7 @@ def gaussian_xx_gradients(m1, kwidth, k):
     k : array
         Upper left portion of the overall covariance matrix.
     """
-    size = np.shape(m1)
+    size = m1.shape
     big_kgd = np.zeros((size[0], size[0] * size[1]))
     big_kdd = np.zeros((size[0] * size[1], size[0] * size[1]))
     invsqkwidth = kwidth**(-2)
@@ -132,6 +146,7 @@ def gaussian_xx_gradients(m1, kwidth, k):
     return np.block([[k, big_kgd], [np.transpose(big_kgd), big_kdd]])
 
 
+@numba.jit(nopython=True)
 def gaussian_xxp_gradients(m1, m2, kwidth, k):
     """Gradient for k(x, x').
 
@@ -146,8 +161,8 @@ def gaussian_xxp_gradients(m1, m2, kwidth, k):
     k : array
         Upper left portion of the overall covariance matrix.
     """
-    size_m1 = np.shape(m1)
-    size_m2 = np.shape(m2)
+    size_m1 = m1.shape
+    size_m2 = m2.shape
     kgd_tilde = np.zeros((size_m1[0], size_m2[0] * size_m2[1]))
     invsqkwidth = kwidth**(-2)
     for i in range(size_m1[0]):
