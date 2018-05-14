@@ -4,9 +4,11 @@ import os
 import numpy as np
 
 from ase.ga.data import DataConnection
+from ase.data import covalent_radii
 
 from catlearn.utilities.neighborlist import (ase_neighborlist,
                                              catlearn_neighborlist)
+from catlearn.utilities.distribution import pair_distribution, pair_deviation
 
 wkdir = os.getcwd()
 
@@ -43,6 +45,20 @@ class TestNeighborList(unittest.TestCase):
         nlfull = catlearn_neighborlist(all_cand[0], max_neighbor='full')
         self.assertFalse(np.allclose(nl4, nl5))
         self.assertTrue(np.allclose(nl5, nlfull))
+
+    def test_pdf(self):
+        gadb = DataConnection('{}/data/gadb.db'.format(wkdir))
+        all_cand = gadb.get_all_relaxed_candidates(use_extinct=False)
+
+        cutoff_dictionary = {}
+        for z in range(1, 92):
+            cutoff_dictionary[z] = covalent_radii[z]
+
+        pdf, x1 = pair_distribution(all_cand)
+
+        # Get bond length deviations from touching spheres.
+        dev, x2 = pair_deviation(all_cand,
+                                 cutoffs=cutoff_dictionary)
 
 
 if __name__ == '__main__':
