@@ -190,10 +190,10 @@ def default_catlearn_radius(z):
     z : int
         Atomic number.
     """
-    if z == 1 or z == 6:
-        r = covalent_radii[z]
+    if z == 6:
+        r = covalent_radii[z] * 1.1
     else:
         r = get_radius(z, params=['atomic_radius', 'covalent_radius_cordero'])
     # Some bond streching is allowed.
-    r *= 1.14
+    r = r * 1.0 + 0.1
     return r

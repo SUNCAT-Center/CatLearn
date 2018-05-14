@@ -563,6 +563,6 @@ def auto_layers(atoms):
             indices of atoms belonging to the slab
     """
     radii = [get_radius(z) for z in atoms.numbers[atoms.subsets['slab_atoms']]]
-    radius = np.average(radii)
+    radius = np.average(radii) / 2.
     lz, li = get_layers(atoms, (0, 0, 1), tolerance=radius)
     return lz, li
