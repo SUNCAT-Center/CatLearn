@@ -1,4 +1,6 @@
 *.pyc
+*.nbc
+*.nbi
 *.pickle
 Pipfile.lock
 

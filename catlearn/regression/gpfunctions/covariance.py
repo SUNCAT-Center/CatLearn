@@ -56,7 +56,7 @@ def get_covariance(kernel_dict, log_scale, matrix1, matrix2=None,
 
         # Get mapping from kernel functions.
         k = eval(
-            'ak.{}_kernel(m1=matrix1, m2=matrix2, theta=hyperparameters, \
+            'ak.{}_kernel(m1=matrix1, m2=matrix2, theta=np.array(hyperparameters), \
             eval_gradients=eval_gradients, log_scale=log_scale)'.format(ktype))
 
         # Initialize covariance matrix

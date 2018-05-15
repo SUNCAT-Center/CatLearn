@@ -1,12 +1,14 @@
 """Contains kernel functions and gradients of kernels."""
 import numpy as np
 import numba
+from numba import float64, boolean, optional
 from scipy.spatial import distance
 
 
-@numba.jit(nopython=True)
+@numba.jit(float64[:, :](float64[:, :], float64[:, :], float64[:]),
+           nopython=True, cache=True)
 def cdist_python(x1, x2, kwidth):
-    n1, p = x1.shape
+    n1 = x1.shape[0]
     n2, p = x2.shape
     dist = np.empty((n1, n2))
     for i in range(n1):
@@ -19,7 +21,9 @@ def cdist_python(x1, x2, kwidth):
     return dist / kwidth
 
 
-@numba.jit(nopython=True)
+@numba.jit(float64[:, :](
+    float64[:], boolean, float64[:, :], optional(float64[:, :]), boolean),
+    nopython=True, cache=True)
 def constant_kernel(theta, log_scale, m1, m2=None, eval_gradients=False):
     """Return constant to add to the kernel.
 
@@ -41,7 +45,6 @@ def constant_kernel(theta, log_scale, m1, m2=None, eval_gradients=False):
     k : array
         The covariance matrix.
     """
-    theta = numba.float64(theta)
     if log_scale:
         theta = np.exp(theta)
 
@@ -66,7 +69,9 @@ def constant_kernel(theta, log_scale, m1, m2=None, eval_gradients=False):
     return k
 
 
-@numba.jit(nopython=True)
+@numba.jit(float64[:, :](
+    float64[:], boolean, float64[:, :], optional(float64[:, :]), boolean),
+    nopython=True, cache=True)
 def gaussian_kernel(theta, log_scale, m1, m2=None, eval_gradients=False):
     """Generate the covariance between data with a Gaussian kernel.
 
@@ -88,7 +93,7 @@ def gaussian_kernel(theta, log_scale, m1, m2=None, eval_gradients=False):
     k : array
         The covariance matrix.
     """
-    kwidth = numba.float64(theta)
+    kwidth = theta
 
     if log_scale:
         kwidth = np.exp(kwidth)
@@ -96,19 +101,20 @@ def gaussian_kernel(theta, log_scale, m1, m2=None, eval_gradients=False):
     if m2 is None:
         k = np.exp(-.5 * cdist_python(m1, m1, kwidth)**2)
 
-        if eval_gradients:
-            return gaussian_xx_gradients(m1, kwidth, k)
+        # if eval_gradients:
+        #    return gaussian_xx_gradients(m1, kwidth, k)
 
     else:
         k = np.exp(-.5 * cdist_python(m1, m2, kwidth)**2)
 
-        if eval_gradients:
-            return gaussian_xxp_gradients(m1, m2, kwidth, k)
+        # if eval_gradients:
+        #    return gaussian_xxp_gradients(m1, m2, kwidth, k)
 
     return k
 
 
-@numba.jit(nopython=True)
+# @numba.jit(float64[:, :](float64[:, :], float64[:], float64[:, :]),
+#           nopython=True)
 def gaussian_xx_gradients(m1, kwidth, k):
     """Gradient for k(x, x).
 
@@ -146,7 +152,8 @@ def gaussian_xx_gradients(m1, kwidth, k):
     return np.block([[k, big_kgd], [np.transpose(big_kgd), big_kdd]])
 
 
-@numba.jit(nopython=True)
+# @numba.jit(float64[:, :](float64[:, :], float64[:, :], float64[:],
+#                         float64[:, :]), nopython=True)
 def gaussian_xxp_gradients(m1, m2, kwidth, k):
     """Gradient for k(x, x').
 
