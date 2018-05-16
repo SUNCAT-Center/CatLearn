@@ -617,7 +617,6 @@ class AdsorbateFingerprintGenerator(BaseGenerator):
         if atoms is None:
             return ['strain_site', 'strain_term']
         else:
-            z_chemi = atoms.numbers[atoms.subsets['chemisorbed_atoms']]
             if ('key_value_pairs' in atoms.info and
                     'term' in atoms.info['key_value_pairs']):
                 term = atoms.info['key_value_pairs']['term']
@@ -638,6 +637,8 @@ class AdsorbateFingerprintGenerator(BaseGenerator):
                 bulk_numbers = atoms.numbers[bulk]
             else:
                 raise NotImplementedError("strain fingerprint.")
+            site = atoms.subsets['site_atoms']
+            site_numbers = atoms.numbers[site]
             rbulk = []
             rterm = []
             rsite = []
@@ -645,7 +646,7 @@ class AdsorbateFingerprintGenerator(BaseGenerator):
                 rbulk.append(get_radius(b))
             for t in term_numbers:
                 rterm.append(get_radius(t))
-            for z in z_chemi:
+            for z in site_numbers:
                 rsite.append(get_radius(z))
             av_term = np.average(rterm)
             av_bulk = np.average(rbulk)
@@ -903,7 +904,7 @@ class AdsorbateFingerprintGenerator(BaseGenerator):
             except KeyError:
                 n = np.nan
             size = len(atoms.subsets['termination_atoms'])
-            coverage = n / size
+            coverage = np.true_divide(n, size)
             return layers, size, coverage
 
     def name(self, atoms=None):
