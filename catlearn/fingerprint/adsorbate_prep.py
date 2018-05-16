@@ -9,9 +9,7 @@ import numpy as np
 from tqdm import tqdm
 from ase.atoms import string2symbols
 from ase.geometry import get_layers
-from catlearn.api.ase_atoms_api import (images_connectivity,
-                                        database_to_dictionary,
-                                        images_connectivity_dict)
+from catlearn.api.ase_atoms_api import images_connectivity
 from catlearn.fingerprint.periodic_table_data import get_radius
 
 
@@ -101,12 +99,16 @@ def detect_adsorbate(atoms):
     """
     if 'ads_atoms' in atoms.subsets:
         return atoms.subsets['ads_atoms']
+    if (len(np.unique(atoms.get_tags())) >= 4 and
+        min(atoms.get_tags()) <= 0 and
+       max(atoms.get_tags()) > 2):
+        return tags2ads_index(atoms)
     # Use species chemical formula if known.
     try:
         species = atoms.info['key_value_pairs']['species']
     except KeyError:
-        warnings.warn("'species' key missing.")
-        return sym2ads_index(atoms)
+        warnings.warn("'species' key or .info['key_value_pairs'] missing.")
+        return sym2ads_index(atoms, ads_syms=ads_syms)
     if species == '':
         return []
     elif '-' in species or '+' in species or ',' in species:
@@ -129,13 +131,14 @@ def detect_termination(atoms):
         'slab_atoms' : list
             indices of atoms belonging to the slab
     """
-    if len(np.unique(atoms.get_tags())) >= 4:
+    if (len(np.unique(atoms.get_tags())) >= 4 and
+        min(atoms.get_tags()) <= 0 and
+       max(atoms.get_tags()) > 2):
         bulk, term, subsurf = tags_termination(atoms)
+    elif len(atoms.constraints) == 1:
+        bulk, term, subsurf = constraints_termination(atoms)
     elif 'key_value_pairs' not in atoms.info:
-        if len(atoms.constraints) == 1:
-            bulk, term, subsurf = constraints_termination(atoms)
-        else:
-            bulk, term, subsurf = connectivity_termination(atoms)
+        bulk, term, subsurf = connectivity_termination(atoms)
     elif 'layers' in atoms.info['key_value_pairs']:
         bulk, term, subsurf = layers_termination(atoms)
     try:
@@ -171,38 +174,22 @@ def detect_termination(atoms):
     return bulk, term, subsurf
 
 
-def check_reconstructions(images, reference_db, selection=None):
+def check_reconstructions(image_pairs):
     """Return a list of database ids, for adsorbate/slab structures, which
     has a reconstructed slab with respect to the reference slab.
 
     Parameters
     ----------
-    images : list
-        List of ASE atoms objects. They must contain the info dictionary with
-        database key_value_pairs, including 'slab_id', referring to the
-        database id of the reference slab.
-    reference_db : str
-        Path and filename to an ASE database containing all the slabs.
-    selection : list
-        Optional list of selection filters for importing the slabs.
+    image_pairs : list
+        List of tuples containing pairs of ASE atoms objects.
+        The first element in each tuple must represent an adsorbate*slab
+        structure and the second element must represent a slab.
     """
-    references = database_to_dictionary(reference_db, selection=selection)
-    references = images_connectivity_dict(references)
     reconstructed = []
-    for atoms in images:
-        try:
-            slab_id = atoms.info['key_value_pairs']['slab_id']
-        except KeyError:
-            msg = "slab_id not attached."
-            try:
-                msg += ' id=' + str(atoms.info['id'])
-            except KeyError:
-                pass
-            warnings.warn("slab_id not attached.")
-            continue
-        identical = compare_slab_connectivity(atoms, references[int(slab_id)])
+    for row in image_pairs:
+        identical = compare_slab_connectivity(row[0], row[1])
         if not identical:
-            reconstructed.append(atoms.info['id'])
+            reconstructed.append(row[0].info['id'])
     return reconstructed
 
 
@@ -214,21 +201,20 @@ def compare_slab_connectivity(atoms, reference_atoms):
     ----------
     atoms : object
         ASE atoms object with connectivity and 'slab_atoms' subsets attached.
-        This represents an adsorbate/slab structure.
-    refernce_atoms : object
+        This represents an adsorbate*slab structure.
+    reference_atoms : object
         ASE atoms object with connectivity and 'slab_atoms' subsets attached.
         This represents a slab structure.
 
     Returns
     ----------
     identical : boolean
-        Are the connectivity matrices identical or not.
+        Are the connectivities within the slabs identical or not.
     """
     slab_atoms = atoms.subsets['slab_atoms']
     slab_cm = atoms.connectivity[:, slab_atoms][slab_atoms, :]
     reference_cm = reference_atoms.connectivity
-    identical = np.allclose(slab_cm, reference_cm)
-    return identical
+    return np.allclose(slab_cm, reference_cm)
 
 
 def slab_index(atoms):
@@ -248,7 +234,7 @@ def slab_index(atoms):
     return chemi
 
 
-def sym2ads_index(atoms):
+def sym2ads_index(atoms, ads_syms):
     """Return the indexes of atoms from the global list of adsorbate symbols.
 
     Parameters
@@ -257,6 +243,20 @@ def sym2ads_index(atoms):
         An ase atoms object.
     """
     ads_atoms = [a.index for a in atoms if a.symbol in ads_syms]
+
+    return ads_atoms
+
+
+def tags2ads_index(atoms):
+    """Return the indexes of atoms from the global list of adsorbate symbols.
+
+    Parameters
+    ----------
+    atoms : object
+        An ase atoms object. `atoms.tags` must label adsorbate atoms with 0 or
+        negative numbers.
+    """
+    ads_atoms = [a.index for a in atoms if a.tag < 1]
 
     return ads_atoms
 
