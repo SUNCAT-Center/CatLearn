@@ -40,7 +40,7 @@ class TestAdsorbateFeatures(unittest.TestCase):
                 images.append(atoms)
         return images
 
-    def test_raw_ads(self):
+    def test_tags(self):
         """Test the feature generation."""
         images = self.setup_atoms()
         images = autogen_info(images)
@@ -58,6 +58,7 @@ class TestAdsorbateFeatures(unittest.TestCase):
     def test_constrained_ads(self):
         """Test the feature generation."""
         images = self.setup_atoms()
+        [atoms.set_tags(np.zeros(len(atoms))) for atoms in images]
         for atoms in images:
             c_atoms = [a.index for a in atoms if
                        a.z < atoms.cell[2, 2] / 2. + 0.1]
@@ -77,6 +78,7 @@ class TestAdsorbateFeatures(unittest.TestCase):
     def test_db_ads(self):
         """Test the feature generation."""
         images = database_to_list('data/ads_example.db')
+        [atoms.set_tags(np.zeros(len(atoms))) for atoms in images]
         images = autogen_info(images)
         print(str(len(images)) + ' training examples.')
         gen = FeatureGenerator(nprocs=1)
