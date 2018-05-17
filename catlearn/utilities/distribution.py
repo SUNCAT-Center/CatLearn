@@ -28,7 +28,8 @@ def pair_distribution(images, bins=101, bounds=None, mic=True, element=None):
     pdf, x0 = np.histogram([], bins=bins, range=bounds)
     n = 0
     for atoms in images:
-        dist, x = _distance_hist(atoms, bins, bounds, mic=mic, element=element)
+        dist, x = _distance_hist(atoms, bins=bins, bounds=bounds,
+                                 mic=mic, element=element)
         assert np.allclose(x, x0)
         pdf = np.add(pdf, dist)
         n += 1
@@ -67,7 +68,7 @@ def pair_deviation(images, cutoffs, bins=33,
     pdf, x0 = np.histogram([], bins=bins, range=bounds)
     n = 0
     for atoms in images:
-        dist, x = _distance_hist(atoms, bins, bounds=bounds,
+        dist, x = _distance_hist(atoms, bins=bins, bounds=bounds,
                                  mic=mic,
                                  element=element,
                                  subtract_cutoffs=cutoffs)
@@ -102,7 +103,7 @@ def _distance_hist(atoms, bins, bounds, mic=True, element=None,
     """
     if isinstance(element, tuple) and element[0] == element[1]:
         subset = [i for i, z in enumerate(atoms.numbers) if z == element[0]]
-        atoms = atoms[subset]
+        atoms = atoms[subset].copy()
     d = atoms.get_all_distances(atoms)
 
     if subtract_cutoffs is not False:
