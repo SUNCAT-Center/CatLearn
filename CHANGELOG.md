@@ -2,6 +2,9 @@
 
 -   Genetic algorithm feature selection can parallelize over population within each generation.
 -   Default fingerprinter function sets accessible using `catlearn.fingerprint.setup.default_fingerprinters`
+-   New surrogate model utility
+-   New utility for evaluating cutoff radii for connectivity based fingerprinting.
+-   `default_catlearn_radius` improved.
 
 # Version 0.4.1 (April 2018)
 
