@@ -65,6 +65,8 @@ def check_length(labels, result, atoms):
             ' labels/fingerprint mismatch.'
         if 'id' in atoms.info:
             msg += ' database id: ' + str(atoms.info['id'])
+            msg += ' ' + ' '.join([str(label) for label in labels])
+            msg += ' ' + ' '.join([str(value) for value in result])
         raise AssertionError(msg)
 
 
@@ -119,7 +121,10 @@ class AdsorbateFingerprintGenerator(BaseGenerator):
                   'oxi_min_term',
                   'oxi_med_term',
                   'oxi_max_term',
-                  'block_term',
+                  'sblock_term',
+                  'pblock_term',
+                  'dblock_term',
+                  'fblock_term',
                   'ne_outer_term',
                   'ne_s_term',
                   'ne_p_term',
@@ -176,7 +181,10 @@ class AdsorbateFingerprintGenerator(BaseGenerator):
                   'dbwidth_bulk',
                   'dbskew_bulk',
                   'dbkurtosis_bulk',
-                  'block_bulk',
+                  'sblock_bulk',
+                  'pblock_bulk',
+                  'dblock_bulk',
+                  'fblock_bulk',
                   'oxi_min_bulk',
                   'oxi_med_bulk',
                   'oxi_max_bulk',
@@ -233,7 +241,10 @@ class AdsorbateFingerprintGenerator(BaseGenerator):
                   'oxi_min_ads1',
                   'oxi_med_ads1',
                   'oxi_max_ads1',
-                  'block_ads1',
+                  'sblock_ads1',
+                  'pblock_ads1',
+                  'dblock_ads1',
+                  'fblock_ads1',
                   'ne_outer_ads1',
                   'ne_s_ads1',
                   'ne_p_ads1',
@@ -292,7 +303,10 @@ class AdsorbateFingerprintGenerator(BaseGenerator):
                   'oxi_min_site_av',
                   'oxi_med_site_av',
                   'oxi_max_site_av',
-                  'block_site_av',
+                  'sblock_site_av',
+                  'pblock_site_av',
+                  'dblock_site_av',
+                  'fblock_site_av',
                   'ne_outer_site_av',
                   'ne_s_site_av',
                   'ne_p_site_av',
@@ -345,7 +359,10 @@ class AdsorbateFingerprintGenerator(BaseGenerator):
                   'oxi_min_site_sum',
                   'oxi_med_site_sum',
                   'oxi_max_site_sum',
-                  'block_site_sum',
+                  'sblock_site_sum',
+                  'pblock_site_sum',
+                  'dblock_site_sum',
+                  'fblock_site_sum',
                   'ne_outer_site_sum',
                   'ne_s_site_sum',
                   'ne_p_site_sum',
@@ -437,7 +454,10 @@ class AdsorbateFingerprintGenerator(BaseGenerator):
                   'oxi_min_surf_ligands',
                   'oxi_med_surf_ligands',
                   'oxi_max_surf_ligands',
-                  'block_surf_ligands',
+                  'sblock_surf_ligands',
+                  'pblock_surf_ligands',
+                  'dblock_surf_ligands',
+                  'fblock_surf_ligands',
                   'ne_outer_surf_ligands',
                   'ne_s_surf_ligands',
                   'ne_p_surf_ligands',
@@ -597,7 +617,6 @@ class AdsorbateFingerprintGenerator(BaseGenerator):
         if atoms is None:
             return ['strain_site', 'strain_term']
         else:
-            z_chemi = atoms.numbers[atoms.subsets['chemisorbed_atoms']]
             if ('key_value_pairs' in atoms.info and
                     'term' in atoms.info['key_value_pairs']):
                 term = atoms.info['key_value_pairs']['term']
@@ -618,6 +637,8 @@ class AdsorbateFingerprintGenerator(BaseGenerator):
                 bulk_numbers = atoms.numbers[bulk]
             else:
                 raise NotImplementedError("strain fingerprint.")
+            site = atoms.subsets['site_atoms']
+            site_numbers = atoms.numbers[site]
             rbulk = []
             rterm = []
             rsite = []
@@ -625,7 +646,7 @@ class AdsorbateFingerprintGenerator(BaseGenerator):
                 rbulk.append(get_radius(b))
             for t in term_numbers:
                 rterm.append(get_radius(t))
-            for z in z_chemi:
+            for z in site_numbers:
                 rsite.append(get_radius(z))
             av_term = np.average(rterm)
             av_bulk = np.average(rbulk)
@@ -705,7 +726,10 @@ class AdsorbateFingerprintGenerator(BaseGenerator):
                     #'dbwidth_m1',
                     #'dbskew_m1',
                     #'dbkurtosis_m1',
-                    'block_m1',
+                    'sblock_m1',
+                    'pblock_m1',
+                    'dblock_m1',
+                    'fblock_m1',
                     'ne_outer_m1',
                     'ne_s_m1',
                     'ne_p_m1',
@@ -735,7 +759,10 @@ class AdsorbateFingerprintGenerator(BaseGenerator):
                     #'dbwidth_m2',
                     #'dbskew_m2',
                     #'dbkurtosis_m1',
-                    'block_m2',
+                    'sblock_m2',
+                    'pblock_m2',
+                    'dblock_m2',
+                    'fblock_m2',
                     'ne_outer_m2',
                     'ne_s_m2',
                     'ne_p_m2',
@@ -765,7 +792,10 @@ class AdsorbateFingerprintGenerator(BaseGenerator):
                     #'dbwidth_sum',
                     #'dbskew_sum',
                     #'dbkurtosis_sum',
-                    'block_sum',
+                    'sblock_sum',
+                    'pblock_sum',
+                    'dblock_sum',
+                    'fblock_sum',
                     'ne_outer_sum',
                     'ne_s_sum',
                     'ne_p_sum',
@@ -865,9 +895,16 @@ class AdsorbateFingerprintGenerator(BaseGenerator):
         if atoms is None:
             return labels
         else:
-            layers = float(atoms.info['key_value_pairs']['layers'])
+            try:
+                layers = float(atoms.info['key_value_pairs']['layers'])
+            except KeyError:
+                layers = np.nan
+            try:
+                n = float(atoms.info['key_value_pairs']['n'])
+            except KeyError:
+                n = np.nan
             size = len(atoms.subsets['termination_atoms'])
-            coverage = float(atoms.info['key_value_pairs']['n']) / size
+            coverage = np.true_divide(n, size)
             return layers, size, coverage
 
     def name(self, atoms=None):

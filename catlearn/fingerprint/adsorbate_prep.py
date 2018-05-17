@@ -99,12 +99,16 @@ def detect_adsorbate(atoms):
     """
     if 'ads_atoms' in atoms.subsets:
         return atoms.subsets['ads_atoms']
+    if (len(np.unique(atoms.get_tags())) >= 4 and
+        min(atoms.get_tags()) <= 0 and
+       max(atoms.get_tags()) > 2):
+        return tags2ads_index(atoms)
     # Use species chemical formula if known.
     try:
         species = atoms.info['key_value_pairs']['species']
     except KeyError:
-        warnings.warn("'species' key missing.")
-        return sym2ads_index(atoms)
+        warnings.warn("'species' key or .info['key_value_pairs'] missing.")
+        return sym2ads_index(atoms, ads_syms=ads_syms)
     if species == '':
         return []
     elif '-' in species or '+' in species or ',' in species:
@@ -127,7 +131,9 @@ def detect_termination(atoms):
         'slab_atoms' : list
             indices of atoms belonging to the slab
     """
-    if len(np.unique(atoms.get_tags())) >= 4:
+    if (len(np.unique(atoms.get_tags())) >= 4 and
+        min(atoms.get_tags()) <= 0 and
+       max(atoms.get_tags()) > 2):
         bulk, term, subsurf = tags_termination(atoms)
     elif len(atoms.constraints) == 1:
         bulk, term, subsurf = constraints_termination(atoms)
@@ -141,8 +147,9 @@ def detect_termination(atoms):
         sy = int(''.join(i for i in sy if i.isdigit()))
         if int(sx) * int(sy) != len(term):
             msg = str(len(term)) + ' termination atoms identified.' + \
-                'size = ' + atoms.info['key_value_pairs']['supercell'] + \
-                ' id: ' + str(atoms.info['id'])
+                ' ' + atoms.info['key_value_pairs']['facet'] + \
+                ' ' + atoms.info['key_value_pairs']['supercell'] + \
+                '. id=' + str(atoms.info['id'])
             warnings.warn(msg)
     except KeyError:
         pass
@@ -150,11 +157,64 @@ def detect_termination(atoms):
         for a_s in atoms.subsets['site_atoms']:
             if a_s not in term:
                 msg = 'site atom not in term.'
+                try:
+                    msg += ' ' + str(atoms.info['key_value_pairs']['phase'])
+                except KeyError:
+                    pass
+                try:
+                    msg += ' ' + str(atoms.info['key_value_pairs']['facet'])
+                    msg += ' ' + str(
+                            atoms.info['key_value_pairs']['supercell'])
+                except KeyError:
+                    pass
                 if 'id' in atoms.info:
-                    msg += str(atoms.info['id'])
+                    msg += ' ' + str(atoms.info['id'])
                 warnings.warn(msg)
                 break
     return bulk, term, subsurf
+
+
+def check_reconstructions(image_pairs):
+    """Return a list of database ids, for adsorbate/slab structures, which
+    has a reconstructed slab with respect to the reference slab.
+
+    Parameters
+    ----------
+    image_pairs : list
+        List of tuples containing pairs of ASE atoms objects.
+        The first element in each tuple must represent an adsorbate*slab
+        structure and the second element must represent a slab.
+    """
+    reconstructed = []
+    for row in image_pairs:
+        identical = compare_slab_connectivity(row[0], row[1])
+        if not identical:
+            reconstructed.append(row[0].info['id'])
+    return reconstructed
+
+
+def compare_slab_connectivity(atoms, reference_atoms):
+    """Return a boolean for whether an adsorbate has caused a slab to
+    reconstruct and change it's connectivity.
+
+    Parameters
+    ----------
+    atoms : object
+        ASE atoms object with connectivity and 'slab_atoms' subsets attached.
+        This represents an adsorbate*slab structure.
+    reference_atoms : object
+        ASE atoms object with connectivity and 'slab_atoms' subsets attached.
+        This represents a slab structure.
+
+    Returns
+    ----------
+    identical : boolean
+        Are the connectivities within the slabs identical or not.
+    """
+    slab_atoms = atoms.subsets['slab_atoms']
+    slab_cm = atoms.connectivity[:, slab_atoms][slab_atoms, :]
+    reference_cm = reference_atoms.connectivity
+    return np.allclose(slab_cm, reference_cm)
 
 
 def slab_index(atoms):
@@ -174,7 +234,7 @@ def slab_index(atoms):
     return chemi
 
 
-def sym2ads_index(atoms):
+def sym2ads_index(atoms, ads_syms):
     """Return the indexes of atoms from the global list of adsorbate symbols.
 
     Parameters
@@ -183,6 +243,20 @@ def sym2ads_index(atoms):
         An ase atoms object.
     """
     ads_atoms = [a.index for a in atoms if a.symbol in ads_syms]
+
+    return ads_atoms
+
+
+def tags2ads_index(atoms):
+    """Return the indexes of atoms from the global list of adsorbate symbols.
+
+    Parameters
+    ----------
+    atoms : object
+        An ase atoms object. `atoms.tags` must label adsorbate atoms with 0 or
+        negative numbers.
+    """
+    ads_atoms = [a.index for a in atoms if a.tag < 1]
 
     return ads_atoms
 
@@ -328,12 +402,12 @@ def info2primary_index(atoms):
         print(chemi, site, ligand)
         msg = 'No adsorption site detected.'
         if 'id' in atoms.info:
-            msg += ' dbid: ' + str(atoms.info['id'])
+            msg += ' id=' + str(atoms.info['id'])
         warnings.warn(msg)
     elif len(ligand) < 2:
         msg = 'Site has less than 2 nearest neighbors.'
         if 'id' in atoms.info:
-            msg += ' dbid: ' + str(atoms.info['id'])
+            msg += ' id=' + str(atoms.info['id'])
         warnings.warn(msg)
     return chemi, site, ligand
 
@@ -380,13 +454,13 @@ def layers_termination(atoms):
         if db_layers != nlayers:
             msg = str(db_layers) + ' != ' + str(nlayers)
             if 'id' in atoms.info:
-                msg += ' ' + str(atoms.info['id'])
+                msg += ' id=' + str(atoms.info['id'])
             warnings.warn(msg)
     except(KeyError):
         if nlayers < 3:
             msg = 'nlayers = ' + str(nlayers)
             if 'id' in atoms.info:
-                msg += ' ' + str(atoms.info['id'])
+                msg += ' id=' + str(atoms.info['id'])
             warnings.warn(msg)
     # bulk atoms can include subsurface atoms.
     term = [a.index for a in atoms if il[a.index] >= nlayers - 1 and
@@ -414,16 +488,16 @@ def constraints_termination(atoms):
     cm = atoms.connectivity.copy()
     np.fill_diagonal(cm, 0)
     # List coordination numbers of slab atoms.
-    coord = np.count_nonzero(cm[atoms.subsets['slab_atoms'], :], axis=1)
-    coord -= 1
+    slab_atoms = atoms.subsets['slab_atoms']
+    coord = np.count_nonzero(cm[slab_atoms, :][:, slab_atoms], axis=1)
     bulk = []
     term = []
     max_coord = np.max(coord)
     for j, c in enumerate(coord):
         a_s = atoms.subsets['slab_atoms'][j]
-        if c == max_coord:
+        if a_s in atoms.constraints[0].get_indices():
             bulk.append(a_s)
-        elif a_s in atoms.constraints[0].get_indices():
+        elif c >= max_coord - 2:
             bulk.append(a_s)
         else:
             term.append(a_s)
@@ -454,15 +528,15 @@ def connectivity_termination(atoms):
     cm = atoms.connectivity.copy()
     np.fill_diagonal(cm, 0)
     # List coordination numbers of slab atoms.
-    coord = np.count_nonzero(cm[atoms.subsets['slab_atoms'], :], axis=1)
-    coord -= 1
+    slab_atoms = atoms.subsets['slab_atoms']
+    coord = np.count_nonzero(cm[slab_atoms, :][:, slab_atoms], axis=1)
     bulk = []
     term = []
     max_coord = np.max(coord)
     bulk = atoms.subsets['slab_atoms']
     for j, c in enumerate(coord):
         a_s = atoms.subsets['slab_atoms'][j]
-        if c == max_coord:
+        if c >= max_coord - 2:
             bulk.append(a_s)
         else:
             term.append(a_s)
@@ -489,6 +563,6 @@ def auto_layers(atoms):
             indices of atoms belonging to the slab
     """
     radii = [get_radius(z) for z in atoms.numbers[atoms.subsets['slab_atoms']]]
-    radius = np.average(radii)
+    radius = np.average(radii) / 2.
     lz, li = get_layers(atoms, (0, 0, 1), tolerance=radius)
     return lz, li

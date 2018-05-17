@@ -10,7 +10,9 @@ from ase.build import fcc111, add_adsorbate
 from ase.data import atomic_numbers
 from ase.constraints import FixAtoms
 from catlearn.api.ase_atoms_api import database_to_list
-from catlearn.fingerprint.adsorbate_prep import autogen_info
+from catlearn.fingerprint.adsorbate_prep import (autogen_info,
+                                                 check_reconstructions,
+                                                 images_connectivity)
 from catlearn.fingerprint.periodic_table_data import (get_radius,
                                                       default_catlearn_radius)
 from catlearn.fingerprint.setup import FeatureGenerator, default_fingerprinters
@@ -38,7 +40,7 @@ class TestAdsorbateFeatures(unittest.TestCase):
                 images.append(atoms)
         return images
 
-    def test_raw_ads(self):
+    def test_tags(self):
         """Test the feature generation."""
         images = self.setup_atoms()
         images = autogen_info(images)
@@ -56,6 +58,7 @@ class TestAdsorbateFeatures(unittest.TestCase):
     def test_constrained_ads(self):
         """Test the feature generation."""
         images = self.setup_atoms()
+        [atoms.set_tags(np.zeros(len(atoms))) for atoms in images]
         for atoms in images:
             c_atoms = [a.index for a in atoms if
                        a.z < atoms.cell[2, 2] / 2. + 0.1]
@@ -75,6 +78,7 @@ class TestAdsorbateFeatures(unittest.TestCase):
     def test_db_ads(self):
         """Test the feature generation."""
         images = database_to_list('data/ads_example.db')
+        [atoms.set_tags(np.zeros(len(atoms))) for atoms in images]
         images = autogen_info(images)
         print(str(len(images)) + ' training examples.')
         gen = FeatureGenerator(nprocs=1)
@@ -90,6 +94,20 @@ class TestAdsorbateFeatures(unittest.TestCase):
             for i, l in enumerate(labels):
                 print(i, l)
         self.assertTrue(len(labels) == np.shape(matrix)[1])
+
+    def test_recontruction(self):
+        images = self.setup_atoms()
+        slabs = []
+        for atoms in images:
+            slab = atoms.copy()
+            slab.pop(-1)
+            slabs.append(slab)
+        images = autogen_info(images)
+        slabs = images_connectivity(slabs)
+        image_pairs = zip(images, slabs)
+        reconstructed = check_reconstructions(image_pairs)
+
+        self.assertTrue(len(reconstructed) == 0)
 
 
 if __name__ == '__main__':
