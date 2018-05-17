@@ -13,12 +13,13 @@ from .particle_fingerprint import ParticleFingerprintGenerator
 from .standard_fingerprint import StandardFingerprintGenerator
 from .graph_fingerprint import GraphFingerprintGenerator
 from .bulk_fingerprint import BulkFingerprintGenerator
+from .convoluted_fingerprint import ConvolutedFingerprintGenerator
 
 
 class FeatureGenerator(
         AdsorbateFingerprintGenerator, ParticleFingerprintGenerator,
         StandardFingerprintGenerator, GraphFingerprintGenerator,
-        BulkFingerprintGenerator):
+        BulkFingerprintGenerator, ConvolutedFingerprintGenerator):
     """Feature generator class.
 
     It is sometimes necessary to normalize the length of feature vectors when
