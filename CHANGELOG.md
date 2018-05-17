@@ -1,5 +1,7 @@
 # dev
 
+# Version 0.4.2 (May 2018)
+
 -   Genetic algorithm feature selection can parallelize over population within each generation.
 -   Default fingerprinter function sets accessible using `catlearn.fingerprint.setup.default_fingerprinters`
 -   New surrogate model utility
