@@ -57,6 +57,9 @@ class TestAPI(unittest.TestCase):
         self.assertTrue(all_cand[2].get_graph() == g)
         self.assertTrue(all_cand[1].get_graph() is None)
 
+    # def test_catmap_api(self):
+    #     catmap = catmap_energy(fname, database_ids, prediction)
+
 
 if __name__ == '__main__':
     unittest.main()
