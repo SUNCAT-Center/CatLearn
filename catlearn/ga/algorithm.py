@@ -269,7 +269,7 @@ class GeneticAlgorithm(object):
             fit = self._parallel_iterator(param_list)
 
         if self.pareto:
-            fit = self._pareto_trainsform(fit)
+            fit = self._pareto_transform(fit)
 
         return np.reshape(fit, (len(fit),))
 
@@ -300,7 +300,7 @@ class GeneticAlgorithm(object):
         fit_reordered = fit[np.argsort(i), :]
         return fit_reordered
 
-    def _pareto_trainsform(self, fitness):
+    def _pareto_transform(self, fitness):
         """Function to transform a variable with fitness to a pareto fitness.
 
         Parameters
@@ -401,7 +401,10 @@ def _cross_validate(args):
         try:
             score = fit_func(train_features, train_targets,
                              test_features, test_targets)
-            if len(score) != fitness_parameters:
+            print(score)
+            if isinstance(score, float) and fitness_parameters != 1:
+                raise AssertionError("len(fit_func) != fitness_parameters")
+            elif isinstance(score, list) and len(score) != fitness_parameters:
                 raise AssertionError("len(fit_func) != fitness_parameters")
             calc_fit += np.array(score)
         except np.linalg.linalg.LinAlgError:
@@ -410,4 +413,4 @@ def _cross_validate(args):
                 [float('-inf')] * fitness_parameters)
             msg = 'The fitness function is failing. Returning -inf.'
             warnings.warn(msg)
-    return index, calc_fit
+    return index, calc_fit / nsplit
