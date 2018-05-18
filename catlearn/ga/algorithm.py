@@ -401,7 +401,6 @@ def _cross_validate(args):
         try:
             score = fit_func(train_features, train_targets,
                              test_features, test_targets)
-            print(score)
             if isinstance(score, float) and fitness_parameters != 1:
                 raise AssertionError("len(fit_func) != fitness_parameters")
             elif isinstance(score, list) and len(score) != fitness_parameters:
