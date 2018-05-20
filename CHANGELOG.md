@@ -1,4 +1,6 @@
 # dev
+-   `ConvolutedFingerprintGenerator` added for bulk and molecules.
+-   Dropped support for Python3.4 as it appears to start causing problems.
 
 # Version 0.4.2 (May 2018)
 

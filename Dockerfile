@@ -4,7 +4,7 @@ FROM jenningspc/catlearn:latest
 ENV LANG=C.UTF-8 LC_ALL=C.UTF-8
 
 # Add some descriptive labels.
-LABEL Description="This image is used to run CatLearn locally." Version="0.3.1"
+LABEL Description="This image is used to run CatLearn locally." Version="0.4.2"
 
 # Create the root directory.
 RUN mkdir CatLearn
