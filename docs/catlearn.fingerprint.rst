@@ -42,10 +42,26 @@ catlearn.fingerprint.bulk\_fingerprint
     :undoc-members:
     :show-inheritance:
 
+catlearn.fingerprint.convoluted\_fingerprint
+--------------------------------------------
+
+.. automodule:: catlearn.fingerprint.convoluted_fingerprint
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 catlearn.fingerprint.graph\_fingerprint
 ---------------------------------------
 
 .. automodule:: catlearn.fingerprint.graph_fingerprint
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+catlearn.fingerprint.molecule\_fingerprint
+------------------------------------------
+
+.. automodule:: catlearn.fingerprint.molecule_fingerprint
     :members:
     :undoc-members:
     :show-inheritance:
