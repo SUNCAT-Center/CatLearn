@@ -3,17 +3,11 @@ import numpy as np
 from ase.atoms import string2symbols
 from ase.data import ground_state_magnetic_moments as gs_magmom
 from ase.data import atomic_numbers
-from .periodic_table_data import (get_mendeleev_params, n_outer,
-                                  list_mendeleev_params,
-                                  default_params, get_radius,
-                                  electronegativities,
-                                  block2number)
-from .neighbor_matrix import connection_matrix
-import collections
+from .periodic_table_data import list_mendeleev_params, default_params
 from .base import BaseGenerator
 
 default_convoluted_fingerprinters = ['conv_bulk',
-                                    'conv_term']
+                                     'conv_term']
 
 extra_slab_params = ['atomic_radius',
                      'heat_of_formation',
@@ -31,8 +25,11 @@ extra_slab_params = ['atomic_radius',
 
 
 def check_length(labels, result, atoms):
-    """Check that two lists have the same length. If not, print an informative
-    error message containing a databse id if present.
+    """Check that two lists have the same length.
+
+    If not, print an informative error message containing a databse id if
+    present.
+
     Parameters
     ----------
     labels : list
@@ -75,7 +72,8 @@ class ConvolutedFingerprintGenerator(BaseGenerator):
 
         Parameters
         ----------
-            atoms : object
+        atoms : object
+            A single atoms object.
         """
         labels = ['atomic_number_bulk_conv_0',
                   'atomic_volume_bulk_conv_0',
@@ -151,36 +149,37 @@ class ConvolutedFingerprintGenerator(BaseGenerator):
                   'ne_f_bulk_conv_1',
                   'ionenergy_bulk_conv_1',
                   'ground_state_magmom_bulk_conv_1']
+
         if atoms is None:
             return labels
-        else:
-            if ('key_value_pairs' in atoms.info and
-                    'bulk' in atoms.info['key_value_pairs']):
-                bulk = atoms.info['key_value_pairs']['bulk']
-                numbers = [atomic_numbers[s] for s in string2symbols(bulk)]
-            elif 'bulk_atoms' in atoms.subsets:
-                bulk = atoms.subsets['bulk_atoms']
-                numbers = atoms.numbers[bulk]
-                connectivity = atoms.connectivity[bulk]
-            else:
-                raise NotImplementedError("bulk convoluted fingerprint.")
-            slab_numbers = atoms.numbers
-            dat_b = list_mendeleev_params(numbers, params=self.slab_params)
-            dat = list_mendeleev_params(slab_numbers, params=self.slab_params)
-            result = list(np.sqrt(np.sum(dat_b * dat_b, axis=0))/len(bulk))
-            result += [np.sqrt(np.sum([gs_magmom[z]**2 
-                             for z in numbers]))/len(bulk)]
-            for i in range(dat.shape[1]):
-                result += [np.sqrt(np.sum(dat[:, i]
-                           [:len(connectivity)].reshape(len(connectivity), 1)
-                           * (dat[:, i] * connectivity))) / len(bulk)]
-            gsm = np.array([gs_magmom[z] for z in atoms.numbers])
-            result += [np.sqrt(np.sum(
-                       gsm[:len(connectivity)].reshape(len(connectivity), 1)
-                       * (gsm * connectivity))) / len(bulk)]
-            check_length(labels, result, atoms)
-            return result
 
+        if ('key_value_pairs' in atoms.info and
+                'bulk' in atoms.info['key_value_pairs']):
+            bulk = atoms.info['key_value_pairs']['bulk']
+            numbers = [atomic_numbers[s] for s in string2symbols(bulk)]
+        elif 'bulk_atoms' in atoms.subsets:
+            bulk = atoms.subsets['bulk_atoms']
+            numbers = atoms.numbers[bulk]
+            connectivity = atoms.connectivity[bulk]
+        else:
+            raise NotImplementedError("bulk convoluted fingerprint.")
+        slab_numbers = atoms.numbers
+        dat_b = list_mendeleev_params(numbers, params=self.slab_params)
+        dat = list_mendeleev_params(slab_numbers, params=self.slab_params)
+        result = list(np.sqrt(np.sum(dat_b * dat_b, axis=0)) / len(bulk))
+        result += [np.sqrt(np.sum([gs_magmom[z]**2
+                                   for z in numbers])) / len(bulk)]
+        for i in range(dat.shape[1]):
+            result += [np.sqrt(np.sum(
+                dat[:, i][:len(connectivity)].reshape(len(connectivity), 1)
+                * (dat[:, i] * connectivity))) / len(bulk)]
+        gsm = np.array([gs_magmom[z] for z in atoms.numbers])
+        result += [np.sqrt(np.sum(
+            gsm[:len(connectivity)].reshape(len(connectivity), 1)
+            * (gsm * connectivity))) / len(bulk)]
+        check_length(labels, result, atoms)
+
+        return result
 
     def conv_term(self, atoms=None):
         """Return a fingerprint vector with propeties convoluted over the
@@ -188,7 +187,8 @@ class ConvolutedFingerprintGenerator(BaseGenerator):
 
         Parameters
         ----------
-            atoms : object
+        atoms : object
+            A single atoms object.
         """
         labels = ['atomic_number_term_conv_0',
                   'atomic_volume_term_conv_0',
@@ -264,34 +264,34 @@ class ConvolutedFingerprintGenerator(BaseGenerator):
                   'ne_f_term_conv_1',
                   'ionenergy_term_conv_1',
                   'ground_state_magmom_term_conv_1']
+
         if atoms is None:
             return labels
-        else:
-            if ('key_value_pairs' in atoms.info and
-                    'term' in atoms.info['key_value_pairs']):
-                term = atoms.info['key_value_pairs']['term']
-                numbers = [atomic_numbers[s] for s in string2symbols(term)]
-            elif 'termination_atoms' in atoms.subsets:
-                term = atoms.subsets['termination_atoms']
-                numbers = atoms.numbers[term]
-                connectivity = atoms.connectivity[term]
-            else:
-                raise NotImplementedError("term convoluted fingerprint.")
-            slab_numbers = atoms.numbers
-            dat_t = list_mendeleev_params(numbers, params=self.slab_params)
-            dat = list_mendeleev_params(slab_numbers, params=self.slab_params)
-            result = list(np.sqrt(np.sum(dat_t * dat_t, axis=0))/len(term))
-            result += [np.sqrt(np.sum([gs_magmom[z]**2 
-                             for z in numbers]))/len(term)]
-            for i in range(dat.shape[1]):
-                result += [np.sqrt(np.sum(dat[:, i]
-                           [:len(connectivity)].reshape(len(connectivity), 1)
-                           * (dat[:, i] * connectivity))) / len(term)]
-            gsm = np.array([gs_magmom[z] for z in atoms.numbers])
-            result += [np.sqrt(np.sum(
-                       gsm[:len(connectivity)].reshape(len(connectivity), 1)
-                       * (gsm * connectivity))) / len(term)]
-            check_length(labels, result, atoms)
-            return result
- 
 
+        if ('key_value_pairs' in atoms.info and
+                'term' in atoms.info['key_value_pairs']):
+            term = atoms.info['key_value_pairs']['term']
+            numbers = [atomic_numbers[s] for s in string2symbols(term)]
+        elif 'termination_atoms' in atoms.subsets:
+            term = atoms.subsets['termination_atoms']
+            numbers = atoms.numbers[term]
+            connectivity = atoms.connectivity[term]
+        else:
+            raise NotImplementedError("term convoluted fingerprint.")
+        slab_numbers = atoms.numbers
+        dat_t = list_mendeleev_params(numbers, params=self.slab_params)
+        dat = list_mendeleev_params(slab_numbers, params=self.slab_params)
+        result = list(np.sqrt(np.sum(dat_t * dat_t, axis=0)) / len(term))
+        result += [np.sqrt(np.sum([gs_magmom[z]**2
+                                   for z in numbers])) / len(term)]
+        for i in range(dat.shape[1]):
+            result += [np.sqrt(np.sum(
+                dat[:, i][:len(connectivity)].reshape(len(connectivity), 1)
+                * (dat[:, i] * connectivity))) / len(term)]
+        gsm = np.array([gs_magmom[z] for z in atoms.numbers])
+        result += [np.sqrt(np.sum(
+            gsm[:len(connectivity)].reshape(len(connectivity), 1)
+            * (gsm * connectivity))) / len(term)]
+        check_length(labels, result, atoms)
+
+        return result

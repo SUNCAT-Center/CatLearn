@@ -1,7 +1,4 @@
-# -*- coding: utf-8 -*-
-"""
-AtoML 0.4.1
-"""
+"""Class to automate building a surrogate model."""
 from __future__ import print_function
 import numpy as np
 from tqdm import tqdm
@@ -71,7 +68,6 @@ class SurrogateModel(object):
         target : list
             training target feature.
         """
-
         self.train_model = train_model
         self.predict = predict
         self.acquisition_function = acquisition_function
