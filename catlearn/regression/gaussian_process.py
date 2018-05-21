@@ -297,7 +297,7 @@ class GaussianProcess(object):
         self.kernel_dict = list2kdict(self.theta_opt['x'][:-1],
                                       self.kernel_dict)
         self.regularization = self.theta_opt['x'][-1]
-        self.log_marginal_likelihood = -self.theta_opt['fun']
+        self.log_marginal_likelihood = -self.theta_opt['fun'][0]
         # Make a new covariance matrix with the optimized hyperparameters.
         cvm = get_covariance(kernel_dict=self.kernel_dict,
                              matrix1=self.train_fp,
