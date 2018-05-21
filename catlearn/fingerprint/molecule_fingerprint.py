@@ -62,6 +62,6 @@ class AutoCorrelationFingerprintGenerator():
             B = Bm.copy()
             B[distance_matrix == dd] = 1
             AC = np.dot(np.dot(W, B), W.T).diagonal()
-            fingerprint[n*dd:n*(dd + 1)] = AC
+            fingerprint[n * dd:n * (dd + 1)] = AC
 
         return fingerprint
