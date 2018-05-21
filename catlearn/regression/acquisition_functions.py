@@ -60,7 +60,7 @@ def UCB(y_best, predictions, uncertainty, objective='max', kappa=1.5):
         return -predictions + kappa * uncertainty
 
 
-def EI(y_best, predictions, uncertainty, objective):
+def EI(y_best, predictions, uncertainty, objective='max'):
     """Return expected improvement acq. function.
 
     Parameters
