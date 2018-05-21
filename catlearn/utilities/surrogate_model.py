@@ -78,7 +78,7 @@ class SurrogateModel(object):
         self.train_data = train_data
         self.target = target
 
-    def test_acquisition(self, initial_subset=None, batch_size=1):
+    def test_acquisition(self, initial_subset=None, batch_size=1, n_max=None):
         """Return an array of test results for a surrogate model.
 
         Parameters
@@ -88,6 +88,8 @@ class SurrogateModel(object):
         batch_size : int
             Number of training points to acquire (move from test to training)
             in every iteration.
+        n_max : int
+            Max number of training points to test.
         """
         if initial_subset is None:
             train_index = list(range(max(batch_size, 2)))
@@ -104,6 +106,8 @@ class SurrogateModel(object):
             test_target = np.array(self.target)[test_index]
 
             if len(test_target) == 0:
+                break
+            elif n_max is not None and len(train_target) >= n_max:
                 break
             elif len(test_target) < batch_size:
                 batch_size = len(test_target)
