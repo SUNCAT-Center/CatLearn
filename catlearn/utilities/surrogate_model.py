@@ -95,8 +95,12 @@ class SurrogateModel(object):
             train_index = list(range(max(batch_size, 2)))
         else:
             train_index = initial_subset
+
+        if n_max is None:
+            n_max = len(self.target)
+
         output = []
-        for i in tqdm(np.arange(len(self.target) // batch_size)):
+        for i in tqdm(np.arange(n_max // batch_size)):
             # Setup data.
             test_index = np.delete(np.arange(len(self.train_data)),
                                    np.array(train_index))
@@ -106,8 +110,6 @@ class SurrogateModel(object):
             test_target = np.array(self.target)[test_index]
 
             if len(test_target) == 0:
-                break
-            elif n_max is not None and len(train_target) >= n_max:
                 break
             elif len(test_target) < batch_size:
                 batch_size = len(test_target)
