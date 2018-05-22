@@ -9,14 +9,16 @@ def catmap_energy(fname, database_ids, prediction,
 
     Parameters
     ----------
+        fname : str
+            Path and filename of candidate ase database file.
         database_ids : list
             Database ids.
         prediction : list
-            Predicted means.
+            Predicted means in the same order as database_ids.
         uncertainty : list
-            Predicted uncertainties.
-        fname : str
-            Path and filename of ase database file.
+            Predicted uncertainties in the same order as database_ids.
+        catmap : object
+            CatMAP db2catmap object.
     """
     c = ase.db.connect(fname)
 
