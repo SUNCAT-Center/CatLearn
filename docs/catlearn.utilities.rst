@@ -18,6 +18,14 @@ catlearn.utilities.database\_functions
     :undoc-members:
     :show-inheritance:
 
+catlearn.utilities.distribution
+-------------------------------
+
+.. automodule:: catlearn.utilities.distribution
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 catlearn.utilities.neighborlist
 -------------------------------
 
@@ -38,6 +46,14 @@ catlearn.utilities.sammon
 -------------------------
 
 .. automodule:: catlearn.utilities.sammon
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+catlearn.utilities.surrogate\_model
+-----------------------------------
+
+.. automodule:: catlearn.utilities.surrogate_model
     :members:
     :undoc-members:
     :show-inheritance:

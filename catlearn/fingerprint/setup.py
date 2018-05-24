@@ -9,6 +9,8 @@ import multiprocessing
 from tqdm import tqdm
 from .adsorbate_fingerprint import (AdsorbateFingerprintGenerator,
                                     default_adsorbate_fingerprinters)
+from .convoluted_fingerprint import (ConvolutedFingerprintGenerator,
+                                     default_convoluted_fingerprinters)
 from .particle_fingerprint import (ParticleFingerprintGenerator,
                                    default_particle_fingerprinters)
 from .standard_fingerprint import (StandardFingerprintGenerator,
@@ -21,7 +23,8 @@ from .bulk_fingerprint import (BulkFingerprintGenerator,
 default_sets = {'bulk': default_bulk_fingerprinters,
                 'fragment': (default_molecule_fingerprinters +
                              default_particle_fingerprinters),
-                'adsorbates': default_adsorbate_fingerprinters}
+                'adsorbates': (default_adsorbate_fingerprinters +
+                               default_convoluted_fingerprinters)}
 
 
 def default_fingerprinters(generator, data_type):
@@ -50,7 +53,7 @@ def default_fingerprinters(generator, data_type):
 class FeatureGenerator(
         AdsorbateFingerprintGenerator, ParticleFingerprintGenerator,
         StandardFingerprintGenerator, GraphFingerprintGenerator,
-        BulkFingerprintGenerator):
+        BulkFingerprintGenerator, ConvolutedFingerprintGenerator):
     """Feature generator class.
 
     It is sometimes necessary to normalize the length of feature vectors when
