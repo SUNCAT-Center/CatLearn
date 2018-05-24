@@ -10,7 +10,6 @@ benchmark those predictions against the known underlying function.
 """
 import numpy as np
 import matplotlib.pyplot as plt
-
 from catlearn.regression import GaussianProcess
 
 
