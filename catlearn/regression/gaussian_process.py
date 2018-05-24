@@ -158,7 +158,10 @@ class GaussianProcess(object):
             )
 
             # Calculated the error for the prediction on the training data.
-            train_target = self.train_target
+            if self.scale_data:
+                train_target = self.scaling.rescale_targets(self.train_target)
+            else:
+                train_target = self.train_target
             data['training_error'] = get_error(
                 prediction=data['train_prediction'], target=train_target,
                 epsilon=epsilon
