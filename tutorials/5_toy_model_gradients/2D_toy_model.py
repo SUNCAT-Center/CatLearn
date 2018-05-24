@@ -1,17 +1,17 @@
-"""Fifth AtoML tutorial.
+"""Fifth CatLearn tutorial.
 
-This tutorial is intended to help you get familiar with using AtoML to set up a
-model and do predictions.
+This tutorial is intended to help you get familiar with using CatLearn to set
+up a model and do predictions.
 
 First we set up a known underlying function in one dimension (including
 first derivative). Then, we pick some values to train.
-Finally we will use AtoML to make predictions on some unseen fingerprint and
+Finally we will use CatLearn to make predictions on some unseen fingerprint and
 benchmark those predictions against the known underlying function.
 """
 import numpy as np
 import matplotlib.pyplot as plt
 
-from atoml.regression import GaussianProcess
+from catlearn.regression import GaussianProcess
 
 
 # Set whether first derivative observations are included or not.
