@@ -1,6 +1,9 @@
 *.pyc
 *.pyc.*
 *.pickle
+*.pdf
+POSCAR
+CONTCAR
 
 docs/_*
 

@@ -65,22 +65,20 @@ def neb_converged(self):
             if self.distance_convergence <= 0.01:
                 print('Path has not changed from previous iteration.')
                 print('Max uncertainty:', np.max(self.unc_discr_neb))
-                self.ci = True
-                ########################
-                # self.k = self.initial_k * 100.0
-                #########################
                 fmax = get_fmax(-np.array([self.list_gradients[-1]]),
                                     self.num_atoms)
                 self.max_abs_forces = np.max(np.abs(fmax))
                 print('Forces last image evaluated', self.max_abs_forces)
                 if self.max_abs_forces <= self.fmax:
-                        return True
+                    return True
                 # Prevents to evaluate twice the same point:
-                if np.argmax(self.unc_discr_neb) == np.argmax(self.energies_discr_neb):
-                        return False
-                if self.max_abs_forces > self.fmax:
+                # if np.argmax(self.unc_discr_neb) == np.argmax(
+                #                                     self.energies_discr_neb):
+                #     return False
+                if self.max_abs_forces >= self.fmax:
                     check_point = self.images[np.argmax(
-                    self.energies_discr_neb)].get_positions().flatten()
+                                              self.energies_discr_neb)
+                                              ].get_positions().flatten()
                     if check_point.ndim == 1:
                         check_point = np.array([check_point])
                     self.list_train = np.append(self.list_train,
@@ -100,6 +98,10 @@ def neb_converged(self):
                                     self.num_atoms)
                     self.max_abs_forces = np.max(np.abs(fmax))
                     print('Forces max. top image', self.max_abs_forces)
+
+                    ######### Under test: ############
+                    self.ci = True
+                    ######### Under test: ############
                     if self.climb_img is False:
                         print('WARNING: The path is not converged using CI.')
                         return True

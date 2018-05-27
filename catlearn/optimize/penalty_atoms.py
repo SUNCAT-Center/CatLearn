@@ -19,7 +19,7 @@ def penalty_too_far_atoms(list_train, test, max_step, c_max_crit=1e2):
     return penalty
 
 
-def penalty_too_far_atoms_v2(list_train, test, max_step):
+def penalty_too_far_atoms_v2(list_train, test, max_step, penalty_constant):
     d_test_list_train = distance.cdist([test], list_train, 'euclidean')
     closest_train = (list_train[np.argmin(d_test_list_train)])
     test = array_to_atoms(test)
@@ -28,7 +28,7 @@ def penalty_too_far_atoms_v2(list_train, test, max_step):
     for atom in range(len(test)):
         d_atom_atom = distance.euclidean(test[atom], closest_train[atom])
         if d_atom_atom >= max_step:
-            a_const = 2.0
+            a_const = penalty_constant
             c_const = 2.0
             d_const = 1.0
             p_i = (a_const * ((d_atom_atom-max_step)**2)) / (c_const*np.abs(
@@ -62,3 +62,20 @@ def penalty_too_far(list_train, test, max_step=None, c_max_crit=1e2):
             p = 0.0
         penalty_max.append(p)
     return penalty_max
+
+# def penalty_atoms_too_close(test, min_dist, a_c=10.0):
+#     test = array_to_atoms(test)
+#     penalty = 0
+#     for atom in range(len(test)):
+#         d_atom_atom = distance.euclidean(atom, atom)
+#         if d_atom_atom <= min_dist:
+#             a_const = a_c
+#             c_const = 2.0
+#             d_const = 1.0
+#             p_i = (a_const * ((d_atom_atom-min_dist)**2)) / (c_const*np.abs(
+#             d_atom_atom-min_dist) + d_const)
+#         else:
+#             p_i = 0
+#         penalty += p_i
+#     return penalty
+

@@ -157,8 +157,8 @@ class NEBOptimizer(object):
 
 
     def run(self, fmax=0.05, ml_fmax=None, unc_conv=0.025, max_iter=200,
-            max_step=None, climb_img=False, neb_method='improvedtangent',
-            ml_algo='FIRE', penalty_mode='all_neb_atoms_label_v2', k=None,
+            max_step=0.05, climb_img=False, neb_method='improvedtangent',
+            ml_algo='FIRE', k=None,
             store_neb_paths=False):
 
         """Executing run will start the optimization process.
@@ -184,8 +184,6 @@ class NEBOptimizer(object):
         max_step: float
             Maximum step size in Ang. before applying a penalty (atoms or
             distances depending on the penalty mode).
-        penalty_mode: string
-            Penalization mode.
         fmax: float
             Convergence criteria. Forces below fmax.
         store_neb_paths: bool
@@ -219,12 +217,20 @@ class NEBOptimizer(object):
         self.ci = False
 
         self.neb_method = neb_method
-        self.initial_k = k
+
         self.k = k
 
-        self.penalty_mode = penalty_mode
         self.max_step = max_step
+        self.penalty_constant = 2.0
 
+        # Default spring constant is not specified.
+        if self.k is None:
+            if self.ml_algo is 'MDMin':
+                self.k = 1.0
+            if self.ml_algo is not 'MDMin':
+                self.k = 100.0
+            warning_spring_default(self.k)
+        self.initial_k = self.k
 
         print('Number of images:', self.n_images)
         print('Distance between first and last point:', self.d_start_end)
@@ -234,6 +240,7 @@ class NEBOptimizer(object):
         self.iter = 0
 
         while not neb_converged(self):
+
 
             self.org_train = self.list_train.copy()
             self.org_targets = self.list_targets.copy()
@@ -261,11 +268,22 @@ class NEBOptimizer(object):
                 self.ml_calc.opt_hyperparameters()
 
             # 2) Optimize ML and return the next point to evaluate:
+            catlearn_ase_calc = CatLearn_ASE(trained_process=self.trained_process,
+                                     ml_calc=self.ml_calc,
+                                     finite_step=1e-5,
+                                     max_step=self.max_step,
+                                     n_images=self.n_images,
+                                     c_crit_penalty=self.penalty_constant)
+
             self.ml_fmax = self.initial_ml_fmax*2
             self.max_ml_steps = 100 # Hard-coded.
+            if self.ml_algo is 'MDMin':
+                self.max_ml_steps = 30 # Hard-coded.
             if self.ci is True:
                 self.ml_fmax = self.initial_ml_fmax
                 self.max_ml_steps = 150 # Hard-coded.
+                if self.ml_algo is 'MDMin':
+                    self.max_ml_steps = 60 # Hard-coded.
 
             ml_algo_i = re.sub('\_ASE$', '', self.ml_algo)
             warning_ml_algo(self)
@@ -290,15 +308,7 @@ class NEBOptimizer(object):
                 image = start_guess_ml.copy()
                 image.info['label'] = i
                 image.info['uncertainty'] = 0
-                image.set_calculator(CatLearn_ASE(
-                                     trained_process=self.trained_process,
-                                     ml_calc=self.ml_calc,
-                                     finite_step=1e-5,
-                                     max_step=self.max_step,
-                                     n_images=self.n_images,
-                                     penalty_mode=self.penalty_mode,
-                                     c_crit_penalty=1.0)
-                                     )
+                image.set_calculator(copy.deepcopy(catlearn_ase_calc))
                 image.set_positions(last_images[i].get_positions())
                 image.set_constraint(self.constraints)
                 self.images.append(image)
@@ -352,7 +362,6 @@ class NEBOptimizer(object):
                 pred_i = self.ml_calc.get_predictions(
                                     trained_process=self.trained_process,
                                     test_data=pos_i_masked[0])
-                print(pred_i)
                 unc_i = pred_i['uncertainty_with_reg']
                 i.info['uncertainty']= unc_i[0]
                 #! CHECK THIS (why different?):
@@ -362,7 +371,9 @@ class NEBOptimizer(object):
                 self.unc_discr_neb.append(unc_i)
                 self.energies_discr_neb.append(energy_i - energy_img0)
 
-            self.energies_discr_neb = np.asarray(self.energies_discr_neb).flatten()
+            self.energies_discr_neb = np.asarray(
+                                                 self.energies_discr_neb
+                                                ).flatten()
             self.unc_discr_neb = np.asarray(self.unc_discr_neb).flatten()
             self.unc_discr_neb[0] = 0.0
             self.unc_discr_neb[-1] = 0.0
@@ -390,12 +401,14 @@ class NEBOptimizer(object):
                 print('Max. numb. ML iterations exceeded.')
                 ml_conv = False
 
-            if self.distance_convergence >= 0.20:
+            ############# Under test #########################################
+            if self.distance_convergence >= 10 * self.max_step:
                 print('The path was too stretched. The last NEB is not saved.')
                 ml_conv = False
-                # Accept the path if the uncertainty goes below 50 meV
-                if np.max(self.unc_discr_neb) <= (2*unc_conv):
-                    ml_conv = True
+                # Accept path if the uncertainty goes below 2*unc_conv in eV.
+            if np.max(self.unc_discr_neb) <= (2*unc_conv):
+                ml_conv = True
+            ############# Under test #########################################
 
             # If it is not reliable remove last positions for penalty.
             # This is when the path is stretch too much or when NEB ML did
@@ -449,7 +462,7 @@ class NEBOptimizer(object):
             print('Length discrete path:', s[-1])
             print('Max Step:', self.max_step)
             print('Max uncertainty:', np.max(self.unc_discr_neb))
-            print('NEB ML Converged?', ml_conv)
+            print('NEB ML Converged / Path accepted?', ml_conv)
             print('ITERATIONS:', self.iter)
             print('Spring constant:', self.k)
 

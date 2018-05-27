@@ -74,6 +74,12 @@ def warning_max_step_radii_neb(max_step):
     print(msg)
     store_warnings_and_errors(msg)
 
+def warning_spring_default(spring):
+    msg = "WARNING: You have not set an spring constant. The default spring " \
+          "constant for this optimization is k=" + str(spring)+" Angstrom^2."
+    print(msg)
+    store_warnings_and_errors(msg)
+
 
 def warning_kernel():
     msg = "WARNING: You have not selected a kernel (covariance " \

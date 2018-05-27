@@ -18,54 +18,58 @@ import numpy as np
 
 """ Toy model using the MullerBrown potential.  
 In this tutorial, we first optimize the initial and final end-points of the 
-reaction path. Secondly, we make a comparission between the ASE 
+reaction path. Secondly, we make a comparison between the ASE 
 implementation and our CatLearn (Machine Learning assisted) NEB code.
 """
 
 
 # 1. Structural relaxation. ##################################################
 
+# Setup calculator:
+ase_calculator = MullerBrown()
+
 # 1.1. Structures:
 initial_structure = Atoms('C', positions=[(-0.55, 1.41, 0.0)])
 final_structure = Atoms('C', positions=[(0.625, 0.025, 0.0)])
 
-initial_structure.set_calculator(MullerBrown())
-final_structure.set_calculator(MullerBrown())
+initial_structure.set_calculator(copy.deepcopy(ase_calculator))
+final_structure.set_calculator(copy.deepcopy(ase_calculator))
 
-# 1.2. Optimize initial and final states.
+# 1.2. Optimize initial and final end-points.
 
-# Initial:
+# Initial end-point:
 initial_opt = FIRE(initial_structure, trajectory='initial_optimized.traj')
 initial_opt.run(fmax=0.01)
-# Final:
+
+# Final end-point:
 final_opt = FIRE(final_structure, trajectory='final_optimized.traj')
 final_opt.run(fmax=0.01)
 
 # 2.A. NEB using ASE #########################################################
 
-number_of_images_neb_exact = 7
-initial_exact = read('initial_optimized.traj')
-final_exact = read('final_optimized.traj')
-images_exact = [initial_exact]
-for i in range(0,number_of_images_neb_exact):
-    image_exact = initial_exact.copy()
-    image_exact.set_calculator(MullerBrown())
-    images_exact.append(image_exact)
-images_exact.append(final_exact)
+number_of_images_neb_ase = 7
+initial_ase = read('initial_optimized.traj')
+final_ase = read('final_optimized.traj')
+images_ase = [initial_ase]
+for i in range(0,number_of_images_neb_ase):
+    image_ase = initial_ase.copy()
+    image_ase.set_calculator(copy.deepcopy(ase_calculator))
+    images_ase.append(image_ase)
+images_ase.append(final_ase)
 
-neb_exact = NEB(images_exact, climb=True, method='improvedtangent', k=0.1)
-neb_exact.interpolate()
+neb_ase = NEB(images_ase, climb=True, method='improvedtangent', k=0.1)
+neb_ase.interpolate()
 
-qn_exact = FIRE(neb_exact, trajectory='neb_exact.traj')
-qn_exact.run(fmax=0.01)
+qn_ase = FIRE(neb_ase, trajectory='neb_ase.traj')
+qn_ase.run(fmax=0.01)
 
-nebtools_exact = NEBTools(images_exact)
+nebtools_ase = NEBTools(images_ase)
 
-Sf_exact = nebtools_exact.get_fit()[2]
-Ef_exact = nebtools_exact.get_fit()[3]
+Sf_ase = nebtools_ase.get_fit()[2]
+Ef_ase = nebtools_ase.get_fit()[3]
 
-Ef_neb_exact, dE_neb_exact = nebtools_exact.get_barrier(fit=False)
-nebtools_exact.plot_band()
+Ef_neb_ase, dE_neb_ase = nebtools_ase.get_barrier(fit=False)
+nebtools_ase.plot_band()
 plt.show()
 
 
@@ -75,10 +79,11 @@ initial = read('initial_optimized.traj')
 final = read('final_optimized.traj')
 
 neb_catlearn = NEBOptimizer(start='initial_optimized.traj',
-                       end='final_optimized.traj', ase_calc=MullerBrown(),
-                       n_images=9, interpolation='')
+                       end='final_optimized.traj',
+                       ase_calc=copy.deepcopy(ase_calculator),
+                       n_images=7, interpolation='')
 
-neb_catlearn.run(ml_algo='FIRE', k=100.0, climb_img=True, max_step=0.05,
-neb_method='improvedtangent', store_neb_paths=True)
+neb_catlearn.run(ml_algo='FIRE', climb_img=True, max_step=0.10,
+                 neb_method='improvedtangent', store_neb_paths=True)
 
 # 3. Summary of the results #################################################
