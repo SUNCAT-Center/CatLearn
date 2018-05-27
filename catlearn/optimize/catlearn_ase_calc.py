@@ -45,7 +45,7 @@ class CatLearn_ASE(Calculator):
 
         # Previous paths of the atom i (for penalty function).
 
-        prev_atoms = read('all_pred_paths.traj',':')
+        prev_atoms = read('accepted_paths.traj',':')
         all_prev_pos_label = []
         for i in prev_atoms:
             if i.info['label'] == atoms.info['label']:

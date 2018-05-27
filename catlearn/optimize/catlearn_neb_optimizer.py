@@ -145,6 +145,7 @@ class NEBOptimizer(object):
             initial_images = initialize_neb(self)
 
         # Save initial path in list of paths.
+        write('accepted_paths.traj', initial_images[:])
         write('all_pred_paths.traj', initial_images[:])
 
         # Attach labels to the end-points.
@@ -301,15 +302,20 @@ class NEBOptimizer(object):
             self.images[0].__dict__['_calc'].__dict__['results']['energy'] - \
             mean_targets
 
-            # Append images:
+            # Append labels, uncertainty and iter to the first end-point:
+            self.images[0].info['label'] = 0
+            self.images[0].info['uncertainty'] = 0.0
+            self.images[0].info['iteration'] = self.iter
 
-            last_images = read("all_pred_paths.traj", '-' + str(self.n_images)
+            # Append images:
+            last_images = read("accepted_paths.traj", '-' + str(self.n_images)
              + ':')
 
             for i in range(1, self.n_images-1):
                 image = start_guess_ml.copy()
                 image.info['label'] = i
-                image.info['uncertainty'] = 0
+                image.info['uncertainty'] = 0.0
+                image.info['iteration'] = self.iter
                 image.set_calculator(copy.deepcopy(catlearn_ase_calc))
                 image.set_positions(last_images[i].get_positions())
                 image.set_constraint(self.constraints)
@@ -320,6 +326,11 @@ class NEBOptimizer(object):
             self.images[-1].__dict__['_calc'].__dict__['results']['energy'] = \
             self.images[-1].__dict__['_calc'].__dict__['results']['energy'] - \
                 mean_targets
+
+            # Append labels, uncertainty and iter to the last end-point:
+            self.images[-1].info['label'] = self.n_images
+            self.images[-1].info['uncertainty'] = 0.0
+            self.images[-1].info['iteration'] = self.iter
 
             # Set up ML+NEB:
             neb = NEB(self.images, climb=self.ci,
@@ -333,7 +344,6 @@ class NEBOptimizer(object):
 
             # Run ML+NEB:
             neb_opt.run(fmax=self.ml_fmax, steps=self.max_ml_steps)
-
 
             # Get dist. convergence (d between opt. path and prev. opt. path).
 
@@ -383,8 +393,11 @@ class NEBOptimizer(object):
 
             # Save (append) opt. path (including initial and final images).
 
-            all_prev_paths = read("all_pred_paths.traj",':') + self.images
-            write('all_pred_paths.traj', all_prev_paths)
+            all_prev_paths = read("accepted_paths.traj",':') + self.images
+            write('all_pred_paths.traj', read('all_pred_paths.traj',
+                  ':') + self.images)
+            write('accepted_paths.traj', all_prev_paths)
+            write('last_pred_path.traj', self.images)
 
             # Get fit of the discrete path.
             neb_tools = NEBTools(self.images)
@@ -416,15 +429,21 @@ class NEBOptimizer(object):
 
             # Store plots.
             if store_neb_paths is True:
-                plot_predicted_neb_path(images=self.images, iter=self.iter,
-                accepted_path=ml_conv, climb_image=self.ci)
+                plot_predicted_neb_path(images=self.images,
+                                        accepted_path=ml_conv,
+                                        climb_image=self.ci)
 
             # If it is not reliable remove last positions for penalty.
             # This is when the path is stretch too much or when NEB ML did
             # not converged.
             if ml_conv is False:
-                all_prev_paths = read("all_pred_paths.traj", ':'+'-' + str(self.n_images))
-                write('all_pred_paths.traj', all_prev_paths)
+                # Remove last path since it is not accepted:
+                all_prev_paths = read("accepted_paths.traj", ':'+'-' + str(self.n_images))
+                write('accepted_paths.traj', all_prev_paths)
+                # Save the last path accepted in a different file:
+                last_accepted_path = read("accepted_paths.traj", '-' + str(
+                self.n_images) + ':')
+                write('last_accepted_path.traj', last_accepted_path)
 
             #############################################
             if store_neb_paths is True:

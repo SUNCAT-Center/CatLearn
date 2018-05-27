@@ -128,8 +128,21 @@ def plot_neb_mullerbrown(self):
 
 
 def plot_predicted_neb_path(images, accepted_path=None, climb_image=None,
-                            iter=None, filename=''):
-    # Plot discrete path.
+                            filename=''):
+    """ Tool for plotting a predicted path of a given trajectory file.
+
+    Parameters
+    ----------
+    images: Atoms objects containing the path to plot.
+
+    Returns
+    -------
+    Plot Save image in pdf file and
+    """
+
+    iter = None
+
+    iter = images[0].info['iteration']
 
     neb_tools = NEBTools(images)
     [s, E, Sfit, Efit, lines] = neb_tools.get_fit()
@@ -164,18 +177,11 @@ def plot_predicted_neb_path(images, accepted_path=None, climb_image=None,
     Er_neb = max(Efit) - E[-1]
     dE_neb = E[-1] - E[0]
 
-    if iter is None:
-        plt.title('$E_\mathrm{f} \\approx$ %.3f eV; '
-             '$E_\mathrm{r} \\approx$ %.3f eV; '
-             '$\\Delta E$ = %.3f eV'
-             % (Ef_neb, Er_neb, dE_neb))
-        plt.savefig(fname=(filename + 'reaction_path.pdf'), dpi=300,
-                    format='pdf', transparent=True)
-    if iter is not None:
-        plt.title('Iter: {0:.0f}; E$_f$: {1:.3f} eV; E$_r$: {2:.3f} eV'.format(
+    plt.title('Iter: {0:.0f}; E$_f$: {1:.3f} eV; E$_r$: {2:.3f} eV'.format(
         iter, Ef_neb, Er_neb) + '; Accepted:' + str(accepted_path) + '; CI:' +
         str(climb_image))
-        plt.savefig(fname=(filename + 'reaction_path_iteration_' + str(iter)
+    plt.savefig(fname=(filename + 'reaction_path_iteration_' + str(iter)
                     +'.pdf'), dpi=300, format='pdf', transparent=True)
     plt.show()
     plt.close()
+

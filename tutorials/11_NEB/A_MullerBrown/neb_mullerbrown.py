@@ -47,7 +47,7 @@ final_opt.run(fmax=0.01)
 
 # 2.A. NEB using ASE #########################################################
 
-number_of_images_neb_ase = 4
+number_of_images_neb_ase = 9
 initial_ase = read('initial_optimized.traj')
 final_ase = read('final_optimized.traj')
 images_ase = [initial_ase]
@@ -81,7 +81,7 @@ final = read('final_optimized.traj')
 neb_catlearn = NEBOptimizer(start='initial_optimized.traj',
                        end='final_optimized.traj',
                        ase_calc=copy.deepcopy(ase_calculator),
-                       n_images=4, interpolation='')
+                       n_images=9, interpolation='')
 
 neb_catlearn.run(ml_algo='MDMin', climb_img=True, max_step=0.10,
                  neb_method='improvedtangent', store_neb_paths=True)

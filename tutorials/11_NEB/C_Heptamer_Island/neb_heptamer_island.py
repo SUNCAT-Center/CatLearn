@@ -46,7 +46,7 @@ final_ase = read('final.traj')
 
 ase_calculator = copy.deepcopy(ase_calculator)
 
-n_images = 3
+n_images = 9
 images_ase = [initial_ase]
 for i in range(1, n_images-1):
     image = initial_ase.copy()
@@ -78,7 +78,7 @@ plt.show()
 # 2.B. NEB using CatLearn ####################################################
 
 neb_catlearn = NEBOptimizer(start='initial.traj', end='final.traj',
-                       ase_calc=copy.deepcopy(ase_calculator), n_images=5,
+                       ase_calc=copy.deepcopy(ase_calculator), n_images=9,
                        interpolation='idpp')
 
 neb_catlearn.run(max_iter=200, ml_algo='MDMin', climb_img=True, max_step=0.10,

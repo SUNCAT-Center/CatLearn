@@ -80,12 +80,14 @@ def initialize_neb(self):
     images = [start_guess_ml]
     images[0].info['uncertainty'] = 0.0
     images[0].info['label'] = 0
+    images[0].info['iteration'] = -1
 
     # A) ASE interpolation.
     if self.path is None:
         for i in range(1, self.n_images-1):
             image = start_guess_ml.copy()
             image.info['label'] = i
+            image.info['iteration'] = -1
             image.set_calculator(CatLearn_ASE())
             image.set_constraint(self.constraints)
             images.append(image)
@@ -98,6 +100,7 @@ def initialize_neb(self):
         for i in range(0, len(self.path_images)):
             image = self.path_images[i]
             image.info['label'] = i+1
+            image.info['iteration'] = -1
             image.set_calculator(CatLearn_ASE())
             image.set_constraint(self.constraints)
             images.append(image)
@@ -105,5 +108,6 @@ def initialize_neb(self):
         self.n_images = len(images)
     images[-1].info['uncertainty'] = 0.0
     images[-1].info['label'] = self.n_images-1
+    images[-1].info['iteration'] = -1
 
     return images

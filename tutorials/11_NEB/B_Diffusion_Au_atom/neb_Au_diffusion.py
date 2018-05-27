@@ -50,7 +50,7 @@ initial_ase = read('initial.traj')
 final_ase = read('final.traj')
 constraint = FixAtoms(mask=[atom.tag > 1 for atom in initial_ase])
 
-n_images = 7
+n_images = 9
 images_ase = [initial_ase]
 for i in range(1, n_images-1):
     image = initial_ase.copy()
