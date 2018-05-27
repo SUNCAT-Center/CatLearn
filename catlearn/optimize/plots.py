@@ -127,7 +127,8 @@ def plot_neb_mullerbrown(self):
     plt.show()
 
 
-def plot_predicted_neb_path(images, iter=None, filename=''):
+def plot_predicted_neb_path(images, accepted_path=None, climb_image=None,
+                            iter=None, filename=''):
     # Plot discrete path.
 
     neb_tools = NEBTools(images)
@@ -171,11 +172,9 @@ def plot_predicted_neb_path(images, iter=None, filename=''):
         plt.savefig(fname=(filename + 'reaction_path.pdf'), dpi=300,
                     format='pdf', transparent=True)
     if iter is not None:
-        plt.title('$Iter:$ %.0f ; '
-             '$E_\mathrm{f} \\approx$ %.3f eV; '
-             '$E_\mathrm{r} \\approx$ %.3f eV; '
-             '$\\Delta E$ = %.3f eV'
-             % (iter, Ef_neb, Er_neb, dE_neb))
+        plt.title('Iter: {0:.0f}; E$_f$: {1:.3f} eV; E$_r$: {2:.3f} eV'.format(
+        iter, Ef_neb, Er_neb) + '; Accepted:' + str(accepted_path) + '; CI:' +
+        str(climb_image))
         plt.savefig(fname=(filename + 'reaction_path_iteration_' + str(iter)
                     +'.pdf'), dpi=300, format='pdf', transparent=True)
     plt.show()

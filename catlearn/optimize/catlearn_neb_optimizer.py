@@ -155,6 +155,9 @@ class NEBOptimizer(object):
         label_end_prev[-1].info['label'] = self.n_images
         write(self.end, label_end_prev)
 
+        # Check if there are enough images:
+        assert self.n_images > 3, err_not_enough_images()
+
 
     def run(self, fmax=0.05, ml_fmax=None, unc_conv=0.025, max_iter=200,
             max_step=0.05, climb_img=False, neb_method='improvedtangent',
@@ -238,7 +241,6 @@ class NEBOptimizer(object):
         print('Spring constant:', self.k)
 
         self.iter = 0
-
         while not neb_converged(self):
 
 
@@ -278,12 +280,12 @@ class NEBOptimizer(object):
             self.ml_fmax = self.initial_ml_fmax*2
             self.max_ml_steps = 100 # Hard-coded.
             if self.ml_algo is 'MDMin':
-                self.max_ml_steps = 30 # Hard-coded.
+                self.max_ml_steps = 50 # Hard-coded.
             if self.ci is True:
                 self.ml_fmax = self.initial_ml_fmax
-                self.max_ml_steps = 150 # Hard-coded.
+                self.max_ml_steps = 50 # Hard-coded.
                 if self.ml_algo is 'MDMin':
-                    self.max_ml_steps = 60 # Hard-coded.
+                    self.max_ml_steps = 20 # Hard-coded.
 
             ml_algo_i = re.sub('\_ASE$', '', self.ml_algo)
             warning_ml_algo(self)
@@ -339,7 +341,7 @@ class NEBOptimizer(object):
             for i in range(0, len(self.images)): # Only mid positions
                 pos_opt_i = self.images[i].get_positions().flatten()
                 pos_last_i = last_images[i].get_positions().flatten()
-                self.list_distance_convergence.append(distance.sqeuclidean(
+                self.list_distance_convergence.append(distance.euclidean(
                                                  pos_opt_i, pos_last_i))
             self.distance_convergence = np.max(
             np.abs(self.list_distance_convergence))
@@ -387,8 +389,6 @@ class NEBOptimizer(object):
             # Get fit of the discrete path.
             neb_tools = NEBTools(self.images)
             [s, E, Sfit, Efit, lines] = neb_tools.get_fit()
-            if store_neb_paths is True:
-                plot_predicted_neb_path(images=self.images, iter=self.iter)
 
             # Select image with max. uncertainty.
             self.interesting_point = self.images[np.argmax(
@@ -402,18 +402,26 @@ class NEBOptimizer(object):
                 ml_conv = False
 
             ############# Under test #########################################
-            if self.distance_convergence >= 10 * self.max_step:
+
+            if self.distance_convergence >= self.max_step:
                 print('The path was too stretched. The last NEB is not saved.')
                 ml_conv = False
                 # Accept path if the uncertainty goes below 2*unc_conv in eV.
+
             if np.max(self.unc_discr_neb) <= (2*unc_conv):
                 ml_conv = True
+
             ############# Under test #########################################
+
+
+            # Store plots.
+            if store_neb_paths is True:
+                plot_predicted_neb_path(images=self.images, iter=self.iter,
+                accepted_path=ml_conv, climb_image=self.ci)
 
             # If it is not reliable remove last positions for penalty.
             # This is when the path is stretch too much or when NEB ML did
             # not converged.
-
             if ml_conv is False:
                 all_prev_paths = read("all_pred_paths.traj", ':'+'-' + str(self.n_images))
                 write('all_pred_paths.traj', all_prev_paths)

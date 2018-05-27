@@ -82,8 +82,8 @@ class CatLearn_ASE(Calculator):
                     d_atom_atom = distance.euclidean(test[atom], closest_train[atom])
                     if d_atom_atom >= max_step:
                         p_i = 0.0
-                        a_const = 4.0
-                        c_const = 4.0
+                        a_const = 2.0
+                        c_const = 2.0
                         d_const = 1.0
                         p_i = (a_const * ((d_atom_atom-max_step)**2)) / (c_const*(
                         d_atom_atom-max_step) + d_const)

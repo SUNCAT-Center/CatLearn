@@ -236,6 +236,11 @@ def err_not_neb_end():
     store_warnings_and_errors(msg)
     return msg
 
+def err_not_enough_images():
+    msg = """ COMPUTER SAYS NO: You must include at least 4 NEB images."""
+    store_warnings_and_errors(msg)
+    return msg
+
 def store_warnings_and_errors(msg):
     warn_and_errors = open('warnings_and_errors.txt', "a")
     warn_and_errors.write(msg + "\n")

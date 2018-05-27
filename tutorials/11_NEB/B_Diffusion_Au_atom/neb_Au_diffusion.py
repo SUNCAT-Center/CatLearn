@@ -52,7 +52,7 @@ constraint = FixAtoms(mask=[atom.tag > 1 for atom in initial_ase])
 
 n_images = 7
 images_ase = [initial_ase]
-for i in range(n_images):
+for i in range(1, n_images-1):
     image = initial_ase.copy()
     image.set_calculator(copy.deepcopy(ase_calculator))
     image.set_constraint(constraint)
@@ -80,5 +80,5 @@ neb_catlearn = NEBOptimizer(start='initial.traj', end='final.traj',
                        ase_calc=copy.deepcopy(ase_calculator), n_images=9,
                        interpolation='idpp')
 
-neb_catlearn.run(ml_algo='FIRE', climb_img=True, max_step=0.10,
+neb_catlearn.run(ml_algo='MDMin', climb_img=True, max_step=0.10,
                  neb_method='improvedtangent', store_neb_paths=True)
