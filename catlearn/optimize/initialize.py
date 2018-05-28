@@ -93,7 +93,7 @@ def initialize_neb(self):
             images.append(image)
         images.append(final_guess_ml)
         neb = NEB(images)
-        neb.interpolate(method=self.interpolation)
+        neb.interpolate(method=self.interpolation, mic=True)
 
     # B) User provides a path.
     if self.path is not None:
