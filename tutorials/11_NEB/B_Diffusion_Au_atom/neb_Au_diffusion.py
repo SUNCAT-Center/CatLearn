@@ -50,7 +50,7 @@ initial_ase = read('initial.traj')
 final_ase = read('final.traj')
 constraint = FixAtoms(mask=[atom.tag > 1 for atom in initial_ase])
 
-n_images = 9
+n_images = 7
 images_ase = [initial_ase]
 for i in range(1, n_images-1):
     image = initial_ase.copy()
@@ -77,8 +77,8 @@ plt.show()
 # 2.B. NEB using CatLearn ####################################################
 
 neb_catlearn = NEBOptimizer(start='initial.traj', end='final.traj',
-                       ase_calc=copy.deepcopy(ase_calculator), n_images=9,
+                       ase_calc=copy.deepcopy(ase_calculator), n_images=7,
                        interpolation='idpp')
 
 neb_catlearn.run(ml_algo='MDMin', climb_img=True, max_step=0.10,
-                 neb_method='improvedtangent', store_neb_paths=True)
+                 neb_method='improvedtangent', plot_neb_paths=True)

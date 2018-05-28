@@ -150,6 +150,7 @@ def plot_predicted_neb_path(images, accepted_path=None, climb_image=None,
     energies_pred_neb = []
 
     energy_img_0 = images[0].get_total_energy()
+
     uncertainties_pred_neb = []
     for i in images:
         energies_pred_neb.append(i.get_total_energy() - energy_img_0)
@@ -180,6 +181,12 @@ def plot_predicted_neb_path(images, accepted_path=None, climb_image=None,
     plt.title('Iter: {0:.0f}; E$_f$: {1:.3f} eV; E$_r$: {2:.3f} eV'.format(
         iter, Ef_neb, Er_neb) + '; Accepted:' + str(accepted_path) + '; CI:' +
         str(climb_image))
+
+    if accepted_path is None:
+        plt.title('Iter: {0:.0f}; E$_f$: {1:.3f} eV; E$_r$: {2:.3f} '
+        'eV; Max. uncertainty: {3:.3f} eV'.format(
+        iter, Ef_neb, Er_neb, np.max(uncertainties_pred_neb)))
+
     plt.savefig(fname=(filename + 'reaction_path_iteration_' + str(iter)
                     +'.pdf'), dpi=300, format='pdf', transparent=True)
     plt.show()

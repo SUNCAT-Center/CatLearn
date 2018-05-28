@@ -75,7 +75,7 @@ def neb_converged(self):
                 if np.argmax(self.unc_discr_neb) == np.argmax(
                                                     self.energies_discr_neb):
                     return False
-                if self.max_abs_forces >= self.fmax:
+                if self.max_abs_forces > self.fmax:
                     check_point = self.images[np.argmax(
                                               self.energies_discr_neb)
                                               ].get_positions().flatten()

@@ -12,8 +12,8 @@ from catlearn.optimize.catlearn_neb_optimizer import NEBOptimizer
 from ase.neb import NEBTools
 import copy
 
-# 1. Structural relaxation. ##################################################
-
+# # 1. Structural relaxation. ##################################################
+#
 # Setup calculator:
 ase_calculator = EMT()
 
@@ -46,7 +46,7 @@ final_ase = read('final.traj')
 
 ase_calculator = copy.deepcopy(ase_calculator)
 
-n_images = 9
+n_images = 7
 images_ase = [initial_ase]
 for i in range(1, n_images-1):
     image = initial_ase.copy()
@@ -78,8 +78,8 @@ plt.show()
 # 2.B. NEB using CatLearn ####################################################
 
 neb_catlearn = NEBOptimizer(start='initial.traj', end='final.traj',
-                       ase_calc=copy.deepcopy(ase_calculator), n_images=9,
+                       ase_calc=copy.deepcopy(ase_calculator), n_images=7,
                        interpolation='idpp')
 
-neb_catlearn.run(max_iter=200, ml_algo='MDMin', climb_img=True, max_step=0.10,
-                 neb_method='improvedtangent', store_neb_paths=True)
+neb_catlearn.run(ml_algo='MDMin', climb_img=True, max_step=0.10,
+                 neb_method='improvedtangent', plot_neb_paths=True)

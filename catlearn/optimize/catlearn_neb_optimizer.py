@@ -160,10 +160,11 @@ class NEBOptimizer(object):
         assert self.n_images > 3, err_not_enough_images()
 
 
-    def run(self, fmax=0.05, ml_fmax=None, unc_conv=0.025, max_iter=200,
-            max_step=0.05, climb_img=False, neb_method='improvedtangent',
+    def run(self, fmax=0.05, max_iter=200, ml_fmax=None, unc_conv=0.025,
+            ml_max_iter=100, max_step=0.05, climb_img=False,
+            neb_method='improvedtangent',
             ml_algo='FIRE', k=None,
-            store_neb_paths=False):
+            plot_neb_paths=False):
 
         """Executing run will start the optimization process.
 
@@ -190,7 +191,7 @@ class NEBOptimizer(object):
             distances depending on the penalty mode).
         fmax: float
             Convergence criteria. Forces below fmax.
-        store_neb_paths: bool
+        plot_neb_paths: bool
             If True it stores the predicted NEB path in pdf format for each
             iteration.
             Note: Python package matplotlib is required.
@@ -242,6 +243,7 @@ class NEBOptimizer(object):
         print('Spring constant:', self.k)
 
         self.iter = 0
+
         while not neb_converged(self):
 
 
@@ -278,20 +280,8 @@ class NEBOptimizer(object):
                                      n_images=self.n_images,
                                      c_crit_penalty=self.penalty_constant)
 
-            self.ml_fmax = self.initial_ml_fmax*2
-            self.max_ml_steps = 100 # Hard-coded.
-            if self.ml_algo is 'MDMin':
-                self.max_ml_steps = 50 # Hard-coded.
-            if self.ci is True:
-                self.ml_fmax = self.initial_ml_fmax
-                self.max_ml_steps = 50 # Hard-coded.
-                if self.ml_algo is 'MDMin':
-                    self.max_ml_steps = 20 # Hard-coded.
 
-            ml_algo_i = re.sub('\_ASE$', '', self.ml_algo)
-            warning_ml_algo(self)
-            warning_climb_img(self)
-
+            # End-points of the NEB path:
             start_guess_ml = read(self.x0)
             final_guess_ml = read(self.f0)
 
@@ -332,18 +322,37 @@ class NEBOptimizer(object):
             self.images[-1].info['uncertainty'] = 0.0
             self.images[-1].info['iteration'] = self.iter
 
-            # Set up ML+NEB:
+            # Convergence NEB ML Setup:
+
+            # Convergence setup step 1.
+            initial_max_ml_iter = ml_max_iter # Hard-coded.
+            self.ml_fmax = self.initial_ml_fmax*2
+            max_ml_iter = initial_max_ml_iter # Hard-coded.
+            if self.ml_algo is 'MDMin':
+                max_ml_iter = initial_max_ml_iter/2 # Hard-coded.
+            if self.ci is True:
+                self.ml_fmax = self.initial_ml_fmax
+                max_ml_iter = initial_max_ml_iter/2 # Hard-coded.
+                if self.ml_algo is 'MDMin':
+                    max_ml_iter = initial_max_ml_iter/4 # Hard-coded.
+
+            ml_algo_i = re.sub('\_ASE$', '', self.ml_algo)
+            warning_ml_algo(self)
+            warning_climb_img(self)
+
+
+            # Convergence setup step 2.
             neb = NEB(self.images, climb=self.ci,
                       method=self.neb_method, k=self.k)  # Hard-coded.
 
-            # Set up ML+NEB:
+            # Convergence setup step 3.
             if ml_algo is 'FIRE' or ml_algo is 'MDMin':
                 neb_opt = eval(ml_algo_i)(neb, dt=0.1)
             if ml_algo is not 'FIRE' or ml_algo is not 'MDMin':
                 neb_opt = eval(ml_algo_i)(neb)
 
             # Run ML+NEB:
-            neb_opt.run(fmax=self.ml_fmax, steps=self.max_ml_steps)
+            neb_opt.run(fmax=self.ml_fmax, steps=max_ml_iter)
 
             # Get dist. convergence (d between opt. path and prev. opt. path).
 
@@ -410,7 +419,7 @@ class NEBOptimizer(object):
             # Check if the path found is reliable.
             ml_conv = True
 
-            if neb_opt.__dict__['nsteps'] >= self.max_ml_steps:
+            if neb_opt.__dict__['nsteps'] >= max_ml_iter:
                 print('Max. numb. ML iterations exceeded.')
                 ml_conv = False
 
@@ -426,27 +435,28 @@ class NEBOptimizer(object):
 
             ############# Under test #########################################
 
-
             # Store plots.
-            if store_neb_paths is True:
+            if plot_neb_paths is True:
                 plot_predicted_neb_path(images=self.images,
                                         accepted_path=ml_conv,
                                         climb_image=self.ci)
 
+            # Store the last accepted path in a different file:
+            if ml_conv is True:
+                last_accept_path = read("accepted_paths.traj", ':')
+                write('last_accepted_path.traj', last_accept_path[-self.n_images:])
+
             # If it is not reliable remove last positions for penalty.
             # This is when the path is stretch too much or when NEB ML did
             # not converged.
+
             if ml_conv is False:
                 # Remove last path since it is not accepted:
                 all_prev_paths = read("accepted_paths.traj", ':'+'-' + str(self.n_images))
                 write('accepted_paths.traj', all_prev_paths)
-                # Save the last path accepted in a different file:
-                last_accepted_path = read("accepted_paths.traj", '-' + str(
-                self.n_images) + ':')
-                write('last_accepted_path.traj', last_accepted_path)
 
             #############################################
-            if store_neb_paths is True:
+            if plot_neb_paths is True:
                 if self.ase_calc.__dict__['name'] == 'mullerbrown':
                     plot_neb_mullerbrown(self)
             #############################################
@@ -485,11 +495,13 @@ class NEBOptimizer(object):
 
             self.feval = len(self.list_targets-2)
 
+            print('Maximum number of ML steps set by the user:', max_ml_iter)
+            print('Maximum step set by the user:', self.max_step)
+            print('Spring constant set by the user:', self.k)
             print('Length of initial path:', self.d_start_end)
-            print('Length discrete path:', s[-1])
-            print('Max Step:', self.max_step)
+            print('Length of the current path:', s[-1])
             print('Max uncertainty:', np.max(self.unc_discr_neb))
             print('NEB ML Converged / Path accepted?', ml_conv)
             print('ITERATIONS:', self.iter)
-            print('Spring constant:', self.k)
+
 
