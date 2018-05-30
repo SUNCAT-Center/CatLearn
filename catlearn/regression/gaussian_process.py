@@ -158,7 +158,10 @@ class GaussianProcess(object):
             )
 
             # Calculated the error for the prediction on the training data.
-            train_target = self.train_target
+            if self.scale_data:
+                train_target = self.scaling.rescale_targets(self.train_target)
+            else:
+                train_target = self.train_target
             data['training_error'] = get_error(
                 prediction=data['train_prediction'], target=train_target,
                 epsilon=epsilon
@@ -297,7 +300,7 @@ class GaussianProcess(object):
         self.kernel_dict = list2kdict(self.theta_opt['x'][:-1],
                                       self.kernel_dict)
         self.regularization = self.theta_opt['x'][-1]
-        self.log_marginal_likelihood = -self.theta_opt['fun']
+        self.log_marginal_likelihood = -self.theta_opt['fun'][0]
         # Make a new covariance matrix with the optimized hyperparameters.
         cvm = get_covariance(kernel_dict=self.kernel_dict,
                              matrix1=self.train_fp,

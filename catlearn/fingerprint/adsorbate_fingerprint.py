@@ -18,6 +18,9 @@ default_adsorbate_fingerprinters = ['mean_chemisorbed_atoms',
                                     'count_ads_atoms',
                                     'count_ads_bonds',
                                     'mean_site',
+                                    'max_site',
+                                    'min_site',
+                                    'median_site',
                                     'sum_site',
                                     'mean_surf_ligands',
                                     'term',
@@ -321,6 +324,174 @@ class AdsorbateFingerprintGenerator(BaseGenerator):
             dat = list_mendeleev_params(numbers, params=self.slab_params)
             result = list(np.nanmean(dat, axis=0))
             result += [np.nanmean([gs_magmom[z] for z in numbers])]
+            check_length(labels, result, atoms)
+            return result
+
+    def min_site(self, atoms=None):
+        """Function that takes an atoms objects and returns a fingerprint
+        vector with properties averaged over the surface metal atoms
+        closest to an add atom.
+
+        Parameters
+        ----------
+            atoms : object
+        """
+        labels = ['atomic_number_site_min',
+                  'atomic_volume_site_min',
+                  'boiling_point_site_min',
+                  'density_site_min',
+                  'dipole_polarizability_site_min',
+                  'electron_affinity_site_min',
+                  'group_id_site_min',
+                  'lattice_constant_site_min',
+                  'melting_point_site_min',
+                  'period_site_min',
+                  'vdw_radius_site_min',
+                  'covalent_radius_cordero_site_min',
+                  'en_allen_site_min',
+                  'atomic_weight_site_min',
+                  'atomic_radius_site_min',
+                  'heat_of_formation_site_min',
+                  'dft_bulk_modulus_site_min',
+                  'dft_rhodensity_site_min',
+                  'dbcenter_site_min',
+                  'dbfilling_site_min',
+                  'dbwidth_site_min',
+                  'dbskew_site_min',
+                  'dbkurtosis_site_min',
+                  'oxi_min_site_min',
+                  'oxi_med_site_min',
+                  'oxi_max_site_min',
+                  'sblock_site_min',
+                  'pblock_site_min',
+                  'dblock_site_min',
+                  'fblock_site_min',
+                  'ne_outer_site_min',
+                  'ne_s_site_min',
+                  'ne_p_site_min',
+                  'ne_d_site_min',
+                  'ne_f_site_min',
+                  'ionenergy_site_min',
+                  'ground_state_magmom_site_min']
+        if atoms is None:
+            return labels
+        else:
+            numbers = [atoms[j].number for j in atoms.subsets['site_atoms']]
+            dat = list_mendeleev_params(numbers, params=self.slab_params)
+            result = list(np.nanmin(dat, axis=0))
+            result += [np.nanmin([gs_magmom[z] for z in numbers])]
+            check_length(labels, result, atoms)
+            return result
+
+    def max_site(self, atoms=None):
+        """Function that takes an atoms objects and returns a fingerprint
+        vector with properties averaged over the surface metal atoms
+        closest to an add atom.
+
+        Parameters
+        ----------
+            atoms : object
+        """
+        labels = ['atomic_number_site_max',
+                  'atomic_volume_site_max',
+                  'boiling_point_site_max',
+                  'density_site_max',
+                  'dipole_polarizability_site_max',
+                  'electron_affinity_site_max',
+                  'group_id_site_max',
+                  'lattice_constant_site_max',
+                  'melting_point_site_max',
+                  'period_site_max',
+                  'vdw_radius_site_max',
+                  'covalent_radius_cordero_site_max',
+                  'en_allen_site_max',
+                  'atomic_weight_site_max',
+                  'atomic_radius_site_max',
+                  'heat_of_formation_site_max',
+                  'dft_bulk_modulus_site_max',
+                  'dft_rhodensity_site_max',
+                  'dbcenter_site_max',
+                  'dbfilling_site_max',
+                  'dbwidth_site_max',
+                  'dbskew_site_max',
+                  'dbkurtosis_site_max',
+                  'oxi_min_site_max',
+                  'oxi_med_site_max',
+                  'oxi_max_site_max',
+                  'sblock_site_max',
+                  'pblock_site_max',
+                  'dblock_site_max',
+                  'fblock_site_max',
+                  'ne_outer_site_max',
+                  'ne_s_site_max',
+                  'ne_p_site_max',
+                  'ne_d_site_max',
+                  'ne_f_site_max',
+                  'ionenergy_site_max',
+                  'ground_state_magmom_site_max']
+        if atoms is None:
+            return labels
+        else:
+            numbers = [atoms[j].number for j in atoms.subsets['site_atoms']]
+            dat = list_mendeleev_params(numbers, params=self.slab_params)
+            result = list(np.nanmax(dat, axis=0))
+            result += [np.nanmax([gs_magmom[z] for z in numbers])]
+            check_length(labels, result, atoms)
+            return result
+
+    def median_site(self, atoms=None):
+        """Function that takes an atoms objects and returns a fingerprint
+        vector with properties averaged over the surface metal atoms
+        closest to an add atom.
+
+        Parameters
+        ----------
+            atoms : object
+        """
+        labels = ['atomic_number_site_med',
+                  'atomic_volume_site_med',
+                  'boiling_point_site_med',
+                  'density_site_med',
+                  'dipole_polarizability_site_med',
+                  'electron_affinity_site_med',
+                  'group_id_site_med',
+                  'lattice_constant_site_med',
+                  'melting_point_site_med',
+                  'period_site_med',
+                  'vdw_radius_site_med',
+                  'covalent_radius_cordero_site_med',
+                  'en_allen_site_med',
+                  'atomic_weight_site_med',
+                  'atomic_radius_site_med',
+                  'heat_of_formation_site_med',
+                  'dft_bulk_modulus_site_med',
+                  'dft_rhodensity_site_med',
+                  'dbcenter_site_med',
+                  'dbfilling_site_med',
+                  'dbwidth_site_med',
+                  'dbskew_site_med',
+                  'dbkurtosis_site_med',
+                  'oxi_min_site_med',
+                  'oxi_med_site_med',
+                  'oxi_max_site_med',
+                  'sblock_site_med',
+                  'pblock_site_med',
+                  'dblock_site_med',
+                  'fblock_site_med',
+                  'ne_outer_site_med',
+                  'ne_s_site_med',
+                  'ne_p_site_med',
+                  'ne_d_site_med',
+                  'ne_f_site_med',
+                  'ionenergy_site_med',
+                  'ground_state_magmom_site_med']
+        if atoms is None:
+            return labels
+        else:
+            numbers = [atoms[j].number for j in atoms.subsets['site_atoms']]
+            dat = list_mendeleev_params(numbers, params=self.slab_params)
+            result = list(np.nanmedian(dat, axis=0))
+            result += [np.nanmedian([gs_magmom[z] for z in numbers])]
             check_length(labels, result, atoms)
             return result
 
