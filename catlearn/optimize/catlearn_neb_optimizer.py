@@ -162,7 +162,7 @@ class NEBOptimizer(object):
         assert self.n_images > 3, err_not_enough_images()
 
 
-    def run(self, fmax=0.05, max_iter=200, ml_fmax=None, unc_conv=0.025,
+    def run(self, fmax=0.05, max_iter=500, ml_fmax=None, unc_conv=0.025,
             ml_max_iter=100, max_step=0.05, climb_img=False,
             neb_method='improvedtangent',
             ml_algo='FIRE', k=None,
@@ -416,6 +416,14 @@ class NEBOptimizer(object):
             neb_tools = NEBTools(self.images)
             [s, E, Sfit, Efit, lines] = neb_tools.get_fit()
 
+            ################ Under test #####################################
+            # Save the gradients of the path (for convergence).
+
+            self.gradient_of_path = np.gradient(self.energies_discr_neb, s)
+            self.gradient_of_path[0] = 0.0
+            self.gradient_of_path[-1] = 0.0
+            ################ Under test: #####################################
+
             # Select image with max. uncertainty.
             self.interesting_point = self.images[np.argmax(
             self.unc_discr_neb)].get_positions().flatten()
@@ -505,7 +513,7 @@ class NEBOptimizer(object):
             print('Length of initial path:', self.d_start_end)
             print('Length of the current path:', s[-1])
             print('Max uncertainty:', np.max(self.unc_discr_neb))
-            print('NEB ML Converged / Path accepted?', ml_conv)
+            print('NEB ML Converged / Path accepted?:', ml_conv)
             print('ITERATIONS:', self.iter)
 
 

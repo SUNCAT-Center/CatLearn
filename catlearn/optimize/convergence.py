@@ -68,7 +68,7 @@ def neb_converged(self):
                 fmax = get_fmax(-np.array([self.list_gradients[-1]]),
                                     self.num_atoms)
                 self.max_abs_forces = np.max(np.abs(fmax))
-                print('Forces last image evaluated', self.max_abs_forces)
+                print('Forces last image evaluated:', self.max_abs_forces)
                 if self.max_abs_forces <= self.fmax:
                     return True
                 # Prevents to evaluate twice the same point:
@@ -78,9 +78,18 @@ def neb_converged(self):
                 if self.max_abs_forces > self.fmax:
 
                     ######### Under test: ############
-                    check_point = self.images[1:-1][np.argmax(
-                                              self.energies_discr_neb[1:-1])
+                    # check_point = self.images[1:-1][np.argmax(
+                    #                           self.energies_discr_neb[1:-1])
+                    #                           ].get_positions().flatten()
+
+                    top_image_number = np.argmin(np.abs(self.gradient_of_path[
+                    1:-1])) + 2
+
+
+                    check_point = self.images[1:-1][np.argmin(np.abs(
+                                              self.gradient_of_path[1:-1]))
                                               ].get_positions().flatten()
+
                     ######### Under test: ############
                     if check_point.ndim == 1:
                         check_point = np.array([check_point])
@@ -100,7 +109,9 @@ def neb_converged(self):
                     fmax = get_fmax(-np.array([self.list_gradients[-1]]),
                                     self.num_atoms)
                     self.max_abs_forces = np.max(np.abs(fmax))
-                    print('Forces max. top image', self.max_abs_forces)
+                    print('Forces max. top image (number ' + str(
+                    top_image_number) + '):',
+                    self.max_abs_forces)
 
                     self.ci = True
 
