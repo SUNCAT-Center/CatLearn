@@ -76,9 +76,12 @@ def neb_converged(self):
                                                     self.energies_discr_neb):
                     return False
                 if self.max_abs_forces > self.fmax:
-                    check_point = self.images[np.argmax(
-                                              self.energies_discr_neb)
+
+                    ######### Under test: ############
+                    check_point = self.images[1:-1][np.argmax(
+                                              self.energies_discr_neb[1:-1])
                                               ].get_positions().flatten()
+                    ######### Under test: ############
                     if check_point.ndim == 1:
                         check_point = np.array([check_point])
                     self.list_train = np.append(self.list_train,
@@ -99,12 +102,17 @@ def neb_converged(self):
                     self.max_abs_forces = np.max(np.abs(fmax))
                     print('Forces max. top image', self.max_abs_forces)
 
-                    ######### Under test: ############
                     self.ci = True
-                    ######### Under test: ############
+
                     if self.climb_img is False:
                         print('WARNING: The path is not converged using CI.')
                         return True
+                    ######### Under test: ############
+                    if np.max(self.energies_discr_neb[1:-1]) < 0.001: # 1 mev
+                        print('Max uncertainty of the path bellow 1 meV.')
+                        return True
+                    ######### Under test: ############
+
                     if self.max_abs_forces > self.fmax:
                         return False
                 print('Congratulations your NEB path is converged!')

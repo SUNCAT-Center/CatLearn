@@ -21,7 +21,7 @@ class NEBOptimizer(object):
     def __init__(self, start=None, end=None, path=None, ml_calc=None, \
     ase_calc=None,
     acq_fun=None, filename='results', inc_prev_calcs=False, n_images=None,
-    interpolation='linear'):
+    interpolation='linear', remove_rotation_and_translation=False, mic=True):
         """ Nudged elastic band (NEB) setup.
 
         Parameters
@@ -57,6 +57,8 @@ class NEBOptimizer(object):
         self.filename = filename
         self.ase = True
         self.inc_prev_calcs = inc_prev_calcs
+        self.remove_rotation_and_translation = remove_rotation_and_translation
+        self.mic = mic
 
         # Reset:
         self.constraints = None
@@ -343,7 +345,9 @@ class NEBOptimizer(object):
 
             # Convergence setup step 2.
             neb = NEB(self.images, climb=self.ci,
-                      method=self.neb_method, k=self.k)  # Hard-coded.
+                      method=self.neb_method, k=self.k,
+                      remove_rotation_and_translation=self
+                      .remove_rotation_and_translation)
 
             # Convergence setup step 3.
             if ml_algo is 'FIRE' or ml_algo is 'MDMin':

@@ -92,8 +92,10 @@ def initialize_neb(self):
             image.set_constraint(self.constraints)
             images.append(image)
         images.append(final_guess_ml)
-        neb = NEB(images)
-        neb.interpolate(method=self.interpolation, mic=True)
+        neb = NEB(images,
+                 remove_rotation_and_translation=self
+                 .remove_rotation_and_translation)
+        neb.interpolate(method=self.interpolation, mic=self.mic)
 
     # B) User provides a path.
     if self.path is not None:
