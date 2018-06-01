@@ -187,8 +187,8 @@ def plot_predicted_neb_path(images, accepted_path=None, climb_image=None,
         'eV; Max. uncertainty: {3:.3f} eV'.format(
         iter, Ef_neb, Er_neb, np.max(uncertainties_pred_neb)))
 
-    plt.savefig(fname=(filename + 'reaction_path_iteration_' + str(iter)
-                    +'.pdf'), dpi=300, format='pdf', transparent=True)
+    # plt.savefig(fname=filename + 'reaction_path_iteration_' + str(iter)
+    #                 +'.pdf', dpi=300, format='pdf', transparent=True)
     plt.show()
     plt.close()
 

@@ -451,7 +451,8 @@ class NEBOptimizer(object):
             if plot_neb_paths is True:
                 plot_predicted_neb_path(images=self.images,
                                         accepted_path=ml_conv,
-                                        climb_image=self.ci)
+                                        climb_image=self.ci,
+                                        filename=self.filename)
 
             # Store the last accepted path in a different file:
             if ml_conv is True:
@@ -514,6 +515,7 @@ class NEBOptimizer(object):
             print('Length of the current path:', s[-1])
             print('Max uncertainty:', np.max(self.unc_discr_neb))
             print('NEB ML Converged / Path accepted?:', ml_conv)
+            print('Number of evaluations:', len(self.list_targets))
             print('ITERATIONS:', self.iter)
 
 
