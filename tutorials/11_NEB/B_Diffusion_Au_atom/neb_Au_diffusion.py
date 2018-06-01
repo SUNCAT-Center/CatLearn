@@ -81,4 +81,4 @@ neb_catlearn = NEBOptimizer(start='initial.traj', end='final.traj',
                        interpolation='idpp')
 
 neb_catlearn.run(ml_algo='MDMin', climb_img=True, max_step=0.10,
-                 neb_method='improvedtangent', plot_neb_paths=True)
+                 neb_method='improvedtangent', plot_neb_paths=False)

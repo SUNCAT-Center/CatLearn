@@ -72,8 +72,11 @@ def neb_converged(self):
                 if self.max_abs_forces <= self.fmax:
                     return True
                 # Prevents to evaluate twice the same point:
-                if np.argmax(self.unc_discr_neb) == np.argmax(
-                                                    self.energies_discr_neb):
+
+                if np.array_equal(self.images[1:-1][np.argmin(np.abs(
+                                              self.gradient_of_path[1:-1]))
+                                              ].get_positions().flatten(),
+                                              self.list_train[-1]):
                     return False
                 if self.max_abs_forces > self.fmax:
 
@@ -84,7 +87,6 @@ def neb_converged(self):
 
                     top_image_number = np.argmin(np.abs(self.gradient_of_path[
                     1:-1])) + 2
-
 
                     check_point = self.images[1:-1][np.argmin(np.abs(
                                               self.gradient_of_path[1:-1]))
@@ -102,22 +104,24 @@ def neb_converged(self):
                     self.list_gradients = np.append(self.list_gradients,
                                             [-get_forces_catlearn(
                                              self).flatten()], axis=0)
-                    TrajectoryWriter(atoms=self.ase_ini, filename='./' + str(self.filename)
-                     +'_evaluated_images.traj', mode='a').write()
+                    TrajectoryWriter(atoms=self.ase_ini, filename='./' +
+                                     str(self.filename)
+                                     +'_evaluated_images.traj',
+                                     mode='a').write()
 
                     self.iter += 1
                     fmax = get_fmax(-np.array([self.list_gradients[-1]]),
                                     self.num_atoms)
                     self.max_abs_forces = np.max(np.abs(fmax))
                     print('Forces max. top image (number ' + str(
-                    top_image_number) + '):',
-                    self.max_abs_forces)
+                          top_image_number) + '):', self.max_abs_forces)
 
                     self.ci = True
 
                     if self.climb_img is False:
                         print('WARNING: The path is not converged using CI.')
                         return True
+
                     ######### Under test: ############
                     if np.max(self.energies_discr_neb[1:-1]) < 0.001: # 1 mev
                         print('Max uncertainty of the path bellow 1 meV.')
@@ -126,6 +130,6 @@ def neb_converged(self):
 
                     if self.max_abs_forces > self.fmax:
                         return False
-                print('Congratulations your NEB path is converged!')
+                print("\n", 'Congratulations your NEB path is converged!')
                 return True
     return False
