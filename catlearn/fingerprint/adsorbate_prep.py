@@ -100,7 +100,7 @@ def detect_adsorbate(atoms):
     if 'ads_atoms' in atoms.subsets:
         return atoms.subsets['ads_atoms']
     if (len(np.unique(atoms.get_tags())) >= 4 and
-        min(atoms.get_tags()) <= 0 and
+        min(atoms.get_tags()) <= -1 and
        max(atoms.get_tags()) > 2):
         return tags2ads_index(atoms)
     # Use species chemical formula if known.
@@ -141,6 +141,8 @@ def detect_termination(atoms):
         bulk, term, subsurf = connectivity_termination(atoms)
     elif 'layers' in atoms.info['key_value_pairs']:
         bulk, term, subsurf = layers_termination(atoms)
+    else:
+        bulk, term, subsurf = connectivity_termination(atoms)
     try:
         sx, sy = atoms.info['key_value_pairs']['supercell'].split('x')
         sx = int(''.join(i for i in sx if i.isdigit()))
@@ -429,7 +431,7 @@ def tags_termination(atoms):
     return bulk, term, subsurf
 
 
-def layers_termination(atoms):
+def layers_termination(atoms, miller=(0, 0, 1)):
     """Return lists bulk, term and subsurf containing atom indices belonging to
     those subsets of a surface atoms object.
     This function relies on ase.atoms.get_layers, default atomic radii, and a
@@ -444,7 +446,7 @@ def layers_termination(atoms):
         'slab_atoms' : list
             indices of atoms belonging to the slab.
     """
-    il, zl = auto_layers(atoms)
+    il, zl = auto_layers(atoms, miller=miller)
     il_slab = list(il)
     for index in sorted(atoms.subsets['ads_atoms'], reverse=True):
         del il_slab[index]
@@ -549,7 +551,7 @@ def connectivity_termination(atoms):
     return bulk, term, subsurf
 
 
-def auto_layers(atoms):
+def auto_layers(atoms, miller=(0, 0, 1)):
     """Returns two arrays describing which layer each atom belongs
     to and the distance between the layers and origo.
     Assumes the tolerance corresponds to the average atomic radii of the slab.
@@ -564,5 +566,5 @@ def auto_layers(atoms):
     """
     radii = [get_radius(z) for z in atoms.numbers[atoms.subsets['slab_atoms']]]
     radius = np.average(radii) / 2.
-    lz, li = get_layers(atoms, (0, 0, 1), tolerance=radius)
+    lz, li = get_layers(atoms, miller=miller, tolerance=radius)
     return lz, li
