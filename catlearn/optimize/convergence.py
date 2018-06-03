@@ -72,26 +72,36 @@ def neb_converged(self):
                 if self.max_abs_forces <= self.fmax:
                     return True
                 # Prevents to evaluate twice the same point:
+                if np.array_equal(self.images[1:-1][np.argmax(
+                                  self.energies_discr_neb[
+                                  1:-1])].get_positions().flatten(),
+                                  self.list_train[-1]):
+                    return False
 
-                if np.array_equal(self.images[1:-1][np.argmin(np.abs(
-                                              self.gradient_of_path[1:-1]))
-                                              ].get_positions().flatten(),
-                                              self.list_train[-1]):
+                # Get point with minimum gradient:
+                # if np.array_equal(self.images[1:-1][np.argmin(np.abs(
+                #                               self.gradient_of_path[1:-1]))
+                #                               ].get_positions().flatten(),
+                #                               self.list_train[-1]):
                     return False
                 if self.max_abs_forces > self.fmax:
 
                     ######### Under test: ############
-                    # check_point = self.images[1:-1][np.argmax(
-                    #                           self.energies_discr_neb[1:-1])
-                    #                           ].get_positions().flatten()
-
-                    top_image_number = np.argmin(np.abs(self.gradient_of_path[
-                    1:-1])) + 2
-
-                    check_point = self.images[1:-1][np.argmin(np.abs(
-                                              self.gradient_of_path[1:-1]))
+                    check_point = self.images[1:-1][np.argmax(
+                                              self.energies_discr_neb[1:-1])
                                               ].get_positions().flatten()
+                    top_image_number = np.argmax(
+                                              self.energies_discr_neb[1:-1]
+                                              ) + 2
 
+                    self.ml_calc.__dict__['opt_hyperparam'] = True
+
+                    # Get point with minimum gradient:
+                    # top_image_number = np.argmin(np.abs(self.gradient_of_path[
+                    # 1:-1])) + 2
+                    # check_point = self.images[1:-1][np.argmin(np.abs(
+                    #                           self.gradient_of_path[1:-1]))
+                    #                           ].get_positions().flatten()
                     ######### Under test: ############
                     if check_point.ndim == 1:
                         check_point = np.array([check_point])

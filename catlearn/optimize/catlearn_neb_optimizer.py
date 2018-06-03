@@ -505,8 +505,6 @@ class NEBOptimizer(object):
 
             self.iter += 1
 
-            self.feval = len(self.list_targets-2)
-
             print('Maximum number of ML steps set by the user:', max_ml_iter)
             print('Maximum step set by the user:', self.max_step)
             print('Spring constant set by the user:', self.k)
@@ -517,13 +515,5 @@ class NEBOptimizer(object):
             print('Number of data points trained:', len(self.list_targets))
             print('ITERATIONS:', self.iter)
 
-        # Print Final convergence: #
-        print('Maximum number of ML steps set by the user:', max_ml_iter)
-        print('Maximum step set by the user:', self.max_step)
-        print('Spring constant set by the user:', self.k)
-        print('Length of initial path:', self.d_start_end)
-        print('Length of the current path:', s[-1])
-        print('Max uncertainty:', np.max(self.unc_discr_neb))
-        print('NEB ML Converged / Path accepted?:', ml_conv)
-        print('Number of data points trained:', len(self.list_targets))
-        print('ITERATIONS:', self.iter)
+        # Print Final convergence:
+        print('Number of function evaluations in this run:', self.iter)

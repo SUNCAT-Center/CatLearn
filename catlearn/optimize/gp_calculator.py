@@ -8,7 +8,7 @@ class GPCalculator(object):
 
     def __init__(self, kernel_dict=None,
                  regularization=1e-5,
-                 regularization_bounds=(1e-5, 1.0),
+                 regularization_bounds=(1e-5, 1e-5),
                  algo_opt_hyperparamters='L-BFGS-B',
                  global_optimization=False,
                  scale_data=False,
@@ -74,7 +74,9 @@ class GPCalculator(object):
         self.trained_process.optimize_hyperparameters(
         global_opt=self.global_optimization,
         algomin=self.algo_opt_hyperparamters)
-        print('logmarg', self.trained_process.log_marginal_likelihood)
+        print('Hyperparameter optimization is switched on.')
+        print('Optimized Hyperparameters: ', self.trained_process.theta_opt)
+        print('log marginal: ', self.trained_process.log_marginal_likelihood)
         return self.trained_process
 
     def get_predictions(self, trained_process, test_data):
