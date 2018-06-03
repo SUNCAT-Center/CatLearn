@@ -133,6 +133,8 @@ class TestAcquisition(unittest.TestCase):
 
         self.assertTrue(len(to_acquire) == batch_size)
 
+        sg0.ensemble_test(size=2, batch_size=batch_size)
+
 
 def _train_model(train_features, train_targets):
     kdict = {'k1': {'type': 'gaussian', 'width': 0.5}}
