@@ -156,12 +156,7 @@ def _quadratic_setup(kdict_param, bounds, N_D, default_bounds):
     if 'bounds' in kdict_param:
         bounds += kdict_param['bounds']
     else:
-        bounds += default_bounds * N_D
-
-    if 'bounds' in kdict_param:
-        bounds += kdict_param['bounds']
-    else:
-        bounds += default_bounds
+        bounds += default_bounds * (N_D + 1)
 
     return bounds
 
