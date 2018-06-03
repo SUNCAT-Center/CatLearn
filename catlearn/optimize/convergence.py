@@ -94,7 +94,7 @@ def neb_converged(self):
                                               self.energies_discr_neb[1:-1]
                                               ) + 2
 
-                    self.ml_calc.__dict__['opt_hyperparam'] = True
+                    # self.ml_calc.__dict__['opt_hyperparam'] = True
 
                     # Get point with minimum gradient:
                     # top_image_number = np.argmin(np.abs(self.gradient_of_path[

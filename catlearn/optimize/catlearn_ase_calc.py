@@ -83,10 +83,10 @@ class CatLearn_ASE(Calculator):
                     if d_atom_atom >= max_step:
                         p_i = 0.0
                         ##### Under test ##################
-                        a_const = 100.0
-                        c_const = 20.0
+                        a_const = 4.0
+                        c_const = 4.0
                         ##### Under test ##################
-                        d_const = 10.0
+                        d_const = 3.0
                         p_i = (a_const * ((d_atom_atom-max_step)**2)) / (c_const*(
                         d_atom_atom-max_step) + d_const)
                     if d_atom_atom < max_step:

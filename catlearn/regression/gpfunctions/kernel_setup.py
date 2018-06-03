@@ -96,7 +96,7 @@ def _gaussian_setup(kdict_param, bounds, N_D, default_bounds):
     assert 'width' in kdict_param, msg
 
     allowed_keys = ['type', 'operation', 'features', 'dimension', 'scaling',
-                    'width', 'bounds']
+                    'width', 'bounds', 'scaling_bounds']
     msg1 = "An undefined key, '"
     msg2 = "', has been provided in a 'gaussian' type kernel dict"
     for k in kdict_param:

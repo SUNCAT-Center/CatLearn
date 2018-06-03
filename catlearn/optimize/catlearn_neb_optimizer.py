@@ -64,14 +64,6 @@ class NEBOptimizer(object):
         self.constraints = None
         self.interesting_point = None
 
-        self.ml_calc = ml_calc
-        if self.ml_calc is None:
-            self.kdict = {'k1': {'type': 'gaussian', 'scaling': 1.0, 'width':
-                          0.5, 'dimension':'single'}}
-            self.ml_calc = GPCalculator(
-            kernel_dict=self.kdict, opt_hyperparam=False, scale_data=False,
-            scale_optimizer=False,
-            calc_uncertainty=False, regularization=1e-5)
 
         assert start is not None, err_not_neb_start()
         assert end is not None, err_not_neb_end()
@@ -161,6 +153,21 @@ class NEBOptimizer(object):
         # Check if there are enough images:
         assert self.n_images > 3, err_not_enough_images()
 
+        # Configure ML:
+        self.ml_calc = ml_calc
+        if self.ml_calc is None:
+            self.kdict = {
+                         'k1': {'type': 'gaussian', 'width': 0.5,
+                         'bounds':
+                          ((0.1, 1.0),)*len(self.ind_mask_constr),
+                         'scaling': 1.0, 'scaling_bounds': ((1.0, 1.0),)},
+                        }
+            self.ml_calc = GPCalculator(
+            kernel_dict=self.kdict, opt_hyperparam=False, scale_data=False,
+            scale_optimizer=False,
+            calc_uncertainty=False, regularization=1e-5)
+
+
 
     def run(self, fmax=0.05, max_iter=500, ml_fmax=None, unc_conv=0.025,
             ml_max_iter=100, max_step=0.05, climb_img=False,
@@ -232,7 +239,7 @@ class NEBOptimizer(object):
         # Default spring constant is not specified.
         if self.k is None:
             if self.ml_algo is 'MDMin':
-                self.k = 1.0
+                self.k = 0.1
             if self.ml_algo is not 'MDMin':
                 self.k = 100.0
             warning_spring_default(self.k)
@@ -272,6 +279,9 @@ class NEBOptimizer(object):
 
             if self.ml_calc.__dict__['opt_hyperparam']:
                 self.ml_calc.opt_hyperparameters()
+                ################# Under test ######################
+                # self.ml_calc.__dict__['opt_hyperparam'] = False
+                ################# Under test ######################
 
             # 2) Optimize ML and return the next point to evaluate:
             catlearn_ase_calc = CatLearn_ASE(trained_process=self.trained_process,
