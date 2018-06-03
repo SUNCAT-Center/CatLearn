@@ -77,8 +77,9 @@ plt.show()
 # 2.B. NEB using CatLearn ####################################################
 
 neb_catlearn = NEBOptimizer(start='initial.traj', end='final.traj',
-                       ase_calc=copy.deepcopy(ase_calculator), n_images=7,
+                       ase_calc=copy.deepcopy(ase_calculator),
+                       n_images=7,
                        interpolation='idpp')
 
-neb_catlearn.run(ml_algo='MDMin', climb_img=True, max_step=0.10,
+neb_catlearn.run(ml_algo='MDMin', climb_img=True, max_step=0.05,
                  neb_method='improvedtangent', plot_neb_paths=True)

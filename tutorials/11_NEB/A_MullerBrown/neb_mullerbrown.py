@@ -45,13 +45,16 @@ initial_opt.run(fmax=0.01)
 final_opt = FIRE(final_structure, trajectory='final_optimized.traj')
 final_opt.run(fmax=0.01)
 
+# Define number of images for NEBS:
+
+n_images = 7
+
 # 2.A. NEB using ASE #########################################################
 
-number_of_images_neb_ase = 11
 initial_ase = read('initial_optimized.traj')
 final_ase = read('final_optimized.traj')
 images_ase = [initial_ase]
-for i in range(1, number_of_images_neb_ase-1):
+for i in range(1, n_images-1):
     image_ase = initial_ase.copy()
     image_ase.set_calculator(copy.deepcopy(ase_calculator))
     images_ase.append(image_ase)
@@ -81,9 +84,20 @@ final = read('final_optimized.traj')
 neb_catlearn = NEBOptimizer(start='initial_optimized.traj',
                        end='final_optimized.traj',
                        ase_calc=copy.deepcopy(ase_calculator),
-                       n_images=11, interpolation='')
+                       n_images=n_images, interpolation='')
 
-neb_catlearn.run(ml_algo='MDMin', climb_img=True, max_step=0.10,
+neb_catlearn.run(ml_algo='MDMin', climb_img=True, max_step=0.05,
                  neb_method='improvedtangent', plot_neb_paths=True)
 
 # 3. Summary of the results #################################################
+
+# NEB ASE:
+atoms_ase = read('neb_ase.traj', ':')
+n_eval_ase = len(atoms_ase) - 2 * n_images
+
+print('Number of function evaluations CI-NEB implemented in ASE:', n_eval_ase)
+
+# Catlearn:
+atoms_catlearn = read('results_evaluated_images.traj', ':')
+n_eval_catlearn = len(atoms_catlearn)
+print('Number of function evaluations Catlearn ASE:', n_eval_catlearn)

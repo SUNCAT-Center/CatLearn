@@ -239,7 +239,7 @@ class NEBOptimizer(object):
         # Default spring constant is not specified.
         if self.k is None:
             if self.ml_algo is 'MDMin':
-                self.k = 0.1
+                self.k = 1.0
             if self.ml_algo is not 'MDMin':
                 self.k = 100.0
             warning_spring_default(self.k)
