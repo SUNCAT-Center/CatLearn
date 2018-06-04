@@ -21,7 +21,7 @@ class NEBOptimizer(object):
     def __init__(self, start=None, end=None, path=None, ml_calc=None, \
     ase_calc=None,
     acq_fun=None, filename='results', inc_prev_calcs=False, n_images=None,
-    interpolation='linear', remove_rotation_and_translation=False, mic=True):
+    interpolation='linear', remove_rotation_and_translation=False, mic=False):
         """ Nudged elastic band (NEB) setup.
 
         Parameters
@@ -170,7 +170,7 @@ class NEBOptimizer(object):
 
 
     def run(self, fmax=0.05, max_iter=500, ml_fmax=None, unc_conv=0.025,
-            ml_max_iter=300, max_step=0.05, climb_img=False,
+            ml_max_iter=100, max_step=0.05, climb_img=False,
             neb_method='improvedtangent',
             ml_algo='FIRE', k=None,
             plot_neb_paths=False):
@@ -235,8 +235,8 @@ class NEBOptimizer(object):
 
         self.max_step = max_step
 
-        self.penalty_a = 50.0
-        self.penalty_c = 2.0
+        self.penalty_a = 100.0
+        self.penalty_c = 5.0
 
         # Default spring constant is not specified.
         if self.k is None:
@@ -271,7 +271,12 @@ class NEBOptimizer(object):
                                            mask_index= self.ind_mask_constr)
 
             # Scale energies:
-            mean_targets = np.mean(self.list_targets)
+
+            ########## Under test: ###############################
+            #mean_targets = np.mean(self.list_targets)
+            mean_targets = self.list_targets[0][0]
+            ########## Under test: ###############################
+
             self.list_targets = self.list_targets - mean_targets
 
             self.trained_process = self.ml_calc.train_process(
@@ -449,7 +454,7 @@ class NEBOptimizer(object):
 
             ############# Under test #########################################
 
-            if self.distance_convergence >= self.max_step:
+            if self.distance_convergence >= 2*self.max_step:
                 print('The path was too stretched. The last NEB is not saved.')
                 ml_conv = False
                 # Accept path if the uncertainty goes below 2*unc_conv in eV.
