@@ -258,7 +258,7 @@ def tags2ads_index(atoms):
         An ase atoms object. `atoms.tags` must label adsorbate atoms with 0 or
         negative numbers.
     """
-    ads_atoms = [a.index for a in atoms if a.tag < 1]
+    ads_atoms = [a.index for a in atoms if a.tag < 0]
 
     return ads_atoms
 
