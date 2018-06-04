@@ -17,7 +17,7 @@ class CatLearn_ASE(Calculator):
     nolabel = True
 
     def __init__(self, trained_process=None, ml_calc=None, finite_step=1e-5,
-                 n_images=None, max_step=None,
+                 n_images=None, max_step=None, a_crit_penalty=None,
                  c_crit_penalty=None, **kwargs):
         Calculator.__init__(self, **kwargs)
         self.trained_process = trained_process
@@ -25,6 +25,7 @@ class CatLearn_ASE(Calculator):
         self.step = finite_step
         self.n_images = n_images
         self.max_step = max_step
+        self.a_crit = a_crit_penalty
         self.c_crit = c_crit_penalty
 
     def calculate(self, atoms=None, properties=['energy', 'forces'],
@@ -83,8 +84,8 @@ class CatLearn_ASE(Calculator):
                     if d_atom_atom >= max_step:
                         p_i = 0.0
                         ##### Under test ##################
-                        a_const = 2.0
-                        c_const = 2.0
+                        a_const = self.a_crit
+                        c_const = self.c_crit
                         ##### Under test ##################
                         d_const = 1.0
                         p_i = (a_const * ((d_atom_atom-max_step)**2)) / (c_const*(

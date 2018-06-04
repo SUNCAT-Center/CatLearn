@@ -62,7 +62,7 @@ def neb_converged(self):
 
     if self.iter > 1:
         if np.max(self.unc_discr_neb) <= self.unc_conv:
-            if self.distance_convergence <= 0.1:
+            if self.distance_convergence <= 0.05:
                 print('Path has not changed from previous iteration.')
                 print('Max uncertainty:', np.max(self.unc_discr_neb))
                 fmax = get_fmax(-np.array([self.list_gradients[-1]]),
@@ -85,6 +85,11 @@ def neb_converged(self):
                 #                               self.list_train[-1]):
                     return False
                 if self.max_abs_forces > self.fmax:
+
+                    ######### Under test: ############
+                    self.penalty_a = 1.0
+                    self.penalty_c = 1.0
+
 
                     ######### Under test: ############
                     check_point = self.images[1:-1][np.argmax(

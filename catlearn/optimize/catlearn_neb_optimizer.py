@@ -170,7 +170,7 @@ class NEBOptimizer(object):
 
 
     def run(self, fmax=0.05, max_iter=500, ml_fmax=None, unc_conv=0.025,
-            ml_max_iter=100, max_step=0.05, climb_img=False,
+            ml_max_iter=300, max_step=0.05, climb_img=False,
             neb_method='improvedtangent',
             ml_algo='FIRE', k=None,
             plot_neb_paths=False):
@@ -234,7 +234,9 @@ class NEBOptimizer(object):
         self.k = k
 
         self.max_step = max_step
-        self.penalty_constant = 2.0
+
+        self.penalty_a = 50.0
+        self.penalty_c = 2.0
 
         # Default spring constant is not specified.
         if self.k is None:
@@ -289,7 +291,8 @@ class NEBOptimizer(object):
                                      finite_step=1e-5,
                                      max_step=self.max_step,
                                      n_images=self.n_images,
-                                     c_crit_penalty=self.penalty_constant)
+                                     a_crit_penalty=self.penalty_a,
+                                     c_crit_penalty=self.penalty_c)
 
 
             # End-points of the NEB path:

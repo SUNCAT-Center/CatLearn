@@ -47,7 +47,7 @@ final_opt.run(fmax=0.01)
 
 # Define number of images for NEBS:
 
-n_images = 7
+n_images = 11
 
 # 2.A. NEB using ASE #########################################################
 
@@ -86,12 +86,14 @@ neb_catlearn = NEBOptimizer(start='initial_optimized.traj',
                        ase_calc=copy.deepcopy(ase_calculator),
                        n_images=n_images, interpolation='')
 
-neb_catlearn.run(ml_algo='MDMin', climb_img=True, max_step=0.05,
+neb_catlearn.run(ml_algo='FIRE', climb_img=True, max_step=0.10,
                  neb_method='improvedtangent', plot_neb_paths=True)
 
 # 3. Summary of the results #################################################
 
 # NEB ASE:
+print('\n \n Summary of results: \n')
+
 atoms_ase = read('neb_ase.traj', ':')
 n_eval_ase = len(atoms_ase) - 2 * n_images
 
