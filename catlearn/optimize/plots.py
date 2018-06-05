@@ -64,7 +64,8 @@ def plot_each_step(self):
     plt.show()
 
 
-def plot_neb_mullerbrown(self):
+def plot_neb_mullerbrown(images, interesting_point, trained_process,
+                         list_train):
     # Generate test datapoints in x and y.
 
     crange = np.linspace(-3.0, 8.0, 200)
@@ -98,8 +99,8 @@ def plot_neb_mullerbrown(self):
 
     # Plot predicted function.
 
-    geometry_data = self.list_train.copy()
-    pred = self.trained_process.predict(test_fp=test)
+    geometry_data = list_train.copy()
+    pred = trained_process.predict(test_fp=test)
     prediction = np.array(pred['prediction'][:, 0])
 
     zi = plt.mlab.griddata(x, y, prediction, testx, testy,
@@ -113,12 +114,12 @@ def plot_neb_mullerbrown(self):
                 s=15.0, c='black', alpha=0.8)
 
     # Plot NEB/GP optimized.
-    for i in self.images:
+    for i in images:
         pos_i_x = i.get_positions()[0][0]
         pos_i_y = i.get_positions()[0][1]
         plt.scatter(pos_i_x, pos_i_y, marker='o', s=8.0,
                 c='red', edgecolors='red', alpha=0.9)
-    plt.scatter(self.interesting_point[0], self.interesting_point[1],
+    plt.scatter(interesting_point[0], interesting_point[1],
                 marker='o', c='white', edgecolors='black')
 
     plt.xlim(x_lim[0], x_lim[1])
@@ -150,6 +151,7 @@ def plot_predicted_neb_path(images, accepted_path=None, climb_image=None,
     energies_pred_neb = []
 
     energy_img_0 = images[0].get_total_energy()
+
 
     uncertainties_pred_neb = []
     for i in images:
@@ -186,6 +188,10 @@ def plot_predicted_neb_path(images, accepted_path=None, climb_image=None,
         plt.title('Iter: {0:.0f}; E$_f$: {1:.3f} eV; E$_r$: {2:.3f} '
         'eV; Max. uncertainty: {3:.3f} eV'.format(
         iter, Ef_neb, Er_neb, np.max(uncertainties_pred_neb)))
+
+
+
+
 
     # plt.savefig(fname=filename + 'reaction_path_iteration_' + str(iter)
     #                 +'.pdf', dpi=300, format='pdf', transparent=True)

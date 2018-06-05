@@ -84,7 +84,7 @@ final = read('final_optimized.traj')
 neb_catlearn = NEBOptimizer(start='initial_optimized.traj',
                        end='final_optimized.traj',
                        ase_calc=copy.deepcopy(ase_calculator),
-                       n_images=n_images, interpolation='')
+                       n_images=n_images, interpolation=None)
 
 neb_catlearn.run(ml_algo='FIRE', climb_img=True, max_step=0.10,
                  neb_method='improvedtangent', plot_neb_paths=True)

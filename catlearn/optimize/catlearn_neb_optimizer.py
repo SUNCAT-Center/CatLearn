@@ -6,15 +6,16 @@ from catlearn.optimize.constraints import *
 from catlearn.optimize.convergence import *
 from catlearn.optimize.initialize import *
 from catlearn.optimize.neb_tools import *
+from catlearn.optimize.neb_functions import *
 from ase import Atoms
 from scipy.spatial import distance
-from catlearn.optimize.catlearn_ase_calc import CatLearn_ASE
 from ase.io import read, write
 # from ase.visualize import view
 from ase.neb import NEBTools
 import copy
 from catlearn.optimize.plots import plot_neb_mullerbrown, plot_predicted_neb_path
 from ase.optimize import QuasiNewton, BFGS, FIRE, MDMin
+
 
 class NEBOptimizer(object):
 
@@ -51,7 +52,7 @@ class NEBOptimizer(object):
         self.path = path
 
         # General setup:
-        self.ml_calc = ml_calc
+        self.initial_ml_calc = ml_calc
         self.ase_calc = ase_calc
         self.acq_fun = acq_fun
         self.filename = filename
@@ -85,6 +86,11 @@ class NEBOptimizer(object):
             self.trajectory_end = read(self.f0, '-1:')
         self.posx0 = (self.trajectory_start[-1].get_positions().flatten())
         self.posf0 = (self.trajectory_end[-1].get_positions().flatten())
+
+        # Obtain the energy of the endpoints for scaling:
+        energy_is = self.trajectory_start[-1].get_potential_energy()
+        energy_fs = self.trajectory_end[-1].get_potential_energy()
+        self.scale_targets = np.min([energy_is, energy_fs])
 
         # Convert atoms information to ML information.
         if os.path.exists('./tmp.traj'):
@@ -154,23 +160,23 @@ class NEBOptimizer(object):
         assert self.n_images > 3, err_not_enough_images()
 
         # Configure ML:
-        self.ml_calc = ml_calc
-        if self.ml_calc is None:
+
+        if self.initial_ml_calc is None:
             self.kdict = {
                          'k1': {'type': 'gaussian', 'width': 0.5,
                          'bounds':
                           ((0.1, 1.0),)*len(self.ind_mask_constr),
                          'scaling': 1.0, 'scaling_bounds': ((1.0, 1.0),)},
                         }
-            self.ml_calc = GPCalculator(
+            self.initial_ml_calc = GPCalculator(
             kernel_dict=self.kdict, opt_hyperparam=False, scale_data=False,
             scale_optimizer=False,
             calc_uncertainty=False, regularization=1e-5)
 
 
 
-    def run(self, fmax=0.05, max_iter=500, ml_fmax=None, unc_conv=0.025,
-            ml_max_iter=100, max_step=0.05, climb_img=False,
+    def run(self, fmax=0.05, max_iter=500, ml_fmax=0.05, unc_conv=0.025,
+            ml_max_iter=500, max_step=0.05, climb_img=False,
             neb_method='improvedtangent',
             ml_algo='FIRE', k=None,
             plot_neb_paths=False):
@@ -217,14 +223,9 @@ class NEBOptimizer(object):
         """
         self.fmax = fmax
 
-        if ml_fmax is None:
-            ml_fmax = fmax
-        self.initial_ml_fmax = ml_fmax
-        self.ml_fmax = ml_fmax
         self.unc_conv = unc_conv
 
         self.max_iter = max_iter
-        self.ml_algo = ml_algo
 
         self.climb_img = climb_img
         self.ci = False
@@ -233,147 +234,72 @@ class NEBOptimizer(object):
 
         self.k = k
 
-        self.max_step = max_step
-
         self.penalty_a = 100.0
         self.penalty_c = 5.0
 
         # Default spring constant is not specified.
         if self.k is None:
-            if self.ml_algo is 'MDMin':
+            if ml_algo is 'MDMin':
                 self.k = 1.0
-            if self.ml_algo is not 'MDMin':
+            if ml_algo is not 'MDMin':
                 self.k = 100.0
             warning_spring_default(self.k)
         self.initial_k = self.k
 
         print('Number of images:', self.n_images)
         print('Distance between first and last point:', self.d_start_end)
-        print('Max step:', self.max_step)
+        print('Max step:', max_step)
         print('Spring constant:', self.k)
 
         self.iter = 0
 
         while not neb_converged(self):
 
-
-            self.org_train = self.list_train.copy()
-            self.org_targets = self.list_targets.copy()
-            self.org_gradients = self.list_gradients.copy()
-
-            if self.constraints is not None:
-                [self.org_train, self.list_train] = apply_mask_ase_constraints(
-                                           list_to_mask=self.list_train,
-                                           mask_index=self.ind_mask_constr)
-                [self.org_gradients, self.list_gradients] = \
-                                           apply_mask_ase_constraints(
-                                           list_to_mask=self.list_gradients,
-                                           mask_index= self.ind_mask_constr)
-
-            # Scale energies:
-
-            ########## Under test: ###############################
-            #mean_targets = np.mean(self.list_targets)
-            mean_targets = self.list_targets[0][0]
-            ########## Under test: ###############################
-
-            self.list_targets = self.list_targets - mean_targets
-
-            self.trained_process = self.ml_calc.train_process(
-                    train_data=self.list_train,
-                    target_data=self.list_targets,
-                    gradients_data=self.list_gradients)
-
-            if self.ml_calc.__dict__['opt_hyperparam']:
-                self.ml_calc.opt_hyperparameters()
-                ################# Under test ######################
-                # self.ml_calc.__dict__['opt_hyperparam'] = False
-                ################# Under test ######################
-
-            # 2) Optimize ML and return the next point to evaluate:
-            catlearn_ase_calc = CatLearn_ASE(trained_process=self.trained_process,
-                                     ml_calc=self.ml_calc,
-                                     finite_step=1e-5,
-                                     max_step=self.max_step,
-                                     n_images=self.n_images,
-                                     a_crit_penalty=self.penalty_a,
-                                     c_crit_penalty=self.penalty_c)
+            # 1) Train Machine Learning process:
+            process = train_ml_process(list_train=self.list_train,
+                                       list_targets=self.list_targets,
+                                       list_gradients=self.list_gradients,
+                                       index_constraints=self.ind_mask_constr,
+                                       ml_calculator=self.initial_ml_calc,
+                                       scale_targets=self.scale_targets)
+            
+            trained_process = process['trained_process']
+            ml_calc = process['ml_calc']
 
 
-            # End-points of the NEB path:
-            start_guess_ml = read(self.x0)
-            final_guess_ml = read(self.f0)
+            # 2) Setup and run ML NEB:
 
-            self.images = [start_guess_ml]
-
-            # Scale energies (initial):
-            self.images[0].__dict__['_calc'].__dict__['results']['energy'] = \
-            self.images[0].__dict__['_calc'].__dict__['results']['energy'] - \
-            mean_targets
-
-            # Append labels, uncertainty and iter to the first end-point:
-            self.images[0].info['label'] = 0
-            self.images[0].info['uncertainty'] = 0.0
-            self.images[0].info['iteration'] = self.iter
-
-            # Append images:
-            last_images = read("accepted_paths.traj", '-' + str(self.n_images)
-             + ':')
-
-            for i in range(1, self.n_images-1):
-                image = start_guess_ml.copy()
-                image.info['label'] = i
-                image.info['uncertainty'] = 0.0
-                image.info['iteration'] = self.iter
-                image.set_calculator(copy.deepcopy(catlearn_ase_calc))
-                image.set_positions(last_images[i].get_positions())
-                image.set_constraint(self.constraints)
-                self.images.append(image)
-
-            # Scale energies (final):
-            self.images.append(final_guess_ml)
-            self.images[-1].__dict__['_calc'].__dict__['results']['energy'] = \
-            self.images[-1].__dict__['_calc'].__dict__['results']['energy'] - \
-                mean_targets
-
-            # Append labels, uncertainty and iter to the last end-point:
-            self.images[-1].info['label'] = self.n_images
-            self.images[-1].info['uncertainty'] = 0.0
-            self.images[-1].info['iteration'] = self.iter
-
-            # Convergence NEB ML Setup:
-
-            # Convergence setup step 1.
-            initial_max_ml_iter = ml_max_iter # Hard-coded.
-            self.ml_fmax = self.initial_ml_fmax*2
-            max_ml_iter = initial_max_ml_iter # Hard-coded.
-            if self.ml_algo is 'MDMin':
-                max_ml_iter = initial_max_ml_iter/2 # Hard-coded.
-            if self.ci is True:
-                self.ml_fmax = self.initial_ml_fmax
-                max_ml_iter = initial_max_ml_iter/2 # Hard-coded.
-                if self.ml_algo is 'MDMin':
-                    max_ml_iter = initial_max_ml_iter/4 # Hard-coded.
-
-            ml_algo_i = re.sub('\_ASE$', '', self.ml_algo)
-            warning_ml_algo(self)
-            warning_climb_img(self)
+            settings_neb_dict = {'max_step': max_step,
+                                 'a_const': self.penalty_a,
+                                 'c_const': self.penalty_c,
+                                 'scale_targets': self.scale_targets,
+                                 'iteration': self.iter,
+                                 'constraints': self.constraints,
+                                 'initial_endpoint': self.x0,
+                                 'final_endpoint': self.f0}
 
 
-            # Convergence setup step 2.
+            last_images = read("accepted_paths.traj", '-' + str(
+                               self.n_images)+ ':')
+
+            self.images = create_ml_neb(n_images=self.n_images,
+                          images_interpolation=last_images,
+                          trained_process=trained_process,
+                          ml_calculator=ml_calc,
+                          settings_neb_dict=settings_neb_dict)
+            warning_climb_img(self.ci)
+
             neb = NEB(self.images, climb=self.ci,
                       method=self.neb_method, k=self.k,
                       remove_rotation_and_translation=self
                       .remove_rotation_and_translation)
 
-            # Convergence setup step 3.
-            if ml_algo is 'FIRE' or ml_algo is 'MDMin':
-                neb_opt = eval(ml_algo_i)(neb, dt=0.1)
-            if ml_algo is not 'FIRE' or ml_algo is not 'MDMin':
-                neb_opt = eval(ml_algo_i)(neb)
+            neb_opt = eval(ml_algo)(neb, dt=0.1)
+            neb_opt.run(fmax=ml_fmax, steps=ml_max_iter)
 
-            # Run ML+NEB:
-            neb_opt.run(fmax=self.ml_fmax, steps=max_ml_iter)
+
+            # 3) Get results from ML NEB:
+
 
             # Get dist. convergence (d between opt. path and prev. opt. path).
 
@@ -390,7 +316,7 @@ class NEBOptimizer(object):
 
             # Get energies and uncertainties of the predicted path.
 
-            self.ml_calc.__dict__['calc_uncertainty']= True
+            ml_calc.__dict__['calc_uncertainty']= True
 
             self.energies_discr_neb = []
             self.unc_discr_neb = []
@@ -401,8 +327,8 @@ class NEBOptimizer(object):
                 pos_i_masked = apply_mask_ase_constraints(
                                  list_to_mask=pos_i,
                                  mask_index=self.ind_mask_constr)[1]
-                pred_i = self.ml_calc.get_predictions(
-                                    trained_process=self.trained_process,
+                pred_i = ml_calc.get_predictions(
+                                    trained_process=trained_process,
                                     test_data=pos_i_masked[0])
                 unc_i = pred_i['uncertainty_with_reg']
                 i.info['uncertainty']= unc_i[0]
@@ -419,7 +345,7 @@ class NEBOptimizer(object):
             self.unc_discr_neb = np.asarray(self.unc_discr_neb).flatten()
             self.unc_discr_neb[0] = 0.0
             self.unc_discr_neb[-1] = 0.0
-            self.ml_calc.__dict__['calc_uncertainty']= False
+            ml_calc.__dict__['calc_uncertainty']= False
 
             # Save (append) opt. path (including initial and final images).
 
@@ -448,13 +374,13 @@ class NEBOptimizer(object):
             # Check if the path found is reliable.
             ml_conv = True
 
-            if neb_opt.__dict__['nsteps'] >= max_ml_iter:
+            if neb_opt.__dict__['nsteps'] >= ml_max_iter:
                 print('Max. numb. ML iterations exceeded.')
                 ml_conv = False
 
             ############# Under test #########################################
 
-            if self.distance_convergence >= 2*self.max_step:
+            if self.distance_convergence >= 2*max_step:
                 print('The path was too stretched. The last NEB is not saved.')
                 ml_conv = False
                 # Accept path if the uncertainty goes below 2*unc_conv in eV.
@@ -488,14 +414,15 @@ class NEBOptimizer(object):
             #############################################
             if plot_neb_paths is True:
                 if self.ase_calc.__dict__['name'] == 'mullerbrown':
-                    plot_neb_mullerbrown(self)
+                    plot_neb_mullerbrown(images=self.images,
+                                         interesting_point=self.interesting_point,
+                                         trained_process=trained_process,
+                                         list_train=self.list_train)
             #############################################
+
 
             # 3) Add a new training point and evaluate it.
 
-            self.list_train = self.org_train.copy()
-            self.list_targets = self.org_targets.copy() # Rescale the targets
-            self.list_gradients = self.org_gradients.copy()
             if self.interesting_point.ndim == 1:
                 self.interesting_point = np.array([self.interesting_point])
             self.list_train = np.append(self.list_train,
@@ -506,6 +433,8 @@ class NEBOptimizer(object):
                                           (len(self.list_targets), 1))
             self.list_gradients = np.append(self.list_gradients,
                 [-get_forces_catlearn(self).flatten()], axis=0)
+
+
 
             # Store all the atoms objects of the real evaluations (expensive).
 
@@ -523,8 +452,8 @@ class NEBOptimizer(object):
 
             self.iter += 1
 
-            print('Maximum number of ML steps set by the user:', max_ml_iter)
-            print('Maximum step set by the user:', self.max_step)
+            print('Maximum number of ML steps set by the user:', ml_max_iter)
+            print('Maximum step set by the user:', max_step)
             print('Spring constant set by the user:', self.k)
             print('Length of initial path:', self.d_start_end)
             print('Length of the current path:', s[-1])

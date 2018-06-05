@@ -91,11 +91,11 @@ def warning_kernel():
     store_warnings_and_errors(msg)
 
 
-def warning_climb_img(self):
-    if self.ci is False:
+def warning_climb_img(climb_image):
+    if climb_image is False:
         msg = "The predicted mean is optimized using NEB (CI-NEB is " \
         "switched off)."""
-    if self.ci is True:
+    if climb_image is True:
         msg = "The predicted mean is optimized using CI-NEB."""
     print(msg)
     store_warnings_and_errors(msg)
