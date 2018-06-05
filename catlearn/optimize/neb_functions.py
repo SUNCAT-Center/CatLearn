@@ -94,7 +94,7 @@ def create_ml_neb(n_images, images_interpolation, trained_process,
 
     for i in range(0, n_images-2):
         image = start_guess_ml.copy()
-        image.info['label'] = i
+        image.info['label'] = i+1
         image.info['uncertainty'] = 0.0
         image.info['iteration'] = settings_neb_dict['iteration']
         image.set_calculator(copy.deepcopy(catlearn_ase_calc))

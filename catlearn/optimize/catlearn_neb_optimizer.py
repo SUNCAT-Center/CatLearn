@@ -90,7 +90,7 @@ class NEBOptimizer(object):
         # Obtain the energy of the endpoints for scaling:
         energy_is = self.trajectory_start[-1].get_potential_energy()
         energy_fs = self.trajectory_end[-1].get_potential_energy()
-        self.scale_targets = np.min([energy_is, energy_fs])
+        self.scale_targets = np.mean([energy_is, energy_fs])
 
         # Convert atoms information to ML information.
         if os.path.exists('./tmp.traj'):
@@ -176,7 +176,7 @@ class NEBOptimizer(object):
 
 
     def run(self, fmax=0.05, max_iter=1000, ml_fmax=0.05, unc_conv=0.025,
-            ml_max_iter=500, max_step=0.05, climb_img=False,
+            ml_max_iter=300, max_step=0.05, climb_img=False,
             neb_method='improvedtangent',
             ml_algo='FIRE', k=None,
             plot_neb_paths=False):
@@ -255,6 +255,8 @@ class NEBOptimizer(object):
 
         while not neb_converged(self):
 
+            self.scale_targets = np.mean(self.list_targets)
+
             # 1) Train Machine Learning process:
             process = train_ml_process(list_train=self.list_train,
                                        list_targets=self.list_targets,
@@ -265,7 +267,6 @@ class NEBOptimizer(object):
             
             trained_process = process['trained_process']
             ml_calc = process['ml_calc']
-
 
             # 2) Setup and run ML NEB:
 
@@ -282,6 +283,8 @@ class NEBOptimizer(object):
             last_images = read("accepted_paths.traj", '-' + str(
                                self.n_images)+ ':')
 
+
+
             self.images = create_ml_neb(n_images=self.n_images,
                           images_interpolation=last_images,
                           trained_process=trained_process,
@@ -294,7 +297,7 @@ class NEBOptimizer(object):
                       remove_rotation_and_translation=self
                       .remove_rotation_and_translation)
 
-            neb_opt = eval(ml_algo)(neb, dt=0.1)
+            neb_opt = eval(ml_algo)(neb)#, dt=0.1)
             neb_opt.run(fmax=ml_fmax, steps=ml_max_iter)
 
 

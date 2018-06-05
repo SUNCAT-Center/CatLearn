@@ -89,8 +89,7 @@ def neb_converged(self):
                     ######### Under test: ############
                     self.penalty_a = 1.0
                     self.penalty_c = 1.0
-
-
+                    # self.k = 100.0
                     ######### Under test: ############
                     check_point = self.images[1:-1][np.argmax(
                                               self.energies_discr_neb[1:-1])

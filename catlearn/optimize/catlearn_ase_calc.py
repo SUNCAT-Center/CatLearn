@@ -49,11 +49,11 @@ class CatLearn_ASE(Calculator):
         prev_atoms = read('accepted_paths.traj',':')
         all_prev_pos_label = []
         for i in prev_atoms:
-            # if i.info['label'] == atoms.info['label']:
-            # Under test:
-            if i.info['label'] == atoms.info['label'] or i.info['label'] == \
-            atoms.info['label']-1 or i.info['label'] == atoms.info['label']+1:
-            # Under test:
+            if i.info['label'] == atoms.info['label']:
+            ######### Under test: ###################
+            # if i.info['label'] == atoms.info['label'] or i.info['label'] == \
+            # atoms.info['label']-1 or i.info['label'] == atoms.info['label']+1:
+            ######### Under test: ###################
                 tmp = i.get_positions().flatten()
                 all_prev_pos_label.append(tmp)
         all_prev_pos_label = apply_mask_ase_constraints(

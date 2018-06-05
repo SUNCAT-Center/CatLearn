@@ -82,17 +82,13 @@ def initialize_neb(self):
     images[0].info['label'] = 0
     images[0].info['iteration'] = -1
 
-    images[0].__dict__['_calc'].__dict__['results']['energy'] = \
-    images[0].__dict__['_calc'].__dict__['results']['energy'] - \
-    self.scale_targets
-
 
     # A) ASE interpolation.
     if self.path is None:
         for i in range(1, self.n_images-1):
             image = start_guess_ml.copy()
             image.info['label'] = i
-            image.info['iteration'] = -1
+            image.info['iteration'] = 0
             image.set_calculator(CatLearn_ASE())
             image.set_constraint(self.constraints)
             images.append(image)
@@ -114,10 +110,8 @@ def initialize_neb(self):
         images.append(final_guess_ml)
         self.n_images = len(images)
     images[-1].info['uncertainty'] = 0.0
-    images[-1].info['label'] = self.n_images-1
-    images[-1].info['iteration'] = -1
-    images[-1].__dict__['_calc'].__dict__['results']['energy'] = \
-    images[-1].__dict__['_calc'].__dict__['results']['energy'] - \
-    self.scale_targets
+    images[-1].info['label'] = self.n_images
+    images[-1].info['iteration'] = 0
+
 
     return images
