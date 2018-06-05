@@ -175,7 +175,7 @@ class NEBOptimizer(object):
 
 
 
-    def run(self, fmax=0.05, max_iter=500, ml_fmax=0.05, unc_conv=0.025,
+    def run(self, fmax=0.05, max_iter=1000, ml_fmax=0.05, unc_conv=0.025,
             ml_max_iter=500, max_step=0.05, climb_img=False,
             neb_method='improvedtangent',
             ml_algo='FIRE', k=None,
