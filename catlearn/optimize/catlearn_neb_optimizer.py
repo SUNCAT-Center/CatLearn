@@ -175,9 +175,9 @@ class NEBOptimizer(object):
 
 
 
-    def run(self, fmax=0.05, max_iter=1000, ml_fmax=0.05, unc_conv=0.025,
+    def run(self, fmax=0.05, max_iter=1000, unc_conv=0.025,
             ml_max_iter=300, max_step=0.05, climb_img=False,
-            neb_method='improvedtangent',
+            neb_method='aseneb',
             ml_algo='FIRE', k=None,
             plot_neb_paths=False):
 
@@ -235,7 +235,10 @@ class NEBOptimizer(object):
         self.k = k
 
         self.penalty_a = 100.0
-        self.penalty_c = 5.0
+        self.penalty_c = 10.0
+
+        initial_ml_fmax = fmax
+        ml_fmax = fmax * 2.0
 
         # Default spring constant is not specified.
         if self.k is None:
@@ -283,8 +286,6 @@ class NEBOptimizer(object):
             last_images = read("accepted_paths.traj", '-' + str(
                                self.n_images)+ ':')
 
-
-
             self.images = create_ml_neb(n_images=self.n_images,
                           images_interpolation=last_images,
                           trained_process=trained_process,
@@ -292,17 +293,26 @@ class NEBOptimizer(object):
                           settings_neb_dict=settings_neb_dict)
             warning_climb_img(self.ci)
 
+
+
+            if self.ci is True:
+                self.neb_method = 'improvedtangent'
+                self.k = 100.0
+                ml_fmax = initial_ml_fmax
+
+
+
             neb = NEB(self.images, climb=self.ci,
                       method=self.neb_method, k=self.k,
                       remove_rotation_and_translation=self
                       .remove_rotation_and_translation)
 
             neb_opt = eval(ml_algo)(neb)#, dt=0.1)
+
             neb_opt.run(fmax=ml_fmax, steps=ml_max_iter)
 
 
             # 3) Get results from ML NEB:
-
 
             # Get dist. convergence (d between opt. path and prev. opt. path).
 
