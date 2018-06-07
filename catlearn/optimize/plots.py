@@ -68,7 +68,7 @@ def plot_neb_mullerbrown(images, interesting_point, trained_process,
                          list_train):
     # Generate test datapoints in x and y.
 
-    crange = np.linspace(-3.0, 8.0, 200)
+    crange = np.linspace(-1.0, 3.0, 200)
     x_lim = [-1.2, 1.1]
     y_lim = [-0.4, 1.8]
 
@@ -128,8 +128,7 @@ def plot_neb_mullerbrown(images, interesting_point, trained_process,
     plt.show()
 
 
-def plot_predicted_neb_path(images, accepted_path=None, climb_image=None,
-                            filename=''):
+def plot_predicted_neb_path(images, climb_image=None, filename=''):
     """ Tool for plotting a predicted path of a given trajectory file.
 
     Parameters
@@ -144,6 +143,7 @@ def plot_predicted_neb_path(images, accepted_path=None, climb_image=None,
     iter = None
 
     iter = images[0].info['iteration']
+    accepted_path = images[0].info['accepted_path']
 
     neb_tools = NEBTools(images)
     [s, E, Sfit, Efit, lines] = neb_tools.get_fit()
@@ -188,9 +188,6 @@ def plot_predicted_neb_path(images, accepted_path=None, climb_image=None,
         plt.title('Iter: {0:.0f}; E$_f$: {1:.3f} eV; E$_r$: {2:.3f} '
         'eV; Max. uncertainty: {3:.3f} eV'.format(
         iter, Ef_neb, Er_neb, np.max(uncertainties_pred_neb)))
-
-
-
 
 
     # plt.savefig(fname=filename + 'reaction_path_iteration_' + str(iter)

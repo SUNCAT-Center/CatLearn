@@ -17,26 +17,23 @@ class CatLearn_ASE(Calculator):
     nolabel = True
 
     def __init__(self, trained_process=None, ml_calc=None, finite_step=1e-5,
-                 n_images=None, max_step=None, a_crit_penalty=None,
-                 c_crit_penalty=None, **kwargs):
+                 settings=None, **kwargs):
         Calculator.__init__(self, **kwargs)
         self.trained_process = trained_process
         self.ml_calc = ml_calc
         self.step = finite_step
-        self.n_images = n_images
-        self.max_step = max_step
-        self.a_crit = a_crit_penalty
-        self.c_crit = c_crit_penalty
+        self.n_images = settings['n_images']
+        self.max_step = settings['max_step']
+        self.a_crit = settings['a_const']
+        self.c_crit = settings['c_const']
+        self.ind_constraints = settings['ind_constraints']
+        self.all_pred_images = settings['all_pred_images']
 
     def calculate(self, atoms=None, properties=['energy', 'forces'],
                   system_changes=all_changes):
 
         # Atoms:
         self.atoms = atoms
-
-        # Mask test (constraints):
-        ind_constraints = create_mask_ase_constraints(ini=atoms,
-            constraints=atoms._constraints)
 
         predictions = 0.0
         pred_value = 0.0
@@ -46,18 +43,19 @@ class CatLearn_ASE(Calculator):
 
         # Previous paths of the atom i (for penalty function).
 
-        prev_atoms = read('accepted_paths.traj',':')
         all_prev_pos_label = []
-        for i in prev_atoms:
+        for i in self.all_pred_images:
             if i.info['label'] == atoms.info['label']:
             ######### Under test: ###################
-            # if i.info['label'] == atoms.info['label'] or i.info['label'] == \
-            # atoms.info['label']-1 or i.info['label'] == atoms.info['label']+1:
+            # if (i.info['label'] == atoms.info['label']) or (i.info['label']
+            # == atoms.info['label']-1) or (i.info['label'] == atoms.info[
+            # 'label']+1):
             ######### Under test: ###################
-                tmp = i.get_positions().flatten()
-                all_prev_pos_label.append(tmp)
+                if i.info['accepted_path'] is True:
+                    tmp = i.get_positions().flatten()
+                    all_prev_pos_label.append(tmp)
         all_prev_pos_label = apply_mask_ase_constraints(
-        list_to_mask=all_prev_pos_label, mask_index=ind_constraints)[1]
+        list_to_mask=all_prev_pos_label, mask_index=self.ind_constraints)[1]
 
 
         def pred_energy_test(test, atoms=self.atoms, ml_calc=self.ml_calc,
@@ -84,13 +82,12 @@ class CatLearn_ASE(Calculator):
                 closest_train = array_to_atoms(closest_train)
                 penalty_max = 0.0
                 for atom in range(len(test)):
-                    d_atom_atom = distance.euclidean(test[atom], closest_train[atom])
+                    d_atom_atom = distance.sqeuclidean(test[atom],
+                    closest_train[atom])
                     if d_atom_atom >= max_step:
                         p_i = 0.0
-                        ##### Under test ##################
                         a_const = self.a_crit
                         c_const = self.c_crit
-                        ##### Under test ##################
                         d_const = 1.0
                         p_i = (a_const * ((d_atom_atom-max_step)**2)) / (c_const*(
                         d_atom_atom-max_step) + d_const)
@@ -98,36 +95,7 @@ class CatLearn_ASE(Calculator):
                         p_i = 0.0
                     penalty_max += p_i
 
-            # Penalty too close atoms:
-            ############# Under test ######################################
-            # pos_atoms = atoms.get_positions()
-            # cov_radii_atoms = covalent_radii[atoms.get_atomic_numbers()]/2
-            #
-            # penalty_min = 0.0
-            # for i in range(0, len(pos_atoms)):
-            #     for j in range(i+1, len(pos_atoms)-1):
-            #         d_i_j = distance.euclidean(pos_atoms[i], pos_atoms[j])
-            #         sum_of_radii = cov_radii_atoms[i] + cov_radii_atoms[j]
-            #         if d_i_j <= sum_of_radii:
-            #             p_min_i = 0.0
-            #             a_c = 10.0
-            #             c_c = 2.0
-            #             d_c = 1.0
-            #             p_min_i = (a_c * ((d_i_j-sum_of_radii)**2)) / (c_c*(
-            #                        d_i_j-sum_of_radii) + d_c)
-            #         if d_i_j > sum_of_radii:
-            #             p_min_i = 0.0
-            #         penalty_min += p_min_i
-            # if penalty_min != 0.0:
-            #     print('Stopped because atoms are too close', penalty_min)
-            #     from ase.visualize import view
-            #
-            #     view(atoms)
-            #     exit()
-            # print(penalty_min)
-            ############# Under test ######################################
-
-            pred_value = pred_value[0][0] + penalty_max #+ penalty_min
+            pred_value = pred_value[0][0] + penalty_max
 
             return pred_value
 
@@ -138,7 +106,7 @@ class CatLearn_ASE(Calculator):
         pos_flatten = self.atoms.get_positions().flatten()
 
         test = apply_mask_ase_constraints(list_to_mask=[pos_flatten],
-        mask_index=ind_constraints)[1]
+                                          mask_index=self.ind_constraints)[1]
 
         # Get energy:
 
@@ -147,8 +115,8 @@ class CatLearn_ASE(Calculator):
         # Get forces:
 
         gradients = np.zeros(len(pos_flatten))
-        for i in range(len(ind_constraints)):
-            index_force = ind_constraints[i]
+        for i in range(len(self.ind_constraints)):
+            index_force = self.ind_constraints[i]
             pos = test.copy()
             pos[0][i] = pos_flatten[index_force] + self.step
             f_pos = pred_energy_test(test=pos)

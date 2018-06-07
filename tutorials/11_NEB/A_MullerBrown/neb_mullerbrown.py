@@ -47,33 +47,33 @@ final_opt.run(fmax=0.01)
 
 # Define number of images for NEBS:
 
-n_images = 11
+n_images = 7
 
 # 2.A. NEB using ASE #########################################################
-
-initial_ase = read('initial_optimized.traj')
-final_ase = read('final_optimized.traj')
-images_ase = [initial_ase]
-for i in range(1, n_images-1):
-    image_ase = initial_ase.copy()
-    image_ase.set_calculator(copy.deepcopy(ase_calculator))
-    images_ase.append(image_ase)
-images_ase.append(final_ase)
-
-neb_ase = NEB(images_ase, climb=True, method='improvedtangent', k=0.1)
-neb_ase.interpolate()
-
-qn_ase = FIRE(neb_ase, trajectory='neb_ase.traj')
-qn_ase.run(fmax=0.01)
-
-nebtools_ase = NEBTools(images_ase)
-
-Sf_ase = nebtools_ase.get_fit()[2]
-Ef_ase = nebtools_ase.get_fit()[3]
-
-Ef_neb_ase, dE_neb_ase = nebtools_ase.get_barrier(fit=False)
-nebtools_ase.plot_band()
-plt.show()
+#
+# initial_ase = read('initial_optimized.traj')
+# final_ase = read('final_optimized.traj')
+# images_ase = [initial_ase]
+# for i in range(1, n_images-1):
+#     image_ase = initial_ase.copy()
+#     image_ase.set_calculator(copy.deepcopy(ase_calculator))
+#     images_ase.append(image_ase)
+# images_ase.append(final_ase)
+#
+# neb_ase = NEB(images_ase, climb=True, method='improvedtangent', k=0.1)
+# neb_ase.interpolate()
+#
+# qn_ase = FIRE(neb_ase, trajectory='neb_ase.traj')
+# qn_ase.run(fmax=0.01)
+#
+# nebtools_ase = NEBTools(images_ase)
+#
+# Sf_ase = nebtools_ase.get_fit()[2]
+# Ef_ase = nebtools_ase.get_fit()[3]
+#
+# Ef_neb_ase, dE_neb_ase = nebtools_ase.get_barrier(fit=False)
+# nebtools_ase.plot_band()
+# plt.show()
 
 
 # 2.B. NEB using CatLearn ####################################################
@@ -82,12 +82,11 @@ initial = read('initial_optimized.traj')
 final = read('final_optimized.traj')
 
 neb_catlearn = NEBOptimizer(start='initial_optimized.traj',
-                       end='final_optimized.traj',
-                       ase_calc=copy.deepcopy(ase_calculator),
-                       n_images=n_images, interpolation=None)
+                            end='final_optimized.traj',
+                            ase_calc=copy.deepcopy(ase_calculator),
+                            n_images=n_images, interpolation=None)
 
-neb_catlearn.run(ml_algo='FIRE', climb_img=True, max_step=0.10,
-                 neb_method='aseneb', plot_neb_paths=True)
+neb_catlearn.run(ml_algo='FIRE', plot_neb_paths=True)
 
 # 3. Summary of the results #################################################
 

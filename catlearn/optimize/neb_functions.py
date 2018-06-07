@@ -51,33 +51,16 @@ def train_ml_process(list_train, list_targets, list_gradients,
     if ml_calculator.__dict__['opt_hyperparam']:
         ml_calculator.opt_hyperparameters()
 
-    return {'ml_calc':ml_calculator, 'trained_process': trained_process,
-            'scale_targets': scale_targets}
+    return {'ml_calc':ml_calculator, 'trained_process': trained_process}
 
-def create_ml_neb(n_images, images_interpolation, trained_process,
-                  ml_calculator, settings_neb_dict):
+def create_ml_neb(images_interpolation, trained_process, ml_calculator,
+                  settings_neb_dict):
 
-    catlearn_ase_calc = CatLearn_ASE(trained_process=trained_process,
-                                     ml_calc=ml_calculator,
-                                     finite_step=1e-5,
-                                     max_step=settings_neb_dict['max_step'],
-                                     n_images=n_images,
-                                     a_crit_penalty=settings_neb_dict['a_const'],
-                                     c_crit_penalty=settings_neb_dict['c_const'])
 
 
     # End-points of the NEB path:
-    start_guess_ml = read(settings_neb_dict['initial_endpoint'])
-    final_guess_ml = read(settings_neb_dict['final_endpoint'])
-
-    # Check if the images_interpolation contains the endpoints (delete them):
-    pos_is = images_interpolation[0].get_positions().flatten()
-    pos_fs = images_interpolation[-1].get_positions().flatten()
-
-    if np.array_equal(start_guess_ml.get_positions().flatten(), pos_is) :
-        images_interpolation = images_interpolation[1:] # Remove first image.
-    if np.array_equal(final_guess_ml.get_positions().flatten(), pos_fs):
-        images_interpolation = images_interpolation[:-1] # Remove last image.
+    start_guess_ml = copy.deepcopy(settings_neb_dict['initial_endpoint'])
+    final_guess_ml = copy.deepcopy(settings_neb_dict['final_endpoint'])
 
     # Create ML NEB path:
     images = [start_guess_ml]
@@ -91,14 +74,21 @@ def create_ml_neb(n_images, images_interpolation, trained_process,
     images[0].info['label'] = 0
     images[0].info['uncertainty'] = 0.0
     images[0].info['iteration'] = settings_neb_dict['iteration']
+    images[0].info['scaling'] = settings_neb_dict['scale_targets']
+    images[0].info['accepted_path'] = True
 
-    for i in range(0, n_images-2):
+    for i in range(0, settings_neb_dict['n_images']-2):
         image = start_guess_ml.copy()
         image.info['label'] = i+1
         image.info['uncertainty'] = 0.0
         image.info['iteration'] = settings_neb_dict['iteration']
-        image.set_calculator(copy.deepcopy(catlearn_ase_calc))
-        image.set_positions(images_interpolation[i].get_positions())
+        image.info['scaling'] = settings_neb_dict['scale_targets']
+        image.info['accepted_path'] = True
+        image.set_calculator(CatLearn_ASE(trained_process=trained_process,
+                                     ml_calc=ml_calculator,
+                                     settings=settings_neb_dict))
+        if images_interpolation is not None:
+            image.set_positions(images_interpolation[i].get_positions())
         image.set_constraint(settings_neb_dict['constraints'])
         images.append(image)
 
@@ -109,9 +99,11 @@ def create_ml_neb(n_images, images_interpolation, trained_process,
     settings_neb_dict['scale_targets']
 
     # Append labels, uncertainty and iter to the last end-point:
-    images[-1].info['label'] = n_images
+    images[-1].info['label'] = settings_neb_dict['n_images']
     images[-1].info['uncertainty'] = 0.0
     images[-1].info['iteration'] = settings_neb_dict['iteration']
+    images[-1].info['scaling'] = settings_neb_dict['scale_targets']
+    images[-1].info['accepted_path'] = True
 
     return images
 
