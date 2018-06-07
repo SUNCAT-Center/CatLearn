@@ -82,7 +82,7 @@ class CatLearn_ASE(Calculator):
                 closest_train = array_to_atoms(closest_train)
                 penalty_max = 0.0
                 for atom in range(len(test)):
-                    d_atom_atom = distance.sqeuclidean(test[atom],
+                    d_atom_atom = distance.euclidean(test[atom],
                     closest_train[atom])
                     if d_atom_atom >= max_step:
                         p_i = 0.0

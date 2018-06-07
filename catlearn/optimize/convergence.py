@@ -59,7 +59,6 @@ def converged(self):
 
 
 def neb_converged(self):
-
     if self.neb_dict['iteration'] > 1:
         if np.max(self.unc_discr_neb) <= self.unc_conv:
             if self.distance_convergence <= 0.05:

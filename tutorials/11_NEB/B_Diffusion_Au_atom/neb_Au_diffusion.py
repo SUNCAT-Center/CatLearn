@@ -93,3 +93,19 @@ neb_catlearn = NEBOptimizer(start='initial.traj', end='final.traj',
                        interpolation='idpp')
 
 neb_catlearn.run(fmax=0.05, plot_neb_paths=True)
+
+
+# 3. Summary of the results #################################################
+
+# NEB ASE:
+print('\n \n Summary of results: \n')
+
+atoms_ase = read('neb_ase.traj', ':')
+n_eval_ase = len(atoms_ase) - 2 * n_images
+
+print('Number of function evaluations CI-NEB implemented in ASE:', n_eval_ase)
+
+# Catlearn:
+atoms_catlearn = read('results_evaluated_images.traj', ':')
+n_eval_catlearn = len(atoms_catlearn)
+print('Number of function evaluations Catlearn ASE:', n_eval_catlearn)

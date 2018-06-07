@@ -68,7 +68,7 @@ def plot_neb_mullerbrown(images, interesting_point, trained_process,
                          list_train):
     # Generate test datapoints in x and y.
 
-    crange = np.linspace(-1.0, 3.0, 200)
+    crange = np.linspace(-0.5, 5.0, 200)
     x_lim = [-1.2, 1.1]
     y_lim = [-0.4, 1.8]
 

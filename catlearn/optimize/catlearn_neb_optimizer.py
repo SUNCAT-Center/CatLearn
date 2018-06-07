@@ -73,9 +73,12 @@ class NEBOptimizer(object):
         assert self.ase_calc, err_not_ase_calc_traj()
 
         # A) Include previous calculations for training the ML model.
-        if inc_prev_calcs is True:
-            is_end_point = read(start, ':')
-            fs_end_point = read(end, ':')
+        is_end_point = read(start, ':')
+        fs_end_point = read(end, ':')
+
+        # Write previous evaluated images in evaluations:
+        write('./' + str(self.filename) +'_evaluated_images.traj',
+              is_end_point + fs_end_point)
 
         # B) Only include initial and final (optimized) images.
         if inc_prev_calcs is False:
@@ -83,6 +86,8 @@ class NEBOptimizer(object):
             fs_end_point = read(end, '-1:')
         is_pos = is_end_point[-1].get_positions().flatten()
         fs_pos = fs_end_point[-1].get_positions().flatten()
+
+
 
         # Check the magnetic moments of the initial and final states:
         self.magmom_is = None
@@ -137,7 +142,7 @@ class NEBOptimizer(object):
                          'scaling': 1.0, 'scaling_bounds': ((1.0, 1.0),)},
                         }
             self.ml_calc = GPCalculator(
-            kernel_dict=self.kdict, opt_hyperparam=True, scale_data=False,
+            kernel_dict=self.kdict, opt_hyperparam=False, scale_data=False,
             scale_optimizer=False,
             calc_uncertainty=False, regularization=1e-5)
 
@@ -147,14 +152,14 @@ class NEBOptimizer(object):
         self.climb_image = climb_image
         self.ci = False
 
-        self.neb_dict = {'max_step': 0.05,
+        self.neb_dict = {'max_step': 0.10,
                          'a_const': 100.0,
                          'c_const': 10.0,
                          'scale_targets': self.scale_targets,
                          'iteration': self.iter,
                          'constraints': self.constraints,
                          'ind_constraints': self.ind_mask_constr,
-                         'method': 'aseneb',
+                         'method': 'improvedtangent',
                          'spring_k': 100.0,
                          'n_images': self.n_images,
                          'initial_endpoint': is_end_point[-1],
@@ -216,6 +221,7 @@ class NEBOptimizer(object):
 
         # Initial path as accepted path:
         write('last_accepted_path.traj', self.images)
+
 
         # Check whether the user set enough images.
         assert self.n_images > 3, err_not_enough_images()
@@ -304,7 +310,6 @@ class NEBOptimizer(object):
             images_guess = self.neb_dict['last_accepted_images']
 
 
-
             # Create images of the path:
             self.images = create_ml_neb(
                                     images_interpolation=images_guess,
@@ -326,20 +331,28 @@ class NEBOptimizer(object):
 
 
             # # Improve the previous ML NEB path by using CI-NEB:
-            if self.iter > 0 and np.max(uncertainty_path) <= 0.010:
+            self.ci = False
+            if self.iter > 0 and np.max(uncertainty_path) <= \
+                                self.converg_dict['uncertainty_convergence']:
                 if self.climb_image is True:
+                    warning_climb_img(self.climb_image)
                     self.neb_dict['a_const'] = 1.0
                     self.neb_dict['c_const'] = 1.0
-                    neb = NEB(self.images, climb=True,
-                          method='aseneb',
-                          k=100.0,
-                          remove_rotation_and_translation=self.rrt)
-                    neb_opt = eval(ml_algo)(neb, dt=0.1)
-
-                    neb_opt.run(fmax=self.converg_dict['fmax'],
+                    images_ci = copy.deepcopy(self.images)
+                    neb_ci = NEB(images_ci, climb=True,
+                                 method='improvedtangent',
+                                 k=100.0,
+                                 remove_rotation_and_translation=self.rrt)
+                    neb_opt_ci = eval(ml_algo)(neb_ci, dt=0.1)
+                    neb_opt_ci.run(fmax=self.converg_dict['fmax'],
                             steps=self.converg_dict['ml_max_iter'])
-                    self.ci = True
-
+                    conv_ci = neb_opt_ci.__dict__['nsteps'] < \
+                              self.converg_dict['ml_max_iter']
+                    # Accept the CI optimization if it is converged:
+                    if conv_ci is True:
+                        self.ci = True
+                        self.images = copy.deepcopy(images_ci)
+                        neb_opt = neb_opt_ci
 
             # 3) Get results from ML NEB:
 
@@ -360,7 +373,7 @@ class NEBOptimizer(object):
                                            i].get_positions().flatten()
                 list_distance_convergence.append(distance.euclidean(
                                                  pos_opt_i, pos_last_i))
-                list_distance_acceptance.append(distance.euclidean(
+                list_distance_acceptance.append(distance.sqeuclidean(
                                                  pos_opt_i, pos_last_i))
 
 
@@ -444,13 +457,9 @@ class NEBOptimizer(object):
                 write('last_accepted_path.traj', self.images)
 
             # Store all the atoms objects of the real evaluations (expensive).
-            if self.iter == 0:
-                ai = copy.deepcopy(self.neb_dict['all_pred_images'])
-                TrajectoryWriter(atoms=ai, filename='./' + str(self.filename)
-                     +'_evaluated_images.traj', mode='w').write()
-            if self.iter > 0:
-                TrajectoryWriter(atoms=self.ase_ini, filename='./' + str(self.filename)
-                     +'_evaluated_images.traj', mode='a').write()
+            TrajectoryWriter(atoms=self.ase_ini, filename='./' + str(
+                             self.filename) +'_evaluated_images.traj',
+                             mode='a').write()
 
             print('Maximum step set by the user:', self.neb_dict['max_step'])
             print('Spring constant:', self.neb_dict['spring_k'])
