@@ -73,6 +73,23 @@ def check_length(labels, result, atoms):
         raise AssertionError(msg)
 
 
+def make_labels(params, prefix, suffix):
+    labels = []
+    for p in params:
+        if p == 'oxistates':
+            labels += [prefix + '_oxi' + s + '_' + suffix for
+                       s in ['min', 'med', 'max']]
+        elif p == 'block':
+            labels += [prefix + '_' + s + 'block_' + suffix for
+                       s in ['s', 'p', 'd', 'f']]
+        elif p == 'econf':
+            labels += [prefix + '_ne_' + s + '_' + suffix for
+                       s in ['s', 'p', 'd', 'f']]
+        else:
+            labels.append(prefix + '_' + p + '_' + suffix)
+    return labels
+
+
 class AdsorbateFingerprintGenerator(BaseGenerator):
     def __init__(self, **kwargs):
         """Class containing functions for fingerprint generation.

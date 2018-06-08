@@ -116,7 +116,10 @@ def detect_adsorbate(atoms):
     try:
         return formula2ads_index(atoms, species)
     except AssertionError:
-        return last2ads_index(atoms, species)
+        try:
+            return connectivity2ads_index(atoms, species)
+        except AssertionError:
+            return last2ads_index(atoms, species)
 
 
 def detect_termination(atoms):
@@ -249,6 +252,49 @@ def sym2ads_index(atoms, ads_syms):
     return ads_atoms
 
 
+def connectivity2ads_index(atoms, species):
+    """Return the indexes of atoms from the global list of adsorbate symbols.
+
+    Parameters
+    ----------
+    atoms : object
+        ASE atoms object with connectivity attached.
+        This represents an adsorbate*slab structure.
+    species : str
+        chemical formula of the adsorbate.
+    """
+    composition = string2symbols(species)
+    ads_atoms = []
+    for symbol in composition:
+        if (composition.count(symbol) ==
+           atoms.get_chemical_symbols().count(symbol)):
+            ads_atoms += [atom.index for atom in atoms if
+                          atom.symbol == symbol]
+
+    if len(ads_atoms) == len(composition):
+        return ads_atoms
+    elif len(ads_atoms) == 0:
+        raise AssertionError("Formula adsorbate identification failed.")
+
+    # If an atom in species also occurs in the slab, infer by connectivity.
+    connected_atoms = []
+    for atom in ads_atoms:
+        edges = atoms.connectivity[atom, :]
+        connected_atoms += [i for i, bonds in enumerate(edges) if
+                            bonds > 0 and
+                            atoms[i].symbol in composition and
+                            atoms[i].symbol != atoms[atom].symbol]
+    ads_atoms += connected_atoms
+
+    # Final check.
+    for a in ads_atoms:
+        if (atoms[a].symbol not in composition or
+           len(ads_atoms) != len(composition)):
+            raise AssertionError("Neighbor 1 adsorbate identification failed.")
+
+    return list(np.unique(ads_atoms))
+
+
 def tags2ads_index(atoms):
     """Return the indexes of atoms from the global list of adsorbate symbols.
 
@@ -287,6 +333,7 @@ def last2ads_index(atoms, species):
     for a in ads_atoms:
         if atoms[a].symbol not in composition:
             raise AssertionError("last index adsorbate identification failed.")
+    warnings.warn("Adsorbate identified by last index.")
     return ads_atoms
 
 
