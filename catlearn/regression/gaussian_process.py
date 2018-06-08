@@ -6,7 +6,7 @@ import numpy as np
 from scipy.optimize import minimize, basinhopping
 from collections import defaultdict
 import functools
-
+import warnings
 from .gpfunctions.log_marginal_likelihood import log_marginal_likelihood
 from .gpfunctions.covariance import get_covariance
 from .gpfunctions.kernel_setup import prepare_kernels, kdicts2list, list2kdict
@@ -192,7 +192,37 @@ class GaussianProcess(object):
 
         return data
 
-    def update_data(self, train_fp, train_target, gradients=None,
+    def predict_uncertainty(self, test_fp):
+        """Return uncertainty only.
+
+        Parameters
+        ----------
+        test_fp : list
+            A list of testing fingerprint vectors.
+        """
+        # Calculate the covariance between the test and training datasets.
+        ktb = get_covariance(kernel_dict=self.kernel_dict, matrix1=test_fp,
+                             matrix2=self.train_fp, regularization=None,
+                             log_scale=self.scale_optimizer,
+                             eval_gradients=self.eval_gradients)
+        # Store input data.
+        data = defaultdict(list)
+
+        data['uncertainty'] = get_uncertainty(
+            kernel_dict=self.kernel_dict, test_fp=test_fp,
+            ktb=ktb, cinv=self.cinv,
+            log_scale=self.scale_optimizer)
+
+        data['uncertainty_with_reg'] = data['uncertainty'] + \
+            self.regularization
+
+        # Rescale uncertainty if needed.
+        if self.scale_data:
+            data['uncertainty'] *= self.scaling.target_data['std']
+            data['uncertainty_with_reg'] *= self.scaling.target_data['std']
+        return data
+
+    def update_data(self, train_fp, train_target=None, gradients=None,
                     scale_optimizer=False):
         """Update the training matrix, targets and covariance matrix.
 
@@ -223,17 +253,19 @@ class GaussianProcess(object):
 
         # Store the training data in the GP, enforce np.array type.
         self.train_fp = np.asarray(train_fp)
-        self.train_target = np.asarray(train_target)
 
-        if self.scale_data:
-            self.scaling = ScaleData(train_fp, train_target)
-            self.train_fp, self.train_target = self.scaling.train()
-            if gradients is not None:
-                gradients = gradients / (self.scaling.target_data['std'] /
-                                         self.scaling.feature_data['std'])
-                gradients = np.ravel(gradients)
+        if train_target is not None:
+            self.train_target = np.asarray(train_target)
 
-        if gradients is not None:
+            if self.scale_data:
+                self.scaling = ScaleData(train_fp, train_target)
+                self.train_fp, self.train_target = self.scaling.train()
+                if gradients is not None:
+                    gradients = gradients / (self.scaling.target_data['std'] /
+                                             self.scaling.feature_data['std'])
+                    gradients = np.ravel(gradients)
+
+        if gradients is not None and train_target is not None:
             train_target_grad = np.append(self.train_target, gradients)
             self.train_target = np.reshape(train_target_grad,
                                            (np.shape(train_target_grad)[0], 1))
@@ -246,7 +278,11 @@ class GaussianProcess(object):
 
         # Invert the covariance matrix.
         self.cinv = np.linalg.inv(cvm)
-        self._update_lml()
+        if train_target is None:
+            warnings.warn("GP mean not updated.")
+            self.log_marginal_likelihood = np.nan
+        else:
+            self._update_lml()
 
     def optimize_hyperparameters(self, global_opt=False, algomin='L-BFGS-B',
                                  eval_jac=False, loss_function='lml'):

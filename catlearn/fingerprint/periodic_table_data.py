@@ -198,3 +198,35 @@ def default_catlearn_radius(z):
         radius = get_radius(z)
     # Some bond streching is allowed.
     return radius * 1.15 + 0.1
+
+
+def make_labels(params, prefix, suffix):
+    """Return a list of feature labels.
+
+    Parameters
+    ----------
+    params : list
+        Parameter keys.
+    prefix : str
+        Appended in front of each parameter key.
+    suffix : str
+        Appended to end of each parameter key.
+
+    Returns
+    ----------
+    labels : list
+    """
+    labels = []
+    for p in params:
+        if p == 'oxistates':
+            labels += [prefix + 'oxi' + s + suffix for
+                       s in ['min', 'med', 'max']]
+        elif p == 'block':
+            labels += [prefix + s + 'block' + suffix for
+                       s in ['s', 'p', 'd', 'f']]
+        elif p == 'econf':
+            labels += [prefix + 'ne_' + s + suffix for
+                       s in ['outer', 's', 'p', 'd', 'f']]
+        else:
+            labels.append(prefix + p + suffix)
+    return labels
