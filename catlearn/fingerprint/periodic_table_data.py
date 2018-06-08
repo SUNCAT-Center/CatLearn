@@ -211,6 +211,10 @@ def make_labels(params, prefix, suffix):
         Appended in front of each parameter key.
     suffix : str
         Appended to end of each parameter key.
+
+    Returns
+    ----------
+    labels : list
     """
     labels = []
     for p in params:
