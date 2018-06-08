@@ -75,43 +75,8 @@ class AdsorbateFingerprintGenerator(BaseGenerator):
         ----------
             atoms : object
         """
-        labels = ['atomic_number_term',
-                  'atomic_volume_term',
-                  'boiling_point_term',
-                  'density_term',
-                  'dipole_polarizability_term',
-                  'electron_affinity_term',
-                  'group_id_term',
-                  'lattice_constant_term',
-                  'melting_point_term',
-                  'period_term',
-                  'vdw_radius_term',
-                  'covalent_radius_cordero_term',
-                  'en_allen_term',
-                  'atomic_weight_term',
-                  'atomic_radius_term',
-                  'heat_of_formation_term',
-                  'dft_bulk_modulus_term',
-                  'dft_rhodensity_term',
-                  'dbcenter_term',
-                  'dbfilling_term',
-                  'dbwidth_term',
-                  'dbskew_term',
-                  'dbkurtosis_term',
-                  'oxi_min_term',
-                  'oxi_med_term',
-                  'oxi_max_term',
-                  'sblock_term',
-                  'pblock_term',
-                  'dblock_term',
-                  'fblock_term',
-                  'ne_outer_term',
-                  'ne_s_term',
-                  'ne_p_term',
-                  'ne_d_term',
-                  'ne_f_term',
-                  'ionenergy_term',
-                  'ground_state_magmom_term']
+        labels = make_labels(self.slab_params, '', '_term')
+        labels.append('ground_state_magmom_term')
         if atoms is None:
             return labels
         else:
@@ -138,43 +103,8 @@ class AdsorbateFingerprintGenerator(BaseGenerator):
         ----------
             atoms : object
         """
-        labels = ['atomic_number_bulk',
-                  'atomic_volume_bulk',
-                  'boiling_point_bulk',
-                  'density_bulk',
-                  'dipole_polarizability_bulk',
-                  'electron_affinity_bulk',
-                  'group_id_bulk',
-                  'lattice_constant_bulk',
-                  'melting_point_bulk',
-                  'period_bulk',
-                  'vdw_radius_bulk',
-                  'covalent_radius_cordero_bulk',
-                  'en_allen_bulk',
-                  'atomic_weight_bulk',
-                  'atomic_radius_bulk',
-                  'heat_of_formation_bulk',
-                  'dft_bulk_modulus_bulk',
-                  'dft_rhodensity_bulk',
-                  'dbcenter_bulk',
-                  'dbfilling_bulk',
-                  'dbwidth_bulk',
-                  'dbskew_bulk',
-                  'dbkurtosis_bulk',
-                  'sblock_bulk',
-                  'pblock_bulk',
-                  'dblock_bulk',
-                  'fblock_bulk',
-                  'oxi_min_bulk',
-                  'oxi_med_bulk',
-                  'oxi_max_bulk',
-                  'ne_outer_bulk',
-                  'ne_s_bulk',
-                  'ne_p_bulk',
-                  'ne_d_bulk',
-                  'ne_f_bulk',
-                  'ionenergy_bulk',
-                  'ground_state_magmom_bulk']
+        labels = make_labels(self.slab_params, '', '_bulk')
+        labels.append('ground_state_magmom_bulk')
         if atoms is None:
             return labels
         else:
@@ -200,38 +130,16 @@ class AdsorbateFingerprintGenerator(BaseGenerator):
 
         Parameters
         ----------
-            atoms : object
+        atoms : object
+
+        Returns
+        ----------
+        result : list
         """
-        labels = ['atomic_number_ads1',
-                  'atomic_volume_ads1',
-                  'boiling_point_ads1',
-                  'density_ads1',
-                  'dipole_polarizability_ads1',
-                  'electron_affinity_ads1',
-                  'group_id_ads1',
-                  'lattice_constant_ads1',
-                  'melting_point_ads1',
-                  'period_ads1',
-                  'vdw_radius_ads1',
-                  'covalent_radius_cordero_ads1',
-                  'en_allen_ads1',
-                  'atomic_weight_ads1',
-                  'atomic_radius_ads1',
-                  'heat_of_formation_ads1',
-                  'oxi_min_ads1',
-                  'oxi_med_ads1',
-                  'oxi_max_ads1',
-                  'sblock_ads1',
-                  'pblock_ads1',
-                  'dblock_ads1',
-                  'fblock_ads1',
-                  'ne_outer_ads1',
-                  'ne_s_ads1',
-                  'ne_p_ads1',
-                  'ne_d_ads1',
-                  'ne_f_ads1',
-                  'ionenergy_ads1',
-                  'ground_state_magmom_ads1']
+        extra_ads_params = ['atomic_radius', 'heat_of_formation',
+                            'oxistates', 'block', 'econf', 'ionenergies']
+        labels = make_labels(default_params + extra_ads_params, '', '_ads1')
+        labels.append('ground_state_magmom_site_av')
         if atoms is None:
             return labels
         else:
@@ -239,8 +147,6 @@ class AdsorbateFingerprintGenerator(BaseGenerator):
             chemisorbed_atoms = atoms.subsets['chemisorbed_atoms']
             numbers = atoms.numbers[chemisorbed_atoms]
             # Import CatLearn data on that element.
-            extra_ads_params = ['atomic_radius', 'heat_of_formation',
-                                'oxistates', 'block', 'econf', 'ionenergies']
             dat = list_mendeleev_params(numbers, params=default_params +
                                         extra_ads_params)
             result = list(np.nanmean(dat, axis=0))
@@ -257,43 +163,8 @@ class AdsorbateFingerprintGenerator(BaseGenerator):
         ----------
             atoms : object
         """
-        labels = ['atomic_number_site_av',
-                  'atomic_volume_site_av',
-                  'boiling_point_site_av',
-                  'density_site_av',
-                  'dipole_polarizability_site_av',
-                  'electron_affinity_site_av',
-                  'group_id_site_av',
-                  'lattice_constant_site_av',
-                  'melting_point_site_av',
-                  'period_site_av',
-                  'vdw_radius_site_av',
-                  'covalent_radius_cordero_site_av',
-                  'en_allen_site_av',
-                  'atomic_weight_site_av',
-                  'atomic_radius_site_av',
-                  'heat_of_formation_site_av',
-                  'dft_bulk_modulus_site_av',
-                  'dft_rhodensity_site_av',
-                  'dbcenter_site_av',
-                  'dbfilling_site_av',
-                  'dbwidth_site_av',
-                  'dbskew_site_av',
-                  'dbkurtosis_site_av',
-                  'oxi_min_site_av',
-                  'oxi_med_site_av',
-                  'oxi_max_site_av',
-                  'sblock_site_av',
-                  'pblock_site_av',
-                  'dblock_site_av',
-                  'fblock_site_av',
-                  'ne_outer_site_av',
-                  'ne_s_site_av',
-                  'ne_p_site_av',
-                  'ne_d_site_av',
-                  'ne_f_site_av',
-                  'ionenergy_site_av',
-                  'ground_state_magmom_site_av']
+        labels = make_labels(self.slab_params, '', '_site_av')
+        labels.append('ground_state_magmom_site_av')
         if atoms is None:
             return labels
         else:
@@ -313,43 +184,8 @@ class AdsorbateFingerprintGenerator(BaseGenerator):
         ----------
             atoms : object
         """
-        labels = ['atomic_number_site_min',
-                  'atomic_volume_site_min',
-                  'boiling_point_site_min',
-                  'density_site_min',
-                  'dipole_polarizability_site_min',
-                  'electron_affinity_site_min',
-                  'group_id_site_min',
-                  'lattice_constant_site_min',
-                  'melting_point_site_min',
-                  'period_site_min',
-                  'vdw_radius_site_min',
-                  'covalent_radius_cordero_site_min',
-                  'en_allen_site_min',
-                  'atomic_weight_site_min',
-                  'atomic_radius_site_min',
-                  'heat_of_formation_site_min',
-                  'dft_bulk_modulus_site_min',
-                  'dft_rhodensity_site_min',
-                  'dbcenter_site_min',
-                  'dbfilling_site_min',
-                  'dbwidth_site_min',
-                  'dbskew_site_min',
-                  'dbkurtosis_site_min',
-                  'oxi_min_site_min',
-                  'oxi_med_site_min',
-                  'oxi_max_site_min',
-                  'sblock_site_min',
-                  'pblock_site_min',
-                  'dblock_site_min',
-                  'fblock_site_min',
-                  'ne_outer_site_min',
-                  'ne_s_site_min',
-                  'ne_p_site_min',
-                  'ne_d_site_min',
-                  'ne_f_site_min',
-                  'ionenergy_site_min',
-                  'ground_state_magmom_site_min']
+        labels = make_labels(self.slab_params, '', '_site_min')
+        labels.append('ground_state_magmom_site_min')
         if atoms is None:
             return labels
         else:
@@ -369,43 +205,8 @@ class AdsorbateFingerprintGenerator(BaseGenerator):
         ----------
             atoms : object
         """
-        labels = ['atomic_number_site_max',
-                  'atomic_volume_site_max',
-                  'boiling_point_site_max',
-                  'density_site_max',
-                  'dipole_polarizability_site_max',
-                  'electron_affinity_site_max',
-                  'group_id_site_max',
-                  'lattice_constant_site_max',
-                  'melting_point_site_max',
-                  'period_site_max',
-                  'vdw_radius_site_max',
-                  'covalent_radius_cordero_site_max',
-                  'en_allen_site_max',
-                  'atomic_weight_site_max',
-                  'atomic_radius_site_max',
-                  'heat_of_formation_site_max',
-                  'dft_bulk_modulus_site_max',
-                  'dft_rhodensity_site_max',
-                  'dbcenter_site_max',
-                  'dbfilling_site_max',
-                  'dbwidth_site_max',
-                  'dbskew_site_max',
-                  'dbkurtosis_site_max',
-                  'oxi_min_site_max',
-                  'oxi_med_site_max',
-                  'oxi_max_site_max',
-                  'sblock_site_max',
-                  'pblock_site_max',
-                  'dblock_site_max',
-                  'fblock_site_max',
-                  'ne_outer_site_max',
-                  'ne_s_site_max',
-                  'ne_p_site_max',
-                  'ne_d_site_max',
-                  'ne_f_site_max',
-                  'ionenergy_site_max',
-                  'ground_state_magmom_site_max']
+        labels = make_labels(self.slab_params, '', '_site_max')
+        labels.append('ground_state_magmom_site_max')
         if atoms is None:
             return labels
         else:
@@ -446,43 +247,8 @@ class AdsorbateFingerprintGenerator(BaseGenerator):
         ----------
             atoms : object
         """
-        labels = ['atomic_number_site_sum',
-                  'atomic_volume_site_sum',
-                  'boiling_point_site_sum',
-                  'density_site_sum',
-                  'dipole_polarizability_site_sum',
-                  'electron_affinity_site_sum',
-                  'group_id_site_sum',
-                  'lattice_constant_site_sum',
-                  'melting_point_site_sum',
-                  'period_site_sum',
-                  'vdw_radius_site_sum',
-                  'covalent_radius_cordero_site_sum',
-                  'en_allen_site_sum',
-                  'atomic_weight_site_sum',
-                  'atomic_radius_site_sum',
-                  'heat_of_formation_site_sum',
-                  'dft_bulk_modulus_site_sum',
-                  'dft_rhodensity_site_sum',
-                  'dbcenter_site_sum',
-                  'dbfilling_site_sum',
-                  'dbwidth_site_sum',
-                  'dbskew_site_sum',
-                  'dbkurtosis_site_sum',
-                  'oxi_min_site_sum',
-                  'oxi_med_site_sum',
-                  'oxi_max_site_sum',
-                  'sblock_site_sum',
-                  'pblock_site_sum',
-                  'dblock_site_sum',
-                  'fblock_site_sum',
-                  'ne_outer_site_sum',
-                  'ne_s_site_sum',
-                  'ne_p_site_sum',
-                  'ne_d_site_sum',
-                  'ne_f_site_sum',
-                  'ionenergy_site_sum',
-                  'ground_state_magmom_site_sum']
+        labels = make_labels(self.slab_params, '', '_site_sum')
+        labels.append('ground_state_magmom_site_sum')
         if atoms is None:
             return labels
         else:
@@ -540,44 +306,9 @@ class AdsorbateFingerprintGenerator(BaseGenerator):
         ----------
             atoms : object
         """
-        labels = ['nn_surf_ligands', 'identnn_surf_ligands',
-                  'atomic_number_surf_ligands',
-                  'atomic_volume_surf_ligands',
-                  'boiling_point_surf_ligands',
-                  'density_surf_ligands',
-                  'dipole_polarizability_surf_ligands',
-                  'electron_affinity_surf_ligands',
-                  'group_id_surf_ligands',
-                  'lattice_constant_surf_ligands',
-                  'melting_point_surf_ligands',
-                  'period_surf_ligands',
-                  'vdw_radius_surf_ligands',
-                  'covalent_radius_cordero_surf_ligands',
-                  'en_allen_surf_ligands',
-                  'atomic_weight_surf_ligands',
-                  'atomic_radius_surf_ligands',
-                  'heat_of_formation_surf_ligands',
-                  'dft_bulk_modulus_surf_ligands',
-                  'dft_density_surf_ligands',
-                  'dbcenter_surf_ligands',
-                  'dbfilling_surf_ligands',
-                  'dbwidth_surf_ligands',
-                  'dbskew_surf_ligands',
-                  'dbkurtosis_surf_ligands',
-                  'oxi_min_surf_ligands',
-                  'oxi_med_surf_ligands',
-                  'oxi_max_surf_ligands',
-                  'sblock_surf_ligands',
-                  'pblock_surf_ligands',
-                  'dblock_surf_ligands',
-                  'fblock_surf_ligands',
-                  'ne_outer_surf_ligands',
-                  'ne_s_surf_ligands',
-                  'ne_p_surf_ligands',
-                  'ne_d_surf_ligands',
-                  'ne_f_surf_ligands',
-                  'ionenergy_surf_ligands',
-                  'ground_state_magmom_surf_ligands']
+        labels = ['nn_surf_ligands', 'identnn_surf_ligands']
+        labels += make_labels(self.slab_params, '', '_surf_ligands')
+        labels.append('ground_state_magmom_surf_ligands')
         if atoms is None:
             return labels
         else:
