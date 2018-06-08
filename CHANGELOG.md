@@ -1,5 +1,7 @@
 # dev
 
+-   Improved automatic identification of adsorbate, site.
+
 # Version 0.4.3 (May 2018)
 
 -   `ConvolutedFingerprintGenerator` added for bulk and molecules.

@@ -122,3 +122,26 @@ class BaseGenerator(object):
         else:
             raise NotImplementedError('{} data type not implemented.'.format(
                 self.dtype))
+
+
+def check_labels(labels, result, atoms):
+    """Check that two lists have the same length. If not, print an informative
+    error message containing a databse id if present.
+
+    Parameters
+    ----------
+    labels : list
+        A list of feature names.
+    result : list
+        A fingerprint.
+    atoms : object
+        A single atoms object.
+    """
+    if len(result) != len(labels):
+        msg = str(len(labels)) + '/' + str(len(result)) + \
+            ' labels/fingerprint mismatch.'
+        if 'id' in atoms.info:
+            msg += ' database id: ' + str(atoms.info['id'])
+            msg += ' ' + ' '.join([str(label) for label in labels])
+            msg += ' ' + ' '.join([str(value) for value in result])
+        raise AssertionError(msg)
