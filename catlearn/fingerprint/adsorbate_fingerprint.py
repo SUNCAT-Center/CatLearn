@@ -27,7 +27,8 @@ default_adsorbate_fingerprinters = ['mean_chemisorbed_atoms',
                                     'bulk',
                                     'strain',
                                     'en_difference_ads',
-                                    'en_difference_chemi']
+                                    'en_difference_chemi',
+                                    'generalized_cn_site']
 
 extra_slab_params = ['atomic_radius',
                      'heat_of_formation',
@@ -59,6 +60,12 @@ class AdsorbateFingerprintGenerator(BaseGenerator):
         params : list
             An optional list of parameters upon which to generate features.
         """
+        if not hasattr(self, 'cn_max'):
+            self.cn_max = kwargs.get('cn_max')
+
+        if self.cn_max is None:
+            self.cn_max = 12
+
         if not hasattr(self, 'params'):
             self.slab_params = kwargs.get('params')
 
@@ -258,6 +265,31 @@ class AdsorbateFingerprintGenerator(BaseGenerator):
             result += [np.nansum([gs_magmom[z] for z in numbers])]
             check_labels(labels, result, atoms)
             return result
+
+    def generalized_cn_site(self, atoms):
+        """Returns the generalized average coordination number of the site.
+        Calle-Vallejo et al. Angew. Chem. Int. Ed. 2014, 53, 8316-8319.
+
+        Parameters
+        ----------
+            atoms : object
+        """
+        if atoms is None:
+            return ['cn_site', 'gcn_site']
+        site = atoms.subsets['site_atoms']
+        slab = atoms.subsets['slab_atoms']
+        cm = atoms.connectivity
+        cn_site = 0.
+        for atom in site:
+            row = cm[atom, :]
+            cn = len([k for k in row if k > 0])
+            cn_site += cn
+            gcn = 0.
+            for j, btom in enumerate(row):
+                if btom > 0 and j in slab:
+                    cn = len([k for k in cm[btom, :] if k > 0])
+                    gcn += btom * cn / 12.
+        return [cn_site / len(site), gcn / len(site)]
 
     def count_ads_atoms(self, atoms=None):
         """Function that takes an atoms objects and returns a fingerprint
@@ -718,7 +750,7 @@ class AdsorbateFingerprintGenerator(BaseGenerator):
             atoms : object
         """
         if atoms is None:
-            return ['Ef']
+            return ['delta_energy']
         else:
             try:
                 delta = float(atoms.info['key_value_pairs']['delta_energy'])
