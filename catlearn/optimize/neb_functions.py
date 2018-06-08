@@ -77,9 +77,9 @@ def create_ml_neb(images_interpolation, trained_process, ml_calculator,
     images[0].info['scaling'] = settings_neb_dict['scale_targets']
     images[0].info['accepted_path'] = True
 
-    for i in range(0, settings_neb_dict['n_images']-2):
+    for i in range(1, settings_neb_dict['n_images']-1):
         image = start_guess_ml.copy()
-        image.info['label'] = i+1
+        image.info['label'] = i
         image.info['uncertainty'] = 0.0
         image.info['iteration'] = settings_neb_dict['iteration']
         image.info['scaling'] = settings_neb_dict['scale_targets']

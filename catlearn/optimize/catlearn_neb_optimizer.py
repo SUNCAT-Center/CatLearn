@@ -138,7 +138,7 @@ class NEBOptimizer(object):
             self.kdict = {
                          'k1': {'type': 'gaussian', 'width': 0.5,
                          'bounds':
-                          ((0.1, 1.0),)*len(self.ind_mask_constr),
+                          ((0.001, 1.0),)*len(self.ind_mask_constr),
                          'scaling': 1.0, 'scaling_bounds': ((1.0, 1.0),)},
                         }
             self.ml_calc = GPCalculator(
@@ -165,7 +165,8 @@ class NEBOptimizer(object):
                          'initial_endpoint': is_end_point[-1],
                          'final_endpoint': fs_end_point[-1],
                          'all_pred_images': [],
-                         'last_accepted_images': []}
+                         'last_accepted_images': [],
+                         'all_accepted_images':[]}
 
         # Initial path can be provided or interpolated from the end-points.
 
@@ -216,8 +217,9 @@ class NEBOptimizer(object):
         # Tag images as accepted:
         for i in self.images:
             i.info['accepted_path'] = True
-        self.neb_dict['all_pred_images'] = self.images
-        self.neb_dict['last_accepted_images'] = self.images
+        self.neb_dict['all_pred_images'] = copy.deepcopy(self.images)
+        self.neb_dict['last_accepted_images'] = copy.deepcopy(self.images)
+        self.neb_dict['all_accepted_images'] = copy.deepcopy(self.images)
 
         # Initial path as accepted path:
         write('last_accepted_path.traj', self.images)
@@ -230,7 +232,7 @@ class NEBOptimizer(object):
         self.converg_dict = {}
 
 
-    def run(self, fmax=0.05, max_iter=30, unc_conv=0.025, ml_algo='FIRE',
+    def run(self, fmax=0.05, max_iter=100, unc_conv=0.025, ml_algo='FIRE',
             plot_neb_paths=False):
 
         """Executing run will start the optimization process.
@@ -273,7 +275,7 @@ class NEBOptimizer(object):
                                  'uncertainty_convergence': unc_conv,
                                  'max_iter': max_iter,
                                  'ml_fmax': fmax * 2.0,
-                                 'ml_max_iter': 500}
+                                 'ml_max_iter': 250}
 
         print('Number of images:', self.neb_dict['n_images'])
         print('Distance between first and last point:', self.d_start_end)
@@ -281,7 +283,8 @@ class NEBOptimizer(object):
         print('Spring constant:', self.neb_dict['spring_k'])
 
 
-        # while not neb_converged(self):
+
+
         while True:
 
             # 1) Train Machine Learning process:
@@ -309,50 +312,21 @@ class NEBOptimizer(object):
 
             images_guess = self.neb_dict['last_accepted_images']
 
-
-            # Create images of the path:
             self.images = create_ml_neb(
-                                    images_interpolation=images_guess,
-                                    trained_process=trained_process,
-                                    ml_calculator=ml_calc,
-                                    settings_neb_dict=self.neb_dict)
+                                        images_interpolation=images_guess,
+                                        trained_process=trained_process,
+                                        ml_calculator=ml_calc,
+                                        settings_neb_dict=self.neb_dict)
+
             warning_climb_img(self.ci)
 
-            neb = NEB(self.images, climb=False,
+            neb = NEB(self.images, climb=self.ci,
                       method=self.neb_dict['method'],
                       k=self.neb_dict['spring_k'],
                       remove_rotation_and_translation=self.rrt)
-
-
-            neb_opt = eval(ml_algo)(neb, dt=0.1)
-
+            neb_opt = eval(ml_algo)(neb) #, dt=0.1)
             neb_opt.run(fmax=self.converg_dict['ml_fmax'],
                         steps=self.converg_dict['ml_max_iter'])
-
-
-            # # Improve the previous ML NEB path by using CI-NEB:
-            self.ci = False
-            if self.iter > 0 and np.max(uncertainty_path) <= \
-                                self.converg_dict['uncertainty_convergence']:
-                if self.climb_image is True:
-                    warning_climb_img(self.climb_image)
-                    self.neb_dict['a_const'] = 1.0
-                    self.neb_dict['c_const'] = 1.0
-                    images_ci = copy.deepcopy(self.images)
-                    neb_ci = NEB(images_ci, climb=True,
-                                 method='improvedtangent',
-                                 k=100.0,
-                                 remove_rotation_and_translation=self.rrt)
-                    neb_opt_ci = eval(ml_algo)(neb_ci, dt=0.1)
-                    neb_opt_ci.run(fmax=self.converg_dict['fmax'],
-                            steps=self.converg_dict['ml_max_iter'])
-                    conv_ci = neb_opt_ci.__dict__['nsteps'] < \
-                              self.converg_dict['ml_max_iter']
-                    # Accept the CI optimization if it is converged:
-                    if conv_ci is True:
-                        self.ci = True
-                        self.images = copy.deepcopy(images_ci)
-                        neb_opt = neb_opt_ci
 
             # 3) Get results from ML NEB:
 
@@ -366,21 +340,17 @@ class NEBOptimizer(object):
             # Get dist. convergence (d between opt. path and prev. opt. path).
 
             list_distance_convergence = []
-            list_distance_acceptance = []
             for i in range(0, len(self.images)):
                 pos_opt_i = self.images[i].get_positions().flatten()
                 pos_last_i = self.neb_dict['last_accepted_images'][
                                            i].get_positions().flatten()
-                list_distance_convergence.append(distance.euclidean(
-                                                 pos_opt_i, pos_last_i))
-                list_distance_acceptance.append(distance.sqeuclidean(
+                list_distance_convergence.append(distance.sqeuclidean(
                                                  pos_opt_i, pos_last_i))
 
 
             distance_convergence = np.max(np.abs(
                                                list_distance_convergence))
-            distance_acceptance = np.max(np.abs(
-                                               list_distance_acceptance))
+
             print('Max. distance between last accepted path and current path',
                   distance_convergence)
 
@@ -395,7 +365,7 @@ class NEBOptimizer(object):
                 pred_i = ml_calc.get_predictions(
                                     trained_process=trained_process,
                                     test_data=pos_i_masked[0])
-                unc_i = pred_i['uncertainty_with_reg']
+                unc_i = pred_i['uncertainty_with_reg'] * 2.0
                 self.images[i].info['uncertainty']= unc_i[0]
             ml_calc.__dict__['calc_uncertainty']= False
 
@@ -405,7 +375,7 @@ class NEBOptimizer(object):
             # Tag if the path found is reliable.
 
             # A) Not accept a path that was stretched too much.
-            if distance_acceptance >= 2 * self.neb_dict['max_step']:
+            if distance_convergence >= self.neb_dict['max_step']:
                 print('The path was too stretched. The last NEB is not saved.')
                 for i in self.images:
                     i.info['accepted_path'] = False
@@ -417,7 +387,8 @@ class NEBOptimizer(object):
                     i.info['accepted_path'] = False
 
             # C) Accept path if the uncertainty goes below 2*unc_conv in eV.
-            if np.max(uncertainty_path) <= (2*unc_conv):
+            if np.max(uncertainty_path) <= unc_conv:
+                print('Path accepted. Max. unc bellow unc_conv threshold. ')
                 for i in self.images:
                     i.info['accepted_path'] = True
 
@@ -425,10 +396,38 @@ class NEBOptimizer(object):
             for i in self.images:
                     i.info['iteration'] = self.iter
 
+
             ##################################################################
+
             # Select image with max. uncertainty.
-            argm_unc = np.argmax(uncertainty_path)
-            interesting_point = self.images[argm_unc].get_positions().flatten()
+
+            argmax_unc = np.argmax(uncertainty_path)
+            interesting_point = self.images[argmax_unc].get_positions().flatten()
+
+            # Original parameters:
+            self.neb_dict['a_const'] = 100.0
+            self.neb_dict['c_const'] = 10.0
+            self.converg_dict['ml_fmax'] = self.converg_dict['fmax'] * 2.0
+            ml_calc.__dict__['opt_hyperparam']= False
+            self.ci = False
+
+            # Select CI if accepted path:
+
+            if distance_convergence <= 0.05:
+                if np.max(uncertainty_path) <= self.converg_dict[
+                                            'uncertainty_convergence']:
+                    argmax_energy = np.argmax(energies_path[1:-1])
+                    # Tag image with uncertainty 0:
+                    self.images[1:-1][argmax_energy].info['uncertainty'] = 0.0
+                    interesting_point = self.images[1:-1][argmax_energy].get_positions().flatten()
+                    # Set new parameters:
+                    self.ci = True
+                    self.neb_dict['method'] = 'improvedtangent'
+                    self.neb_dict['a_const'] = 1.0
+                    self.neb_dict['c_const'] = 1.0
+                    self.converg_dict['ml_fmax'] = self.converg_dict['fmax']
+                    ml_calc.__dict__['opt_hyperparam']= True
+
             ##################################################################
 
             # Store plots.
@@ -449,12 +448,16 @@ class NEBOptimizer(object):
             evaluate_interesting_point_and_append_training(self,
                                                           interesting_point)
 
-            # Save (append) opt. path (including initial and final images).
+            # 4) Save (append) opt. path (including initial and final images).
 
             write('all_pred_paths.traj', self.neb_dict['all_pred_images'])
             write('last_pred_path.traj', self.images)
+
             if self.images[-1].info['accepted_path'] is True:
                 write('last_accepted_path.traj', self.images)
+                self.neb_dict['last_accepted_images'] = self.images
+                self.neb_dict['all_accepted_images'] += self.images
+
 
             # Store all the atoms objects of the real evaluations (expensive).
             TrajectoryWriter(atoms=self.ase_ini, filename='./' + str(
@@ -470,6 +473,23 @@ class NEBOptimizer(object):
                                                         'accepted_path'])
             print('Number of data points trained:', len(self.list_targets))
             print('ITERATIONS:', self.iter)
+
+            # Break if converged:
+
+            fmax = get_fmax(-np.array([self.list_gradients[-1]]),
+                                    self.num_atoms)
+            max_abs_forces = np.max(np.abs(fmax))
+
+            print('Forces last image evaluated:', max_abs_forces)
+
+            if self.ci is True:
+                top_image_number = np.argmax(energies_path[1:-1]) + 2
+                print('Forces max. top image (number ' + str(
+                      top_image_number) + '):', max_abs_forces)
+
+            if max_abs_forces <= self.converg_dict['fmax']:
+                print("\n", 'Congratulations your NEB path is converged!')
+                break
 
 
 

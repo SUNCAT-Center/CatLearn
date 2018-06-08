@@ -27,7 +27,7 @@ class CatLearn_ASE(Calculator):
         self.a_crit = settings['a_const']
         self.c_crit = settings['c_const']
         self.ind_constraints = settings['ind_constraints']
-        self.all_pred_images = settings['all_pred_images']
+        self.all_accepted_images = settings['all_accepted_images']
 
     def calculate(self, atoms=None, properties=['energy', 'forces'],
                   system_changes=all_changes):
@@ -44,16 +44,15 @@ class CatLearn_ASE(Calculator):
         # Previous paths of the atom i (for penalty function).
 
         all_prev_pos_label = []
-        for i in self.all_pred_images:
+        for i in self.all_accepted_images:
             if i.info['label'] == atoms.info['label']:
             ######### Under test: ###################
             # if (i.info['label'] == atoms.info['label']) or (i.info['label']
             # == atoms.info['label']-1) or (i.info['label'] == atoms.info[
             # 'label']+1):
             ######### Under test: ###################
-                if i.info['accepted_path'] is True:
-                    tmp = i.get_positions().flatten()
-                    all_prev_pos_label.append(tmp)
+                tmp = i.get_positions().flatten()
+                all_prev_pos_label.append(tmp)
         all_prev_pos_label = apply_mask_ase_constraints(
         list_to_mask=all_prev_pos_label, mask_index=self.ind_constraints)[1]
 

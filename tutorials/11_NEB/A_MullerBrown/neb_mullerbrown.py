@@ -47,7 +47,7 @@ final_opt.run(fmax=0.01)
 
 # Define number of images for NEBS:
 
-n_images = 15
+n_images = 21
 
 # 2.A. NEB using ASE #########################################################
 
@@ -64,7 +64,8 @@ neb_ase = NEB(images_ase, climb=True, method='improvedtangent', k=0.1)
 neb_ase.interpolate()
 
 qn_ase = FIRE(neb_ase, trajectory='neb_ase.traj')
-qn_ase.run(fmax=0.01)
+qn_ase.run(fmax=0.05)
+
 
 nebtools_ase = NEBTools(images_ase)
 
@@ -73,6 +74,7 @@ Ef_ase = nebtools_ase.get_fit()[3]
 
 Ef_neb_ase, dE_neb_ase = nebtools_ase.get_barrier(fit=False)
 nebtools_ase.plot_band()
+
 
 
 
