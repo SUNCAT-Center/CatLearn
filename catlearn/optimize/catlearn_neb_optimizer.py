@@ -152,7 +152,7 @@ class NEBOptimizer(object):
         self.climb_image = climb_image
         self.ci = False
 
-        self.neb_dict = {'max_step': 0.10,
+        self.neb_dict = {'max_step': 0.15,
                          'a_const': 100.0,
                          'c_const': 10.0,
                          'scale_targets': self.scale_targets,
