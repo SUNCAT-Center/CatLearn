@@ -47,7 +47,7 @@ final_opt.run(fmax=0.01)
 
 # Define number of images for NEBS:
 
-n_images = 21
+n_images = 9
 
 # 2.A. NEB using ASE #########################################################
 

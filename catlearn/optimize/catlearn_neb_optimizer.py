@@ -292,109 +292,127 @@ class NEBOptimizer(object):
             # Check that you are not feeding redundant information.
             count_unique = np.unique(self.list_train, return_counts=True,
                                      axis=0)[1]
-            msg = 'Your training list constains 1 or more duplicated elements'
-            assert not np.any(count_unique>1), msg
 
-            process = train_ml_process(list_train=self.list_train,
-                                       list_targets=self.list_targets,
-                                       list_gradients=self.list_gradients,
-                                       index_constraints=self.ind_mask_constr,
-                                       ml_calculator=self.ml_calc,
-                                       scale_targets=self.scale_targets)
-            
-            trained_process = process['trained_process']
-            ml_calc = process['ml_calc']
+            if np.any(count_unique>1):
+                msg = 'Your training list constains 1 or more duplicated elements'
+                print(msg)
+                last_index = len(self.list_targets)-1
+                self.list_train = np.delete(self.list_train, last_index,
+                                        axis=0)
+                self.list_targets = np.delete(self.list_targets, last_index,
+                                          axis=0)
+                self.list_gradients = np.delete(self.list_gradients,
+                                            last_index, axis=0)
 
 
-            # 2) Setup and run ML NEB:
+            if np.any(count_unique) <= 1:
 
-            # Start from last accepted path:
+                process = train_ml_process(list_train=self.list_train,
+                                           list_targets=self.list_targets,
+                                           list_gradients=self.list_gradients,
+                                           index_constraints=self.ind_mask_constr,
+                                           ml_calculator=self.ml_calc,
+                                           scale_targets=self.scale_targets)
 
-            images_guess = self.neb_dict['last_accepted_images']
+                trained_process = process['trained_process']
+                ml_calc = process['ml_calc']
 
-            self.images = create_ml_neb(
-                                        images_interpolation=images_guess,
+
+                # 2) Setup and run ML NEB:
+
+                # Start from last accepted path:
+
+                images_guess = self.neb_dict['last_accepted_images']
+
+                self.images = create_ml_neb(
+                                            images_interpolation=images_guess,
+                                            trained_process=trained_process,
+                                            ml_calculator=ml_calc,
+                                            settings_neb_dict=self.neb_dict)
+
+                warning_climb_img(self.ci)
+
+                neb = NEB(self.images, climb=self.ci,
+                          method=self.neb_dict['method'],
+                          k=self.neb_dict['spring_k'],
+                          remove_rotation_and_translation=self.rrt)
+                neb_opt = eval(ml_algo)(neb) #, dt=0.1)
+                neb_opt.run(fmax=self.converg_dict['ml_fmax'],
+                            steps=self.converg_dict['ml_max_iter'])
+
+                # 3) Get results from ML NEB:
+
+                # Store the path obtain after the run in dictionary:
+                self.neb_dict['all_pred_images'] += self.images
+
+                # Get fit of the discrete path.
+                neb_tools = NEBTools(self.images)
+                [s, E, Sfit, Efit, lines] = neb_tools.get_fit()
+
+                # Get dist. convergence (d between opt. path and prev. opt. path).
+
+                list_distance_convergence = []
+                list_distance_acceptance = []
+                for i in range(0, len(self.images)):
+                    pos_opt_i = self.images[i].get_positions().flatten()
+                    pos_last_i = self.neb_dict['last_accepted_images'][
+                                               i].get_positions().flatten()
+                    list_distance_convergence.append(distance.sqeuclidean(
+                                                     pos_opt_i, pos_last_i))
+                    list_distance_acceptance.append(distance.euclidean(
+                                                     pos_opt_i, pos_last_i))
+
+
+
+                distance_convergence = np.max(np.abs(
+                                                   list_distance_convergence))
+                distance_acceptance = np.max(np.abs(
+                                                   list_distance_acceptance))
+
+                print('Max. distance between last accepted path and current path',
+                      distance_convergence)
+
+                # Tag uncertainty to the images of the path.
+
+                ml_calc.__dict__['calc_uncertainty']= True
+                for i in range(1, len(self.images)-1): # Only to the middle images.
+                    pos_i = [self.images[i].get_positions().flatten()]
+                    pos_i_masked = apply_mask_ase_constraints(
+                                     list_to_mask=pos_i,
+                                     mask_index=self.ind_mask_constr)[1]
+                    pred_i = ml_calc.get_predictions(
                                         trained_process=trained_process,
-                                        ml_calculator=ml_calc,
-                                        settings_neb_dict=self.neb_dict)
+                                        test_data=pos_i_masked[0])
+                    unc_i = pred_i['uncertainty_with_reg'] * 2.0
+                    self.images[i].info['uncertainty'] = unc_i[0]
+                ml_calc.__dict__['calc_uncertainty'] = False
 
-            warning_climb_img(self.ci)
+                uncertainty_path = [i.info['uncertainty'] for i in self.images]
+                energies_path = [i.get_potential_energy() for i in self.images]
 
-            neb = NEB(self.images, climb=self.ci,
-                      method=self.neb_dict['method'],
-                      k=self.neb_dict['spring_k'],
-                      remove_rotation_and_translation=self.rrt)
-            neb_opt = eval(ml_algo)(neb) #, dt=0.1)
-            neb_opt.run(fmax=self.converg_dict['ml_fmax'],
-                        steps=self.converg_dict['ml_max_iter'])
+                # Tag if the path found is reliable.
 
-            # 3) Get results from ML NEB:
+                # A) Not accept a path that was stretched too much.
+                if distance_acceptance >= 2.0 * self.neb_dict['max_step']:
+                    print('The path was too stretched. The last NEB is not saved.')
+                    for i in self.images:
+                        i.info['accepted_path'] = False
 
-            # Store the path obtain after the run in dictionary:
-            self.neb_dict['all_pred_images'] += self.images
+                # B) Not accept a path in which the ML NEB did not converged.
+                if neb_opt.__dict__['nsteps'] >= self.converg_dict['ml_max_iter']:
+                    print('Max. numb. ML iterations exceeded.')
+                    for i in self.images:
+                        i.info['accepted_path'] = False
 
-            # Get fit of the discrete path.
-            neb_tools = NEBTools(self.images)
-            [s, E, Sfit, Efit, lines] = neb_tools.get_fit()
+                # C) Accept path if the uncertainty goes below 2*unc_conv in eV.
+                if np.max(uncertainty_path) <= unc_conv:
+                    print('Path accepted. Max. unc bellow unc_conv threshold. ')
+                    for i in self.images:
+                        i.info['accepted_path'] = True
 
-            # Get dist. convergence (d between opt. path and prev. opt. path).
-
-            list_distance_convergence = []
-            for i in range(0, len(self.images)):
-                pos_opt_i = self.images[i].get_positions().flatten()
-                pos_last_i = self.neb_dict['last_accepted_images'][
-                                           i].get_positions().flatten()
-                list_distance_convergence.append(distance.sqeuclidean(
-                                                 pos_opt_i, pos_last_i))
-
-
-            distance_convergence = np.max(np.abs(
-                                               list_distance_convergence))
-
-            print('Max. distance between last accepted path and current path',
-                  distance_convergence)
-
-            # Tag uncertainty to the images of the path.
-
-            ml_calc.__dict__['calc_uncertainty']= True
-            for i in range(1, len(self.images)-1): # Only to the middle images.
-                pos_i = [self.images[i].get_positions().flatten()]
-                pos_i_masked = apply_mask_ase_constraints(
-                                 list_to_mask=pos_i,
-                                 mask_index=self.ind_mask_constr)[1]
-                pred_i = ml_calc.get_predictions(
-                                    trained_process=trained_process,
-                                    test_data=pos_i_masked[0])
-                unc_i = pred_i['uncertainty_with_reg'] * 2.0
-                self.images[i].info['uncertainty']= unc_i[0]
-            ml_calc.__dict__['calc_uncertainty']= False
-
-            uncertainty_path = [i.info['uncertainty'] for i in self.images]
-            energies_path = [i.get_potential_energy() for i in self.images]
-
-            # Tag if the path found is reliable.
-
-            # A) Not accept a path that was stretched too much.
-            if distance_convergence >= self.neb_dict['max_step']:
-                print('The path was too stretched. The last NEB is not saved.')
+                # Tag iteration:
                 for i in self.images:
-                    i.info['accepted_path'] = False
-
-            # B) Not accept a path in which the ML NEB did not converged.
-            if neb_opt.__dict__['nsteps'] >= self.converg_dict['ml_max_iter']:
-                print('Max. numb. ML iterations exceeded.')
-                for i in self.images:
-                    i.info['accepted_path'] = False
-
-            # C) Accept path if the uncertainty goes below 2*unc_conv in eV.
-            if np.max(uncertainty_path) <= unc_conv:
-                print('Path accepted. Max. unc bellow unc_conv threshold. ')
-                for i in self.images:
-                    i.info['accepted_path'] = True
-
-            # Tag iteration:
-            for i in self.images:
-                    i.info['iteration'] = self.iter
+                        i.info['iteration'] = self.iter
 
 
             ##################################################################
