@@ -107,4 +107,4 @@ print('Number of function evaluations CI-NEB implemented in ASE:', n_eval_ase)
 # Catlearn:
 atoms_catlearn = read('results_evaluated_images.traj', ':')
 n_eval_catlearn = len(atoms_catlearn)
-print('Number of function evaluations Catlearn ASE:', n_eval_catlearn)
+print('Number of function evaluations Catlearn ASE:', n_eval_catlearn-2)

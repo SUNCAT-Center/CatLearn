@@ -142,7 +142,7 @@ class NEBOptimizer(object):
             self.ml_calc = GPCalculator(
             kernel_dict=self.kdict, opt_hyperparam=False, scale_data=False,
             scale_optimizer=False,
-            calc_uncertainty=True, regularization=1e-8)
+            calc_uncertainty=True, regularization=1e-5)
 
         # Settings of the NEB.
         self.neb_method = neb_method
@@ -227,14 +227,16 @@ class NEBOptimizer(object):
 
             # 2) Setup and run ML NEB:
 
-            # Start from last accepted path:
 
 
+            starting_path = copy.deepcopy(self.initial_images)
+
+            if self.iter > 1 and np.max(uncertainty_path[1:-1]) < 0.025:
+                starting_path = self.images
 
             self.images = create_ml_neb(is_endpoint=self.initial_endpoint,
                                         fs_endpoint=self.final_endpoint,
-                                        images_interpolation=copy.deepcopy(
-                                        self.initial_images),
+                                        images_interpolation=starting_path,
                                         n_images=self.n_images,
                                         constraints=self.constraints,
                                         index_constraints=self.ind_mask_constr,
@@ -247,7 +249,7 @@ class NEBOptimizer(object):
             ml_neb = NEB(self.images, climb=True,
                       method=self.neb_method,
                       k=self.spring)
-            neb_opt = eval('MDMin')(ml_neb, dt=0.1)
+            neb_opt = eval('MDMin')(ml_neb, dt=0.01)
 
             neb_opt.run(fmax=fmax,
                         steps=150)
@@ -265,30 +267,34 @@ class NEBOptimizer(object):
                 energies_path.append(i.get_total_energy())
 
 
-            if plot_neb_paths is True:
-                neb_tools.plot_band()
-
-                plt.errorbar(s[1:-1], E[1:-1], yerr=uncertainty_path[1:-1],
-                             ls='none', ecolor='black', capsize=10.0)
-                plt.show()
-
-
             # Select image with max. uncertainty.
 
 
             if self.iter % 2 == 0:
                 argmax_unc = np.argmax(uncertainty_path[1:-1])
-                interesting_point = self.images[1:-1][argmax_unc].get_positions(
-                ).flatten()
+                interesting_point = self.images[1:-1][
+                                          argmax_unc].get_positions().flatten()
 
 
             if self.iter % 2 == 1:
-                argmax_unc = np.argmax(energies_path[1:-1])
-                interesting_point = self.images[1:-1][argmax_unc].get_positions(
-                ).flatten()
+                argmax_unc = np.argmax(np.abs(energies_path[1:-1]))
+                interesting_point = self.images[1:-1][
+                                          argmax_unc].get_positions().flatten()
 
 
             # Store plots.
+
+            if plot_neb_paths is True:
+                neb_tools.plot_band()
+
+                plt.errorbar(s[1:-1], E[1:-1], yerr=uncertainty_path[1:-1],
+                             ls='none', ecolor='black', capsize=10.0)
+                plt.suptitle('Iteration: {0:.0f}'.format(self.iter), x=0.85,
+                             y=0.9)
+                plt.axvline(x=s[argmax_unc+1])
+                plt.show()
+
+
             if plot_neb_paths is True:
                 if self.ase_calc.__dict__['name'] == 'mullerbrown':
                     plot_neb_mullerbrown(images=self.images,
