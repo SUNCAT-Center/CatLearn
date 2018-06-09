@@ -4,7 +4,7 @@ import copy
 from ase.io import read
 
 def train_ml_process(list_train, list_targets, list_gradients,
-                     index_constraints, ml_calculator, scale_targets):
+                     index_constraints, ml_calculator, scaling_targets):
     """Trains a machine learning process.
 
     Parameters (self):
@@ -22,7 +22,7 @@ def train_ml_process(list_train, list_targets, list_gradients,
     Returns
     --------
     dictionary containing:
-        scale : scaling for the energies of the training set.
+        scaling_targets : scaling for the energies of the training set.
         trained_process : trained process ready for testing.
         ml_calc : returns the ML calculator (if changes have been made,
               e.g. hyperparamter optimization).
@@ -41,70 +41,63 @@ def train_ml_process(list_train, list_targets, list_gradients,
 
     # Scale energies:
 
-    list_targets = list_targets - scale_targets
+    list_targets = list_targets - scaling_targets
 
     trained_process = ml_calculator.train_process(
             train_data=list_train,
             target_data=list_targets,
             gradients_data=list_gradients)
 
-    if ml_calculator.__dict__['opt_hyperparam']:
+    if ml_calculator.__dict__['opt_hyperparam'] is True:
         ml_calculator.opt_hyperparameters()
 
     return {'ml_calc':ml_calculator, 'trained_process': trained_process}
 
-def create_ml_neb(images_interpolation, trained_process, ml_calculator,
-                  settings_neb_dict):
-
+def create_ml_neb(is_endpoint, fs_endpoint, images_interpolation,
+                  n_images, constraints, index_constraints, trained_process, \
+                  ml_calculator, scaling_targets, iteration):
 
 
     # End-points of the NEB path:
-    start_guess_ml = copy.deepcopy(settings_neb_dict['initial_endpoint'])
-    final_guess_ml = copy.deepcopy(settings_neb_dict['final_endpoint'])
+    s_guess_ml = copy.deepcopy(is_endpoint)
+    f_guess_ml = copy.deepcopy(fs_endpoint)
 
     # Create ML NEB path:
-    images = [start_guess_ml]
+    imgs = [s_guess_ml]
 
     # Scale energies (initial):
-    images[0].__dict__['_calc'].__dict__['results']['energy'] = \
-    images[0].__dict__['_calc'].__dict__['results']['energy'] - \
-    settings_neb_dict['scale_targets']
+    imgs[0].__dict__['_calc'].__dict__['results']['energy'] = \
+    imgs[0].__dict__['_calc'].__dict__['results']['energy'] - scaling_targets
 
     # Append labels, uncertainty and iter to the first end-point:
-    images[0].info['label'] = 0
-    images[0].info['uncertainty'] = 0.0
-    images[0].info['iteration'] = settings_neb_dict['iteration']
-    images[0].info['scaling'] = settings_neb_dict['scale_targets']
-    images[0].info['accepted_path'] = True
+    imgs[0].info['label'] = 0
+    imgs[0].info['uncertainty'] = 0.0
+    imgs[0].info['iteration'] = iteration
 
-    for i in range(1, settings_neb_dict['n_images']-1):
-        image = start_guess_ml.copy()
+    for i in range(1, n_images-1):
+        image = s_guess_ml.copy()
         image.info['label'] = i
         image.info['uncertainty'] = 0.0
-        image.info['iteration'] = settings_neb_dict['iteration']
-        image.info['scaling'] = settings_neb_dict['scale_targets']
-        image.info['accepted_path'] = True
+        image.info['iteration'] = iteration
         image.set_calculator(CatLearn_ASE(trained_process=trained_process,
                                      ml_calc=ml_calculator,
-                                     settings=settings_neb_dict))
+                                     index_constraints = index_constraints
+                                     ))
         if images_interpolation is not None:
             image.set_positions(images_interpolation[i].get_positions())
-        image.set_constraint(settings_neb_dict['constraints'])
-        images.append(image)
+        image.set_constraint(constraints)
+        imgs.append(image)
 
     # Scale energies (final):
-    images.append(final_guess_ml)
-    images[-1].__dict__['_calc'].__dict__['results']['energy'] = \
-    images[-1].__dict__['_calc'].__dict__['results']['energy'] - \
-    settings_neb_dict['scale_targets']
+    imgs.append(f_guess_ml)
+    imgs[-1].__dict__['_calc'].__dict__['results']['energy'] = \
+    imgs[-1].__dict__['_calc'].__dict__['results']['energy'] - scaling_targets
 
     # Append labels, uncertainty and iter to the last end-point:
-    images[-1].info['label'] = settings_neb_dict['n_images']
-    images[-1].info['uncertainty'] = 0.0
-    images[-1].info['iteration'] = settings_neb_dict['iteration']
-    images[-1].info['scaling'] = settings_neb_dict['scale_targets']
-    images[-1].info['accepted_path'] = True
+    imgs[-1].info['label'] = n_images
+    imgs[-1].info['uncertainty'] = 0.0
+    imgs[-1].info['iteration'] = iteration
 
-    return images
+    return imgs
 
 
