@@ -142,7 +142,7 @@ class NEBOptimizer(object):
             self.ml_calc = GPCalculator(
             kernel_dict=self.kdict, opt_hyperparam=False, scale_data=False,
             scale_optimizer=False,
-            calc_uncertainty=True, regularization=1e-5)
+            calc_uncertainty=True, regularization=1e-6)
 
         # Settings of the NEB.
         self.neb_method = neb_method
@@ -227,11 +227,9 @@ class NEBOptimizer(object):
 
             # 2) Setup and run ML NEB:
 
-
-
             starting_path = copy.deepcopy(self.initial_images)
 
-            if self.iter > 1 and np.max(uncertainty_path[1:-1]) < 0.025:
+            if self.iter > 1 and np.max(uncertainty_path[1:-1]) <= 0.050:
                 starting_path = self.images
 
             self.images = create_ml_neb(is_endpoint=self.initial_endpoint,
@@ -252,7 +250,7 @@ class NEBOptimizer(object):
             neb_opt = eval('MDMin')(ml_neb, dt=0.01)
 
             neb_opt.run(fmax=fmax,
-                        steps=150)
+                        steps=500)
 
             # 3) Get results from ML NEB:
 
@@ -273,7 +271,7 @@ class NEBOptimizer(object):
             if self.iter % 2 == 0:
                 argmax_unc = np.argmax(uncertainty_path[1:-1])
                 interesting_point = self.images[1:-1][
-                                          argmax_unc].get_positions().flatten()
+                                      argmax_unc].get_positions().flatten()
 
 
             if self.iter % 2 == 1:

@@ -47,7 +47,7 @@ class CatLearn_ASE(Calculator):
                                                   test_data=test[0])
             pred_mean = predictions['pred_mean'][0][0]
             uncertainty = predictions['uncertainty_with_reg'][0]
-            pred_value = pred_mean + uncertainty
+            pred_value = pred_mean + 2.0 * uncertainty
             return [pred_value, uncertainty]
 
         self.energy = 0.0
