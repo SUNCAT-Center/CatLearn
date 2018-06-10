@@ -91,7 +91,7 @@ neb_catlearn = NEBOptimizer(start='initial.traj', end='final.traj',
                        n_images=n_images,
                        interpolation='idpp')
 
-neb_catlearn.run(fmax=0.05, plot_neb_paths=True)
+neb_catlearn.run(fmax=0.05, ml_algo='FIRE', plot_neb_paths=True)
 
 
 # 3. Summary of the results #################################################

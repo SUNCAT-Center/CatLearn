@@ -94,7 +94,7 @@ def create_ml_neb(is_endpoint, fs_endpoint, images_interpolation,
     imgs[-1].__dict__['_calc'].__dict__['results']['energy'] - scaling_targets
 
     # Append labels, uncertainty and iter to the last end-point:
-    imgs[-1].info['label'] = n_images
+    imgs[-1].info['label'] = n_images-1
     imgs[-1].info['uncertainty'] = 0.0
     imgs[-1].info['iteration'] = iteration
 

@@ -167,7 +167,7 @@ class NEBOptimizer(object):
         write('all_pred_paths.traj', self.images)
 
 
-    def run(self, fmax=0.05, max_iter=500, ml_algo='MDMin', ml_max_iter=500,
+    def run(self, fmax=0.05, max_iter=500, ml_algo='FIRE', ml_max_iter=500,
             plot_neb_paths=False):
 
         """Executing run will start the optimization process.

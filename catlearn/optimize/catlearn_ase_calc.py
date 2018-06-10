@@ -16,7 +16,8 @@ class CatLearn_ASE(Calculator):
     implemented_properties = ['energy', 'forces']
     nolabel = True
 
-    def __init__(self, trained_process, ml_calc, index_constraints, finite_step=1e-5,
+    def __init__(self, trained_process, ml_calc, index_constraints,
+    finite_step=1e-4,
     **kwargs):
 
         Calculator.__init__(self, **kwargs)
@@ -47,7 +48,7 @@ class CatLearn_ASE(Calculator):
                                                   test_data=test[0])
             pred_mean = predictions['pred_mean'][0][0]
             uncertainty = predictions['uncertainty_with_reg'][0]
-            pred_value = pred_mean + 2.0 * uncertainty
+            pred_value = pred_mean + 4.0 * uncertainty
             return [pred_value, uncertainty]
 
         self.energy = 0.0
