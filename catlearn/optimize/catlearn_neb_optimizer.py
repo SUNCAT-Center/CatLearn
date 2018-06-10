@@ -167,8 +167,8 @@ class NEBOptimizer(object):
         write('all_pred_paths.traj', self.images)
 
 
-    def run(self, fmax=0.05, max_iter=500, ml_algo='FIRE', ml_max_iter=500,
-            plot_neb_paths=False):
+    def run(self, fmax=0.05, unc_convergence=0.020, max_iter=500,
+            ml_algo='FIRE', ml_max_iter=500, plot_neb_paths=False):
 
         """Executing run will start the optimization process.
 
@@ -318,10 +318,11 @@ class NEBOptimizer(object):
             print('Image number:', argmax_unc + 2)
 
             if max_abs_forces <= fmax:
-                print("\n Congratulations your NEB path is converged!")
-                print('Image number:', argmax_unc + 2)
-
-                break
+                print("Congratulations. You have found a stationary point.")
+                if np.max(uncertainty_path) < unc_convergence:
+                    print("\n Congratulations your NEB path is converged!")
+                    print('Image number:', argmax_unc + 2)
+                    break
 
             # Break if reaches the max number of iterations set by the user.
             if max_iter <= self.iter:
