@@ -1,21 +1,14 @@
 import numpy as np
-import re
 from catlearn.optimize.gp_calculator import GPCalculator
-from catlearn.optimize.warnings import *
-from catlearn.optimize.constraints import *
-from catlearn.optimize.convergence import *
-from catlearn.optimize.initialize import *
 from catlearn.optimize.neb_tools import *
 from catlearn.optimize.neb_functions import *
-from ase import Atoms
 from scipy.spatial import distance
 from ase.io import read, write
-# from ase.visualize import view
 from ase.neb import NEBTools
 import copy
-from catlearn.optimize.plots import plot_neb_mullerbrown, plot_predicted_neb_path
+from catlearn.optimize.plots import plt_neb_mullerbrown, plt_predicted_neb_path
+from catlearn.optimize.warnings import *
 from ase.optimize import QuasiNewton, BFGS, FIRE, MDMin
-import matplotlib.pyplot as plt
 
 
 class NEBOptimizer(object):
@@ -170,22 +163,24 @@ class NEBOptimizer(object):
 
         self.initial_images = copy.deepcopy(self.images)
 
-    def run(self, fmax=0.05, max_iter=100, ml_algo='FIRE',
+        # Write previous paths:
+        write('all_pred_paths.traj', self.images)
+
+
+    def run(self, fmax=0.05, max_iter=500, ml_algo='MDMin', ml_max_iter=500,
             plot_neb_paths=False):
 
         """Executing run will start the optimization process.
 
         Parameters
         ----------
+        fmax: float
+            Convergence criteria. Forces below fmax.
+        max_iter: Maximum number of iterations in the surrogate model.
         ml_algo : string
             Algorithm for the surrogate model:
             'FIRE_ASE' and 'MDMin_ASE'.
-        neb_method: string
-            Implemented are: 'aseneb', 'improvedtangent' and 'eb'.
-            (ASE function).
-            See https://wiki.fysik.dtu.dk/ase/ase/neb.html#module-ase.neb
-        fmax: float
-            Convergence criteria. Forces below fmax.
+        ml_max_iter: Maximum number of ML NEB iterations.
         plot_neb_paths: bool
             If True it stores the predicted NEB path in pdf format for each
             iteration.
@@ -193,13 +188,7 @@ class NEBOptimizer(object):
 
         Returns
         -------
-        The NEB results are printed in filename.txt (results.txt, if the
-        user don't specify a name).
-        A trajectory file in ASE format (filename.traj)
-        containing the geometries of the system for each step
-        is also generated. A dictionary with a summary of the results can be
-        accessed by self.results and it is also printed in 'filename'_data.txt.
-
+        NEB optimized path
         """
 
         while True:
@@ -213,7 +202,6 @@ class NEBOptimizer(object):
             'duplicated elements'
             assert np.any(count_unique) < 2, msg
 
-
             process = train_ml_process(list_train=self.list_train,
                                            list_targets=self.list_targets,
                                            list_gradients=self.list_gradients,
@@ -223,7 +211,6 @@ class NEBOptimizer(object):
 
             trained_process = process['trained_process']
             ml_calc = process['ml_calc']
-
 
             # 2) Setup and run ML NEB:
 
@@ -247,10 +234,10 @@ class NEBOptimizer(object):
             ml_neb = NEB(self.images, climb=True,
                       method=self.neb_method,
                       k=self.spring)
-            neb_opt = eval('MDMin')(ml_neb, dt=0.01)
+            neb_opt = eval(ml_algo)(ml_neb, dt=0.01)
 
             neb_opt.run(fmax=fmax,
-                        steps=500)
+                        steps=ml_max_iter)
 
             # 3) Get results from ML NEB:
 
@@ -267,50 +254,52 @@ class NEBOptimizer(object):
 
             # Select image with max. uncertainty.
 
-
             if self.iter % 2 == 0:
                 argmax_unc = np.argmax(uncertainty_path[1:-1])
                 interesting_point = self.images[1:-1][
                                       argmax_unc].get_positions().flatten()
 
-
+            # Select image with max. predicted value (absolute value).
             if self.iter % 2 == 1:
                 argmax_unc = np.argmax(np.abs(energies_path[1:-1]))
                 interesting_point = self.images[1:-1][
                                           argmax_unc].get_positions().flatten()
 
-
             # Store plots.
-
             if plot_neb_paths is True:
-                neb_tools.plot_band()
-
-                plt.errorbar(s[1:-1], E[1:-1], yerr=uncertainty_path[1:-1],
-                             ls='none', ecolor='black', capsize=10.0)
-                plt.suptitle('Iteration: {0:.0f}'.format(self.iter), x=0.85,
-                             y=0.9)
-                plt.axvline(x=s[argmax_unc+1])
-                plt.show()
-
+                plt_predicted_neb_path(images=self.images,
+                                       uncertainty_path=uncertainty_path,
+                                       argmax_unc=argmax_unc,
+                                       iter=self.iter,
+                                       filename=self.filename)
 
             if plot_neb_paths is True:
                 if self.ase_calc.__dict__['name'] == 'mullerbrown':
-                    plot_neb_mullerbrown(images=self.images,
-                                         interesting_point=interesting_point,
-                                         trained_process=trained_process,
-                                         list_train=self.list_train)
+                    plt_neb_mullerbrown(images=self.images,
+                                        interesting_point=interesting_point,
+                                        trained_process=trained_process,
+                                        list_train=self.list_train)
 
             # 3) Add a new training point and evaluate it.
 
             evaluate_interesting_point_and_append_training(self,
-                                                          interesting_point)
+                                                           interesting_point)
 
-            # 4) Save (append) opt. path (including initial and final images).
 
-            # Store all the atoms objects of the real evaluations (expensive).
+            # 4) Store results.
+
+            # Evaluated images.
             TrajectoryWriter(atoms=self.ase_ini, filename='./' + str(
                              self.filename) +'_evaluated_images.traj',
                              mode='a').write()
+            # Last path.
+            write('last_pred_path.traj', self.images)
+            # All paths:
+
+            for i in self.images:
+                TrajectoryWriter(atoms=i,
+                                filename='all_pred_paths.traj',
+                                mode='a').write()
 
             print('Length of initial path:', self.d_start_end)
             print('Length of the current path:', s[-1])
@@ -320,17 +309,17 @@ class NEBOptimizer(object):
             # Break if converged:
 
             max_forces = get_fmax(-np.array([self.list_gradients[-1]]),
-                                    self.num_atoms)
+                                  self.num_atoms)
             max_abs_forces = np.max(np.abs(max_forces))
 
             print('Forces last image evaluated:', max_abs_forces)
             print('Energy of the last image evaluated:',
-                      self.ase_ini.get_total_energy()-self.scale_targets)
-            print('Image number:', argmax_unc+2)
+                      self.ase_ini.get_total_energy() - self.scale_targets)
+            print('Image number:', argmax_unc + 2)
 
             if max_abs_forces <= fmax:
                 print("\n Congratulations your NEB path is converged!")
-                print('Image number:', argmax_unc+2)
+                print('Image number:', argmax_unc + 2)
 
                 break
 

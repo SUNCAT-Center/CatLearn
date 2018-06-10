@@ -64,7 +64,7 @@ def plot_each_step(self):
     plt.show()
 
 
-def plot_neb_mullerbrown(images, interesting_point, trained_process,
+def plt_neb_mullerbrown(images, interesting_point, trained_process,
                          list_train):
     # Generate test datapoints in x and y.
 
@@ -128,7 +128,8 @@ def plot_neb_mullerbrown(images, interesting_point, trained_process,
     plt.show()
 
 
-def plot_predicted_neb_path(images, climb_image=None, filename=''):
+def plt_predicted_neb_path(images, uncertainty_path, argmax_unc,
+                            iter, filename=''):
     """ Tool for plotting a predicted path of a given trajectory file.
 
     Parameters
@@ -140,55 +141,15 @@ def plot_predicted_neb_path(images, climb_image=None, filename=''):
     Plot Save image in pdf file and
     """
 
-    iter = None
-
-    iter = images[0].info['iteration']
-    accepted_path = images[0].info['accepted_path']
-
     neb_tools = NEBTools(images)
     [s, E, Sfit, Efit, lines] = neb_tools.get_fit()
+    neb_tools.plot_band()
 
-    energies_pred_neb = []
-
-    energy_img_0 = images[0].get_total_energy()
-
-
-    uncertainties_pred_neb = []
-    for i in images:
-        energies_pred_neb.append(i.get_total_energy() - energy_img_0)
-        uncertainties_pred_neb.append(i.info['uncertainty'])
-
-    plt.plot(Sfit, Efit,'--', linewidth= 1.2, color='black')
-
-    plt.plot(s, E, 'o', markersize=11.0, alpha=0.4, color='navy')
-    plt.errorbar(s[1:-1], energies_pred_neb[1:-1],
-                 yerr=uncertainties_pred_neb[1:-1], fmt='o', markersize=4,
-                 color='lightgray',
-                 alpha=1.0, ecolor='black', elinewidth=1.5, capsize=5,
-                 capthick=1.5)
-
-    plt.plot(s[0], E[0], 'o', markersize=11.0, alpha=1.0,
-                color='lightgray')
-    plt.plot(s[-1], E[-1], 'o', markersize=11.0, alpha=1.0,
-                color='lightgray')
-
-    plt.rc('xtick', labelsize=12)
-    plt.rc('ytick', labelsize=12)
-    plt.xlabel('Reaction path [$\AA$]')
-    plt.ylabel('Energy [eV]')
-    Ef_neb = max(Efit) - E[0]
-    Er_neb = max(Efit) - E[-1]
-    dE_neb = E[-1] - E[0]
-
-    plt.title('Iter: {0:.0f}; E$_f$: {1:.3f} eV; E$_r$: {2:.3f} eV'.format(
-        iter, Ef_neb, Er_neb) + '; Accepted:' + str(accepted_path) + '; CI:' +
-        str(climb_image))
-
-    if accepted_path is None:
-        plt.title('Iter: {0:.0f}; E$_f$: {1:.3f} eV; E$_r$: {2:.3f} '
-        'eV; Max. uncertainty: {3:.3f} eV'.format(
-        iter, Ef_neb, Er_neb, np.max(uncertainties_pred_neb)))
-
+    plt.errorbar(s[1:-1], E[1:-1], yerr=uncertainty_path[1:-1],
+                 ls='none', ecolor='black', capsize=10.0)
+    plt.suptitle('Iteration: {0:.0f}'.format(iter), x=0.85,
+                             y=0.9)
+    plt.axvline(x=s[argmax_unc+1])
 
     # plt.savefig(fname=filename + 'reaction_path_iteration_' + str(iter)
     #                 +'.pdf', dpi=300, format='pdf', transparent=True)
