@@ -219,7 +219,7 @@ def make_labels(params, prefix, suffix):
     labels = []
     for p in params:
         if p == 'oxistates':
-            labels += [prefix + 'oxi' + s + suffix for
+            labels += [prefix + 'oxi_' + s + suffix for
                        s in ['min', 'med', 'max']]
         elif p == 'block':
             labels += [prefix + s + 'block' + suffix for
@@ -227,6 +227,8 @@ def make_labels(params, prefix, suffix):
         elif p == 'econf':
             labels += [prefix + 'ne_' + s + suffix for
                        s in ['outer', 's', 'p', 'd', 'f']]
+        elif p == 'ionenergies':
+            labels.append(prefix + 'ionenergy' + suffix)
         else:
             labels.append(prefix + p + suffix)
     return labels
