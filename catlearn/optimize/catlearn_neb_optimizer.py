@@ -92,6 +92,7 @@ class NEBOptimizer(object):
         if not np.array_equal(self.magmom_fs, np.zeros_like(self.magmom_fs)):
             self.spin = True
 
+
         # Obtain the energy of the endpoints for scaling:
         energy_is = is_endpoint[-1].get_potential_energy()
         energy_fs = fs_endpoint[-1].get_potential_energy()
@@ -323,7 +324,8 @@ class NEBOptimizer(object):
                                   self.num_atoms)
             max_abs_forces = np.max(np.abs(max_forces))
 
-            print('Max. force of the last image evaluated:', max_abs_forces)
+            print('Max. force of the last image evaluated (eV/Angs):',
+                  max_abs_forces)
             print('Energy of the last image evaluated (eV):',
                       self.ase_ini.get_total_energy())
             print('Energy of the last image evaluated wrt to endpoint (eV):',

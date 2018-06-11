@@ -27,13 +27,15 @@ def get_energy_catlearn(self, x=None, magmoms=None):
     if self.ase:
         pos_ase = array_to_ase(x, self.num_atoms)
         if magmoms is None:
+            self.ase_ini.set_calculator(None)
             self.ase_ini = Atoms(self.ase_ini, positions=pos_ase,
                                  calculator=self.ase_calc)
         if magmoms is not None:
+            self.ase_ini.set_calculator(None)
             self.ase_ini = Atoms(self.ase_ini, positions=pos_ase,
                                  calculator=self.ase_calc, magmoms=magmoms)
         energy = self.ase_ini.get_potential_energy()
-        # print('Energy (eV):', energy)
+        print('Energy of the geometry evaluated (eV):', energy)
 
     # When not using ASE:
     if not self.ase:
@@ -65,7 +67,7 @@ def get_forces_catlearn(self, x=None):
     # ASE:
     if self.ase:
         forces = self.ase_ini.get_forces().flatten()
-        # print('Forces (eV/Angst):\n', forces)
+        print('Forces of the geometry evaluated (eV/Angst):\n', forces)
 
     # When not using ASE:
     if not self.ase:
