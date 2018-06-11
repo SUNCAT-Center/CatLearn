@@ -83,8 +83,8 @@ n_images = 7
 initial = read('initial_optimized.traj')
 final = read('final_optimized.traj')
 
-neb_catlearn = NEBOptimizer(start='initial_optimized.traj',
-                            end='final_optimized.traj',
+neb_catlearn = NEBOptimizer(start='final_optimized.traj',
+                            end='initial_optimized.traj',
                             ase_calc=copy.deepcopy(ase_calculator),
                             n_images=n_images, interpolation=None)
 

@@ -127,14 +127,14 @@ class NEBOptimizer(object):
         # Configure ML.
         if self.ml_calc is None:
             self.kdict = {
-                         'k1': {'type': 'gaussian', 'width': 0.5,
+                         'k1': {'type': 'gaussian', 'width': 0.4,
                          'dimension':'single',
                          'bounds':
                           ((0.1, 1.0),),
                          'scaling': 1.0, 'scaling_bounds': ((1.0, 1.0),)},
                         }
             self.ml_calc = GPCalculator(
-            kernel_dict=self.kdict, opt_hyperparam=True, scale_data=False,
+            kernel_dict=self.kdict, opt_hyperparam=False, scale_data=False,
             scale_optimizer=False, calc_uncertainty=True,
             regularization=1e-5, regularization_bounds=(1e-5, 1e-5))
 
@@ -325,14 +325,15 @@ class NEBOptimizer(object):
 
             print('Max. force of the last image evaluated:', max_abs_forces)
             print('Energy of the last image evaluated (eV):',
+                      self.ase_ini.get_total_energy())
+            print('Energy of the last image evaluated wrt to endpoint (eV):',
                       self.ase_ini.get_total_energy() - self.scale_targets)
             print('Image number:', argmax_unc + 2)
 
             if max_abs_forces <= fmax:
-                print("Congratulations. You have found a stationary point.")
+                print("Congratulations, stationary point found!")
                 if np.max(uncertainty_path) < unc_convergence:
-                    print("\n Congratulations your NEB path is converged!")
-                    print('Image number:', argmax_unc + 2)
+                    print("\nCongratulations, your NEB path is converged!")
                     break
 
             # Break if reaches the max number of iterations set by the user.

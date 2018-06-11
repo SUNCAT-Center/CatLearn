@@ -97,7 +97,7 @@ neb_catlearn.run(fmax=0.05, ml_algo='FIRE', plot_neb_paths=True)
 # 3. Summary of the results #################################################
 
 # NEB ASE:
-print('\n \n Summary of results: \n')
+print('\nSummary of the results:\n')
 
 atoms_ase = read('neb_ase.traj', ':')
 n_eval_ase = len(atoms_ase) - 2 * n_images

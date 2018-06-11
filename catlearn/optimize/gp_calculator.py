@@ -76,7 +76,8 @@ class GPCalculator(object):
         algomin=self.algo_opt_hyperparamters)
         print('Hyperparameter optimization is switched on.')
         print('Optimized Hyperparameters: ', self.trained_process.theta_opt)
-        print('log marginal: ', self.trained_process.log_marginal_likelihood)
+        print('Optimized log marginal likelihood: ',
+        self.trained_process.log_marginal_likelihood)
         return self.trained_process
 
     def get_predictions(self, trained_process, test_data):
