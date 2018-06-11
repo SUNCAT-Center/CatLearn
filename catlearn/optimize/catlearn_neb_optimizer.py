@@ -16,7 +16,8 @@ class NEBOptimizer(object):
     def __init__(self, start=None, end=None,
                  ml_calc=None, ase_calc=None, filename='results',
                  inc_prev_calcs=False, n_images=None,
-                 interpolation='', neb_method='improvedtangent', spring=100.0):
+                 interpolation='', neb_method='improvedtangent',
+                 spring=100.0, stabilize=True):
         """ Nudged elastic band (NEB) setup.
 
         Parameters
@@ -95,7 +96,6 @@ class NEBOptimizer(object):
         energy_is = is_endpoint[-1].get_potential_energy()
         energy_fs = fs_endpoint[-1].get_potential_energy()
 
-
         # Set scaling of the targets:
         self.scale_targets = np.min([energy_is, energy_fs])
 
@@ -135,7 +135,7 @@ class NEBOptimizer(object):
             self.ml_calc = GPCalculator(
             kernel_dict=self.kdict, opt_hyperparam=False, scale_data=False,
             scale_optimizer=False,
-            calc_uncertainty=True, regularization=1e-6)
+            calc_uncertainty=True, regularization=1e-5)
 
         # Settings of the NEB.
         self.neb_method = neb_method
@@ -166,6 +166,16 @@ class NEBOptimizer(object):
         # Write previous paths:
         write('all_pred_paths.traj', self.images)
 
+        if stabilize is True:
+            for i in self.images[1:-1]:
+                interesting_point = i.get_positions().flatten()
+                evaluate_interesting_point_and_append_training(self,
+                                                           interesting_point)
+                TrajectoryWriter(atoms=self.ase_ini, filename='./' + str(
+                             self.filename) +'_evaluated_images.traj',
+                             mode='a').write()
+        self.uncertainty_path = np.zeros(len(self.images))
+
 
     def run(self, fmax=0.05, unc_convergence=0.020, max_iter=500,
             ml_algo='FIRE', ml_max_iter=500, plot_neb_paths=False):
@@ -190,7 +200,7 @@ class NEBOptimizer(object):
         -------
         NEB optimized path
         """
-
+        uncertainty_path = self.uncertainty_path
         while True:
 
             # 1) Train Machine Learning process:
@@ -216,7 +226,7 @@ class NEBOptimizer(object):
 
             starting_path = copy.deepcopy(self.initial_images)
 
-            if self.iter > 1 and np.max(uncertainty_path[1:-1]) <= 0.050:
+            if np.max(uncertainty_path[1:-1]) <= 0.050:
                 starting_path = self.images
 
             self.images = create_ml_neb(is_endpoint=self.initial_endpoint,
@@ -331,3 +341,4 @@ class NEBOptimizer(object):
 
         # Print Final convergence:
         print('Number of function evaluations in this run:', self.iter)
+        print('Number of training points:', len(self.list_train))
