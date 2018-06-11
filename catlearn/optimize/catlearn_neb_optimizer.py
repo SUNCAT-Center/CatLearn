@@ -107,7 +107,7 @@ class NEBOptimizer(object):
         write('tmp.traj', merged_trajectory)
 
         trj = ase_traj_to_catlearn(traj_file='tmp.traj',
-                                ase_calc=self.ase_calc)
+                                ase_calc=copy.deepcopy(self.ase_calc))
         self.list_train, self.list_targets, self.list_gradients, \
             trj_images, self.constraints, self.num_atoms = [
             trj['list_train'], trj['list_targets'],

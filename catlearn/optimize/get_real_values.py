@@ -2,6 +2,7 @@ import numpy as np
 from catlearn.optimize.convert import *
 from ase.atoms import Atoms
 from ase.visualize import view
+import copy
 
 def get_energy_catlearn(self, x=None, magmoms=None):
 
@@ -29,11 +30,12 @@ def get_energy_catlearn(self, x=None, magmoms=None):
         if magmoms is None:
             self.ase_ini.set_calculator(None)
             self.ase_ini = Atoms(self.ase_ini, positions=pos_ase,
-                                 calculator=self.ase_calc)
+                                 calculator=copy.deepcopy(self.ase_calc))
         if magmoms is not None:
             self.ase_ini.set_calculator(None)
             self.ase_ini = Atoms(self.ase_ini, positions=pos_ase,
-                                 calculator=self.ase_calc, magmoms=magmoms)
+                                 calculator=copy.deepcopy(self.ase_calc),
+                                 magmoms=magmoms)
         energy = self.ase_ini.get_potential_energy()
         print('Energy of the geometry evaluated (eV):', energy)
 
