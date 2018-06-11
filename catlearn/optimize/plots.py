@@ -106,7 +106,8 @@ def plt_neb_mullerbrown(images, interesting_point, trained_process,
     zi = plt.mlab.griddata(x, y, prediction, testx, testy,
                            interp='linear')
 
-    plt.contourf(testx, testy, zi, crange, alpha=1.0, cmap='terrain')
+    plt.contourf(testx, testy, zi, crange, alpha=1.0, cmap='terrain',
+                 extend='both')
 
     # Plot each point evaluated (Muller).
 

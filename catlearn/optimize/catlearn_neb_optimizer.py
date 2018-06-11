@@ -16,8 +16,8 @@ class NEBOptimizer(object):
     def __init__(self, start=None, end=None,
                  ml_calc=None, ase_calc=None, filename='results',
                  inc_prev_calcs=False, n_images=None,
-                 interpolation='', neb_method='improvedtangent',
-                 spring=100.0, stabilize=True):
+                 interpolation='idpp', neb_method='aseneb',
+                 spring=10.0, stabilize=True):
         """ Nudged elastic band (NEB) setup.
 
         Parameters
@@ -128,14 +128,15 @@ class NEBOptimizer(object):
         if self.ml_calc is None:
             self.kdict = {
                          'k1': {'type': 'gaussian', 'width': 0.5,
+                         'dimension':'single',
                          'bounds':
-                          ((0.01, 1.0),)*len(self.ind_mask_constr),
+                          ((0.1, 1.0),),
                          'scaling': 1.0, 'scaling_bounds': ((1.0, 1.0),)},
                         }
             self.ml_calc = GPCalculator(
-            kernel_dict=self.kdict, opt_hyperparam=False, scale_data=False,
-            scale_optimizer=False,
-            calc_uncertainty=True, regularization=1e-5)
+            kernel_dict=self.kdict, opt_hyperparam=True, scale_data=False,
+            scale_optimizer=False, calc_uncertainty=True,
+            regularization=1e-5, regularization_bounds=(1e-5, 1e-5))
 
         # Settings of the NEB.
         self.neb_method = neb_method
@@ -159,7 +160,7 @@ class NEBOptimizer(object):
 
         neb_interpolation = NEB(self.images, k=self.spring)
         
-        neb_interpolation.interpolate(method=self.neb_method)
+        neb_interpolation.interpolate(method=interpolation)
 
         self.initial_images = copy.deepcopy(self.images)
 
@@ -322,8 +323,8 @@ class NEBOptimizer(object):
                                   self.num_atoms)
             max_abs_forces = np.max(np.abs(max_forces))
 
-            print('Forces last image evaluated:', max_abs_forces)
-            print('Energy of the last image evaluated:',
+            print('Max. force of the last image evaluated:', max_abs_forces)
+            print('Energy of the last image evaluated (eV):',
                       self.ase_ini.get_total_energy() - self.scale_targets)
             print('Image number:', argmax_unc + 2)
 
