@@ -32,6 +32,7 @@ def get_energy_catlearn(self, x=None, magmoms=None):
             self.ase_ini = Atoms(self.ase_ini, positions=pos_ase,
                                  calculator=copy.deepcopy(self.ase_calc))
         if magmoms is not None:
+            print('Calculating spin:')
             self.ase_ini.set_calculator(None)
             self.ase_ini = Atoms(self.ase_ini, positions=pos_ase,
                                  calculator=copy.deepcopy(self.ase_calc),

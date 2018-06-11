@@ -327,9 +327,9 @@ class NEBOptimizer(object):
             print('Max. force of the last image evaluated (eV/Angs):',
                   max_abs_forces)
             print('Energy of the last image evaluated (eV):',
-                      self.ase_ini.get_total_energy())
+                      self.list_targets[-1][0])
             print('Energy of the last image evaluated wrt to endpoint (eV):',
-                      self.ase_ini.get_total_energy() - self.scale_targets)
+                      self.list_targets[-1][0] - self.scale_targets )
             print('Image number:', argmax_unc + 2)
 
             if max_abs_forces <= fmax:
