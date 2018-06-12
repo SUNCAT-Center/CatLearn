@@ -8,7 +8,8 @@ import warnings
 import numpy as np
 from tqdm import tqdm
 from ase.atoms import string2symbols
-from ase.geometry import get_layers
+# get_distances requires ASE 3.16 or above.
+from ase.geometry import get_layers, get_distances
 from catlearn.api.ase_atoms_api import images_connectivity
 from catlearn.fingerprint.periodic_table_data import get_radius
 
@@ -287,12 +288,72 @@ def connectivity2ads_index(atoms, species):
     ads_atoms += connected_atoms
 
     # Final check.
-    for a in ads_atoms:
-        if (atoms[a].symbol not in composition or
-           len(ads_atoms) != len(composition)):
-            raise AssertionError("Neighbor 1 adsorbate identification failed.")
+    ua_ads, uc_ads = np.unique(
+        np.array(atoms.get_chemical_symbols())[ads_atoms].sort(),
+        return_counts=True)
+    ua_comp, uc_comp = np.unique(composition.sort(), return_counts=True)
+    if ua_ads != ua_comp:
+        msg = str(ua_ads) + " != " + str(ua_comp)
+        raise AssertionError(msg)
+    elif uc_ads != uc_comp:
+        msg = str(uc_ads) + " != " + str(uc_comp)
+        raise AssertionError(msg)
 
     return list(np.unique(ads_atoms))
+
+
+def slab_positions2ads_index(atoms, slab, species):
+    """Return the indexes of adsorbate atoms identified by comparing positions
+    to a reference slab structure.
+
+    Parameters
+    ----------
+    atoms : object
+    """
+    composition = string2symbols(species)
+    ads_atoms = []
+    for symbol in composition:
+        if (composition.count(symbol) ==
+           atoms.get_chemical_symbols().count(symbol)):
+            ads_atoms += [atom.index for atom in atoms if
+                          atom.symbol == symbol]
+
+    ua_ads, uc_ads = np.unique(ads_atoms, return_counts=True)
+    ua_comp, uc_comp = np.unique(composition, return_counts=True)
+    if ua_ads == ua_comp and uc_ads == uc_comp:
+        return ads_atoms
+
+    p_a = atoms.get_positions()
+    p_r = slab.get_positions()
+
+    for s in composition:
+        if s in np.array(atoms.get_chemical_symbols())[ads_atoms]:
+            continue
+        symbol_count = composition.count(s)
+        index_a = np.where(np.array(atoms.get_chemical_symbols()) == s)[0]
+        index_r = np.where(np.array(slab.get_chemical_symbols()) == s)[0]
+        _, dist = get_distances(p_a[index_a, :], p2=p_r[index_r, :],
+                                cell=atoms.cell, pbc=True)
+        # Assume all slab atoms are closest to their reference counterpart.
+        deviations = np.min(dist, axis=1)
+        # Sort deviations.
+        ascending = np.argsort(deviations)
+        # The highest deviations are assumed to be new atoms.
+        ads_atoms += list(index_a[ascending[-symbol_count:]])
+
+    # Final check.
+    ua_ads, uc_ads = np.unique(
+        np.array(atoms.get_chemical_symbols())[ads_atoms].sort(),
+        return_counts=True)
+    ua_comp, uc_comp = np.unique(composition.sort(), return_counts=True)
+    if ua_ads != ua_comp:
+        msg = str(ua_ads) + " != " + str(ua_comp)
+        raise AssertionError(msg)
+    elif uc_ads != uc_comp:
+        msg = str(uc_ads) + " != " + str(uc_comp)
+        raise AssertionError(msg)
+
+    return ads_atoms
 
 
 def tags2ads_index(atoms):
