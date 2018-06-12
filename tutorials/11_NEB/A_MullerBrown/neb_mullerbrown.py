@@ -29,66 +29,65 @@ implementation and our CatLearn (Machine Learning assisted) NEB code.
 ase_calculator = MullerBrown()
 
 # # 1.1. Structures:
-# initial_structure = Atoms('C', positions=[(-0.55, 1.41, 0.0)])
-# final_structure = Atoms('C', positions=[(0.626, 0.025, 0.0)])
-#
-# initial_structure.set_calculator(copy.deepcopy(ase_calculator))
-# final_structure.set_calculator(copy.deepcopy(ase_calculator))
-#
-# # 1.2. Optimize initial and final end-points.
-#
-# # Initial end-point:
-# initial_opt = FIRE(initial_structure, trajectory='initial_optimized.traj')
-# initial_opt.run(fmax=0.01)
-#
-# # Final end-point:
-# final_opt = FIRE(final_structure, trajectory='final_optimized.traj')
-# final_opt.run(fmax=0.01)
-#
+initial_structure = Atoms('C', positions=[(-0.55, 1.41, 0.0)])
+final_structure = Atoms('C', positions=[(0.626, 0.025, 0.0)])
+
+initial_structure.set_calculator(copy.deepcopy(ase_calculator))
+final_structure.set_calculator(copy.deepcopy(ase_calculator))
+
+# 1.2. Optimize initial and final end-points.
+
+# Initial end-point:
+initial_opt = FIRE(initial_structure, trajectory='initial_optimized.traj')
+initial_opt.run(fmax=0.01)
+
+# Final end-point:
+final_opt = FIRE(final_structure, trajectory='final_optimized.traj')
+final_opt.run(fmax=0.01)
+
 # # Define number of images for NEBS:
 
 n_images = 7
 
 # # 2.A. NEB using ASE #########################################################
-#
-# initial_ase = read('initial_optimized.traj')
-# final_ase = read('final_optimized.traj')
-# images_ase = [initial_ase]
-# for i in range(1, n_images-1):
-#     image_ase = initial_ase.copy()
-#     image_ase.set_calculator(copy.deepcopy(ase_calculator))
-#     images_ase.append(image_ase)
-# images_ase.append(final_ase)
-#
-# neb_ase = NEB(images_ase, climb=True, method='improvedtangent', k=0.1)
-# neb_ase.interpolate()
-#
-# qn_ase = FIRE(neb_ase, trajectory='neb_ase.traj')
-# qn_ase.run(fmax=0.05)
-#
-#
-# nebtools_ase = NEBTools(images_ase)
-#
-# Sf_ase = nebtools_ase.get_fit()[2]
-# Ef_ase = nebtools_ase.get_fit()[3]
-#
-# Ef_neb_ase, dE_neb_ase = nebtools_ase.get_barrier(fit=False)
-# nebtools_ase.plot_band()
-#
+
+initial_ase = read('initial_optimized.traj')
+final_ase = read('final_optimized.traj')
+images_ase = [initial_ase]
+for i in range(1, n_images-1):
+    image_ase = initial_ase.copy()
+    image_ase.set_calculator(copy.deepcopy(ase_calculator))
+    images_ase.append(image_ase)
+images_ase.append(final_ase)
+
+neb_ase = NEB(images_ase, climb=True, method='improvedtangent', k=0.1)
+neb_ase.interpolate()
+
+qn_ase = FIRE(neb_ase, trajectory='neb_ase.traj')
+qn_ase.run(fmax=0.05)
 
 
+nebtools_ase = NEBTools(images_ase)
+
+Sf_ase = nebtools_ase.get_fit()[2]
+Ef_ase = nebtools_ase.get_fit()[3]
+
+Ef_neb_ase, dE_neb_ase = nebtools_ase.get_barrier(fit=False)
+nebtools_ase.plot_band()
+
+plt.show()
 
 # 2.B. NEB using CatLearn ####################################################
 
 initial = read('initial_optimized.traj')
 final = read('final_optimized.traj')
 
-neb_catlearn = NEBOptimizer(start='final_optimized.traj',
-                            end='initial_optimized.traj',
+neb_catlearn = NEBOptimizer(start='initial_optimized.traj',
+                            end='final_optimized.traj',
                             ase_calc=copy.deepcopy(ase_calculator),
                             n_images=n_images, interpolation=None)
 
-neb_catlearn.run(ml_algo='FIRE', plot_neb_paths=True)
+neb_catlearn.run(fmax=0.05, plot_neb_paths=True)
 
 # 3. Summary of the results #################################################
 
@@ -101,6 +100,6 @@ n_eval_ase = len(atoms_ase) - 2 * n_images
 print('Number of function evaluations CI-NEB implemented in ASE:', n_eval_ase)
 
 # Catlearn:
-atoms_catlearn = read('results_evaluated_images.traj', ':')
+atoms_catlearn = read('evaluated_structures.traj', ':')
 n_eval_catlearn = len(atoms_catlearn)
 print('Number of function evaluations Catlearn ASE:', n_eval_catlearn-2)

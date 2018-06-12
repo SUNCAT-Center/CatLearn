@@ -6,39 +6,46 @@ from scipy.spatial import distance
 from ase.io import read, write
 from ase.neb import NEBTools
 import copy
-from catlearn.optimize.plots import plt_neb_mullerbrown, plt_predicted_neb_path
+from catlearn.optimize.plots import get_plot_mullerbrown, get_plots_neb
 from catlearn.optimize.warnings import *
 from ase.optimize import QuasiNewton, BFGS, FIRE, MDMin
 
 
 class NEBOptimizer(object):
 
-    def __init__(self, start=None, end=None,
-                 ml_calc=None, ase_calc=None, filename='results',
-                 inc_prev_calcs=False, n_images=None,
-                 interpolation='idpp', neb_method='aseneb',
-                 spring=10.0, stabilize=True):
+    def __init__(self, start, end, path=None, n_images=None, spring=10.0,
+                 interpolation=None, neb_method='aseneb',
+                 ml_calc=None, ase_calc=None, inc_prev_calcs=False,
+                 stabilize=True):
         """ Nudged elastic band (NEB) setup.
 
         Parameters
         ----------
-        start: Trajectory file or atoms object (ASE)
-            First end point of the NEB path. Starting geometry.
-        end: Trajectory file or atoms object (ASE)
-            Second end point of the NEB path. Final geometry.
-        path: Trajectory file or atoms object (ASE)
+        start: Trajectory file (in ASE format).
+            Initial end-point of the NEB path.
+        end: Trajectory file (in ASE format).
+            Final end-point of the NEB path.
+        path: Trajectory file (in ASE format) (optional).
             Atoms trajectory with the intermediate images of the path
             between the two end-points.
-        ml_calc : ML calculator object
-            Machine Learning calculator (e.g. Gaussian Processes).
-            Default is GP.
-        ase_calc: ASE calculator object
-            When using ASE the user must pass an ASE calculator.
-            Default is None (Max uncertainty of the NEB predicted path.)
-        filename: string
-            Filename to store the output.
-        n_images: number of images including initial and final images (
-        end-points).
+        n_images: int
+            Number of images of the path (if not included a path before).
+             The number of images include the 2 end-points of the NEB path.
+        spring: float
+            Spring constant(s) in eV/Ang.
+        interpolation: string
+            Automatic interpolation can be done ('idpp' and 'linear' as
+            implemented in ASE).
+            See https://wiki.fysik.dtu.dk/ase/ase/neb.html.
+        neb_method: string
+            NEB method as implemented in ASE. ('aseneb', 'improvedtangent'
+            or 'eb').
+            See https://wiki.fysik.dtu.dk/ase/ase/neb.html.
+        ml_calc : ML calculator Object.
+            Machine Learning calculator (e.g. Gaussian Process). Default is GP.
+        ase_calc: ASE calculator Object.
+            ASE calculator as implemented in ASE.
+            See https://wiki.fysik.dtu.dk/ase/ase/calculators/calculators.html
         """
 
         # Start end-point, final end-point and path (optional):
@@ -50,7 +57,6 @@ class NEBOptimizer(object):
         self.iter = 0
         self.ml_calc = ml_calc
         self.ase_calc = ase_calc
-        self.filename = filename
         self.ase = True
 
         # Reset:
@@ -59,15 +65,11 @@ class NEBOptimizer(object):
 
         assert start is not None, err_not_neb_start()
         assert end is not None, err_not_neb_end()
-
-        self.ase = True
-        self.ase_calc = ase_calc
         assert self.ase_calc, err_not_ase_calc_traj()
 
         # A) Include previous calculations for training the ML model.
         is_endpoint = read(start, ':')
         fs_endpoint = read(end, ':')
-
 
         # B) Only include initial and final (optimized) images.
         if inc_prev_calcs is False:
@@ -77,7 +79,7 @@ class NEBOptimizer(object):
         fs_pos = fs_endpoint[-1].get_positions().flatten()
 
         # Write previous evaluated images in evaluations:
-        write('./' + str(self.filename) +'_evaluated_images.traj',
+        write('./evaluated_structures.traj',
               is_endpoint + fs_endpoint)
 
         # Check the magnetic moments of the initial and final states:
@@ -173,9 +175,9 @@ class NEBOptimizer(object):
                 interesting_point = i.get_positions().flatten()
                 evaluate_interesting_point_and_append_training(self,
                                                            interesting_point)
-                TrajectoryWriter(atoms=self.ase_ini, filename='./' + str(
-                             self.filename) +'_evaluated_images.traj',
-                             mode='a').write()
+                TrajectoryWriter(atoms=self.ase_ini,
+                                 filename='./evaluated_structures.traj',
+                                 mode='a').write()
         self.uncertainty_path = np.zeros(len(self.images))
 
 
@@ -279,15 +281,12 @@ class NEBOptimizer(object):
 
             # Store plots.
             if plot_neb_paths is True:
-                plt_predicted_neb_path(images=self.images,
-                                       uncertainty_path=uncertainty_path,
-                                       argmax_unc=argmax_unc,
-                                       iter=self.iter,
-                                       filename=self.filename)
+                get_plots_neb(images=self.images,
+                                       selected=argmax_unc, iter=self.iter)
 
             if plot_neb_paths is True:
                 if self.ase_calc.__dict__['name'] == 'mullerbrown':
-                    plt_neb_mullerbrown(images=self.images,
+                    get_plot_mullerbrown(images=self.images,
                                         interesting_point=interesting_point,
                                         trained_process=trained_process,
                                         list_train=self.list_train)
@@ -297,26 +296,25 @@ class NEBOptimizer(object):
             evaluate_interesting_point_and_append_training(self,
                                                            interesting_point)
 
-
             # 4) Store results.
 
             # Evaluated images.
-            TrajectoryWriter(atoms=self.ase_ini, filename='./' + str(
-                             self.filename) +'_evaluated_images.traj',
+            TrajectoryWriter(atoms=self.ase_ini,
+                             filename='./evaluated_structures.traj',
                              mode='a').write()
             # Last path.
             write('last_pred_path.traj', self.images)
-            # All paths:
 
+            # All paths.
             for i in self.images:
                 TrajectoryWriter(atoms=i,
-                                filename='all_pred_paths.traj',
+                                filename='all_predicted_paths.traj',
                                 mode='a').write()
 
             print('Length of initial path:', self.d_start_end)
             print('Length of the current path:', s[-1])
             print('Max uncertainty:', np.max(uncertainty_path))
-            print('ITERATIONS:', self.iter)
+            print('Number of iterations:', self.iter)
 
             # Break if converged:
 
@@ -333,7 +331,7 @@ class NEBOptimizer(object):
             print('Image number:', argmax_unc + 2)
 
             if max_abs_forces <= fmax:
-                print("Congratulations, stationary point found!")
+                print("Stationary point is found!")
                 if np.max(uncertainty_path) < unc_convergence:
                     print("\nCongratulations, your NEB path is converged!")
                     break
@@ -344,5 +342,6 @@ class NEBOptimizer(object):
                 break
 
         # Print Final convergence:
-        print('Number of function evaluations in this run:', self.iter)
         print('Number of training points:', len(self.list_train))
+        print('Number of function evaluations in this run:', self.iter)
+
