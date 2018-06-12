@@ -11,7 +11,6 @@ from .periodic_table_data import (get_mendeleev_params, n_outer,
 from .neighbor_matrix import connection_matrix
 import collections
 from .base import BaseGenerator, check_labels
-import warnings
 
 
 default_adsorbate_fingerprinters = ['mean_chemisorbed_atoms',
@@ -285,7 +284,7 @@ class AdsorbateFingerprintGenerator(BaseGenerator):
             check_labels(labels, result, atoms)
             return result
 
-    def generalized_cn_site(self, atoms):
+    def generalized_cn(self, atoms):
         """Returns the averaged generalized coordination number over the site.
         Calle-Vallejo et al. Angew. Chem. Int. Ed. 2014, 53, 8316-8319.
 
@@ -294,7 +293,7 @@ class AdsorbateFingerprintGenerator(BaseGenerator):
             atoms : object
         """
         if atoms is None:
-            return ['cn_site', 'gcn_site']
+            return ['cn_site', 'gcn_site', 'cn_ads1', 'gcn_ads1']
         site = atoms.subsets['site_atoms']
         slab = atoms.subsets['slab_atoms']
         cm = atoms.connectivity
@@ -308,7 +307,21 @@ class AdsorbateFingerprintGenerator(BaseGenerator):
                 if btom > 0 and j in slab:
                     cn = len([k for k in cm[btom, :] if k > 0])
                     gcn_site += btom * cn / self.cn_max
-        return [cn_site / len(site), gcn_site / len(site)]
+
+        chemi = atoms.subsets['chemisorbed_atoms']
+        cn_chemi = 0.
+        for atom in chemi:
+            row = cm[atom, :]
+            cn = len([k for i, k in enumerate(row) if k > 0])
+            cn_chemi += cn
+            gcn_chemi = 0.
+            for j, btom in enumerate(row):
+                if btom > 0:
+                    cn = len([k for k in cm[btom, :] if k > 0])
+                    gcn_chemi += btom * cn / self.cn_max
+
+        return [cn_site / len(site), gcn_site / len(site),
+                cn_chemi / len(chemi), gcn_chemi / len(chemi)]
 
     def formal_charges(self, atoms):
         """Return a fingerprint based on formal charges and excess charges.
@@ -319,8 +332,7 @@ class AdsorbateFingerprintGenerator(BaseGenerator):
         """
         if atoms is None:
             return ['site_charge_av', 'site_charge_sum',
-                    'site_excess', 'slab_excess',
-                    'slab_transferred']
+                    'site_excess', 'slab_excess', 'slab_transferred']
         else:
             site = atoms.subsets['site_atoms']
             slab = atoms.subsets['slab_atoms']
@@ -356,8 +368,8 @@ class AdsorbateFingerprintGenerator(BaseGenerator):
             site_charge_av = np.nanmean(cation_charges[site])
             site_charge_sum = np.nansum(cation_charges[site])
 
-            return [site_charge_av, site_charge_sum, site_excess, slab_excess,
-                    transferred]
+            return [site_charge_av, site_charge_sum,
+                    site_excess, slab_excess, transferred]
 
     def count_ads_atoms(self, atoms=None):
         """Function that takes an atoms objects and returns a fingerprint
