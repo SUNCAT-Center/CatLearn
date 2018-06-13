@@ -99,6 +99,7 @@ class NEBOptimizer(object):
             self.spin = True
         if not np.array_equal(self.magmom_fs, np.zeros_like(self.magmom_fs)):
             self.spin = True
+            warning_spin_neb()
 
         # Obtain the energy of the endpoints for scaling:
         energy_is = is_endpoint[-1].get_potential_energy()
@@ -187,7 +188,7 @@ class NEBOptimizer(object):
                                  mode='a').write()
         self.uncertainty_path = np.zeros(len(self.images))
 
-    def run(self, fmax=0.05, unc_convergence=0.020, max_iter=500,
+    def run(self, fmax=0.05, unc_convergence=0.010, max_iter=500,
             ml_algo='FIRE', ml_max_iter=500, plot_neb_paths=False):
 
         """Executing run will start the optimization process.
@@ -227,6 +228,7 @@ class NEBOptimizer(object):
             msg = 'Your training list constains 1 or more duplicated elements'
             assert np.any(count_unique) < 2, msg
 
+            print('')
             process = train_ml_process(list_train=self.list_train,
                                        list_targets=self.list_targets,
                                        list_gradients=self.list_gradients,
@@ -323,7 +325,9 @@ class NEBOptimizer(object):
 
             print('Length of initial path:', self.d_start_end)
             print('Length of the current path:', s[-1])
-            print('Max uncertainty:', np.max(self.uncertainty_path))
+            print('Max. uncertainty:', np.max(self.uncertainty_path))
+            print('Image with max. uncertainty:',
+                  np.argmax(np.max(self.uncertainty_path)) + 1)
             print('Number of iterations:', self.iter)
 
             # Break if converged:
@@ -336,14 +340,14 @@ class NEBOptimizer(object):
                   max_abs_forces)
             print('Energy of the last image evaluated (eV):',
                   self.list_targets[-1][0])
-            print('Energy of the last image evaluated wrt to endpoint (eV):',
-                  self.list_targets[-1][0] - self.scale_targets)
-            print('Image number:', argmax_unc + 2)
+            print('Energy of the last image evaluated w.r.t. to endpoint ('
+                  'eV):', self.list_targets[-1][0] - self.scale_targets)
+            print('Number of evaluated image:', argmax_unc + 2)
 
             if max_abs_forces <= fmax:
                 print("Stationary point is found!")
                 if np.max(self.uncertainty_path) < unc_convergence:
-                    print("\nCongratulations, your NEB path is converged!")
+                    print("\nCongratulations, your ML NEB is converged!")
                     break
 
             # Break if reaches the max number of iterations set by the user.
@@ -352,7 +356,6 @@ class NEBOptimizer(object):
                 break
 
         # Print Final convergence:
-        print('Number of training points:', len(self.list_train))
         print('Number of function evaluations in this run:', self.iter)
 
 

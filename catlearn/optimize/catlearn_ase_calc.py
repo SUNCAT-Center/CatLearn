@@ -25,9 +25,10 @@ class CatLearnASE(Calculator):
     def calculate(self, atoms=None, properties=['energy', 'forces'],
                   system_changes=all_changes):
 
-        # Atoms:
+        # Atoms object.
         self.atoms = atoms
 
+        # Cleaning.
         predictions = 0.0
         pred_value = 0.0
         forces = 0.0
@@ -36,8 +37,11 @@ class CatLearnASE(Calculator):
 
         def pred_energy_test(test, ml_calc=self.ml_calc,
                              trained_process=self.trained_process):
+            # Cleaning.
             predictions = 0.0
             pred_value = 0.0
+
+            # Get predictions.
             predictions = ml_calc.get_predictions(trained_process,
                                                   test_data=test[0])
             pred_mean = predictions['pred_mean'][0][0]
@@ -55,9 +59,13 @@ class CatLearnASE(Calculator):
                                             list_to_mask=[pos_flatten],
                                             mask_index=self.ind_constraints)[1]
 
-        # Get energy:
+        # Get energy.
         energy = pred_energy_test(test=test_point)[0]
+
+        # Get uncertainty.
         uncertainty = pred_energy_test(test=test_point)[1]
+
+        # Attach uncertainty to Atoms object.
         atoms.info['uncertainty'] = uncertainty
 
         # Get forces:
@@ -84,3 +92,5 @@ class CatLearnASE(Calculator):
         # Results:
         self.results['energy'] = energy
         self.results['forces'] = forces
+
+

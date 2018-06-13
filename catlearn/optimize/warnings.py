@@ -60,23 +60,6 @@ def warning_max_step_radii(max_step):
     store_warnings_and_errors(msg)
 
 
-def warning_max_step_radii_neb(max_step):
-    msg = "WARNING: You have not set a minimum step size and is using " \
-        "Atoms objects. In order to stabilize the optimization the default " \
-        "maximum step size is 1/10 of the smallest covalent radii " \
-        "found for the system. For this optimization the maximum step is set" \
-        "to" + str(max_step)+" Angstrom."
-    print(msg)
-    store_warnings_and_errors(msg)
-
-
-def warning_spring_default(spring):
-    msg = "WARNING: You have not set an spring constant. The default spring " \
-          "constant for this optimization is k=" + str(spring)+" Angstrom^2."
-    print(msg)
-    store_warnings_and_errors(msg)
-
-
 def warning_kernel():
     msg = "WARNING: You have not selected a kernel (covariance " \
             "function) for the GP. Default: Squared Exponential kernel (" \
@@ -86,6 +69,14 @@ def warning_kernel():
     print(msg)
     store_warnings_and_errors(msg)
 
+def warning_spin_neb():
+    msg = "WARNING: Your Atoms object contains non-zero magnetic moments. " \
+           "Spin polarization NEB is performed. Be careful, this feature is " \
+           "under test. The trajectory file saved for the evaluated images " \
+           "only contains the structure with the magnetic moments for " \
+           "minimum energy found in a given cartesian coordinate."
+    print(msg)
+    store_warnings_and_errors(msg)
 
 def warning_climb_img(climb_image):
     msg = None

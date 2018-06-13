@@ -1,7 +1,7 @@
 import numpy as np
 from ase.atoms import Atoms
 import copy
-from catlearn.optimize.io import array_to_ase
+from catlearn.optimize.io import array_to_ase, array_to_atoms
 
 
 def get_energy_catlearn(self, x=None, magmoms=None):
@@ -36,7 +36,7 @@ def get_energy_catlearn(self, x=None, magmoms=None):
             self.ase_ini = Atoms(self.ase_ini, positions=pos_ase,
                                  calculator=copy.deepcopy(self.ase_calc))
         if magmoms is not None:
-            print('Calculating spin:')
+            print('Spin polarized calculation.')
             self.ase_ini.set_calculator(None)
             self.ase_ini = Atoms(self.ase_ini, positions=pos_ase,
                                  calculator=copy.deepcopy(self.ase_calc),
@@ -77,7 +77,8 @@ def get_forces_catlearn(self, x=None):
     # Get energies using ASE:
     if self.ase:
         forces = self.ase_ini.get_forces().flatten()
-        print('Forces of the geometry evaluated (eV/Angst):\n', forces)
+        print('Forces of the geometry evaluated (eV/Angst):\n',
+              array_to_atoms(forces))
 
     # When not using ASE:
     if not self.ase:
@@ -130,8 +131,10 @@ def eval_and_append(self, interesting_point):
         gradients_2 = [-get_forces_catlearn(self).flatten()]
         self.list_gradients = np.append(self.list_gradients,
                                         gradients_2, axis=0)
+
         last_index = len(self.list_targets)-1
-        self.iter += 1
+
+
         if energy_1 >= energy_2:
             self.list_train = np.delete(self.list_train, last_index, axis=0)
             self.list_targets = np.delete(self.list_targets, last_index,
