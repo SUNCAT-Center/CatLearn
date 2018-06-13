@@ -117,6 +117,9 @@ def eval_and_append(self, interesting_point):
                                     gradients_1, axis=0)
 
     if self.spin is True:
+        # Save images with spin 1:
+        images_spin_1 = copy.deepcopy(self.ase_ini)
+
         if np.ndim(interesting_point) == 1:
             interesting_point = np.array([interesting_point])
 
@@ -134,21 +137,23 @@ def eval_and_append(self, interesting_point):
 
         last_index = len(self.list_targets)-1
 
-
-        if energy_1 >= energy_2:
-            self.list_train = np.delete(self.list_train, last_index, axis=0)
-            self.list_targets = np.delete(self.list_targets, last_index,
-                                          axis=0)
-            self.list_gradients = np.delete(self.list_gradients, last_index,
-                                            axis=0)
-
-        if energy_1 < energy_2:
-            self.list_train = np.delete(self.list_train, last_index-1,
-                                        axis=0)
+        if energy_1 > energy_2:
+            print('Saving atoms with similar spin than the final endpoint.')
+            self.list_train = np.delete(self.list_train, last_index-1, axis=0)
             self.list_targets = np.delete(self.list_targets, last_index-1,
                                           axis=0)
+            self.list_gradients = np.delete(self.list_gradients, last_index-1,
+                                            axis=0)
+
+        if energy_1 <= energy_2:
+            print('Saving atoms with similar spin than the initial endpoint.')
+            self.list_train = np.delete(self.list_train, last_index,
+                                        axis=0)
+            self.list_targets = np.delete(self.list_targets, last_index,
+                                          axis=0)
             self.list_gradients = np.delete(self.list_gradients,
-                                            last_index-1, axis=0)
+                                            last_index, axis=0)
+            self.ase_ini = copy.deepcopy(images_spin_1)
 
     self.list_targets = np.reshape(self.list_targets,
                                    (len(self.list_targets), 1))

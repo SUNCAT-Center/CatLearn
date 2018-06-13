@@ -15,14 +15,14 @@ from ase.optimize import FIRE, MDMin
 from scipy.spatial import distance
 import copy
 import os
-
+from ase.visualize import view
 
 class NEBOptimizer(object):
 
     def __init__(self, start, end, path=None, n_images=None, spring=10.0,
                  interpolation=None, neb_method='aseneb',
                  ml_calc=None, ase_calc=None, inc_prev_calcs=False,
-                 stabilize=True):
+                 stabilize=True, restart_neb=False):
         """ Nudged elastic band (NEB) setup.
 
         Parameters
@@ -83,6 +83,18 @@ class NEBOptimizer(object):
             fs_endpoint = read(end, '-1:')
         is_pos = is_endpoint[-1].get_positions().flatten()
         fs_pos = fs_endpoint[-1].get_positions().flatten()
+
+        # A and B) If user sets restart mode.
+        # Read the previously evaluated structures and append them to the
+        # training list
+        if restart_neb is True:
+            restart_filename = 'evaluated_structures.traj'
+            if not os.path.isfile(restart_filename):
+                warning_restart_neb()
+            if os.path.isfile(restart_filename):
+                evaluated_images = read(restart_filename, ':')
+                is_endpoint = evaluated_images + is_endpoint
+                stabilize = False
 
         # Write previous evaluated images in evaluations:
         write('./evaluated_structures.traj',
@@ -153,7 +165,8 @@ class NEBOptimizer(object):
         self.spring = spring
         self.initial_endpoint = is_endpoint[-1]
         self.final_endpoint = fs_endpoint[-1]
-        
+
+
         # A) Create images using interpolation if user do not feed a path:
         if path is None:
             self.images = create_ml_neb(is_endpoint=self.initial_endpoint,
@@ -175,6 +188,28 @@ class NEBOptimizer(object):
             self.initial_images = copy.deepcopy(self.images)
 
         # B) If the user sets a path:
+        if path is not None:
+            images_path = read(path, ':')
+
+            if not np.array_equal(images_path[0].get_positions.flatten(),
+                                  is_pos):
+                images_path.insert(0, self.initial_endpoint)
+            if not np.array_equal(images_path[-1].get_positions.flatten(),
+                                  fs_pos):
+                images_path.append(self.final_endpoint)
+
+            self.n_images = len(images_path)
+            self.images = create_ml_neb(is_endpoint=self.initial_endpoint,
+                                        fs_endpoint=self.final_endpoint,
+                                        images_interpolation=images_path,
+                                        n_images=self.n_images,
+                                        constraints=self.constraints,
+                                        index_constraints=self.ind_mask_constr,
+                                        trained_process=None,
+                                        ml_calculator=self.ml_calc,
+                                        scaling_targets=self.scale_targets,
+                                        iteration=self.iter
+                                        )
 
         # Save files with all the paths tested:
         write('all_pred_paths.traj', self.images)

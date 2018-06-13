@@ -79,9 +79,9 @@ plt.show()
 # 2.B. NEB using CatLearn ####################################################
 
 neb_catlearn = NEBOptimizer(start='initial.traj', end='final.traj',
-                       ase_calc=copy.deepcopy(ase_calculator),
-                       n_images=n_images,
-                       interpolation='idpp')
+                            ase_calc=copy.deepcopy(ase_calculator),
+                            n_images=n_images,
+                            interpolation='idpp')
 
 neb_catlearn.run(fmax=0.05, ml_algo='FIRE', plot_neb_paths=True)
 

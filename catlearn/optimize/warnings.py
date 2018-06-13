@@ -69,6 +69,7 @@ def warning_kernel():
     print(msg)
     store_warnings_and_errors(msg)
 
+
 def warning_spin_neb():
     msg = "WARNING: Your Atoms object contains non-zero magnetic moments. " \
            "Spin polarization NEB is performed. Be careful, this feature is " \
@@ -78,13 +79,14 @@ def warning_spin_neb():
     print(msg)
     store_warnings_and_errors(msg)
 
-def warning_climb_img(climb_image):
-    msg = None
-    if climb_image is False:
-        msg = "The predicted mean is optimized using NEB (CI-NEB is " \
-              "switched off)."""
-    if climb_image is True:
-        msg = "The predicted mean is optimized using CI-NEB."""
+
+def warning_restart_neb():
+    msg = " COMPUTER SAYS NO: The user has selected to restart the NEB " \
+          "calculation, however, no 'evaluated_structures.traj' file has " \
+          "been found. " \
+          "Notice that iff you want to restart the NEB from a previous " \
+          "non-converged calculation, you must keep the " \
+          "'evaluated_structures.traj' file."
     print(msg)
     store_warnings_and_errors(msg)
 
