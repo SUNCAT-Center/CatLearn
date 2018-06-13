@@ -1,6 +1,3 @@
-from catlearn.optimize.io import *
-
-
 def warning_using_ase():
     msg = "Atoms have been detected. Using ASE..."
     print(msg)
@@ -56,10 +53,9 @@ def warning_max_step():
 def warning_max_step_radii(max_step):
     msg = "WARNING: You have not set a minimum step size and is using " \
         "Atoms objects. In order to stabilize the optimization the default " \
-        "maximum step size is 1/4 of the smallest covalent radii " \
-        "found for the system. For this optimization the maximum step is set " \
-        "to " + \
-        str(max_step)+" Angstrom."
+        "maximum step size is 1/4 of the smallest covalent radii found for " \
+        "the system. For this optimization the maximum step is set to" + str(
+         max_step)+" Angstrom."
     print(msg)
     store_warnings_and_errors(msg)
 
@@ -68,11 +64,11 @@ def warning_max_step_radii_neb(max_step):
     msg = "WARNING: You have not set a minimum step size and is using " \
         "Atoms objects. In order to stabilize the optimization the default " \
         "maximum step size is 1/10 of the smallest covalent radii " \
-        "found for the system. For this optimization the maximum step is set " \
-        "to " + \
-        str(max_step)+" Angstrom."
+        "found for the system. For this optimization the maximum step is set" \
+        "to" + str(max_step)+" Angstrom."
     print(msg)
     store_warnings_and_errors(msg)
+
 
 def warning_spring_default(spring):
     msg = "WARNING: You have not set an spring constant. The default spring " \
@@ -92,9 +88,10 @@ def warning_kernel():
 
 
 def warning_climb_img(climb_image):
+    msg = None
     if climb_image is False:
         msg = "The predicted mean is optimized using NEB (CI-NEB is " \
-        "switched off)."""
+              "switched off)."""
     if climb_image is True:
         msg = "The predicted mean is optimized using CI-NEB."""
     print(msg)
@@ -141,15 +138,14 @@ def err_not_real_func(self):
     msg += "Implemented functions are:" + str(self.fun_avail) + "\n"
     msg += "Alternatively, you can add a function into functions.py"
     msg += " In this case, the analytical function and its first derivative " \
-        "in each dimension must be added by you. "
+           "in each dimension must be added by you. "
     store_warnings_and_errors(msg)
     return msg
 
 
 def err_not_real_func_2(self):
     msg = "COMPUTER SAYS NO: The selected function is not in the list of " \
-    "available " \
-        "functions\n."
+          "available functions\n."
     msg += "HINT: Select one of the functions implemented in functions.py.\n"
     msg += "Implemented functions are:" + str(self.fun_avail) + "\n"
     msg += "Alternatively, you can add a function into functions.py"
@@ -184,18 +180,20 @@ def err_diff_data_size():
     store_warnings_and_errors(msg)
     return msg
 
+
 def err_not_ase_calc_atoms():
     msg = "COMPUTER SAYS NO: The Atoms object that you passed has not " \
           "calculator attached and you have not passed any calculator the " \
           "'ase calc' flag. You can attach the calculator to the atoms " \
-          "object prior feeding it to CatLearn or alternatively you can pass it " \
-          "to CatLearn in the 'ase_calc' flag."
+          "object prior feeding it to CatLearn or alternatively you can " \
+          "pass it to CatLearn in the 'ase_calc' flag."
     store_warnings_and_errors(msg)
     return msg
 
+
 def err_not_ase_calc_traj():
     msg = "COMPUTER SAYS NO: When importing a trajectory file you must " \
-    "include the ASE calculator ('ase_calc' flag). Please be " \
+          "include the ASE calculator ('ase_calc' flag). Please be " \
           "consistent with your previous run."
     store_warnings_and_errors(msg)
     return msg
@@ -236,10 +234,12 @@ def err_not_neb_end():
     store_warnings_and_errors(msg)
     return msg
 
+
 def err_not_enough_images():
     msg = """ COMPUTER SAYS NO: You must include at least 4 NEB images."""
     store_warnings_and_errors(msg)
     return msg
+
 
 def store_warnings_and_errors(msg):
     warn_and_errors = open('warnings_and_errors.txt', "a")

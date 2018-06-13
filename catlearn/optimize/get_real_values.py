@@ -1,8 +1,8 @@
 import numpy as np
-from catlearn.optimize.convert import *
 from ase.atoms import Atoms
-from ase.visualize import view
 import copy
+from catlearn.optimize.io import array_to_ase
+
 
 def get_energy_catlearn(self, x=None, magmoms=None):
 
@@ -10,21 +10,25 @@ def get_energy_catlearn(self, x=None, magmoms=None):
 
     Parameters
     ----------
+    self: arrays
+        Previous information from the CatLearn optimizer.
     x : array
-        Array containing the atom positions (flatten) or point in space.
+        Array containing the atomic positions (flatten) or point in space.
+    magmoms : array
+        List containing the magnetic moments of each Atom.
 
     Returns
     -------
     energy : float
         The function evaluation value.
     """
+    energy = 0.0
 
     # If no point is passed, evaluate the last trained point.
-
     if x is None:
         x = self.list_train[-1]
 
-    # ASE:
+    # Get energies using ASE:
     if self.ase:
         pos_ase = array_to_ase(x, self.num_atoms)
         if magmoms is None:
@@ -43,31 +47,34 @@ def get_energy_catlearn(self, x=None, magmoms=None):
     # When not using ASE:
     if not self.ase:
         energy = self.fun.evaluate(x)
-        # print('Function evaluation:', energy)
+        print('Function evaluation:', energy)
     return energy
+
 
 def get_forces_catlearn(self, x=None):
 
     """ Evaluates the forces (ASE) or the Jacobian of the objective
-    function at a given point in given space.
+    function at a given point in space.
 
     Parameters
     ----------
+    self: arrays
+        Previous information from the CatLearn optimizer.
     x : array
-        Atoms positions or point in a given space.
+        Atoms positions or point in space.
 
     Returns
     -------
     forces : array
-        Forces (ASE) or the negative value of the Jacobian (for other
-        functions).
+        Forces of the atomic structure (flatten) or the negative value of the
+        Jacobian for non atomistic functions.
     """
-
+    forces = 0.0
     # If no point is passed, evaluate the last trained point.
     if x is None:
         x = self.list_train[-1]
 
-    # ASE:
+    # Get energies using ASE:
     if self.ase:
         forces = self.ase_ini.get_forces().flatten()
         print('Forces of the geometry evaluated (eV/Angst):\n', forces)
@@ -75,13 +82,27 @@ def get_forces_catlearn(self, x=None):
     # When not using ASE:
     if not self.ase:
         forces = -self.fun.jacobian(x)
-        # print('Forces:\n', forces)
+        print('Forces:\n', forces)
     return forces
 
 
-def evaluate_interesting_point_and_append_training(self, interesting_point):
+def eval_and_append(self, interesting_point):
+    """ Evaluates the energy and forces (ASE) of the point of interest
+        for a given atomistic structure.
 
-    if interesting_point.ndim == 1:
+    Parameters
+    ----------
+    self: arrays
+        Previous information from the CatLearn optimizer.
+    interesting_point : ndarray
+        Atoms positions or point in space.
+
+    Return
+    -------
+    Append function evaluation and forces values to the training set.
+    """
+
+    if np.ndim(interesting_point) == 1:
         interesting_point = np.array([interesting_point])
 
     self.list_train = np.append(self.list_train,
@@ -95,7 +116,7 @@ def evaluate_interesting_point_and_append_training(self, interesting_point):
                                     gradients_1, axis=0)
 
     if self.spin is True:
-        if interesting_point.ndim == 1:
+        if np.ndim(interesting_point) == 1:
             interesting_point = np.array([interesting_point])
 
         self.list_train = np.append(self.list_train,
@@ -104,12 +125,13 @@ def evaluate_interesting_point_and_append_training(self, interesting_point):
 
         self.list_targets = np.append(self.list_targets, energy_2)
         self.list_targets = np.reshape(self.list_targets,
-                                      (len(self.list_targets), 1))
+                                       (len(self.list_targets), 1))
 
         gradients_2 = [-get_forces_catlearn(self).flatten()]
         self.list_gradients = np.append(self.list_gradients,
                                         gradients_2, axis=0)
         last_index = len(self.list_targets)-1
+        self.iter += 1
         if energy_1 >= energy_2:
             self.list_train = np.delete(self.list_train, last_index, axis=0)
             self.list_targets = np.delete(self.list_targets, last_index,
@@ -126,7 +148,6 @@ def evaluate_interesting_point_and_append_training(self, interesting_point):
                                             last_index-1, axis=0)
 
     self.list_targets = np.reshape(self.list_targets,
-                                  (len(self.list_targets), 1))
+                                   (len(self.list_targets), 1))
 
     self.iter += 1
-

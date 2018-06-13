@@ -1,5 +1,4 @@
 import numpy as np
-
 from ase.calculators.calculator import Calculator
 
 
@@ -11,7 +10,7 @@ class MullerBrown(Calculator):
     default_parameters = {'p1': [-200.0, -1.0,  0.0, -10.0,  1.0, 0.0],
                           'p2': [-100.0, -1.0,  0.0, -10.0,  0.0, 0.5],
                           'p3': [-170.0, -6.5, 11.0,  -6.5, -0.5, 1.5],
-                          'p4': [  15.0,  0.7,  0.6,   0.7, -1.0, 1.0]}
+                          'p4': [15.0,  0.7,  0.6,   0.7, -1.0, 1.0]}
     nolabel = True
 
     def __init__(self, **kwargs):

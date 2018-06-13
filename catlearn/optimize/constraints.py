@@ -6,9 +6,8 @@ def create_mask_ase_constraints(ini, constraints):
     len_contrains = len(constraints)
     for i in range(0, len_contrains):
         try:
-            mask_constraints[constraints[i].__dict__['a']] = ~(constraints[
-            i].__dict__[
-            'mask'])
+            mask_constraints[constraints[i].__dict__['a']] = \
+                                             ~(constraints[i].__dict__['mask'])
         except Exception:
             pass
 
@@ -18,14 +17,14 @@ def create_mask_ase_constraints(ini, constraints):
             pass
 
         try:
-            mask_constraints[constraints[0].__dict__['a']] = ~constraints[
-            0].__dict__['mask']
+            mask_constraints[constraints[0].__dict__['a']] = \
+                                               ~constraints[0].__dict__['mask']
         except Exception:
             pass
 
         try:
-            mask_constraints[constraints[-1].__dict__['a']] = ~(constraints[
-                                                        -1].__dict__['mask'])
+            mask_constraints[constraints[-1].__dict__['a']] = \
+                                            ~(constraints[-1].__dict__['mask'])
         except Exception:
             pass
 

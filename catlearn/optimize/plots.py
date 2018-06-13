@@ -4,11 +4,13 @@ import matplotlib.pyplot as plt
 from ase.neb import NEBTools
 import pandas as pd
 
+
 def get_plot_mullerbrown(images, interesting_point, trained_process,
                          list_train):
+    """ Function for plotting each step of the toy model Muller-Brown .
+    """
     # Generate test datapoints in x and y.
-
-    crange = np.linspace(-0.5, 5.0, 200)
+    crange = np.linspace(-0.2, 4.5, 200)
     x_lim = [-1.2, 1.1]
     y_lim = [-0.4, 1.8]
 
@@ -70,8 +72,8 @@ def get_plot_mullerbrown(images, interesting_point, trained_process,
 
 
 def get_plots_neb(images, selected=None, iter=None):
-    """ Tool for plotting a predicted path of a given atoms object during
-        optimization process.
+    """ Tool for plotting a predicted path for a given set of Atoms objects
+        composing an NEB path.
 
     Parameters
     ----------
@@ -81,6 +83,7 @@ def get_plots_neb(images, selected=None, iter=None):
         Next point to evaluate, chosen by the surrogate model.
     iter: integer
         Iteration number.
+
     Returns
     -------
     Plot of the NEB path.
@@ -109,7 +112,7 @@ def get_plots_neb(images, selected=None, iter=None):
 
     # Save results in csv file:
 
-    # Linear:
+    # Save discrete path:
     data = {'Path distance (Angstrom)': s,
             'Energy (eV)': E,
             'Uncertainty (eV)': uncertainty_path}
@@ -118,7 +121,8 @@ def get_plots_neb(images, selected=None, iter=None):
                                 'Uncertainty (eV)'])
     df.to_csv('results_neb.csv')
     print('Results:', data)
-    # Interpolation:
+
+    # Save interpolated path:
     data = {'Path distance (Angstrom)': Sfit,
             'Energy (eV)': Efit}
     print('Results interpolation:', data)
@@ -128,4 +132,3 @@ def get_plots_neb(images, selected=None, iter=None):
 
     plt.show()
     plt.close()
-
