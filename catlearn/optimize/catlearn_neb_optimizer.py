@@ -230,7 +230,7 @@ class NEBOptimizer(object):
             self.spring = np.sqrt(self.n_images) / self.d_start_end
 
     def run(self, fmax=0.05, unc_convergence=0.010, max_iter=500,
-            ml_algo='FIRE', ml_max_iter=500, plot_neb_paths=False):
+            ml_algo='MDMin', ml_max_iter=500, plot_neb_paths=False):
 
         """Executing run will start the optimization process.
 
@@ -303,7 +303,7 @@ class NEBOptimizer(object):
                          method=self.neb_method,
                          k=self.spring)
 
-            neb_opt = eval(ml_algo)(ml_neb, dt=0.01)
+            neb_opt = eval(ml_algo)(ml_neb, dt=0.1)
 
             neb_opt.run(fmax=fmax,
                         steps=ml_max_iter)
@@ -313,7 +313,7 @@ class NEBOptimizer(object):
                              method='improvedtangent',
                              k=self.spring)
 
-                neb_opt = eval(ml_algo)(ml_neb, dt=0.01)
+                neb_opt = eval(ml_algo)(ml_neb, dt=0.1)
                 neb_opt.run(fmax=fmax, steps=ml_max_iter)
 
 
