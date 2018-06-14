@@ -60,9 +60,17 @@ for i in range(1, n_images-1):
     images_ase.append(image_ase)
 images_ase.append(final_ase)
 
-neb_ase = NEB(images_ase, climb=True, method='improvedtangent', k=0.1)
+
+neb_ase = NEB(images_ase, climb=True, method='improvedtangent', k=50.0)
 neb_ase.interpolate()
 
+nebtools_ase = NEBTools(images_ase)
+s = nebtools_ase.get_fit()[0]
+
+updated_spring = np.sqrt(n_images)/s[-1]
+print('spring', updated_spring)
+neb_ase = NEB(images_ase, climb=True, method='improvedtangent',
+              k=updated_spring)
 qn_ase = FIRE(neb_ase, trajectory='neb_ase.traj')
 qn_ase.run(fmax=0.05)
 

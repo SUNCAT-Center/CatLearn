@@ -158,4 +158,4 @@ def eval_and_append(self, interesting_point):
     self.list_targets = np.reshape(self.list_targets,
                                    (len(self.list_targets), 1))
 
-    self.iter += 1
+    self.iter = self.iter + 1

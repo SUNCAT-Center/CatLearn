@@ -17,12 +17,13 @@ import copy
 import os
 from ase.visualize import view
 
+
 class NEBOptimizer(object):
 
-    def __init__(self, start, end, path=None, n_images=None, spring=10.0,
-                 interpolation=None, neb_method='aseneb',
+    def __init__(self, start, end, path=None, n_images=None, spring=None,
+                 interpolation=None, neb_method='improvedtangent',
                  ml_calc=None, ase_calc=None, inc_prev_calcs=False,
-                 stabilize=True, restart_neb=False):
+                 stabilize=False, restart_neb=False):
         """ Nudged elastic band (NEB) setup.
 
         Parameters
@@ -163,9 +164,10 @@ class NEBOptimizer(object):
         # Settings for the NEB.
         self.neb_method = neb_method
         self.spring = spring
+        if self.spring is None:
+            self.spring = np.sqrt(self.n_images) / self.d_start_end
         self.initial_endpoint = is_endpoint[-1]
         self.final_endpoint = fs_endpoint[-1]
-
 
         # A) Create images using interpolation if user do not feed a path:
         if path is None:
@@ -222,6 +224,10 @@ class NEBOptimizer(object):
                                  filename='./evaluated_structures.traj',
                                  mode='a').write()
         self.uncertainty_path = np.zeros(len(self.images))
+
+        # Stabilize spring constant:
+        if self.spring is None:
+            self.spring = np.sqrt(self.n_images) / self.d_start_end
 
     def run(self, fmax=0.05, unc_convergence=0.010, max_iter=500,
             ml_algo='FIRE', ml_max_iter=500, plot_neb_paths=False):
@@ -293,7 +299,7 @@ class NEBOptimizer(object):
                                         iteration=self.iter
                                         )
 
-            ml_neb = NEB(self.images, climb=True,
+            ml_neb = NEB(self.images, climb=False,
                          method=self.neb_method,
                          k=self.spring)
 
@@ -301,6 +307,15 @@ class NEBOptimizer(object):
 
             neb_opt.run(fmax=fmax,
                         steps=ml_max_iter)
+
+            if np.max(self.uncertainty_path[1:-1]) <= 0.050:
+                ml_neb = NEB(self.images, climb=True,
+                             method='improvedtangent',
+                             k=self.spring)
+
+                neb_opt = eval(ml_algo)(ml_neb, dt=0.01)
+                neb_opt.run(fmax=fmax, steps=ml_max_iter)
+
 
             # 3) Get results from ML NEB using ASE NEB tools:
             # See https://wiki.fysik.dtu.dk/ase/ase/neb.html
@@ -358,10 +373,11 @@ class NEBOptimizer(object):
                                  filename='all_predicted_paths.traj',
                                  mode='a').write()
 
-            print('Length of initial path:', self.d_start_end)
-            print('Length of the current path:', s[-1])
-            print('Max. uncertainty:', np.max(self.uncertainty_path))
-            print('Image with max. uncertainty:',
+            print('Length of initial path (Angstrom):', self.d_start_end)
+            print('Length of the current path (Angstrom):', s[-1])
+            print('Spring constant (eV/Angstrom):', self.spring)
+            print('Max. uncertainty (eV):', np.max(self.uncertainty_path))
+            print('Image #id with max. uncertainty:',
                   np.argmax(np.max(self.uncertainty_path)) + 1)
             print('Number of iterations:', self.iter)
 
@@ -371,13 +387,13 @@ class NEBOptimizer(object):
                                   self.num_atoms)
             max_abs_forces = np.max(np.abs(max_forces))
 
-            print('Max. force of the last image evaluated (eV/Angs):',
+            print('Max. force of the last image evaluated (eV/Angstrom):',
                   max_abs_forces)
             print('Energy of the last image evaluated (eV):',
                   self.list_targets[-1][0])
             print('Energy of the last image evaluated w.r.t. to endpoint ('
                   'eV):', self.list_targets[-1][0] - self.scale_targets)
-            print('Number of evaluated image:', argmax_unc + 2)
+            print('Number #id of the last evaluated image:', argmax_unc + 2)
 
             if max_abs_forces <= fmax:
                 print("Stationary point is found!")
