@@ -1,6 +1,7 @@
 # dev
 
 -   Improved automatic identification of adsorbate, site.
+-   Generalized coordination number for site.
 
 # Version 0.4.3 (May 2018)
 
