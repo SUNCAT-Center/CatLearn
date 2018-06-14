@@ -78,18 +78,18 @@ plt.show()
 
 # 2.B. NEB using CatLearn ####################################################
 
-neb_catlearn = NEBOptimizer(start='initial.traj', end='final.traj',
+neb_catlearn = NEBOptimizer(start='initial.traj',
+                            end='final.traj',
                             ase_calc=copy.deepcopy(ase_calculator),
                             n_images=n_images,
                             interpolation='idpp')
 
-neb_catlearn.run(fmax=0.05, ml_algo='FIRE', plot_neb_paths=True)
-
+neb_catlearn.run(fmax=0.05, plot_neb_paths=True)
 
 # 3. Summary of the results #################################################
 
 # NEB ASE:
-print('\nSummary of the results:\n')
+print('\nSummary of the results: \n')
 
 atoms_ase = read('neb_ase.traj', ':')
 n_eval_ase = len(atoms_ase) - 2 * n_images
@@ -99,4 +99,4 @@ print('Number of function evaluations CI-NEB implemented in ASE:', n_eval_ase)
 # Catlearn:
 atoms_catlearn = read('evaluated_structures.traj', ':')
 n_eval_catlearn = len(atoms_catlearn)
-print('Number of function evaluations Catlearn ASE:', n_eval_catlearn-2)
+print('Number of function evaluations CatLearn:', n_eval_catlearn-2)
