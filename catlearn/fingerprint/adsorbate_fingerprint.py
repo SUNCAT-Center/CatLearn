@@ -340,22 +340,21 @@ class AdsorbateFingerprintGenerator(BaseGenerator):
 
             site = atoms.subsets['site_atoms']
             cm = atoms.connectivity
-            formal_charges = np.ones(len(atoms))
+            anion_charges = np.zeros(len(atoms))
             for i, atom in enumerate(slab):
                 if atoms.numbers[atom] == self.ion_number:
-                    formal_charges[atom] = self.ion_charge
-            transfer = np.tril(cm * np.vstack(formal_charges))
+                    anion_charges[atom] = self.ion_charge
+            transfer = cm * np.vstack(anion_charges)
             row_sums = transfer.sum(axis=1)
             shared = self.ion_charge * transfer / np.vstack(row_sums)
             cation_charges = -np.nansum(shared, axis=0)
+            all_charges = anion_charges + cation_charges
 
             site_excess = 0
             slab_excess = 0
             transferred = 0
             for j, atom in enumerate(slab):
-                if atoms.numbers[atom] == self.ion_number:
-                    continue
-                charge = cation_charges[atom]
+                charge = all_charges[atom]
                 oxistates = get_mendeleev_params(atoms.numbers[atom],
                                                  ['oxistates'])[0]
                 if charge in oxistates:
@@ -368,8 +367,8 @@ class AdsorbateFingerprintGenerator(BaseGenerator):
                     if atom in site:
                         site_excess += charge - oxistate
 
-            site_charge_av = np.nanmean(cation_charges[site])
-            site_charge_sum = np.nansum(cation_charges[site])
+            site_charge_av = np.nanmean(all_charges[site])
+            site_charge_sum = np.nansum(all_charges[site])
 
             return [site_charge_av, site_charge_sum,
                     site_excess, slab_excess, transferred]
