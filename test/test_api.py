@@ -9,6 +9,7 @@ import unittest
 from ase.ga.data import DataConnection
 
 from catlearn.api.ase_atoms_api import extend_atoms_class
+from catlearn.api.catmap import catmap_energy_landscape
 from catlearn.api.networkx_graph_api import (ase_to_networkx,
                                              networkx_to_adjacency)
 from catlearn.fingerprint.setup import FeatureGenerator
@@ -57,8 +58,14 @@ class TestAPI(unittest.TestCase):
         self.assertTrue(all_cand[2].get_graph() == g)
         self.assertTrue(all_cand[1].get_graph() is None)
 
-    # def test_catmap_api(self):
-    #     catmap = catmap_energy(fname, database_ids, prediction)
+    def test_catmap_api(self):
+        fname = 'data/ads_example.db'
+        database_ids = [1, 2]
+        prediction = [0., 0.]
+        uncertainty = [1., 1.]
+        energy_landscape = catmap_energy_landscape(fname, database_ids,
+                                                   prediction, uncertainty)
+        energy_landscape.make_input_file('catmap_energy_test.txt')
 
 
 if __name__ == '__main__':

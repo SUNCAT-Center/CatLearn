@@ -1,10 +1,11 @@
-"""Functions that interface CatLearn with CatMAP."""
+"""API for CatMAP."""
 import ase.db
-from catmap.ase_data import db2catmap
+from catmap.api.ase_data import energy_landscape
 
 
-def catmap_energy(fname, database_ids, prediction,
-                  uncertainty=None, catmap=None):
+def catmap_energy_landscape(fname, database_ids, prediction,
+                            uncertainty=None, catmap=None,
+                            site_specific=False):
     """Return CatMAP ase_data object with predicted formation energies.
 
     Parameters
@@ -18,12 +19,16 @@ def catmap_energy(fname, database_ids, prediction,
         uncertainty : list
             Predicted uncertainties in the same order as database_ids.
         catmap : object
-            CatMAP db2catmap object.
+            CatMAP energy_landscape object.
+        site_specific : bool
+            If True: Dinstinguish sites using the site key value pair, and
+            stores a the potential energy of adsorbates on each site.
+            Else: Use the minimum ab initio energy, disregarding the site.
     """
     c = ase.db.connect(fname)
 
     if catmap is None:
-        catmap = db2catmap()
+        catmap = energy_landscape()
         catmap.formation_energies = {}
         catmap.dbid = {}
         catmap.std = {}
@@ -33,18 +38,22 @@ def catmap_energy(fname, database_ids, prediction,
     std = {}
     for i, dbid in enumerate(database_ids):
         d = c.get(dbid)
-        [n, name, phase, surf_lattice, facet,
-         cell] = catmap._get_adsorbate_fields(d)
-        key = '_'.join([n, str(d.species), name, phase, surf_lattice,
-                        facet, cell, str(d.site)])
+        n, species, name, phase, surf_lattice, facet, cell = \
+            catmap._get_adsorbate_fields(d)
+        if site_specific and 'site' in d:
+            site = str(d.site)
+        else:
+            site = 'site'
+        key = '_'.join([str(n), species, name, phase, surf_lattice,
+                        facet, cell, site])
         if key not in formation_energies:
             formation_energies[key] = prediction[i]
             std[key] = uncertainty[i]
-            dbids[key] = dbid[i]
+            dbids[key] = dbid
         elif formation_energies[key] < prediction[i]:
             formation_energies[key] = prediction[i]
             std[key] = uncertainty[i]
-            dbids[key] = dbid[i]
+            dbids[key] = dbid
     catmap.formation_energies.update(formation_energies)
     catmap.std.update(std)
     catmap.dbid.update(dbids)
