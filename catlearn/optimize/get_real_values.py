@@ -36,7 +36,6 @@ def get_energy_catlearn(self, x=None, magmoms=None):
             self.ase_ini = Atoms(self.ase_ini, positions=pos_ase,
                                  calculator=copy.deepcopy(self.ase_calc))
         if magmoms is not None:
-            print('Spin polarized calculation.')
             self.ase_ini.set_calculator(None)
             self.ase_ini = Atoms(self.ase_ini, positions=pos_ase,
                                  calculator=copy.deepcopy(self.ase_calc),
@@ -77,13 +76,13 @@ def get_forces_catlearn(self, x=None):
     # Get energies using ASE:
     if self.ase:
         forces = self.ase_ini.get_forces().flatten()
-        print('Forces of the geometry evaluated (eV/Angst):\n',
+        print("\nForces of the geometry evaluated (eV/Angst):\n",
               array_to_atoms(forces))
 
     # When not using ASE:
     if not self.ase:
         forces = -self.fun.jacobian(x)
-        print('Forces:\n', forces)
+        print("\nForces:\n", forces)
     return forces
 
 
