@@ -76,7 +76,7 @@ def get_forces_catlearn(self, x=None):
     # Get energies using ASE:
     if self.ase:
         forces = self.ase_ini.get_forces().flatten()
-        print("\nForces of the geometry evaluated (eV/Angst):\n",
+        print("Forces of the geometry evaluated (eV/Angst):\n",
               array_to_atoms(forces))
 
     # When not using ASE:

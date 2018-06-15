@@ -12,8 +12,7 @@ class CatLearnASE(Calculator):
     nolabel = True
 
     def __init__(self, trained_process, ml_calc, index_constraints,
-    finite_step=1e-4,
-    **kwargs):
+                 finite_step=1e-4, **kwargs):
 
         Calculator.__init__(self, **kwargs)
 
@@ -48,8 +47,6 @@ class CatLearnASE(Calculator):
             uncertainty = predictions['uncertainty_with_reg'][0]
             pred_value = pred_mean + 2.0 * uncertainty
             return [pred_value, uncertainty]
-
-        self.energy = 0.0
 
         Calculator.calculate(self, atoms, properties, system_changes)
 
@@ -92,5 +89,3 @@ class CatLearnASE(Calculator):
         # Results:
         self.results['energy'] = energy
         self.results['forces'] = forces
-
-

@@ -2,37 +2,37 @@ import numpy as np
 from ase.io import read
 import matplotlib.pyplot as plt
 from ase.neb import NEBTools
-import pandas as pd
 
 
 def get_plot_mullerbrown(images, interesting_point, trained_process,
                          list_train):
     """ Function for plotting each step of the toy model Muller-Brown .
     """
+
     # Generate test datapoints in x and y.
     crange = np.linspace(-0.2, 4.5, 200)
     x_lim = [-1.2, 1.1]
     y_lim = [-0.4, 1.8]
 
-    test_points = 50 # Length of the grid test points (nxn).
+    test_points = 50  # Length of the grid test points (nxn).
 
     test = []
     testx = np.linspace(x_lim[0], x_lim[1], test_points)
     testy = np.linspace(y_lim[0], y_lim[1], test_points)
     for i in range(len(testx)):
         for j in range(len(testy)):
-            test1 = [testx[i],testy[j], 0.0]
+            test1 = [testx[i], testy[j], 0.0]
             test.append(test1)
     test = np.array(test)
 
     x = []
     for i in range(len(test)):
         t = test[i][0]
-        t = x.append(t)
+        x.append(t)
     y = []
     for i in range(len(test)):
         t = test[i][1]
-        t = y.append(t)
+        y.append(t)
 
     # Contour plot for predicted function.
 
@@ -45,8 +45,7 @@ def get_plot_mullerbrown(images, interesting_point, trained_process,
     pred = trained_process.predict(test_fp=test)
     prediction = np.array(pred['prediction'][:, 0])
 
-    zi = plt.mlab.griddata(x, y, prediction, testx, testy,
-                           interp='linear')
+    zi = plt.mlab.griddata(x, y, prediction, testx, testy, interp='linear')
 
     plt.contourf(testx, testy, zi, crange, alpha=1.0, cmap='terrain',
                  extend='both')
@@ -61,7 +60,7 @@ def get_plot_mullerbrown(images, interesting_point, trained_process,
         pos_i_x = i.get_positions()[0][0]
         pos_i_y = i.get_positions()[0][1]
         plt.scatter(pos_i_x, pos_i_y, marker='o', s=8.0,
-                c='red', edgecolors='red', alpha=0.9)
+                    c='red', edgecolors='red', alpha=0.9)
     plt.scatter(interesting_point[0], interesting_point[1],
                 marker='o', c='white', edgecolors='black')
 
@@ -95,40 +94,19 @@ def get_plots_neb(images, selected=None, iter=None):
         images = read(images, ':')
 
     neb_tools = NEBTools(images)
-    [s, E, Sfit, Efit, lines] = neb_tools.get_fit()
+    [s, e] = neb_tools.get_fit()[0:2]
     neb_tools.plot_band()
 
     uncertainty_path = []
     for i in images:
         uncertainty_path.append(i.info['uncertainty'])
 
-    plt.errorbar(s, E, yerr=uncertainty_path,
+    plt.errorbar(s, e, yerr=uncertainty_path,
                  ls='none', ecolor='black', capsize=10.0)
     if iter is not None:
-        plt.suptitle('Iteration: {0:.0f}'.format(iter), x=0.85,
-                                 y=0.9)
+        plt.suptitle('Iteration: {0:.0f}'.format(iter), x=0.85, y=0.9)
     if selected is not None:
         plt.axvline(x=s[selected+1])
-
-    # Save results in csv file:
-
-    # Save discrete path:
-    data = {'Path distance (Angstrom)': s,
-            'Energy (eV)': E,
-            'Uncertainty (eV)': uncertainty_path}
-    df = pd.DataFrame(data,
-                     columns = ['Path distance (Angstrom)', 'Energy (eV)',
-                                'Uncertainty (eV)'])
-    df.to_csv('results_neb.csv')
-    print('Results:', data)
-
-    # Save interpolated path:
-    data = {'Path distance (Angstrom)': Sfit,
-            'Energy (eV)': Efit}
-    print('Results interpolation:', data)
-    df = pd.DataFrame(data,
-                     columns = ['Path distance (Angstrom)', 'Energy (eV)'])
-    df.to_csv('results_neb_interpolation.csv')
 
     plt.show()
     plt.close()

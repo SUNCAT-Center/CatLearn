@@ -3,6 +3,7 @@ from prettytable import PrettyTable
 import os
 import numpy as np
 from ase.io import Trajectory
+import pandas as pd
 
 
 def ase_traj_to_catlearn(traj_file):
@@ -264,3 +265,30 @@ def backup_old_calcs(filename):
             n_backup = str('{:05d}'.format(j))
         os.rename("./" + filename + "_convergence_catlearn.txt", "./" +
                   filename + "_convergence_catlearn_old" + n_backup + ".txt")
+
+
+def store_results_neb(s, e, sfit, efit, uncertainty_path):
+    """ Function that print in csv files the predicted NEB curves after
+        each iteration"""
+
+    # Save results in csv file:
+    print('Saving results of the ML NEB in text files...')
+    print('See the NEB results in the results_neb.csv and '
+          'results_neb_interpolation.csv files.')
+    print('Check if your ML NEB is converged.')
+
+    # Save discrete path:
+    data = {'Path distance (Angstrom)': s,
+            'Energy (eV)': e,
+            'Uncertainty (eV)': uncertainty_path}
+    df = pd.DataFrame(data,
+                      columns=['Path distance (Angstrom)', 'Energy (eV)',
+                               'Uncertainty (eV)'])
+    df.to_csv('results_neb.csv')
+
+    # Save interpolated path:
+    data = {'Path distance (Angstrom)': sfit, 'Energy (eV)': efit}
+
+    df = pd.DataFrame(data,
+                      columns=['Path distance (Angstrom)', 'Energy (eV)'])
+    df.to_csv('results_neb_interpolation.csv')

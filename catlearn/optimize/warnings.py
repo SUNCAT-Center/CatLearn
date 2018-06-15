@@ -1,3 +1,9 @@
+def store_warnings_and_errors(msg):
+    warn_and_errors = open('warnings_and_errors.txt', "a")
+    warn_and_errors.write(msg + "\n")
+    warn_and_errors.close()
+
+
 def warning_using_ase():
     msg = "Atoms have been detected. Using ASE..."
     print(msg)
@@ -234,7 +240,18 @@ def err_not_enough_images():
     return msg
 
 
-def store_warnings_and_errors(msg):
-    warn_and_errors = open('warnings_and_errors.txt', "a")
-    warn_and_errors.write(msg + "\n")
-    warn_and_errors.close()
+def congrats_stationary_neb():
+    msg = "Congratulations! Stationary point is found! Check the file " \
+          "'evaluated_geometries.traj' using ASE."
+    print(msg)
+    store_warnings_and_errors(msg)
+
+
+def congrats_neb_converged():
+    msg = "Congratulations! Your ML NEB is converged. Check the file " \
+          " 'last_predicted_path.traj' using ASE. " \
+          "If you want to plot the ML NEB predicted path you should also " \
+          "check the files 'results_neb.csv' " \
+          "and 'results_neb_interpolation.csv'."
+    print(msg)
+    store_warnings_and_errors(msg)

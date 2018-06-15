@@ -3,11 +3,21 @@ from ase.calculators.emt import EMT
 from ase.io import read
 from ase.constraints import FixAtoms
 from ase.neb import NEB
-from ase.optimize import FIRE
+from ase.optimize import BFGS, MDMin
 import matplotlib.pyplot as plt
 from catlearn.optimize.catlearn_neb_optimizer import NEBOptimizer
 from ase.neb import NEBTools
 import copy
+
+""" 
+    Toy model for the diffusion of a Au atom on an Al(111) surface.  
+    This example contains: 
+    1) Optimization of the initial and final end-points of the reaction path. 
+    2A) NEB optimization using NEB-CI as implemented in ASE. 
+    2B) NEB optimization using our machine-learning surrogate model.
+    3) Comparison between the ASE NEB and our Machine Learning assisted NEB 
+       algorithm.
+"""
 
 # 1. Structural relaxation. ##################################################
 
@@ -32,26 +42,25 @@ slab[12].magmom = 2.0
 # 1.2. Optimize initial and final end-points.
 
 # Initial end-point:
-qn = FIRE(slab, trajectory='initial.traj')
+qn = BFGS(slab, trajectory='initial.traj')
 qn.run(fmax=0.01)
 
 slab[12].magmom = 1.0
 
 # Final end-point:
 slab[-1].x += slab.get_cell()[0, 0] / 2
-qn = FIRE(slab, trajectory='final.traj')
+qn = BFGS(slab, trajectory='final.traj')
 qn.run(fmax=0.01)
 
 
 # # Define number of images:
-n_images = 9
+n_images = 7
 
 # 2.A. NEB using ASE #########################################################
 
 initial_ase = read('initial.traj')
 final_ase = read('final.traj')
 constraint = FixAtoms(mask=[atom.tag > 1 for atom in initial_ase])
-
 
 images_ase = [initial_ase]
 for i in range(1, n_images-1):
@@ -62,10 +71,12 @@ for i in range(1, n_images-1):
 
 images_ase.append(final_ase)
 
-neb_ase = NEB(images_ase, climb=True, method='improvedtangent', k=0.1)
+neb_ase = NEB(images_ase, climb=True, method='improvedtangent')
 neb_ase.interpolate(method='idpp')
-qn_ase = FIRE(neb_ase, trajectory='neb_ase.traj')
+
+qn_ase = MDMin(neb_ase, trajectory='neb_ase.traj')
 qn_ase.run(fmax=0.05)
+
 nebtools_ase = NEBTools(images_ase)
 
 Sf_ase = nebtools_ase.get_fit()[2]
@@ -100,3 +111,9 @@ print('Number of function evaluations CI-NEB implemented in ASE:', n_eval_ase)
 atoms_catlearn = read('evaluated_structures.traj', ':')
 n_eval_catlearn = len(atoms_catlearn)
 print('Number of function evaluations CatLearn:', n_eval_catlearn-2)
+
+# Comparison:
+print('\nThe CatLearn algorithm required approximately',
+      int(n_eval_ase/n_eval_catlearn),
+      'times less number of function evaluations than '
+      'the standard NEB algorithm.')

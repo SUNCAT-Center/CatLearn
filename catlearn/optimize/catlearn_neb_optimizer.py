@@ -1,6 +1,6 @@
 import numpy as np
 from catlearn.optimize.warnings import *
-from catlearn.optimize.io import ase_traj_to_catlearn
+from catlearn.optimize.io import ase_traj_to_catlearn, store_results_neb
 from catlearn.optimize.ml_calculator import GPCalculator, train_ml_process
 from catlearn.optimize.convergence import get_fmax
 from catlearn.optimize.get_real_values import eval_and_append
@@ -15,7 +15,6 @@ from ase.optimize import FIRE, MDMin
 from scipy.spatial import distance
 import copy
 import os
-from ase.visualize import view
 
 
 class NEBOptimizer(object):
@@ -23,7 +22,7 @@ class NEBOptimizer(object):
     def __init__(self, start, end, path=None, n_images=None, spring=None,
                  interpolation=None, neb_method='improvedtangent',
                  ml_calc=None, ase_calc=None, inc_prev_calcs=False,
-                 stabilize=False, restart_neb=False):
+                 stabilize=False, restart=False):
         """ Nudged elastic band (NEB) setup.
 
         Parameters
@@ -70,6 +69,9 @@ class NEBOptimizer(object):
         self.constraints = None
         self.interesting_point = None
 
+        # Create new file to store warnings and errors:
+        open('warnings_and_errors.txt', 'w')
+
         assert start is not None, err_not_neb_start()
         assert end is not None, err_not_neb_end()
         assert self.ase_calc, err_not_ase_calc_traj()
@@ -85,10 +87,11 @@ class NEBOptimizer(object):
         is_pos = is_endpoint[-1].get_positions().flatten()
         fs_pos = fs_endpoint[-1].get_positions().flatten()
 
-        # A and B) If user sets restart mode.
+        # A and B) Restart mode.
+
         # Read the previously evaluated structures and append them to the
         # training list
-        if restart_neb is True:
+        if restart is True:
             restart_filename = 'evaluated_structures.traj'
             if not os.path.isfile(restart_filename):
                 warning_restart_neb()
@@ -214,7 +217,7 @@ class NEBOptimizer(object):
                                         )
 
         # Save files with all the paths tested:
-        write('all_pred_paths.traj', self.images)
+        write('all_predicted_paths.traj', self.images)
 
         if stabilize is True:
             for i in self.images[1:-1]:
@@ -264,12 +267,14 @@ class NEBOptimizer(object):
             # 1) Train Machine Learning process:
 
             # Check that the user is not feeding redundant information to ML.
+
             count_unique = np.unique(self.list_train, return_counts=True,
                                      axis=0)[1]
             msg = 'Your training list constains 1 or more duplicated elements'
             assert np.any(count_unique) < 2, msg
 
-            print('')
+            print('Training a ML process...')
+            print('Number of training points:', len(self.list_targets))
             process = train_ml_process(list_train=self.list_train,
                                        list_targets=self.list_targets,
                                        list_gradients=self.list_gradients,
@@ -279,12 +284,13 @@ class NEBOptimizer(object):
 
             trained_process = process['trained_process']
             ml_calc = process['ml_calc']
+            print('ML process trained.')
 
             # 2) Setup and run ML NEB:
 
             starting_path = copy.deepcopy(self.initial_images)
 
-            if np.max(self.uncertainty_path[1:-1]) <= 0.050:
+            if np.max(self.uncertainty_path[1:-1]) <= 2 * unc_convergence:
                 starting_path = self.images
 
             self.images = create_ml_neb(is_endpoint=self.initial_endpoint,
@@ -305,24 +311,28 @@ class NEBOptimizer(object):
 
             neb_opt = eval(ml_algo)(ml_neb, dt=0.1)
 
+            print('Starting ML NEB optimization...')
             neb_opt.run(fmax=fmax,
                         steps=ml_max_iter)
 
-            if np.max(self.uncertainty_path[1:-1]) <= 0.050:
+            if np.max(self.uncertainty_path[1:-1]) <= 2 * unc_convergence:
+                print('Starting ML NEB optimization using climbing image...')
                 ml_neb = NEB(self.images, climb=True,
                              method='improvedtangent',
                              k=self.spring)
 
                 neb_opt = eval(ml_algo)(ml_neb, dt=0.1)
                 neb_opt.run(fmax=fmax, steps=ml_max_iter)
-
+            print('ML NEB optimized.')
 
             # 3) Get results from ML NEB using ASE NEB tools:
             # See https://wiki.fysik.dtu.dk/ase/ase/neb.html
 
+            interesting_point = []
+
             # Get fit of the discrete path.
             neb_tools = NEBTools(self.images)
-            s = neb_tools.get_fit()[0]
+            [s, e, sfit, efit] = neb_tools.get_fit()[0:4]
 
             self.uncertainty_path = []
             energies_path = []
@@ -342,7 +352,7 @@ class NEBOptimizer(object):
                 interesting_point = self.images[1:-1][
                                           argmax_unc].get_positions().flatten()
 
-            # Store plots.
+            # Plots results in each iteration.
             if plot_neb_paths is True:
                 get_plots_neb(images=self.images,
                                        selected=argmax_unc, iter=self.iter)
@@ -353,6 +363,8 @@ class NEBOptimizer(object):
                                          interesting_point=interesting_point,
                                          trained_process=trained_process,
                                          list_train=self.list_train)
+            # Store results each iteration:
+            store_results_neb(s, e, sfit, efit, self.uncertainty_path)
 
             # 3) Add a new training point and evaluate it.
 
@@ -365,7 +377,7 @@ class NEBOptimizer(object):
                              filename='./evaluated_structures.traj',
                              mode='a').write()
             # Last path.
-            write('last_pred_path.traj', self.images)
+            write('last_predicted_path.traj', self.images)
 
             # All paths.
             for i in self.images:
@@ -395,10 +407,13 @@ class NEBOptimizer(object):
                   'eV):', self.list_targets[-1][0] - self.scale_targets)
             print('Number #id of the last evaluated image:', argmax_unc + 2)
 
+            # 5) Check convergence:
+
+            # Check whether the evaluated point is a stationary point.
             if max_abs_forces <= fmax:
-                print("Stationary point is found!")
+                congrats_stationary_neb()
                 if np.max(self.uncertainty_path) < unc_convergence:
-                    print("\nCongratulations, your ML NEB is converged!")
+                    congrats_neb_converged()
                     break
 
             # Break if reaches the max number of iterations set by the user.
