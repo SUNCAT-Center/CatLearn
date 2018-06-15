@@ -288,10 +288,7 @@ class NEBOptimizer(object):
 
             # 2) Setup and run ML NEB:
 
-            starting_path = copy.deepcopy(self.initial_images)
-
-            if np.max(self.uncertainty_path[1:-1]) <= 2 * unc_convergence:
-                starting_path = self.images
+            starting_path = self.images
 
             self.images = create_ml_neb(is_endpoint=self.initial_endpoint,
                                         fs_endpoint=self.final_endpoint,
@@ -318,7 +315,7 @@ class NEBOptimizer(object):
             if np.max(self.uncertainty_path[1:-1]) <= 2 * unc_convergence:
                 print('Starting ML NEB optimization using climbing image...')
                 ml_neb = NEB(self.images, climb=True,
-                             method='improvedtangent',
+                             method=self.neb_method,
                              k=self.spring)
 
                 neb_opt = eval(ml_algo)(ml_neb, dt=0.1)
