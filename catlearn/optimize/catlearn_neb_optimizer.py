@@ -169,7 +169,7 @@ class NEBOptimizer(object):
         self.neb_method = neb_method
         self.spring = spring
         if self.spring is None:
-            self.spring = np.sqrt(self.n_images) / self.d_start_end
+            self.spring = np.sqrt((self.n_images-1) / self.d_start_end)
         self.initial_endpoint = is_endpoint[-1]
         self.final_endpoint = fs_endpoint[-1]
 
