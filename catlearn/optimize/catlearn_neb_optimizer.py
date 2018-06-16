@@ -230,7 +230,7 @@ class NEBOptimizer(object):
 
         # Stabilize spring constant:
         if self.spring is None:
-            self.spring = np.sqrt(self.n_images) / self.d_start_end
+            self.spring = np.sqrt((self.n_images-1) / self.d_start_end)
 
     def run(self, fmax=0.05, unc_convergence=0.010, max_iter=500,
             ml_algo='MDMin', ml_max_iter=500, plot_neb_paths=False):
