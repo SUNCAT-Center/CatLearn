@@ -6,7 +6,8 @@ from catlearn.optimize.convergence import get_fmax
 from catlearn.optimize.get_real_values import eval_and_append
 from catlearn.optimize.catlearn_ase_calc import CatLearnASE
 from catlearn.optimize.constraints import create_mask_ase_constraints
-from catlearn.optimize.plots import get_plot_mullerbrown, get_plots_neb
+from catlearn.optimize.plots import get_plot_mullerbrown, get_plots_neb, \
+                                    get_plot_mullerbrown_p
 from ase.io.trajectory import TrajectoryWriter
 from ase.neb import NEB
 from ase.neb import NEBTools
@@ -360,6 +361,10 @@ class NEBOptimizer(object):
                                          interesting_point=interesting_point,
                                          trained_process=trained_process,
                                          list_train=self.list_train)
+                    get_plot_mullerbrown_p(images=self.images,
+                                           interesting_point=interesting_point,
+                                           trained_process=trained_process,
+                                           list_train=self.list_train)
             # Store results each iteration:
             store_results_neb(s, e, sfit, efit, self.uncertainty_path)
 
