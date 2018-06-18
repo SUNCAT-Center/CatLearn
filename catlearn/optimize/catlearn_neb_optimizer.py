@@ -12,12 +12,13 @@ from ase.io.trajectory import TrajectoryWriter
 from ase.neb import NEB
 from ase.neb import NEBTools
 from ase.io import read, write
-from ase.optimize import FIRE, MDMin
+from ase.optimize import MDMin, FIRE
 from scipy.spatial import distance
 import copy
 import os
 from scipy.interpolate import CubicSpline
 from catlearn.optimize.io import array_to_ase
+
 
 class NEBOptimizer(object):
 
@@ -151,7 +152,7 @@ class NEBOptimizer(object):
 
         # Configure ML calculator.
         if self.ml_calc is None:
-            self.kdict = {'k1': {'type': 'gaussian', 'width': 0.4,
+            self.kdict = {'k1': {'type': 'gaussian', 'width': 0.5,
                                  'dimension': 'single',
                                  'bounds': ((0.1, 1.0), ),
                                  'scaling': 1.0,
@@ -159,9 +160,9 @@ class NEBOptimizer(object):
                           }
 
             self.ml_calc = GPCalculator(
-                kernel_dict=self.kdict, opt_hyperparam=False, scale_data=False,
+                kernel_dict=self.kdict, opt_hyperparam=True, scale_data=False,
                 scale_optimizer=False, calc_uncertainty=True,
-                regularization=1e-6, regularization_bounds=(1e-6, 1e-6))
+                regularization=1e-5, regularization_bounds=(1e-5, 1e-5))
 
         # Settings for the NEB.
         self.neb_method = neb_method
@@ -233,7 +234,7 @@ class NEBOptimizer(object):
             self.spring = np.sqrt((self.n_images-1) / self.d_start_end)
 
         # Get path distance:
-        self.path_distance = self.d_start_end.copy()
+        self.path_distance = copy.deepcopy(self.d_start_end)
 
     def run(self, fmax=0.05, unc_convergence=0.010, max_iter=500,
             ml_algo='MDMin', ml_max_iter=500, plot_neb_paths=False):
@@ -291,21 +292,22 @@ class NEBOptimizer(object):
 
             # 2) Setup and run ML NEB:
 
-            # Re-arrange images:
             if self.iter > 0:
-                x = s
-                y = []
-                for i in self.images:
-                    y.append(i.get_positions().flatten())
-                cubic = CubicSpline(x, y)
-                lin_space = np.linspace(0, self.path_distance, self.n_images)
-                reag_pos = cubic(lin_space)
 
-                for i in range(0, len(self.images)):
-                    pos = array_to_ase(reag_pos[i], self.num_atoms)
-                    self.images[i].set_positions(pos)
+                # Redistribute images along the path.
+
+                self.images = redistribute_images_path(
+                                              images=self.images,
+                                              d_images=s,
+                                              path_distance=self.path_distance,
+                                              n_images=self.n_images,
+                                              n_atoms=self.num_atoms
+                                              )
+
+                # If the previous run didn't converge use the initial path.
                 if neb_opt.__dict__['nsteps'] >= ml_max_iter-2:
-                    self.images = self.initial_images
+                    self.images = copy.deepcopy(self.initial_images)
+
             starting_path = self.images
 
             self.images = create_ml_neb(is_endpoint=self.initial_endpoint,
@@ -367,12 +369,13 @@ class NEBOptimizer(object):
             if self.iter % 2 == 1:
                 argmax_unc = np.argmax(np.abs(energies_path[1:-1]))
                 interesting_point = self.images[1:-1][
-                                          argmax_unc].get_positions().flatten()
+                                          int(argmax_unc)].get_positions(
+                                          ).flatten()
 
             # Plots results in each iteration.
             if plot_neb_paths is True:
                 get_plots_neb(images=self.images,
-                                       selected=argmax_unc, iter=self.iter)
+                              selected=int(argmax_unc), iter=self.iter)
 
             if plot_neb_paths is True:
                 if self.ase_calc.__dict__['name'] == 'mullerbrown':
@@ -469,7 +472,7 @@ def create_ml_neb(is_endpoint, fs_endpoint, images_interpolation,
     imgs[0].info['iteration'] = iteration
 
     for i in range(1, n_images-1):
-        image = s_guess_ml.copy()
+        image = copy.deepcopy(s_guess_ml)
         image.info['label'] = i
         image.info['uncertainty'] = 0.0
         image.info['iteration'] = iteration
@@ -494,3 +497,19 @@ def create_ml_neb(is_endpoint, fs_endpoint, images_interpolation,
     imgs[-1].info['iteration'] = iteration
 
     return imgs
+
+def redistribute_images_path(images, d_images, path_distance, n_images,
+                             n_atoms):
+    x = d_images
+    y = []
+
+    for i in images:
+        y.append(i.get_positions().flatten())
+    cubic = CubicSpline(x, y)
+    lin_space = np.linspace(0, path_distance, n_images)
+    reag_pos = cubic(lin_space)
+
+    for i in range(0, len(images)):
+        pos = array_to_ase(reag_pos[i], n_atoms)
+        images[i].set_positions(pos)
+    return images

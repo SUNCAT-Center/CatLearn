@@ -160,7 +160,7 @@ def get_plots_neb(images, selected=None, iter=None):
     ----------
     images : Atoms objects or trajectory file.
         Atoms objects or traj file (in ASE format) containing the path to plot.
-    selected: float
+    selected: int
         Next point to evaluate, chosen by the surrogate model.
     iter: integer
         Iteration number.
