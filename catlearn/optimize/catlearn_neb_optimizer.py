@@ -16,7 +16,8 @@ from ase.optimize import FIRE, MDMin
 from scipy.spatial import distance
 import copy
 import os
-
+from scipy.interpolate import CubicSpline
+from catlearn.optimize.io import array_to_ase
 
 class NEBOptimizer(object):
 
@@ -148,9 +149,6 @@ class NEBOptimizer(object):
             self.ind_mask_constr = create_mask_ase_constraints(
                                                 self.ase_ini, self.constraints)
 
-        # Calculate length of the path.
-        self.d_start_end = np.abs(distance.euclidean(is_pos, fs_pos))
-
         # Configure ML calculator.
         if self.ml_calc is None:
             self.kdict = {'k1': {'type': 'gaussian', 'width': 0.4,
@@ -163,18 +161,19 @@ class NEBOptimizer(object):
             self.ml_calc = GPCalculator(
                 kernel_dict=self.kdict, opt_hyperparam=False, scale_data=False,
                 scale_optimizer=False, calc_uncertainty=True,
-                regularization=1e-5, regularization_bounds=(1e-5, 1e-5))
+                regularization=1e-6, regularization_bounds=(1e-6, 1e-6))
 
         # Settings for the NEB.
         self.neb_method = neb_method
         self.spring = spring
-        if self.spring is None:
-            self.spring = np.sqrt((self.n_images-1) / self.d_start_end)
         self.initial_endpoint = is_endpoint[-1]
         self.final_endpoint = fs_endpoint[-1]
 
         # A) Create images using interpolation if user do not feed a path:
         if path is None:
+            self.d_start_end = np.abs(distance.euclidean(is_pos, fs_pos))
+            if self.spring is None:
+                self.spring = np.sqrt((self.n_images-1) / self.d_start_end)
             self.images = create_ml_neb(is_endpoint=self.initial_endpoint,
                                         fs_endpoint=self.final_endpoint,
                                         images_interpolation=None,
@@ -188,7 +187,7 @@ class NEBOptimizer(object):
                                         )
 
             neb_interpolation = NEB(self.images, k=self.spring)
-        
+
             neb_interpolation.interpolate(method=interpolation)
 
             self.initial_images = copy.deepcopy(self.images)
@@ -232,6 +231,9 @@ class NEBOptimizer(object):
         # Stabilize spring constant:
         if self.spring is None:
             self.spring = np.sqrt((self.n_images-1) / self.d_start_end)
+
+        # Get path distance:
+        self.path_distance = self.d_start_end.copy()
 
     def run(self, fmax=0.05, unc_convergence=0.010, max_iter=500,
             ml_algo='MDMin', ml_max_iter=500, plot_neb_paths=False):
@@ -289,6 +291,21 @@ class NEBOptimizer(object):
 
             # 2) Setup and run ML NEB:
 
+            # Re-arrange images:
+            if self.iter > 0:
+                x = s
+                y = []
+                for i in self.images:
+                    y.append(i.get_positions().flatten())
+                cubic = CubicSpline(x, y)
+                lin_space = np.linspace(0, self.path_distance, self.n_images)
+                reag_pos = cubic(lin_space)
+
+                for i in range(0, len(self.images)):
+                    pos = array_to_ase(reag_pos[i], self.num_atoms)
+                    self.images[i].set_positions(pos)
+                if neb_opt.__dict__['nsteps'] >= ml_max_iter-2:
+                    self.images = self.initial_images
             starting_path = self.images
 
             self.images = create_ml_neb(is_endpoint=self.initial_endpoint,
@@ -313,14 +330,14 @@ class NEBOptimizer(object):
             neb_opt.run(fmax=fmax,
                         steps=ml_max_iter)
 
-            if np.max(self.uncertainty_path[1:-1]) <= 2 * unc_convergence:
-                print('Starting ML NEB optimization using climbing image...')
-                ml_neb = NEB(self.images, climb=True,
-                             method=self.neb_method,
-                             k=self.spring)
+            # if np.max(self.uncertainty_path[1:-1]) <= 2 * unc_convergence:
+            print('Starting ML NEB optimization using climbing image...')
+            ml_neb = NEB(self.images, climb=True,
+                         method=self.neb_method,
+                         k=self.spring)
 
-                neb_opt = eval(ml_algo)(ml_neb, dt=0.1)
-                neb_opt.run(fmax=fmax, steps=ml_max_iter)
+            neb_opt = eval(ml_algo)(ml_neb, dt=0.1)
+            neb_opt.run(fmax=fmax, steps=ml_max_iter)
             print('ML NEB optimized.')
 
             # 3) Get results from ML NEB using ASE NEB tools:
@@ -331,6 +348,8 @@ class NEBOptimizer(object):
             # Get fit of the discrete path.
             neb_tools = NEBTools(self.images)
             [s, e, sfit, efit] = neb_tools.get_fit()[0:4]
+
+            self.path_distance = s[-1]
 
             self.uncertainty_path = []
             energies_path = []
@@ -361,10 +380,10 @@ class NEBOptimizer(object):
                                          interesting_point=interesting_point,
                                          trained_process=trained_process,
                                          list_train=self.list_train)
-                    get_plot_mullerbrown_p(images=self.images,
-                                           interesting_point=interesting_point,
-                                           trained_process=trained_process,
-                                           list_train=self.list_train)
+                    # get_plot_mullerbrown_p(images=self.images,
+                    #                        interesting_point=interesting_point,
+                    #                        trained_process=trained_process,
+                    #                        list_train=self.list_train)
             # Store results each iteration:
             store_results_neb(s, e, sfit, efit, self.uncertainty_path)
 
@@ -388,11 +407,12 @@ class NEBOptimizer(object):
                                  mode='a').write()
 
             print('Length of initial path (Angstrom):', self.d_start_end)
-            print('Length of the current path (Angstrom):', s[-1])
+            print('Length of the current path (Angstrom):', self.path_distance)
             print('Spring constant (eV/Angstrom):', self.spring)
-            print('Max. uncertainty (eV):', np.max(self.uncertainty_path))
+            print('Max. uncertainty (eV):',
+                  np.max(self.uncertainty_path[1:-1]))
             print('Image #id with max. uncertainty:',
-                  np.argmax(np.max(self.uncertainty_path)) + 1)
+                  np.argmax(self.uncertainty_path[1:-1]) + 2)
             print('Number of iterations:', self.iter)
 
             # Break if converged:
@@ -414,7 +434,7 @@ class NEBOptimizer(object):
             # Check whether the evaluated point is a stationary point.
             if max_abs_forces <= fmax:
                 congrats_stationary_neb()
-                if np.max(self.uncertainty_path) < unc_convergence:
+                if np.max(self.uncertainty_path[1:-1]) < unc_convergence:
                     congrats_neb_converged()
                     break
 
