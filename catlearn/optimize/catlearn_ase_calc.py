@@ -13,7 +13,7 @@ class CatLearnASE(Calculator):
     nolabel = True
 
     def __init__(self, trained_process, ml_calc, index_constraints,
-                 finite_step=1e-5, **kwargs):
+                 finite_step=1e-5, kappa=4.0, **kwargs):
 
         Calculator.__init__(self, **kwargs)
 
@@ -21,6 +21,7 @@ class CatLearnASE(Calculator):
         self.ml_calc = ml_calc
         self.fs = finite_step
         self.ind_constraints = index_constraints
+        self.kappa = kappa
 
     def calculate(self, atoms=None, properties=['energy', 'forces'],
                   system_changes=all_changes):
@@ -29,14 +30,15 @@ class CatLearnASE(Calculator):
         self.atoms = atoms
 
         def pred_energy_test(test, ml_calc=self.ml_calc,
-                             trained_process=self.trained_process):
+                             trained_process=self.trained_process,
+                             kappa=self.kappa):
 
             # Get predictions.
             predictions = ml_calc.get_predictions(trained_process,
                                                   test_data=test[0])
             post_mean = predictions['pred_mean'][0][0]
             unc = predictions['uncertainty_with_reg'][0]
-            acq_val = copy.deepcopy(post_mean) + 4.0 * copy.deepcopy(unc)
+            acq_val = copy.deepcopy(post_mean) + kappa * copy.deepcopy(unc)
             return [acq_val, unc]
 
         Calculator.calculate(self, atoms, properties, system_changes)
