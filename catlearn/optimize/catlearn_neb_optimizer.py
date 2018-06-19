@@ -156,7 +156,7 @@ class NEBOptimizer(object):
         if self.ml_calc is None:
             self.kdict = {'k1': {'type': 'gaussian', 'width': 0.5,
                                  'dimension': 'single',
-                                 'bounds': ((0.1, 1.0), ),
+                                 'bounds': ((0.05, 1.0), ),
                                  'scaling': 1.0,
                                  'scaling_bounds': ((1.0, 1.0), )}
                           }
