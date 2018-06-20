@@ -37,7 +37,7 @@ slab.set_calculator(copy.deepcopy(ase_calculator))
 mask = [atom.tag > 1 for atom in slab]
 slab.set_constraint(FixAtoms(mask=mask))
 
-slab[12].magmom = 2.0
+slab[12].magmom = 1.0
 
 # 1.2. Optimize initial and final end-points.
 
@@ -45,7 +45,7 @@ slab[12].magmom = 2.0
 qn = BFGS(slab, trajectory='initial.traj')
 qn.run(fmax=0.01)
 
-slab[12].magmom = 1.0
+slab[12].magmom = -1.0
 
 # Final end-point:
 slab[-1].x += slab.get_cell()[0, 0] / 2

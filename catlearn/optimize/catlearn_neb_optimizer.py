@@ -119,8 +119,6 @@ class NEBOptimizer(object):
         if not np.array_equal(self.magmom_fs, np.zeros_like(self.magmom_fs)):
             self.spin = True
             warning_spin_neb()
-        if np.array_equal(self.magmom_is, self.magmom_fs):
-            self.spin = False
 
         # Obtain the energy of the endpoints for scaling:
         energy_is = is_endpoint[-1].get_potential_energy()
@@ -361,18 +359,29 @@ class NEBOptimizer(object):
                 self.uncertainty_path.append(i.info['uncertainty'])
                 energies_path.append(i.get_total_energy())
 
+            # Extra: Spin polarized calculations. Interpolation between is/fs.
+            if self.spin is True:
+                vect_magmom = (self.magmom_fs-self.magmom_is) / s[-1]
+                for i in range(0, len(self.images)):
+                    self.images[i].__dict__['arrays']['initial_magmoms'] =\
+                                            (vect_magmom*s[i] + self.magmom_is)
+
             # Select image with maximum uncertainty.
             if self.iter % 2 == 0:
                 argmax_unc = np.argmax(self.uncertainty_path[1:-1])
-                interesting_point = self.images[1:-1][
-                                      argmax_unc].get_positions().flatten()
+
+                interesting_image = self.images[1:-1][int(argmax_unc)]
+                interesting_point = interesting_image.get_positions().flatten()
+                interesting_magmom = \
+                    interesting_image.get_initial_magnetic_moments()
 
             # Select image with max. predicted value (absolute value).
             if self.iter % 2 == 1:
                 argmax_unc = np.argmax(np.abs(energies_path[1:-1]))
-                interesting_point = self.images[1:-1][
-                                          int(argmax_unc)].get_positions(
-                                          ).flatten()
+                interesting_image = self.images[1:-1][int(argmax_unc)]
+                interesting_point = interesting_image.get_positions().flatten()
+                interesting_magmom = \
+                    interesting_image.get_initial_magnetic_moments()
 
             # Plots results in each iteration.
             if plot_neb_paths is True:
@@ -393,8 +402,7 @@ class NEBOptimizer(object):
             store_results_neb(s, e, sfit, efit, self.uncertainty_path)
 
             # 3) Add a new training point and evaluate it.
-
-            eval_and_append(self, interesting_point)
+            eval_and_append(self, interesting_point, interesting_magmom)
 
             # 4) Store results.
 
@@ -499,6 +507,7 @@ def create_ml_neb(is_endpoint, fs_endpoint, images_interpolation,
     imgs[-1].info['iteration'] = iteration
 
     return imgs
+
 
 def redistribute_images_path(images, d_images, path_distance, n_images,
                              n_atoms):

@@ -167,14 +167,6 @@ class AutoNEBASE(object):
         for i in to_run[1:-1]:
             self.all_images[i].set_calculator(self.attach_calculators)
 
-
-            # self.all_images[i].set_calculator(CatLearnASE(
-            #                                       trained_process=self.tr,
-            #                                       ml_calc=self.ml,
-            #                                       index_constraints=self.const
-            #                                              )
-            #                                   )
-
         neb = NEB([self.all_images[i] for i in to_run],
                   k=[self.k[i] for i in to_run[0:-1]],
                   method=self.method,

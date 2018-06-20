@@ -86,7 +86,7 @@ def get_forces_catlearn(self, x=None):
     return forces
 
 
-def eval_and_append(self, interesting_point):
+def eval_and_append(self, interesting_point, interesting_magmom=None):
     """ Evaluates the energy and forces (ASE) of the point of interest
         for a given atomistic structure.
 
@@ -107,52 +107,14 @@ def eval_and_append(self, interesting_point):
 
     self.list_train = np.append(self.list_train,
                                 interesting_point, axis=0)
-    energy_1 = get_energy_catlearn(self, magmoms=self.magmom_is)
 
-    self.list_targets = np.append(self.list_targets, energy_1)
+    energy = get_energy_catlearn(self, magmoms=interesting_magmom)
 
-    gradients_1 = [-get_forces_catlearn(self).flatten()]
+    self.list_targets = np.append(self.list_targets, energy)
+
+    gradients = [-get_forces_catlearn(self).flatten()]
     self.list_gradients = np.append(self.list_gradients,
-                                    gradients_1, axis=0)
-
-    if self.spin is True:
-        # Save images with spin 1:
-        images_spin_1 = copy.deepcopy(self.ase_ini)
-
-        if np.ndim(interesting_point) == 1:
-            interesting_point = np.array([interesting_point])
-
-        self.list_train = np.append(self.list_train,
-                                    interesting_point, axis=0)
-        energy_2 = get_energy_catlearn(self, magmoms=self.magmom_fs)
-
-        self.list_targets = np.append(self.list_targets, energy_2)
-        self.list_targets = np.reshape(self.list_targets,
-                                       (len(self.list_targets), 1))
-
-        gradients_2 = [-get_forces_catlearn(self).flatten()]
-        self.list_gradients = np.append(self.list_gradients,
-                                        gradients_2, axis=0)
-
-        last_index = len(self.list_targets)-1
-
-        if energy_1 > energy_2:
-            print('Saving atoms with similar spin than the final endpoint.')
-            self.list_train = np.delete(self.list_train, last_index-1, axis=0)
-            self.list_targets = np.delete(self.list_targets, last_index-1,
-                                          axis=0)
-            self.list_gradients = np.delete(self.list_gradients, last_index-1,
-                                            axis=0)
-
-        if energy_1 <= energy_2:
-            print('Saving atoms with similar spin than the initial endpoint.')
-            self.list_train = np.delete(self.list_train, last_index,
-                                        axis=0)
-            self.list_targets = np.delete(self.list_targets, last_index,
-                                          axis=0)
-            self.list_gradients = np.delete(self.list_gradients,
-                                            last_index, axis=0)
-            self.ase_ini = copy.deepcopy(images_spin_1)
+                                    gradients, axis=0)
 
     self.list_targets = np.reshape(self.list_targets,
                                    (len(self.list_targets), 1))

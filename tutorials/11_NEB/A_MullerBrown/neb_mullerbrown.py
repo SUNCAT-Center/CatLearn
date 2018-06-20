@@ -40,9 +40,9 @@ initial_opt.run(fmax=0.01)
 final_opt = BFGS(final_structure, trajectory='final_optimized.traj')
 final_opt.run(fmax=0.01)
 
-# # Define number of images for NEBS:
+# # Define number of images for the NEB:
 
-n_images = 7
+n_images = 11
 
 # # 2.A. NEB using ASE ########################################################
 
