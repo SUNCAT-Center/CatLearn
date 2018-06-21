@@ -1,5 +1,6 @@
 from catlearn.optimize.catlearn_minimizer import MLOptimizer
-from catlearn.optimize.functions_calc import ModifiedHimmelblau
+from catlearn.optimize.functions_calc import MullerBrown, Himmelblau, \
+                                             ModifiedHimmelblau
 from ase import Atoms
 from ase.optimize import BFGS
 from ase.io import read
@@ -13,11 +14,11 @@ import numpy as np
 """
 
 # 0. Set calculator.
-ase_calculator = ModifiedHimmelblau()
+ase_calculator = MullerBrown()
 
 # 1. Set common initial structure.
-common_initial = Atoms('C', positions=[(4.0, -4.0, 0.0)])
-common_initial.rattle(stdev=0.2, seed=0)
+common_initial = Atoms('C', positions=[(0.0, 0.0, 0.0)])
+# common_initial.rattle(stdev=0.1, seed=0)
 
 # 2.A. Optimize structure using ASE.
 initial_ase = copy.deepcopy(common_initial)
@@ -32,7 +33,7 @@ initial_catlearn = copy.deepcopy(common_initial)
 initial_catlearn.set_calculator(copy.deepcopy(ase_calculator))
 
 catlearn_opt = MLOptimizer(initial_catlearn, filename='results')
-catlearn_opt.run(fmax=0.01, ml_algo='FIRE')
+catlearn_opt.run(fmax=0.01, ml_algo='BFGS')
 
 # 3. Summary of the results:
 print('\n Summary of the results:\n ------------------------------------')
@@ -41,16 +42,10 @@ ase_results = read('ase_optimization.traj', ':')
 
 print('Number of function evaluations using ASE:', len(ase_results))
 print('Energy ASE (eV):', ase_results[-1].get_potential_energy())
-print('Coordinates ASE:', np.round(ase_results[-1].get_positions(
-                                        ).flatten(),
-                                        5)
-                                        )
+print('Coordinates ASE:', ase_results[-1].get_positions().flatten())
 
 catlearn_results = read('results_catlearn.traj', ':')
 
 print('Number of function evaluations using CatLearn:', len(catlearn_results))
 print('Energy CatLearn (eV):', catlearn_results[-1].get_potential_energy())
-print('Coordinates CatLearn:', np.round(catlearn_results[-1].get_positions(
-                                        ).flatten(),
-                                        5)
-                                        )
+print('Coordinates CatLearn:', catlearn_results[-1].get_positions().flatten())

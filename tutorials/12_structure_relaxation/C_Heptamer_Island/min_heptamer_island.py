@@ -43,8 +43,7 @@ ase_results = read('ase_optimization.traj', ':')
 print('Number of function evaluations using ASE:', len(ase_results))
 print('Energy ASE (eV):', ase_results[-1].get_potential_energy())
 
-catlearn_results= read('results_catlearn.traj', ':')
+catlearn_results = read('results_catlearn.traj', ':')
 
 print('Number of function evaluations using CatLearn:', len(catlearn_results))
 print('Energy CatLearn (eV):', catlearn_results[-1].get_potential_energy())
-

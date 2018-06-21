@@ -57,7 +57,7 @@ class MLOptimizer(object):
             self.ml_calc = GPCalculator(
                 kernel_dict=self.kdict, opt_hyperparam=True, scale_data=False,
                 scale_optimizer=False, calc_uncertainty=True,
-                regularization=1e-5, regularization_bounds=(1e-5, 1e-5))
+                regularization=1e-4, regularization_bounds=(1e-4, 1e-4))
             warning_kernel()
 
         self.ase_calc = ase_calc
@@ -199,13 +199,13 @@ class MLOptimizer(object):
             guess.set_calculator(CatLearnASE(
                                     trained_process=trained_process,
                                     ml_calc=ml_calc,
-                                    kappa=4.0,
+                                    kappa=1.0,
                                     index_constraints=self.ind_mask_constr
                                          ))
             # Run ML optimization.
             opt_ml = eval(ml_algo)(guess)
             print('Starting ML NEB optimization...')
-            opt_ml.run(fmax=fmax, steps=ml_max_iter)
+            opt_ml.run(fmax=fmax/2.0, steps=ml_max_iter)
             print('ML NEB optimized.')
 
             # 3) Evaluate and append interesting point.

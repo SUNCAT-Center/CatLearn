@@ -51,6 +51,7 @@ class AutoNEBOptimizer(object):
 
         # General setup:
         self.iter = 0
+        self.feval = 0
         self.ml_calc = ml_calc
         self.ase_calc = ase_calc
         self.ase = True
