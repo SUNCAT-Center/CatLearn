@@ -120,3 +120,4 @@ def eval_and_append(self, interesting_point, interesting_magmom=None):
                                    (len(self.list_targets), 1))
 
     self.iter = self.iter + 1
+    self.feval += 1

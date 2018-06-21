@@ -1,12 +1,9 @@
 from ase.io import read, write
-from ase.optimize import BFGS, MDMin
-import matplotlib.pyplot as plt
-from catlearn.optimize.catlearn_neb_optimizer import NEBOptimizer
-from ase.neb import NEBTools
+from ase.optimize import BFGS
 import copy
 from catlearn.optimize.autoneb_ase import AutoNEBASE
 from catlearn.optimize.catlearn_autoneb_optimizer import AutoNEBOptimizer
-from catlearn.optimize.mullerbrown_calc import MullerBrown
+from catlearn.optimize.functions_calc import MullerBrown
 from ase import Atoms
 import glob
 import shutil

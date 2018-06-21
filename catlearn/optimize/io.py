@@ -122,7 +122,7 @@ def print_info(self):
     if self.iter == 1 and self.feval > 1:
         if self.start_mode is 'dict':
             _start_table(self)
-            for i in range(0, len(self.list_targets)-1):
+            for i in range(0, self.feval-1):
                 if self.jac:
                     self.table_results.add_row(['Previous', self.iter-1,
                                                i+1, self.list_targets[i][0],
@@ -139,7 +139,7 @@ def print_info(self):
 
         if self.start_mode is 'trajectory':
             _start_table(self)
-            for i in range(0, len(self.list_targets)-1):
+            for i in range(0, self.feval-1):
                 self.table_results.add_row(['Traj. ASE', self.iter-1, i+1,
                                            self.list_targets[i][0],
                                            self.list_fmax[i][0],
@@ -149,12 +149,12 @@ def print_info(self):
         if self.feval == 1:
             if not self.jac:
                 self.table_results.add_row(['Eval.', self.iter,
-                                           len(self.list_targets),
+                                           self.feval,
                                            self.list_targets[-1][0], '-',
                                            converged(self)])
             if self.jac:
                 self.table_results.add_row(['Eval.', self.iter,
-                                            len(self.list_targets),
+                                            self.feval,
                                             self.list_targets[-1][0],
                                             self.max_abs_forces,
                                             converged(self)])
@@ -163,24 +163,24 @@ def print_info(self):
             if not self.i_ase_step:
                 if not self.jac:
                     self.table_results.add_row(['LineSearch', self.iter,
-                                                len(self.list_targets),
+                                                self.feval,
                                                 self.list_targets[-1][0], '-',
                                                 converged(self)])
                 if self.jac:
                     self.table_results.add_row(['LineSearch', self.iter,
-                                                len(self.list_targets),
+                                                self.feval,
                                                 self.list_targets[-1][0],
                                                 self.max_abs_forces,
                                                 converged(self)])
             if self.i_ase_step:
                 if not self.jac:
                     self.table_results.add_row([self.i_ase_step, self.iter,
-                                                len(self.list_targets),
+                                                self.feval,
                                                 self.list_targets[-1][0],
                                                 self.e_diff, converged(self)])
                 if self.jac:
                     self.table_results.add_row([self.i_ase_step, self.iter,
-                                                len(self.list_targets),
+                                                self.feval,
                                                 self.list_targets[-1][0],
                                                 self.max_abs_forces,
                                                 converged(self)])
@@ -188,12 +188,12 @@ def print_info(self):
     if self.iter > 0:
         if not self.jac:
             self.table_results.add_row(['CatLearn', self.iter,
-                                        len(self.list_targets),
+                                        self.feval,
                                         self.list_targets[-1][0],
                                         self.e_diff, converged(self)])
         if self.jac:
             self.table_results.add_row(['CatLearn', self.iter,
-                                        len(self.list_targets),
+                                        self.feval,
                                         self.list_targets[-1][0],
                                         self.max_abs_forces, converged(self)])
     print(self.table_results)
@@ -226,7 +226,7 @@ def store_results(self):
         self.results = {'train': self.list_train,
                         'targets': self.list_targets,
                         'iterations': self.iter,
-                        'f_eval': len(self.list_targets),
+                        'f_eval': self.feval,
                         'converged': converged(self)}
     if self.jac:
         self.results = {'train': self.list_train,
@@ -234,7 +234,7 @@ def store_results(self):
                         'gradients': self.list_gradients,
                         'forces': -self.list_gradients,
                         'iterations': self.iter,
-                        'f_eval': len(self.list_targets),
+                        'f_eval': self.feval,
                         'converged': converged(self)}
 
     f_res = open(str(self.filename) + "_data.txt", "w")

@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 from catlearn.optimize.catlearn_neb_optimizer import NEBOptimizer
 from ase.neb import NEBTools
 import copy
-from catlearn.optimize.mullerbrown_calc import MullerBrown
+from catlearn.optimize.functions_calc import MullerBrown
 from ase import Atoms
 from ase.optimize import BFGS, MDMin
 

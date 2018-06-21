@@ -19,8 +19,9 @@ def converged(self):
     #  The force on all individual atoms should be less than fmax.
     if self.ase is True:
         if self.jac is True:
-            self.list_fmax = get_fmax(self.list_gradients, self.num_atoms)
-            self.max_abs_forces = self.list_fmax[-1][0]
+            self.list_fmax = get_fmax(-np.array([self.list_gradients[-1]]),
+                                  self.num_atoms)
+            self.max_abs_forces = np.max(np.abs(self.list_fmax))
             if self.min_iter:
                 if self.iter <= self.min_iter:
                     return False
