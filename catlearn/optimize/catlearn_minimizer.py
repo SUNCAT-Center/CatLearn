@@ -51,13 +51,14 @@ class MLOptimizer(object):
                                  'dimension': 'single',
                                  'bounds': ((0.05, 1.0), ),
                                  'scaling': 1.0,
-                                 'scaling_bounds': ((1.0, 1.0), )}
+                                 'scaling_bounds': ((1.0, 1.0), )},
+                          # 'k2': {'type': 'constant', 'const':100.0}
                           }
 
             self.ml_calc = GPCalculator(
                 kernel_dict=self.kdict, opt_hyperparam=True, scale_data=False,
                 scale_optimizer=False, calc_uncertainty=True,
-                regularization=1e-5, regularization_bounds=(1e-5, 1e-5))
+                regularization=5e-4, regularization_bounds=(5e-4, 5e-4))
             warning_kernel()
 
         self.ase_calc = ase_calc
@@ -168,14 +169,14 @@ class MLOptimizer(object):
                 self.list_gradients = self.list_gradients[-max_memory:]
 
             # Check scaling:
-            scale_targets = np.mean(self.list_targets)
+            scale_targets = np.max(self.list_targets)
 
             # 1) Train Machine Learning process:
 
             # Check that the user is not feeding redundant information to ML.
             count_unique = np.unique(self.list_train, return_counts=True,
                                      axis=0)[1]
-            msg = 'Your training list constains 1 or more duplicated elements'
+            msg = 'Your training list contains 1 or more duplicated elements'
             assert np.any(count_unique) < 2, msg
             print('Training a ML process...')
             print('Number of training points:', len(self.list_targets))
@@ -203,10 +204,11 @@ class MLOptimizer(object):
                                     index_constraints=self.ind_mask_constr
                                          ))
             guess.info['iteration'] = self.iter
+
             # Run ML optimization.
             opt_ml = eval(ml_algo)(guess)
             print('Starting ML NEB optimization...')
-            opt_ml.run(fmax=fmax/2.0, steps=ml_max_iter)
+            opt_ml.run(fmax=fmax/10.0, steps=ml_max_iter)
             print('ML NEB optimized.')
 
             # 3) Evaluate and append interesting point.
@@ -214,11 +216,11 @@ class MLOptimizer(object):
             interesting_point = guess.get_positions().flatten()
             eval_and_append(self, interesting_point, magmoms)
 
-            get_plot_step(images=guess,
-                            interesting_point=interesting_point,
-                            trained_process=trained_process,
-                            list_train=self.list_train,
-                            scale=scale_targets)
+            # get_plot_step(images=guess,
+            #                 interesting_point=interesting_point,
+            #                 trained_process=trained_process,
+            #                 list_train=self.list_train,
+            #                 scale=scale_targets)
 
             # Save evaluated image.
             TrajectoryWriter(atoms=self.ase_ini,

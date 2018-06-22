@@ -1,6 +1,7 @@
 from catlearn.optimize.catlearn_minimizer import MLOptimizer
 from catlearn.optimize.functions_calc import MullerBrown, Himmelblau, \
-                                             ModifiedHimmelblau
+                                             ModifiedHimmelblau,\
+                                             NoiseHimmelblau
 from ase import Atoms
 from ase.optimize import BFGS
 from ase.io import read
@@ -14,18 +15,18 @@ import numpy as np
 """
 
 # 0. Set calculator.
-ase_calculator = MullerBrown()
+ase_calculator = NoiseHimmelblau()
 
 # 1. Set common initial structure.
-common_initial = Atoms('C', positions=[(0.0, 0.0, 0.0)])
-# common_initial.rattle(stdev=0.1, seed=0)
+common_initial = Atoms('C', positions=[(-1.5, -1.0, 0.0)])
+# common_initial.rattle(stdev=0.2, seed=0)
 
 # 2.A. Optimize structure using ASE.
 initial_ase = copy.deepcopy(common_initial)
 initial_ase.set_calculator(copy.deepcopy(ase_calculator))
 
 ase_opt = BFGS(initial_ase, trajectory='ase_optimization.traj')
-ase_opt.run(fmax=0.01)
+ase_opt.run(fmax=0.01, steps=500)
 
 # 2.B. Optimize structure using CatLearn:
 

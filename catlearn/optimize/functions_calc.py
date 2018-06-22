@@ -1,6 +1,6 @@
 import numpy as np
 from ase.calculators.calculator import Calculator
-
+import math
 
 class MullerBrown(Calculator):
 
@@ -151,8 +151,8 @@ class GoldsteinPrice(Calculator):
         forces[0][1] = -fy
         forces[0][2] = -fz
 
-        self.results['energy'] = energy
-        self.results['forces'] = forces
+        self.results['energy'] = 0.01 * energy
+        self.results['forces'] = 0.01 * forces
 
 
 class Himmelblau(Calculator):
@@ -175,19 +175,19 @@ class Himmelblau(Calculator):
 
         x = self.atoms.get_positions()[0][0:2]
 
-        energy = 0.05*((x[0]**2 + x[1] -11)**2 + (x[0] + x[1]**2 -7)**2)
+        energy = (x[0]**2 + x[1] -11)**2 + (x[0] + x[1]**2 -7)**2
 
-        fx = 0.05*(4*x[0]*(x[0]**2 + x[1] - 11) + 2*x[0] + 2*x[1]**2 - 14)
+        fx = 4*x[0]*(x[0]**2 + x[1] - 11) + 2*x[0] + 2*x[1]**2 - 14
 
-        fy = 0.05*(2*x[0]**2 + 4*x[1]*(x[0] + x[1]**2 - 7) + 2*x[1] - 22)
+        fy = 2*x[0]**2 + 4*x[1]*(x[0] + x[1]**2 - 7) + 2*x[1] - 22
         fz = 0.0
 
         forces[0][0] = -fx
         forces[0][1] = -fy
         forces[0][2] = -fz
 
-        self.results['energy'] = energy
-        self.results['forces'] = forces
+        self.results['energy'] = 0.05 * energy
+        self.results['forces'] = 0.05 * forces
 
 
 class ModifiedHimmelblau(Calculator):
@@ -211,14 +211,12 @@ class ModifiedHimmelblau(Calculator):
         x = [self.atoms.get_positions()[0][0], self.atoms.get_positions()[
         0][1]]
 
-        energy = 0.05 * ((x[0]**2 + x[1] -11)**2 + (x[0] + x[1]**2 -7)**2 \
-                 + 0.5 * x[0] + x[1])
+        energy = (x[0]**2 + x[1] -11)**2 + (x[0] + x[1]**2 -7)**2 + 0.5 * x[
+                  0] + x[1]
 
-        fx = 0.05 * (4*x[0]*(x[0]**2 + x[1] - 11) + 2*x[0] + 2*x[1]**2 - 14 \
-             + 0.5)
+        fx = 4*x[0]*(x[0]**2 + x[1] - 11) + 2*x[0] + 2*x[1]**2 - 14 + 0.5
 
-        fy = 0.05 * (2*x[0]**2 + 4*x[1]*(x[0] + x[1]**2 - 7) + 2*x[1] - 22 \
-             + 1.0)
+        fy = 2*x[0]**2 + 4*x[1]*(x[0] + x[1]**2 - 7) + 2*x[1] - 22 + 1.0
 
         fz = 0.0
 
@@ -226,8 +224,51 @@ class ModifiedHimmelblau(Calculator):
         forces[0][1] = -fy
         forces[0][2] = -fz
 
-        self.results['energy'] = energy
-        self.results['forces'] = forces
+        self.results['energy'] = 0.05 * energy
+        self.results['forces'] = 0.05 * forces
+
+class NoiseHimmelblau(Calculator):
+
+    """NoiseHimmelblau potential."""
+
+    implemented_properties = ['energy', 'forces']
+    nolabel = True
+
+    def __init__(self, **kwargs):
+        Calculator.__init__(self, **kwargs)
+
+    def calculate(self, atoms=None, properties=['energy','forces'],
+                  system_changes=['positions', 'numbers', 'cell', 'pbc']):
+        Calculator.calculate(self, atoms, properties, system_changes)
+
+        self.energy = 0.0
+        self.forces = np.zeros((len(self.atoms), 3))
+        forces = self.forces
+
+        x = [self.atoms.get_positions()[0][0], self.atoms.get_positions()[
+        0][1]]
+
+        energy = (x[0]**2 + x[1] -11)**2 + (x[0] + x[1]**2 -7)**2 + 0.5 * x[
+                  0] + x[1]
+
+        fx = 4*x[0]*(x[0]**2 + x[1] - 11) + 2*x[0] + 2*x[1]**2 - 14 + 0.5
+
+        fy = 2*x[0]**2 + 4*x[1]*(x[0] + x[1]**2 - 7) + 2*x[1] - 22 + 1.0
+
+        fz = 0.0
+
+        forces[0][0] = -fx
+        forces[0][1] = -fy
+        forces[0][2] = -fz
+
+        # noise_energy = 10.0 * ((np.sin(x[0]) + np.sin(x[1])))
+
+        forces[0][0] -= 40.0 * np.sin(fx)
+        forces[0][1] -= 20.0 * np.sin(fy)
+
+        self.results['energy'] = 0.05 * energy
+        self.results['forces'] = 0.05 * forces
+
 
 class Rosenbrock(Calculator):
 
@@ -262,5 +303,5 @@ class Rosenbrock(Calculator):
         forces[0][1] = -fy
         forces[0][2] = -fz
 
-        self.results['energy'] = energy
-        self.results['forces'] = forces
+        self.results['energy'] = 0.01 * energy
+        self.results['forces'] = 0.01 * forces

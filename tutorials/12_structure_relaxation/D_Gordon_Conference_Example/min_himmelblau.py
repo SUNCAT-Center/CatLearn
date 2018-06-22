@@ -1,5 +1,5 @@
 from catlearn.optimize.catlearn_minimizer import MLOptimizer
-from catlearn.optimize.functions_calc import ModifiedHimmelblau, Rosenbrock
+from catlearn.optimize.functions_calc import ModifiedHimmelblau, NoiseHimmelblau
 from ase import Atoms
 from ase.optimize import BFGS, FIRE, LBFGS, MDMin
 from ase.io import read
@@ -8,6 +8,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from catlearn.optimize.io import array_to_ase
 from catlearn.optimize.catlearn_ase_calc import CatLearnASE
+from catlearn.optimize.convergence import get_fmax
 
 """ 
     Minimization example.
@@ -16,7 +17,7 @@ from catlearn.optimize.catlearn_ase_calc import CatLearnASE
 """
 
 # 0. Set calculator.
-ase_calculator = ModifiedHimmelblau()
+ase_calculator = NoiseHimmelblau()
 
 # 1. Set common initial structure.
 common_initial = Atoms('C', positions=[(-1.5, -1.0, 0.0)])
@@ -25,7 +26,7 @@ common_initial = Atoms('C', positions=[(-1.5, -1.0, 0.0)])
 initial_ase = copy.deepcopy(common_initial)
 initial_ase.set_calculator(copy.deepcopy(ase_calculator))
 
-ase_opt = MDMin(initial_ase, trajectory='ase_optimization.traj')
+ase_opt = FIRE(initial_ase, trajectory='ase_optimization.traj')
 ase_opt.run(fmax=0.01)
 
 # # Plot each step in a folder.
@@ -33,11 +34,15 @@ ase_trajectory = read('ase_optimization.traj', ':')
 
 opt_ase_positions = []
 opt_ase_energies = []
+opt_ase_forces = []
 for i in range(0, len(ase_trajectory)):
     opt_ase_positions.append(ase_trajectory[i].get_positions()[0][0:2])
     opt_ase_energies.append(ase_trajectory[i].get_potential_energy())
+    opt_ase_forces.append(ase_trajectory[i].get_forces())
 
 opt_ase_positions = np.reshape(opt_ase_positions, (len(opt_ase_positions), 2))
+opt_ase_forces = np.reshape(opt_ase_forces, (len(opt_ase_forces), 3))
+list_fmax_ase = get_fmax(opt_ase_forces, 1)
 
 folder = './plots_ase/'
 
@@ -46,7 +51,7 @@ plt.figure(figsize=(4.0, 4.0))
 # Contour plot for real function.
 limitsx = [-5.5, 5.5]
 limitsy = [-5.5, 5.5]
-crange = np.linspace(-0.5, 6.0, 60)
+crange = np.linspace(-0.5, 10.0, 60)
 crange2 = 40
 
 plot_resolution = 150
@@ -71,7 +76,7 @@ plt.yticks([])
 plt.savefig(fname=(folder+'widerange_himmelblau.png'), dpi=500, format='png',
             transparent=False)
 plt.show()
-
+plt.close()
 
 
 def plot_ase_steps(iteration, positions):
@@ -88,9 +93,10 @@ def plot_ase_steps(iteration, positions):
     Z = np.zeros((len(A),len(B)))
     for i in range(0, len(A)):
         for j in range(0,len(B)):
-            x = [A[j], B[i]]
-            e = 0.05 * ((x[0]**2 + x[1] -11)**2 + (x[0] + x[1]**2 -7)**2 \
-                 + 0.5 * x[0] + x[1])
+            struc_i = Atoms('C', positions=[(A[j], B[i], 0.0)])
+            struc_i.set_calculator(copy.deepcopy(ase_calculator))
+            e = struc_i.get_total_energy()
+            Z[i][j] = e
             Z[i][j] = e
     plt.contourf(X, Y, Z, crange, alpha=1.0, cmap='terrain')
     plt.contour(X, Y, Z, crange2, alpha=0.5, linewidths=1.0, antialiased=True,
@@ -105,18 +111,73 @@ def plot_ase_steps(iteration, positions):
     plt.savefig(fname=(folder+'min_ase_himmelblau_iter'+ str(iteration) +
                 '.png'), dpi=500, format='png', transparent=False)
     plt.show()
-
+    plt.close()
 
 for i in range(0, len(opt_ase_positions)):
     opt_ase_positions_i = opt_ase_positions[0:i+1]
     plot_ase_steps(iteration=i, positions=opt_ase_positions_i)
 
-# 2.B. Optimize structure using CatLearn:
-
+# # # 2.B. Optimize structure using CatLearn:
+# #
 initial_catlearn = copy.deepcopy(common_initial)
 initial_catlearn.set_calculator(copy.deepcopy(ase_calculator))
 catlearn_opt = MLOptimizer(initial_catlearn, filename='results')
-catlearn_opt.run(fmax=0.01, ml_algo='MDMin')
+catlearn_opt.run(fmax=0.01, ml_algo='FIRE')
+
+energies_catlearn = catlearn_opt.list_targets
+forces_catlearn = catlearn_opt.list_gradients
+list_fmax_catlearn = get_fmax(forces_catlearn, 1)
+
+
+# Plot of the energy convergence:
+list_iterations = np.arange(0, len(opt_ase_energies))
+
+
+for i in range(0, len(opt_ase_energies)):
+    plt.figure(figsize=(4.0, 4.0))
+    plt.xlim([0, len(opt_ase_energies)+5])
+    plt.ylim([-1.0, np.max(opt_ase_energies)+0.2])
+
+    plt.plot(list_iterations[0:i+1], opt_ase_energies[0:i+1], c='black',
+             lw=2.0)
+
+    lt = list_iterations[0:i+1].copy()
+    if len(list_iterations[0:i+1]) >= len(energies_catlearn):
+        lt = list_iterations.copy()
+        lt = lt[0:len(energies_catlearn)]
+
+    plt.plot(lt, energies_catlearn[0:i+1], c='red',
+             lw=2.0)
+    plt.savefig(fname=(folder+'energies_himmelblau_iter'+ str(i) +
+                '.png'), dpi=500, format='png', transparent=False)
+    plt.xlim([0, len(opt_ase_energies)+5])
+    plt.ylim([-1.0, np.max(opt_ase_energies)+0.2])
+    plt.show()
+    plt.close()
+
+
+# Plot of the forces convergence:
+for i in range(0, len(list_fmax_ase)):
+    plt.xlim([0, len(list_fmax_ase)+5])
+    plt.ylim([-1.0, np.max(list_fmax_ase)+0.2])
+    plt.figure(figsize=(4.0, 4.0))
+    plt.plot(list_iterations[0:i+1], list_fmax_ase[0:i+1], c='black',
+             lw=2.0)
+
+    lt = list_iterations[0:i+1].copy()
+    if len(list_iterations[0:i+1]) >= len(list_fmax_catlearn):
+        lt = list_iterations.copy()
+        lt = lt[0:len(list_fmax_catlearn)]
+
+    plt.plot(lt, list_fmax_catlearn[0:i+1], c='red',
+             lw=2.0)
+    plt.savefig(fname=(folder+'forces_himmelblau_iter'+ str(i) +
+                '.png'), dpi=500, format='png', transparent=False)
+    plt.xlim([0, len(list_fmax_ase)+5])
+    plt.ylim([-1.0, np.max(list_fmax_ase)+0.2])
+    plt.show()
+    plt.close()
+
 
 # 3. Summary of the results:
 print('\n Summary of the results:\n ------------------------------------')

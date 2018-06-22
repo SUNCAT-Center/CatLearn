@@ -200,7 +200,7 @@ class AutoNEBOptimizer(object):
 
             count_unique = np.unique(self.list_train, return_counts=True,
                                      axis=0)[1]
-            msg = 'Your training list constains 1 or more duplicated elements'
+            msg = 'Your training list contains 1 or more duplicated elements'
             assert np.any(count_unique) < 2, msg
 
             print('Training a ML process...')

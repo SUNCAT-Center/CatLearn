@@ -231,6 +231,5 @@ def get_plot_step(images, interesting_point, trained_process,
     plt.savefig(fname=(folder+'min_catlearn_himmelblau_iter'+ str(iteration) +
                 '.png'), dpi=500, format='png', transparent=False)
 
-
-
     plt.show()
+    plt.close()
