@@ -4,7 +4,7 @@ from ase.neb import NEB
 from ase.optimize import BFGS, MDMin
 from ase.visualize import view
 import matplotlib.pyplot as plt
-from catlearn.optimize.catlearn_neb_optimizer import NEBOptimizer
+from catlearn.optimize.catlearn_neb_optimizer import CatLearnNEB
 from ase.neb import NEBTools
 import copy
 
@@ -85,7 +85,7 @@ plt.show()
 
 # 2.B. NEB using CatLearn ####################################################
 
-neb_catlearn = NEBOptimizer(start='initial.traj', end='final.traj',
+neb_catlearn = CatLearnNEB(start='initial.traj', end='final.traj',
                             ase_calc=copy.deepcopy(ase_calculator),
                             n_images=n_images,
                             interpolation='idpp')

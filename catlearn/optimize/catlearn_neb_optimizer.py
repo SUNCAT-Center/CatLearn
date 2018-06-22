@@ -20,7 +20,7 @@ from scipy.interpolate import CubicSpline
 from catlearn.optimize.io import array_to_ase
 
 
-class NEBOptimizer(object):
+class CatLearnNEB(object):
 
     def __init__(self, start, end, path=None, n_images=None, spring=None,
                  interpolation=None, neb_method='improvedtangent',
@@ -163,7 +163,7 @@ class NEBOptimizer(object):
             self.ml_calc = GPCalculator(
                 kernel_dict=self.kdict, opt_hyperparam=True, scale_data=False,
                 scale_optimizer=False, calc_uncertainty=True,
-                regularization=1e-4, regularization_bounds=(1e-4, 1e-4))
+                regularization=1e-5, regularization_bounds=(1e-5, 1e-5))
 
         # Settings for the NEB.
         self.neb_method = neb_method
@@ -275,7 +275,7 @@ class NEBOptimizer(object):
 
             count_unique = np.unique(self.list_train, return_counts=True,
                                      axis=0)[1]
-            msg = 'Your training list constains 1 or more duplicated elements'
+            msg = 'Your training list contains 1 or more duplicated elements'
             assert np.any(count_unique) < 2, msg
 
             print('Training a ML process...')
@@ -306,7 +306,7 @@ class NEBOptimizer(object):
                                               )
 
                 # If the previous run didn't converge use the initial path.
-                if neb_opt.__dict__['nsteps'] >= ml_max_iter-2:
+                if neb_opt.__dict__['nsteps'] >= ml_max_iter - 2:
                     self.images = copy.deepcopy(self.initial_images)
 
             starting_path = self.images

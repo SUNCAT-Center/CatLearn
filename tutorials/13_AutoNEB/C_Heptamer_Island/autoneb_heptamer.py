@@ -6,7 +6,7 @@ import glob
 import shutil
 import os
 from catlearn.optimize.autoneb_ase import AutoNEBASE
-from catlearn.optimize.catlearn_autoneb_optimizer import AutoNEBOptimizer
+from catlearn.optimize.catlearn_autoneb_optimizer import CatLearnAutoNEB
 
 """ 
     Toy model rearrangement of Pt heptamer island on Pt(111).
@@ -42,7 +42,6 @@ slab_initial.set_calculator(copy.deepcopy(ase_calculator))
 slab_final = read('./I_structure/POSCAR')
 slab_final.set_calculator(ase_calculator)
 
-
 # 1.2. Optimize initial and final end-points.
 
 # Initial end-point:
@@ -65,16 +64,16 @@ write('images000.traj', initial)
 final = read('final.traj')
 write('images001.traj', final)
 
-automatic = AutoNEBASE(prefix='images',
+autoneb_ase = AutoNEBASE(prefix='images',
                        n_max=n_images,
                        n_simul=1,
                        attach_calculators=ase_calculator)
-automatic.run()
+autoneb_ase.run()
 
 # 2.B. AutoNEB using CatLearn ################################################
 
-auto_catlearn = AutoNEBOptimizer(start='initial.traj',
+autoneb_catlearn = CatLearnAutoNEB(start='initial.traj',
                                  end='final.traj',
                                  ase_calc=copy.deepcopy(ase_calculator),
                                  n_images=n_images)
-auto_catlearn.run(fmax=0.05, plot_neb_paths=True)
+autoneb_catlearn.run(fmax=0.05, plot_neb_paths=True)

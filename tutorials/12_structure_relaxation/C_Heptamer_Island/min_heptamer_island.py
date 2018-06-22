@@ -1,7 +1,7 @@
-from catlearn.optimize.catlearn_minimizer import MLOptimizer
+from catlearn.optimize.catlearn_minimizer import CatLearnMinimizer
 from ase.calculators.emt import EMT
 from ase.io import read
-from ase.optimize import BFGS, MDMin
+from ase.optimize import BFGS
 import copy
 
 
@@ -32,7 +32,7 @@ ase_opt.run(fmax=0.01)
 initial_catlearn = copy.deepcopy(common_initial)
 initial_catlearn.set_calculator(copy.deepcopy(ase_calculator))
 
-catlearn_opt = MLOptimizer(initial_catlearn, filename='results')
+catlearn_opt = CatLearnMinimizer(initial_catlearn, filename='results')
 catlearn_opt.run(fmax=0.01, ml_algo='BFGS')
 
 # 3. Summary of the results:

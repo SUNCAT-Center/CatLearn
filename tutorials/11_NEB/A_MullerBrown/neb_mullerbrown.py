@@ -1,7 +1,7 @@
 from ase.io import read
 from ase.neb import NEB
 import matplotlib.pyplot as plt
-from catlearn.optimize.catlearn_neb_optimizer import NEBOptimizer
+from catlearn.optimize.catlearn_neb_optimizer import CatLearnNEB
 from ase.neb import NEBTools
 import copy
 from catlearn.optimize.functions_calc import MullerBrown
@@ -77,7 +77,7 @@ plt.show()
 initial = read('initial_optimized.traj')
 final = read('final_optimized.traj')
 
-neb_catlearn = NEBOptimizer(start='initial_optimized.traj',
+neb_catlearn = CatLearnNEB(start='initial_optimized.traj',
                             end='final_optimized.traj',
                             ase_calc=copy.deepcopy(ase_calculator),
                             n_images=n_images,

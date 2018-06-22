@@ -5,8 +5,7 @@ from catlearn.optimize.ml_calculator import GPCalculator, train_ml_process
 from catlearn.optimize.convergence import get_fmax
 from catlearn.optimize.get_real_values import eval_and_append
 from catlearn.optimize.constraints import create_mask_ase_constraints
-from catlearn.optimize.plots import get_plot_mullerbrown, get_plots_neb, \
-                                    get_plot_mullerbrown_p
+from catlearn.optimize.plots import get_plot_mullerbrown, get_plots_neb
 from ase.io.trajectory import TrajectoryWriter
 from ase.neb import NEBTools
 from ase.io import read, write
@@ -19,7 +18,7 @@ from catlearn.optimize.catlearn_ase_calc import CatLearnASE
 from scipy.spatial import distance
 
 
-class AutoNEBOptimizer(object):
+class CatLearnAutoNEB(object):
 
     def __init__(self, start, end, n_images=None,
                  ml_calc=None, ase_calc=None, inc_prev_calcs=False,

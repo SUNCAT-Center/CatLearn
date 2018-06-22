@@ -96,6 +96,8 @@ def eval_and_append(self, interesting_point, interesting_magmom=None):
         Previous information from the CatLearn optimizer.
     interesting_point : ndarray
         Atoms positions or point in space.
+    interesting_magmom: ndarray
+        Guessed magnetic moments for the interesting point.
 
     Return
     -------

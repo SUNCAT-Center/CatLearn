@@ -77,8 +77,7 @@ def get_plot_mullerbrown(images, interesting_point, trained_process,
     plt.show()
 
 
-def get_plot_mullerbrown_p(images, interesting_point, trained_process,
-                         list_train):
+def get_plot_mullerbrown_p(images, interesting_point, list_train):
     """ Function for plotting each step of the toy model Muller-Brown .
     """
 
@@ -149,7 +148,6 @@ def get_plot_mullerbrown_p(images, interesting_point, trained_process,
     plt.yticks([])
 
     plt.show()
-
 
 
 def get_plots_neb(images, selected=None, iter=None):
@@ -228,7 +226,7 @@ def get_plot_step(images, interesting_point, trained_process,
     plt.ylim(limitsy[0], limitsy[1])
     plt.xticks([])
     plt.yticks([])
-    plt.savefig(fname=(folder+'min_catlearn_himmelblau_iter'+ str(iteration) +
+    plt.savefig(fname=(folder+'min_catlearn_himmelblau_iter' + str(iteration) +
                 '.png'), dpi=500, format='png', transparent=False)
 
     plt.show()

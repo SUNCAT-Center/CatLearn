@@ -15,7 +15,8 @@ from catlearn.optimize.catlearn_ase_calc import CatLearnASE
 import copy
 from catlearn.optimize.plots import get_plot_step
 
-class MLOptimizer(object):
+
+class CatLearnMinimizer(object):
 
     def __init__(self, x0, ase_calc=None, ml_calc=None, filename='results'):
 
@@ -200,7 +201,7 @@ class MLOptimizer(object):
             guess.set_calculator(CatLearnASE(
                                     trained_process=trained_process,
                                     ml_calc=ml_calc,
-                                    kappa=1.0,
+                                    kappa=2.0,
                                     index_constraints=self.ind_mask_constr
                                          ))
             guess.info['iteration'] = self.iter
