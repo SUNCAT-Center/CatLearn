@@ -13,7 +13,7 @@ from ase.atoms import Atoms
 from catlearn.optimize.convergence import converged, get_fmax
 from catlearn.optimize.catlearn_ase_calc import CatLearnASE
 import copy
-
+from catlearn.optimize.plots import get_plot_step
 
 class MLOptimizer(object):
 
@@ -57,7 +57,7 @@ class MLOptimizer(object):
             self.ml_calc = GPCalculator(
                 kernel_dict=self.kdict, opt_hyperparam=True, scale_data=False,
                 scale_optimizer=False, calc_uncertainty=True,
-                regularization=1e-4, regularization_bounds=(1e-4, 1e-4))
+                regularization=1e-5, regularization_bounds=(1e-5, 1e-5))
             warning_kernel()
 
         self.ase_calc = ase_calc
@@ -148,7 +148,7 @@ class MLOptimizer(object):
 
         self.fmax = fmax
         self.min_iter = min_iter
-        max_memory = 30
+        max_memory = 50
 
         # Initialization (evaluate two points):
         initialize(self)
@@ -168,7 +168,7 @@ class MLOptimizer(object):
                 self.list_gradients = self.list_gradients[-max_memory:]
 
             # Check scaling:
-            scale_targets = np.max(self.list_targets)
+            scale_targets = np.mean(self.list_targets)
 
             # 1) Train Machine Learning process:
 
@@ -202,6 +202,7 @@ class MLOptimizer(object):
                                     kappa=1.0,
                                     index_constraints=self.ind_mask_constr
                                          ))
+            guess.info['iteration'] = self.iter
             # Run ML optimization.
             opt_ml = eval(ml_algo)(guess)
             print('Starting ML NEB optimization...')
@@ -212,6 +213,12 @@ class MLOptimizer(object):
             magmoms = self.ase_ini.get_initial_magnetic_moments()
             interesting_point = guess.get_positions().flatten()
             eval_and_append(self, interesting_point, magmoms)
+
+            get_plot_step(images=guess,
+                            interesting_point=interesting_point,
+                            trained_process=trained_process,
+                            list_train=self.list_train,
+                            scale=scale_targets)
 
             # Save evaluated image.
             TrajectoryWriter(atoms=self.ase_ini,
