@@ -192,3 +192,44 @@ def get_plots_neb(images, selected=None, iter=None):
 
     plt.show()
     plt.close()
+
+
+def get_plot_step(images, interesting_point, trained_process,
+                         list_train, scale):
+    """ Function for plotting each step of the toy model Muller-Brown .
+    """
+    iteration = images.info['iteration']
+    folder = './plots_ase/'
+    plt.figure(figsize=(4.0, 4.0))
+
+    plot_resolution = 150
+    limitsx = [-5.5, 0]
+    limitsy = [-5.5, 0]
+    crange = np.linspace(-0.5, 10.0, 60)
+    crange2 = 40
+
+    A = np.linspace(limitsx[0], limitsx[1], plot_resolution)
+    B = np.linspace(limitsy[0], limitsy[1], plot_resolution)
+    X, Y = np.meshgrid(A, B)
+    Z = np.zeros((len(A),len(B)))
+    for i in range(0, len(A)):
+        for j in range(0,len(B)):
+            x = [A[j], B[i], 0]
+            pred = trained_process.predict(test_fp=np.array([x]))
+            e = np.array(pred['prediction'][:, 0])
+            Z[i][j] = e + scale
+    plt.contourf(X, Y, Z, crange, alpha=1.0, cmap='terrain')
+    plt.contour(X, Y, Z, crange2, alpha=0.5, linewidths=1.0, antialiased=True,
+                linestyles='dashed')
+    plt.scatter(list_train[-1, 0], list_train[-1, 1],
+                marker='o', c='white', edgecolors='black', alpha=1.0)
+    plt.plot(list_train[:, 0], list_train[:, 1], linewidth=2.0, color='red')
+    plt.xlim(limitsx[0], limitsx[1])
+    plt.ylim(limitsy[0], limitsy[1])
+    plt.xticks([])
+    plt.yticks([])
+    plt.savefig(fname=(folder+'min_catlearn_himmelblau_iter'+ str(iteration) +
+                '.png'), dpi=500, format='png', transparent=False)
+
+    plt.show()
+    plt.close()
