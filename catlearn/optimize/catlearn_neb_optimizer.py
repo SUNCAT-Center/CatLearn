@@ -172,8 +172,9 @@ class CatLearnNEB(object):
         self.final_endpoint = fs_endpoint[-1]
 
         # A) Create images using interpolation if user do not feed a path:
+        self.d_start_end = np.abs(distance.euclidean(is_pos, fs_pos))
+
         if path is None:
-            self.d_start_end = np.abs(distance.euclidean(is_pos, fs_pos))
             if self.spring is None:
                 self.spring = np.sqrt((self.n_images-1) / self.d_start_end)
             self.images = create_ml_neb(is_endpoint=self.initial_endpoint,
@@ -198,10 +199,10 @@ class CatLearnNEB(object):
         if path is not None:
             images_path = read(path, ':')
 
-            if not np.array_equal(images_path[0].get_positions.flatten(),
+            if not np.array_equal(images_path[0].get_positions().flatten(),
                                   is_pos):
                 images_path.insert(0, self.initial_endpoint)
-            if not np.array_equal(images_path[-1].get_positions.flatten(),
+            if not np.array_equal(images_path[-1].get_positions().flatten(),
                                   fs_pos):
                 images_path.append(self.final_endpoint)
 
@@ -217,6 +218,7 @@ class CatLearnNEB(object):
                                         scaling_targets=self.scale_targets,
                                         iteration=self.iter
                                         )
+
 
         # Save files with all the paths tested:
         write('all_predicted_paths.traj', self.images)
@@ -442,6 +444,9 @@ class CatLearnNEB(object):
             print('Energy of the last image evaluated w.r.t. to endpoint ('
                   'eV):', self.list_targets[-1][0] - self.scale_targets)
             print('Number #id of the last evaluated image:', argmax_unc + 2)
+
+            # Update spring:
+            self.spring = np.sqrt((self.n_images-1) / s[-1])
 
             # 5) Check convergence:
 
