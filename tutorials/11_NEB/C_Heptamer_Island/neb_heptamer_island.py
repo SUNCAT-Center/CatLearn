@@ -45,7 +45,7 @@ qn = BFGS(slab_final, trajectory='final.traj')
 qn.run(fmax=0.01)
 
 # Set number of images
-n_images = 7
+n_images = 11
 
 # 2.A. NEB using ASE #########################################################
 
@@ -86,9 +86,9 @@ plt.show()
 # 2.B. NEB using CatLearn ####################################################
 
 neb_catlearn = CatLearnNEB(start='initial.traj', end='final.traj',
-                            ase_calc=copy.deepcopy(ase_calculator),
-                            n_images=n_images,
-                            interpolation='idpp')
+                           ase_calc=copy.deepcopy(ase_calculator),
+                           n_images=n_images,
+                           interpolation='idpp')
 
 neb_catlearn.run(fmax=0.05, plot_neb_paths=True)
 

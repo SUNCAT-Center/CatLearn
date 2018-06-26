@@ -77,11 +77,9 @@ def warning_kernel():
 
 
 def warning_spin_neb():
-    msg = "WARNING: Your Atoms object contains non-zero magnetic moments. " \
-           "Spin polarization NEB is performed. Be careful, this feature is " \
-           "under test. The trajectory file saved for the evaluated images " \
-           "only contains the structure with the magnetic moments for " \
-           "minimum energy found in a given cartesian coordinate."
+    msg = "WARNING: Spin-polarized NEB. The magnetic moments of the " \
+    "initial and final end-points will be calculated to ensure the correct " \
+    "magnetic moments are passed. Be careful, this feature is under test."
     print(msg)
     store_warnings_and_errors(msg)
 

@@ -271,12 +271,6 @@ def store_results_neb(s, e, sfit, efit, uncertainty_path):
     """ Function that print in csv files the predicted NEB curves after
         each iteration"""
 
-    # Save results in csv file:
-    print('Saving results of the ML NEB in text files...')
-    print('See the NEB results in the results_neb.csv and '
-          'results_neb_interpolation.csv files.')
-    print('Check if your ML NEB is converged.')
-
     # Save discrete path:
     data = {'Path distance (Angstrom)': s,
             'Energy (eV)': e,

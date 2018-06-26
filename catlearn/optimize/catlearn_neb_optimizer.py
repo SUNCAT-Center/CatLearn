@@ -22,8 +22,10 @@ from catlearn.optimize.io import array_to_ase
 
 class CatLearnNEB(object):
 
-    def __init__(self, start, end, path=None, n_images=None, spring=None,
-                 interpolation=None, neb_method='improvedtangent',
+    def __init__(self, start, end, path=None, n_images=None,
+                 spin_polarized=False,
+                 interpolation=None, mic=False,
+                 neb_method='improvedtangent', spring=None,
                  ml_calc=None, ase_calc=None, inc_prev_calcs=False,
                  stabilize=False, restart=False):
         """ Nudged elastic band (NEB) setup.
@@ -68,6 +70,8 @@ class CatLearnNEB(object):
         self.ml_calc = ml_calc
         self.ase_calc = ase_calc
         self.ase = True
+        self.spin = spin_polarized
+        self.mic = mic
 
         # Reset:
         self.constraints = None
@@ -107,19 +111,6 @@ class CatLearnNEB(object):
         # Write previous evaluated images in evaluations:
         write('./evaluated_structures.traj',
               is_endpoint + fs_endpoint)
-
-        # Check the magnetic moments of the initial and final states:
-        self.magmom_is = None
-        self.magmom_fs = None
-        self.magmom_is = is_endpoint[-1].get_initial_magnetic_moments()
-        self.magmom_fs = fs_endpoint[-1].get_initial_magnetic_moments()
-
-        self.spin = False
-        if not np.array_equal(self.magmom_is, np.zeros_like(self.magmom_is)):
-            self.spin = True
-        if not np.array_equal(self.magmom_fs, np.zeros_like(self.magmom_fs)):
-            self.spin = True
-            warning_spin_neb()
 
         # Obtain the energy of the endpoints for scaling:
         energy_is = is_endpoint[-1].get_potential_energy()
@@ -191,7 +182,7 @@ class CatLearnNEB(object):
 
             neb_interpolation = NEB(self.images, k=self.spring)
 
-            neb_interpolation.interpolate(method=interpolation)
+            neb_interpolation.interpolate(method=interpolation, mic=self.mic)
 
             self.initial_images = copy.deepcopy(self.images)
 
@@ -219,7 +210,6 @@ class CatLearnNEB(object):
                                         iteration=self.iter
                                         )
 
-
         # Save files with all the paths tested:
         write('all_predicted_paths.traj', self.images)
 
@@ -230,6 +220,8 @@ class CatLearnNEB(object):
                 TrajectoryWriter(atoms=self.ase_ini,
                                  filename='./evaluated_structures.traj',
                                  mode='a').write()
+                self.iter = 0
+
         self.uncertainty_path = np.zeros(len(self.images))
 
         # Stabilize spring constant:
@@ -238,6 +230,38 @@ class CatLearnNEB(object):
 
         # Get path distance:
         self.path_distance = copy.deepcopy(self.d_start_end)
+
+        # Check the magnetic moments of the initial and final states:
+
+        if self.spin is True:
+            warning_spin_neb()
+            is_spin = copy.deepcopy(is_endpoint[-1])
+            is_spin.set_calculator(self.ase_calc)
+            is_spin.get_potential_energy()
+            self.magmom_is = []
+            for i in is_spin:
+                self.magmom_is.append(i.magmom)
+            fs_spin = copy.deepcopy(fs_endpoint[-1])
+            fs_spin.set_calculator(self.ase_calc)
+            fs_spin.get_potential_energy()
+            self.magmom_fs = []
+            for i in fs_spin:
+                self.magmom_fs.append(i.magmom)
+            self.magmom_is = np.array(self.magmom_is)
+            self.magmom_fs = np.array(self.magmom_fs)
+            print('\nInitial magmoms:')
+            print('---------------------------------------------------------')
+            print('Initial state end-point:',
+                                 is_endpoint[-1].get_initial_magnetic_moments()
+)
+            print('Final state end-point:',
+                                fs_endpoint[-1].get_initial_magnetic_moments())
+            print('\nOptimized magmoms:')
+            print('---------------------------------------------------------')
+            print('Initial state end-point:', self.magmom_is)
+            print('Final state end-point:', self.magmom_fs)
+            print('\n')
+
 
     def run(self, fmax=0.05, unc_convergence=0.010, max_iter=500,
             ml_algo='MDMin', ml_max_iter=500, plot_neb_paths=False):
