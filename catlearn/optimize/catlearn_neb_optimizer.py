@@ -17,6 +17,7 @@ from scipy.spatial import distance
 import copy
 import os
 from scipy.interpolate import CubicSpline
+
 from catlearn.optimize.io import array_to_ase
 
 
@@ -146,7 +147,7 @@ class CatLearnNEB(object):
         if self.ml_calc is None:
             self.kdict = {'k1': {'type': 'gaussian', 'width': 0.5,
                                  'dimension': 'single',
-                                 'bounds': ((0.05, 1.0), ),
+                                 'bounds': ((0.1, 1.0), ),
                                  'scaling': 1.0,
                                  'scaling_bounds': ((1.0, 1.0), )}
                           }
@@ -154,7 +155,7 @@ class CatLearnNEB(object):
             self.ml_calc = GPCalculator(
                 kernel_dict=self.kdict, opt_hyperparam=True, scale_data=False,
                 scale_optimizer=False, calc_uncertainty=True,
-                regularization=1e-5, regularization_bounds=(1e-5, 1e-5))
+                regularization=1e-4, regularization_bounds=(1e-4, 1e-4))
 
         # Settings for the NEB.
         self.neb_method = neb_method
@@ -325,7 +326,6 @@ class CatLearnNEB(object):
 
                 self.images = redistribute_images_path(
                                               images=self.images,
-                                              d_images=s,
                                               path_distance=self.path_distance,
                                               n_images=self.n_images,
                                               n_atoms=self.num_atoms
@@ -469,9 +469,6 @@ class CatLearnNEB(object):
                   'eV):', self.list_targets[-1][0] - self.scale_targets)
             print('Number #id of the last evaluated image:', argmax_unc + 2)
 
-            # Update spring:
-            self.spring = np.sqrt((self.n_images-1) / s[-1])
-
             # 5) Check convergence:
 
             # Check whether the evaluated point is a stationary point.
@@ -518,7 +515,8 @@ def create_ml_neb(is_endpoint, fs_endpoint, images_interpolation,
         image.info['iteration'] = iteration
         image.set_calculator(CatLearnASE(trained_process=trained_process,
                                          ml_calc=ml_calculator,
-                                         index_constraints=index_constraints
+                                         index_constraints=index_constraints,
+                                         kappa=4.0
                                          ))
         if images_interpolation is not None:
             image.set_positions(images_interpolation[i].get_positions())
@@ -539,9 +537,8 @@ def create_ml_neb(is_endpoint, fs_endpoint, images_interpolation,
     return imgs
 
 
-def redistribute_images_path(images, d_images, path_distance, n_images,
-                             n_atoms):
-    x = d_images
+def redistribute_images_path(images, path_distance, n_images, n_atoms):
+    x = np.linspace(0.0, path_distance, n_images, endpoint=True)
     y = []
 
     for i in images:
