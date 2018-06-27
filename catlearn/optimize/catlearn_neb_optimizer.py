@@ -23,7 +23,7 @@ from catlearn.optimize.io import array_to_ase
 class CatLearnNEB(object):
 
     def __init__(self, start, end, path=None, n_images=None, spring=None,
-                 interpolation=None, neb_method='improvedtangent',
+                 interpolation=None, mic=False, neb_method='improvedtangent',
                  ml_calc=None, ase_calc=None, inc_prev_calcs=False,
                  stabilize=False, restart=False):
         """ Nudged elastic band (NEB) setup.
@@ -68,6 +68,7 @@ class CatLearnNEB(object):
         self.ml_calc = ml_calc
         self.ase_calc = ase_calc
         self.ase = True
+        self.mic = mic
 
         # Reset:
         self.constraints = None
@@ -190,7 +191,7 @@ class CatLearnNEB(object):
 
             neb_interpolation = NEB(self.images, k=self.spring)
 
-            neb_interpolation.interpolate(method=interpolation)
+            neb_interpolation.interpolate(method=interpolation, mic=self.mic)
 
             self.initial_images = copy.deepcopy(self.images)
 
@@ -275,7 +276,7 @@ class CatLearnNEB(object):
 
             count_unique = np.unique(self.list_train, return_counts=True,
                                      axis=0)[1]
-            msg = 'Your training list constains 1 or more duplicated elements'
+            msg = 'Your training list contains 1 or more duplicated elements'
             assert np.any(count_unique) < 2, msg
 
             print('Training a ML process...')
