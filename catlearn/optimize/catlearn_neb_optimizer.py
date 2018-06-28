@@ -199,10 +199,10 @@ class CatLearnNEB(object):
         if path is not None:
             images_path = read(path, ':')
 
-            if not np.array_equal(images_path[0].get_positions.flatten(),
+            if not np.array_equal(images_path[0].get_positions().flatten(),
                                   is_pos):
                 images_path.insert(0, self.initial_endpoint)
-            if not np.array_equal(images_path[-1].get_positions.flatten(),
+            if not np.array_equal(images_path[-1].get_positions().flatten(),
                                   fs_pos):
                 images_path.append(self.final_endpoint)
 
@@ -218,6 +218,7 @@ class CatLearnNEB(object):
                                         scaling_targets=self.scale_targets,
                                         iteration=self.iter
                                         )
+            self.d_start_end = np.abs(distance.euclidean(is_pos, fs_pos))
 
         # Save files with all the paths tested:
         write('all_predicted_paths.traj', self.images)
@@ -229,6 +230,7 @@ class CatLearnNEB(object):
                 TrajectoryWriter(atoms=self.ase_ini,
                                  filename='./evaluated_structures.traj',
                                  mode='a').write()
+                self.iter = 0
         self.uncertainty_path = np.zeros(len(self.images))
 
         # Stabilize spring constant:
