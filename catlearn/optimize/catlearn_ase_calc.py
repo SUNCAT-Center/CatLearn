@@ -13,7 +13,7 @@ class CatLearnASE(Calculator):
     nolabel = True
 
     def __init__(self, trained_process, ml_calc, index_constraints,
-                 finite_step=1e-6, kappa=4.0, **kwargs):
+                 finite_step=1e-5, kappa=4.0, **kwargs):
 
         Calculator.__init__(self, **kwargs)
 
@@ -49,8 +49,11 @@ class CatLearnASE(Calculator):
                                             list_to_mask=[pos_flatten],
                                             mask_index=self.ind_constraints)[1]
 
-        # Get energy and uncertainty:
-        energy, uncertainty = pred_energy_test(test=test_point)
+        # Get energy.
+        energy = pred_energy_test(test=test_point)[0]
+
+        # Get uncertainty.
+        uncertainty = pred_energy_test(test=test_point)[1]
 
         # Attach uncertainty to Atoms object.
         atoms.info['uncertainty'] = uncertainty
