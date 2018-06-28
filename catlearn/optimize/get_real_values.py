@@ -4,7 +4,7 @@ import copy
 from catlearn.optimize.io import array_to_ase, array_to_atoms
 
 
-def get_energy_catlearn(self, x=None, magmoms=None):
+def get_energy_catlearn(self, x=None):
 
     """ Evaluates the objective function at a given point in space.
 
@@ -14,8 +14,6 @@ def get_energy_catlearn(self, x=None, magmoms=None):
         Previous information from the CatLearn optimizer.
     x : array
         Array containing the atomic positions (flatten) or point in space.
-    magmoms : array
-        List containing the magnetic moments of each Atom.
 
     Returns
     -------
@@ -31,15 +29,10 @@ def get_energy_catlearn(self, x=None, magmoms=None):
     # Get energies using ASE:
     if self.ase:
         pos_ase = array_to_ase(x, self.num_atoms)
-        if magmoms is None:
-            self.ase_ini.set_calculator(None)
-            self.ase_ini = Atoms(self.ase_ini, positions=pos_ase,
-                                 calculator=copy.deepcopy(self.ase_calc))
-        if magmoms is not None:
-            self.ase_ini.set_calculator(None)
-            self.ase_ini = Atoms(self.ase_ini, positions=pos_ase,
-                                 calculator=copy.deepcopy(self.ase_calc),
-                                 magmoms=magmoms)
+
+        self.ase_ini.set_calculator(None)
+        self.ase_ini = Atoms(self.ase_ini, positions=pos_ase,
+                             calculator=copy.deepcopy(self.ase_calc))
         energy = self.ase_ini.get_potential_energy()
         print('Energy of the geometry evaluated (eV):', energy)
 
@@ -86,7 +79,7 @@ def get_forces_catlearn(self, x=None):
     return forces
 
 
-def eval_and_append(self, interesting_point, interesting_magmom=None):
+def eval_and_append(self, interesting_point):
     """ Evaluates the energy and forces (ASE) of the point of interest
         for a given atomistic structure.
 
@@ -96,8 +89,6 @@ def eval_and_append(self, interesting_point, interesting_magmom=None):
         Previous information from the CatLearn optimizer.
     interesting_point : ndarray
         Atoms positions or point in space.
-    interesting_magmom: ndarray
-        Guessed magnetic moments for the interesting point.
 
     Return
     -------
@@ -110,7 +101,7 @@ def eval_and_append(self, interesting_point, interesting_magmom=None):
     self.list_train = np.append(self.list_train,
                                 interesting_point, axis=0)
 
-    energy = get_energy_catlearn(self, magmoms=interesting_magmom)
+    energy = get_energy_catlearn(self)
 
     self.list_targets = np.append(self.list_targets, energy)
 

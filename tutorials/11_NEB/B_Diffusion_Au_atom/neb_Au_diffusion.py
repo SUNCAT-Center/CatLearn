@@ -93,8 +93,7 @@ neb_catlearn = CatLearnNEB(start='initial.traj',
                            end='final.traj',
                            ase_calc=copy.deepcopy(ase_calculator),
                            n_images=n_images,
-                           interpolation='idpp',
-                           spin_polarized=True)
+                           interpolation='idpp')
 
 neb_catlearn.run(fmax=0.05, plot_neb_paths=True)
 
@@ -110,11 +109,11 @@ print('Number of function evaluations CI-NEB implemented in ASE:', n_eval_ase)
 
 # Catlearn:
 atoms_catlearn = read('evaluated_structures.traj', ':')
-n_eval_catlearn = len(atoms_catlearn)
-print('Number of function evaluations CatLearn:', n_eval_catlearn-2)
+n_eval_catlearn = len(atoms_catlearn) - 2
+print('Number of function evaluations CatLearn:', n_eval_catlearn)
 
 # Comparison:
-print('\nThe CatLearn algorithm required approximately',
-      int(n_eval_ase/n_eval_catlearn),
+print('\nThe CatLearn algorithm required ',
+      (n_eval_ase/n_eval_catlearn),
       'times less number of function evaluations than '
       'the standard NEB algorithm.')

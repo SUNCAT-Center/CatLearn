@@ -29,6 +29,11 @@ class CatLearnASE(Calculator):
         # Atoms object.
         self.atoms = atoms
 
+        # Clean up:
+        energy = 0.0
+        forces = 0.0
+        uncertainty = 0.0
+
         def pred_energy_test(test, ml_calc=self.ml_calc,
                              trained_process=self.trained_process,
                              kappa=self.kappa):
@@ -38,7 +43,7 @@ class CatLearnASE(Calculator):
                                                   test_data=test[0])
             post_mean = predictions['pred_mean'][0][0]
             unc = predictions['uncertainty_with_reg'][0]
-            acq_val = copy.deepcopy(post_mean) + kappa * copy.deepcopy(unc)
+            acq_val = copy.deepcopy(post_mean) + (kappa * copy.deepcopy(unc))
             return [acq_val, unc]
 
         Calculator.calculate(self, atoms, properties, system_changes)
@@ -68,7 +73,7 @@ class CatLearnASE(Calculator):
             pos = copy.deepcopy(test_point)
             pos[0][i] = pos_flatten[index_force] - self.fs
             f_neg = pred_energy_test(test=pos)[0]
-            gradients[index_force] = (-1.0 * f_neg + f_pos) / (2.0 * self.fs)
+            gradients[index_force] = (-f_neg + f_pos) / (2.0 * self.fs)
 
         forces = np.reshape(-gradients, (self.atoms.get_number_of_atoms(), 3))
 

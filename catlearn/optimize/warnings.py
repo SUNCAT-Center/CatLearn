@@ -77,9 +77,8 @@ def warning_kernel():
 
 
 def warning_spin_neb():
-    msg = "WARNING: Spin-polarized NEB. The magnetic moments of the " \
-    "initial and final end-points will be calculated to ensure the correct " \
-    "magnetic moments are passed. Be careful, this feature is under test."
+    msg = "WARNING: Spin-polarized NEB. Spin-polarized calculations are " \
+    "not not supported."
     print(msg)
     store_warnings_and_errors(msg)
 
