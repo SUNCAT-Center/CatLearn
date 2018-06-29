@@ -98,19 +98,13 @@ class CatLearnAutoNEB(object):
               is_endpoint + fs_endpoint)
 
         # Check the magnetic moments of the initial and final states:
-        self.magmom_is = None
-        self.magmom_fs = None
         self.magmom_is = is_endpoint[-1].get_initial_magnetic_moments()
         self.magmom_fs = fs_endpoint[-1].get_initial_magnetic_moments()
 
-        self.spin = False
         if not np.array_equal(self.magmom_is, np.zeros_like(self.magmom_is)):
-            self.spin = True
-        if not np.array_equal(self.magmom_fs, np.zeros_like(self.magmom_fs)):
-            self.spin = True
             warning_spin_neb()
-        if np.array_equal(self.magmom_is, self.magmom_fs):
-            self.spin = False
+        if not np.array_equal(self.magmom_fs, np.zeros_like(self.magmom_fs)):
+            warning_spin_neb()
 
         # Obtain the energy of the endpoints for scaling:
         energy_is = is_endpoint[-1].get_potential_energy()
