@@ -152,7 +152,7 @@ class CatLearnNEB(object):
         if self.ml_calc is None:
             self.kdict = {'k1': {'type': 'gaussian', 'width': 0.5,
                                  'dimension': 'single',
-                                 'bounds': ((0.1, 1.0), ),
+                                 'bounds': ((0.05, 1.0), ),
                                  'scaling': 1.0,
                                  'scaling_bounds': ((1.0, 1.0), )}
                           }
@@ -160,7 +160,7 @@ class CatLearnNEB(object):
             self.ml_calc = GPCalculator(
                 kernel_dict=self.kdict, opt_hyperparam=True, scale_data=False,
                 scale_optimizer=False, calc_uncertainty=True,
-                regularization=1e-5, regularization_bounds=(1e-5, 1e-5))
+                regularization=1e-4, regularization_bounds=((1e-6, 1e-3),))
 
         # Settings for the NEB.
         self.neb_method = neb_method

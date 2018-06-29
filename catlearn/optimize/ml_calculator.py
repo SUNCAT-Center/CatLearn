@@ -6,8 +6,8 @@ from catlearn.optimize.constraints import apply_mask_ase_constraints
 class GPCalculator(object):
 
     def __init__(self, kernel_dict=None,
-                 regularization=1e-5,
-                 regularization_bounds=(1e-5, 1e-5),
+                 regularization=1e-3,
+                 regularization_bounds=((1e-5, 1e-3),),
                  algo_opt_hyperparamters='L-BFGS-B',
                  scale_data=False,
                  scale_optimizer=False,

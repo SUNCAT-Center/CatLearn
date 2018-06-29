@@ -59,7 +59,7 @@ class CatLearnMinimizer(object):
             self.ml_calc = GPCalculator(
                 kernel_dict=self.kdict, opt_hyperparam=True, scale_data=False,
                 scale_optimizer=False, calc_uncertainty=True,
-                regularization=5e-4, regularization_bounds=(5e-4, 5e-4))
+                regularization=1e-4, regularization_bounds=(1e-6, 1e-3),)
             warning_kernel()
 
         self.ase_calc = ase_calc
@@ -117,7 +117,7 @@ class CatLearnMinimizer(object):
                     self.ase_ini, self.constraints)
 
     def run(self, fmax=0.05, ml_algo='BFGS', max_iter=500,
-            min_iter=0, ml_max_iter=500):
+            min_iter=0, ml_max_iter=250):
 
         """Executing run will start the optimization process.
 
@@ -209,13 +209,13 @@ class CatLearnMinimizer(object):
             # Run ML optimization.
             opt_ml = eval(ml_algo)(guess)
             print('Starting ML NEB optimization...')
-            opt_ml.run(fmax=fmax/10.0, steps=ml_max_iter)
+            opt_ml.run(fmax=fmax, steps=ml_max_iter)
             print('ML NEB optimized.')
 
             # 3) Evaluate and append interesting point.
-            magmoms = self.ase_ini.get_initial_magnetic_moments()
+
             interesting_point = guess.get_positions().flatten()
-            eval_and_append(self, interesting_point, magmoms)
+            eval_and_append(self, interesting_point)
 
             # get_plot_step(images=guess,
             #                 interesting_point=interesting_point,
