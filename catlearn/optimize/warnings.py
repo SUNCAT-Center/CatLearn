@@ -252,3 +252,13 @@ def congrats_neb_converged():
           "and 'results_neb_interpolation.csv'."
     print(msg)
     store_warnings_and_errors(msg)
+
+
+def stationary_point_not_found():
+    msg = "Stationary point not found. However, the maximum uncertainty of " \
+          "the path has gone bellow 1 meV. Stopping calculation. Check the " \
+          "file 'last_predicted_path.traj' using ASE. If you want to plot " \
+          "the ML NEB predicted path you should also check the files " \
+          "'results_neb.csv' and 'results_neb_interpolation.csv'."
+    print(msg)
+    store_warnings_and_errors(msg)

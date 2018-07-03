@@ -16,16 +16,14 @@ from ase.optimize import MDMin, FIRE
 from scipy.spatial import distance
 import copy
 import os
-from scipy.interpolate import CubicSpline
-from catlearn.optimize.io import array_to_ase
 
 
 class CatLearnNEB(object):
 
     def __init__(self, start, end, path=None, n_images=None, spring=None,
-                 interpolation=None, mic=False, neb_method='improvedtangent',
+                 interpolation=None, mic=False, neb_method='aseneb',
                  ml_calc=None, ase_calc=None, inc_prev_calcs=False,
-                 stabilize=False, restart=False):
+                 penalty=3.0, stabilize=False, restart=False):
         """ Nudged elastic band (NEB) setup.
 
         Parameters
@@ -152,15 +150,15 @@ class CatLearnNEB(object):
         if self.ml_calc is None:
             self.kdict = {'k1': {'type': 'gaussian', 'width': 0.5,
                                  'dimension': 'single',
-                                 'bounds': ((0.05, 1.0), ),
+                                 'bounds': ((0.05, 0.5), ),
                                  'scaling': 1.0,
-                                 'scaling_bounds': ((1.0, 1.0), )}
+                                 'scaling_bounds': ((0.5, 1.0), )}
                           }
 
             self.ml_calc = GPCalculator(
                 kernel_dict=self.kdict, opt_hyperparam=True, scale_data=False,
                 scale_optimizer=False, calc_uncertainty=True,
-                regularization=1e-4, regularization_bounds=((1e-6, 1e-3),))
+                regularization=1e-4, regularization_bounds=(1e-5, 1e-3))
 
         # Settings for the NEB.
         self.neb_method = neb_method
@@ -182,7 +180,8 @@ class CatLearnNEB(object):
                                         trained_process=None,
                                         ml_calculator=self.ml_calc,
                                         scaling_targets=self.scale_targets,
-                                        iteration=self.iter
+                                        iteration=self.iter,
+                                        kappa=0.0,
                                         )
 
             neb_interpolation = NEB(self.images, k=self.spring)
@@ -212,7 +211,8 @@ class CatLearnNEB(object):
                                         trained_process=None,
                                         ml_calculator=self.ml_calc,
                                         scaling_targets=self.scale_targets,
-                                        iteration=self.iter
+                                        iteration=self.iter,
+                                        kappa=0.0
                                         )
             self.d_start_end = np.abs(distance.euclidean(is_pos, fs_pos))
 
@@ -226,18 +226,20 @@ class CatLearnNEB(object):
                 TrajectoryWriter(atoms=self.ase_ini,
                                  filename='./evaluated_structures.traj',
                                  mode='a').write()
-                self.iter = 0
         self.uncertainty_path = np.zeros(len(self.images))
 
         # Stabilize spring constant:
         if self.spring is None:
             self.spring = np.sqrt((self.n_images-1) / self.d_start_end)
 
+        # Penalty kappa:
+        self.kappa = penalty
+
         # Get path distance:
         self.path_distance = copy.deepcopy(self.d_start_end)
 
     def run(self, fmax=0.05, unc_convergence=0.010, max_iter=500,
-            ml_algo='MDMin', ml_max_iter=500, plot_neb_paths=False):
+            ml_algo='FIRE', ml_max_iter=300, plot_neb_paths=False):
 
         """Executing run will start the optimization process.
 
@@ -292,23 +294,7 @@ class CatLearnNEB(object):
 
             # 2) Setup and run ML NEB:
 
-            if self.iter > 0:
-
-                # Redistribute images along the path.
-
-                self.images = redistribute_images_path(
-                                              images=self.images,
-                                              d_images=s,
-                                              path_distance=self.path_distance,
-                                              n_images=self.n_images,
-                                              n_atoms=self.num_atoms
-                                              )
-
-                # If the previous run didn't converge use the initial path.
-                if neb_opt.__dict__['nsteps'] >= ml_max_iter-2:
-                    self.images = copy.deepcopy(self.initial_images)
-
-            starting_path = self.images
+            starting_path = copy.deepcopy(self.initial_images)
 
             self.images = create_ml_neb(is_endpoint=self.initial_endpoint,
                                         fs_endpoint=self.final_endpoint,
@@ -319,7 +305,8 @@ class CatLearnNEB(object):
                                         trained_process=trained_process,
                                         ml_calculator=ml_calc,
                                         scaling_targets=self.scale_targets,
-                                        iteration=self.iter
+                                        iteration=self.iter,
+                                        kappa=self.kappa
                                         )
 
             ml_neb = NEB(self.images, climb=False,
@@ -359,14 +346,12 @@ class CatLearnNEB(object):
                 self.uncertainty_path.append(i.info['uncertainty'])
                 energies_path.append(i.get_total_energy())
 
-            # Select image with maximum uncertainty.
-            if self.iter % 2 == 0:
-                argmax_unc = np.argmax(self.uncertainty_path[1:-1])
-                interesting_point = self.images[1:-1][
-                                      argmax_unc].get_positions().flatten()
+            argmax_unc = np.argmax(self.uncertainty_path[1:-1])
+            interesting_point = self.images[1:-1][
+                                  argmax_unc].get_positions().flatten()
 
             # Select image with max. predicted value (absolute value).
-            if self.iter % 2 == 1:
+            if np.max(self.uncertainty_path[1:-1]) < unc_convergence:
                 argmax_unc = np.argmax(np.abs(energies_path[1:-1]))
                 interesting_point = self.images[1:-1][
                                           int(argmax_unc)].get_positions(
@@ -383,10 +368,10 @@ class CatLearnNEB(object):
                                          interesting_point=interesting_point,
                                          trained_process=trained_process,
                                          list_train=self.list_train)
-                    # get_plot_mullerbrown_p(images=self.images,
-                    #                        interesting_point=interesting_point,
-                    #                        trained_process=trained_process,
-                    #                        list_train=self.list_train)
+                    get_plot_mullerbrown_p(images=self.images,
+                                           interesting_point=interesting_point,
+                                           trained_process=trained_process,
+                                           list_train=self.list_train)
             # Store results each iteration:
             store_results_neb(s, e, sfit, efit, self.uncertainty_path)
 
@@ -446,11 +431,17 @@ class CatLearnNEB(object):
                 warning_max_iter_reached()
                 break
 
+            # Break if the uncertainty goes below 1 mev.
+            if np.max(self.uncertainty_path[1:-1]) < 0.001:
+                stationary_point_not_found()
+                if self.feval > 5:
+                    break
+
         # Print Final convergence:
         print('Number of function evaluations in this run:', self.iter)
 
 
-def create_ml_neb(is_endpoint, fs_endpoint, images_interpolation,
+def create_ml_neb(is_endpoint, fs_endpoint, images_interpolation, kappa,
                   n_images, constraints, index_constraints, trained_process,
                   ml_calculator, scaling_targets, iteration):
 
@@ -478,7 +469,8 @@ def create_ml_neb(is_endpoint, fs_endpoint, images_interpolation,
         image.info['iteration'] = iteration
         image.set_calculator(CatLearnASE(trained_process=trained_process,
                                          ml_calc=ml_calculator,
-                                         index_constraints=index_constraints
+                                         index_constraints=index_constraints,
+                                         kappa=kappa
                                          ))
         if images_interpolation is not None:
             image.set_positions(images_interpolation[i].get_positions())
@@ -497,20 +489,3 @@ def create_ml_neb(is_endpoint, fs_endpoint, images_interpolation,
     imgs[-1].info['iteration'] = iteration
 
     return imgs
-
-
-def redistribute_images_path(images, d_images, path_distance, n_images,
-                             n_atoms):
-    x = d_images
-    y = []
-
-    for i in images:
-        y.append(i.get_positions().flatten())
-    cubic = CubicSpline(x, y)
-    lin_space = np.linspace(0, path_distance, n_images)
-    reag_pos = cubic(lin_space)
-
-    for i in range(0, len(images)):
-        pos = array_to_ase(reag_pos[i], n_atoms)
-        images[i].set_positions(pos)
-    return images
