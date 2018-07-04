@@ -50,17 +50,15 @@ class CatLearnMinimizer(object):
         if self.ml_calc is None:
             self.kdict = {'k1': {'type': 'gaussian', 'width': 0.5,
                                  'dimension': 'single',
-                                 'bounds': ((0.05, 1.0), ),
+                                 'bounds': ((0.05, 0.5), ),
                                  'scaling': 1.0,
-                                 'scaling_bounds': ((1.0, 1.0), )},
-                          # 'k2': {'type': 'constant', 'const':100.0}
+                                 'scaling_bounds': ((0.5, 1.0), )}
                           }
 
             self.ml_calc = GPCalculator(
                 kernel_dict=self.kdict, opt_hyperparam=True, scale_data=False,
                 scale_optimizer=False, calc_uncertainty=True,
-                regularization=1e-4, regularization_bounds=(1e-6, 1e-3),)
-            warning_kernel()
+                regularization=1e-4, regularization_bounds=(1e-5, 1e-3))
 
         self.ase_calc = ase_calc
 

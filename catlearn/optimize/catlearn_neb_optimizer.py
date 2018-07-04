@@ -370,7 +370,6 @@ class CatLearnNEB(object):
                                          list_train=self.list_train)
                     get_plot_mullerbrown_p(images=self.images,
                                            interesting_point=interesting_point,
-                                           trained_process=trained_process,
                                            list_train=self.list_train)
             # Store results each iteration:
             store_results_neb(s, e, sfit, efit, self.uncertainty_path)
