@@ -122,7 +122,6 @@ class AutoNEBASE(object):
         self.ml = ml_calculator
         self.const = index_constraints
 
-
         if interpolate_method not in ['idpp', 'linear']:
             self.interpolate_method = 'idpp'
             print('Interpolation method not implementet.',
@@ -145,7 +144,7 @@ class AutoNEBASE(object):
             os.makedirs(self.iter_folder)
 
     def execute_one_neb(self, n_cur, to_run, climb=False, many_steps=False):
-        '''Internal method which executes one NEB optimization.'''
+        # Internal method which executes one NEB optimization.
         self.iteration += 1
         # First we copy around all the images we are not using in this
         # neb (for reproducability purposes)
@@ -153,7 +152,8 @@ class AutoNEBASE(object):
             for i in range(n_cur):
                 if i not in to_run[1: -1]:
                     filename = '%s%03d.traj' % (self.prefix, i)
-                    t = Trajectory(filename, mode='w', atoms=self.all_images[i])
+                    t = Trajectory(filename, mode='w',
+                                   atoms=self.all_images[i])
                     t.write()
                     filename_ref = self.iter_folder + \
                         '/%s%03diter%03d.traj' % (self.prefix, i,
@@ -234,7 +234,7 @@ class AutoNEBASE(object):
         neb.distribute()
 
     def run(self):
-        '''Run the AutoNEB optimization algorithm.'''
+        # Run the AutoNEB optimization algorithm.
         n_cur = self.__initialize__()
         while len(self.all_images) < self.n_simul + 2:
             if isinstance(self.k, (float, int)):
@@ -446,7 +446,7 @@ class AutoNEBASE(object):
         return self.all_images
 
     def __initialize__(self):
-        '''Load files from the filesystem.'''
+        # Load files from the filesystem.
         if not os.path.isfile('%s000.traj' % self.prefix):
             raise IOError('No file with name %s000.traj' % self.prefix,
                           'was found. Should contain initial image')
@@ -567,7 +567,6 @@ class seriel_writer:
     def write(self):
         if self.num % (self.i + 1) == 0:
             self.traj.write()
-
 
 
 def store_E_and_F_in_spc(self):

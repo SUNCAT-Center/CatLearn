@@ -140,15 +140,15 @@ class CatLearnAutoNEB(object):
         if self.ml_calc is None:
             self.kdict = {'k1': {'type': 'gaussian', 'width': 0.5,
                                  'dimension': 'single',
-                                 'bounds': ((0.05, 1.0), ),
+                                 'bounds': ((0.05, 0.5), ),
                                  'scaling': 1.0,
-                                 'scaling_bounds': ((1.0, 1.0), )}
+                                 'scaling_bounds': ((0.5, 1.0), )}
                           }
 
             self.ml_calc = GPCalculator(
                 kernel_dict=self.kdict, opt_hyperparam=True, scale_data=False,
                 scale_optimizer=False, calc_uncertainty=True,
-                regularization=1e-4, regularization_bounds=((1e-6, 1e-3),))
+                regularization=1e-4, regularization_bounds=(1e-5, 1e-3))
 
         # Stabilize spring constant:
 
@@ -281,14 +281,12 @@ class CatLearnAutoNEB(object):
                 self.uncertainty_path.append(i.info['uncertainty'])
                 energies_path.append(i.get_total_energy())
 
-            # Select image with maximum uncertainty.
-            if self.iter % 2 == 0:
-                argmax_unc = np.argmax(self.uncertainty_path[1:-1])
-                interesting_point = images[1:-1][
-                                      argmax_unc].get_positions().flatten()
+            argmax_unc = np.argmax(self.uncertainty_path[1:-1])
+            interesting_point = images[1:-1][
+                                  argmax_unc].get_positions().flatten()
 
             # Select image with max. predicted value (absolute value).
-            if self.iter % 2 == 1:
+            if np.max(self.uncertainty_path[1:-1]) < unc_convergence:
                 argmax_unc = np.argmax(np.abs(energies_path[1:-1]))
                 interesting_point = images[1:-1][
                                           int(argmax_unc)].get_positions(
@@ -307,7 +305,6 @@ class CatLearnAutoNEB(object):
                                          list_train=self.list_train)
                     # get_plot_mullerbrown_p(images=images,
                     #                        interesting_point=interesting_point,
-                    #                        trained_process=trained_process,
                     #                        list_train=self.list_train)
             # Store results each iteration:
             store_results_neb(s, e, sfit, efit, self.uncertainty_path)
@@ -366,6 +363,12 @@ class CatLearnAutoNEB(object):
             if max_iter <= self.iter:
                 warning_max_iter_reached()
                 break
+
+            # Break if the uncertainty goes below 1 mev.
+            if np.max(self.uncertainty_path[1:-1]) < 0.001:
+                stationary_point_not_found()
+                if self.feval > 5:
+                    break
 
         # Print Final convergence:
         print('Number of function evaluations in this run:', self.iter)
