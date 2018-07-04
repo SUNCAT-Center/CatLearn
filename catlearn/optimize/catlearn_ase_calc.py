@@ -54,11 +54,8 @@ class CatLearnASE(Calculator):
                                             list_to_mask=[pos_flatten],
                                             mask_index=self.ind_constraints)[1]
 
-        # Get energy.
-        energy = pred_energy_test(test=test_point)[0]
-
-        # Get uncertainty.
-        uncertainty = pred_energy_test(test=test_point)[1]
+        # Get energy and uncertainty.
+        energy, uncertainty = pred_energy_test(test=test_point)
 
         # Attach uncertainty to Atoms object.
         atoms.info['uncertainty'] = uncertainty

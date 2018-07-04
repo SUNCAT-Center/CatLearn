@@ -239,7 +239,7 @@ class CatLearnNEB(object):
         self.path_distance = copy.deepcopy(self.d_start_end)
 
     def run(self, fmax=0.05, unc_convergence=0.010, max_iter=500,
-            ml_algo='FIRE', ml_max_iter=300, plot_neb_paths=False):
+            ml_algo='MDMin', ml_max_iter=300, plot_neb_paths=False):
 
         """Executing run will start the optimization process.
 
