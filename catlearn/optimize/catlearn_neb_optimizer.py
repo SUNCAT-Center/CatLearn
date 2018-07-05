@@ -180,7 +180,8 @@ class CatLearnNEB(object):
                                         trained_process=None,
                                         ml_calculator=self.ml_calc,
                                         scaling_targets=self.scale_targets,
-                                        iteration=self.iter
+                                        iteration=self.iter,
+                                        kappa=0.0
                                         )
 
             neb_interpolation = NEB(self.images, k=self.spring)
