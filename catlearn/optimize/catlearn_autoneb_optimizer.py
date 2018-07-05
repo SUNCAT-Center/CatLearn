@@ -160,7 +160,8 @@ class CatLearnAutoNEB(object):
             self.spring = np.sqrt((self.n_images-1) / self.d_start_end)
 
     def run(self, fmax=0.05, unc_convergence=0.010, max_iter=500,
-            ml_max_iter=500, plot_neb_paths=False):
+            ml_max_iter=500, plot_neb_paths=False,
+            penalty=4.0):
 
         """Executing run will start the optimization process.
 
@@ -178,6 +179,10 @@ class CatLearnAutoNEB(object):
             If True it prints and stores (in csv format) the last predicted
             NEB path obtained by the surrogate ML model. Note: Python package
             matplotlib is required.
+        penalty : float
+            Number of times the predicted energy is penalized w.r.t the
+            uncertainty during the ML optimization.
+
 
         Returns
         -------
@@ -243,7 +248,7 @@ class CatLearnAutoNEB(object):
                                  attach_calculators=CatLearnASE(
                                          trained_process=trained_process,
                                          ml_calc=ml_calc,
-                                         kappa=2.0,
+                                         kappa=penalty,
                                          index_constraints=self.ind_mask_constr
                                          ),
                                  k=self.spring,

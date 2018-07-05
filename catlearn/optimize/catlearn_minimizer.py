@@ -115,7 +115,7 @@ class CatLearnMinimizer(object):
                     self.ase_ini, self.constraints)
 
     def run(self, fmax=0.05, ml_algo='BFGS', max_iter=500,
-            min_iter=0, ml_max_iter=250):
+            min_iter=0, ml_max_iter=250, penalty=2.0):
 
         """Executing run will start the optimization process.
 
@@ -133,6 +133,9 @@ class CatLearnMinimizer(object):
             Minimum number of iteration in the surrogate model.
         ml_max_iter : int
             Maximum number of ML NEB iterations.
+        penalty : float
+            Number of times the predicted energy is penalized w.r.t the
+            uncertainty during the ML optimization.
 
         Returns
         -------
@@ -199,7 +202,7 @@ class CatLearnMinimizer(object):
             guess.set_calculator(CatLearnASE(
                                     trained_process=trained_process,
                                     ml_calc=ml_calc,
-                                    kappa=2.0,
+                                    kappa=penalty,
                                     index_constraints=self.ind_mask_constr
                                          ))
             guess.info['iteration'] = self.iter

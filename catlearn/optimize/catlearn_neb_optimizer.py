@@ -23,7 +23,7 @@ class CatLearnNEB(object):
     def __init__(self, start, end, path=None, n_images=None, spring=None,
                  interpolation=None, mic=False, neb_method='aseneb',
                  ml_calc=None, ase_calc=None, inc_prev_calcs=False,
-                 penalty=3.0, stabilize=False, restart=False):
+                 stabilize=False, restart=False):
         """ Nudged elastic band (NEB) setup.
 
         Parameters
@@ -180,8 +180,7 @@ class CatLearnNEB(object):
                                         trained_process=None,
                                         ml_calculator=self.ml_calc,
                                         scaling_targets=self.scale_targets,
-                                        iteration=self.iter,
-                                        kappa=0.0,
+                                        iteration=self.iter
                                         )
 
             neb_interpolation = NEB(self.images, k=self.spring)
@@ -232,14 +231,12 @@ class CatLearnNEB(object):
         if self.spring is None:
             self.spring = np.sqrt((self.n_images-1) / self.d_start_end)
 
-        # Penalty kappa:
-        self.kappa = penalty
-
         # Get path distance:
         self.path_distance = copy.deepcopy(self.d_start_end)
 
     def run(self, fmax=0.05, unc_convergence=0.010, max_iter=500,
-            ml_algo='MDMin', ml_max_iter=300, plot_neb_paths=False):
+            ml_algo='MDMin', ml_max_iter=300, plot_neb_paths=False,
+            penalty=4.0):
 
         """Executing run will start the optimization process.
 
@@ -261,6 +258,9 @@ class CatLearnNEB(object):
             If True it prints and stores (in csv format) the last predicted
             NEB path obtained by the surrogate ML model. Note: Python package
             matplotlib is required.
+        penalty : float
+            Number of times the predicted energy is penalized w.r.t the
+            uncertainty during the ML optimization.
 
         Returns
         -------
@@ -306,7 +306,7 @@ class CatLearnNEB(object):
                                         ml_calculator=ml_calc,
                                         scaling_targets=self.scale_targets,
                                         iteration=self.iter,
-                                        kappa=self.kappa
+                                        kappa=penalty
                                         )
 
             ml_neb = NEB(self.images, climb=False,
