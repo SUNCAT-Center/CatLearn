@@ -160,7 +160,7 @@ class CatLearnAutoNEB(object):
             self.spring = np.sqrt((self.n_images-1) / self.d_start_end)
 
     def run(self, fmax=0.05, unc_convergence=0.010, max_iter=500,
-            ml_max_iter=500, plot_neb_paths=False,
+            ml_max_iter=1000, plot_neb_paths=False,
             penalty=4.0):
 
         """Executing run will start the optimization process.
