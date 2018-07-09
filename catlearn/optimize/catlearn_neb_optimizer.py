@@ -230,14 +230,14 @@ class CatLearnNEB(object):
 
         # Stabilize spring constant:
         if self.spring is None:
-            self.spring = np.sqrt((self.n_images-1) / self.d_start_end)
+            self.spring = np.sqrt(self.n_images-1) / self.d_start_end
 
         # Get path distance:
         self.path_distance = copy.deepcopy(self.d_start_end)
 
     def run(self, fmax=0.05, unc_convergence=0.010, max_iter=500,
             ml_algo='MDMin', ml_max_iter=300, plot_neb_paths=False,
-            penalty=4.0):
+            penalty=4.0, acquisition='acq_1'):
 
         """Executing run will start the optimization process.
 
@@ -347,16 +347,45 @@ class CatLearnNEB(object):
                 self.uncertainty_path.append(i.info['uncertainty'])
                 energies_path.append(i.get_total_energy())
 
-            argmax_unc = np.argmax(self.uncertainty_path[1:-1])
-            interesting_point = self.images[1:-1][
+            # Select next point to train:
+
+            # Option 1:
+            if acquisition == 'acq_1':
+                # Select image with max. uncertainty.
+                if self.iter % 2 == 0:
+                    argmax_unc = np.argmax(self.uncertainty_path[1:-1])
+                    interesting_point = self.images[1:-1][
+                                      argmax_unc].get_positions().flatten()
+
+                # Select image with max. predicted value (absolute value).
+                if self.iter % 2 == 1:
+                    argmax_unc = np.argmax(np.abs(energies_path[1:-1]))
+                    interesting_point = self.images[1:-1][
+                                              int(argmax_unc)].get_positions(
+                                              ).flatten()
+            # Option 2:
+            if acquisition == 'acq_2':
+                # Select image with max. uncertainty.
+                argmax_unc = np.argmax(self.uncertainty_path[1:-1])
+                interesting_point = self.images[1:-1][
                                   argmax_unc].get_positions().flatten()
 
-            # Select image with max. predicted value (absolute value).
-            if np.max(self.uncertainty_path[1:-1]) < unc_convergence:
-                argmax_unc = np.argmax(np.abs(energies_path[1:-1]))
+                # Select image with max. predicted value (absolute value).
+                if np.max(self.uncertainty_path[1:-1]) < unc_convergence:
+                    argmax_unc = np.argmax(np.abs(energies_path[1:-1]))
+                    interesting_point = self.images[1:-1][
+                                              int(argmax_unc)].get_positions(
+                                              ).flatten()
+            # Option 3:
+            if acquisition == 'acq_3':
+                # Select image with max. uncertainty.
+                argmax_unc = np.argmax(self.uncertainty_path[1:-1])
                 interesting_point = self.images[1:-1][
-                                          int(argmax_unc)].get_positions(
-                                          ).flatten()
+                                  argmax_unc].get_positions().flatten()
+
+                # When reached certain uncertainty apply acq. 1.
+                if np.max(self.uncertainty_path[1:-1]) < unc_convergence:
+                    acquisition = 'acq_1'
 
             # Plots results in each iteration.
             if plot_neb_paths is True:
@@ -369,9 +398,9 @@ class CatLearnNEB(object):
                                          interesting_point=interesting_point,
                                          trained_process=trained_process,
                                          list_train=self.list_train)
-                    get_plot_mullerbrown_p(images=self.images,
-                                           interesting_point=interesting_point,
-                                           list_train=self.list_train)
+                    # get_plot_mullerbrown_p(images=self.images,
+                    #                        interesting_point=interesting_point,
+                    #                        list_train=self.list_train)
             # Store results each iteration:
             store_results_neb(s, e, sfit, efit, self.uncertainty_path)
 

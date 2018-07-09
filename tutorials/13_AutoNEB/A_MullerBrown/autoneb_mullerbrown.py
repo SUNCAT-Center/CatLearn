@@ -44,7 +44,7 @@ final_opt = BFGS(final_structure, trajectory='final.traj')
 final_opt.run(fmax=0.01)
 
 # Define number of images:
-n_images = 7
+n_images = 11
 
 # 2.A. AutoNEB using ASE  ####################################################
 
@@ -56,15 +56,15 @@ final = read('final.traj')
 write('images001.traj', final)
 
 autoneb_ase = AutoNEBASE(prefix='images',
-                  n_max=n_images,
-                  n_simul=1,
-                  attach_calculators=ase_calculator)
+                         n_max=n_images,
+                         n_simul=1,
+                         attach_calculators=ase_calculator)
 autoneb_ase.run()
 
 # 2.B. AutoNEB using CatLearn ################################################
 
 autoneb_catlearn = CatLearnAutoNEB(start='initial.traj',
-                                 end='final.traj',
-                                 ase_calc=copy.deepcopy(ase_calculator),
-                                 n_images=n_images)
+                                   end='final.traj',
+                                   ase_calc=copy.deepcopy(ase_calculator),
+                                   n_images=n_images)
 autoneb_catlearn.run(fmax=0.05, plot_neb_paths=True)

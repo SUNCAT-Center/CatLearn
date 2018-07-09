@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 from ase.io import Trajectory
 from ase.io import read
 from ase.neb import NEB
@@ -13,18 +11,21 @@ import os
 import types
 from math import log
 from math import exp
-from ase.calculators.emt import EMT
-from catlearn.optimize.catlearn_ase_calc import CatLearnASE
-import copy
 
 class AutoNEBASE(object):
     """AutoNEB object.
+    This class is a modified version of the original class AutoNEB in ASE.
+    See https://gitlab.com/ase/ase/blob/master/ase/autoneb.py
+
     The AutoNEB algorithm streamlines the execution of NEB and CI-NEB
     calculations following the algorithm described in:
+
     E. L. Kolsbjerg, M. N. Groves, and B. Hammer, J. Chem. Phys,
     145, 094107, 2016. (doi: 10.1063/1.4961868)
+
     The user supplies at minimum the two end-points and possibly also some
     intermediate images.
+
     The stages are:
         1) Define a set of images and name them sequentially.
                 Must at least have a relaxed starting and ending image
@@ -39,8 +40,11 @@ class AutoNEBASE(object):
            are further relaxed to smooth the path
         6) All the images between the highest point and the ending point are
            further relaxed to smooth the path
+
            Step 4 and 5-6 are optional steps!
+
     Parameters:
+
     attach_calculators:
         Function which adds valid calculators to the list of images supplied.
     prefix: string
@@ -66,19 +70,20 @@ class AutoNEBASE(object):
     k: float
         The spring constant along the NEB path
     method: str (see neb.py)
-        Choice betweeen three method:
+        Choice between three method:
         'aseneb', standard ase NEB implementation
         'improvedtangent', published NEB implementation
-        'eb', full spring force implementation (defualt)
+        'eb', full spring force implementation (default)
     optimizer: str
         Which optimizer to use in the relaxation. Valid values are 'BFGS'
-        and 'FIRE' (defualt)
+        and 'FIRE' (default)
     space_energy_ratio: float
         The preference for new images to be added in a big energy gab
         with a preference around the peak or in the biggest geometric gab.
-        A space_energy_ratio set to 1 will only considder geometric gabs
+        A space_energy_ratio set to 1 will only consider geometric gabs
         while one set to 0 will result in only images for energy
         resolution.
+
     The AutoNEB method uses a fixed file-naming convention.
     The initial images should have the naming prefix000.traj, prefix001.traj,
     ... up until the final image in prefix00N.traj
@@ -87,6 +92,7 @@ class AutoNEBASE(object):
     When doing the i'th NEB optimization a set of files
     prefixXXXiter00i.traj exists with XXX ranging from 000 to the N images
     currently in the NEB.
+
     The most recent NEB path can always be monitored by:
         $ ase-gui -n -1 neb???.traj
     """
@@ -117,14 +123,9 @@ class AutoNEBASE(object):
         self.remove_rotation_and_translation = remove_rotation_and_translation
         self.space_energy_ratio = space_energy_ratio
 
-        # Machine learning
-        self.tr = trained_process
-        self.ml = ml_calculator
-        self.const = index_constraints
-
         if interpolate_method not in ['idpp', 'linear']:
             self.interpolate_method = 'idpp'
-            print('Interpolation method not implementet.',
+            print('Interpolation method not implemented.',
                   'Using the IDPP method.')
         else:
             self.interpolate_method = interpolate_method
@@ -147,7 +148,7 @@ class AutoNEBASE(object):
         # Internal method which executes one NEB optimization.
         self.iteration += 1
         # First we copy around all the images we are not using in this
-        # neb (for reproducability purposes)
+        # neb (for reproducibility purposes)
         if self.world.rank == 0:
             for i in range(n_cur):
                 if i not in to_run[1: -1]:
@@ -229,7 +230,7 @@ class AutoNEBASE(object):
 
         # Remove the calculators and replace them with single
         # point calculators and update all the nodes for
-        # preperration for next iteration
+        # preparation for next iteration
         neb.distribute = types.MethodType(store_E_and_F_in_spc, neb)
         neb.distribute()
 
@@ -310,7 +311,7 @@ class AutoNEBASE(object):
             if isinstance(self.k, (float, int)):
                 self.k = [self.k] * (len(self.all_images) - 1)
             # Insert a new image where the distance between two images
-            # is the largest OR where a higher energy reselution is needed
+            # is the largest OR where a higher energy resolution is needed
             if self.world.rank == 0:
                 print('****Now adding another image until n_max is reached',
                       '({0}/{1})****'.format(n_cur, self.n_max))
@@ -481,7 +482,7 @@ class AutoNEBASE(object):
                     shutil.copy2(filename, filename_ref)
                 except IOError:
                     pass
-        # Wait for file system on all nodes is syncronized
+        # Wait for file system on all nodes is synchronized
         self.world.barrier()
         # And now lets read in the configurations
         for i in range(n_cur):

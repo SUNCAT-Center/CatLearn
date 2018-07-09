@@ -156,12 +156,10 @@ class CatLearnAutoNEB(object):
         fs_pos = fs_endpoint[-1].get_positions().flatten()
         self.d_start_end = np.abs(distance.euclidean(is_pos, fs_pos))
 
-        if self.spring is None:
-            self.spring = np.sqrt((self.n_images-1) / self.d_start_end)
 
     def run(self, fmax=0.05, unc_convergence=0.010, max_iter=500,
             ml_max_iter=1000, plot_neb_paths=False,
-            penalty=4.0):
+            acquisition='acq_1', penalty=4.0):
 
         """Executing run will start the optimization process.
 
@@ -182,6 +180,16 @@ class CatLearnAutoNEB(object):
         penalty : float
             Number of times the predicted energy is penalized w.r.t the
             uncertainty during the ML optimization.
+        acquisition: string
+            Acquisition function. Implemented are:
+            'max_uncertainty_max_energy' and 'max_uncertainty'.
+            The first one targets the max. uncertainty of the predicted path
+            in odd iterations and the max. energy on the even iterations.
+            The second acqusition function targets the max. uncertainty of
+            the path. Once the uncertainty goes below the
+            uncertainty criteria defined in the 'unc_convergence' flag,
+            it will target the max. energy point.
+
 
 
         Returns
@@ -232,16 +240,15 @@ class CatLearnAutoNEB(object):
                 os.remove(i)
 
             # Remove data from previous iteration:
-            directory = './AutoNEB_iter'
-            if os.path.exists(directory):
-                shutil.rmtree(directory)
+            # directory = './AutoNEB_iter'
+            # if os.path.exists(directory):
+            #     shutil.rmtree(directory)
 
             write('images000.traj', initial)
             write('images001.traj', final)
 
             print('Starting ML NEB optimization...')
-            neb_opt = AutoNEBASE(
-                                 n_simul=1,
+            neb_opt = AutoNEBASE(n_simul=1,
                                  n_max=self.n_images,
                                  fmax=fmax,
                                  prefix='images',
@@ -251,7 +258,7 @@ class CatLearnAutoNEB(object):
                                          kappa=penalty,
                                          index_constraints=self.ind_mask_constr
                                          ),
-                                 k=self.spring,
+                                 # k=self.spring,
                                  maxsteps=ml_max_iter
                                  )
             neb_opt.run()
@@ -286,16 +293,45 @@ class CatLearnAutoNEB(object):
                 self.uncertainty_path.append(i.info['uncertainty'])
                 energies_path.append(i.get_total_energy())
 
-            argmax_unc = np.argmax(self.uncertainty_path[1:-1])
-            interesting_point = images[1:-1][
+            # Select next point to train:
+
+            # Option 1:
+            if acquisition == 'acq_1':
+                # Select image with max. uncertainty.
+                if self.iter % 2 == 0:
+                    argmax_unc = np.argmax(self.uncertainty_path[1:-1])
+                    interesting_point = images[1:-1][
+                                      argmax_unc].get_positions().flatten()
+
+                # Select image with max. predicted value (absolute value).
+                if self.iter % 2 == 1:
+                    argmax_unc = np.argmax(np.abs(energies_path[1:-1]))
+                    interesting_point = images[1:-1][
+                                              int(argmax_unc)].get_positions(
+                                              ).flatten()
+            # Option 2:
+            if acquisition == 'acq_2':
+                # Select image with max. uncertainty.
+                argmax_unc = np.argmax(self.uncertainty_path[1:-1])
+                interesting_point = images[1:-1][
                                   argmax_unc].get_positions().flatten()
 
-            # Select image with max. predicted value (absolute value).
-            if np.max(self.uncertainty_path[1:-1]) < unc_convergence:
-                argmax_unc = np.argmax(np.abs(energies_path[1:-1]))
+                # Select image with max. predicted value (absolute value).
+                if np.max(self.uncertainty_path[1:-1]) < unc_convergence:
+                    argmax_unc = np.argmax(np.abs(energies_path[1:-1]))
+                    interesting_point = images[1:-1][
+                                              int(argmax_unc)].get_positions(
+                                              ).flatten()
+            # Option 3:
+            if acquisition == 'acq_3':
+                # Select image with max. uncertainty.
+                argmax_unc = np.argmax(self.uncertainty_path[1:-1])
                 interesting_point = images[1:-1][
-                                          int(argmax_unc)].get_positions(
-                                          ).flatten()
+                                  argmax_unc].get_positions().flatten()
+
+                # When reached certain uncertainty apply acq. 1.
+                if np.max(self.uncertainty_path[1:-1]) < unc_convergence:
+                    acquisition = 'acq_1'
 
             # Plots results in each iteration.
             if plot_neb_paths is True:
