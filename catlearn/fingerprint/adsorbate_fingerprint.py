@@ -7,10 +7,10 @@ from .periodic_table_data import (get_mendeleev_params, n_outer,
                                   list_mendeleev_params,
                                   default_params, get_radius,
                                   electronegativities,
-                                  block2number)
+                                  block2number, make_labels)
 from .neighbor_matrix import connection_matrix
 import collections
-from .base import BaseGenerator
+from .base import BaseGenerator, check_labels
 
 
 default_adsorbate_fingerprinters = ['mean_chemisorbed_atoms',
@@ -18,13 +18,17 @@ default_adsorbate_fingerprinters = ['mean_chemisorbed_atoms',
                                     'count_ads_atoms',
                                     'count_ads_bonds',
                                     'mean_site',
+                                    'max_site',
+                                    'min_site',
+                                    'median_site',
                                     'sum_site',
                                     'mean_surf_ligands',
                                     'term',
                                     'bulk',
                                     'strain',
                                     'en_difference_ads',
-                                    'en_difference_chemi']
+                                    'en_difference_chemi',
+                                    'generalized_cn']
 
 extra_slab_params = ['atomic_radius',
                      'heat_of_formation',
@@ -47,29 +51,6 @@ facetdict = {'001': [1.], '0001step': [2.], '100': [3.],
              '532': [8.]}
 
 
-def check_length(labels, result, atoms):
-    """Check that two lists have the same length. If not, print an informative
-    error message containing a databse id if present.
-
-    Parameters
-    ----------
-    labels : list
-        A list of feature names.
-    result : list
-        A fingerprint.
-    atoms : object
-        A single atoms object.
-    """
-    if len(result) != len(labels):
-        msg = str(len(labels)) + '/' + str(len(result)) + \
-            ' labels/fingerprint mismatch.'
-        if 'id' in atoms.info:
-            msg += ' database id: ' + str(atoms.info['id'])
-            msg += ' ' + ' '.join([str(label) for label in labels])
-            msg += ' ' + ' '.join([str(value) for value in result])
-        raise AssertionError(msg)
-
-
 class AdsorbateFingerprintGenerator(BaseGenerator):
     def __init__(self, **kwargs):
         """Class containing functions for fingerprint generation.
@@ -78,12 +59,36 @@ class AdsorbateFingerprintGenerator(BaseGenerator):
         ----------
         params : list
             An optional list of parameters upon which to generate features.
+        cn_max : int
+            Optional integer for maximum expected coordination number.
+        ion_number : int
+            Optional atomic number.
+        ion_charge : int
+            Optional formal charge of that element.
         """
         if not hasattr(self, 'params'):
             self.slab_params = kwargs.get('params')
 
         if self.slab_params is None:
             self.slab_params = default_params + extra_slab_params
+
+        if not hasattr(self, 'cn_max'):
+            self.cn_max = kwargs.get('cn_max')
+
+        if self.cn_max is None:
+            self.cn_max = 12
+
+        if not hasattr(self, 'ion_number'):
+            self.ion_number = kwargs.get('ion_number')
+
+        if self.ion_number is None:
+            self.ion_number = 8
+
+        if not hasattr(self, 'ion_charge'):
+            self.ion_charge = kwargs.get('ion_charge')
+
+        if self.ion_charge is None:
+            self.ion_charge = -2
 
         super(AdsorbateFingerprintGenerator, self).__init__(**kwargs)
 
@@ -95,43 +100,8 @@ class AdsorbateFingerprintGenerator(BaseGenerator):
         ----------
             atoms : object
         """
-        labels = ['atomic_number_term',
-                  'atomic_volume_term',
-                  'boiling_point_term',
-                  'density_term',
-                  'dipole_polarizability_term',
-                  'electron_affinity_term',
-                  'group_id_term',
-                  'lattice_constant_term',
-                  'melting_point_term',
-                  'period_term',
-                  'vdw_radius_term',
-                  'covalent_radius_cordero_term',
-                  'en_allen_term',
-                  'atomic_weight_term',
-                  'atomic_radius_term',
-                  'heat_of_formation_term',
-                  'dft_bulk_modulus_term',
-                  'dft_rhodensity_term',
-                  'dbcenter_term',
-                  'dbfilling_term',
-                  'dbwidth_term',
-                  'dbskew_term',
-                  'dbkurtosis_term',
-                  'oxi_min_term',
-                  'oxi_med_term',
-                  'oxi_max_term',
-                  'sblock_term',
-                  'pblock_term',
-                  'dblock_term',
-                  'fblock_term',
-                  'ne_outer_term',
-                  'ne_s_term',
-                  'ne_p_term',
-                  'ne_d_term',
-                  'ne_f_term',
-                  'ionenergy_term',
-                  'ground_state_magmom_term']
+        labels = make_labels(self.slab_params, '', '_term')
+        labels.append('ground_state_magmom_term')
         if atoms is None:
             return labels
         else:
@@ -147,7 +117,7 @@ class AdsorbateFingerprintGenerator(BaseGenerator):
             dat = list_mendeleev_params(numbers, params=self.slab_params)
             result = list(np.nanmean(dat, axis=0))
             result += [np.nanmean([gs_magmom[z] for z in numbers])]
-            check_length(labels, result, atoms)
+            check_labels(labels, result, atoms)
             return result
 
     def bulk(self, atoms=None):
@@ -158,43 +128,8 @@ class AdsorbateFingerprintGenerator(BaseGenerator):
         ----------
             atoms : object
         """
-        labels = ['atomic_number_bulk',
-                  'atomic_volume_bulk',
-                  'boiling_point_bulk',
-                  'density_bulk',
-                  'dipole_polarizability_bulk',
-                  'electron_affinity_bulk',
-                  'group_id_bulk',
-                  'lattice_constant_bulk',
-                  'melting_point_bulk',
-                  'period_bulk',
-                  'vdw_radius_bulk',
-                  'covalent_radius_cordero_bulk',
-                  'en_allen_bulk',
-                  'atomic_weight_bulk',
-                  'atomic_radius_bulk',
-                  'heat_of_formation_bulk',
-                  'dft_bulk_modulus_bulk',
-                  'dft_rhodensity_bulk',
-                  'dbcenter_bulk',
-                  'dbfilling_bulk',
-                  'dbwidth_bulk',
-                  'dbskew_bulk',
-                  'dbkurtosis_bulk',
-                  'sblock_bulk',
-                  'pblock_bulk',
-                  'dblock_bulk',
-                  'fblock_bulk',
-                  'oxi_min_bulk',
-                  'oxi_med_bulk',
-                  'oxi_max_bulk',
-                  'ne_outer_bulk',
-                  'ne_s_bulk',
-                  'ne_p_bulk',
-                  'ne_d_bulk',
-                  'ne_f_bulk',
-                  'ionenergy_bulk',
-                  'ground_state_magmom_bulk']
+        labels = make_labels(self.slab_params, '', '_bulk')
+        labels.append('ground_state_magmom_bulk')
         if atoms is None:
             return labels
         else:
@@ -210,7 +145,7 @@ class AdsorbateFingerprintGenerator(BaseGenerator):
             dat = list_mendeleev_params(numbers, params=self.slab_params)
             result = list(np.nanmean(dat, axis=0))
             result += [np.nanmean([gs_magmom[z] for z in numbers])]
-            check_length(labels, result, atoms)
+            check_labels(labels, result, atoms)
             return result
 
     def mean_chemisorbed_atoms(self, atoms=None):
@@ -220,38 +155,16 @@ class AdsorbateFingerprintGenerator(BaseGenerator):
 
         Parameters
         ----------
-            atoms : object
+        atoms : object
+
+        Returns
+        ----------
+        result : list
         """
-        labels = ['atomic_number_ads1',
-                  'atomic_volume_ads1',
-                  'boiling_point_ads1',
-                  'density_ads1',
-                  'dipole_polarizability_ads1',
-                  'electron_affinity_ads1',
-                  'group_id_ads1',
-                  'lattice_constant_ads1',
-                  'melting_point_ads1',
-                  'period_ads1',
-                  'vdw_radius_ads1',
-                  'covalent_radius_cordero_ads1',
-                  'en_allen_ads1',
-                  'atomic_weight_ads1',
-                  'atomic_radius_ads1',
-                  'heat_of_formation_ads1',
-                  'oxi_min_ads1',
-                  'oxi_med_ads1',
-                  'oxi_max_ads1',
-                  'sblock_ads1',
-                  'pblock_ads1',
-                  'dblock_ads1',
-                  'fblock_ads1',
-                  'ne_outer_ads1',
-                  'ne_s_ads1',
-                  'ne_p_ads1',
-                  'ne_d_ads1',
-                  'ne_f_ads1',
-                  'ionenergy_ads1',
-                  'ground_state_magmom_ads1']
+        extra_ads_params = ['atomic_radius', 'heat_of_formation',
+                            'oxistates', 'block', 'econf', 'ionenergies']
+        labels = make_labels(default_params + extra_ads_params, '', '_ads1')
+        labels.append('ground_state_magmom_ads1')
         if atoms is None:
             return labels
         else:
@@ -259,13 +172,11 @@ class AdsorbateFingerprintGenerator(BaseGenerator):
             chemisorbed_atoms = atoms.subsets['chemisorbed_atoms']
             numbers = atoms.numbers[chemisorbed_atoms]
             # Import CatLearn data on that element.
-            extra_ads_params = ['atomic_radius', 'heat_of_formation',
-                                'oxistates', 'block', 'econf', 'ionenergies']
             dat = list_mendeleev_params(numbers, params=default_params +
                                         extra_ads_params)
             result = list(np.nanmean(dat, axis=0))
             result += [np.nanmean([gs_magmom[z] for z in numbers])]
-            check_length(labels, result, atoms)
+            check_labels(labels, result, atoms)
             return result
 
     def mean_site(self, atoms=None):
@@ -277,43 +188,8 @@ class AdsorbateFingerprintGenerator(BaseGenerator):
         ----------
             atoms : object
         """
-        labels = ['atomic_number_site_av',
-                  'atomic_volume_site_av',
-                  'boiling_point_site_av',
-                  'density_site_av',
-                  'dipole_polarizability_site_av',
-                  'electron_affinity_site_av',
-                  'group_id_site_av',
-                  'lattice_constant_site_av',
-                  'melting_point_site_av',
-                  'period_site_av',
-                  'vdw_radius_site_av',
-                  'covalent_radius_cordero_site_av',
-                  'en_allen_site_av',
-                  'atomic_weight_site_av',
-                  'atomic_radius_site_av',
-                  'heat_of_formation_site_av',
-                  'dft_bulk_modulus_site_av',
-                  'dft_rhodensity_site_av',
-                  'dbcenter_site_av',
-                  'dbfilling_site_av',
-                  'dbwidth_site_av',
-                  'dbskew_site_av',
-                  'dbkurtosis_site_av',
-                  'oxi_min_site_av',
-                  'oxi_med_site_av',
-                  'oxi_max_site_av',
-                  'sblock_site_av',
-                  'pblock_site_av',
-                  'dblock_site_av',
-                  'fblock_site_av',
-                  'ne_outer_site_av',
-                  'ne_s_site_av',
-                  'ne_p_site_av',
-                  'ne_d_site_av',
-                  'ne_f_site_av',
-                  'ionenergy_site_av',
-                  'ground_state_magmom_site_av']
+        labels = make_labels(self.slab_params, '', '_site_av')
+        labels.append('ground_state_magmom_site_av')
         if atoms is None:
             return labels
         else:
@@ -321,7 +197,70 @@ class AdsorbateFingerprintGenerator(BaseGenerator):
             dat = list_mendeleev_params(numbers, params=self.slab_params)
             result = list(np.nanmean(dat, axis=0))
             result += [np.nanmean([gs_magmom[z] for z in numbers])]
-            check_length(labels, result, atoms)
+            check_labels(labels, result, atoms)
+            return result
+
+    def min_site(self, atoms=None):
+        """Function that takes an atoms objects and returns a fingerprint
+        vector with properties averaged over the surface metal atoms
+        closest to an add atom.
+
+        Parameters
+        ----------
+            atoms : object
+        """
+        labels = make_labels(self.slab_params, '', '_site_min')
+        labels.append('ground_state_magmom_site_min')
+        if atoms is None:
+            return labels
+        else:
+            numbers = [atoms[j].number for j in atoms.subsets['site_atoms']]
+            dat = list_mendeleev_params(numbers, params=self.slab_params)
+            result = list(np.nanmin(dat, axis=0))
+            result += [np.nanmin([gs_magmom[z] for z in numbers])]
+            check_labels(labels, result, atoms)
+            return result
+
+    def max_site(self, atoms=None):
+        """Function that takes an atoms objects and returns a fingerprint
+        vector with properties averaged over the surface metal atoms
+        closest to an add atom.
+
+        Parameters
+        ----------
+            atoms : object
+        """
+        labels = make_labels(self.slab_params, '', '_site_max')
+        labels.append('ground_state_magmom_site_max')
+        if atoms is None:
+            return labels
+        else:
+            numbers = [atoms[j].number for j in atoms.subsets['site_atoms']]
+            dat = list_mendeleev_params(numbers, params=self.slab_params)
+            result = list(np.nanmax(dat, axis=0))
+            result += [np.nanmax([gs_magmom[z] for z in numbers])]
+            check_labels(labels, result, atoms)
+            return result
+
+    def median_site(self, atoms=None):
+        """Function that takes an atoms objects and returns a fingerprint
+        vector with properties averaged over the surface metal atoms
+        closest to an add atom.
+
+        Parameters
+        ----------
+            atoms : object
+        """
+        labels = make_labels(self.slab_params, '', '_site_med')
+        labels.append('ground_state_magmom_site_med')
+        if atoms is None:
+            return labels
+        else:
+            numbers = [atoms[j].number for j in atoms.subsets['site_atoms']]
+            dat = list_mendeleev_params(numbers, params=self.slab_params)
+            result = list(np.nanmedian(dat, axis=0))
+            result += [np.nanmedian([gs_magmom[z] for z in numbers])]
+            check_labels(labels, result, atoms)
             return result
 
     def sum_site(self, atoms=None):
@@ -333,43 +272,8 @@ class AdsorbateFingerprintGenerator(BaseGenerator):
         ----------
             atoms : object
         """
-        labels = ['atomic_number_site_sum',
-                  'atomic_volume_site_sum',
-                  'boiling_point_site_sum',
-                  'density_site_sum',
-                  'dipole_polarizability_site_sum',
-                  'electron_affinity_site_sum',
-                  'group_id_site_sum',
-                  'lattice_constant_site_sum',
-                  'melting_point_site_sum',
-                  'period_site_sum',
-                  'vdw_radius_site_sum',
-                  'covalent_radius_cordero_site_sum',
-                  'en_allen_site_sum',
-                  'atomic_weight_site_sum',
-                  'atomic_radius_site_sum',
-                  'heat_of_formation_site_sum',
-                  'dft_bulk_modulus_site_sum',
-                  'dft_rhodensity_site_sum',
-                  'dbcenter_site_sum',
-                  'dbfilling_site_sum',
-                  'dbwidth_site_sum',
-                  'dbskew_site_sum',
-                  'dbkurtosis_site_sum',
-                  'oxi_min_site_sum',
-                  'oxi_med_site_sum',
-                  'oxi_max_site_sum',
-                  'sblock_site_sum',
-                  'pblock_site_sum',
-                  'dblock_site_sum',
-                  'fblock_site_sum',
-                  'ne_outer_site_sum',
-                  'ne_s_site_sum',
-                  'ne_p_site_sum',
-                  'ne_d_site_sum',
-                  'ne_f_site_sum',
-                  'ionenergy_site_sum',
-                  'ground_state_magmom_site_sum']
+        labels = make_labels(self.slab_params, '', '_site_sum')
+        labels.append('ground_state_magmom_site_sum')
         if atoms is None:
             return labels
         else:
@@ -377,8 +281,98 @@ class AdsorbateFingerprintGenerator(BaseGenerator):
             dat = list_mendeleev_params(numbers, params=self.slab_params)
             result = list(np.nansum(dat, axis=0))
             result += [np.nansum([gs_magmom[z] for z in numbers])]
-            check_length(labels, result, atoms)
+            check_labels(labels, result, atoms)
             return result
+
+    def generalized_cn(self, atoms):
+        """Returns the averaged generalized coordination number over the site.
+        Calle-Vallejo et al. Angew. Chem. Int. Ed. 2014, 53, 8316-8319.
+
+        Parameters
+        ----------
+            atoms : object
+        """
+        if atoms is None:
+            return ['cn_site', 'gcn_site', 'cn_ads1', 'gcn_ads1']
+        site = atoms.subsets['site_atoms']
+        slab = atoms.subsets['slab_atoms']
+        cm = atoms.connectivity
+        cn_site = 0.
+        for atom in site:
+            row = cm[atom, :]
+            cn = len([k for i, k in enumerate(row) if k > 0 and i in slab])
+            cn_site += cn
+            gcn_site = 0.
+            for j, btom in enumerate(row):
+                if btom > 0 and j in slab:
+                    cn = len([k for k in cm[btom, :] if k > 0])
+                    gcn_site += btom * cn / self.cn_max
+
+        chemi = atoms.subsets['chemisorbed_atoms']
+        cn_chemi = 0.
+        for atom in chemi:
+            row = cm[atom, :]
+            cn = len([k for i, k in enumerate(row) if k > 0])
+            cn_chemi += cn
+            gcn_chemi = 0.
+            for j, btom in enumerate(row):
+                if btom > 0:
+                    cn = len([k for k in cm[btom, :] if k > 0])
+                    gcn_chemi += btom * cn / self.cn_max
+
+        return [cn_site / len(site), gcn_site / len(site),
+                cn_chemi / len(chemi), gcn_chemi / len(chemi)]
+
+    def formal_charges(self, atoms):
+        """Return a fingerprint based on formal charges and excess charges.
+
+        Parameters
+        ----------
+            atoms : object
+        """
+        if atoms is None:
+            return ['site_charge_av', 'site_charge_sum',
+                    'site_excess', 'slab_excess', 'slab_transferred']
+        else:
+            slab = atoms.subsets['slab_atoms']
+            if self.ion_number not in atoms.numbers[slab]:
+                return [0.] * 5
+
+            site = atoms.subsets['site_atoms']
+            cm = atoms.connectivity
+            formal_charges = np.ones(len(atoms))
+            for i, atom in enumerate(slab):
+                if atoms.numbers[atom] == self.ion_number:
+                    formal_charges[atom] = self.ion_charge
+            transfer = np.tril(cm * np.vstack(formal_charges))
+            row_sums = transfer.sum(axis=1)
+            shared = self.ion_charge * transfer / np.vstack(row_sums)
+            cation_charges = -np.nansum(shared, axis=0)
+
+            site_excess = 0
+            slab_excess = 0
+            transferred = 0
+            for j, atom in enumerate(slab):
+                if atoms.numbers[atom] == self.ion_number:
+                    continue
+                charge = cation_charges[atom]
+                oxistates = get_mendeleev_params(atoms.numbers[atom],
+                                                 ['oxistates'])[0]
+                if charge in oxistates:
+                    continue
+                else:
+                    oxi_index = np.argmin(np.abs(charge - np.array(oxistates)))
+                    oxistate = oxistates[oxi_index]
+                    transferred += abs(charge - oxistate)
+                    slab_excess += charge - oxistate
+                    if atom in site:
+                        site_excess += charge - oxistate
+
+            site_charge_av = np.nanmean(cation_charges[site])
+            site_charge_sum = np.nansum(cation_charges[site])
+
+            return [site_charge_av, site_charge_sum,
+                    site_excess, slab_excess, transferred]
 
     def count_ads_atoms(self, atoms=None):
         """Function that takes an atoms objects and returns a fingerprint
@@ -427,44 +421,9 @@ class AdsorbateFingerprintGenerator(BaseGenerator):
         ----------
             atoms : object
         """
-        labels = ['nn_surf_ligands', 'identnn_surf_ligands',
-                  'atomic_number_surf_ligands',
-                  'atomic_volume_surf_ligands',
-                  'boiling_point_surf_ligands',
-                  'density_surf_ligands',
-                  'dipole_polarizability_surf_ligands',
-                  'electron_affinity_surf_ligands',
-                  'group_id_surf_ligands',
-                  'lattice_constant_surf_ligands',
-                  'melting_point_surf_ligands',
-                  'period_surf_ligands',
-                  'vdw_radius_surf_ligands',
-                  'covalent_radius_cordero_surf_ligands',
-                  'en_allen_surf_ligands',
-                  'atomic_weight_surf_ligands',
-                  'atomic_radius_surf_ligands',
-                  'heat_of_formation_surf_ligands',
-                  'dft_bulk_modulus_surf_ligands',
-                  'dft_density_surf_ligands',
-                  'dbcenter_surf_ligands',
-                  'dbfilling_surf_ligands',
-                  'dbwidth_surf_ligands',
-                  'dbskew_surf_ligands',
-                  'dbkurtosis_surf_ligands',
-                  'oxi_min_surf_ligands',
-                  'oxi_med_surf_ligands',
-                  'oxi_max_surf_ligands',
-                  'sblock_surf_ligands',
-                  'pblock_surf_ligands',
-                  'dblock_surf_ligands',
-                  'fblock_surf_ligands',
-                  'ne_outer_surf_ligands',
-                  'ne_s_surf_ligands',
-                  'ne_p_surf_ligands',
-                  'ne_d_surf_ligands',
-                  'ne_f_surf_ligands',
-                  'ionenergy_surf_ligands',
-                  'ground_state_magmom_surf_ligands']
+        labels = ['nn_surf_ligands', 'identnn_surf_ligands']
+        labels += make_labels(self.slab_params, '', '_surf_ligands')
+        labels.append('ground_state_magmom_surf_ligands')
         if atoms is None:
             return labels
         else:
@@ -476,7 +435,7 @@ class AdsorbateFingerprintGenerator(BaseGenerator):
             result += [np.nanmean([gs_magmom[z] for z in numbers])]
             # Append count of ligand atoms.
             result = [len(ligand_atoms), len(np.unique(numbers))] + result
-            check_length(labels, result, atoms)
+            check_labels(labels, result, atoms)
             return result
 
     def count_ads_bonds(self, atoms=None):
@@ -534,37 +493,18 @@ class AdsorbateFingerprintGenerator(BaseGenerator):
         ----------
             atoms : object
         """
+        ads_params = default_params + ['econf', 'ionenergies']
+        labels = make_labels(ads_params, '', '_ads_sum')
+        labels.append('ground_state_magmom_ads_sum')
         if atoms is None:
-            return ['atomic_number_ads_sum',
-                    'atomic_volume_ads_sum',
-                    'boiling_point_ads_sum',
-                    'density_ads_sum',
-                    'dipole_polarizability_ads_sum',
-                    'electron_affinity_ads_sum',
-                    'group_id_ads_sum',
-                    'lattice_constant_ads_sum',
-                    'melting_point_ads_sum',
-                    'period_ads_sum',
-                    'vdw_radius_ads_sum',
-                    'covalent_radius_cordero_ads_sum',
-                    'en_allen_ads_sum',
-                    'atomic_weight_ads_sum',
-                    'ne_outer_ads_sum',
-                    'ne_s_ads_sum',
-                    'ne_p_ads_sum',
-                    'ne_d_ads_sum',
-                    'ne_f_ads_sum',
-                    'ionenergy_ads_sum']
+            return labels
         else:
-            ads_atoms = atoms.subsets['ads_atoms']
-            dat = []
-            for a in ads_atoms:
-                Z = atoms.numbers[a]
-                ads_params = default_params + ['econf', 'ionenergies']
-                mnlv = get_mendeleev_params(Z, params=ads_params)
-                dat.append(mnlv[:-2] + list(n_outer(mnlv[-2])) +
-                           [mnlv[-1]['1']])
-            return list(np.nansum(dat, axis=0))
+            numbers = [atoms[j].number for j in atoms.subsets['ads_atoms']]
+            dat = list_mendeleev_params(numbers, params=ads_params)
+            result = list(np.nansum(dat, axis=0))
+            result += [np.nansum([gs_magmom[z] for z in numbers])]
+            check_labels(labels, result, atoms)
+            return result
 
     def ads_av(self, atoms=None):
         """Function that takes an atoms objects and returns a fingerprint
@@ -574,37 +514,18 @@ class AdsorbateFingerprintGenerator(BaseGenerator):
         ----------
             atoms : object
         """
+        ads_params = default_params + ['econf', 'ionenergies']
+        labels = make_labels(ads_params, '', '_ads_av')
+        labels.append('ground_state_magmom_ads_av')
         if atoms is None:
-            return ['atomic_number_ads_av',
-                    'atomic_volume_ads_av',
-                    'boiling_point_ads_av',
-                    'density_ads_av',
-                    'dipole_polarizability_ads_av',
-                    'electron_affinity_ads_av',
-                    'group_id_ads_av',
-                    'lattice_constant_ads_av',
-                    'melting_point_ads_av',
-                    'period_ads_av',
-                    'vdw_radius_ads_av',
-                    'covalent_radius_cordero_ads_av',
-                    'en_allen_ads_av',
-                    'atomic_weight_ads_av',
-                    'ne_outer_ads_av',
-                    'ne_s_ads_av',
-                    'ne_p_ads_av',
-                    'ne_d_ads_av',
-                    'ne_f_ads_av',
-                    'ionenergy_ads_av']
+            return labels
         else:
-            ads_atoms = atoms.subsets['ads_atoms']
-            dat = []
-            for a in ads_atoms:
-                Z = int(atoms.numbers[a])
-                ads_params = default_params + ['econf', 'ionenergies']
-                mnlv = get_mendeleev_params(Z, params=ads_params)
-                dat.append(mnlv[:-2] + list(n_outer(mnlv[-2])) +
-                           [mnlv[-1]['1']])
-            return list(np.nanmean(dat, axis=0))
+            numbers = [atoms[j].number for j in atoms.subsets['ads_atoms']]
+            dat = list_mendeleev_params(numbers, params=ads_params)
+            result = list(np.nanmean(dat, axis=0))
+            result += [np.nanmean([gs_magmom[z] for z in numbers])]
+            check_labels(labels, result, atoms)
+            return result
 
     def strain(self, atoms=None):
         """Return a fingerprint with the espected strain of the
@@ -874,7 +795,7 @@ class AdsorbateFingerprintGenerator(BaseGenerator):
             atoms : object
         """
         if atoms is None:
-            return ['Ef']
+            return ['delta_energy']
         else:
             try:
                 delta = float(atoms.info['key_value_pairs']['delta_energy'])
@@ -949,11 +870,3 @@ class AdsorbateFingerprintGenerator(BaseGenerator):
             return [np.nan]
         else:
             return [atoms.info['ctime']]
-
-    def randomfpv(self, atoms=None):
-        """ Returns alist of n random numbers. """
-        n = 20
-        if atoms is None:
-            return ['random'] * n
-        else:
-            return list(np.random.randint(0, 10, size=n))

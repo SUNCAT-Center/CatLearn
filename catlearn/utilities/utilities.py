@@ -67,13 +67,13 @@ def target_correlation(train, target,
         correlation = c
         # Find the correlation.
         row = []
-        for c in train_data.T:
+        for d in train_data.T:
             if correlation is 'pearson':
-                row.append(pearsonr(c, train_target)[0])
+                row.append(pearsonr(d, train_target)[0])
             elif correlation is 'spearman':
-                row.append(spearmanr(c, train_target)[0])
+                row.append(spearmanr(d, train_target)[0])
             elif correlation is 'kendall':
-                row.append(kendalltau(c, train_target)[0])
+                row.append(kendalltau(d, train_target)[0])
         output.append(row)
 
     return output
