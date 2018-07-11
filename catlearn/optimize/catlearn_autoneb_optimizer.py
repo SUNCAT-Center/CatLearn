@@ -22,7 +22,7 @@ class CatLearnAutoNEB(object):
 
     def __init__(self, start, end, n_images=None,
                  ml_calc=None, ase_calc=None, inc_prev_calcs=False,
-                 restart=False, spring=None):
+                 restart=False, spring=None, mic=False):
         """ Nudged elastic band (NEB) setup.
 
         Parameters
@@ -55,6 +55,7 @@ class CatLearnAutoNEB(object):
         self.ase_calc = ase_calc
         self.ase = True
         self.spring = spring
+        self.mic = mic
 
         # Reset:
         self.constraints = None
@@ -259,7 +260,8 @@ class CatLearnAutoNEB(object):
                                          index_constraints=self.ind_mask_constr
                                          ),
                                  # k=self.spring,
-                                 maxsteps=ml_max_iter
+                                 maxsteps=ml_max_iter,
+                                 mic=self.mic
                                  )
             neb_opt.run()
             print('ML NEB optimized.')

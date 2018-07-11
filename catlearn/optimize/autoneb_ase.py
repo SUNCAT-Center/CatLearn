@@ -104,10 +104,9 @@ class AutoNEBASE(object):
                  remove_rotation_and_translation=False, space_energy_ratio=0.5,
                  world=None,
                  parallel=True, smooth_curve=False, interpolate_method='idpp',
-                 trained_process=None,
-                 ml_calculator=None,
-                 index_constraints=None
+                 mic=False
                  ):
+        self.mic = mic
         self.attach_calculators = attach_calculators
         self.prefix = prefix
         self.n_simul = n_simul
@@ -267,7 +266,7 @@ class AutoNEBASE(object):
             toInterpolate += [self.all_images[jmax + 1]]
 
             neb = NEB(toInterpolate)
-            neb.interpolate(method=self.interpolate_method)
+            neb.interpolate(method=self.interpolate_method, mic=self.mic)
 
             tmp = self.all_images[:jmax + 1]
             tmp += toInterpolate[1:-1]
