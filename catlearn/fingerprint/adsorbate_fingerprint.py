@@ -28,6 +28,7 @@ default_adsorbate_fingerprinters = ['mean_chemisorbed_atoms',
                                     'strain',
                                     'en_difference_ads',
                                     'en_difference_chemi',
+                                    'en_difference_active',
                                     'generalized_cn']
 
 extra_slab_params = ['atomic_radius',
@@ -556,6 +557,32 @@ class AdsorbateFingerprintGenerator(BaseGenerator):
         en_site = list_mendeleev_params(site_numbers, electronegativities)
         delta_en = (en_chemi[:, np.newaxis, :] -
                     en_site[np.newaxis, :, :]) ** 2
+        en_result = list(np.einsum("ij,ijk->k", bonds, delta_en))
+        assert len(en_result) == len(labels)
+        return en_result
+
+    def en_difference_active(self, atoms=None):
+        """Returns a list of electronegativity metrics, squared and summed over
+        adsorbate bonds including those with the surface.
+
+        Parameters
+        ----------
+            atoms : object
+        """
+        labels = ['dist_' + s + '_active' for s in electronegativities]
+        if atoms is None:
+            return labels
+        cm = atoms.connectivity
+        ads = atoms.subsets['ads_atoms']
+        site = atoms.subsets['site_atoms']
+        active = ads + site
+        bonds = cm[ads, :][:, active]
+        active_numbers = atoms.numbers[active]
+        ads_numbers = atoms.numbers[ads]
+        en_active = list_mendeleev_params(active_numbers, electronegativities)
+        en_ads = list_mendeleev_params(ads_numbers, electronegativities)
+        delta_en = (en_ads[:, np.newaxis, :] -
+                    en_active[np.newaxis, :, :]) ** 2
         en_result = list(np.einsum("ij,ijk->k", bonds, delta_en))
         assert len(en_result) == len(labels)
         return en_result
