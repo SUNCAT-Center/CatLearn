@@ -257,13 +257,13 @@ class GaussianProcess(object):
         if train_target is not None:
             self.train_target = np.asarray(train_target)
 
-            if self.scale_data:
-                self.scaling = ScaleData(train_fp, train_target)
-                self.train_fp, self.train_target = self.scaling.train()
-                if gradients is not None:
-                    gradients = gradients / (self.scaling.target_data['std'] /
-                                             self.scaling.feature_data['std'])
-                    gradients = np.ravel(gradients)
+        if self.scale_data:
+            self.scaling = ScaleData(train_fp, train_target)
+            self.train_fp, self.train_target = self.scaling.train()
+            if gradients is not None:
+                gradients = gradients / (self.scaling.target_data['std'] /
+                                         self.scaling.feature_data['std'])
+                gradients = np.ravel(gradients)
 
         if gradients is not None and train_target is not None:
             train_target_grad = np.append(self.train_target, gradients)
