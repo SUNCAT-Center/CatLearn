@@ -7,6 +7,7 @@ Input:
 import warnings
 import numpy as np
 from tqdm import tqdm
+from ase.data import chemical_symbols
 from ase.atoms import string2symbols
 # get_distances requires ASE 3.16 or above.
 from ase.geometry import get_layers, get_distances
@@ -676,3 +677,31 @@ def auto_layers(atoms, miller=(0, 0, 1)):
     radius = np.average(radii) / 2.
     lz, li = get_layers(atoms, miller=miller, tolerance=radius)
     return lz, li
+
+
+def attach_cations(atoms, anion_number=8):
+    if anion_number not in atoms.numbers:
+        raise ValueError('Anion ' + chemical_symbols[anion_number] +
+                         'not in atoms')
+    atoms.subsets['cation_atoms'] = [a.index for a in atoms if
+                                     a.number != anion_number]
+    atoms.subsets['anion_atoms'] = [a.index for a in atoms if
+                                    a.number == anion_number]
+
+
+def formal_charges(atoms, ion_number, ion_charge):
+    cm = atoms.connectivity
+    anion_charges = np.zeros(len(atoms))
+    for i, atom in enumerate(atoms):
+        if atoms.numbers[i] == ion_number:
+            anion_charges[i] = ion_charge
+            transfer = cm * np.vstack(anion_charges)
+            row_sums = transfer.sum(axis=1)
+            for j, s in enumerate(row_sums):
+                if row_sums == ion_charge:
+                    row_sums[j] *= abs(ion_charge)
+            shared = ion_charge * transfer / np.vstack(row_sums)
+            cation_charges = -np.nansum(shared, axis=0)
+            all_charges = anion_charges + cation_charges
+    atoms.set_initial_charges(all_charges)
+    return atoms
