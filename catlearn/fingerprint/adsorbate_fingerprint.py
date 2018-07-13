@@ -78,18 +78,6 @@ class AdsorbateFingerprintGenerator(BaseGenerator):
         if self.cn_max is None:
             self.cn_max = 12
 
-        if not hasattr(self, 'ion_number'):
-            self.ion_number = kwargs.get('ion_number')
-
-        if self.ion_number is None:
-            self.ion_number = 8
-
-        if not hasattr(self, 'ion_charge'):
-            self.ion_charge = kwargs.get('ion_charge')
-
-        if self.ion_charge is None:
-            self.ion_charge = -2
-
         super(AdsorbateFingerprintGenerator, self).__init__(**kwargs)
 
     def term(self, atoms=None):
@@ -322,56 +310,6 @@ class AdsorbateFingerprintGenerator(BaseGenerator):
 
         return [cn_site / len(site), gcn_site / len(site),
                 cn_chemi / len(chemi), gcn_chemi / len(chemi)]
-
-    def formal_charges(self, atoms):
-        """Return a fingerprint based on formal charges and excess charges.
-
-        Parameters
-        ----------
-            atoms : object
-        """
-        if atoms is None:
-            return ['site_charge_av', 'site_charge_sum',
-                    'site_excess', 'slab_excess', 'slab_transferred']
-        else:
-            slab = atoms.subsets['slab_atoms']
-            if self.ion_number not in atoms.numbers[slab]:
-                return [0.] * 5
-
-            site = atoms.subsets['site_atoms']
-            cm = atoms.connectivity
-            anion_charges = np.zeros(len(atoms))
-            for i, atom in enumerate(slab):
-                if atoms.numbers[atom] == self.ion_number:
-                    anion_charges[atom] = self.ion_charge
-            transfer = cm * np.vstack(anion_charges)
-            row_sums = transfer.sum(axis=1)
-            shared = self.ion_charge * transfer / np.vstack(row_sums)
-            cation_charges = -np.nansum(shared, axis=0)
-            all_charges = anion_charges + cation_charges
-
-            site_excess = 0
-            slab_excess = 0
-            transferred = 0
-            for j, atom in enumerate(slab):
-                charge = all_charges[atom]
-                oxistates = get_mendeleev_params(atoms.numbers[atom],
-                                                 ['oxistates'])[0]
-                if charge in oxistates:
-                    continue
-                else:
-                    oxi_index = np.argmin(np.abs(charge - np.array(oxistates)))
-                    oxistate = oxistates[oxi_index]
-                    transferred += abs(charge - oxistate)
-                    slab_excess += charge - oxistate
-                    if atom in site:
-                        site_excess += charge - oxistate
-
-            site_charge_av = np.nanmean(all_charges[site])
-            site_charge_sum = np.nansum(all_charges[site])
-
-            return [site_charge_av, site_charge_sum,
-                    site_excess, slab_excess, transferred]
 
     def count_ads_atoms(self, atoms=None):
         """Function that takes an atoms objects and returns a fingerprint

@@ -18,7 +18,7 @@ from .standard_fingerprint import (StandardFingerprintGenerator,
 from .graph_fingerprint import GraphFingerprintGenerator
 from .bulk_fingerprint import (BulkFingerprintGenerator,
                                default_bulk_fingerprinters)
-
+from .chalcogenide_fingerprint import ChalcogenideFingerprintGenerator
 
 default_sets = {'bulk': default_bulk_fingerprinters,
                 'fragment': (default_molecule_fingerprinters +
@@ -53,7 +53,8 @@ def default_fingerprinters(generator, data_type):
 class FeatureGenerator(
         AdsorbateFingerprintGenerator, ParticleFingerprintGenerator,
         StandardFingerprintGenerator, GraphFingerprintGenerator,
-        BulkFingerprintGenerator, ConvolutedFingerprintGenerator):
+        BulkFingerprintGenerator, ConvolutedFingerprintGenerator,
+        ChalcogenideFingerprintGenerator):
     """Feature generator class.
 
     It is sometimes necessary to normalize the length of feature vectors when
