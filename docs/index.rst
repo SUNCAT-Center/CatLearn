@@ -22,6 +22,7 @@ CatLearn_ provides utilities for building and testing atomic machine learning mo
 CatLearn provides an environment to facilitate utilization of machine learning within the field of materials science and catalysis. Workflows are typically expected to utilize the Atomic Simulation Environment (ASE_), or NetworkX_ graphs.
 Through close coupling with these codes, CatLearn can generate numerous embeddings for atomic systems. As well as generating a useful feature space for numerous problems, CatLearn has functions for model optimization. Further, Gaussian
 processes (GP) regression machine learning routines are implemented with additional functionality over standard implementations such as that in scikit-learn.
+A more detailed explanation of how to utilize the code can be found in the Tutorials_ folder.
 
 To featurize ASE atoms objects, the following lines of code can be used::
 
@@ -101,7 +102,6 @@ There is much functionality in CatLearn to assist in handling atom data and buil
     *   Penalty functions
     *   SQLite db storage
 
-A more detailed explanation of how to utilize the code can be found in the Tutorials_ folder.
 
 .. toctree::
    :maxdepth: 1
