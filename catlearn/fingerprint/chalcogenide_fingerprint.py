@@ -8,6 +8,13 @@ from .base import BaseGenerator, check_labels
 from .adsorbate_fingerprint import extra_slab_params
 
 
+default_chalcogenide_fingerprinters = ['formal_charges',
+                                       'min_cation',
+                                       'max_cation',
+                                       'mean_cation',
+                                       'sum_cation']
+
+
 class ChalcogenideFingerprintGenerator(BaseGenerator):
     def __init__(self, **kwargs):
         """Class containing functions for fingerprint generation.
