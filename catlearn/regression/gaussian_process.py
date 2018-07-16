@@ -247,9 +247,11 @@ class GaussianProcess(object):
         # Perform some sanity checks.
         msg = 'GP must be trained on more than one data point.'
         assert d > 1, msg
-        msg = 'It looks like the number of features has changed. Train a new '
-        msg += 'model instead of trying to update.'
-        assert self.N_D == f
+        if self.N_D != f:
+            msg = str(f) + '!=' + str(self.N_D)
+            msg += '\n The number of features has changed. Train a new '
+            msg += 'model instead of trying to update.'
+            raise AssertionError(msg)
 
         # Store the training data in the GP, enforce np.array type.
         self.train_fp = np.asarray(train_fp)
