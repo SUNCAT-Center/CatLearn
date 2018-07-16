@@ -13,7 +13,8 @@ from catlearn.api.ase_atoms_api import database_to_list, images_connectivity
 from catlearn.fingerprint.adsorbate_prep import (autogen_info,
                                                  check_reconstructions,
                                                  connectivity2ads_index,
-                                                 slab_positions2ads_index)
+                                                 slab_positions2ads_index,
+                                                 attach_cations)
 from catlearn.fingerprint.periodic_table_data import (get_radius,
                                                       default_catlearn_radius)
 from catlearn.fingerprint.setup import FeatureGenerator, default_fingerprinters
@@ -24,7 +25,7 @@ wkdir = os.getcwd()
 class TestAdsorbateFeatures(unittest.TestCase):
     """Test out the adsorbate feature generation."""
 
-    def setup_atoms(self):
+    def setup_metals(self):
         """Get the atoms objects."""
         adsorbates = ['H', 'O', 'C', 'N', 'S', 'Cl', 'P', 'F']
         symbols = ['Ag', 'Au', 'Cu', 'Pt', 'Pd', 'Ir', 'Rh', 'Ni', 'Co']
@@ -43,7 +44,7 @@ class TestAdsorbateFeatures(unittest.TestCase):
 
     def test_tags(self):
         """Test the feature generation."""
-        images = self.setup_atoms()
+        images = self.setup_metals()
         images = autogen_info(images)
         print(str(len(images)) + ' training examples.')
         gen = FeatureGenerator(nprocs=1)
@@ -61,7 +62,7 @@ class TestAdsorbateFeatures(unittest.TestCase):
 
     def test_constrained_ads(self):
         """Test the feature generation."""
-        images = self.setup_atoms()
+        images = self.setup_metals()
         [atoms.set_tags(np.zeros(len(atoms))) for atoms in images]
         for atoms in images:
             c_atoms = [a.index for a in atoms if
@@ -115,6 +116,18 @@ class TestAdsorbateFeatures(unittest.TestCase):
             slab_positions2ads_index(images[i], slabs[i], species)
             connectivity2ads_index(images[i], species)
         self.assertTrue(len(reconstructed) == 0)
+
+    #def test_chalcogenides(self):
+    #    images = database_to_list('data/oxides_example.db')
+    #    attach_cations(images)
+    #    gen = FeatureGenerator(nprocs=1)
+    #    train_fpv = default_fingerprinters(gen, 'chalcogenides')
+    #    matrix = gen.return_vec(images, train_fpv)
+    #    labels = gen.return_names(train_fpv)
+    #    if __name__ == '__main__':
+    #        for i, l in enumerate(labels):
+    #            print(i, l)
+    #    self.assertTrue(len(labels) == np.shape(matrix)[1])
 
 
 if __name__ == '__main__':
