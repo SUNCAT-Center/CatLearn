@@ -90,22 +90,6 @@ class CatLearnNEB(object):
         is_pos = is_endpoint[-1].get_positions().flatten()
         fs_pos = fs_endpoint[-1].get_positions().flatten()
 
-        # A and B) Restart mode.
-
-        # Read the previously evaluated structures and append them to the
-        # training list
-        if restart is True:
-            restart_filename = 'evaluated_structures.traj'
-            if not os.path.isfile(restart_filename):
-                warning_restart_neb()
-            if os.path.isfile(restart_filename):
-                evaluated_images = read(restart_filename, ':')
-                is_endpoint = evaluated_images + is_endpoint
-                stabilize = False
-
-        # Write previous evaluated images in evaluations:
-        write('./evaluated_structures.traj',
-              is_endpoint + fs_endpoint)
 
         # Check the magnetic moments of the initial and final states:
         self.magmom_is = is_endpoint[-1].get_initial_magnetic_moments()
@@ -124,12 +108,21 @@ class CatLearnNEB(object):
         self.scale_targets = np.min([energy_is, energy_fs])
 
         # Convert atoms information into data to feed the ML process.
-        if os.path.exists('./tmp.traj'):
-                os.remove('./tmp.traj')
-        merged_trajectory = is_endpoint + fs_endpoint
-        write('tmp.traj', merged_trajectory)
 
-        trj = ase_traj_to_catlearn(traj_file='tmp.traj')
+        # Include Restart mode.
+
+        if restart is not True:
+            if os.path.exists('./tmp.traj'):
+                    os.remove('./tmp.traj')
+            merged_trajectory = is_endpoint + fs_endpoint
+            write('tmp.traj', merged_trajectory)
+            trj = ase_traj_to_catlearn(traj_file='tmp.traj')
+            os.remove('./tmp.traj')
+            write('./evaluated_structures.traj', is_endpoint + fs_endpoint)
+
+        if restart is True:
+            trj = ase_traj_to_catlearn(traj_file='./evaluated_structures.traj')
+
         self.list_train, self.list_targets, self.list_gradients, trj_images,\
             self.constraints, self.num_atoms = [trj['list_train'],
                                                 trj['list_targets'],
@@ -137,7 +130,6 @@ class CatLearnNEB(object):
                                                 trj['images'],
                                                 trj['constraints'],
                                                 trj['num_atoms']]
-        os.remove('./tmp.traj')
         self.ase_ini = trj_images[0]
         self.num_atoms = len(self.ase_ini)
         if len(self.constraints) < 0:
