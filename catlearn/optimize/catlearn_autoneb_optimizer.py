@@ -151,8 +151,8 @@ class CatLearnAutoNEB(object):
 
 
     def run(self, fmax=0.05, unc_convergence=0.010, max_iter=500,
-            ml_max_iter=1000, plot_neb_paths=False,
-            acquisition='acq_1', penalty=4.0):
+            ml_max_iter=1000, ml_algo='FIRE', plot_neb_paths=False,
+            acquisition='acq_1', penalty=4.0,):
 
         """Executing run will start the optimization process.
 
@@ -166,6 +166,10 @@ class CatLearnAutoNEB(object):
             Maximum number of iterations in the surrogate model.
         ml_max_iter : int
             Maximum number of ML NEB iterations.
+        ml_algo : string
+            Algorithm for the surrogate model. Implemented are:
+            'BFGS' and 'FIRE' as implemented in ASE.
+            See https://wiki.fysik.dtu.dk/ase/ase/optimize.html
         plot_neb_paths: bool
             If True it prints and stores (in csv format) the last predicted
             NEB path obtained by the surrogate ML model. Note: Python package
@@ -253,7 +257,8 @@ class CatLearnAutoNEB(object):
                                          ),
                                  # k=self.spring,
                                  maxsteps=ml_max_iter,
-                                 mic=self.mic
+                                 mic=self.mic,
+                                 optimizer=ml_algo
                                  )
             neb_opt.run()
             print('ML NEB optimized.')
