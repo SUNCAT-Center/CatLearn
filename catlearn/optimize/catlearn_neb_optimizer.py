@@ -12,7 +12,7 @@ from ase.io.trajectory import TrajectoryWriter
 from ase.neb import NEB
 from ase.neb import NEBTools
 from ase.io import read, write
-from ase.optimize import MDMin, FIRE
+from ase.optimize import MDMin, FIRE, LBFGS, BFGS
 from scipy.spatial import distance
 import copy
 import os
@@ -243,7 +243,7 @@ class CatLearnNEB(object):
             Maximum number of iterations in the surrogate model.
         ml_algo : string
             Algorithm for the surrogate model. Implemented are:
-            'MDMin' and 'FIRE' as implemented in ASE.
+            'BFGS', 'LBFGS', 'MDMin' and 'FIRE' as implemented in ASE.
             See https://wiki.fysik.dtu.dk/ase/ase/optimize.html
         ml_max_iter : int
             Maximum number of ML NEB iterations.
@@ -306,7 +306,10 @@ class CatLearnNEB(object):
                          method=self.neb_method,
                          k=self.spring)
 
-            neb_opt = eval(ml_algo)(ml_neb, dt=0.1)
+            if ml_algo is 'FIRE' or ml_algo is 'MDMin':
+                neb_opt = eval(ml_algo)(ml_neb, dt=0.1)
+            if ml_algo is 'BFGS' or ml_algo is 'LBFGS':
+                neb_opt = eval(ml_algo)(ml_neb)
 
             print('Starting ML NEB optimization...')
             neb_opt.run(fmax=fmax,
@@ -318,7 +321,10 @@ class CatLearnNEB(object):
                          method=self.neb_method,
                          k=self.spring)
 
-            neb_opt = eval(ml_algo)(ml_neb, dt=0.1)
+            if ml_algo is 'FIRE' or ml_algo is 'MDMin':
+                neb_opt = eval(ml_algo)(ml_neb, dt=0.1)
+            if ml_algo is 'BFGS' or ml_algo is 'LBFGS':
+                neb_opt = eval(ml_algo)(ml_neb)
             neb_opt.run(fmax=fmax, steps=ml_max_iter)
             print('ML NEB optimized.')
 
