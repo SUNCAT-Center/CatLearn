@@ -1,7 +1,7 @@
 from ase.io import read, write
 from ase.optimize import BFGS
 import copy
-from catlearn.optimize.autoneb_ase import AutoNEBASE
+from ase.autoneb import AutoNEB
 from catlearn.optimize.catlearn_autoneb_optimizer import CatLearnAutoNEB
 from catlearn.optimize.functions_calc import MullerBrown
 from ase import Atoms
@@ -55,10 +55,22 @@ write('images000.traj', initial)
 final = read('final.traj')
 write('images001.traj', final)
 
-autoneb_ase = AutoNEBASE(prefix='images',
-                         n_max=n_images,
-                         n_simul=1,
-                         attach_calculators=ase_calculator)
+
+def attach_calculators(images):
+    for i in range(len(images)):
+        images[i].set_calculator(MullerBrown())
+
+
+autoneb_ase = AutoNEB(attach_calculators,
+                      prefix='images',
+                      optimizer='BFGS',
+                      n_simul=1,
+                      n_max=n_images,
+                      fmax=0.05,
+                      k=0.5,
+                      parallel=False,
+                      maxsteps=[50, 1000])
+
 autoneb_ase.run()
 
 # 2.B. AutoNEB using CatLearn ################################################

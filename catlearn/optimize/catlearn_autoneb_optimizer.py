@@ -11,18 +11,17 @@ from ase.neb import NEBTools
 from ase.io import read, write
 import copy
 import os
-from catlearn.optimize.autoneb_ase import AutoNEBASE
+from ase.autoneb import AutoNEB
 import glob
-import shutil
 from catlearn.optimize.catlearn_ase_calc import CatLearnASE
 from scipy.spatial import distance
 
 
 class CatLearnAutoNEB(object):
 
-    def __init__(self, start, end, n_images=None,
+    def __init__(self, start, end, n_images=None, interpolation=None,
                  ml_calc=None, ase_calc=None, inc_prev_calcs=False,
-                 restart=False, spring=None, mic=False):
+                 restart=False, spring=None):
         """ Nudged elastic band (NEB) setup.
 
         Parameters
@@ -34,6 +33,10 @@ class CatLearnAutoNEB(object):
         n_images: int
             Number of images of the path (if not included a path before).
              The number of images include the 2 end-points of the NEB path.
+        interpolation: string
+            Automatic interpolation can be done ('idpp' and 'linear' as
+            implemented in ASE).
+            See https://wiki.fysik.dtu.dk/ase/ase/neb.html.
         spring: float
             Spring constant(s) in eV/Ang.
         ml_calc : ML calculator Object.
@@ -47,6 +50,7 @@ class CatLearnAutoNEB(object):
         self.start = start
         self.end = end
         self.n_images = n_images
+        self.interpolation = interpolation
 
         # General setup:
         self.iter = 0
@@ -55,7 +59,6 @@ class CatLearnAutoNEB(object):
         self.ase_calc = ase_calc
         self.ase = True
         self.spring = spring
-        self.mic = mic
 
         # Reset:
         self.constraints = None
@@ -151,7 +154,7 @@ class CatLearnAutoNEB(object):
 
 
     def run(self, fmax=0.05, unc_convergence=0.010, max_iter=500,
-            ml_max_iter=1000, ml_algo='FIRE', plot_neb_paths=False,
+            ml_max_iter=1000, ml_algo='BFGS', plot_neb_paths=False,
             acquisition='acq_1', penalty=4.0,):
 
         """Executing run will start the optimization process.
@@ -236,28 +239,28 @@ class CatLearnAutoNEB(object):
             for i in glob.glob("images*"):
                 os.remove(i)
 
-            # Remove data from previous iteration:
-            # directory = './AutoNEB_iter'
-            # if os.path.exists(directory):
-            #     shutil.rmtree(directory)
-
             write('images000.traj', initial)
             write('images001.traj', final)
 
-            print('Starting ML NEB optimization...')
-            neb_opt = AutoNEBASE(n_simul=1,
-                                 n_max=self.n_images,
-                                 fmax=fmax,
-                                 prefix='images',
-                                 attach_calculators=CatLearnASE(
+            def attach_calculators(images):
+                for i in range(len(images)):
+                    images[i].set_calculator(CatLearnASE(
                                          trained_process=trained_process,
                                          ml_calc=ml_calc,
                                          kappa=penalty,
                                          index_constraints=self.ind_mask_constr
-                                         ),
-                                 # k=self.spring,
-                                 maxsteps=ml_max_iter,
-                                 mic=self.mic,
+                                         ))
+
+            print('Starting ML NEB optimization...')
+            neb_opt = AutoNEB(attach_calculators=attach_calculators,
+                                 n_simul=1,
+                                 parallel=False,
+                                 n_max=self.n_images,
+                                 fmax=fmax,
+                                 prefix='images',
+                                 k=0.5,
+                                 maxsteps=[50, 1000],
+                                 interpolate_method=self.interpolation,
                                  optimizer=ml_algo
                                  )
             neb_opt.run()

@@ -5,7 +5,7 @@ import copy
 import glob
 import shutil
 import os
-from catlearn.optimize.autoneb_ase import AutoNEBASE
+from ase.autoneb import AutoNEB
 from catlearn.optimize.catlearn_autoneb_optimizer import CatLearnAutoNEB
 
 """ 
@@ -64,16 +64,28 @@ write('images000.traj', initial)
 final = read('final.traj')
 write('images001.traj', final)
 
-autoneb_ase = AutoNEBASE(prefix='images',
-                       n_max=n_images,
-                       n_simul=1,
-                       attach_calculators=ase_calculator)
+
+def attach_calculators(images):
+    for i in range(len(images)):
+        images[i].set_calculator(EMT())
+
+
+autoneb_ase = AutoNEB(attach_calculators,
+                      prefix='images',
+                      optimizer='BFGS',
+                      n_simul=1,
+                      n_max=n_images,
+                      fmax=0.05,
+                      k=0.5,
+                      parallel=False,
+                      maxsteps=[50, 1000])
+
 autoneb_ase.run()
 
 # 2.B. AutoNEB using CatLearn ################################################
 
 autoneb_catlearn = CatLearnAutoNEB(start='initial.traj',
-                                 end='final.traj',
-                                 ase_calc=copy.deepcopy(ase_calculator),
-                                 n_images=n_images)
+                                   end='final.traj',
+                                   ase_calc=copy.deepcopy(ase_calculator),
+                                   n_images=n_images)
 autoneb_catlearn.run(fmax=0.05, plot_neb_paths=True)
