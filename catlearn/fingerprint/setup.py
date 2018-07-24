@@ -45,7 +45,7 @@ def default_fingerprinters(generator, data_type):
     vec_name : list of / single vec class(es)
         List of fingerprinting classes.
     """
-    allowed = ['bulk', 'adsorbates', 'fragment']
+    allowed = list(default_sets.keys())
     if data_type not in allowed:
         msg = "data type must be " + " or ".join(allowed)
         msg += ". 'fragment' is for anything without periodic boundary cond."
