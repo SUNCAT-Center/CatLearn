@@ -8,6 +8,24 @@ from scipy.stats import pearsonr, spearmanr, kendalltau
 from catlearn.preprocess.scaling import standardize
 
 
+def formal_charges(atoms, ion_number, ion_charge):
+    cm = atoms.connectivity
+    anion_charges = np.zeros(len(atoms))
+    for i, atom in enumerate(atoms):
+        if atoms.numbers[i] == ion_number:
+            anion_charges[i] = ion_charge
+            transfer = cm * np.vstack(anion_charges)
+            row_sums = transfer.sum(axis=1)
+            for j, s in enumerate(row_sums):
+                if s == ion_charge:
+                    row_sums[j] *= abs(ion_charge)
+            shared = ion_charge * transfer / np.vstack(row_sums)
+            cation_charges = -np.nansum(shared, axis=0)
+            all_charges = anion_charges + cation_charges
+    atoms.set_initial_charges(all_charges)
+    return atoms
+
+
 def holdout_set(data, fraction, target=None, seed=None):
     """Return a dataset split in a hold out set and a training set.
 

@@ -3,7 +3,8 @@
 -   New adsorbate-chalcogenide fingerprint generator.
 -   Improved automatic identification of adsorbate, site.
 -   Generalized coordination number for site.
--   Formal oxidation state function for chalcogenides.
+-   Formal oxidation state fingerprints for chalcogenides.
+-   Formal charges utility.
 -   New sum over bonds fingerprinter.
 
 # Version 0.4.3 (May 2018)
