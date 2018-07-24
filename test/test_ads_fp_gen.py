@@ -18,7 +18,8 @@ from catlearn.fingerprint.adsorbate_prep import (autogen_info,
                                                  attach_cations,
                                                  info2primary_index)
 from catlearn.fingerprint.periodic_table_data import (get_radius,
-                                                      default_catlearn_radius)
+                                                      default_catlearn_radius,
+                                                      stat_mendeleev_params)
 from catlearn.fingerprint.setup import FeatureGenerator, default_fingerprinters
 
 wkdir = os.getcwd()
@@ -147,6 +148,10 @@ class TestAdsorbateFeatures(unittest.TestCase):
             for i, l in enumerate(labels):
                 print(i, l)
         self.assertTrue(len(labels) == np.shape(matrix)[1])
+
+    def test_periodic_table(self):
+        r, w = stat_mendeleev_params('MoS2', params=None)
+        self.assertTrue(len(w) == np.shape(r)[0])
 
 
 if __name__ == '__main__':
