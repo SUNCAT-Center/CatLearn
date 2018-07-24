@@ -18,13 +18,16 @@ from .standard_fingerprint import (StandardFingerprintGenerator,
 from .graph_fingerprint import GraphFingerprintGenerator
 from .bulk_fingerprint import (BulkFingerprintGenerator,
                                default_bulk_fingerprinters)
+from .chalcogenide_fingerprint import (ChalcogenideFingerprintGenerator,
+                                       default_chalcogenide_fingerprinters)
 
 
 default_sets = {'bulk': default_bulk_fingerprinters,
                 'fragment': (default_molecule_fingerprinters +
                              default_particle_fingerprinters),
                 'adsorbates': (default_adsorbate_fingerprinters +
-                               default_convoluted_fingerprinters)}
+                               default_convoluted_fingerprinters),
+                'chalcogenides': default_chalcogenide_fingerprinters}
 
 
 def default_fingerprinters(generator, data_type):
@@ -42,7 +45,7 @@ def default_fingerprinters(generator, data_type):
     vec_name : list of / single vec class(es)
         List of fingerprinting classes.
     """
-    allowed = ['bulk', 'adsorbates', 'fragment']
+    allowed = list(default_sets.keys())
     if data_type not in allowed:
         msg = "data type must be " + " or ".join(allowed)
         msg += ". 'fragment' is for anything without periodic boundary cond."
@@ -53,7 +56,8 @@ def default_fingerprinters(generator, data_type):
 class FeatureGenerator(
         AdsorbateFingerprintGenerator, ParticleFingerprintGenerator,
         StandardFingerprintGenerator, GraphFingerprintGenerator,
-        BulkFingerprintGenerator, ConvolutedFingerprintGenerator):
+        BulkFingerprintGenerator, ConvolutedFingerprintGenerator,
+        ChalcogenideFingerprintGenerator):
     """Feature generator class.
 
     It is sometimes necessary to normalize the length of feature vectors when

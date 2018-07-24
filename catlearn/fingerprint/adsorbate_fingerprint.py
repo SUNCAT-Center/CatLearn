@@ -28,6 +28,7 @@ default_adsorbate_fingerprinters = ['mean_chemisorbed_atoms',
                                     'strain',
                                     'en_difference_ads',
                                     'en_difference_chemi',
+                                    'en_difference_active',
                                     'generalized_cn']
 
 extra_slab_params = ['atomic_radius',
@@ -77,18 +78,6 @@ class AdsorbateFingerprintGenerator(BaseGenerator):
 
         if self.cn_max is None:
             self.cn_max = 12
-
-        if not hasattr(self, 'ion_number'):
-            self.ion_number = kwargs.get('ion_number')
-
-        if self.ion_number is None:
-            self.ion_number = 8
-
-        if not hasattr(self, 'ion_charge'):
-            self.ion_charge = kwargs.get('ion_charge')
-
-        if self.ion_charge is None:
-            self.ion_charge = -2
 
         super(AdsorbateFingerprintGenerator, self).__init__(**kwargs)
 
@@ -322,57 +311,6 @@ class AdsorbateFingerprintGenerator(BaseGenerator):
 
         return [cn_site / len(site), gcn_site / len(site),
                 cn_chemi / len(chemi), gcn_chemi / len(chemi)]
-
-    def formal_charges(self, atoms):
-        """Return a fingerprint based on formal charges and excess charges.
-
-        Parameters
-        ----------
-            atoms : object
-        """
-        if atoms is None:
-            return ['site_charge_av', 'site_charge_sum',
-                    'site_excess', 'slab_excess', 'slab_transferred']
-        else:
-            slab = atoms.subsets['slab_atoms']
-            if self.ion_number not in atoms.numbers[slab]:
-                return [0.] * 5
-
-            site = atoms.subsets['site_atoms']
-            cm = atoms.connectivity
-            formal_charges = np.ones(len(atoms))
-            for i, atom in enumerate(slab):
-                if atoms.numbers[atom] == self.ion_number:
-                    formal_charges[atom] = self.ion_charge
-            transfer = np.tril(cm * np.vstack(formal_charges))
-            row_sums = transfer.sum(axis=1)
-            shared = self.ion_charge * transfer / np.vstack(row_sums)
-            cation_charges = -np.nansum(shared, axis=0)
-
-            site_excess = 0
-            slab_excess = 0
-            transferred = 0
-            for j, atom in enumerate(slab):
-                if atoms.numbers[atom] == self.ion_number:
-                    continue
-                charge = cation_charges[atom]
-                oxistates = get_mendeleev_params(atoms.numbers[atom],
-                                                 ['oxistates'])[0]
-                if charge in oxistates:
-                    continue
-                else:
-                    oxi_index = np.argmin(np.abs(charge - np.array(oxistates)))
-                    oxistate = oxistates[oxi_index]
-                    transferred += abs(charge - oxistate)
-                    slab_excess += charge - oxistate
-                    if atom in site:
-                        site_excess += charge - oxistate
-
-            site_charge_av = np.nanmean(cation_charges[site])
-            site_charge_sum = np.nansum(cation_charges[site])
-
-            return [site_charge_av, site_charge_sum,
-                    site_excess, slab_excess, transferred]
 
     def count_ads_atoms(self, atoms=None):
         """Function that takes an atoms objects and returns a fingerprint
@@ -619,6 +557,32 @@ class AdsorbateFingerprintGenerator(BaseGenerator):
         en_site = list_mendeleev_params(site_numbers, electronegativities)
         delta_en = (en_chemi[:, np.newaxis, :] -
                     en_site[np.newaxis, :, :]) ** 2
+        en_result = list(np.einsum("ij,ijk->k", bonds, delta_en))
+        assert len(en_result) == len(labels)
+        return en_result
+
+    def en_difference_active(self, atoms=None):
+        """Returns a list of electronegativity metrics, squared and summed over
+        adsorbate bonds including those with the surface.
+
+        Parameters
+        ----------
+            atoms : object
+        """
+        labels = ['dist_' + s + '_active' for s in electronegativities]
+        if atoms is None:
+            return labels
+        cm = atoms.connectivity
+        ads = atoms.subsets['ads_atoms']
+        site = atoms.subsets['site_atoms']
+        active = ads + site
+        bonds = cm[ads, :][:, active]
+        active_numbers = atoms.numbers[active]
+        ads_numbers = atoms.numbers[ads]
+        en_active = list_mendeleev_params(active_numbers, electronegativities)
+        en_ads = list_mendeleev_params(ads_numbers, electronegativities)
+        delta_en = (en_ads[:, np.newaxis, :] -
+                    en_active[np.newaxis, :, :]) ** 2
         en_result = list(np.einsum("ij,ijk->k", bonds, delta_en))
         assert len(en_result) == len(labels)
         return en_result
