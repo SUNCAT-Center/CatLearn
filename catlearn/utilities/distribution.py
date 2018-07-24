@@ -31,7 +31,7 @@ def pair_distribution(images, bins=101, bounds=None, mic=True, element=None):
         dist, x = _distance_hist(atoms, bins=bins, bounds=bounds,
                                  mic=mic, element=element)
         assert np.allclose(x, x0)
-        pdf = np.add(pdf, dist)
+        pdf = np.nansum([pdf, dist], axis=0)  # np.add(pdf, dist)
         n += 1
 
     # Normalize to volume and number.
@@ -73,7 +73,7 @@ def pair_deviation(images, cutoffs, bins=33,
                                  element=element,
                                  subtract_cutoffs=cutoffs)
         assert np.allclose(x, x0)
-        pdf = np.add(pdf, dist)
+        pdf = np.nansum([pdf, dist], axis=0)  # np.add(pdf, dist)
         n += 1
 
     # Center bins and normalize to number.
