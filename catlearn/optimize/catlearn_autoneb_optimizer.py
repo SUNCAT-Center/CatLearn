@@ -135,8 +135,9 @@ class CatLearnAutoNEB(object):
         # Configure ML calculator.
         if self.ml_calc is None:
             self.kdict = {'k1': {'type': 'gaussian', 'width': 0.5,
-                                 'dimension': 'single',
-                                 'bounds': ((0.05, 0.5), ),
+                                 'dimension': 'features',
+                                 'bounds': ((0.05, 1.0), ) * len(
+                                                         self.ind_mask_constr),
                                  'scaling': 1.0,
                                  'scaling_bounds': ((0.5, 1.0), )}
                           }
@@ -144,14 +145,12 @@ class CatLearnAutoNEB(object):
             self.ml_calc = GPCalculator(
                 kernel_dict=self.kdict, opt_hyperparam=True, scale_data=False,
                 scale_optimizer=False, calc_uncertainty=True,
+                algo_opt_hyperparamters='L-BFGS-B',
                 regularization=1e-4, regularization_bounds=(1e-5, 1e-3))
-
-        # Stabilize spring constant:
 
         is_pos = is_endpoint[-1].get_positions().flatten()
         fs_pos = fs_endpoint[-1].get_positions().flatten()
         self.d_start_end = np.abs(distance.euclidean(is_pos, fs_pos))
-
 
     def run(self, fmax=0.05, unc_convergence=0.010, max_iter=500,
             ml_max_iter=1000, ml_algo='BFGS', plot_neb_paths=False,
