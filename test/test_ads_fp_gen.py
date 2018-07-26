@@ -91,10 +91,13 @@ class TestAdsorbateFeatures(unittest.TestCase):
         print(str(len(images)) + ' training examples.')
         gen = FeatureGenerator(nprocs=1)
         train_fpv = default_fingerprinters(gen, 'adsorbates')
+        # Test db specific functions.
         train_fpv += [gen.db_size,
                       gen.ctime,
                       gen.dbid,
                       gen.delta_energy]
+        # Old CatApp AxBy fingerprints.
+        train_fpv += [gen.catapp_AB]
         matrix = gen.return_vec(images, train_fpv)
         labels = gen.return_names(train_fpv)
         print(np.shape(matrix), type(matrix))
