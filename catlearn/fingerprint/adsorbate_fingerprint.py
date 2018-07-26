@@ -735,14 +735,14 @@ class AdsorbateFingerprintGenerator(BaseGenerator):
                                             'econf',
                                             'ionenergies']
             f1 = get_mendeleev_params(z1, params=text_params)
-            f1 = f1[:-3] + [float(block2number[f1[-3]])] + \
+            f1 = f1[:-3] + block2number[f1[-3]] + \
                 list(n_outer(f1[-2])) + [f1[-1]['1']] + \
                 [float(gs_magmom[z1])]
             if z1 == z2:
                 f2 = f1
             else:
                 f2 = get_mendeleev_params(z2, params=text_params)
-                f2 = f2[:-3] + [float(block2number[f2[-3]])] + \
+                f2 = f2[:-3] + block2number[f2[-3]] + \
                     list(n_outer(f2[-2])) + [f2[-1]['1']] + \
                     [float(gs_magmom[z2])]
             msum = list(np.nansum([f1, f2], axis=0, dtype=np.float))

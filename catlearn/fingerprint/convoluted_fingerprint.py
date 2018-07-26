@@ -153,11 +153,7 @@ class ConvolutedFingerprintGenerator(BaseGenerator):
         if atoms is None:
             return labels
 
-        if ('key_value_pairs' in atoms.info and
-                'bulk' in atoms.info['key_value_pairs']):
-            bulk = atoms.info['key_value_pairs']['bulk']
-            numbers = [atomic_numbers[s] for s in string2symbols(bulk)]
-        elif 'bulk_atoms' in atoms.subsets:
+        if 'bulk_atoms' in atoms.subsets:
             bulk = atoms.subsets['bulk_atoms']
             numbers = atoms.numbers[bulk]
             connectivity = atoms.connectivity[bulk]
@@ -268,11 +264,7 @@ class ConvolutedFingerprintGenerator(BaseGenerator):
         if atoms is None:
             return labels
 
-        if ('key_value_pairs' in atoms.info and
-                'term' in atoms.info['key_value_pairs']):
-            term = atoms.info['key_value_pairs']['term']
-            numbers = [atomic_numbers[s] for s in string2symbols(term)]
-        elif 'termination_atoms' in atoms.subsets:
+        if 'termination_atoms' in atoms.subsets:
             term = atoms.subsets['termination_atoms']
             numbers = atoms.numbers[term]
             connectivity = atoms.connectivity[term]
