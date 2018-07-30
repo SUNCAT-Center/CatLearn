@@ -15,7 +15,7 @@
 
 There are some general coding conventions that the CatLearn repository adheres to. These include the following:
 
--   Code should support Python 2.7, 3.4 and higher.
+-   Code should support Python 2.7, 3.5 and higher.
 
 -   Code should adhere to the [pep8](https://www.python.org/dev/peps/pep-0008/) and [pyflakes](https://pypi.python.org/pypi/pyflakes) style guides.
 

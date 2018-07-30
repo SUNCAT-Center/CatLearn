@@ -14,7 +14,7 @@ class GeneralPrepreprocess(object):
         Parameters
         ----------
         clean_type : str
-            Define method for handling missing data. Currntly only elimination
+            Define method for handling missing data. Currently only elimination
             implemented.
         """
         self.clean_type = clean_type
@@ -35,6 +35,8 @@ class GeneralPrepreprocess(object):
             train_features, train_targets, test_features = \
                 self._eliminate_cleaner(
                     train_features, train_targets, test_features)
+            if len(train_features) == 0:
+                raise AssertionError("All features has been eliminated.")
         else:
             raise NotImplementedError
 
@@ -57,6 +59,8 @@ class GeneralPrepreprocess(object):
         processed : array
             A cleaned and scaled feature set.
         """
+        features = np.array(features)
+
         # Check to make sure the required data is attached to class.
         if not hasattr(self, 'scale_mean'):
             msg = 'Must run the process function first.'
@@ -64,9 +68,9 @@ class GeneralPrepreprocess(object):
 
         # First eliminate features.
         if self.clean_type is 'eliminate':
-            processed = np.delete(features, self.eliminate_index, axis=1)
+            processed = features[:, self.clean_index]
 
-        # Then scale the features.
+        # Scale the features.
         processed = (processed - self.scale_mean) / self.scale_std
 
         return processed
@@ -83,28 +87,27 @@ class GeneralPrepreprocess(object):
         test_features : array
             The array of test features.
         """
-        reshape_targets = False
-        if len(np.shape(train_targets)) == 1:
-            train_targets = np.reshape(train_targets, (len(train_targets), 1))
-            reshape_targets = True
+        train_features = np.array(train_features)
+        if test_features is not None:
+            test_features = np.array(test_features)
 
-        cleaned = clean_infinite(train=train_features, test=test_features,
-                                 targets=train_targets)
+        # Identify clean and informative features.
+        finite = clean_infinite(train=train_features,
+                                test=test_features,
+                                targets=train_targets)
+        informative = clean_variance(train=train_features,
+                                     test=test_features)
 
-        # Assign cleaned training target data.
-        train_targets = cleaned['targets']
-        if reshape_targets:
-            train_targets = np.reshape(train_targets, (len(train_targets),))
+        # Join lists of features to keep.
+        self.clean_index = np.intersect1d(finite['index'],
+                                          informative['index'])
 
-        # Keep the indexes to delete.
-        self.eliminate_index = cleaned['index']
+        if test_features is None:
+            return train_features[:, self.clean_index], train_targets, \
+                test_features
 
-        cleaned = clean_variance(train=cleaned['train'], test=cleaned['test'])
-
-        # Join lists of features to eliminate.
-        self.eliminate_index += cleaned['index']
-
-        return cleaned['train'], train_targets, cleaned['test']
+        return train_features[:, self.clean_index], train_targets, \
+            test_features[:, self.clean_index]
 
     def _standardize_scalar(self, train_features, test_features):
         """Function to feature data.
