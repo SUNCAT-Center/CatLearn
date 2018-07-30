@@ -9,9 +9,9 @@ def standardize(train_matrix, test_matrix=None, mean=None, std=None,
 
     Parameters
     ----------
-    train_matrix : list
+    train_matrix : array
         Feature matrix for the training dataset.
-    test_matrix : list
+    test_matrix : array
         Feature matrix for the test dataset.
     mean : list
         List of mean values for each feature.
@@ -24,7 +24,7 @@ def standardize(train_matrix, test_matrix=None, mean=None, std=None,
     if test_matrix is not None and not local:
         data = np.concatenate((train_matrix, test_matrix), axis=0)
     else:
-        data = train_matrix
+        data = np.array(train_matrix)
 
     if mean is None:
         mean = np.mean(data, axis=0)
@@ -37,6 +37,7 @@ def standardize(train_matrix, test_matrix=None, mean=None, std=None,
     scale['train'] = (train_matrix - scale['mean']) / scale['std']
 
     if test_matrix is not None:
+        print(test_matrix)
         test_matrix = (test_matrix - scale['mean']) / scale['std']
     scale['test'] = test_matrix
 

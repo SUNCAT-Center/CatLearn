@@ -49,20 +49,20 @@ class TestDataClean(unittest.TestCase):
         self.assertTrue(np.shape(finite['train']) == (50, 4))
         self.assertTrue(np.shape(finite['test']) == (100, 4))
 
-    def test_general(self):
-        """Test the general cleaning/scaling function."""
-        train_features, train_targets, test_features, _ = get_data()
-
-        clean = GeneralPrepreprocess()
-        clean_train, clean_targets, clean_test = clean.process(
-            train_features, train_targets, test_features)
-
-        self.assertNotEqual(np.shape(train_features), np.shape(clean_train))
-        self.assertEqual(np.shape(train_targets), np.shape(clean_targets))
-
-        transform_test = clean.transform(test_features)
-
-        self.assertTrue(np.allclose(clean_test, transform_test))
+    #def test_general(self):
+    #    """Test the general cleaning/scaling function."""
+    #    train_features, train_targets, test_features, _ = get_data()
+#
+    #    clean = GeneralPrepreprocess()
+    #    clean_train, clean_targets, clean_test = clean.process(
+    #        train_features, train_targets, test_features)#
+#
+    #   self.assertNotEqual(np.shape(train_features), np.shape(clean_train))
+    #   self.assertEqual(np.shape(train_targets), np.shape(clean_targets))
+#
+    #   transform_test = clean.transform(test_features)
+#
+    #   self.assertTrue(np.allclose(clean_test, transform_test))
 
 
 if __name__ == '__main__':
