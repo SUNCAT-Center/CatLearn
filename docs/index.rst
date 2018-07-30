@@ -13,7 +13,7 @@ Welcome to CatLearn's documentation!
 .. image:: https://badge.fury.io/py/CatLearn.svg
     :target: https://badge.fury.io/py/CatLearn
 
-CatLearn_ provides utilities for building and testing atomic machine learning models.
+CatLearn_ provides utilities for building and testing atomistic machine learning models for surface science and catalysis.
 
 .. note:: This is part of the SUNCAT centers code base for understanding materials for catalytic applications. Other code is hosted on the center's Github_ repository.
 

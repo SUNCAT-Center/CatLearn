@@ -31,4 +31,4 @@ $ cd docs/
 $ make html
 ```
 
-We use Read the Docs for hosting the CatLearn documentation, found at [catlearn.readthedocs.io](catlearn.readthedocs.io). This should be recompiled with each commit to Github, there is a badge on the README that will indicate if the docs builds are passing or failing.
+We use Read the Docs for hosting the CatLearn documentation, found at [catlearn.readthedocs.io](http://catlearn.readthedocs.io/en/latest/). This should be recompiled with each commit to Github, there is a badge on the README that will indicate if the docs builds are passing or failing.
