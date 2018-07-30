@@ -2,7 +2,7 @@
 
 **This file is not meant to be included in the docs.** Instead it is meant as a guide for how to update and compile the docs.
 
-To stat with it is necessary to install some packages that will be used throughout.
+To start with it is necessary to install some packages that will be used throughout.
 
 ```shell
 $ pip install sphinx sphinx-autobuild  # install basic sphinx packages

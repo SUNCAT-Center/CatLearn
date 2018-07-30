@@ -118,18 +118,19 @@ def clean_infinite(train, test=None, targets=None, labels=None, mask=None,
         Imputation strategy.
 
     Returns
-    -------
+    --------
     data : dict
         key value pairs
-        --------
 
-        'train' : array
-            Clean training data matrix.
-        'test' : array
-            Clean test data matrix
-        'targets' : boolean list
-            Whether targets are finite.
-        'labels' : feature labels of clean data set.
+            - 'train' : array
+                Clean training data matrix.
+            - 'test' : array
+                Clean test data matrix
+            - 'targets' : list
+                Boolean list on whether targets are finite.
+            - 'labels' : list
+                Feature labels of clean data set.
+
     """
     clean = defaultdict(list)
 

@@ -133,6 +133,7 @@ def detect_termination(atoms):
     ----------
     atoms : object.
         The atoms object must have the following keys in atoms.subsets:
+
         'slab_atoms' : list
             indices of atoms belonging to the slab
     """
