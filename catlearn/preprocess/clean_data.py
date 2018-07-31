@@ -85,7 +85,7 @@ def clean_variance(train, test=None, labels=None, mask=None):
         test = np.asarray(test, dtype=np.float64)
         clean['test'] = test[:, index].copy()
     if labels is not None:
-        labels = np.asarray(labels, dtype=np.float64)
+        labels = np.asarray(labels)
         clean['labels'] = labels[index].copy()
 
     return clean

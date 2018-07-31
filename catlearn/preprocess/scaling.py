@@ -37,7 +37,6 @@ def standardize(train_matrix, test_matrix=None, mean=None, std=None,
     scale['train'] = (train_matrix - scale['mean']) / scale['std']
 
     if test_matrix is not None:
-        print(test_matrix)
         test_matrix = (test_matrix - scale['mean']) / scale['std']
     scale['test'] = test_matrix
 

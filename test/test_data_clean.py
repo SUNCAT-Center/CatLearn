@@ -31,8 +31,9 @@ class TestDataClean(unittest.TestCase):
         features = np.random.random_sample((50, 5))
         features[:, 1:2] = 109.982
         test = np.random.random_sample((100, 5))
+        labels = 5 * ['test_label']
 
-        informative = clean.clean_variance(features, test=test)
+        informative = clean.clean_variance(features, test=test, labels=labels)
 
         self.assertTrue(np.shape(informative['train']) == (50, 4))
         self.assertTrue(np.shape(informative['test']) == (100, 4))
@@ -43,26 +44,28 @@ class TestDataClean(unittest.TestCase):
         features[0, 0] = np.nan
         features[40:, 1] = np.nan
         test = np.random.random_sample((100, 5))
-        finite = clean.clean_infinite(features, test=test,
+        labels = 5 * ['test_label']
+
+        finite = clean.clean_infinite(features, test=test, labels=labels,
                                       max_impute_fraction=0.1)
 
         self.assertTrue(np.shape(finite['train']) == (50, 4))
         self.assertTrue(np.shape(finite['test']) == (100, 4))
 
-    #def test_general(self):
-    #    """Test the general cleaning/scaling function."""
-    #    train_features, train_targets, test_features, _ = get_data()
-#
-    #    clean = GeneralPrepreprocess()
-    #    clean_train, clean_targets, clean_test = clean.process(
-    #        train_features, train_targets, test_features)#
-#
-    #   self.assertNotEqual(np.shape(train_features), np.shape(clean_train))
-    #   self.assertEqual(np.shape(train_targets), np.shape(clean_targets))
-#
-    #   transform_test = clean.transform(test_features)
-#
-    #   self.assertTrue(np.allclose(clean_test, transform_test))
+    def test_general(self):
+        """Test the general cleaning/scaling function."""
+        train_features, train_targets, test_features, _ = get_data()
+
+        clean = GeneralPrepreprocess()
+        clean_train, clean_targets, clean_test = clean.process(
+            train_features, train_targets, test_features)
+
+        self.assertNotEqual(np.shape(train_features), np.shape(clean_train))
+        self.assertEqual(np.shape(train_targets), np.shape(clean_targets))
+
+        transform_test = clean.transform(test_features)
+
+        self.assertTrue(np.allclose(clean_test, transform_test))
 
 
 if __name__ == '__main__':

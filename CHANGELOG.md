@@ -1,5 +1,6 @@
 # dev
 
+-   Data cleaning function now return a dictionary with 'index' of clean features.
 -   New adsorbate-chalcogenide fingerprint generator.
 -   Improved automatic identification of adsorbate, site.
 -   Generalized coordination number for site.
