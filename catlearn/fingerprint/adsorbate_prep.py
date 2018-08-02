@@ -48,6 +48,10 @@ def autogen_info(images):
         # Identify slab atoms.
         if 'slab_atoms' not in atoms.subsets:
             atoms.subsets['slab_atoms'] = slab_index(atoms)
+        if not (len(atoms.subsets['slab_atoms']) +
+                len(atoms.subsets['ads_atoms']) ==
+                len(atoms)):
+            raise AssertionError("all atoms must belong to slab or adsorbate.")
         # Identify atoms at node distance 0 and 1 from the surface-ads bond.
         if ('chemisorbed_atoms' not in atoms.subsets or
             'site_atoms' not in atoms.subsets or
@@ -101,6 +105,8 @@ def detect_adsorbate(atoms):
     """
     if 'ads_atoms' in atoms.subsets:
         return atoms.subsets['ads_atoms']
+    if 'slab_atoms' in atoms.subsets:
+        return ads_index(atoms)
     if (len(np.unique(atoms.get_tags())) >= 4 and
         min(atoms.get_tags()) <= -1 and
        max(atoms.get_tags()) > 2):
@@ -240,6 +246,23 @@ def slab_index(atoms):
     chemi = [a.index for a in atoms if a.index not in
              atoms.subsets['ads_atoms']]
     return chemi
+
+
+def ads_index(atoms):
+    """ Returns a list of indices of atoms belonging to the adsorbate.
+    These are defined as atoms that are not belonging to the slab.
+
+    Parameters
+    ----------
+    atoms : ase atoms object
+        The atoms object must have the key 'ads_atoms' in atoms.subsets:
+
+            - 'slab_atoms' : list
+                indices of atoms belonging to the adsorbate
+    """
+    ads = [a.index for a in atoms if a.index not in
+           atoms.subsets['slab_atoms']]
+    return ads
 
 
 def sym2ads_index(atoms, ads_syms):
@@ -495,6 +518,7 @@ def info2primary_index(atoms):
     """
     slab_atoms = atoms.subsets['slab_atoms']
     ads_atoms = atoms.subsets['ads_atoms']
+
     cm = atoms.connectivity
     chemi = []
     site = []
