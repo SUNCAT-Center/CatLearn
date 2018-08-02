@@ -285,7 +285,7 @@ class AdsorbateFingerprintGenerator(BaseGenerator):
             return ['cn_site', 'gcn_site', 'cn_ads1', 'gcn_ads1']
         site = atoms.subsets['site_atoms']
         slab = atoms.subsets['slab_atoms']
-        cm = atoms.connectivity
+        cm = np.array(atoms.connectivity)
         cn_site = 0.
         for atom in site:
             row = cm[atom, :]
@@ -344,7 +344,7 @@ class AdsorbateFingerprintGenerator(BaseGenerator):
             return ['nn_num_C', 'nn_num_H', 'nn_num_M']
         else:
             chemi = atoms.subsets['chemisorbed_atoms']
-            cm = atoms.connectivity
+            cm = np.array(atoms.connectivity)
             nH = np.sum(cm[:, chemi] * np.vstack(atoms.numbers == 1))
             nC = np.sum(cm[:, chemi] * np.vstack(atoms.numbers == 6))
             nM = np.sum(cm[:, chemi][atoms.subsets['site_atoms'], :])
