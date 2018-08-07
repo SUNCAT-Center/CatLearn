@@ -135,9 +135,8 @@ class CatLearnAutoNEB(object):
         # Configure ML calculator.
         if self.ml_calc is None:
             self.kdict = {'k1': {'type': 'gaussian', 'width': 0.5,
-                                 'dimension': 'features',
-                                 'bounds': ((0.05, 1.0), ) * len(
-                                                         self.ind_mask_constr),
+                                 'dimension': 'single',
+                                 'bounds': ((0.05, 0.5), ),
                                  'scaling': 1.0,
                                  'scaling_bounds': ((0.5, 1.0), )}
                           }
