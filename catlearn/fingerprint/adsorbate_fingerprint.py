@@ -11,6 +11,7 @@ from .periodic_table_data import (get_mendeleev_params, n_outer,
 from .neighbor_matrix import connection_matrix
 import collections
 from .base import BaseGenerator, check_labels
+from .adsorbate_prep import site_nn
 
 
 default_adsorbate_fingerprinters = ['mean_chemisorbed_atoms',
@@ -29,7 +30,8 @@ default_adsorbate_fingerprinters = ['mean_chemisorbed_atoms',
                                     'en_difference_ads',
                                     'en_difference_chemi',
                                     'en_difference_active',
-                                    'generalized_cn']
+                                    'generalized_cn',
+                                    'coordination_counts']
 
 extra_slab_params = ['atomic_radius',
                      'heat_of_formation',
@@ -284,18 +286,38 @@ class AdsorbateFingerprintGenerator(BaseGenerator):
         if atoms is None:
             return ['cn_site', 'gcn_site', 'cn_ads1', 'gcn_ads1']
         site = atoms.subsets['site_atoms']
+
+        if len(site) == 1:
+            cn_max = 12
+        elif len(site) == 2:
+            cn_max = 18
+        elif len(site) == 3:
+            cn_max = 24
+        elif len(site) == 4:
+            cn_max = 30
+        elif len(site) == 5:
+            cn_max = 36
+        elif len(site) >= 6:
+            raise AssertionError('site of ' + str(len(site)) + ' atoms')
+
         slab = atoms.subsets['slab_atoms']
         cm = np.array(atoms.connectivity)
+        np.fill_diagonal(cm, 0)
+
+        if 'site_nn_atoms' not in atoms.subsets:
+            atoms = site_nn(atoms)
+        site_neighbors = list(np.unique(atoms.subsets['site_nn_atoms']))
+
         cn_site = 0.
-        for atom in site:
-            row = cm[atom, :]
-            cn = len([k for i, k in enumerate(row) if k > 0 and i in slab])
-            cn_site += cn
-            gcn_site = 0.
-            for j, btom in enumerate(row):
-                if btom > 0 and j in slab:
-                    cn = len([k for k in cm[btom, :] if k > 0])
-                    gcn_site += btom * cn / self.cn_max
+        for j, atom in enumerate(site):
+            cn_site += np.sum(cm[atom, :][slab])
+        cn_site /= len(site)
+
+        gcn_site = 0.
+        for j, btom in enumerate(site_neighbors):
+            cn_nn = np.sum(cm[btom, :][slab])
+            gcn_site += cn_nn
+        gcn_site /= (cn_max * len(site_neighbors))
 
         chemi = atoms.subsets['chemisorbed_atoms']
         cn_chemi = 0.
@@ -307,10 +329,32 @@ class AdsorbateFingerprintGenerator(BaseGenerator):
             for j, btom in enumerate(row):
                 if btom > 0:
                     cn = len([k for k in cm[btom, :] if k > 0])
-                    gcn_chemi += btom * cn / self.cn_max
+                    gcn_chemi += btom * cn / cn_max
 
-        return [cn_site / len(site), gcn_site / len(site),
+        return [cn_site, gcn_site,
                 cn_chemi / len(chemi), gcn_chemi / len(chemi)]
+
+    def coordination_counts(self, atoms):
+        """Count the number of neighbors of the site,
+        which has a n number of neighbors.
+        """
+        labels = ['count_' + str(j) + 'nn_site' for j in range(3, 25)]
+        if atoms is None:
+            return labels
+        else:
+            if 'site_nn_atoms' not in atoms.subsets:
+                atoms = site_nn(atoms)
+            site_neighbors = list(np.unique(atoms.subsets['site_nn_atoms']))
+            slab = atoms.subsets['slab_atoms']
+
+            fingerprint_nn = np.zeros(22)
+            cm = np.array(atoms.connectivity)
+            np.fill_diagonal(cm, 0)
+            for i, atom in enumerate(site_neighbors):
+                fingerprint_nn[np.sum(cm[atom, :][slab])] += 1
+
+            fingerprint = list(fingerprint_nn)
+            return fingerprint
 
     def count_ads_atoms(self, atoms=None):
         """Function that takes an atoms objects and returns a fingerprint

@@ -704,7 +704,46 @@ def auto_layers(atoms, miller=(0, 0, 1)):
     return lz, li
 
 
+def site_nn(atoms):
+    """Attaches subset containing atomic indices of atoms in the slab, which
+    are nearest neighbors of the adsorption site.
+
+    Parameters
+    ----------
+    atoms : object
+        The atoms object must have the following keys in atoms.subsets:
+
+        'slab_atoms' : list
+            indices of atoms belonging to the slab
+        'site_atoms' : list
+            indices of atoms belonging to the site
+
+    Returns
+    --------
+    atoms : object
+        ase.Atoms object. atoms.subsets['site_nn_atoms'] is attached.
+    """
+    slab = atoms.subsets['slab_atoms']
+    site = atoms.subsets['site_atoms']
+    cm = np.array(atoms.connectivity)
+    site_nn_atoms = []
+    for atom in site:
+        row = cm[atom, :]
+        site_nn_atoms += [k for i, k in enumerate(row) if k > 0 and i in slab]
+    atoms.subsets['site_nn_atoms'] = site_nn_atoms
+    return atoms
+
+
 def attach_cations(atoms, anion_number=8):
+    """Attaches list of cation and anion atomic indices.
+
+    Parameters
+    ----------
+    atoms : object
+        ase.Atoms object.
+    anion_number : int
+        Atomic number of the anion of this chalcogenide.
+    """
     if anion_number not in atoms.numbers:
         raise ValueError('Anion ' + chemical_symbols[anion_number] +
                          'not in atoms')
