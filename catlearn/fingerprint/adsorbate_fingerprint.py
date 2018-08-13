@@ -77,13 +77,6 @@ class AdsorbateFingerprintGenerator(BaseGenerator):
         if self.slab_params is None:
             self.slab_params = default_params + extra_slab_params
 
-        # Maximum atomic number type for bag of bonds.
-        if not hasattr(self, 'Z_max'):
-            self.Z_max = kwargs.get('Z_max')
-
-        if self.cn_max is None:
-            self.Z_max = 82  # Pb.
-
         super(AdsorbateFingerprintGenerator, self).__init__(**kwargs)
 
     def term(self, atoms=None):
@@ -571,17 +564,16 @@ class AdsorbateFingerprintGenerator(BaseGenerator):
             atoms : object
         """
         # range of element types
-        Z_max = self.Z_max
-        s = np.array(chemical_symbols)[1:Z_max+1]
-        rows, cols = np.meshgrid(s, s)
+        n_elements = len(self.atom_types)
+        symbols = np.array([chemical_symbols[z] for z in self.atom_types])
+        rows, cols = np.meshgrid(symbols, symbols)
         pairs = np.core.defchararray.add(rows, cols)
-        labels = list(
-                pairs[np.triu_indices_from(np.core.defchararray.add(pairs))])
+        labels = ['bag_' + c for c in pairs[np.triu_indices_from(pairs)]]
         if atoms is None:
             return labels
         else:
             # empty bag of bond types.
-            bob = np.zeros([Z_max, Z_max])
+            bob = np.zeros([n_elements, n_elements])
 
             natoms = len(atoms)
             cm = np.array(atoms.connectivity)
@@ -592,13 +584,14 @@ class AdsorbateFingerprintGenerator(BaseGenerator):
             cm[slab, :][:, slab] = 0
             cm[:, slab][slab, :] = 0
 
-            bonds = np.where(np.ravel(cm) > 0)[0]
+            bonds = np.where(np.ravel(np.triu(cm)) > 0)[0]
             for b in bonds:
                 # Get bonded atomic numbers.
                 z_row, z_col = np.unravel_index(b, [natoms, natoms])
-                # 0-index from atom types.
-                bond_type = tuple(sorted(atoms.numbers[z_row]-1,
-                                         atoms.numbers[z_col]-1))
+                bond_index = sorted((atoms.numbers[z_row],
+                                     atoms.numbers[z_col]))
+                bond_type = tuple((self.atom_types.index(bond_index[0]),
+                                   self.atom_types.index(bond_index[1])))
                 # Count bonds in upper triangle.
                 bob[bond_type] += 1
             return list(bob[np.triu_indices_from(bob)])
