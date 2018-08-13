@@ -2,7 +2,7 @@
 import numpy as np
 from ase.atoms import string2symbols
 from ase.data import ground_state_magnetic_moments as gs_magmom
-from ase.data import atomic_numbers
+from ase.data import atomic_numbers, chemical_symbols
 from .periodic_table_data import (get_mendeleev_params, n_outer,
                                   list_mendeleev_params,
                                   default_params, get_radius,
@@ -31,7 +31,8 @@ default_adsorbate_fingerprinters = ['mean_chemisorbed_atoms',
                                     'en_difference_chemi',
                                     'en_difference_active',
                                     'generalized_cn',
-                                    'coordination_counts']
+                                    'coordination_counts',
+                                    'bag_bonds_ads']
 
 extra_slab_params = ['atomic_radius',
                      'heat_of_formation',
@@ -69,17 +70,19 @@ class AdsorbateFingerprintGenerator(BaseGenerator):
         ion_charge : int
             Optional formal charge of that element.
         """
+        # Slab periodic table parameters.
         if not hasattr(self, 'params'):
             self.slab_params = kwargs.get('params')
 
         if self.slab_params is None:
             self.slab_params = default_params + extra_slab_params
 
-        if not hasattr(self, 'cn_max'):
-            self.cn_max = kwargs.get('cn_max')
+        # Maximum atomic number type for bag of bonds.
+        if not hasattr(self, 'Z_max'):
+            self.Z_max = kwargs.get('Z_max')
 
         if self.cn_max is None:
-            self.cn_max = 12
+            self.Z_max = 82  # Pb.
 
         super(AdsorbateFingerprintGenerator, self).__init__(**kwargs)
 
@@ -557,6 +560,47 @@ class AdsorbateFingerprintGenerator(BaseGenerator):
             strain_site = (av_site - av_bulk) / av_bulk
             strain_term = (av_term - av_bulk) / av_bulk
             return [strain_site, strain_term]
+
+    def bag_bonds_ads(self, atoms):
+        """Returns bag of bonds, counting only the bonds within the adsorbate
+        and the bonds between adsorbate and surface.
+
+        Parameters
+        ----------
+            atoms : object
+        """
+        # range of element types
+        Z_max = self.Z_max
+        s = np.array(chemical_symbols)[1:Z_max+1]
+        rows, cols = np.meshgrid(s, s)
+        pairs = np.core.defchararray.add(rows, cols)
+        labels = list(
+                pairs[np.triu_indices_from(np.core.defchararray.add(pairs))])
+        if atoms is None:
+            return labels
+        else:
+            # empty bag of bond types.
+            bob = np.zeros([Z_max, Z_max])
+
+            natoms = len(atoms)
+            cm = np.array(atoms.connectivity)
+            np.fill_diagonal(cm, 0)
+
+            # Ignore connections within the slab.
+            slab = atoms.subsets['slab_atoms']
+            cm[slab, :][:, slab] = 0
+            cm[:, slab][slab, :] = 0
+
+            bonds = np.where(np.ravel(cm) > 0)[0]
+            for b in bonds:
+                # Get bonded atomic numbers.
+                z_row, z_col = np.unravel_index(b, [natoms, natoms])
+                # 0-index from atom types.
+                bond_type = tuple(sorted(atoms.numbers[z_row]-1,
+                                         atoms.numbers[z_col]-1))
+                # Count bonds in upper triangle.
+                bob[bond_type] += 1
+            return list(bob[np.triu_indices_from(bob)])
 
     def en_difference_ads(self, atoms=None):
         """Returns a list of electronegativity metrics, squared and summed over
