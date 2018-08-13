@@ -28,7 +28,7 @@ default_adsorbate_fingerprinters = ['mean_chemisorbed_atoms',
                                     'generalized_cn',
                                     'coordination_counts',
                                     'bag_atoms_ads',
-                                    'bag_bonds_ads']
+                                    'bag_connections_ads']
 
 extra_slab_params = ['atomic_radius',
                      'heat_of_formation',
@@ -491,11 +491,11 @@ class AdsorbateFingerprintGenerator(BaseGenerator):
             strain_term = (av_term - av_bulk) / av_bulk
             return [strain_site, strain_term]
 
-    def bag_bonds_ads(self, atoms):
-        """Returns bag of bonds, counting only the bonds within the adsorbate
-        and the bonds between adsorbate and surface.
+    def bag_connections_ads(self, atoms):
+        """Returns bag of connections, counting only the bonds within the
+        adsorbate and the connections between adsorbate and surface.
 
-        Loosely inspired by the bag of pair potentials by
+        Loosely inspired by the bag of coulomb potentials by
         K. Hansen et al., J. Phys. Chem. Lett., 2015, 6 (12), pp 2326–2331.
 
         Parameters
@@ -507,12 +507,12 @@ class AdsorbateFingerprintGenerator(BaseGenerator):
         symbols = np.array([chemical_symbols[z] for z in self.atom_types])
         rows, cols = np.meshgrid(symbols, symbols)
         pairs = np.core.defchararray.add(rows, cols)
-        labels = ['bob_' + c for c in pairs[np.triu_indices_from(pairs)]]
+        labels = ['boc_' + c for c in pairs[np.triu_indices_from(pairs)]]
         if atoms is None:
             return labels
         else:
-            # empty bag of bond types.
-            bob = np.zeros([n_elements, n_elements])
+            # empty bag of connection types.
+            boc = np.zeros([n_elements, n_elements])
 
             natoms = len(atoms)
             cm = np.array(atoms.connectivity)
@@ -532,8 +532,8 @@ class AdsorbateFingerprintGenerator(BaseGenerator):
                 bond_type = tuple((self.atom_types.index(bond_index[0]),
                                    self.atom_types.index(bond_index[1])))
                 # Count bonds in upper triangle.
-                bob[bond_type] += 1
-            return list(bob[np.triu_indices_from(bob)])
+                boc[bond_type] += 1
+            return list(boc[np.triu_indices_from(boc)])
 
     def en_difference_ads(self, atoms=None):
         """Returns a list of electronegativity metrics, squared and summed over

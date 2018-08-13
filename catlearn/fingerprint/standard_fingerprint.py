@@ -24,7 +24,7 @@ default_molecule_fingerprinters = [
                                    'eigenspectrum_vec',
                                    'composition_vec',
                                    'distance_vec',
-                                   'bag_bonds'
+                                   'bag_connections'
                                    ]
 
 
@@ -276,12 +276,12 @@ class StandardFingerprintGenerator(BaseGenerator):
             features.append(co)
         return features
 
-    def bag_bonds(self, atoms):
-        """Returns the bag of bonds, defined as counting connections between
-        types of elements pairs. We define the bag as a vector, e.g.
+    def bag_connections(self, atoms):
+        """Returns the bag of connections, defined as counting connections
+        between types of elements pairs. We define the bag as a vector, e.g.
         return [Number of C-H connections, # C-C, # C-O, ..., # M-X]
 
-        This is loosely inspired by the bag of pair potentials by
+        Loosely inspired by the bag of coulomb potentials by
         K. Hansen et al., J. Phys. Chem. Lett., 2015, 6 (12), pp 2326–2331.
 
         Parameters
@@ -302,7 +302,7 @@ class StandardFingerprintGenerator(BaseGenerator):
             return labels
         else:
             # empty bag of bond types.
-            bob = np.zeros([n_elements, n_elements])
+            boc = np.zeros([n_elements, n_elements])
 
             natoms = len(atoms)
             cm = np.array(atoms.connectivity)
@@ -317,5 +317,5 @@ class StandardFingerprintGenerator(BaseGenerator):
                 bond_type = tuple((self.atom_types.index(bond_index[0]),
                                    self.atom_types.index(bond_index[1])))
                 # Count bonds in upper triangle.
-                bob[bond_type] += 1
-            return list(bob[np.triu_indices_from(bob)])
+                boc[bond_type] += 1
+            return list(boc[np.triu_indices_from(boc)])
