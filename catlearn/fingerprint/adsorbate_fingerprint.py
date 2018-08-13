@@ -295,11 +295,11 @@ class AdsorbateFingerprintGenerator(BaseGenerator):
         elif len(site) == 2:
             cn_max = 18
         elif len(site) == 3:
-            cn_max = 24
+            cn_max = 22
         elif len(site) == 4:
-            cn_max = 30
+            cn_max = 26
         elif len(site) == 5:
-            cn_max = 36
+            cn_max = 30
         elif len(site) >= 6:
             raise AssertionError('site of ' + str(len(site)) + ' atoms')
 
@@ -347,6 +347,7 @@ class AdsorbateFingerprintGenerator(BaseGenerator):
         else:
             if 'site_nn_atoms' not in atoms.subsets:
                 atoms = site_nn(atoms)
+            # Only count neighbors once.
             site_neighbors = list(np.unique(atoms.subsets['site_nn_atoms']))
             slab = atoms.subsets['slab_atoms']
 
