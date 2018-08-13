@@ -263,7 +263,7 @@ class FeatureGenerator(
         self.atom_types = atom_types
 
     def _get_atom_length(self, train_candidates, test_candidates=None):
-        """Function to get all potential atomic types in data.
+        """Function to get all potential system sizes in data.
 
         Parameters
         ----------
@@ -275,7 +275,7 @@ class FeatureGenerator(
         Returns
         -------
         atom_types : list
-            Full list of atomic numbers in data.
+            Full list of system sizes in data.
         """
         train_candidates = list(train_candidates)
         if test_candidates is not None:
