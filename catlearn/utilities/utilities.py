@@ -5,7 +5,24 @@ from scipy.stats import pearsonr, spearmanr, kendalltau
 from catlearn.preprocess.scaling import standardize
 
 
-def formal_charges(atoms, ion_number, ion_charge):
+def formal_charges(atoms, ion_number=8, ion_charge=-2):
+    """Return a list of formal charges on atoms.
+
+    Parameters
+    ----------
+    atoms : object
+        ase.Atoms object representing a chalcogenide. The default parameters
+        are relevant for an oxide.
+    anion_number : int
+        atomic number of anion.
+    anion_charge : int
+        formal charge of anion.
+
+    Returns
+    ----------
+    all_charges : list
+        Formal charges ordered by atomic index.
+    """
     cm = atoms.connectivity
     anion_charges = np.zeros(len(atoms))
     for i, atom in enumerate(atoms):
@@ -19,8 +36,7 @@ def formal_charges(atoms, ion_number, ion_charge):
             shared = ion_charge * transfer / np.vstack(row_sums)
             cation_charges = -np.nansum(shared, axis=0)
             all_charges = anion_charges + cation_charges
-    atoms.set_initial_charges(all_charges)
-    return atoms
+    return all_charges
 
 
 def holdout_set(data, fraction, target=None, seed=None):
