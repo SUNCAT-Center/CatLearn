@@ -277,12 +277,20 @@ class StandardFingerprintGenerator(BaseGenerator):
         return features
 
     def bag_bonds(self, atoms):
-        """Returns the bag of bonds.
-        DOI: 10.1021/acs.jpclett.5b00831
+        """Returns the bag of bonds, defined as counting connections between
+        types of elements pairs. We define the bag as a vector, e.g.
+        return [Number of C-H connections, # C-C, # C-O, ..., # M-X]
+
+        This is loosely inspired by the bag of pair potentials by
+        K. Hansen et al., J. Phys. Chem. Lett., 2015, 6 (12), pp 2326–2331.
 
         Parameters
         ----------
-            atoms : object
+        atoms : object
+
+        Returns
+        ----------
+        features : list
         """
         # range of element types
         n_elements = len(self.atom_types)
