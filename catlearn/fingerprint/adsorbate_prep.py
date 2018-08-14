@@ -705,6 +705,15 @@ def auto_layers(atoms, miller=(0, 0, 1)):
 
 
 def attach_cations(atoms, anion_number=8):
+    """Attaches list of cation and anion atomic indices.
+
+    Parameters
+    ----------
+    atoms : object
+        ase.Atoms object.
+    anion_number : int
+        Atomic number of the anion of this chalcogenide.
+    """
     if anion_number not in atoms.numbers:
         raise ValueError('Anion ' + chemical_symbols[anion_number] +
                          'not in atoms')

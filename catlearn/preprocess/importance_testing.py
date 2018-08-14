@@ -19,6 +19,14 @@ class ImportanceElimination(object):
 
         Parameters
         ----------
+        transform : object
+            Function to transform a feature, to test its importance.
+            transform must accept a list of parameters:
+
+                - feature index.
+                - training data.
+                - test data.
+
         nprocs : int
             Number of processers used in parallel implementation. Default is 1
             e.g. serial.
@@ -47,12 +55,18 @@ class ImportanceElimination(object):
 
             predict should return a function that can be passed to
             test_predict.
+        test_predict : object
+            A function that will accept a trained model object and return a
+            float or a list of test metrics. The first returned metric will be
+            used to eliminate features.
         features : array
             An n, d array of features.
         targets : list
             A list of the target values.
         nsplit : int
             Number of folds in k-fold cross-validation.
+        step : int
+            Optional number of features to eliminate in each round.
 
         Returns
         -------
@@ -63,8 +77,8 @@ class ImportanceElimination(object):
             Second column are corresponding cost function values, averaged over
             the k fold split.
 
-            Following columns are any additional values returned by predict,
-            averaged over the k fold split.
+            Following columns are any additional values returned by
+            test_predict, averaged over the k fold split.
         """
         # Make some k-fold splits.
         features, targets = k_fold(features, targets=targets, nsplit=nsplit)
@@ -158,7 +172,7 @@ class ImportanceElimination(object):
             The training target data.
         test_targets : array
             The test target data:
-        predict : object
+        test_predict : object
             The prediction function.
         meta_k : list
             The metadata for the k-fold.
@@ -208,7 +222,7 @@ class ImportanceElimination(object):
             The training target data.
         test_targets : array
             The test target data:
-        predict : object
+        test_predict : object
             The prediction function.
         meta_k : list
             The metadata for the k-fold.
@@ -242,21 +256,28 @@ def _predictor(args):
 
     Parameters
     ----------
-    features : array
-        The original feature matrix.
-    index : int
-        The index of the feature to be transformed.
+    args : list
+        A list of arguments:
+
+        index : int
+            The index of the feature to be shuffled.
+        train_features : array
+            The original training data matrix.
+        test_features : array
+            The original test data matrix.
 
     Returns
     -------
-    features : array
-        Feature matrix with an invariant feature column in matrix.
+    f : int
+        Feature index.
+    result : float or list
+        Importance and optionally metadata as following elements in a list.
     """
     # Unpack args tuple.
     f = args[0]
     train_features = args[1]
     test_features = args[2]
-    train_targets = args[3]
+    # train_targets = args[3]
     test_targets = args[4]
     predict = args[5]
     transform = args[6]
@@ -280,15 +301,22 @@ def feature_invariance(args):
 
     Parameters
     ----------
-    features : array
-        The original feature matrix.
-    index : int
-        The index of the feature to be transformed.
+    args : list
+        A list of arguments:
+
+        index : int
+            The index of the feature to be shuffled.
+        train_features : array
+            The original training data matrix.
+        test_features : array
+            The original test data matrix.
 
     Returns
     -------
-    features : array
-        Feature matrix with an invariant feature column in matrix.
+    train : array
+        Feature matrix with a shuffled feature column in matrix.
+    test : array
+        Feature matrix with a shuffled feature column in matrix.
     """
     # Unpack args tuple.
     f = args[0]
@@ -314,15 +342,22 @@ def feature_randomize(args):
 
     Parameters
     ----------
-    features : array
-        The original feature matrix.
-    index : int
-        The index of the feature to be transformed.
+    args : list
+        A list of arguments:
+
+        index : int
+            The index of the feature to be shuffled.
+        train_features : array
+            The original training data matrix.
+        test_features : array
+            The original test data matrix.
 
     Returns
     -------
-    features : array
-        Feature matrix with an invariant feature column in matrix.
+    train : array
+        Feature matrix with a shuffled feature column in matrix.
+    test : array
+        Feature matrix with a shuffled feature column in matrix.
     """
     # Unpack args tuple.
     f = args[0]
@@ -353,14 +388,21 @@ def feature_shuffle(args):
 
     Parameters
     ----------
-    features : array
-        The original feature matrix.
-    index : int
-        The index of the feature to be shuffled.
+    args : list
+        A list of arguments:
+
+        index : int
+            The index of the feature to be shuffled.
+        train_features : array
+            The original training data matrix.
+        test_features : array
+            The original test data matrix.
 
     Returns
     -------
-    features : array
+    train : array
+        Feature matrix with a shuffled feature column in matrix.
+    test : array
         Feature matrix with a shuffled feature column in matrix.
     """
     # Unpack args tuple.
