@@ -363,8 +363,13 @@ class AdsorbateFingerprintGenerator(BaseGenerator):
             atoms : object
         """
         if atoms is None:
-            labels = ['bag_ads_' + chemical_symbols[z] for z in
-                      self.atom_types]
+            try:
+                labels = ['bag_ads_' + chemical_symbols[z] for z in
+                          self.atom_types]
+            except TypeError:
+                print(chemical_symbols)
+                print(self.atom_types)
+                raise
             return labels
         else:
             bag = np.zeros(len(self.atom_types))
