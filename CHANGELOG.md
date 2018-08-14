@@ -1,13 +1,14 @@
-# dev
+# Version 0.4.4 (August 2018)
 
+-   Major modifications to adsorbates fingerprinter
 -   Bag of site neighbor coordinations numbers implemented.
--   Bag of bonds implemented for adsorbate systems.
--   Bag of bonds implemented.
+-   Bag of connections implemented for adsorbate systems.
+-   General bag of connections implemented.
 -   Data cleaning function now return a dictionary with 'index' of clean features.
+-   New clean function to discard features with excessive skewness.
 -   New adsorbate-chalcogenide fingerprint generator.
--   Improved automatic identification of adsorbate, site.
+-   Enhancements to automatic identification of adsorbate, site.
 -   Generalized coordination number for site.
--   Formal oxidation state fingerprints for chalcogenides.
 -   Formal charges utility.
 -   New sum electronegativity over bonds fingerprinter.
 

@@ -52,6 +52,19 @@ class TestDataClean(unittest.TestCase):
         self.assertTrue(np.shape(finite['train']) == (50, 4))
         self.assertTrue(np.shape(finite['test']) == (100, 4))
 
+    def test_skew(self):
+        """Test cleaning inf variable features."""
+        features = np.random.random_sample((50, 5))
+        features[:, 0] = 0
+        features[0, 0] = 1
+        test = np.random.random_sample((100, 5))
+        labels = 5 * ['test_label']
+
+        symmetric = clean.clean_skewness(features, test=test, labels=labels)
+
+        self.assertTrue(np.shape(symmetric['train']) == (50, 4))
+        self.assertTrue(np.shape(symmetric['test']) == (100, 4))
+
     def test_general(self):
         """Test the general cleaning/scaling function."""
         train_features, train_targets, test_features, _ = get_data()

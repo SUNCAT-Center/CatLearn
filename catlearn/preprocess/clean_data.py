@@ -2,6 +2,7 @@
 import numpy as np
 from collections import defaultdict
 from sklearn.preprocessing import Imputer
+from scipy.stats import skew
 
 
 def remove_outliers(features, targets, con=1.4826, dev=3., constraint=None):
@@ -174,5 +175,46 @@ def clean_infinite(train, test=None, targets=None, labels=None, mask=None,
         assert len(labels) == int(np.shape(train)[1])
         labels = list(np.array(labels)[clean['index']])
     clean['labels'] = labels
+
+    return clean
+
+
+def clean_skewness(train, test=None, labels=None, mask=None, skewness=3.):
+    """Discards features that are excessively skewed.
+
+    Parameters
+    ----------
+    train : array
+        Feature matrix for the traing data.
+    test : array
+        Optional feature matrix for the test data. Default is None passed.
+    labels : array
+        Optional list of feature labels. Default is None passed.
+    mask : list
+        Indices of features that are not subject to cleaning.
+    skewness : float
+        Maximum allowed skewness thresshold.
+    """
+    train = np.asarray(train, dtype=np.float64)
+
+    clean = defaultdict(list)
+
+    data_skewness = skew(train, axis=0)
+    print(data_skewness)
+    assert np.isfinite(data_skewness).all()
+
+    # Index of informative features.
+    index = list(np.where(abs(data_skewness) < skewness)[0])
+    print(index)
+    clean['index'] = index
+
+    # Clean data.
+    clean['train'] = train[:, index].copy()
+    if test is not None:
+        test = np.asarray(test, dtype=np.float64)
+        clean['test'] = test[:, index].copy()
+    if labels is not None:
+        labels = np.asarray(labels)
+        clean['labels'] = labels[index].copy()
 
     return clean

@@ -1,6 +1,33 @@
 # Changelog
 
-## Version 0.4.1 (April 2018)
+# Version 0.4.4 (August 2018)
+
+-   Major modifications to adsorbates fingerprinter
+-   Bag of site neighbor coordinations numbers implemented.
+-   Bag of connections implemented for adsorbate systems.
+-   General bag of connections implemented.
+-   Data cleaning function now return a dictionary with 'index' of clean features.
+-   New clean function to discard features with excessive skewness.
+-   New adsorbate-chalcogenide fingerprint generator.
+-   Enhancements to automatic identification of adsorbate, site.
+-   Generalized coordination number for site.
+-   Formal charges utility.
+-   New sum electronegativity over bonds fingerprinter.
+
+# Version 0.4.3 (May 2018)
+
+-   `ConvolutedFingerprintGenerator` added for bulk and molecules.
+-   Dropped support for Python3.4 as it appears to start causing problems.
+
+# Version 0.4.2 (May 2018)
+
+-   Genetic algorithm feature selection can parallelize over population within each generation.
+-   Default fingerprinter function sets accessible using `catlearn.fingerprint.setup.default_fingerprinters`
+-   New surrogate model utility
+-   New utility for evaluating cutoff radii for connectivity based fingerprinting.
+-   `default_catlearn_radius` improved.
+
+# Version 0.4.1 (April 2018)
 
 -   AtoML renamed to CatLearn and moved to Github.
 -   Adsorbate fingerprinting again parallelizable.
@@ -10,7 +37,7 @@
 -   Fixed a bug that caused the negative log marginal likelihood to be attached to the gp class.
 -   Small speed improvement for initialize and updates to `GaussianProcess`.
 
-## Version 0.4.0 (April 2018)
+# Version 0.4.0 (April 2018)
 
 -   Added `autogen_info` function for list of atoms objects representing adsorbates.
     -   This can auto-generate all atomic group information and attach it to `atoms.info`.
@@ -32,14 +59,14 @@
 -   Modified uncertainty output. The user can ask for the uncertainty with and without adding noise parameter (regularization).
 -   Clean up some bits of code, fix some bugs.
 
-## Version 0.3.1 (February 2018)
+# Version 0.3.1 (February 2018)
 
 -   Added a parallel version of the greedy feature selection. **Python3 only!**
 -   Updated the k-fold cross-validation function to handle features and targets explicitly.
 -   Added some basic read/write functionality to the k-fold CV.
 -   A number of minor bugs have been fixed.
 
-## Version 0.3.0 (February 2018)
+# Version 0.3.0 (February 2018)
 
 -   Update the fingerprint generator functions so there is now a `FeatureGenerator` class that wraps round all type specific generators.
 -   Feature generation can now be performed in parallel, setting `nprocs` variable in the `FeatureGenerator` class. **Python3 only!**
@@ -50,12 +77,12 @@
 -   Added some more test and changed the way test are called/handled.
 -   A number of minor bugs have been fixed.
 
-## Version 0.2.1 (February 2018)
+# Version 0.2.1 (February 2018)
 
 -   Update functions to compile features allowing for variable length of atoms objects.
 -   Added some tutorials for hierarchy cross-validation and prediction on organic molecules.
 
-## Version 0.2.0 (January 2018)
+# Version 0.2.0 (January 2018)
 
 -   Gradients added to hyperparameter optimization.
 -   More features added to the adsorbate fingerprint generator.
@@ -67,7 +94,7 @@
 -   Added Dockerfile and appropriate documentation in the README and CONTRIBUTING guidelines.
 -   A number of minor bugs have been fixed.
 
-## Version 0.1.0 (December 2017)
+# Version 0.1.0 (December 2017)
 
 -   The first stable version of the code base!
 -   For those that used the precious development version, there are many big changes in the way the code is structured. Most scripts will need to be rewritten.
