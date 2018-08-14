@@ -24,14 +24,15 @@ class LearningCurve(object):
         """
         self.nprocs = nprocs
 
-    def run(self, predict, train, target, test, test_target,
+    def run(self, model, train, target, test, test_target,
             step=1, min_data=2):
-        """Evaluate custom metrics versus training data size.
+        """Evaluate a model versus training data size.
 
         Parameters
         ----------
-        predict : object
-            A function that will make the predictions. predict should accept
+        model : object
+            A function that will train or load a regression model or classifier
+            and make predictions for testing. model should accept
             the parameters:
 
                 train_features : array
@@ -39,7 +40,7 @@ class LearningCurve(object):
                 train_targets : list
                 test_targets : list
 
-            predict should return either a float or a list of floats. The float
+            model should return either a float or a list of floats. The float
             or the first value of the list will be used as the fitness score.
         train : array
             An n, d array of training examples.
@@ -57,7 +58,7 @@ class LearningCurve(object):
         Returns
         -------
         output : array
-            Each row is the output from the predict object.
+            Each row is the output from the model object.
         """
         n, d = np.shape(train)
         # Get total number of iterations
@@ -70,7 +71,7 @@ class LearningCurve(object):
             tasks = np.arange(total)
             args = (
                 (x, step, train, test, target,
-                 test_target, predict) for x in tasks)
+                 test_target, model) for x in tasks)
             for r in tqdm(pool.imap_unordered(
                     _single_test, args), total=total,
                     desc='nested              ', leave=False):
@@ -84,7 +85,7 @@ class LearningCurve(object):
                     total,
                     desc='nested              ', leave=False):
                 args = (x, step, train, test,
-                        target, test_target, predict)
+                        target, test_target, model)
                 r = _single_test(args)
                 output.append(r)
         return output
@@ -264,7 +265,7 @@ def _single_test(args):
         args[5] : list
             A list of the test target values.
         args[6] : object
-            custom function testing a regression model.
+            custom function for testing a predictive model.
             Must accept 4 parameters, which are args[2:5].
     """
     # Unpack args tuple.
@@ -274,12 +275,12 @@ def _single_test(args):
     test = args[3]
     train_targets = args[4]
     test_targets = args[5]
-    predict = args[6]
+    model = args[6]
 
     # Delete required subset of training examples.
     train = train_features[-n:, :]
     targets = train_targets[-n:]
 
     # Calculate the error or other metrics from the model.
-    result = predict(train, targets, test, test_targets)
+    result = model(train, targets, test, test_targets)
     return result

@@ -281,9 +281,6 @@ class StandardFingerprintGenerator(BaseGenerator):
         between types of elements pairs. We define the bag as a vector, e.g.
         return [Number of C-H connections, # C-C, # C-O, ..., # M-X]
 
-        Loosely inspired by the bag of coulomb potentials by
-        K. Hansen et al., J. Phys. Chem. Lett., 2015, 6 (12), pp 2326–2331.
-
         Parameters
         ----------
         atoms : object

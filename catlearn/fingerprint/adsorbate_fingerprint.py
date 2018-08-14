@@ -495,9 +495,6 @@ class AdsorbateFingerprintGenerator(BaseGenerator):
         """Returns bag of connections, counting only the bonds within the
         adsorbate and the connections between adsorbate and surface.
 
-        Loosely inspired by the bag of coulomb potentials by
-        K. Hansen et al., J. Phys. Chem. Lett., 2015, 6 (12), pp 2326–2331.
-
         Parameters
         ----------
             atoms : object
