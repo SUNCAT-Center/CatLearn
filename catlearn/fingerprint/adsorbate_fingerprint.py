@@ -25,6 +25,7 @@ default_adsorbate_fingerprinters = ['mean_chemisorbed_atoms',
                                     'en_difference_ads',
                                     'en_difference_chemi',
                                     'en_difference_active',
+                                    'count_chemisorbed_fragment',
                                     'generalized_cn',
                                     'coordination_counts',
                                     'bag_atoms_ads',
@@ -366,18 +367,37 @@ class AdsorbateFingerprintGenerator(BaseGenerator):
             try:
                 labels = ['bag_ads_' + chemical_symbols[z] for z in
                           self.atom_types]
-            except TypeError:
-                print(chemical_symbols)
-                print(self.atom_types)
+            except TypeError as error:
+                error.message += '\n Default atom_types require data to be' + \
+                    ' generated before feature labels. Call return_vec first.'
                 raise
             return labels
         else:
             bag = np.zeros(len(self.atom_types))
-
             for atom in atoms.subsets['ads_atoms']:
                 bag[self.atom_types.index(atoms[atom].number)] += 1
 
             return bag
+
+    def count_chemisorbed_fragment(self, atoms=None):
+        """Function that takes an atoms objects and returns a fingerprint
+        vector containing the count of C, O, H, N and also metal atoms,
+        that are neighbors to the binding atom.
+        """
+        if atoms is None:
+            labels = ['bag_chemi_nn_' + chemical_symbols[z] for z in
+                      self.atom_types] + ['boc_site']
+            return labels
+        else:
+            chemi = atoms.subsets['chemisorbed_atoms']
+            cm = np.array(atoms.connectivity)
+            bag = np.zeros(len(self.atom_types))
+            for j, z in enumerate(self.atom_types):
+                bag[j] += np.sum(cm[:, chemi] * np.vstack(atoms.numbers == z))
+
+            boc_site = np.sum(cm[:, chemi][atoms.subsets['site_atoms'], :])
+
+            return list(bag) + [boc_site]
 
     def mean_surf_ligands(self, atoms=None):
         """Function that takes an atoms objects and returns a fingerprint
