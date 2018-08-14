@@ -1,5 +1,6 @@
 from catlearn.optimize.catlearn_minimizer import CatLearnMinimizer
-from catlearn.optimize.functions_calc import Himmelblau
+from catlearn.optimize.functions_calc import Himmelblau, NoiseHimmelblau, \
+GoldsteinPrice, Rosenbrock, MullerBrown
 from ase import Atoms
 from ase.optimize import BFGS
 from ase.io import read
@@ -13,7 +14,7 @@ import numpy as np
 """
 
 # 0. Set calculator.
-ase_calculator = Himmelblau()
+ase_calculator = MullerBrown()
 
 # 1. Set common initial structure.
 common_initial = Atoms('C', positions=[(-1.5, -1.0, 0.0)])
@@ -32,7 +33,7 @@ initial_catlearn = copy.deepcopy(common_initial)
 initial_catlearn.set_calculator(copy.deepcopy(ase_calculator))
 
 catlearn_opt = CatLearnMinimizer(initial_catlearn, filename='results')
-catlearn_opt.run(fmax=0.01, ml_algo='BFGS')
+catlearn_opt.run(fmax=0.01)
 
 # 3. Summary of the results:
 print('\n Summary of the results:\n ------------------------------------')

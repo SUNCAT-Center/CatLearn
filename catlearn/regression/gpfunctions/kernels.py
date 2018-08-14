@@ -113,18 +113,18 @@ def gaussian_xx_gradients(m1, kwidth, k):
         ldist = (invsqkwidth * (m1[:, :] - m1[i, :]))
         big_kgd_i = ((ldist).T * k[i]).T
         big_kgd[:, (size[1] * i):(size[1] + size[1] * i)] = big_kgd_i
-        if size[1] <= 30:  # Broadcasting requires large memory.
-            k_dd = ((I_m - (ldist[:, None, :] * ldist[:, :, None])) *
-                    (k[i, None, None].T)).reshape(-1, size[1])
-            big_kdd[:, size[1] * i:size[1] + size[1] * i] = k_dd
-        elif size[1] > 30:  # Loop when large number of features.
-            for j in range(i, size[0]):
-                k_dd = (I_m - np.outer(ldist[j], ldist[j].T)) * k[i, j]
-                big_kdd[i * size[1]:(i + 1) * size[1],
-                        j * size[1]:(j + 1) * size[1]] = k_dd
-                if j != i:
-                    big_kdd[j * size[1]:(j + 1) * size[1],
-                            i * size[1]:(i + 1) * size[1]] = k_dd.T
+        # if size[1] <= 30:  # Broadcasting requires large memory.
+        #     k_dd = ((I_m - (ldist[:, None, :] * ldist[:, :, None])) *
+        #             (k[i, None, None].T)).reshape(-1, size[1])
+        #     big_kdd[:, size[1] * i:size[1] + size[1] * i] = k_dd
+        # elif size[1] > 30:  # Loop when large number of features.
+        for j in range(i, size[0]):
+            k_dd = (I_m - np.outer(ldist[j], ldist[j].T)) * k[i, j]
+            big_kdd[i * size[1]:(i + 1) * size[1],
+                    j * size[1]:(j + 1) * size[1]] = k_dd
+            if j != i:
+                big_kdd[j * size[1]:(j + 1) * size[1],
+                        i * size[1]:(i + 1) * size[1]] = k_dd.T
 
     return np.block([[k, big_kgd], [np.transpose(big_kgd), big_kdd]])
 

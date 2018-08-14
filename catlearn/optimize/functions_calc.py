@@ -263,8 +263,8 @@ class NoiseHimmelblau(Calculator):
 
         # noise_energy = 10.0 * ((np.sin(x[0]) + np.sin(x[1])))
 
-        forces[0][0] -= 40.0 * np.sin(fx)
-        forces[0][1] -= 20.0 * np.sin(fy)
+        forces[0][0] -= 2.0 * np.sin(fx)
+        forces[0][1] -= 1.0 * np.sin(fy)
 
         self.results['energy'] = 0.05 * energy
         self.results['forces'] = 0.05 * forces

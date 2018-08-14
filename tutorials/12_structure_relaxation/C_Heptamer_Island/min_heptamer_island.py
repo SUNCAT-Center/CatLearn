@@ -33,7 +33,7 @@ initial_catlearn = copy.deepcopy(common_initial)
 initial_catlearn.set_calculator(copy.deepcopy(ase_calculator))
 
 catlearn_opt = CatLearnMinimizer(initial_catlearn, filename='results')
-catlearn_opt.run(fmax=0.01, ml_algo='BFGS')
+catlearn_opt.run(fmax=0.01)
 
 # 3. Summary of the results:
 print('\n Summary of the results:\n ------------------------------------')

@@ -135,25 +135,25 @@ class CatLearnAutoNEB(object):
         # Configure ML calculator.
         if self.ml_calc is None:
             self.kdict = {'k1': {'type': 'gaussian', 'width': 0.5,
-                                 'dimension': 'single',
-                                 'bounds': ((0.05, 0.5), ),
+                                 'dimension': 'features',
+                                 'bounds': ((0.01, 1.0), )*len(
+                                 self.ind_mask_constr),
                                  'scaling': 1.0,
                                  'scaling_bounds': ((0.5, 1.0), )}
                           }
 
             self.ml_calc = GPCalculator(
-                kernel_dict=self.kdict, opt_hyperparam=True, scale_data=False,
+                kernel_dict=self.kdict, opt_hyperparam=False, scale_data=False,
                 scale_optimizer=False, calc_uncertainty=True,
-                algo_opt_hyperparamters='L-BFGS-B',
-                regularization=1e-4, regularization_bounds=(1e-5, 1e-3))
+                regularization=1e-5, regularization_bounds=(1e-6, 1e-3))
 
         is_pos = is_endpoint[-1].get_positions().flatten()
         fs_pos = fs_endpoint[-1].get_positions().flatten()
         self.d_start_end = np.abs(distance.euclidean(is_pos, fs_pos))
 
     def run(self, fmax=0.05, unc_convergence=0.010, max_iter=500,
-            ml_max_iter=1000, ml_algo='BFGS', plot_neb_paths=False,
-            acquisition='acq_1', penalty=4.0,):
+            ml_max_iter=1000, ml_algo='FIRE', plot_neb_paths=False,
+            acquisition='acq_1', penalty=6.0):
 
         """Executing run will start the optimization process.
 
@@ -257,7 +257,7 @@ class CatLearnAutoNEB(object):
                                  fmax=fmax,
                                  prefix='images',
                                  k=0.5,
-                                 maxsteps=[50, 1000],
+                                 maxsteps=[50, ml_max_iter],
                                  interpolate_method=self.interpolation,
                                  optimizer=ml_algo
                                  )
@@ -410,6 +410,16 @@ class CatLearnAutoNEB(object):
                 stationary_point_not_found()
                 if self.feval > 5:
                     break
+
+            #######################################################
+            #######################################################
+            # if len(self.list_targets) >= 20:
+            #     self.ml_calc.__dict__['opt_hyperparam'] = True
+
+            #######################################################
+            #######################################################
+
+
 
         # Print Final convergence:
         print('Number of function evaluations in this run:', self.iter)

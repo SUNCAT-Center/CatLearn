@@ -41,9 +41,9 @@ class CatLearnASE(Calculator):
             # Get predictions.
             predictions = ml_calc.get_predictions(trained_process,
                                                   test_data=test[0])
-            post_mean = predictions['pred_mean'][0][0]
-            unc = predictions['uncertainty_with_reg'][0]
-            acq_val = copy.deepcopy(post_mean) + (kappa * copy.deepcopy(unc))
+            post_mean = np.round(predictions['pred_mean'][0][0],7)
+            unc = np.round(predictions['uncertainty_with_reg'][0], 7)
+            acq_val = copy.deepcopy(post_mean) + (kappa * unc)
             return [acq_val, unc]
 
         Calculator.calculate(self, atoms, properties, system_changes)

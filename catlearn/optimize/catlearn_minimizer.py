@@ -46,19 +46,6 @@ class CatLearnMinimizer(object):
         # Create new file to store warnings and errors:
         open('warnings_and_errors.txt', 'w')
 
-        # Configure ML calculator.
-        if self.ml_calc is None:
-            self.kdict = {'k1': {'type': 'gaussian', 'width': 0.5,
-                                 'dimension': 'single',
-                                 'bounds': ((0.05, 0.5), ),
-                                 'scaling': 1.0,
-                                 'scaling_bounds': ((0.5, 1.0), )}
-                          }
-
-            self.ml_calc = GPCalculator(
-                kernel_dict=self.kdict, opt_hyperparam=True, scale_data=False,
-                scale_optimizer=False, calc_uncertainty=True,
-                regularization=1e-4, regularization_bounds=(1e-5, 1e-3))
 
         self.ase_calc = ase_calc
 
@@ -114,8 +101,24 @@ class CatLearnMinimizer(object):
                 self.ind_mask_constr = create_mask_ase_constraints(
                     self.ase_ini, self.constraints)
 
-    def run(self, fmax=0.05, ml_algo='BFGS', max_iter=500,
-            min_iter=0, ml_max_iter=250, penalty=2.0):
+        # Configure ML calculator.
+        if self.ml_calc is None:
+            self.kdict = {'k1': {'type': 'gaussian', 'width': 0.5,
+                                 'dimension': 'features',
+                                 'bounds': ((0.01, 1.0), )*len(
+                                 self.ind_mask_constr),
+                                 'scaling': 1.0,
+                                 'scaling_bounds': ((0.5, 1.0), )}
+                          }
+
+            self.ml_calc = GPCalculator(
+                kernel_dict=self.kdict, opt_hyperparam=False, scale_data=False,
+                scale_optimizer=False, calc_uncertainty=True,
+                regularization=1e-5, regularization_bounds=(1e-6, 1e-3))
+
+
+    def run(self, fmax=0.05, ml_algo='FIRE', max_iter=500,
+            min_iter=0, ml_max_iter=250, penalty=4.0):
 
         """Executing run will start the optimization process.
 
@@ -244,6 +247,14 @@ class CatLearnMinimizer(object):
             if self.iter > max_iter:
                 print('Not converged. Maximum number of iterations reached.')
                 break
+
+            #######################################################
+            #######################################################
+            # if len(self.list_targets) >= 20:
+            #     self.ml_calc.__dict__['opt_hyperparam'] = True
+            #######################################################
+            #######################################################
+
 
 
 def initialize(self, i_step=1e-3):

@@ -44,7 +44,7 @@ qn.run(fmax=0.01)
 # # Define number of images:
 n_images = 7
 
-# # 2.A. NEB using ASE #########################################################
+# 2.A. NEB using ASE #########################################################
 
 initial_ase = read('initial_opt.traj')
 final_ase = read('final_opt.traj')
@@ -73,10 +73,11 @@ nebtools_ase.plot_band()
 plt.show()
 
 
-neb_catlearn = CatLearnNEB(start='initial_opt.traj',
+neb_catlearn = CatLearnAutoNEB(start='initial_opt.traj',
                            end='final_opt.traj',
                            ase_calc=copy.deepcopy(ase_calculator),
                            n_images=n_images,
-                           interpolation='idpp', restart=False)
+                           restart=False)
 
-neb_catlearn.run(fmax=0.05, plot_neb_paths=True, acquisition='acq_1')
+neb_catlearn.run(fmax=0.05, plot_neb_paths=True, acquisition='acq_1',
+                 )
