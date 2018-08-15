@@ -1,3 +1,5 @@
+# @ Version 0.9.8
+
 import numpy as np
 from catlearn.optimize.warnings import *
 from catlearn.optimize.io import ase_traj_to_catlearn, store_results_neb
@@ -467,7 +469,7 @@ class CatLearnNEB(object):
 
             #######################################################
             #######################################################
-            # if len(self.list_targets) >= 20:
+            # if max_abs_forces <= 2.0 * fmax:
             #     self.ml_calc.__dict__['opt_hyperparam'] = True
             #######################################################
             #######################################################

@@ -1,3 +1,5 @@
+# @ Version 0.9.8
+
 import numpy as np
 from catlearn.optimize.warnings import *
 from catlearn.optimize.ml_calculator import GPCalculator, train_ml_process
@@ -118,7 +120,7 @@ class CatLearnMinimizer(object):
 
 
     def run(self, fmax=0.05, ml_algo='FIRE', max_iter=500,
-            min_iter=0, ml_max_iter=250, penalty=4.0):
+            min_iter=0, ml_max_iter=250, penalty=2.0):
 
         """Executing run will start the optimization process.
 
@@ -250,11 +252,10 @@ class CatLearnMinimizer(object):
 
             #######################################################
             #######################################################
-            # if len(self.list_targets) >= 20:
+            # if max_abs_forces <= 2.0 * fmax:
             #     self.ml_calc.__dict__['opt_hyperparam'] = True
             #######################################################
             #######################################################
-
 
 
 def initialize(self, i_step=1e-3):
