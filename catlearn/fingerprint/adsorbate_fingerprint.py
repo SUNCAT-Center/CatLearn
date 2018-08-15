@@ -82,7 +82,7 @@ class AdsorbateFingerprintGenerator(BaseGenerator):
 
         Parameters
         ----------
-            atoms : object
+        atoms : object
         """
         labels = make_labels(self.slab_params, '', '_term')
         labels.append('ground_state_magmom_term')
@@ -110,7 +110,7 @@ class AdsorbateFingerprintGenerator(BaseGenerator):
 
         Parameters
         ----------
-            atoms : object
+        atoms : object
         """
         labels = make_labels(self.slab_params, '', '_bulk')
         labels.append('ground_state_magmom_bulk')
@@ -170,7 +170,7 @@ class AdsorbateFingerprintGenerator(BaseGenerator):
 
         Parameters
         ----------
-            atoms : object
+        atoms : object
         """
         labels = make_labels(self.slab_params, '', '_site_av')
         labels.append('ground_state_magmom_site_av')
@@ -191,7 +191,7 @@ class AdsorbateFingerprintGenerator(BaseGenerator):
 
         Parameters
         ----------
-            atoms : object
+        atoms : object
         """
         labels = make_labels(self.slab_params, '', '_site_min')
         labels.append('ground_state_magmom_site_min')
@@ -212,7 +212,7 @@ class AdsorbateFingerprintGenerator(BaseGenerator):
 
         Parameters
         ----------
-            atoms : object
+        atoms : object
         """
         labels = make_labels(self.slab_params, '', '_site_max')
         labels.append('ground_state_magmom_site_max')
@@ -233,7 +233,7 @@ class AdsorbateFingerprintGenerator(BaseGenerator):
 
         Parameters
         ----------
-            atoms : object
+        atoms : object
         """
         labels = make_labels(self.slab_params, '', '_site_med')
         labels.append('ground_state_magmom_site_med')
@@ -274,10 +274,10 @@ class AdsorbateFingerprintGenerator(BaseGenerator):
 
         Parameters
         ----------
-            atoms : object
+        atoms : object
         """
         if atoms is None:
-            return ['cn_site', 'gcn_site', 'cn_ads1', 'gcn_ads1']
+            return ['av_cn_site', 'cn_site', 'gcn_site', 'cn_ads1', 'gcn_ads1']
         site = atoms.subsets['site_atoms']
 
         if len(site) == 1:
@@ -299,11 +299,14 @@ class AdsorbateFingerprintGenerator(BaseGenerator):
 
         site_neighbors = list(np.unique(atoms.subsets['ligand_atoms']))
 
+        # Site coordination number.
+        cn_site = len(site_neighbors)
+
         # Average coordination number of the site.
-        cn_site = 0.
+        av_cn_site = 0.
         for j, atom in enumerate(site):
-            cn_site += np.sum(cm[atom, :][slab])
-        cn_site /= len(site)
+            av_cn_site += np.sum(cm[atom, :][slab])
+        av_cn_site /= len(site)
 
         # Generalized coordination number.
         gcn_site = 0.
@@ -323,9 +326,9 @@ class AdsorbateFingerprintGenerator(BaseGenerator):
             for j, btom in enumerate(row):
                 if btom > 0:
                     cn = len([k for k in cm[btom, :] if k > 0])
-                    gcn_chemi += btom * cn / cn_max
+                    gcn_chemi += btom * cn / 12
 
-        return [cn_site, gcn_site,
+        return [av_cn_site, cn_site, gcn_site,
                 cn_chemi / len(chemi), gcn_chemi / len(chemi)]
 
     def coordination_counts(self, atoms):
@@ -335,7 +338,7 @@ class AdsorbateFingerprintGenerator(BaseGenerator):
 
         Parameters
         ----------
-            atoms : object
+        atoms : object
         """
         labels = ['count_' + str(j) + 'nn_site' for j in range(3, 31)]
         if atoms is None:
@@ -361,7 +364,7 @@ class AdsorbateFingerprintGenerator(BaseGenerator):
 
         Parameters
         ----------
-            atoms : object
+        atoms : object
         """
         if atoms is None:
             try:
@@ -383,10 +386,14 @@ class AdsorbateFingerprintGenerator(BaseGenerator):
         """Function that takes an atoms objects and returns a fingerprint
         vector containing the count of C, O, H, N and also metal atoms,
         that are neighbors to the binding atom.
+
+        Parameters
+        ----------
+        atoms : object
         """
         if atoms is None:
             labels = ['bag_chemi_nn_' + chemical_symbols[z] for z in
-                      self.atom_types] + ['boc_site']
+                      self.atom_types] + ['boc_site', 'n_site']
             return labels
         else:
             chemi = atoms.subsets['chemisorbed_atoms']
@@ -396,8 +403,55 @@ class AdsorbateFingerprintGenerator(BaseGenerator):
                 bag[j] += np.sum(cm[:, chemi] * np.vstack(atoms.numbers == z))
 
             boc_site = np.sum(cm[:, chemi][atoms.subsets['site_atoms'], :])
+            site = len(atoms.subsets['site_atoms'])
 
-            return list(bag) + [boc_site]
+            return list(bag) + [boc_site, site]
+
+    def count_ads_bonds(self, atoms=None):
+        """Function that takes an atoms object and returns a fingerprint
+        vector with the number of C-H bonds and C-C bonds in the adsorbate.
+        The adsorbate atoms must be specified in advance in
+        atoms.subsets['ads_atoms']
+         Parameters
+        ----------
+            atoms : object
+        """
+        if atoms is None:
+            return ['nC-C', 'ndouble', 'nC-H', 'nO-H']
+        else:
+            ads_atoms = atoms[atoms.subsets['ads_atoms']]
+            A = atoms.connectivity[:, ads_atoms][ads_atoms, :]
+            Hindex = [a.index for a in ads_atoms if a.symbol == 'H']
+            Cindex = [a.index for a in ads_atoms if a.symbol == 'C']
+            Oindex = [a.index for a in ads_atoms if a.symbol == 'O']
+            nCC = 0
+            nCH = 0
+            nC2 = 0
+            nOH = 0
+            nOdouble = 0
+            nCdouble = 0
+            nCtriple = 0
+            nCquad = 0
+            for o in Oindex:
+                nOH += np.sum(A[Hindex, o])
+                Onn = np.sum(A[:, o])
+                if Onn == 1:
+                    nOdouble += 1
+            for c in Cindex:
+                nCC += np.sum(A[Cindex, c])
+                nCH += np.sum(A[Hindex, c])
+                Cnn = np.sum(A[:, c])
+                if Cnn == 3:
+                    nCdouble += 1
+                elif Cnn == 2:
+                    if nCH > 0:
+                        nCtriple += 1
+                    else:
+                        nCdouble += 2
+                elif Cnn == 1:
+                    nCquad += 1
+                nC2 += 4 - (nCC + nCH)
+            return [nCC, nC2, nCH, nOH]
 
     def mean_surf_ligands(self, atoms=None):
         """Function that takes an atoms objects and returns a fingerprint
@@ -406,7 +460,7 @@ class AdsorbateFingerprintGenerator(BaseGenerator):
 
         Parameters
         ----------
-            atoms : object
+        atoms : object
         """
         labels = ['nn_surf_ligands', 'identnn_surf_ligands']
         labels += make_labels(self.slab_params, '', '_surf_ligands')
@@ -431,7 +485,7 @@ class AdsorbateFingerprintGenerator(BaseGenerator):
 
         Parameters
         ----------
-            atoms : object
+        atoms : object
         """
         ads_params = default_params + ['econf', 'ionenergies']
         labels = make_labels(ads_params, '', '_ads_sum')
@@ -452,7 +506,7 @@ class AdsorbateFingerprintGenerator(BaseGenerator):
 
         Parameters
         ----------
-            atoms : object
+        atoms : object
         """
         ads_params = default_params + ['econf', 'ionenergies']
         labels = make_labels(ads_params, '', '_ads_av')
@@ -473,7 +527,7 @@ class AdsorbateFingerprintGenerator(BaseGenerator):
 
         Parameters
         ----------
-            atoms : object
+        atoms : object
         """
         if atoms is None:
             return ['strain_site', 'strain_term']
@@ -522,7 +576,7 @@ class AdsorbateFingerprintGenerator(BaseGenerator):
 
         Parameters
         ----------
-            atoms : object
+        atoms : object
         """
         # range of element types
         n_elements = len(self.atom_types)
@@ -563,7 +617,7 @@ class AdsorbateFingerprintGenerator(BaseGenerator):
 
         Parameters
         ----------
-            atoms : object
+        atoms : object
         """
         labels = ['dist_' + s + '_ads' for s in electronegativities]
         if atoms is None:
@@ -585,7 +639,7 @@ class AdsorbateFingerprintGenerator(BaseGenerator):
 
         Parameters
         ----------
-            atoms : object
+        atoms : object
         """
         labels = ['dist_' + s + '_chemi' for s in electronegativities]
         if atoms is None:
@@ -610,7 +664,7 @@ class AdsorbateFingerprintGenerator(BaseGenerator):
 
         Parameters
         ----------
-            atoms : object
+        atoms : object
         """
         labels = ['dist_' + s + '_active' for s in electronegativities]
         if atoms is None:
@@ -799,7 +853,7 @@ class AdsorbateFingerprintGenerator(BaseGenerator):
 
         Parameters
         ----------
-            atoms : object
+        atoms : object
         """
         if atoms is None:
             return ['delta_energy']
@@ -841,7 +895,7 @@ class AdsorbateFingerprintGenerator(BaseGenerator):
 
         Parameters
         ----------
-            atoms : object
+        atoms : object
         """
         if atoms is None:
             return ['catapp_name']
@@ -855,7 +909,7 @@ class AdsorbateFingerprintGenerator(BaseGenerator):
 
         Parameters
         ----------
-            atoms : object
+        atoms : object
         """
         if atoms is None:
             return ['id']
@@ -869,7 +923,7 @@ class AdsorbateFingerprintGenerator(BaseGenerator):
 
         Parameters
         ----------
-            atoms : object
+        atoms : object
         """
         if atoms is None:
             return ['time_float']
