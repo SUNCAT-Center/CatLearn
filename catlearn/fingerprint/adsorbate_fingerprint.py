@@ -29,7 +29,8 @@ default_adsorbate_fingerprinters = ['mean_chemisorbed_atoms',
                                     'generalized_cn',
                                     'coordination_counts',
                                     'bag_atoms_ads',
-                                    'bag_connections_ads']
+                                    'bag_connections_ads',
+                                    'bag_connections_chemi']
 
 extra_slab_params = ['atomic_radius',
                      'heat_of_formation',
@@ -571,6 +572,47 @@ class AdsorbateFingerprintGenerator(BaseGenerator):
             return [strain_site, strain_term]
 
     def bag_connections_ads(self, atoms):
+        """Returns bag of connections, counting only the bonds within the
+        adsorbate and the connections between adsorbate and surface.
+
+        Parameters
+        ----------
+        atoms : object
+        """
+        # range of element types
+        n_elements = len(self.atom_types)
+        symbols = np.array([chemical_symbols[z] for z in self.atom_types])
+        rows, cols = np.meshgrid(symbols, symbols)
+        pairs = np.core.defchararray.add(rows, cols)
+        labels = ['boc_' + c for c in pairs[np.triu_indices_from(pairs)]]
+        if atoms is None:
+            return labels
+        else:
+            # empty bag of connection types.
+            boc = np.zeros([n_elements, n_elements])
+
+            natoms = len(atoms)
+            cm = np.array(atoms.connectivity)
+            np.fill_diagonal(cm, 0)
+
+            # Ignore connections with and within the slab.
+            slab = atoms.subsets['slab_atoms']
+            cm[slab, :] = 0
+            cm[:, slab] = 0
+
+            bonds = np.where(np.ravel(np.triu(cm)) > 0)[0]
+            for b in bonds:
+                # Get bonded atomic numbers.
+                z_row, z_col = np.unravel_index(b, [natoms, natoms])
+                bond_index = sorted((atoms.numbers[z_row],
+                                     atoms.numbers[z_col]))
+                bond_type = tuple((self.atom_types.index(bond_index[0]),
+                                   self.atom_types.index(bond_index[1])))
+                # Count bonds in upper triangle.
+                boc[bond_type] += 1
+            return list(boc[np.triu_indices_from(boc)])
+
+    def bag_connections_chemi(self, atoms):
         """Returns bag of connections, counting only the bonds within the
         adsorbate and the connections between adsorbate and surface.
 
