@@ -1,5 +1,7 @@
 """Functions that interface ase with CatLearn."""
 import types
+import warnings
+import numpy as np
 import ase.db
 from catlearn.utilities.neighborlist import ase_connectivity
 from catlearn.fingerprint.periodic_table_data import default_catlearn_radius
@@ -32,7 +34,7 @@ def database_to_list(fname, selection=None):
     return images
 
 
-def images_connectivity(images):
+def images_connectivity(images, check_cn_max=True):
     """Return a list of atoms objects imported from an ase database.
 
     Parameters
@@ -46,6 +48,13 @@ def images_connectivity(images):
         if not hasattr(atoms, 'connectivity'):
             radii = [default_catlearn_radius(z) for z in atoms.numbers]
             atoms.connectivity = ase_connectivity(atoms, radii)
+            if check_cn_max:
+                n_connections = np.sum(atoms.connectivity, axis=0)
+                if max(n_connections) > 12:
+                    msg = 'atom has more than 12 connections.'
+                    if 'id' in atoms.info:
+                        msg += str(atoms.info['id'])
+                    warnings.warn(msg)
     return images
 
 
