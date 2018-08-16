@@ -201,9 +201,28 @@ class CatLearnMinimizer(object):
 
             # Attach CatLearn calculator.
             guess = copy.deepcopy(self.ase_ini)
-            guess.__dict__['_calc'].__dict__['results']['energy'] = \
-                guess.__dict__['_calc'].__dict__['results']['energy'] \
-                - scale_targets
+
+            try:
+                guess.__dict__['_calc'].__dict__['energy_free'] = \
+                    guess.__dict__['_calc'].__dict__['energy_free'] \
+                    - scale_targets
+            except KeyError:
+                pass
+
+            try:
+                guess.__dict__['_calc'].__dict__['energy_zero'] = \
+                    guess.__dict__['_calc'].__dict__['energy_zero'] \
+                    - scale_targets
+            except KeyError:
+                pass
+
+            try:
+                guess.__dict__['_calc'].__dict__['energy'] = \
+                    guess.__dict__['_calc'].__dict__['energy'] \
+                    - scale_targets
+            except KeyError:
+                pass
+
             guess.set_calculator(CatLearnASE(
                                     trained_process=trained_process,
                                     ml_calc=ml_calc,
