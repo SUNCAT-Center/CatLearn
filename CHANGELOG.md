@@ -1,3 +1,8 @@
+# dev
+
+-   Verbosity switched off in GA and Importance when using multiple cpus.
+-   Small fixes in adsorbate fingerprinter.
+
 # Version 0.4.4 (August 2018)
 
 -   Major modifications to adsorbates fingerprinter

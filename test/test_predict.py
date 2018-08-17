@@ -234,6 +234,8 @@ class TestPrediction(unittest.TestCase):
                           test_target=test_targets,
                           get_validation_error=True,
                           get_training_error=True)
+        sigma = gp.predict_uncertainty(test_fp=test_features)
+        self.assertEqual(len(sigma['uncertainty']), len(test_features))
         self.assertEqual(len(pred['prediction']), len(test_features))
         print('Update prediction:',
               pred['validation_error']['rmse_average'])

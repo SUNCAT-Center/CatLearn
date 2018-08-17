@@ -5,7 +5,7 @@ from __future__ import division
 import copy
 import multiprocessing
 import time
-from tqdm import trange, tqdm
+from tqdm import trange
 import numpy as np
 
 from catlearn.cross_validation import k_fold
@@ -87,23 +87,23 @@ class ImportanceElimination(object):
         output = []
         survivors = list(range(total_features))
 
-        if self.verbose:
+        if not self.verbose or self.nprocs > 1:
+            iterator1 = range((total_features - 1) // step)
+        else:
             # The tqdm package is used for tracking progress.
             iterator1 = trange(
                 (total_features - 1) // step, desc='features eliminated ',
                 leave=False)
-        else:
-            iterator1 = range((total_features - 1) // step)
 
         for fnum in iterator1:
             self.result = np.zeros((nsplit, total_features))
             meta = []
 
-            if self.verbose:
+            if not self.verbose or self.nprocs > 1:
+                iterator2 = range(nsplit)
+            else:
                 iterator2 = trange(nsplit, desc='k-folds             ',
                                    leave=False)
-            else:
-                iterator2 = range(nsplit)
 
             for self.index in iterator2:
                 # Sort out training and testing data.
@@ -193,9 +193,7 @@ class ImportanceElimination(object):
             (x, train_features, test_features, train_targets,
              test_targets, predict, self.transform, test_predict
              ) for x in np.arange(d))
-        for r in tqdm(pool.imap_unordered(
-                _predictor, args), total=d,
-                desc='nested              ', leave=False):
+        for r in pool.imap_unordered(_predictor, args):
             self.result[self.index][r[0]] = r[1]
             if len(r) > 2:
                 meta_k.append(r[2])

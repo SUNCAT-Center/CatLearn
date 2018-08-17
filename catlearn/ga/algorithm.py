@@ -3,7 +3,7 @@ import numpy as np
 import random
 import warnings
 import copy
-from tqdm import trange, tqdm
+from tqdm import trange
 import multiprocessing
 from catlearn.cross_validation import k_fold
 from .initialize import initialize_population
@@ -291,9 +291,7 @@ class GeneticAlgorithm(object):
              self.nsplit,
              ) for x in np.arange(d))
         pool = multiprocessing.Pool(self.nprocs)
-        for r in tqdm(pool.imap_unordered(
-                _cross_validate, args), total=d,
-                desc='nested              ', leave=False):
+        for r in pool.imap_unordered(_cross_validate, args):
             fit[r[0]] = r[1]
 
         # Return fitness in original order.
