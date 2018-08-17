@@ -34,7 +34,7 @@ def database_to_list(fname, selection=None):
     return images
 
 
-def images_connectivity(images, check_cn_max=True):
+def images_connectivity(images, check_cn_max=False):
     """Return a list of atoms objects imported from an ase database.
 
     Parameters
