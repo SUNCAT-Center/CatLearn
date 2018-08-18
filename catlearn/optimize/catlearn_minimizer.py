@@ -58,7 +58,7 @@ class CatLearnMinimizer(object):
             self.ml_calc = GPCalculator(
                 kernel_dict=self.kdict, opt_hyperparam=True, scale_data=False,
                 scale_optimizer=False, calc_uncertainty=True,
-                regularization=1e-4, regularization_bounds=(1e-5, 1e-3))
+                regularization=1e-5, regularization_bounds=(1e-5, 1e-3))
 
         self.ase_calc = ase_calc
 
