@@ -17,6 +17,16 @@ from catlearn.fingerprint.setup import FeatureGenerator
 wkdir = os.getcwd()
 
 
+class TestEnergyLandscape(object):
+    def __init__(self):
+        self.formation_energies = {}
+        self.dbid = {}
+        self.std = {}
+
+    def _get_adsorbate_fields(self, d):
+        return ['test'] * 7
+
+
 class TestAPI(unittest.TestCase):
     """Test out the ASE api."""
 
@@ -61,11 +71,13 @@ class TestAPI(unittest.TestCase):
     def test_catmap_api(self):
         fname = 'data/ads_example.db'
         database_ids = [1, 2]
-        prediction = [0., 0.]
-        uncertainty = [1., 1.]
+        prediction = [0.1, 0.2]
+        uncertainty = [0.2, 0.1]
+        energy_landscape = TestEnergyLandscape()
         energy_landscape = catmap_energy_landscape(fname, database_ids,
-                                                   prediction, uncertainty)
-        energy_landscape.make_input_file('catmap_energy_test.txt')
+                                                   prediction,
+                                                   uncertainty,
+                                                   catmap=energy_landscape)
 
 
 if __name__ == '__main__':
