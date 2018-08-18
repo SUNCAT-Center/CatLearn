@@ -3,7 +3,7 @@ import numpy as np
 import random
 import warnings
 import copy
-from tqdm import trange, tqdm
+from tqdm import trange
 import multiprocessing
 from catlearn.cross_validation import k_fold
 from .initialize import initialize_population
@@ -122,7 +122,7 @@ class GeneticAlgorithm(object):
         fitness : list
             The fitness for the current population.
         """
-        self.fitness = self._get_fitness(self.population)
+        self.fitness = self._serial_iterator(self.population)
         if verbose:
             self._print_data()
 
@@ -136,7 +136,7 @@ class GeneticAlgorithm(object):
             offspring_list = self._new_generation()
 
             # Keep track of fitness for new candidates.
-            new_fit = self._get_fitness(offspring_list)
+            new_fit = self._serial_iterator(offspring_list)
             if new_fit is None:
                 break
 
@@ -237,7 +237,7 @@ class GeneticAlgorithm(object):
 
         return None
 
-    def _get_fitness(self, param_list):
+    def _serial_iterator(self, param_list):
         """Function wrapper to calculate the fitness.
 
         Parameters
@@ -264,12 +264,12 @@ class GeneticAlgorithm(object):
                         self.fit_func,
                         self.nsplit)
                 calc_fit = _cross_validate(args)[1]
-                fit[index] = calc_fit / float(self.nsplit)
+                fit[index] = calc_fit
         else:
             fit = self._parallel_iterator(param_list)
 
         if self.pareto:
-            fit = self._pareto_trainsform(fit)
+            fit = self._pareto_transform(fit)
 
         return np.reshape(fit, (len(fit),))
 
@@ -291,16 +291,14 @@ class GeneticAlgorithm(object):
              self.nsplit,
              ) for x in np.arange(d))
         pool = multiprocessing.Pool(self.nprocs)
-        for r in tqdm(pool.imap_unordered(
-                _cross_validate, args), total=d,
-                desc='nested              ', leave=False):
-            fit[r[0]] = r[1] / float(self.nsplit)
+        for r in pool.imap_unordered(_cross_validate, args):
+            fit[r[0]] = r[1]
 
         # Return fitness in original order.
         fit_reordered = fit[np.argsort(i), :]
         return fit_reordered
 
-    def _pareto_trainsform(self, fitness):
+    def _pareto_transform(self, fitness):
         """Function to transform a variable with fitness to a pareto fitness.
 
         Parameters
@@ -401,7 +399,9 @@ def _cross_validate(args):
         try:
             score = fit_func(train_features, train_targets,
                              test_features, test_targets)
-            if len(score) != fitness_parameters:
+            if isinstance(score, float) and fitness_parameters != 1:
+                raise AssertionError("len(fit_func) != fitness_parameters")
+            elif isinstance(score, list) and len(score) != fitness_parameters:
                 raise AssertionError("len(fit_func) != fitness_parameters")
             calc_fit += np.array(score)
         except np.linalg.linalg.LinAlgError:
@@ -410,4 +410,4 @@ def _cross_validate(args):
                 [float('-inf')] * fitness_parameters)
             msg = 'The fitness function is failing. Returning -inf.'
             warnings.warn(msg)
-    return index, calc_fit
+    return index, calc_fit / nsplit

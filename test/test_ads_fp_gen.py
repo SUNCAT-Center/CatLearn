@@ -9,10 +9,10 @@ import unittest
 from ase.build import fcc111, add_adsorbate
 from ase.data import atomic_numbers
 from ase.constraints import FixAtoms
-from catlearn.api.ase_atoms_api import database_to_list
+from catlearn.api.ase_atoms_api import database_to_list, images_connectivity
 from catlearn.fingerprint.adsorbate_prep import (autogen_info,
                                                  check_reconstructions,
-                                                 images_connectivity)
+                                                 connectivity2ads_index)
 from catlearn.fingerprint.periodic_table_data import (get_radius,
                                                       default_catlearn_radius)
 from catlearn.fingerprint.setup import FeatureGenerator, default_fingerprinters
@@ -23,7 +23,7 @@ wkdir = os.getcwd()
 class TestAdsorbateFeatures(unittest.TestCase):
     """Test out the adsorbate feature generation."""
 
-    def setup_atoms(self):
+    def setup_metals(self):
         """Get the atoms objects."""
         adsorbates = ['H', 'O', 'C', 'N', 'S', 'Cl', 'P', 'F']
         symbols = ['Ag', 'Au', 'Cu', 'Pt', 'Pd', 'Ir', 'Rh', 'Ni', 'Co']
@@ -42,11 +42,14 @@ class TestAdsorbateFeatures(unittest.TestCase):
 
     def test_tags(self):
         """Test the feature generation."""
-        images = self.setup_atoms()
+        images = self.setup_metals()
         images = autogen_info(images)
         print(str(len(images)) + ' training examples.')
         gen = FeatureGenerator(nprocs=1)
         train_fpv = default_fingerprinters(gen, 'adsorbates')
+        train_fpv += [gen.formal_charges,
+                      gen.ads_av,
+                      gen.ads_sum]
         matrix = gen.return_vec(images, train_fpv)
         labels = gen.return_names(train_fpv)
         print(np.shape(matrix), type(matrix))
@@ -57,7 +60,7 @@ class TestAdsorbateFeatures(unittest.TestCase):
 
     def test_constrained_ads(self):
         """Test the feature generation."""
-        images = self.setup_atoms()
+        images = self.setup_metals()
         [atoms.set_tags(np.zeros(len(atoms))) for atoms in images]
         for atoms in images:
             c_atoms = [a.index for a in atoms if
@@ -83,10 +86,13 @@ class TestAdsorbateFeatures(unittest.TestCase):
         print(str(len(images)) + ' training examples.')
         gen = FeatureGenerator(nprocs=1)
         train_fpv = default_fingerprinters(gen, 'adsorbates')
+        # Test db specific functions.
         train_fpv += [gen.db_size,
                       gen.ctime,
                       gen.dbid,
                       gen.delta_energy]
+        # Old CatApp AxBy fingerprints.
+        train_fpv += [gen.catapp_AB]
         matrix = gen.return_vec(images, train_fpv)
         labels = gen.return_names(train_fpv)
         print(np.shape(matrix), type(matrix))
@@ -96,7 +102,7 @@ class TestAdsorbateFeatures(unittest.TestCase):
         self.assertTrue(len(labels) == np.shape(matrix)[1])
 
     def test_recontruction(self):
-        images = self.setup_atoms()
+        images = database_to_list('data/ads_example.db')
         slabs = []
         for atoms in images:
             slab = atoms.copy()
@@ -106,7 +112,9 @@ class TestAdsorbateFeatures(unittest.TestCase):
         slabs = images_connectivity(slabs)
         image_pairs = zip(images, slabs)
         reconstructed = check_reconstructions(image_pairs)
-
+        for i in range(len(images)):
+            species = images[i].info['key_value_pairs']['species']
+            connectivity2ads_index(images[i], species)
         self.assertTrue(len(reconstructed) == 0)
 
 

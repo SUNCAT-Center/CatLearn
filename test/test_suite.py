@@ -7,6 +7,7 @@ from test_1_feature_generation import TestFeatureGeneration
 from test_api import TestAPI
 from test_feature_base import TestBaseGenerator
 from test_ads_fp_gen import TestAdsorbateFeatures
+from test_chalcogenides import TestChalcogenides
 from test_bulk_fp_gen import TestBulkFeatures
 from test_voronoi import TestVoronoiFeatures
 from test_neighborlist import TestNeighborList
@@ -20,6 +21,7 @@ from test_validation import TestValidation
 from test_learning_curve import TestCurve
 from test_io import TestIO
 from test_ga import TestGeneticAlgorithm
+from test_autocorrelation import TestAutoCorrelation
 
 from test_functions import ConfigTestCase
 
@@ -53,6 +55,7 @@ if __name__ == '__main__':
         TestAPI,
         TestBaseGenerator,
         TestAdsorbateFeatures,
+        TestChalcogenides,
         TestBulkFeatures,
         TestVoronoiFeatures,
         TestNeighborList,
@@ -67,7 +70,8 @@ if __name__ == '__main__':
         TestCurve,
         TestIO,
         TestGeneticAlgorithm,
-        ConfigTestCase
+        ConfigTestCase,
+        TestAutoCorrelation
     ])
 
     # Clean everything up.

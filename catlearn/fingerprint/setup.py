@@ -9,6 +9,8 @@ import multiprocessing
 from tqdm import tqdm
 from .adsorbate_fingerprint import (AdsorbateFingerprintGenerator,
                                     default_adsorbate_fingerprinters)
+from .convoluted_fingerprint import (ConvolutedFingerprintGenerator,
+                                     default_convoluted_fingerprinters)
 from .particle_fingerprint import (ParticleFingerprintGenerator,
                                    default_particle_fingerprinters)
 from .standard_fingerprint import (StandardFingerprintGenerator,
@@ -16,12 +18,16 @@ from .standard_fingerprint import (StandardFingerprintGenerator,
 from .graph_fingerprint import GraphFingerprintGenerator
 from .bulk_fingerprint import (BulkFingerprintGenerator,
                                default_bulk_fingerprinters)
+from .chalcogenide_fingerprint import (ChalcogenideFingerprintGenerator,
+                                       default_chalcogenide_fingerprinters)
 
 
 default_sets = {'bulk': default_bulk_fingerprinters,
                 'fragment': (default_molecule_fingerprinters +
                              default_particle_fingerprinters),
-                'adsorbates': default_adsorbate_fingerprinters}
+                'adsorbates': (default_adsorbate_fingerprinters +
+                               default_convoluted_fingerprinters),
+                'chalcogenides': default_chalcogenide_fingerprinters}
 
 
 def default_fingerprinters(generator, data_type):
@@ -39,7 +45,7 @@ def default_fingerprinters(generator, data_type):
     vec_name : list of / single vec class(es)
         List of fingerprinting classes.
     """
-    allowed = ['bulk', 'adsorbates', 'fragment']
+    allowed = list(default_sets.keys())
     if data_type not in allowed:
         msg = "data type must be " + " or ".join(allowed)
         msg += ". 'fragment' is for anything without periodic boundary cond."
@@ -50,7 +56,8 @@ def default_fingerprinters(generator, data_type):
 class FeatureGenerator(
         AdsorbateFingerprintGenerator, ParticleFingerprintGenerator,
         StandardFingerprintGenerator, GraphFingerprintGenerator,
-        BulkFingerprintGenerator):
+        BulkFingerprintGenerator, ConvolutedFingerprintGenerator,
+        ChalcogenideFingerprintGenerator):
     """Feature generator class.
 
     It is sometimes necessary to normalize the length of feature vectors when
@@ -256,7 +263,7 @@ class FeatureGenerator(
         self.atom_types = atom_types
 
     def _get_atom_length(self, train_candidates, test_candidates=None):
-        """Function to get all potential atomic types in data.
+        """Function to get all potential system sizes in data.
 
         Parameters
         ----------
@@ -268,7 +275,7 @@ class FeatureGenerator(
         Returns
         -------
         atom_types : list
-            Full list of atomic numbers in data.
+            Full list of system sizes in data.
         """
         train_candidates = list(train_candidates)
         if test_candidates is not None:

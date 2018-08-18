@@ -1,8 +1,10 @@
 *.pyc
+*.pyc.*
 *.pickle
-Pipfile.lock
 
 docs/_*
 
 .idea/
 .ipynb_checkpoints/
+
+vec_store.sqlite
