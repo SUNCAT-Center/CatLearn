@@ -18,7 +18,7 @@ ase_calculator = MullerBrown()
 
 # 1. Set common initial structure.
 common_initial = Atoms('C', positions=[(-1.5, -1.0, 0.0)])
-common_initial.rattle(stdev=0.2, seed=0)
+common_initial.rattle(stdev=0.5, seed=0)
 
 # 2.A. Optimize structure using ASE.
 initial_ase = copy.deepcopy(common_initial)

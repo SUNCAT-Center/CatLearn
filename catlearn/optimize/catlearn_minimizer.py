@@ -114,7 +114,7 @@ class CatLearnMinimizer(object):
             self.ml_calc = GPCalculator(
                 kernel_dict=self.kdict, opt_hyperparam=True, scale_data=False,
                 scale_optimizer=False, calc_uncertainty=True,
-                regularization=1e-5, regularization_bounds=(1e-5, 1e-3))
+                regularization=1e-5, regularization_bounds=(1e-4, 1e-3))
 
     def run(self, fmax=0.05, ml_algo='SciPyFminCG', max_iter=500,
             min_iter=0, ml_max_iter=250, penalty=2.0):
@@ -210,7 +210,7 @@ class CatLearnMinimizer(object):
             # Run ML optimization.
             opt_ml = eval(ml_algo)(guess)
             print('Starting ML NEB optimization...')
-            opt_ml.run(fmax=fmax, steps=ml_max_iter)
+            opt_ml.run(fmax=fmax/2, steps=ml_max_iter)
             print('ML NEB optimized.')
 
             # 3) Evaluate and append interesting point.
@@ -223,6 +223,31 @@ class CatLearnMinimizer(object):
             #                 trained_process=trained_process,
             #                 list_train=self.list_train,
             #                 scale=scale_targets)
+
+            #######################################################
+            #######################################################
+
+            if len(self.list_targets) <= 20:
+               self.ml_calc.__dict__['opt_hyperparam'] = True
+
+            if len(self.list_targets) <= 40:
+                # Configure ML calculator.
+                if self.ml_calc is None:
+                    self.kdict = {'k1': {'type': 'gaussian', 'width': 0.5,
+                                         'dimension': 'features',
+                                         'bounds': ((0.05, 0.5),
+                                         ) * len(self.ind_mask_constr),
+                                         'scaling': 1.0,
+                                         'scaling_bounds': ((0.5, 1.0), )}
+                                  }
+
+                    self.ml_calc = GPCalculator(
+                        kernel_dict=self.kdict, opt_hyperparam=True, scale_data=False,
+                        scale_optimizer=False, calc_uncertainty=True,
+                        regularization=1e-5, regularization_bounds=(1e-4,1e-3))
+            #######################################################
+            #######################################################
+
 
             # Save evaluated image.
             TrajectoryWriter(atoms=self.ase_ini,
