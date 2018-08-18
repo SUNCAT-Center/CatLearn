@@ -1,6 +1,7 @@
 """API for CatMAP."""
 import ase.db
-from catmap.api.ase_data import energy_landscape
+from catmap.api.ase_data import EnergyLandscape
+import json
 
 
 def catmap_energy_landscape(fname, database_ids, prediction,
@@ -28,7 +29,7 @@ def catmap_energy_landscape(fname, database_ids, prediction,
     c = ase.db.connect(fname)
 
     if catmap is None:
-        catmap = energy_landscape()
+        catmap = EnergyLandscape()
         catmap.formation_energies = {}
         catmap.dbid = {}
         catmap.std = {}
@@ -59,3 +60,15 @@ def catmap_energy_landscape(fname, database_ids, prediction,
     catmap.dbid.update(dbids)
 
     return catmap
+
+
+def catmap_pickle(fname):
+    f = open(fname, 'r')
+    catmap_model = json.load(f)
+    return catmap_model
+
+
+def get_rate_control(state, catmap_model):
+    n, species, cat_name, lattice, cell, site = state.split('_')
+    # catmap_model
+    return species

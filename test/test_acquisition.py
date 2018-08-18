@@ -10,11 +10,10 @@ from ase.ga.data import DataConnection
 from catlearn.api.ase_data_setup import get_unique, get_train
 from catlearn.fingerprint.setup import FeatureGenerator
 from catlearn.regression import GaussianProcess
-from catlearn.regression.acquisition_functions import (rank, classify,
-                                                       optimistic_proximity,
-                                                       proximity,
-                                                       probability_density)
-from catlearn.utilities.surrogate_model import SurrogateModel
+from catlearn.surrogate_model.acquisition_functions import (
+    rank, classify, optimistic_proximity, proximity, probability_density)
+from catlearn.surrogate_model.algorithm import SurrogateModel
+
 
 wkdir = os.getcwd()
 
