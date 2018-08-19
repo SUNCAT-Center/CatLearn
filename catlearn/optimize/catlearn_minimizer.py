@@ -14,7 +14,7 @@ from ase.atoms import Atoms
 from catlearn.optimize.convergence import converged, get_fmax
 from catlearn.optimize.catlearn_ase_calc import CatLearnASE
 import copy
-from catlearn.optimize.plots import get_plot_step
+from catlearn.optimize.plots import get_plot_step, get_plot_step_p
 
 
 class CatLearnMinimizer(object):
@@ -112,9 +112,9 @@ class CatLearnMinimizer(object):
                           }
 
             self.ml_calc = GPCalculator(
-                kernel_dict=self.kdict, opt_hyperparam=True, scale_data=False,
+                kernel_dict=self.kdict, opt_hyperparam=False, scale_data=False,
                 scale_optimizer=False, calc_uncertainty=True,
-                regularization=1e-5, regularization_bounds=(1e-4, 1e-3))
+                regularization=1e-4, regularization_bounds=(1e-5, 1e-3))
 
     def run(self, fmax=0.05, ml_algo='SciPyFminCG', max_iter=500,
             min_iter=0, ml_max_iter=250, penalty=2.0):
@@ -219,18 +219,21 @@ class CatLearnMinimizer(object):
             eval_and_append(self, interesting_point)
 
             # get_plot_step(images=guess,
-            #                 interesting_point=interesting_point,
-            #                 trained_process=trained_process,
-            #                 list_train=self.list_train,
-            #                 scale=scale_targets)
+            #               interesting_point=interesting_point,
+            #               trained_process=trained_process,
+            #               list_train=self.list_train,
+            #               scale=scale_targets)
+
+            # get_plot_step_p(structure=guess,
+            #               list_train=self.list_train,
+            #               )
 
             #######################################################
-            #######################################################
 
-            if len(self.list_targets) <= 20:
+            if len(self.list_targets) <= 10:
                self.ml_calc.__dict__['opt_hyperparam'] = True
 
-            if len(self.list_targets) <= 40:
+            if len(self.list_targets) <= 20:
                 # Configure ML calculator.
                 if self.ml_calc is None:
                     self.kdict = {'k1': {'type': 'gaussian', 'width': 0.5,
@@ -244,10 +247,10 @@ class CatLearnMinimizer(object):
                     self.ml_calc = GPCalculator(
                         kernel_dict=self.kdict, opt_hyperparam=True, scale_data=False,
                         scale_optimizer=False, calc_uncertainty=True,
-                        regularization=1e-5, regularization_bounds=(1e-4,1e-3))
-            #######################################################
-            #######################################################
+                        regularization=1e-4, regularization_bounds=(1e-5,
+                                                                    1e-3))
 
+            #########################################################
 
             # Save evaluated image.
             TrajectoryWriter(atoms=self.ase_ini,
