@@ -3,7 +3,8 @@ from ase.calculators.emt import EMT
 from ase.io import read
 from ase.optimize import BFGS
 import copy
-
+from ase.visualize import view
+import numpy as np
 
 """ 
     Toy model minimization of Pt heptamer island on Pt(111).
@@ -18,7 +19,11 @@ ase_calculator = EMT()
 # 1.1. Structures:
 
 common_initial = read('./A_structure/POSCAR')
-# common_initial.rattle(stdev=0.1, seed=0)
+
+for i in common_initial:
+    if i.position[2] > 14.00:
+        i.symbol = 'Au'
+        i.position = i.position + np.random.normal(scale=0.1)
 
 # 2.A. Optimize structure using ASE.
 initial_ase = copy.deepcopy(common_initial)

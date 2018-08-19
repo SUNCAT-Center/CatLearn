@@ -13,7 +13,7 @@ class CatLearnASE(Calculator):
     nolabel = True
 
     def __init__(self, trained_process, ml_calc, index_constraints,
-                 finite_step=1e-5, kappa=0.0, **kwargs):
+                 finite_step=1e-3, kappa=0.0, **kwargs):
 
         Calculator.__init__(self, **kwargs)
 
@@ -42,7 +42,7 @@ class CatLearnASE(Calculator):
             predictions = ml_calc.get_predictions(trained_process,
                                                   test_data=test[0])
             post_mean = predictions['pred_mean'][0][0]
-            unc = predictions['uncertainty_with_reg'][0]
+            unc = predictions['uncertainty'][0]
             acq_val = copy.deepcopy(post_mean) + (kappa * unc)
             return [acq_val, unc]
 

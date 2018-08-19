@@ -137,11 +137,10 @@ class CatLearnAutoNEB(object):
         # Configure ML calculator.
         if self.ml_calc is None:
             self.kdict = {'k1': {'type': 'gaussian', 'width': 0.5,
-                                 'dimension': 'features',
-                                 'bounds': ((0.01, 1.0), )*len(
-                                 self.ind_mask_constr),
+                                 'dimension': 'single',
+                                 'bounds': ((0.05, 0.5), ),
                                  'scaling': 1.0,
-                                 'scaling_bounds': ((0.5, 1.0), )}
+                                 'scaling_bounds': ((1.0, 1.0), )}
                           }
 
             self.ml_calc = GPCalculator(
@@ -415,8 +414,10 @@ class CatLearnAutoNEB(object):
 
             #######################################################
             #######################################################
-            # if max_abs_forces <= 2.0 * fmax:
-            #     self.ml_calc.__dict__['opt_hyperparam'] = True
+            if np.max(self.uncertainty_path[1:-1]) <= unc_convergence:
+               self.ml_calc.__dict__['opt_hyperparam'] = True
+            if np.max(self.uncertainty_path[1:-1]) > unc_convergence:
+               self.ml_calc.__dict__['opt_hyperparam'] = False
             #######################################################
             #######################################################
 

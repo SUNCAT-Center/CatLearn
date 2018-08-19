@@ -145,16 +145,15 @@ class CatLearnNEB(object):
         if self.ml_calc is None:
             self.kdict = {'k1': {'type': 'gaussian', 'width': 0.5,
                                  'dimension': 'single',
-                                 'bounds': ((0.05, 0.5),
-                                 ) ,
+                                 'bounds': ((0.05, 0.5), ),
                                  'scaling': 1.0,
-                                 'scaling_bounds': ((0.5, 1.0), )}
+                                 'scaling_bounds': ((1.0, 1.0), )}
                           }
 
             self.ml_calc = GPCalculator(
                 kernel_dict=self.kdict, opt_hyperparam=False, scale_data=False,
                 scale_optimizer=False, calc_uncertainty=True,
-                regularization=1e-5, regularization_bounds=(1e-4, 1e-3))
+                regularization=1e-5, regularization_bounds=(1e-6, 1e-3))
 
         # Settings for the NEB.
         self.neb_method = neb_method
@@ -470,25 +469,10 @@ class CatLearnNEB(object):
 
             #######################################################
             #######################################################
-
-            if len(self.list_targets) <= 25:
+            if np.max(self.uncertainty_path[1:-1]) <= unc_convergence:
                self.ml_calc.__dict__['opt_hyperparam'] = True
-
-            if len(self.list_targets) <= 50:
-                # Configure ML calculator.
-                if self.ml_calc is None:
-                    self.kdict = {'k1': {'type': 'gaussian', 'width': 0.5,
-                                         'dimension': 'features',
-                                         'bounds': ((0.05, 0.5),
-                                         ) * len(self.ind_mask_constr),
-                                         'scaling': 1.0,
-                                         'scaling_bounds': ((0.5, 1.0), )}
-                                  }
-
-                    self.ml_calc = GPCalculator(
-                        kernel_dict=self.kdict, opt_hyperparam=True, scale_data=False,
-                        scale_optimizer=False, calc_uncertainty=True,
-                        regularization=1e-5, regularization_bounds=(1e-4, 1e-3))
+            if np.max(self.uncertainty_path[1:-1]) > unc_convergence:
+               self.ml_calc.__dict__['opt_hyperparam'] = False
             #######################################################
             #######################################################
 

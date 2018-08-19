@@ -104,19 +104,18 @@ class CatLearnMinimizer(object):
         # Configure ML calculator.
         if self.ml_calc is None:
             self.kdict = {'k1': {'type': 'gaussian', 'width': 0.5,
-                                 'dimension': 'features',
-                                 'bounds': ((0.05, 0.5),
-                                 ) * len(self.ind_mask_constr),
+                                 'dimension': 'single',
+                                 'bounds': ((0.05, 0.5), ),
                                  'scaling': 1.0,
-                                 'scaling_bounds': ((0.5, 1.0), )}
+                                 'scaling_bounds': ((1.0, 1.0), )}
                           }
 
             self.ml_calc = GPCalculator(
                 kernel_dict=self.kdict, opt_hyperparam=False, scale_data=False,
                 scale_optimizer=False, calc_uncertainty=True,
-                regularization=1e-4, regularization_bounds=(1e-5, 1e-3))
+                regularization=1e-5, regularization_bounds=(1e-6, 1e-3))
 
-    def run(self, fmax=0.05, ml_algo='SciPyFminCG', max_iter=500,
+    def run(self, fmax=0.05, ml_algo='BFGS', max_iter=500,
             min_iter=0, ml_max_iter=250, penalty=2.0):
 
         """Executing run will start the optimization process.
@@ -127,14 +126,15 @@ class CatLearnMinimizer(object):
             Convergence criteria (in eV/Angs).
         ml_algo : string
             Algorithm for the surrogate model. Implemented are:
-            'BFGS', 'LBFGS', 'MDMin' and 'FIRE' as implemented in ASE.
+            'BFGS', 'LBFGS', 'MDMin', 'FIRE', 'ScipyFminPowell',
+            'SciPyFminBFGS', and 'SciPyFminCG' as implemented in ASE.
             See https://wiki.fysik.dtu.dk/ase/ase/optimize.html
         max_iter : int
             Maximum number of iterations in the surrogate model.
         min_iter : int
             Minimum number of iteration in the surrogate model.
         ml_max_iter : int
-            Maximum number of ML NEB iterations.
+            Maximum number of ML iterations.
         penalty : float
             Number of times the predicted energy is penalized w.r.t the
             uncertainty during the ML optimization.
@@ -160,7 +160,14 @@ class CatLearnMinimizer(object):
         converged(self)
         print_info(self)
 
-        initialize(self, i_step=ml_algo)
+        list_min_forces = ['BFGS', 'ScipyFminBFGS', 'SciPyFminCG', 'LBFGS',
+                           'FIRE', 'MDMin']
+
+        if ml_algo in list_min_forces:
+            initialize(self, i_step=ml_algo)
+        if ml_algo not in list_min_forces:
+            initialize(self, i_step='BFGS')
+
         converged(self)
         print_info(self)
 
@@ -209,9 +216,12 @@ class CatLearnMinimizer(object):
 
             # Run ML optimization.
             opt_ml = eval(ml_algo)(guess)
-            print('Starting ML NEB optimization...')
-            opt_ml.run(fmax=fmax/2, steps=ml_max_iter)
-            print('ML NEB optimized.')
+            print('Starting ML optimization...')
+            if ml_algo in list_min_forces:
+                opt_ml.run(fmax=fmax/2, steps=ml_max_iter)
+            if ml_algo not in list_min_forces:
+                opt_ml.run(steps=ml_max_iter)
+            print('ML optimized.')
 
             # 3) Evaluate and append interesting point.
 
@@ -230,25 +240,16 @@ class CatLearnMinimizer(object):
 
             #######################################################
 
-            if len(self.list_targets) <= 10:
-               self.ml_calc.__dict__['opt_hyperparam'] = True
+            # Convergence results:
+            max_forces = get_fmax(-np.array([self.list_gradients[-1]]),
+                                  self.num_atoms)
+            max_abs_forces = np.max(np.abs(max_forces))
 
-            if len(self.list_targets) <= 20:
-                # Configure ML calculator.
-                if self.ml_calc is None:
-                    self.kdict = {'k1': {'type': 'gaussian', 'width': 0.5,
-                                         'dimension': 'features',
-                                         'bounds': ((0.05, 0.5),
-                                         ) * len(self.ind_mask_constr),
-                                         'scaling': 1.0,
-                                         'scaling_bounds': ((0.5, 1.0), )}
-                                  }
 
-                    self.ml_calc = GPCalculator(
-                        kernel_dict=self.kdict, opt_hyperparam=True, scale_data=False,
-                        scale_optimizer=False, calc_uncertainty=True,
-                        regularization=1e-4, regularization_bounds=(1e-5,
-                                                                    1e-3))
+            #########################################################
+
+            if max_abs_forces <= 0.10:
+                self.ml_calc.__dict__['opt_hyperparam'] = True
 
             #########################################################
 
@@ -257,10 +258,7 @@ class CatLearnMinimizer(object):
                              filename='./' + str(self.filename) +
                              '_catlearn.traj', mode='a').write()
 
-            # Printing:
-            max_forces = get_fmax(-np.array([self.list_gradients[-1]]),
-                                  self.num_atoms)
-            max_abs_forces = np.max(np.abs(max_forces))
+
             print('Number of iterations:', self.iter)
             print('Max. force of the last image evaluated (eV/Angstrom):',
                   max_abs_forces)
@@ -296,7 +294,7 @@ def initialize(self, i_step=1e-3):
                              self.list_gradients[-1]]
 
         if isinstance(i_step, str):
-            eval(i_step)(self.ase_ini).run(fmax=0.05, steps=1)
+            eval(i_step)(self.ase_ini).run(fmax=1e-5, steps=1)
             ini_train = [self.ase_ini.get_positions().flatten()]
 
         self.list_train = np.append(self.list_train, ini_train, axis=0)
