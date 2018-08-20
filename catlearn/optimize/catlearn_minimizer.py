@@ -1,3 +1,5 @@
+# @Version u1.0.3
+
 import numpy as np
 from catlearn.optimize.warnings import *
 from catlearn.optimize.ml_calculator import GPCalculator, train_ml_process
@@ -13,7 +15,6 @@ from catlearn.optimize.get_real_values import eval_and_append, \
 from ase.atoms import Atoms
 from catlearn.optimize.convergence import converged, get_fmax
 from catlearn.optimize.catlearn_ase_calc import CatLearnASE
-import copy
 from catlearn.optimize.plots import get_plot_step
 
 
@@ -27,15 +28,15 @@ class CatLearnMinimizer(object):
         ----------
         x0 : Atoms object or trajectory file in ASE format.
             Initial guess.
-        ml_calc : Machine Learning calculator object.
-            Machine Learning calculator (e.g. Gaussian Processes).
         ase_calc: ASE calculator object.
             When using ASE the user must pass an ASE calculator.
+        ml_calc : Machine Learning calculator object.
+            Machine Learning calculator (e.g. Gaussian Processes).
         filename: string
             Filename to store the output.
         """
 
-        # General variables:
+        # General variables.
         self.filename = filename
         self.ml_calc = ml_calc
         self.iter = 0
@@ -44,7 +45,7 @@ class CatLearnMinimizer(object):
         self.min_iter = 0
         self.jac = True
 
-        # Create new file to store warnings and errors:
+        # Create new file to store warnings and errors.
         open('warnings_and_errors.txt', 'w')
 
         # Configure ML calculator.
@@ -123,23 +124,21 @@ class CatLearnMinimizer(object):
         Parameters
         ----------
         fmax : float
-            Convergence criteria (in eV/Angs).
+            Convergence criteria (in eV/Angstrom).
         ml_algo : string
             Algorithm for the surrogate model. Implemented are:
             'BFGS', 'LBFGS', 'SciPyFminCG', 'SciPyFminBFGS', 'MDMin' and
-            'FIRE' as
-            implemented in
-            ASE.
+            'FIRE' as implemented in ASE.
             See https://wiki.fysik.dtu.dk/ase/ase/optimize.html
         max_iter : int
-            Maximum number of iterations in the surrogate model.
+            Max. number of optimization steps.
         min_iter : int
-            Minimum number of iteration in the surrogate model.
+            Min. number of optimizations steps
         ml_max_iter : int
-            Maximum number of ML iterations.
+            Max. number of iterations of the machine learning surrogate model.
         penalty : float
             Number of times the predicted energy is penalized w.r.t the
-            uncertainty during the ML optimization.
+            uncertainty during the machine learning optimization.
 
         Returns
         -------
@@ -157,7 +156,7 @@ class CatLearnMinimizer(object):
         self.min_iter = min_iter
         max_memory = 50
 
-        # Initialization (evaluate two points):
+        # Initialization (evaluate two points).
         initialize(self)
         converged(self)
         print_info(self)
@@ -174,10 +173,10 @@ class CatLearnMinimizer(object):
                 self.list_targets = self.list_targets[-max_memory:]
                 self.list_gradients = self.list_gradients[-max_memory:]
 
-            # Check scaling:
+            # Update scaling.
             scale_targets = np.max(self.list_targets)
 
-            # 1) Train Machine Learning process:
+            # 1. Train Machine Learning process.
 
             # Check that the user is not feeding redundant information to ML.
             count_unique = np.unique(self.list_train, return_counts=True,
@@ -196,7 +195,7 @@ class CatLearnMinimizer(object):
             ml_calc = process['ml_calc']
             print('ML process trained.')
 
-            # 2) Setup and run optimization.
+            # 2. Setup and run optimization.
 
             # Attach CatLearn calculator.
             if self.iter <= 2:
@@ -210,22 +209,25 @@ class CatLearnMinimizer(object):
                                          ))
             guess.info['iteration'] = self.iter
 
-            # Run ML optimization.
+            # Run optimization of the predicted PES.
             opt_ml = eval(ml_algo)(guess)
             print('Starting ML optimization...')
             opt_ml.run(fmax=fmax, steps=ml_max_iter)
             print('ML optimized.')
 
-            # 3) Evaluate and append interesting point.
+            # 3. Evaluate and append interesting point.
 
             interesting_point = guess.get_positions().flatten()
             eval_and_append(self, interesting_point)
 
+            # Optional. Plots.
             # get_plot_step(images=guess,
             #                 interesting_point=interesting_point,
             #                 trained_process=trained_process,
             #                 list_train=self.list_train,
             #                 scale=scale_targets)
+
+            # 4. Convergence and output.
 
             # Save evaluated image.
             TrajectoryWriter(atoms=self.ase_ini,
@@ -250,11 +252,13 @@ class CatLearnMinimizer(object):
 
 
 def initialize(self, i_step=1e-3):
-    """Evaluates the "real" function for a given initial guess and then it
-    will obtain the function value of a second guessed
-    point originated using CG theory. This function is exclusively
-    called when the optimization is initialized and the user has not
-    provided any trained data.
+    """ The GPR model needs two points to start the ML surrogate model.
+    This function takes care of the two first optimization steps.
+    First, evaluates the "real" function for a given initial guess. Secondly,
+    obtains the function value of a second guessed point originated using the
+    same optimizor used for the optimization of the predicted PES. This
+    function is exclusively called when the optimization is initialized and
+    the user has not provided any trained data.
     """
 
     if len(self.list_targets) == 1:

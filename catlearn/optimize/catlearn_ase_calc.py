@@ -1,3 +1,5 @@
+# @Version u1.0.3
+
 import numpy as np
 from catlearn.optimize.constraints import apply_mask_ase_constraints
 from ase.calculators.calculator import Calculator, all_changes
