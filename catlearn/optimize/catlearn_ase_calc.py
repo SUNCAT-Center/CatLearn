@@ -13,7 +13,7 @@ class CatLearnASE(Calculator):
     nolabel = True
 
     def __init__(self, trained_process, ml_calc, index_constraints,
-                 finite_step=1e-3, kappa=0.0, **kwargs):
+                 finite_step=5e-4, kappa=0.0, **kwargs):
 
         Calculator.__init__(self, **kwargs)
 
