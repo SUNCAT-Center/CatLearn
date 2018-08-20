@@ -57,7 +57,8 @@ class TestPrediction(unittest.TestCase):
         train_features, train_targets, test_features, test_targets = get_data()
 
         # Test prediction routine with linear kernel.
-        kdict = {'k1': {'type': 'linear', 'scaling': 1.},
+        kdict = {'k1': {'type': 'linear', 'scaling': 1.,
+                        'scaling_bounds': ((0., None),)},
                  'c1': {'type': 'constant', 'const': 1.}}
         gp = GaussianProcess(
             train_fp=train_features, train_target=train_targets,
@@ -76,7 +77,10 @@ class TestPrediction(unittest.TestCase):
 
         # Test prediction routine with quadratic kernel.
         kdict = {'k1': {'type': 'quadratic', 'slope': 1., 'degree': 1.,
-                        'scaling': 1.}}
+                        'scaling': 1.,
+                        'bounds': ((1e-5, None),) *
+                        (np.shape(train_features)[1] + 1),
+                        'scaling_bounds': ((0., None),)}}
         gp = GaussianProcess(
             train_fp=train_features, train_target=train_targets,
             kernel_dict=kdict, regularization=1e-3,
@@ -116,7 +120,9 @@ class TestPrediction(unittest.TestCase):
 
         # Test prediction routine with single width parameter.
         kdict = {'k1': {'type': 'gaussian', 'width': 1., 'scaling': 1.,
-                        'dimension': 'single'}}
+                        'dimension': 'single',
+                        'bounds': ((1e-5, None),),
+                        'scaling_bounds': ((0., None),)}}
         gp = GaussianProcess(
             train_fp=train_features, train_target=train_targets,
             kernel_dict=kdict, regularization=1e-3,
@@ -138,7 +144,10 @@ class TestPrediction(unittest.TestCase):
         train_features, train_targets, test_features, test_targets = get_data()
 
         # Test prediction routine with laplacian kernel.
-        kdict = {'k1': {'type': 'laplacian', 'width': 1., 'scaling': 1.}}
+        kdict = {'k1': {'type': 'laplacian', 'width': 1., 'scaling': 1.,
+                        'bounds': ((1e-5, None),) *
+                        np.shape(train_features)[1],
+                        'scaling_bounds': ((0., None),)}}
         gp = GaussianProcess(
             train_fp=train_features, train_target=train_targets,
             kernel_dict=kdict, regularization=1e-3,
@@ -225,6 +234,8 @@ class TestPrediction(unittest.TestCase):
                           test_target=test_targets,
                           get_validation_error=True,
                           get_training_error=True)
+        sigma = gp.predict_uncertainty(test_fp=test_features)
+        self.assertEqual(len(sigma['uncertainty']), len(test_features))
         self.assertEqual(len(pred['prediction']), len(test_features))
         print('Update prediction:',
               pred['validation_error']['rmse_average'])

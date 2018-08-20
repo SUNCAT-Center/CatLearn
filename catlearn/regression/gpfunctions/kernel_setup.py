@@ -73,7 +73,7 @@ def _scaling_setup(kdict_param, bounds, default_bounds):
 def _constant_setup(kdict_param, bounds, N_D, default_bounds):
     """Setup the constant kernel."""
     allowed_keys = ['type', 'operation', 'features', 'dimension', 'const',
-                    'bounds']
+                    'bounds', 'scaling_bounds']
     msg1 = "An undefined key, '"
     msg2 = "', has been provided in a 'constant' type kernel dict."
     for k in kdict_param:
@@ -133,7 +133,7 @@ def _quadratic_setup(kdict_param, bounds, N_D, default_bounds):
     assert 'slope' in kdict_param and 'degree' in kdict_param, msg
 
     allowed_keys = ['type', 'operation', 'features', 'dimension', 'scaling',
-                    'slope', 'degree', 'bounds']
+                    'slope', 'degree', 'bounds', 'scaling_bounds']
     msg1 = "An undefined key, '"
     msg2 = "', has been provided in a 'quadratic' type kernel dict"
     for k in kdict_param:
@@ -156,12 +156,7 @@ def _quadratic_setup(kdict_param, bounds, N_D, default_bounds):
     if 'bounds' in kdict_param:
         bounds += kdict_param['bounds']
     else:
-        bounds += default_bounds * N_D
-
-    if 'bounds' in kdict_param:
-        bounds += kdict_param['bounds']
-    else:
-        bounds += default_bounds
+        bounds += default_bounds * (N_D + 1)
 
     return bounds
 
@@ -172,7 +167,7 @@ def _laplacian_setup(kdict_param, bounds, N_D, default_bounds):
     assert 'width' in kdict_param, msg
 
     allowed_keys = ['type', 'operation', 'features', 'dimension', 'scaling',
-                    'width', 'bounds']
+                    'width', 'bounds', 'scaling_bounds']
     msg1 = "An undefined key, '"
     msg2 = "', has been provided in a 'laplacian' type kernel dict."
     for k in kdict_param:

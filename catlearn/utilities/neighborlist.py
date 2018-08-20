@@ -161,9 +161,6 @@ def ase_connectivity(atoms, cutoffs=None, count_bonds=True):
     conn : array
         An n by n, where n is len(atoms).
     """
-    if hasattr(atoms, 'connectivity'):
-        return atoms.connectivity
-
     if hasattr(atoms, 'neighborlist'):
         nl = atoms.neighborlist
     else:

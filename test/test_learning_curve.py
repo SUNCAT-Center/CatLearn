@@ -4,10 +4,10 @@ import unittest
 import os
 
 from catlearn.cross_validation import Hierarchy
-from catlearn.learning_curve import hierarchy, feature_frequency
+from catlearn.learning_curve import hierarchy, feature_frequency, LearningCurve
 from catlearn.utilities import DescriptorDatabase
 from catlearn.regression import GaussianProcess
-from catlearn.utilities.utilities import LearningCurve
+
 
 wkdir = os.getcwd()
 
@@ -181,10 +181,10 @@ class TestCurve(unittest.TestCase):
         ge = LearningCurve(nprocs=1)
         step = 5
         min_data = 10
-        output = ge.learning_curve(self.prediction,
-                                   train_features, train_targets,
-                                   test_features, test_targets,
-                                   step=step, min_data=min_data)
+        output = ge.run(self.prediction,
+                        train_features, train_targets,
+                        test_features, test_targets,
+                        step=step, min_data=min_data)
         print(np.shape(output))
 
 

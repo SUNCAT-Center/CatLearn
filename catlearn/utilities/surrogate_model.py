@@ -186,7 +186,7 @@ class SurrogateModel(object):
             output.append(score)
         return output
 
-    def acquire(self, unlabeled_data, initial_subset=None, batch_size=1):
+    def acquire(self, unlabeled_data, batch_size=1):
         """Return indices of datapoints to acquire, from a known search space.
 
         Parameters
@@ -201,6 +201,7 @@ class SurrogateModel(object):
         """
         # Do regression.
         model = self.train_model(self.train_data, self.target)
+
         # Make predictions.
         aqcuisition_args, score = self.predict(model, unlabeled_data)
 

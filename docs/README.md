@@ -2,7 +2,7 @@
 
 **This file is not meant to be included in the docs.** Instead it is meant as a guide for how to update and compile the docs.
 
-To stat with it is necessary to install some packages that will be used throughout.
+To start with it is necessary to install some packages that will be used throughout.
 
 ```shell
 $ pip install sphinx sphinx-autobuild  # install basic sphinx packages
@@ -31,4 +31,4 @@ $ cd docs/
 $ make html
 ```
 
-We use Read the Docs for hosting the CatLearn documentation, found at [catlearn.readthedocs.io](catlearn.readthedocs.io). This should be recompiled with each commit to Github, there is a badge on the README that will indicate if the docs builds are passing or failing.
+We use Read the Docs for hosting the CatLearn documentation, found at [catlearn.readthedocs.io](http://catlearn.readthedocs.io/en/latest/). This should be recompiled with each commit to Github, there is a badge on the README that will indicate if the docs builds are passing or failing.

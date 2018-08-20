@@ -1,11 +1,42 @@
 """Some useful utilities."""
 import numpy as np
 import hashlib
-import time
-import multiprocessing
-from tqdm import trange, tqdm
 from scipy.stats import pearsonr, spearmanr, kendalltau
 from catlearn.preprocess.scaling import standardize
+
+
+def formal_charges(atoms, ion_number=8, ion_charge=-2):
+    """Return a list of formal charges on atoms.
+
+    Parameters
+    ----------
+    atoms : object
+        ase.Atoms object representing a chalcogenide. The default parameters
+        are relevant for an oxide.
+    anion_number : int
+        atomic number of anion.
+    anion_charge : int
+        formal charge of anion.
+
+    Returns
+    ----------
+    all_charges : list
+        Formal charges ordered by atomic index.
+    """
+    cm = atoms.connectivity
+    anion_charges = np.zeros(len(atoms))
+    for i, atom in enumerate(atoms):
+        if atoms.numbers[i] == ion_number:
+            anion_charges[i] = ion_charge
+            transfer = cm * np.vstack(anion_charges)
+            row_sums = transfer.sum(axis=1)
+            for j, s in enumerate(row_sums):
+                if s == ion_charge:
+                    row_sums[j] *= abs(ion_charge)
+            shared = ion_charge * transfer / np.vstack(row_sums)
+            cation_charges = -np.nansum(shared, axis=0)
+            all_charges = anion_charges + cation_charges
+    return all_charges
 
 
 def holdout_set(data, fraction, target=None, seed=None):
@@ -67,141 +98,16 @@ def target_correlation(train, target,
         correlation = c
         # Find the correlation.
         row = []
-        for c in train_data.T:
+        for d in train_data.T:
             if correlation is 'pearson':
-                row.append(pearsonr(c, train_target)[0])
+                row.append(pearsonr(d, train_target)[0])
             elif correlation is 'spearman':
-                row.append(spearmanr(c, train_target)[0])
+                row.append(spearmanr(d, train_target)[0])
             elif correlation is 'kendall':
-                row.append(kendalltau(c, train_target)[0])
+                row.append(kendalltau(d, train_target)[0])
         output.append(row)
 
     return output
-
-
-class LearningCurve(object):
-    """The simple learning curve class."""
-
-    def __init__(self, nprocs=1):
-        """Initialize the class.
-
-        Parameters
-        ----------
-        nprocs : int
-            Number of processers used in parallel implementation. Default is 1
-            e.g. serial.
-        """
-        self.nprocs = nprocs
-
-    def learning_curve(self, predict, train, target, test, test_target,
-                       step=1, min_data=2):
-        """Evaluate custom metrics versus training data size.
-
-        Parameters
-        ----------
-        predict : object
-            A function that will make the predictions. predict should accept
-            the parameters:
-
-                train_features : array
-                test_features : array
-                train_targets : list
-                test_targets : list
-
-            predict should return either a float or a list of floats. The float
-            or the first value of the list will be used as the fitness score.
-        train : array
-            An n, d array of training examples.
-        targets : list
-            A list of the target values.
-        test : array
-            An n, d array of test data.
-        test targets : list
-            A list of the test target values.
-        step : int
-            Incrementent the data set size by this many examples.
-        min_data : int
-            Smallest number of training examples to test.
-
-        Returns
-        -------
-        output : array
-            Each row is the output from the predict object.
-        """
-        n, d = np.shape(train)
-        # Get total number of iterations
-        total = (n - min_data) // step
-        output = []
-        # Iterate through the data subset.
-        if self.nprocs != 1:
-            # First a parallel implementation.
-            pool = multiprocessing.Pool(self.nprocs)
-            tasks = np.arange(total)
-            args = (
-                (x, step, train, test, target,
-                 test_target, predict) for x in tasks)
-            for r in tqdm(pool.imap_unordered(
-                    _single_model, args), total=total,
-                    desc='nested              ', leave=False):
-                output.append(r)
-                # Wait to make things more stable.
-                time.sleep(0.001)
-            pool.close()
-        else:
-            # Then a more clear serial implementation.
-            for x in trange(
-                    total,
-                    desc='nested              ', leave=False):
-                args = (x, step, train, test,
-                        target, test_target, predict)
-                r = _single_model(args)
-                output.append(r)
-        return output
-
-
-def _single_model(args):
-    """Run a model on a subset of training data with a fixed test set.
-
-    Return the output of a function specified by the last argument.
-
-    Parameters
-    ----------
-    args : tuple
-        Parameters and data to be passed to model.
-
-        args[0] : int
-            Increment.
-        args[1] : int
-            Step size. args[1] * args[0] training examples will be passed
-            to the regression model.
-        args[2] : array
-            An n, d array of training examples.
-        args[3] : list
-            A list of the target values.
-        args[4] : array
-            An n, d array of test data.
-        args[5] : list
-            A list of the test target values.
-        args[6] : object
-            custom function testing a regression model.
-            Must accept 4 parameters, which are args[2:5].
-    """
-    # Unpack args tuple.
-    x = args[0]
-    n = x * args[1]
-    train_features = args[2]
-    test = args[3]
-    train_targets = args[4]
-    test_targets = args[5]
-    predict = args[6]
-
-    # Delete required subset of training examples.
-    train = train_features[-n:, :]
-    targets = train_targets[-n:]
-
-    # Calculate the error or other metrics from the model.
-    result = predict(train, targets, test, test_targets)
-    return result
 
 
 def geometry_hash(atoms):
