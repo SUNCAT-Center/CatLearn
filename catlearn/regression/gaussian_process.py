@@ -247,9 +247,11 @@ class GaussianProcess(object):
         # Perform some sanity checks.
         msg = 'GP must be trained on more than one data point.'
         assert d > 1, msg
-        msg = 'It looks like the number of features has changed. Train a new '
-        msg += 'model instead of trying to update.'
-        assert self.N_D == f
+        if self.N_D != f:
+            msg = str(f) + '!=' + str(self.N_D)
+            msg += '\n The number of features has changed. Train a new '
+            msg += 'model instead of trying to update.'
+            raise AssertionError(msg)
 
         # Store the training data in the GP, enforce np.array type.
         self.train_fp = np.asarray(train_fp)
@@ -257,13 +259,13 @@ class GaussianProcess(object):
         if train_target is not None:
             self.train_target = np.asarray(train_target)
 
-            if self.scale_data:
-                self.scaling = ScaleData(train_fp, train_target)
-                self.train_fp, self.train_target = self.scaling.train()
-                if gradients is not None:
-                    gradients = gradients / (self.scaling.target_data['std'] /
-                                             self.scaling.feature_data['std'])
-                    gradients = np.ravel(gradients)
+        if self.scale_data:
+            self.scaling = ScaleData(train_fp, train_target)
+            self.train_fp, self.train_target = self.scaling.train()
+            if gradients is not None:
+                gradients = gradients / (self.scaling.target_data['std'] /
+                                         self.scaling.feature_data['std'])
+                gradients = np.ravel(gradients)
 
         if gradients is not None and train_target is not None:
             train_target_grad = np.append(self.train_target, gradients)

@@ -13,6 +13,8 @@ import json
 import numpy as np
 import warnings
 
+from ase.data import chemical_symbols
+
 from catlearn import __path__ as catlearn_path
 from .base import BaseGenerator
 
@@ -21,7 +23,8 @@ default_molecule_fingerprinters = [
                                    'element_parameter_vec',
                                    'eigenspectrum_vec',
                                    'composition_vec',
-                                   'distance_vec'
+                                   'distance_vec',
+                                   'bag_connections'
                                    ]
 
 
@@ -272,3 +275,44 @@ class StandardFingerprintGenerator(BaseGenerator):
                 co /= ad
             features.append(co)
         return features
+
+    def bag_connections(self, atoms):
+        """Returns the bag of connections, defined as counting connections
+        between types of elements pairs. We define the bag as a vector, e.g.
+        return [Number of C-H connections, # C-C, # C-O, ..., # M-X]
+
+        Parameters
+        ----------
+        atoms : object
+
+        Returns
+        ----------
+        features : list
+        """
+        # range of element types
+        n_elements = len(self.atom_types)
+        symbols = np.array([chemical_symbols[z] for z in self.atom_types])
+        rows, cols = np.meshgrid(symbols, symbols)
+        pairs = np.core.defchararray.add(rows, cols)
+        labels = ['bag_' + c for c in pairs[np.triu_indices_from(pairs)]]
+        if atoms is None:
+            return labels
+        else:
+            # empty bag of bond types.
+            boc = np.zeros([n_elements, n_elements])
+
+            natoms = len(atoms)
+            cm = np.array(atoms.connectivity)
+            np.fill_diagonal(cm, 0)
+
+            bonds = np.where(np.ravel(np.triu(cm)) > 0)[0]
+            for b in bonds:
+                # Get bonded atomic numbers.
+                z_row, z_col = np.unravel_index(b, [natoms, natoms])
+                bond_index = sorted((atoms.numbers[z_row],
+                                     atoms.numbers[z_col]))
+                bond_type = tuple((self.atom_types.index(bond_index[0]),
+                                   self.atom_types.index(bond_index[1])))
+                # Count bonds in upper triangle.
+                boc[bond_type] += 1
+            return list(boc[np.triu_indices_from(boc)])

@@ -6,3 +6,5 @@ docs/_*
 
 .idea/
 .ipynb_checkpoints/
+
+vec_store.sqlite

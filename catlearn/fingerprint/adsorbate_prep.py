@@ -7,7 +7,8 @@ Input:
 import warnings
 import numpy as np
 from tqdm import tqdm
-from ase.atoms import string2symbols
+from ase.data import chemical_symbols
+from ase.atoms import string2symbols, symbols2numbers
 # get_distances requires ASE 3.16 or above.
 from ase.geometry import get_layers, get_distances
 from catlearn.api.ase_atoms_api import images_connectivity
@@ -38,15 +39,22 @@ def autogen_info(images):
         # Pre-allocate subsets dictionary.
         if not hasattr(atoms, 'subsets'):
             atoms.subsets = {}
+
         # Identify adsorbate atoms.
         if 'ads_atoms' not in atoms.subsets:
             ads_atoms = detect_adsorbate(atoms)
             atoms.subsets['ads_atoms'] = ads_atoms
             if len(ads_atoms) == 0:
                 continue
+
         # Identify slab atoms.
         if 'slab_atoms' not in atoms.subsets:
             atoms.subsets['slab_atoms'] = slab_index(atoms)
+        if not (len(atoms.subsets['slab_atoms']) +
+                len(atoms.subsets['ads_atoms']) ==
+                len(atoms)):
+            raise AssertionError("all atoms must belong to slab or adsorbate.")
+
         # Identify atoms at node distance 0 and 1 from the surface-ads bond.
         if ('chemisorbed_atoms' not in atoms.subsets or
             'site_atoms' not in atoms.subsets or
@@ -55,6 +63,7 @@ def autogen_info(images):
             atoms.subsets['chemisorbed_atoms'] = chemi
             atoms.subsets['site_atoms'] = site
             atoms.subsets['ligand_atoms'] = ligand
+
         # Identify surface layers.
         if ('bulk_atoms' not in atoms.subsets or
             'termination_atoms' not in atoms.subsets or
@@ -100,6 +109,8 @@ def detect_adsorbate(atoms):
     """
     if 'ads_atoms' in atoms.subsets:
         return atoms.subsets['ads_atoms']
+    if 'slab_atoms' in atoms.subsets:
+        return ads_index(atoms)
     if (len(np.unique(atoms.get_tags())) >= 4 and
         min(atoms.get_tags()) <= -1 and
        max(atoms.get_tags()) > 2):
@@ -132,6 +143,7 @@ def detect_termination(atoms):
     ----------
     atoms : object.
         The atoms object must have the following keys in atoms.subsets:
+
         'slab_atoms' : list
             indices of atoms belonging to the slab
     """
@@ -238,6 +250,23 @@ def slab_index(atoms):
     chemi = [a.index for a in atoms if a.index not in
              atoms.subsets['ads_atoms']]
     return chemi
+
+
+def ads_index(atoms):
+    """ Returns a list of indices of atoms belonging to the adsorbate.
+    These are defined as atoms that are not belonging to the slab.
+
+    Parameters
+    ----------
+    atoms : ase atoms object
+        The atoms object must have the key 'ads_atoms' in atoms.subsets:
+
+            - 'slab_atoms' : list
+                indices of atoms belonging to the adsorbate
+    """
+    ads = [a.index for a in atoms if a.index not in
+           atoms.subsets['slab_atoms']]
+    return ads
 
 
 def sym2ads_index(atoms, ads_syms):
@@ -367,6 +396,13 @@ def tags2ads_index(atoms):
     """
     ads_atoms = [a.index for a in atoms if a.tag < 0]
 
+    if 'key_value_pairs' in atoms.info:
+        if 'species' in atoms.info['key_value_pairs']:
+            species = atoms.info['key_value_pairs']['species']
+            numbers = sorted(symbols2numbers(species))
+            if numbers != sorted(atoms[ads_atoms].numbers):
+                msg = 'Incorret tags!'
+                raise AssertionError(msg)
     return ads_atoms
 
 
@@ -390,10 +426,8 @@ def last2ads_index(atoms, species):
     n_ads = len(string2symbols(species))
     natoms = len(atoms)
     ads_atoms = list(range(natoms - n_ads, natoms))
-    composition = string2symbols(species)
-    for a in ads_atoms:
-        if atoms[a].symbol not in composition:
-            raise AssertionError("last index adsorbate identification failed.")
+    if sorted(symbols2numbers(species)) != sorted(atoms[ads_atoms].numbers):
+        raise AssertionError("last index adsorbate identification failed.")
     warnings.warn("Adsorbate identified by last index.")
     return ads_atoms
 
@@ -420,7 +454,7 @@ def formula2ads_index(atoms, species):
         print(species)
         raise
     ads_atoms = [a.index for a in atoms if a.symbol in composition]
-    if len(ads_atoms) != len(composition):
+    if sorted(symbols2numbers(species)) != sorted(atoms[ads_atoms].numbers):
         raise AssertionError("ads atoms identification by formula failed.")
     return ads_atoms
 
@@ -443,11 +477,7 @@ def layers2ads_index(atoms, species):
     lz, li = auto_layers(atoms)
     layers = int(atoms.info['key_value_pairs']['layers'])
     ads_atoms = [a.index for a in atoms if li[a.index] > layers - 1]
-    natoms = len(atoms)
-    composition = string2symbols(species)
-    n_ads = len(composition)
-    ads_atoms = list(range(natoms - n_ads, natoms))
-    if len(ads_atoms) != len(composition):
+    if sorted(symbols2numbers(species)) != sorted(atoms[ads_atoms].numbers):
         raise AssertionError("ads atoms identification by layers failed.")
     return ads_atoms
 
@@ -472,9 +502,8 @@ def z2ads_index(atoms, species):
     n_ads = len(composition)
     z = atoms.get_positions()[:, 2]
     ads_atoms = np.argsort(z)[:n_ads]
-    for a in ads_atoms:
-        if atoms[a].symbol not in composition:
-            raise AssertionError("adsorbate identification by z coord failed.")
+    if sorted(symbols2numbers(species)) != sorted(atoms[ads_atoms].numbers):
+        raise AssertionError("adsorbate identification by z coord failed.")
     return ads_atoms
 
 
@@ -493,6 +522,7 @@ def info2primary_index(atoms):
     """
     slab_atoms = atoms.subsets['slab_atoms']
     ads_atoms = atoms.subsets['ads_atoms']
+
     cm = atoms.connectivity
     chemi = []
     site = []
@@ -676,3 +706,22 @@ def auto_layers(atoms, miller=(0, 0, 1)):
     radius = np.average(radii) / 2.
     lz, li = get_layers(atoms, miller=miller, tolerance=radius)
     return lz, li
+
+
+def attach_cations(atoms, anion_number=8):
+    """Attaches list of cation and anion atomic indices.
+
+    Parameters
+    ----------
+    atoms : object
+        ase.Atoms object.
+    anion_number : int
+        Atomic number of the anion of this chalcogenide.
+    """
+    if anion_number not in atoms.numbers:
+        raise ValueError('Anion ' + chemical_symbols[anion_number] +
+                         'not in atoms')
+    atoms.subsets['cation_atoms'] = [a.index for a in atoms if
+                                     a.number != anion_number]
+    atoms.subsets['anion_atoms'] = [a.index for a in atoms if
+                                    a.number == anion_number]

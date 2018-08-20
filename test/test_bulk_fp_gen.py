@@ -11,6 +11,7 @@ from ase.data import atomic_numbers
 
 from catlearn.fingerprint.periodic_table_data import get_radius
 from catlearn.fingerprint.setup import FeatureGenerator, default_fingerprinters
+from catlearn.api.ase_atoms_api import images_connectivity
 
 wkdir = os.getcwd()
 
@@ -32,9 +33,10 @@ class TestBulkFeatures(unittest.TestCase):
     def test_bulk_fp_gen(self):
         """Test the feature generation."""
         images = self.setup_metal()
+        images = images_connectivity(images)
 
         gen = FeatureGenerator()
-        train_fpv = default_fingerprinters(gen, 'bulk')
+        train_fpv = default_fingerprinters(gen, 'bulk') + [gen.bag_connections]
         matrix = gen.return_vec(images, train_fpv)
         labels = gen.return_names(train_fpv)
         print(np.shape(matrix), print(type(matrix)))
