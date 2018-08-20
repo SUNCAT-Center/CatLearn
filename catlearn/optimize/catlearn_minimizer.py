@@ -14,7 +14,7 @@ from ase.atoms import Atoms
 from catlearn.optimize.convergence import converged, get_fmax
 from catlearn.optimize.catlearn_ase_calc import CatLearnASE
 import copy
-from catlearn.optimize.plots import get_plot_step, get_plot_step_p
+from catlearn.optimize.plots import get_plot_step
 
 
 class CatLearnMinimizer(object):
@@ -46,6 +46,20 @@ class CatLearnMinimizer(object):
 
         # Create new file to store warnings and errors:
         open('warnings_and_errors.txt', 'w')
+
+        # Configure ML calculator.
+        if self.ml_calc is None:
+            self.kdict = {'k1': {'type': 'gaussian', 'width': 0.5,
+                                 'dimension': 'single',
+                                 'bounds': ((0.05, 0.5), ),
+                                 'scaling': 1.0,
+                                 'scaling_bounds': ((0.5, 1.0), )}
+                          }
+
+            self.ml_calc = GPCalculator(
+                kernel_dict=self.kdict, opt_hyperparam=True, scale_data=False,
+                scale_optimizer=False, calc_uncertainty=True,
+                regularization=1e-4, regularization_bounds=(1e-5, 1e-3))
 
         self.ase_calc = ase_calc
 
@@ -101,22 +115,8 @@ class CatLearnMinimizer(object):
                 self.ind_mask_constr = create_mask_ase_constraints(
                     self.ase_ini, self.constraints)
 
-        # Configure ML calculator.
-        if self.ml_calc is None:
-            self.kdict = {'k1': {'type': 'gaussian', 'width': 0.25,
-                                 'dimension': 'single',
-                                 'bounds': ((0.05, 0.5), ),
-                                 'scaling': 1.0,
-                                 'scaling_bounds': ((0.5, 1.0), )}
-                          }
-
-            self.ml_calc = GPCalculator(
-                kernel_dict=self.kdict, opt_hyperparam=True, scale_data=False,
-                scale_optimizer=False, calc_uncertainty=True,
-                regularization=1e-4, regularization_bounds=(1e-5, 1e-3))
-
-    def run(self, fmax=0.05, ml_algo='BFGS', max_iter=500,
-            min_iter=0, ml_max_iter=250, penalty=4.0):
+    def run(self, fmax=0.05, ml_algo='SciPyFminCG', max_iter=500,
+            min_iter=0, ml_max_iter=250, penalty=2.0):
 
         """Executing run will start the optimization process.
 
@@ -126,8 +126,10 @@ class CatLearnMinimizer(object):
             Convergence criteria (in eV/Angs).
         ml_algo : string
             Algorithm for the surrogate model. Implemented are:
-            'BFGS', 'LBFGS', 'MDMin', 'FIRE', 'ScipyFminPowell',
-            'SciPyFminBFGS', and 'SciPyFminCG' as implemented in ASE.
+            'BFGS', 'LBFGS', 'SciPyFminCG', 'SciPyFminBFGS', 'MDMin' and
+            'FIRE' as
+            implemented in
+            ASE.
             See https://wiki.fysik.dtu.dk/ase/ase/optimize.html
         max_iter : int
             Maximum number of iterations in the surrogate model.
@@ -160,14 +162,7 @@ class CatLearnMinimizer(object):
         converged(self)
         print_info(self)
 
-        list_min_forces = ['BFGS', 'ScipyFminBFGS', 'SciPyFminCG', 'LBFGS',
-                           'FIRE', 'MDMin']
-
-        if ml_algo in list_min_forces:
-            initialize(self, i_step=ml_algo)
-        if ml_algo not in list_min_forces:
-            initialize(self, i_step='BFGS')
-
+        initialize(self, i_step=ml_algo)
         converged(self)
         print_info(self)
 
@@ -180,7 +175,7 @@ class CatLearnMinimizer(object):
                 self.list_gradients = self.list_gradients[-max_memory:]
 
             # Check scaling:
-            scale_targets = np.min(self.list_targets)
+            scale_targets = np.max(self.list_targets)
 
             # 1) Train Machine Learning process:
 
@@ -204,7 +199,8 @@ class CatLearnMinimizer(object):
             # 2) Setup and run optimization.
 
             # Attach CatLearn calculator.
-            guess = copy.deepcopy(self.ase_ini)
+            if self.iter <= 2:
+                guess = copy.deepcopy(self.ase_ini)
 
             guess.set_calculator(CatLearnASE(
                                     trained_process=trained_process,
@@ -217,10 +213,7 @@ class CatLearnMinimizer(object):
             # Run ML optimization.
             opt_ml = eval(ml_algo)(guess)
             print('Starting ML optimization...')
-            if ml_algo in list_min_forces:
-                opt_ml.run(fmax=fmax/2, steps=ml_max_iter)
-            if ml_algo not in list_min_forces:
-                opt_ml.run(steps=ml_max_iter)
+            opt_ml.run(fmax=fmax, steps=ml_max_iter)
             print('ML optimized.')
 
             # 3) Evaluate and append interesting point.
@@ -229,36 +222,20 @@ class CatLearnMinimizer(object):
             eval_and_append(self, interesting_point)
 
             # get_plot_step(images=guess,
-            #               interesting_point=interesting_point,
-            #               trained_process=trained_process,
-            #               list_train=self.list_train,
-            #               scale=scale_targets)
-
-            # get_plot_step_p(structure=guess,
-            #               list_train=self.list_train,
-            #               )
-
-            #######################################################
-
-            # Convergence results:
-            max_forces = get_fmax(-np.array([self.list_gradients[-1]]),
-                                  self.num_atoms)
-            max_abs_forces = np.max(np.abs(max_forces))
-
-
-            #########################################################
-
-            # if max_abs_forces <= 0.10:
-            #     self.ml_calc.__dict__['opt_hyperparam'] = True
-
-            #########################################################
+            #                 interesting_point=interesting_point,
+            #                 trained_process=trained_process,
+            #                 list_train=self.list_train,
+            #                 scale=scale_targets)
 
             # Save evaluated image.
             TrajectoryWriter(atoms=self.ase_ini,
                              filename='./' + str(self.filename) +
                              '_catlearn.traj', mode='a').write()
 
-
+            # Printing:
+            max_forces = get_fmax(-np.array([self.list_gradients[-1]]),
+                                  self.num_atoms)
+            max_abs_forces = np.max(np.abs(max_forces))
             print('Number of iterations:', self.iter)
             print('Max. force of the last image evaluated (eV/Angstrom):',
                   max_abs_forces)
@@ -294,7 +271,7 @@ def initialize(self, i_step=1e-3):
                              self.list_gradients[-1]]
 
         if isinstance(i_step, str):
-            eval(i_step)(self.ase_ini).run(fmax=1e-5, steps=1)
+            eval(i_step)(self.ase_ini).run(fmax=0.05, steps=1)
             ini_train = [self.ase_ini.get_positions().flatten()]
 
         self.list_train = np.append(self.list_train, ini_train, axis=0)
