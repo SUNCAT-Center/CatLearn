@@ -71,8 +71,8 @@ class CatLearnMinimizer(object):
             self.start_mode = 'atoms'
             self.ase = True
             warning_using_ase()
-            self.initial_structure = copy.deepcopy(x0)
-            self.ase_ini = copy.deepcopy(x0)
+            self.initial_structure = x0
+            self.ase_ini = x0
             ase_calc_set = self.ase_calc
             self.ase_calc = self.ase_ini.get_calculator()
             if ase_calc_set is not None:
@@ -200,7 +200,7 @@ class CatLearnMinimizer(object):
 
             # Attach CatLearn calculator.
             if self.iter <= 2:
-                guess = copy.deepcopy(self.ase_ini)
+                guess = (self.ase_ini)
 
             guess.set_calculator(CatLearnASE(
                                     trained_process=trained_process,

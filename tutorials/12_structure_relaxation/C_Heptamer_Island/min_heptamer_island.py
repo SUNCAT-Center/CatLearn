@@ -27,7 +27,7 @@ for i in common_initial:
 
 # 2.A. Optimize structure using ASE.
 initial_ase = copy.deepcopy(common_initial)
-initial_ase.set_calculator(copy.deepcopy(ase_calculator))
+initial_ase.set_calculator(ase_calculator)
 
 ase_opt = BFGS(initial_ase, trajectory='ase_optimization.traj')
 ase_opt.run(fmax=0.01)
@@ -35,7 +35,7 @@ ase_opt.run(fmax=0.01)
 # 2.B. Optimize structure using CatLearn:
 
 initial_catlearn = copy.deepcopy(common_initial)
-initial_catlearn.set_calculator(copy.deepcopy(ase_calculator))
+initial_catlearn.set_calculator(ase_calculator)
 
 catlearn_opt = CatLearnMinimizer(initial_catlearn, filename='results')
 catlearn_opt.run(fmax=0.01)

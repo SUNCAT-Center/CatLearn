@@ -9,3 +9,6 @@ docs/_*
 
 .idea/
 .ipynb_checkpoints/
+tutorials/12_structure_relaxation/F_GPAW_min/__init__.py
+tutorials/12_structure_relaxation/__init__.py
+tutorials/__init__.py

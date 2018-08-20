@@ -32,7 +32,7 @@ def get_energy_catlearn(self, x=None):
 
         self.ase_ini.set_calculator(None)
         self.ase_ini = Atoms(self.ase_ini, positions=pos_ase,
-                             calculator=copy.deepcopy(self.ase_calc))
+                             calculator=self.ase_calc)
         energy = self.ase_ini.get_potential_energy()
         print('Energy of the geometry evaluated (eV):', energy)
 
