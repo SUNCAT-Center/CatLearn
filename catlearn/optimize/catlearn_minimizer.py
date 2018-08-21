@@ -1,4 +1,4 @@
-# @Version u1.0.4
+# @Version u1.0.
 
 import numpy as np
 from catlearn.optimize.warnings import *
@@ -117,8 +117,8 @@ class CatLearnMinimizer(object):
                 self.ind_mask_constr = create_mask_ase_constraints(
                     self.ase_ini, self.constraints)
 
-    def run(self, fmax=0.05, ml_algo='MDMin', max_iter=500,
-            min_iter=0, ml_max_iter=250, penalty=2.0):
+    def run(self, fmax=0.05, ml_algo='SciPyFminCG', max_iter=500,
+            min_iter=0, ml_max_iter=250, penalty=0.0):
 
         """Executing run will start the optimization process.
 
@@ -213,7 +213,7 @@ class CatLearnMinimizer(object):
             # Run optimization of the predicted PES.
             opt_ml = eval(ml_algo)(guess)
             print('Starting ML optimization...')
-            opt_ml.run(fmax=fmax, steps=ml_max_iter)
+            opt_ml.run(fmax=fmax/1.2, steps=ml_max_iter)
             print('ML optimized.')
 
             # 3. Evaluate and append interesting point.
