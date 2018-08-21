@@ -27,7 +27,7 @@ d = 1.10
 
 slab = fcc111('Cu', size=(2, 2, 4), vacuum=10.0)
 molecule = Atoms('CO', positions=[(0., 0., 0.), (0., 0., d)])
-molecule.rattle(stdev=0.0, seed=0)
+molecule.rattle(stdev=0.1, seed=0)
 add_adsorbate(slab, molecule, h, 'ontop')
 
 constraint = FixAtoms(mask=[atom.position[2] < 14.0 for atom in slab])

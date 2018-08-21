@@ -145,15 +145,16 @@ class CatLearnNEB(object):
         if self.ml_calc is None:
             self.kdict = {'k1': {'type': 'gaussian', 'width': 0.5,
                                  'dimension': 'single',
-                                 'bounds': ((0.05, 0.5), ),
+                                 'bounds': ((0.01, 1.0), ),
                                  'scaling': 1.0,
                                  'scaling_bounds': ((1.0, 1.0), )}
                           }
 
             self.ml_calc = GPCalculator(
-                kernel_dict=self.kdict, opt_hyperparam=False, scale_data=False,
+                kernel_dict=self.kdict, opt_hyperparam=True, scale_data=False,
                 scale_optimizer=False, calc_uncertainty=True,
-                regularization=1e-5, regularization_bounds=(1e-6, 1e-3))
+                algo_opt_hyperparamters='L-BFGS-B',
+                regularization=1e-2, regularization_bounds=(1e-6, 1e-2))
 
         # Settings for the NEB.
         self.neb_method = neb_method
@@ -231,8 +232,8 @@ class CatLearnNEB(object):
         self.path_distance = copy.deepcopy(self.d_start_end)
 
     def run(self, fmax=0.05, unc_convergence=0.010, max_iter=500,
-            ml_algo='LBFGS', ml_max_iter=200, plot_neb_paths=False,
-            penalty=4.0, acquisition='acq_1'):
+            ml_algo='MDMin', ml_max_iter=200, plot_neb_paths=False,
+            penalty=0.0, acquisition='acq_1'):
 
         """Executing run will start the optimization process.
 

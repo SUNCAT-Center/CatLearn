@@ -90,7 +90,7 @@ neb_catlearn = CatLearnNEB(start='initial.traj', end='final.traj',
                            n_images=n_images,
                            interpolation='idpp')
 
-neb_catlearn.run(fmax=0.05, plot_neb_paths=True, ml_algo='LBFGS')
+neb_catlearn.run(fmax=0.05, plot_neb_paths=True)
 
 # 3. Summary of the results #################################################
 

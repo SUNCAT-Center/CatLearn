@@ -24,7 +24,7 @@ mol = Atoms('H2O',
              (b, b, 0.1219 + b)],
             cell=[a, a, a])
 
-mol.rattle(seed=0, stdev=0.5)
+mol.rattle(seed=0, stdev=0.1)
 
 
 # 2.A. Optimize structure using ASE.
