@@ -48,21 +48,6 @@ class CatLearnMinimizer(object):
         # Create new file to store warnings and errors.
         open('warnings_and_errors.txt', 'w')
 
-        # Configure ML calculator.
-        if self.ml_calc is None:
-            self.kdict = {'k1': {'type': 'gaussian', 'width': 0.5,
-                                 'dimension': 'single',
-                                 'bounds': ((0.01, 1.0), ),
-                                 'scaling': 1.0,
-                                 'scaling_bounds': ((1.0, 1.0), )}
-                          }
-
-            self.ml_calc = GPCalculator(
-                kernel_dict=self.kdict, opt_hyperparam=True, scale_data=False,
-                scale_optimizer=False, calc_uncertainty=True,
-                algo_opt_hyperparamters='L-BFGS-B',
-                regularization=1e-2, regularization_bounds=(1e-6, 1e-2))
-
         self.ase_calc = ase_calc
 
         backup_old_calcs(self.filename)
@@ -117,7 +102,22 @@ class CatLearnMinimizer(object):
                 self.ind_mask_constr = create_mask_ase_constraints(
                     self.ase_ini, self.constraints)
 
-    def run(self, fmax=0.05, ml_algo='SciPyFminCG', max_iter=500,
+        # Configure ML calculator.
+        if self.ml_calc is None:
+            self.kdict = {'k1': {'type': 'gaussian', 'width': 0.5,
+                                 'dimension': 'single',
+                                 'bounds': ((0.01, 1.0), ),
+                                 'scaling': 1.0,
+                                 'scaling_bounds': ((1.0, 1.0), )}
+                          }
+
+            self.ml_calc = GPCalculator(
+                kernel_dict=self.kdict, opt_hyperparam=True, scale_data=False,
+                scale_optimizer=False, calc_uncertainty=True,
+                algo_opt_hyperparamters='L-BFGS-B',
+                regularization=1e-2, regularization_bounds=(1e-6, 1e-2))
+
+    def run(self, fmax=0.05, ml_algo='BFGS', max_iter=500,
             min_iter=0, ml_max_iter=250, penalty=0.0):
 
         """Executing run will start the optimization process.
