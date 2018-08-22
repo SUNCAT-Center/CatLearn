@@ -2,7 +2,8 @@ from catlearn.optimize.catlearn_minimizer import CatLearnMinimizer
 from catlearn.optimize.functions_calc import Himmelblau, NoiseHimmelblau, \
 GoldsteinPrice, Rosenbrock, MullerBrown
 from ase import Atoms
-from ase.optimize import BFGS
+from ase.optimize import BFGS, FIRE, MDMin
+from ase.optimize.sciopt import SciPyFminPowell, SciPyFminBFGS
 from ase.io import read
 import copy
 import numpy as np

@@ -1,13 +1,13 @@
 from catlearn.optimize.catlearn_minimizer import CatLearnMinimizer
 from ase.calculators.emt import EMT
 from ase.io import read
-from ase.optimize import BFGS
+from ase.optimize import BFGS, FIRE, MDMin
+from ase.optimize.sciopt import SciPyFminPowell, SciPyFminBFGS
 from ase.visualize import view
 import copy
 from ase import Atoms
 from ase.calculators.emt import EMT
 from ase.constraints import FixAtoms
-from ase.optimize import QuasiNewton
 from ase.build import fcc111, add_adsorbate
 
 """ 
@@ -27,7 +27,7 @@ d = 1.10
 
 slab = fcc111('Cu', size=(2, 2, 4), vacuum=10.0)
 molecule = Atoms('CO', positions=[(0., 0., 0.), (0., 0., d)])
-molecule.rattle(stdev=0.1, seed=0)
+molecule.rattle(stdev=0.2, seed=0)
 add_adsorbate(slab, molecule, h, 'ontop')
 
 constraint = FixAtoms(mask=[atom.position[2] < 14.0 for atom in slab])

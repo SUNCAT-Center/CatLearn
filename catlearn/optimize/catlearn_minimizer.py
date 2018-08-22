@@ -115,10 +115,10 @@ class CatLearnMinimizer(object):
                 kernel_dict=self.kdict, opt_hyperparam=True, scale_data=False,
                 scale_optimizer=False, calc_uncertainty=True,
                 algo_opt_hyperparamters='L-BFGS-B',
-                regularization=1e-2, regularization_bounds=(1e-6, 1e-2))
+                regularization=1e-2, regularization_bounds=(1e-5, 1e-2))
 
     def run(self, fmax=0.05, ml_algo='BFGS', max_iter=500,
-            min_iter=0, ml_max_iter=250, penalty=0.0):
+            min_iter=0, ml_max_iter=250, penalty=2.0):
 
         """Executing run will start the optimization process.
 
@@ -153,6 +153,9 @@ class CatLearnMinimizer(object):
             3) An additional file 'warning_and_errors.txt' is included.
         """
 
+        self.list_minimizers_grad = ['BFGS', 'LBFGS', 'SciPyFminCG', 'MDMin',
+                                     'FIRE']
+
         self.fmax = fmax
         self.min_iter = min_iter
         max_memory = 50
@@ -175,7 +178,7 @@ class CatLearnMinimizer(object):
                 self.list_gradients = self.list_gradients[-max_memory:]
 
             # Update scaling.
-            scale_targets = np.max(self.list_targets)
+            scale_targets = np.mean(self.list_targets)
 
             # 1. Train Machine Learning process.
 
@@ -213,7 +216,10 @@ class CatLearnMinimizer(object):
             # Run optimization of the predicted PES.
             opt_ml = eval(ml_algo)(guess)
             print('Starting ML optimization...')
-            opt_ml.run(fmax=fmax/1.2, steps=ml_max_iter)
+            if ml_algo in self.list_minimizers_grad:
+                opt_ml.run(fmax=fmax/1.1, steps=ml_max_iter)
+            else:
+                opt_ml.run(steps=ml_max_iter)
             print('ML optimized.')
 
             # 3. Evaluate and append interesting point.
@@ -276,7 +282,10 @@ def initialize(self, i_step=1e-3):
                              self.list_gradients[-1]]
 
         if isinstance(i_step, str):
-            eval(i_step)(self.ase_ini).run(fmax=0.05, steps=1)
+            if i_step in self.list_minimizers_grad:
+                eval(i_step)(self.ase_ini).run(fmax=0.05, steps=1)
+            else:
+                eval(i_step)(self.ase_ini).run(steps=1)
             ini_train = [self.ase_ini.get_positions().flatten()]
 
         self.list_train = np.append(self.list_train, ini_train, axis=0)

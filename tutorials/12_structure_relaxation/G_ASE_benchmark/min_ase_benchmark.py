@@ -1,11 +1,10 @@
 from ase import Atoms
 from gpaw import GPAW
 from ase.optimize import BFGS, FIRE, MDMin
-from ase.optimize.sciopt import *
+from ase.optimize.sciopt import SciPyFminPowell, SciPyFminBFGS
 from catlearn.optimize.catlearn_minimizer import CatLearnMinimizer
-from ase.io import read, write
+from ase.io import read
 import copy
-from ase.visualize import view
 from ase.db import connect
 import ase.db
 

@@ -1,7 +1,8 @@
 from catlearn.optimize.catlearn_minimizer import CatLearnMinimizer
 from ase.calculators.emt import EMT
 from ase.io import read
-from ase.optimize import BFGS
+from ase.optimize import BFGS, FIRE, MDMin
+from ase.optimize.sciopt import SciPyFminPowell, SciPyFminBFGS
 import copy
 from ase.visualize import view
 import numpy as np

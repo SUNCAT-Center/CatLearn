@@ -1,9 +1,9 @@
 from ase import Atoms
 from gpaw import GPAW
-from ase.optimize import BFGS
-from ase.optimize.sciopt import *
+from ase.optimize import BFGS, FIRE, MDMin
+from ase.optimize.sciopt import SciPyFminPowell, SciPyFminBFGS
 from catlearn.optimize.catlearn_minimizer import CatLearnMinimizer
-from ase.io import read, write
+from ase.io import read
 import copy
 
 """ 
@@ -24,14 +24,14 @@ mol = Atoms('H2O',
              (b, b, 0.1219 + b)],
             cell=[a, a, a])
 
-mol.rattle(seed=0, stdev=0.1)
+mol.rattle(seed=0, stdev=0.2)
 
 
 # 2.A. Optimize structure using ASE.
 initial_ase = mol.copy()
 initial_ase.set_calculator(calc)
 
-ase_opt = SciPyFminCG(initial_ase, trajectory='ase_optimization.traj')
+ase_opt = BFGS(initial_ase, trajectory='ase_optimization.traj')
 ase_opt.run(fmax=0.05)
 
 # 2.B. Optimize structure using CatLearn:
