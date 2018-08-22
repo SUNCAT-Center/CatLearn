@@ -15,11 +15,11 @@ import numpy as np
 """
 
 # 0. Set calculator.
-ase_calculator = MullerBrown()
+ase_calculator = Himmelblau()
 
 # 1. Set common initial structure.
 common_initial = Atoms('C', positions=[(-1.0, -1.0, 0.0)])
-common_initial.rattle(stdev=0.2, seed=0)
+common_initial.rattle(stdev=0.1, seed=0)
 
 # 2.A. Optimize structure using ASE.
 initial_ase = copy.deepcopy(common_initial)

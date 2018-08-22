@@ -118,7 +118,8 @@ class CatLearnMinimizer(object):
                 regularization=1e-2, regularization_bounds=(1e-5, 1e-2))
 
     def run(self, fmax=0.05, ml_algo='BFGS', max_iter=500,
-            min_iter=0, ml_max_iter=250, penalty=2.0):
+            min_iter=0, ml_max_iter=250, penalty=2.0,
+            plots=True):
 
         """Executing run will start the optimization process.
 
@@ -165,7 +166,7 @@ class CatLearnMinimizer(object):
         converged(self)
         print_info(self)
 
-        initialize(self, i_step=ml_algo)
+        initialize(self, i_step='SciPyFminCG')
         converged(self)
         print_info(self)
 
@@ -228,11 +229,12 @@ class CatLearnMinimizer(object):
             eval_and_append(self, interesting_point)
 
             # Optional. Plots.
-            # get_plot_step(images=guess,
-            #                 interesting_point=interesting_point,
-            #                 trained_process=trained_process,
-            #                 list_train=self.list_train,
-            #                 scale=scale_targets)
+            if plots is True:
+                get_plot_step(images=guess,
+                              interesting_point=interesting_point,
+                              trained_process=trained_process,
+                              list_train=self.list_train,
+                              scale=scale_targets)
 
             # 4. Convergence and output.
 

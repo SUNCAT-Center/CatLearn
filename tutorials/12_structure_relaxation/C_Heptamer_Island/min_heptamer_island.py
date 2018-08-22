@@ -26,7 +26,7 @@ np.random.seed(1)
 for i in common_initial:
     if i.position[2] > 14.00:
         i.symbol = 'Au'
-        i.position = i.position + np.random.normal(scale=0.2)
+        i.position = i.position + np.random.normal(scale=0.1)
 
 # 2.A. Optimize structure using ASE.
 initial_ase = copy.deepcopy(common_initial)

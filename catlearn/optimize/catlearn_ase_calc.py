@@ -31,11 +31,6 @@ class CatLearnASE(Calculator):
         # Atoms object.
         self.atoms = atoms
 
-        # Clean up:
-        energy = 0.0
-        forces = 0.0
-        uncertainty = 0.0
-
         def pred_energy_test(test, ml_calc=self.ml_calc,
                              trained_process=self.trained_process,
                              kappa=self.kappa):

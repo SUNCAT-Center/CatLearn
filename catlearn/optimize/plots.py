@@ -197,13 +197,13 @@ def get_plot_step(images, interesting_point, trained_process,
     """ Function for plotting each step of the toy model Muller-Brown .
     """
     iteration = images.info['iteration']
-    folder = './plots_ase/'
+    folder = './'
     plt.figure(figsize=(4.0, 4.0))
 
     plot_resolution = 150
     limitsx = [-5.5, 0]
     limitsy = [-5.5, 0]
-    crange = np.linspace(-0.5, 10.0, 60)
+    crange = np.linspace(-2.0, 10.0, 120)
     crange2 = 5
 
     A = np.linspace(limitsx[0], limitsx[1], plot_resolution)
@@ -217,18 +217,23 @@ def get_plot_step(images, interesting_point, trained_process,
                                            uncertainty=True)
             e = np.array(pred['prediction'][:, 0])
             u = np.array(pred['uncertainty'])
-            Z[i][j] = e + scale + u
+            Z[i][j] = e + scale
+
     plt.contourf(X, Y, Z, crange, alpha=1.0, cmap='terrain')
+    plt.colorbar(ticks=[-2.0, 0.0, 2.0, 4.0, 6.0, 8.0, 10.0])
     plt.contour(X, Y, Z, crange2, alpha=0.5, linewidths=1.0, antialiased=True,
                 linestyles='dashed')
 
-    plt.scatter(list_train[:, 0], list_train[:, 1], marker='o', c='white', edgecolors='black', alpha=1.0)
+    plt.scatter(list_train[:-1, 0], list_train[:-1, 1], marker='o', c='white',
+    edgecolors='black', alpha=1.0)
+    plt.scatter(list_train[-1, 0], list_train[-1, 1], marker='x', c='black',
+    edgecolors='white', alpha=1.0)
     plt.xlim(limitsx[0], limitsx[1])
     plt.ylim(limitsy[0], limitsy[1])
     plt.xticks([])
     plt.yticks([])
-    # plt.savefig(fname=(folder+'min_catlearn_himmelblau_iter' + str(iteration) +
-    #             '.png'), dpi=500, format='png', transparent=False)
+    plt.savefig(fname=(folder+'min_catlearn_himmelblau_iter' + str(iteration) +
+                '.png'), dpi=500, format='png', transparent=False)
 
     plt.show()
     plt.close()

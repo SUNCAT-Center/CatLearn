@@ -26,7 +26,6 @@ mol = Atoms('H2O',
 
 mol.rattle(seed=0, stdev=0.2)
 
-
 # 2.A. Optimize structure using ASE.
 initial_ase = mol.copy()
 initial_ase.set_calculator(calc)
