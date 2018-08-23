@@ -106,7 +106,7 @@ class CatLearnMinimizer(object):
         if self.ml_calc is None:
             self.kdict = {'k1': {'type': 'gaussian', 'width': 0.5,
                                  'dimension': 'single',
-                                 'bounds': ((0.01, 1.0), ),
+                                 'bounds': ((0.01, 0.5), ),
                                  'scaling': 1.0,
                                  'scaling_bounds': ((1.0, 1.0), )}
                           }
@@ -117,9 +117,9 @@ class CatLearnMinimizer(object):
                 algo_opt_hyperparamters='L-BFGS-B',
                 regularization=1e-2, regularization_bounds=(1e-5, 1e-2))
 
-    def run(self, fmax=0.05, ml_algo='BFGS', max_iter=500,
+    def run(self, fmax=0.05, ml_algo='SciPyFminCG', max_iter=500,
             min_iter=0, ml_max_iter=250, penalty=2.0,
-            plots=True):
+            plots=False):
 
         """Executing run will start the optimization process.
 
@@ -258,6 +258,18 @@ class CatLearnMinimizer(object):
             if self.iter > max_iter:
                 print('Not converged. Maximum number of iterations reached.')
                 break
+
+            ########## UNDER TEST #####################################
+            # list_fmax = get_fmax(-np.array([self.list_gradients[-1]]),
+            #                       self.num_atoms)
+            # max_abs_forces = np.max(np.abs(list_fmax))
+            # if max_abs_forces <= 0.10:
+            #     self.ml_calc.__dict__['opt_hyperparam'] = True
+            # if max_abs_forces > 0.10:
+            #     self.ml_calc.__dict__['opt_hyperparam'] = False
+            ########## UNDER TEST #####################################
+
+
 
 
 def initialize(self, i_step=1e-3):

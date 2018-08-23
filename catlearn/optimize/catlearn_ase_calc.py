@@ -58,6 +58,26 @@ class CatLearnASE(Calculator):
         # Attach uncertainty to Atoms object.
         atoms.info['uncertainty'] = uncertainty
 
+        # Get forces (double accuracy):
+        # gradients = np.zeros(len(pos_flatten))
+        # for i in range(len(self.ind_constraints)):
+        #     index_force = self.ind_constraints[i]
+        #     pos = test_point.copy()
+        #     pos[0][i] = pos_flatten[index_force] + self.fs
+        #     f_pos = pred_energy_test(test=pos)[0]
+        #     pos = test_point.copy()
+        #     pos[0][i] = pos_flatten[index_force] - self.fs
+        #     f_neg = pred_energy_test(test=pos)[0]
+        #     pos = test_point.copy()
+        #     pos[0][i] = pos_flatten[index_force] + 2 * self.fs
+        #     f_pos2 = pred_energy_test(test=pos)[0]
+        #     pos = test_point.copy()
+        #     pos[0][i] = pos_flatten[index_force] - 2 * self.fs
+        #     f_neg2 = pred_energy_test(test=pos)[0]
+        #     gradients[index_force] = \
+        #               (f_neg2 - 8 * f_neg + 8 * f_pos - f_pos2 )/(12 * self.fs)
+
+
         # Get forces:
         gradients = np.zeros(len(pos_flatten))
         for i in range(len(self.ind_constraints)):
