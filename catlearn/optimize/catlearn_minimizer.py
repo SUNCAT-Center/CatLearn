@@ -1,4 +1,4 @@
-# @Version u1.0.
+# @Version u1.0.9
 
 import numpy as np
 from catlearn.optimize.warnings import *
@@ -7,7 +7,7 @@ from catlearn.optimize.io import backup_old_calcs, ase_traj_to_catlearn, \
                                  print_info
 from catlearn.optimize.constraints import create_mask_ase_constraints
 from ase.io.trajectory import TrajectoryWriter
-from ase.optimize import BFGS, FIRE, LBFGS, MDMin
+from ase.optimize import BFGS, FIRE, LBFGS, MDMin, QuasiNewton, GoodOldQuasiNewton
 from ase.optimize.sciopt import *
 from catlearn.optimize.get_real_values import eval_and_append, \
                                               get_energy_catlearn, \
@@ -16,7 +16,8 @@ from ase.atoms import Atoms
 from catlearn.optimize.convergence import converged, get_fmax
 from catlearn.optimize.catlearn_ase_calc import CatLearnASE
 from catlearn.optimize.plots import get_plot_step
-
+from ase.optimize.bfgslinesearch import BFGSLineSearch
+import os
 
 class CatLearnMinimizer(object):
 
@@ -37,7 +38,8 @@ class CatLearnMinimizer(object):
         """
 
         # General variables.
-        self.filename = filename
+        base=os.path.basename(filename) # Remove extension if added.
+        self.filename = os.path.splitext(base)[0] # Remove extension if added.
         self.ml_calc = ml_calc
         self.iter = 0
         self.feval = 0
@@ -117,7 +119,7 @@ class CatLearnMinimizer(object):
                 algo_opt_hyperparamters='L-BFGS-B',
                 regularization=1e-2, regularization_bounds=(1e-5, 1e-2))
 
-    def run(self, fmax=0.05, ml_algo='SciPyFminCG', max_iter=500,
+    def run(self, fmax=0.05, ml_algo='GoodOldQuasiNewton', max_iter=500,
             min_iter=0, ml_max_iter=250, penalty=2.0,
             plots=False):
 
@@ -155,7 +157,8 @@ class CatLearnMinimizer(object):
         """
 
         self.list_minimizers_grad = ['BFGS', 'LBFGS', 'SciPyFminCG', 'MDMin',
-                                     'FIRE']
+                                     'FIRE', 'BFGSLineSearch',
+                                     'QuasiNewton', 'GoodOldQuasiNewton']
 
         self.fmax = fmax
         self.min_iter = min_iter
