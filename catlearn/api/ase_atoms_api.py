@@ -23,12 +23,12 @@ def database_to_list(fname, selection=None):
     images = []
     for d in s:
         dbid = int(d.id)
-        atoms = c.get_atoms(dbid)
-        atoms.info['key_value_pairs'] = dict(d.key_value_pairs)
-        atoms.info['unique_id'] = str(d.unique_id)
+        atoms = c.get_atoms(dbid, add_additional_information=True)
         atoms.info['id'] = dbid
         atoms.info['ctime'] = float(d.ctime)
         atoms.subsets = {}
+        if 'connectivity' in d.data:
+            atoms.connectivity = np.array(d.data.connectivity)
         images.append(atoms)
 
     return images
