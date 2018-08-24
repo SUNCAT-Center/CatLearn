@@ -4,6 +4,7 @@ from __future__ import absolute_import
 
 import os
 import unittest
+import numpy as np
 
 from ase.ga.data import DataConnection
 
@@ -110,7 +111,7 @@ class TestAcquisition(unittest.TestCase):
         train_features, train_targets, train_atoms, test_features, \
             test_targets, test_atoms = self.get_data()
 
-        sg0 = SurrogateModel(_train_model, _predict, probability_density,
+        sg0 = SurrogateModel(_train_model, _predict, _rank_pdf,
                              train_features, train_targets)
         batch_size = 10
         sg0.test_acquisition(batch_size=batch_size)
@@ -158,6 +159,10 @@ def _predict(model, test_features, test_targets=None):
                         score['prediction'],
                         score['uncertainty']]
     return acquisition_args, score
+
+
+def _rank_pdf(y_best, predictions, uncertainty):
+    return np.argsort(probability_density(y_best, predictions, uncertainty))
 
 
 if __name__ == '__main__':
