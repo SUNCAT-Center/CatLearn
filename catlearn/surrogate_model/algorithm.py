@@ -7,7 +7,8 @@ import multiprocessing
 
 
 class SurrogateModel(object):
-    """Base class for feature generation."""
+    """Surrogate modeling class. Intended for screening or optimizing in a
+    predefined and finite search space."""
 
     def __init__(self, train_model, predict, acquisition_function,
                  train_data, target):
@@ -52,8 +53,8 @@ class SurrogateModel(object):
                 arbitratry meta data for output.
 
         acquisition_function : object
-            function which returns a list of acquisition function values,
-            where the largest value(s) are to be acquired.
+            function which returns a list of indices of candidates to be
+            acquired.
 
             Parameters
             ----------
@@ -62,8 +63,8 @@ class SurrogateModel(object):
 
             Returns
             ----------
-            af : list
-                Acquisition function values corresponding.
+            sample : list
+                List indices of candidates to be acquired.
 
         train_data : array
             training data matrix.
@@ -75,52 +76,6 @@ class SurrogateModel(object):
         self.acquisition_function = acquisition_function
         self.train_data = train_data
         self.target = target
-
-    def ensemble_test(self, size, initial_subset=None, batch_size=1,
-                      n_max=None, seed_list=None, nprocs=None):
-        """Return a 3d array of test results for a surrogate model. The third
-        dimension expands the ensemble of tests.
-
-        Parameters
-        ----------
-        size : int
-            How many tests to run.
-        initial_subset : list
-            Row indices of data to train on in the first iteration.
-        batch_size : int
-            Number of training points to acquire (move from test to training)
-            in every iteration.
-        n_max : int
-            Max number of training points to test.
-        seed_list : list
-            List of integer seeds for shuffling training data.
-        nprocs : int
-            Number of processors for parallelization
-        """
-        if seed_list is None:
-            seed_list = [None] * size
-
-        ensemble = []
-        if nprocs != 1:
-            # First a parallel implementation.
-            pool = multiprocessing.Pool(nprocs)
-            tasks = np.arange(size)
-            args = (
-                    (initial_subset, batch_size, n_max, seed_list[x],
-                     self.train_data, self.target,
-                     self.train_model, self.predict, self.acquisition_function)
-                    for x in tasks)
-            for r in pool.imap_unordered(_test_acquisition, args):
-                ensemble.append(r)
-                # Wait to make things more stable.
-                time.sleep(0.01)
-            pool.close()
-        else:
-            for test in np.arange(size):
-                seed = seed_list[test]
-                ensemble.append(self.test_acquisition(initial_subset,
-                                                      batch_size, n_max, seed))
-        return ensemble
 
     def test_acquisition(self, initial_subset=None, batch_size=1, n_max=None,
                          seed=None):
@@ -167,15 +122,14 @@ class SurrogateModel(object):
                 break
             elif len(test_target) < batch_size:
                 batch_size = len(test_target)
-            # Do regression.
+            # Train regression model.
             model = self.train_model(train_fp, train_target)
 
             # Make predictions.
             aqcuisition_args, score = self.predict(model, test_fp, test_target)
 
-            # Calculate acquisition values.
-            af = self.acquisition_function(*aqcuisition_args)
-            sample = np.argsort(af)[::-1]
+            # Get indices to acquire from user defined function.
+            sample = self.acquisition_function(*aqcuisition_args)
 
             to_acquire = test_index[sample[:batch_size]]
             assert len(to_acquire) == batch_size
@@ -187,7 +141,8 @@ class SurrogateModel(object):
         return output
 
     def acquire(self, unlabeled_data, batch_size=1):
-        """Return indices of datapoints to acquire, from a known search space.
+        """Return indices of datapoints to acquire, from a predefined, finite
+        search space.
 
         Parameters
         ----------
@@ -198,6 +153,13 @@ class SurrogateModel(object):
         batch_size : int
             Number of training points to acquire (move from test to training)
             in every iteration.
+
+        Returns
+        ----------
+        to_acquire : list
+            Indices in order of relevance from user defined function.
+        score
+            User defined output from predict.
         """
         # Do regression.
         model = self.train_model(self.train_data, self.target)
@@ -205,15 +167,66 @@ class SurrogateModel(object):
         # Make predictions.
         aqcuisition_args, score = self.predict(model, unlabeled_data)
 
-        # Calculate acquisition values.
-        af = self.acquisition_function(*aqcuisition_args)
-        sample = np.argsort(af)[::-1]
+        # Get list of indices in order of relevance from user defined function.
+        sample = self.acquisition_function(*aqcuisition_args)
 
         to_acquire = sample[:batch_size]
         assert len(to_acquire) == batch_size
 
         # Return best candidates and meta data.
         return list(to_acquire), score
+
+    def ensemble_test(self, size, initial_subset=None, batch_size=1,
+                      n_max=None, seed_list=None, nprocs=None):
+        """Return a 3d array of test results for a surrogate model. The third
+        dimension expands the ensemble of tests.
+
+        Parameters
+        ----------
+        size : int
+            How many tests to run.
+        initial_subset : list
+            Row indices of data to train on in the first iteration.
+        batch_size : int
+            Number of training points to acquire (move from test to training)
+            in every iteration.
+        n_max : int
+            Max number of training points to test.
+        seed_list : list
+            List of integer seeds for shuffling training data.
+        nprocs : int
+            Number of processors for parallelization
+
+        Returns
+        ----------
+        ensemble : array
+            size by iterations by number of metrics array of test results.
+        """
+        if seed_list is None:
+            seed_list = [None] * size
+
+        ensemble = []
+        if nprocs != 1:
+            # First a parallel implementation.
+            pool = multiprocessing.Pool(nprocs)
+            args = (
+                    (initial_subset, batch_size, n_max, seed_list[x],
+                     self.train_data, self.target,
+                     self.train_model, self.predict, self.acquisition_function)
+                    for x in np.arange(size))
+            for r in pool.imap_unordered(_test_acquisition, args):
+                ensemble.append(r)
+                # Wait to make things more stable.
+                time.sleep(0.001)
+            pool.close()
+        else:
+            for x in np.arange(size):
+                arg = (initial_subset, batch_size, n_max, seed_list[x],
+                       self.train_data, self.target,
+                       self.train_model, self.predict,
+                       self.acquisition_function)
+                ensemble.append(_test_acquisition(arg))
+        return ensemble
 
 
 def _test_acquisition(args):
@@ -272,8 +285,8 @@ def _test_acquisition(args):
                 arbitratry meta data for output.
 
         acquisition_function : object
-            function which returns a list of acquisition function values,
-            where the largest value(s) are to be acquired.
+            function which returns a list of indices of candidates to be
+            acquired.
 
             Parameters
             ----------
@@ -282,8 +295,8 @@ def _test_acquisition(args):
 
             Returns
             ----------
-            af : list
-                Acquisition function values corresponding.
+            sample : list
+                Indices in order of relevance from user defined function.
         """
         initial_subset = args[0]
         batch_size = args[1]
@@ -333,8 +346,7 @@ def _test_acquisition(args):
             aqcuisition_args, score = predict(model, test_fp, test_target)
 
             # Calculate acquisition values.
-            af = acquisition_function(*aqcuisition_args)
-            sample = np.argsort(af)[::-1]
+            sample = acquisition_function(*aqcuisition_args)
 
             to_acquire = test_index[sample[:batch_size]]
             assert len(to_acquire) == batch_size
@@ -343,4 +355,5 @@ def _test_acquisition(args):
             train_index += list(to_acquire)
             # Return meta data.
             output.append(score)
+
         return output

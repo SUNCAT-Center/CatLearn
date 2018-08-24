@@ -329,9 +329,9 @@ class GaussianProcess(object):
                                       bounds=self.bounds)
         else:
             minimizer_kwargs = {'method': algomin, 'args': args,
-                                'bounds': self.bounds, 'jac': eval_jac,
-                                'T': 10., 'interval': 30., 'niter': 30.}
+                                'bounds': self.bounds, 'jac': eval_jac}
             self.theta_opt = basinhopping(lf, theta,
+                                          T=10., interval=30, niter=30,
                                           minimizer_kwargs=minimizer_kwargs)
 
         # Update kernel_dict and regularization with optimized values.
