@@ -1,4 +1,4 @@
-# @Version u1.0.9
+# @Version u1.2.0
 
 import numpy as np
 from catlearn.optimize.warnings import *
@@ -7,7 +7,7 @@ from catlearn.optimize.io import backup_old_calcs, ase_traj_to_catlearn, \
                                  print_info
 from catlearn.optimize.constraints import create_mask_ase_constraints
 from ase.io.trajectory import TrajectoryWriter
-from ase.optimize import BFGS, FIRE, LBFGS, MDMin, QuasiNewton, GoodOldQuasiNewton
+from ase.optimize import *
 from ase.optimize.sciopt import *
 from catlearn.optimize.get_real_values import eval_and_append, \
                                               get_energy_catlearn, \
@@ -17,6 +17,7 @@ from catlearn.optimize.convergence import converged, get_fmax
 from catlearn.optimize.catlearn_ase_calc import CatLearnASE
 from catlearn.optimize.plots import get_plot_step
 from ase.optimize.bfgslinesearch import BFGSLineSearch
+
 import os
 
 class CatLearnMinimizer(object):
@@ -107,20 +108,20 @@ class CatLearnMinimizer(object):
         # Configure ML calculator.
         if self.ml_calc is None:
             self.kdict = {'k1': {'type': 'gaussian', 'width': 0.5,
-                                 'dimension': 'single',
-                                 'bounds': ((0.01, 0.5), ),
+                                 'dimension': 'features',
+                                 'bounds': ((0.01, 0.5), ) * len(self.ind_mask_constr,),
                                  'scaling': 1.0,
-                                 'scaling_bounds': ((1.0, 1.0), )}
+                                 'scaling_bounds': ((0.1, 1.0), )}
                           }
 
             self.ml_calc = GPCalculator(
                 kernel_dict=self.kdict, opt_hyperparam=True, scale_data=False,
                 scale_optimizer=False, calc_uncertainty=True,
                 algo_opt_hyperparamters='L-BFGS-B',
-                regularization=1e-2, regularization_bounds=(1e-5, 1e-2))
+                regularization=1e-3, regularization_bounds=(1e-5, 1e-2))
 
-    def run(self, fmax=0.05, ml_algo='GoodOldQuasiNewton', max_iter=500,
-            min_iter=0, ml_max_iter=250, penalty=2.0,
+    def run(self, fmax=0.05, ml_algo='BFGS', max_iter=500,
+            min_iter=0, ml_max_iter=250, penalty=0.0,
             plots=False):
 
         """Executing run will start the optimization process.
@@ -169,7 +170,9 @@ class CatLearnMinimizer(object):
         converged(self)
         print_info(self)
 
-        initialize(self, i_step='SciPyFminCG')
+
+        initialize(self, i_step='BFGS')
+
         converged(self)
         print_info(self)
 
@@ -182,7 +185,7 @@ class CatLearnMinimizer(object):
                 self.list_gradients = self.list_gradients[-max_memory:]
 
             # Update scaling.
-            scale_targets = np.mean(self.list_targets)
+            scale_targets = np.max(self.list_targets)
 
             # 1. Train Machine Learning process.
 
@@ -221,7 +224,7 @@ class CatLearnMinimizer(object):
             opt_ml = eval(ml_algo)(guess)
             print('Starting ML optimization...')
             if ml_algo in self.list_minimizers_grad:
-                opt_ml.run(fmax=fmax/1.1, steps=ml_max_iter)
+                opt_ml.run(fmax=fmax, steps=ml_max_iter)
             else:
                 opt_ml.run(steps=ml_max_iter)
             print('ML optimized.')

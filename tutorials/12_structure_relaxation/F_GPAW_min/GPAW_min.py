@@ -12,7 +12,7 @@ import os
     Benchmark GPAW calculations.
 """
 
-catlearn_version = '_u_1_0_9'
+catlearn_version = '_u_1_1_0'
 
 results_dir = './Results/'
 
@@ -33,12 +33,11 @@ mol = Atoms('H2O',
              (b, b, 0.1219 + b)],
             cell=[a, a, a])
 
-mol.rattle(seed=0, stdev=0.5)
+mol.rattle(seed=0, stdev=0.2)
 
 ##############################################################################
 
-minimizers = ['BFGS', 'LBFGS', 'SciPyFminCG', 'SciPyFminBFGS',
-              'FIRE', 'GoodOldQuasiNewton', 'BFGSLineSearch']
+minimizers = ['BFGS', 'LBFGS', 'FIRE']
 
 for i in minimizers:
     filename = i + '_opt.traj'
@@ -49,6 +48,7 @@ for i in minimizers:
         opt.run(fmax=0.05)
         shutil.copy('./' + filename, results_dir + filename)
 
+minimizers = ['BFGS', 'FIRE']
 
 for i in minimizers:
     filename = i + '_opt' + catlearn_version
@@ -56,7 +56,7 @@ for i in minimizers:
         initial = mol.copy()
         initial.set_calculator(calc)
         opt = CatLearnMinimizer(initial, filename=filename)
-        opt.run(fmax=0.05)
+        opt.run(fmax=0.05, ml_algo=i)
         shutil.copy('./' + filename + '_catlearn.traj',
                     results_dir + filename + '_catlearn.traj')
 

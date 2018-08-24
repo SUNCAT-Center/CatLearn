@@ -2,11 +2,13 @@ from catlearn.optimize.catlearn_minimizer import CatLearnMinimizer
 from catlearn.optimize.functions_calc import Himmelblau, NoiseHimmelblau, \
 GoldsteinPrice, Rosenbrock, MullerBrown
 from ase import Atoms
-from ase.optimize import BFGS, FIRE, MDMin
-from ase.optimize.sciopt import SciPyFminPowell, SciPyFminBFGS
+from ase.optimize import *
+from ase.optimize.sciopt import *
 from ase.io import read
 import copy
 import numpy as np
+import os
+import shutil
 
 """ 
     Minimization example.
@@ -14,39 +16,50 @@ import numpy as np
     Goldstein-Price or Rosenbrock.       
 """
 
+catlearn_version = '_u_1_2_0'
+
+results_dir = './Results/'
+
+if not os.path.exists(results_dir):
+    os.makedirs(results_dir)
+
 # 0. Set calculator.
-ase_calculator = Himmelblau()
+calc = Himmelblau()
 
 # 1. Set common initial structure.
-common_initial = Atoms('C', positions=[(-1.0, -1.0, 0.0)])
-common_initial.rattle(stdev=0.1, seed=0)
+mol = Atoms('C', positions=[(-1.0, -1.0, 0.0)])
+mol.rattle(stdev=0.1, seed=0)
 
-# 2.A. Optimize structure using ASE.
-initial_ase = copy.deepcopy(common_initial)
-initial_ase.set_calculator(copy.deepcopy(ase_calculator))
+# 2. Benchmark.
+minimizers = ['BFGS', 'LBFGS', 'FIRE']
 
-ase_opt = BFGS(initial_ase, trajectory='ase_optimization.traj')
-ase_opt.run(fmax=0.01, steps=500)
+for i in minimizers:
+    filename = i + '_opt.traj'
+    if not os.path.exists(results_dir + filename):
+        initial = mol.copy()
+        initial.set_calculator(calc)
+        opt = eval(i)(initial, trajectory=filename, )
+        opt.run(fmax=0.05, steps=500)
+        shutil.copy('./' + filename, results_dir + filename)
 
-# 2.B. Optimize structure using CatLearn:
+minimizers = ['BFGS', 'FIRE']
 
-initial_catlearn = copy.deepcopy(common_initial)
-initial_catlearn.set_calculator(copy.deepcopy(ase_calculator))
+for i in minimizers:
+    filename = i + '_opt' + catlearn_version
+    if not os.path.exists(results_dir + filename + '_catlearn.traj'):
+        initial = mol.copy()
+        initial.set_calculator(calc)
+        opt = CatLearnMinimizer(initial, filename=filename)
+        opt.run(fmax=0.05, ml_algo=i)
+        shutil.copy('./' + filename + '_catlearn.traj',
+                    results_dir + filename + '_catlearn.traj')
 
-catlearn_opt = CatLearnMinimizer(initial_catlearn, filename='results')
-catlearn_opt.run(fmax=0.01)
 
-# 3. Summary of the results:
+# # 3. Summary of the results:
 print('\n Summary of the results:\n ------------------------------------')
 
-ase_results = read('ase_optimization.traj', ':')
-
-print('Number of function evaluations using ASE:', len(ase_results))
-print('Energy ASE (eV):', ase_results[-1].get_potential_energy())
-print('Coordinates ASE:', ase_results[-1].get_positions().flatten())
-
-catlearn_results = read('results_catlearn.traj', ':')
-
-print('Number of function evaluations using CatLearn:', len(catlearn_results))
-print('Energy CatLearn (eV):', catlearn_results[-1].get_potential_energy())
-print('Coordinates CatLearn:', catlearn_results[-1].get_positions().flatten())
+# Function evaluations:
+for filename in os.listdir(results_dir):
+    atoms = read(filename,':')
+    feval = len(atoms)
+    print('Number of function evaluations using ' + filename+ ':', feval)

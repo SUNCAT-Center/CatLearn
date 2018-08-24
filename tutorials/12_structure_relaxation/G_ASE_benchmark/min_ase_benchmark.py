@@ -1,105 +1,81 @@
 from ase import Atoms
 from gpaw import GPAW
-from ase.optimize import BFGS, FIRE, MDMin
-from ase.optimize.sciopt import SciPyFminPowell, SciPyFminBFGS
+from ase.optimize import *
+from ase.optimize.sciopt import *
 from catlearn.optimize.catlearn_minimizer import CatLearnMinimizer
 from ase.io import read
 import copy
 from ase.db import connect
 import ase.db
+from ase.visualize import view
+import numpy as np
+import os
+import shutil
 
+""" 
+   ASE Benchmark.
+"""
 
-# 0. Setup calculator:
+catlearn_version = '_u_1_2_0'
+
+# Systems = ['H2', 'Au8CO', 'Cu2']
+system = '_C5H12'
+
+# 1. Setup calculator:
 ###############################################################################
-ase_calculator = GPAW(mode='lcao',
+calc = GPAW(mode='lcao',
      basis='dzp',
      kpts={'density': 2.0})
 
-# 1 Structure:
+# 2. Build/Load structure:
+###############################################################################
 db = ase.db.connect('systems.db')
-common_initial = db.get_atoms('Au8CO')
-
+mol = db.get_atoms(formula='C5H12')
 
 np.random.seed(1)
-for i in common_initial:
+for i in mol:
     if i.position[2] > 8.50:
         i.position = i.position + np.random.normal(scale=0.0)
 
-# 2.A. Optimize structure using BFGS.
+# 3. Benchmark.
 ###############################################################################
+results_dir = './Results/'
 
-initial_ase = copy.deepcopy(common_initial)
-initial_ase.set_calculator(ase_calculator)
-
-bfgs_opt = BFGS(initial_ase, trajectory='bfgs_optimization.traj')
-bfgs_opt.run(fmax=0.02)
-
-# 2.B. Optimize structure using CatLearn:
-###############################################################################
-
-initial_catlearn = copy.deepcopy(common_initial)
-initial_catlearn.set_calculator(ase_calculator)
-
-catlearn_opt = CatLearnMinimizer(initial_catlearn, filename='results')
-catlearn_opt.run(fmax=0.02, ml_algo='SciPyFminCG')
-
-# 2.C. Optimize structure using FIRE:
-###############################################################################
-
-initial_fire = copy.deepcopy(common_initial)
-initial_fire.set_calculator(ase_calculator)
-
-fire_opt = FIRE(initial_fire, trajectory='fire_optimization.traj')
-fire_opt.run(fmax=0.02)
-
-# 2.D. Optimize structure using MDMin:
-###############################################################################
-
-initial_mdmin = copy.deepcopy(common_initial)
-initial_mdmin.set_calculator(ase_calculator)
-
-mdmin_opt = MDMin(initial_mdmin, trajectory='mdmin_optimization.traj')
-mdmin_opt.run(fmax=0.02)
-
-# 2.E. Optimize structure using SciPyFminCG:
-###############################################################################
-
-# initial_scipy = copy.deepcopy(common_initial)
-# initial_scipy.set_calculator(ase_calculator)
-#
-# scipy_opt = SciPyFminBFGS(initial_scipy, trajectory='scipy_optimization.traj')
-# scipy_opt.run(fmax=0.02)
+if not os.path.exists(results_dir):
+    os.makedirs(results_dir)
 
 
-# 3. Summary of the results:
+minimizers = ['BFGS', 'FIRE', 'LBFGS']
+
+for i in minimizers:
+    filename = i + system + '_opt.traj'
+    if not os.path.exists(results_dir + filename):
+        initial = mol.copy()
+        initial.set_calculator(calc)
+        opt = eval(i)(initial, trajectory=filename, )
+        opt.run(fmax=0.02, steps=500)
+        shutil.copy('./' + filename, results_dir + filename)
+
+minimizers = ['BFGS', 'FIRE']
+
+for i in minimizers:
+    filename = i + system + '_opt' + catlearn_version
+    if not os.path.exists(results_dir + filename + '_catlearn.traj'):
+        initial = mol.copy()
+        initial.set_calculator(calc)
+        opt = CatLearnMinimizer(initial, filename=filename)
+        opt.run(fmax=0.02, ml_algo=i)
+        shutil.copy('./' + filename + '_catlearn.traj',
+                    results_dir + filename + '_catlearn.traj')
+
+
+# 4. Summary of the results:
 ###############################################################################
 
 print('\n Summary of the results:\n ------------------------------------')
 
-bfgs_results = read('bfgs_optimization.traj', ':')
-
-print('Number of function evaluations using BFGS:', len(bfgs_results))
-print('Energy BFGS (eV):', bfgs_results[-1].get_potential_energy())
-
-fire_results = read('fire_optimization.traj', ':')
-
-print('Number of function evaluations using FIRE:', len(fire_results))
-print('Energy FIRE (eV):', fire_results[-1].get_potential_energy())
-
-mdmin_results = read('mdmin_optimization.traj', ':')
-
-print('Number of function evaluations using MDMin:', len(mdmin_results))
-print('Energy MDMin (eV):', mdmin_results[-1].get_potential_energy())
-
-
-catlearn_results = read('results_catlearn.traj', ':')
-
-print('Number of function evaluations using CatLearn:', len(catlearn_results))
-print('Energy CatLearn (eV):', catlearn_results[-1].get_potential_energy())
-
-# scipy_results = read('scipy_optimization.traj', ':')
-#
-# print('Number of function evaluations using SciPy:', len(scipy_results))
-# print('Energy SciPy (eV):', scipy_results[-1].get_potential_energy())
-
-
+# Function evaluations:
+for filename in os.listdir(results_dir):
+    atoms = read(filename,':')
+    feval = len(atoms)
+    print('Number of function evaluations using ' + filename + ':', feval)
