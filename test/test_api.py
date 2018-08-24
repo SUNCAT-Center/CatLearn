@@ -24,7 +24,9 @@ class TestEnergyLandscape(object):
         self.std = {}
 
     def _get_adsorbate_fields(self, d):
-        return ['test'] * 7
+        fields = [1, str(d.species), str(d.name), str(d.crystal),
+                  str(d.surf_lattice), str(d.facet), '2x2x3']
+        return fields
 
 
 class TestAPI(unittest.TestCase):
@@ -78,6 +80,8 @@ class TestAPI(unittest.TestCase):
                                                    prediction,
                                                    uncertainty,
                                                    catmap=energy_landscape)
+        if __name__ == '__main__':
+            print(energy_landscape.formation_energies)
 
 
 if __name__ == '__main__':
