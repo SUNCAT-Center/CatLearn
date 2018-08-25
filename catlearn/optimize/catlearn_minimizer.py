@@ -1,4 +1,4 @@
-# @Version u1.4.6
+# @Version u1.4.7
 
 import numpy as np
 from catlearn.optimize.warnings import *
@@ -17,7 +17,6 @@ from catlearn.optimize.convergence import converged, get_fmax
 from catlearn.optimize.catlearn_ase_calc import CatLearnASE
 from catlearn.optimize.plots import get_plot_step
 from ase.data import covalent_radii
-
 import os
 
 class CatLearnMinimizer(object):
@@ -163,27 +162,36 @@ class CatLearnMinimizer(object):
         converged(self)
         print_info(self)
 
+        # Configure ML calculator.
+
+        # Guess hyperparameter boundaries using covalent radii:
+        atomic_numbers_array = []
+        for i in self.ase_ini:
+            atomic_numbers_array.append(i.number)
+            atomic_numbers_array.append(i.number)
+            atomic_numbers_array.append(i.number)
+        list_bounds = ()
+        upper_list = []
+        for i in self.ind_mask_constr:
+            upper_i = covalent_radii[atomic_numbers_array[i[0]]] / 1.0
+            upper_list.append(upper_i/2.0)
+            list_bounds += ((0.01, upper_i),)
+
+        if self.ml_calc is None:
+            self.kdict = {'k1': {'type': 'gaussian', 'width': upper_list,
+                                 'dimension': 'features',
+                                 'bounds': list_bounds,
+                                 'scaling': 1.0,
+                                 'scaling_bounds': ((1.0, 1.0), )}
+                          }
+            self.ml_calc = GPCalculator(
+                kernel_dict=self.kdict, opt_hyperparam=True, scale_data=False,
+                scale_optimizer=False, calc_uncertainty=True,
+                algo_opt_hyperparamters='L-BFGS-B',
+                global_opt_hyperparameters=False,
+                regularization=1e-5, regularization_bounds=(1e-6, 1e-3))
+
         while not converged(self):
-
-            # Configure ML calculator.
-            atomic_numbers = np.unique(self.ase_ini.numbers)
-            list_radii = []
-            for i in atomic_numbers:
-                list_radii.append(covalent_radii[i])
-            max_step = np.min(list_radii)/4.0
-
-            if self.ml_calc is None:
-                self.kdict = {'k1': {'type': 'gaussian', 'width': max_step/2.0,
-                                     'dimension': 'features',
-                                     'bounds': ((1e-3, max_step),) * len(self.ind_mask_constr),
-                                     'scaling': 1.0,
-                                     'scaling_bounds': ((1.0, 1.0), )}
-                              }
-                self.ml_calc = GPCalculator(
-                    kernel_dict=self.kdict, opt_hyperparam=True, scale_data=False,
-                    scale_optimizer=False, calc_uncertainty=True,
-                    algo_opt_hyperparamters='L-BFGS-B',
-                    regularization=1e-3, regularization_bounds=(1e-5, 1e-2))
 
             # Limited memory.
             if len(self.list_train) >= max_memory:
@@ -280,8 +288,6 @@ class CatLearnMinimizer(object):
             # if max_abs_forces > 0.10:
             #     self.ml_calc.__dict__['opt_hyperparam'] = False
             ########## UNDER TEST #####################################
-
-
 
 
 def initialize(self, i_step=1e-3):

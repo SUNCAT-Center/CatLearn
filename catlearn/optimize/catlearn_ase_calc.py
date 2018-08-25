@@ -1,4 +1,4 @@
-# @Version u1.4.6
+# @Version u1.4.7
 
 import numpy as np
 from catlearn.optimize.constraints import apply_mask_ase_constraints

@@ -9,6 +9,7 @@ class GPCalculator(object):
                  regularization=1e-3,
                  regularization_bounds=((1e-5, 1e-3),),
                  algo_opt_hyperparamters='L-BFGS-B',
+                 global_opt_hyperparameters=False,
                  scale_data=False,
                  scale_optimizer=False,
                  opt_hyperparam=False,
@@ -44,7 +45,7 @@ class GPCalculator(object):
         self.reg_bounds = regularization_bounds
         self.scale_data = scale_data
         self.scale_optimizer = scale_optimizer
-        self.global_optimization = False
+        self.glob_opt = global_opt_hyperparameters
         self.algo_opt_hyperparamters = algo_opt_hyperparamters
         self.opt_hyperparam = opt_hyperparam
         self.guess_hyper = guess_hyper
@@ -95,7 +96,7 @@ class GPCalculator(object):
         msg = "One must train a GP before optimizing its hyper-parameters."
         assert self.trained_process, msg
         self.trained_process.optimize_hyperparameters(
-                                        global_opt=self.global_optimization,
+                                        global_opt=self.glob_opt,
                                         algomin=self.algo_opt_hyperparamters)
 
         print('Hyperparameter optimization is switched on.')

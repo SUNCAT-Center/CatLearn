@@ -1,4 +1,4 @@
-# @Version u1.4.6
+# @Version u1.4.7
 
 import numpy as np
 from catlearn.optimize.warnings import *
@@ -17,6 +17,7 @@ from ase.optimize import FIRE, MDMin, BFGS , LBFGS
 from scipy.spatial import distance
 import copy
 import os
+from ase.data import covalent_radii
 
 
 class CatLearnNEB(object):
@@ -214,7 +215,7 @@ class CatLearnNEB(object):
         # Get path distance:
         self.path_distance = copy.deepcopy(self.d_start_end)
 
-    def run(self, fmax=0.05, unc_convergence=0.010, max_iter=500,
+    def run(self, fmax=0.05, unc_convergence=0.020, max_iter=500,
             ml_algo='FIRE', ml_max_iter=200, plot_neb_paths=False,
             penalty=0.0, acquisition='acq_1'):
 
@@ -248,28 +249,35 @@ class CatLearnNEB(object):
         Files :
         """
 
+        # Guess hyperparameter boundaries using covalent radii:
+        atomic_numbers_array = []
+        for i in self.ase_ini:
+            atomic_numbers_array.append(i.number)
+            atomic_numbers_array.append(i.number)
+            atomic_numbers_array.append(i.number)
+        list_bounds = ()
+        upper_list = []
+        for i in self.ind_mask_constr:
+            upper_i = covalent_radii[atomic_numbers_array[i[0]]] / 1.0
+            upper_list.append(upper_i/2.0)
+            list_bounds += ((0.01, upper_i),)
+
+        if self.ml_calc is None:
+            self.kdict = {'k1': {'type': 'gaussian', 'width': upper_list,
+                                 'dimension': 'features',
+                                 'bounds': list_bounds,
+                                 'scaling': 1.0,
+                                 'scaling_bounds': ((1.0, 1.0), )}
+                          }
+            self.ml_calc = GPCalculator(
+                kernel_dict=self.kdict, opt_hyperparam=True, scale_data=False,
+                scale_optimizer=False, calc_uncertainty=True,
+                algo_opt_hyperparamters='L-BFGS-B',
+                global_opt_hyperparameters=False,
+                regularization=1e-5, regularization_bounds=(1e-6, 1e-3))
+
         while True:
             # 1) Train Machine Learning process:
-
-            # Configure ML calculator.
-            if self.ml_calc is None or self.iter > 0:
-                width_upper_bound = 0.25
-                if len(self.list_targets) > self.n_images-2:
-                    width_upper_bound = 0.75
-                self.kdict = {'k1': {'type': 'gaussian', 'width': 0.25,
-                                     'dimension': 'features',
-                                     'bounds': ((1e-4, width_upper_bound), ) * len(
-                                                             self.ind_mask_constr),
-                                     'scaling': 1.0,
-                                     'scaling_bounds': ((1.0, 1.0), )}
-                              }
-
-                self.ml_calc = GPCalculator(
-                    kernel_dict=self.kdict, opt_hyperparam=True, scale_data=False,
-                    scale_optimizer=False, calc_uncertainty=True,
-                    algo_opt_hyperparamters='L-BFGS-B',
-                    regularization=1e-3, regularization_bounds=(1e-6, 1e-2))
-
 
             # Scale:
             self.scale_targets = np.max(self.list_targets)
