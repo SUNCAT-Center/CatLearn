@@ -1,4 +1,4 @@
-# @Version u1.4.7
+# @Version u1.4.8
 
 import numpy as np
 from catlearn.optimize.warnings import *
@@ -217,7 +217,7 @@ class CatLearnNEB(object):
 
     def run(self, fmax=0.05, unc_convergence=0.020, max_iter=500,
             ml_algo='FIRE', ml_max_iter=200, plot_neb_paths=False,
-            penalty=0.0, acquisition='acq_1'):
+            penalty=0.0, acquisition='acq_3'):
 
         """Executing run will start the optimization process.
 
@@ -258,7 +258,7 @@ class CatLearnNEB(object):
         list_bounds = ()
         upper_list = []
         for i in self.ind_mask_constr:
-            upper_i = covalent_radii[atomic_numbers_array[i[0]]] / 1.0
+            upper_i = (1.0 / covalent_radii[atomic_numbers_array[i[0]]]) / 2.0
             upper_list.append(upper_i/2.0)
             list_bounds += ((0.01, upper_i),)
 
