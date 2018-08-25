@@ -16,7 +16,7 @@ import shutil
    ASE Benchmark.
 """
 
-catlearn_version = '_u_1_2_0'
+catlearn_version = '_u_1_4_6'
 
 # Systems = ['H2', 'Au8CO', 'Cu2']
 system = '_C5H12'

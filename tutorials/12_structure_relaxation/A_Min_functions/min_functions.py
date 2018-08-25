@@ -16,7 +16,7 @@ import shutil
     Goldstein-Price or Rosenbrock.       
 """
 
-catlearn_version = '_u_1_2_0'
+catlearn_version = '_u_1_4_6'
 
 results_dir = './Results/'
 
@@ -24,7 +24,7 @@ if not os.path.exists(results_dir):
     os.makedirs(results_dir)
 
 # 0. Set calculator.
-calc = Himmelblau()
+calc = MullerBrown()
 
 # 1. Set common initial structure.
 mol = Atoms('C', positions=[(-1.0, -1.0, 0.0)])

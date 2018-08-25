@@ -1,4 +1,4 @@
-# @Version u1.0.3
+# @Version u1.4.6
 
 import numpy as np
 from catlearn.optimize.warnings import *
@@ -8,14 +8,12 @@ from catlearn.optimize.convergence import get_fmax
 from catlearn.optimize.get_real_values import eval_and_append
 from catlearn.optimize.catlearn_ase_calc import CatLearnASE
 from catlearn.optimize.constraints import create_mask_ase_constraints
-from catlearn.optimize.plots import get_plot_mullerbrown, get_plots_neb, \
-                                    get_plot_mullerbrown_p
+from catlearn.optimize.plots import get_plot_mullerbrown, get_plots_neb
 from ase.io.trajectory import TrajectoryWriter
 from ase.neb import NEB
 from ase.neb import NEBTools
 from ase.io import read, write
-from ase.optimize import MDMin, FIRE, LBFGS, BFGS
-from ase.optimize.sciopt import *
+from ase.optimize import FIRE, MDMin, BFGS , LBFGS
 from scipy.spatial import distance
 import copy
 import os
@@ -24,7 +22,7 @@ import os
 class CatLearnNEB(object):
 
     def __init__(self, start, end, path=None, n_images=None, spring=None,
-                 interpolation=None, mic=False, neb_method='aseneb',
+                 interpolation=None, mic=False, neb_method='improvedtangent',
                  ml_calc=None, ase_calc=None, inc_prev_calcs=False,
                  stabilize=False, restart=False):
         """ Nudged elastic band (NEB) setup.
@@ -108,7 +106,7 @@ class CatLearnNEB(object):
         energy_fs = fs_endpoint[-1].get_potential_energy()
 
         # Set scaling of the targets:
-        self.scale_targets = np.min([energy_is, energy_fs])
+        self.scale_targets = np.max([energy_is, energy_fs])
 
         # Convert atoms information into data to feed the ML process.
 
@@ -141,21 +139,6 @@ class CatLearnNEB(object):
             self.ind_mask_constr = create_mask_ase_constraints(
                                                 self.ase_ini, self.constraints)
 
-        # Configure ML calculator.
-        if self.ml_calc is None:
-            self.kdict = {'k1': {'type': 'gaussian', 'width': 0.5,
-                                 'dimension': 'single',
-                                 'bounds': ((0.01, 1.0), ),
-                                 'scaling': 1.0,
-                                 'scaling_bounds': ((1.0, 1.0), )}
-                          }
-
-            self.ml_calc = GPCalculator(
-                kernel_dict=self.kdict, opt_hyperparam=True, scale_data=False,
-                scale_optimizer=False, calc_uncertainty=True,
-                algo_opt_hyperparamters='L-BFGS-B',
-                regularization=1e-2, regularization_bounds=(1e-6, 1e-2))
-
         # Settings for the NEB.
         self.neb_method = neb_method
         self.spring = spring
@@ -174,7 +157,7 @@ class CatLearnNEB(object):
                                         constraints=self.constraints,
                                         index_constraints=self.ind_mask_constr,
                                         trained_process=None,
-                                        ml_calculator=self.ml_calc,
+                                        ml_calculator=None,
                                         scaling_targets=self.scale_targets,
                                         iteration=self.iter,
                                         kappa=0.0
@@ -205,7 +188,7 @@ class CatLearnNEB(object):
                                         constraints=self.constraints,
                                         index_constraints=self.ind_mask_constr,
                                         trained_process=None,
-                                        ml_calculator=self.ml_calc,
+                                        ml_calculator=None,
                                         scaling_targets=self.scale_targets,
                                         iteration=self.iter,
                                         kappa=0.0
@@ -232,7 +215,7 @@ class CatLearnNEB(object):
         self.path_distance = copy.deepcopy(self.d_start_end)
 
     def run(self, fmax=0.05, unc_convergence=0.010, max_iter=500,
-            ml_algo='MDMin', ml_max_iter=200, plot_neb_paths=False,
+            ml_algo='FIRE', ml_max_iter=200, plot_neb_paths=False,
             penalty=0.0, acquisition='acq_1'):
 
         """Executing run will start the optimization process.
@@ -266,8 +249,30 @@ class CatLearnNEB(object):
         """
 
         while True:
-
             # 1) Train Machine Learning process:
+
+            # Configure ML calculator.
+            if self.ml_calc is None or self.iter > 0:
+                width_upper_bound = 0.25
+                if len(self.list_targets) > self.n_images-2:
+                    width_upper_bound = 0.75
+                self.kdict = {'k1': {'type': 'gaussian', 'width': 0.25,
+                                     'dimension': 'features',
+                                     'bounds': ((1e-4, width_upper_bound), ) * len(
+                                                             self.ind_mask_constr),
+                                     'scaling': 1.0,
+                                     'scaling_bounds': ((1.0, 1.0), )}
+                              }
+
+                self.ml_calc = GPCalculator(
+                    kernel_dict=self.kdict, opt_hyperparam=True, scale_data=False,
+                    scale_optimizer=False, calc_uncertainty=True,
+                    algo_opt_hyperparamters='L-BFGS-B',
+                    regularization=1e-3, regularization_bounds=(1e-6, 1e-2))
+
+
+            # Scale:
+            self.scale_targets = np.max(self.list_targets)
 
             # Check that the user is not feeding redundant information to ML.
 
@@ -316,7 +321,7 @@ class CatLearnNEB(object):
                 neb_opt = eval(ml_algo)(ml_neb)
 
             print('Starting ML NEB optimization...')
-            neb_opt.run(fmax=fmax,
+            neb_opt.run(fmax=fmax * 2.0,
                         steps=ml_max_iter)
 
             # if np.max(self.uncertainty_path[1:-1]) <= 2 * unc_convergence:
@@ -359,9 +364,9 @@ class CatLearnNEB(object):
                     interesting_point = self.images[1:-1][
                                       argmax_unc].get_positions().flatten()
 
-                # Select image with max. predicted value (absolute value).
+                # Select image with max. predicted value.
                 if self.iter % 2 == 1:
-                    argmax_unc = np.argmax(np.abs(energies_path[1:-1]))
+                    argmax_unc = np.argmax(energies_path[1:-1])
                     interesting_point = self.images[1:-1][
                                               int(argmax_unc)].get_positions(
                                               ).flatten()
@@ -372,9 +377,10 @@ class CatLearnNEB(object):
                 interesting_point = self.images[1:-1][
                                   argmax_unc].get_positions().flatten()
 
-                # Select image with max. predicted value (absolute value).
+                # Select image with max. predicted value.
                 if np.max(self.uncertainty_path[1:-1]) < unc_convergence:
-                    argmax_unc = np.argmax(np.abs(energies_path[1:-1]))
+
+                    argmax_unc = np.argmax(energies_path[1:-1])
                     interesting_point = self.images[1:-1][
                                               int(argmax_unc)].get_positions(
                                               ).flatten()
@@ -399,10 +405,8 @@ class CatLearnNEB(object):
                     get_plot_mullerbrown(images=self.images,
                                          interesting_point=interesting_point,
                                          trained_process=trained_process,
-                                         list_train=self.list_train)
-                    # get_plot_mullerbrown_p(images=self.images,
-                    #                        interesting_point=interesting_point,
-                    #                        list_train=self.list_train)
+                                         list_train=self.list_train,
+                                         )
             # Store results each iteration:
             store_results_neb(s, e, sfit, efit, self.uncertainty_path)
 
@@ -444,8 +448,10 @@ class CatLearnNEB(object):
                   max_abs_forces)
             print('Energy of the last image evaluated (eV):',
                   self.list_targets[-1][0])
-            print('Energy of the last image evaluated w.r.t. to endpoint ('
-                  'eV):', self.list_targets[-1][0] - self.scale_targets)
+            print('Forward reaction barrier energy (eV):',
+                  self.list_targets[-1][0] - self.list_targets[0][0])
+            print('Backward reaction barrier energy (eV):',
+                  self.list_targets[-1][0] - self.list_targets[1][0])
             print('Number #id of the last evaluated image:', argmax_unc + 2)
 
             # 5) Check convergence:
@@ -468,19 +474,24 @@ class CatLearnNEB(object):
                 if self.feval > 5:
                     break
 
-            #######################################################
-            #######################################################
-            if np.max(self.uncertainty_path[1:-1]) <= unc_convergence:
-               self.ml_calc.__dict__['opt_hyperparam'] = True
-            if np.max(self.uncertainty_path[1:-1]) > unc_convergence:
-               self.ml_calc.__dict__['opt_hyperparam'] = False
-            #######################################################
-            #######################################################
+            ##################################################################
+            # # Remove outliers from the training list.
+            # def reject_outliers(data, m=2):
+            #     index = abs(data - np.mean(data)) > m * np.std(data)
+            #     return index
+            #
+            # outliers_index = reject_outliers(self.list_targets)
+            #
+            # if len(self.list_targets) > 50:
+            #     for i in range(0, len(outliers_index)):
+            #         if outliers_index[i] is True:
+            #             self.list_targets = np.delete(self.list_targets, [i], axis=0)
+            #             self.list_train = np.delete(self.list_train, [i], axis=0)
+            #             self.list_gradients = np.delete(self.list_gradients, [i], axis=0)
+            ##################################################################
 
         # Print Final convergence:
         print('Number of function evaluations in this run:', self.iter)
-
-
 
 
 def create_ml_neb(is_endpoint, fs_endpoint, images_interpolation, kappa,

@@ -17,12 +17,8 @@ import shutil
     Minimization example. 
 """
 
-catlearn_version = '_u_1_0_9'
-
-results_dir = './Results/'
-
-if not os.path.exists(results_dir):
-    os.makedirs(results_dir)
+catlearn_version = '_u_1_4_6'
+system = '_N2_Cu111_rattle00'
 
 # 1. Structural relaxation. ##################################################
 
@@ -36,7 +32,7 @@ d = 1.10
 
 slab = fcc111('Cu', size=(2, 2, 4), vacuum=10.0)
 molecule = Atoms('CO', positions=[(0., 0., 0.), (0., 0., d)])
-molecule.rattle(stdev=0.4, seed=0)
+molecule.rattle(stdev=0.0, seed=0)
 add_adsorbate(slab, molecule, h, 'ontop')
 
 constraint = FixAtoms(mask=[atom.position[2] < 14.0 for atom in slab])
@@ -44,38 +40,45 @@ slab.set_constraint(constraint)
 
 mol = slab.copy()
 
+# 3. Benchmark.
+###############################################################################
+results_dir = './Results/'
 
-## 2. Benchmark.
+if not os.path.exists(results_dir):
+    os.makedirs(results_dir)
 
-minimizers = ['BFGS', 'LBFGS', 'SciPyFminCG', 'SciPyFminBFGS',
-              'FIRE', 'QuasiNewton', 'BFGSLineSearch', 'GoodOldQuasiNewton']
+
+minimizers = ['BFGS', 'FIRE', 'LBFGS']
 
 for i in minimizers:
-    filename = i + '_opt.traj'
+    filename = i + system + '_opt.traj'
     if not os.path.exists(results_dir + filename):
         initial = mol.copy()
         initial.set_calculator(calc)
-        opt = eval(i)(initial, trajectory=filename)
-        opt.run(fmax=0.05, steps=500)
+        opt = eval(i)(initial, trajectory=filename, )
+        opt.run(fmax=0.02, steps=500)
         shutil.copy('./' + filename, results_dir + filename)
 
+minimizers = ['BFGS', 'FIRE']
 
 for i in minimizers:
-    filename = i + '_opt' + catlearn_version
+    filename = i + system + '_opt' + catlearn_version
     if not os.path.exists(results_dir + filename + '_catlearn.traj'):
         initial = mol.copy()
         initial.set_calculator(calc)
         opt = CatLearnMinimizer(initial, filename=filename)
-        opt.run(fmax=0.05, ml_algo=i)
+        opt.run(fmax=0.02, ml_algo=i)
         shutil.copy('./' + filename + '_catlearn.traj',
                     results_dir + filename + '_catlearn.traj')
 
 
-# # 3. Summary of the results:
+# 4. Summary of the results:
+###############################################################################
+
 print('\n Summary of the results:\n ------------------------------------')
 
 # Function evaluations:
 for filename in os.listdir(results_dir):
     atoms = read(filename,':')
     feval = len(atoms)
-    print('Number of function evaluations using ' + filename+ ':', feval)
+    print('Number of function evaluations using ' + filename + ':', feval)

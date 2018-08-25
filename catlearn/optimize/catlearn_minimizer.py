@@ -1,4 +1,4 @@
-# @Version u1.2.0
+# @Version u1.4.6
 
 import numpy as np
 from catlearn.optimize.warnings import *
@@ -16,7 +16,7 @@ from ase.atoms import Atoms
 from catlearn.optimize.convergence import converged, get_fmax
 from catlearn.optimize.catlearn_ase_calc import CatLearnASE
 from catlearn.optimize.plots import get_plot_step
-from ase.optimize.bfgslinesearch import BFGSLineSearch
+from ase.data import covalent_radii
 
 import os
 
@@ -105,22 +105,7 @@ class CatLearnMinimizer(object):
                 self.ind_mask_constr = create_mask_ase_constraints(
                     self.ase_ini, self.constraints)
 
-        # Configure ML calculator.
-        if self.ml_calc is None:
-            self.kdict = {'k1': {'type': 'gaussian', 'width': 0.5,
-                                 'dimension': 'features',
-                                 'bounds': ((0.01, 0.5), ) * len(self.ind_mask_constr,),
-                                 'scaling': 1.0,
-                                 'scaling_bounds': ((0.1, 1.0), )}
-                          }
-
-            self.ml_calc = GPCalculator(
-                kernel_dict=self.kdict, opt_hyperparam=True, scale_data=False,
-                scale_optimizer=False, calc_uncertainty=True,
-                algo_opt_hyperparamters='L-BFGS-B',
-                regularization=1e-3, regularization_bounds=(1e-5, 1e-2))
-
-    def run(self, fmax=0.05, ml_algo='BFGS', max_iter=500,
+    def run(self, fmax=0.05, ml_algo='FIRE', max_iter=500,
             min_iter=0, ml_max_iter=250, penalty=0.0,
             plots=False):
 
@@ -170,15 +155,37 @@ class CatLearnMinimizer(object):
         converged(self)
         print_info(self)
 
-
-        initialize(self, i_step='BFGS')
+        if self.ase_calc is 'BFGSLineSearch':
+            initialize(self, i_step='BFGS')
+        else:
+            initialize(self, i_step=ml_algo)
 
         converged(self)
         print_info(self)
 
         while not converged(self):
 
-            # WIP: Memory
+            # Configure ML calculator.
+            atomic_numbers = np.unique(self.ase_ini.numbers)
+            list_radii = []
+            for i in atomic_numbers:
+                list_radii.append(covalent_radii[i])
+            max_step = np.min(list_radii)/4.0
+
+            if self.ml_calc is None:
+                self.kdict = {'k1': {'type': 'gaussian', 'width': max_step/2.0,
+                                     'dimension': 'features',
+                                     'bounds': ((1e-3, max_step),) * len(self.ind_mask_constr),
+                                     'scaling': 1.0,
+                                     'scaling_bounds': ((1.0, 1.0), )}
+                              }
+                self.ml_calc = GPCalculator(
+                    kernel_dict=self.kdict, opt_hyperparam=True, scale_data=False,
+                    scale_optimizer=False, calc_uncertainty=True,
+                    algo_opt_hyperparamters='L-BFGS-B',
+                    regularization=1e-3, regularization_bounds=(1e-5, 1e-2))
+
+            # Limited memory.
             if len(self.list_train) >= max_memory:
                 self.list_train = self.list_train[-max_memory:]
                 self.list_targets = self.list_targets[-max_memory:]
@@ -210,7 +217,7 @@ class CatLearnMinimizer(object):
 
             # Attach CatLearn calculator.
             if self.iter <= 2:
-                guess = (self.ase_ini)
+                guess = self.ase_ini
 
             guess.set_calculator(CatLearnASE(
                                     trained_process=trained_process,
@@ -237,7 +244,6 @@ class CatLearnMinimizer(object):
             # Optional. Plots.
             if plots is True:
                 get_plot_step(images=guess,
-                              interesting_point=interesting_point,
                               trained_process=trained_process,
                               list_train=self.list_train,
                               scale=scale_targets)
