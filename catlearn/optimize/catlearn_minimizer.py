@@ -1,4 +1,4 @@
-# @Version u1.4.7
+# @Version u1.4.8
 
 import numpy as np
 from catlearn.optimize.warnings import *
@@ -173,7 +173,7 @@ class CatLearnMinimizer(object):
         list_bounds = ()
         upper_list = []
         for i in self.ind_mask_constr:
-            upper_i = covalent_radii[atomic_numbers_array[i[0]]] / 1.0
+            upper_i = (1.0 / covalent_radii[atomic_numbers_array[i[0]]]) / 2.0
             upper_list.append(upper_i/2.0)
             list_bounds += ((0.01, upper_i),)
 
