@@ -13,7 +13,7 @@ import os, shutil
     Minimization example. 
 """
 
-catlearn_version = '_u_1_4_6'
+catlearn_version = '_u_1_5_0'
 
 # Systems = ['H2', 'Au8CO', 'Cu2']
 system = '_rattle01'
@@ -72,6 +72,9 @@ print('\n Summary of the results:\n ------------------------------------')
 
 # Function evaluations:
 for filename in os.listdir(results_dir):
-    atoms = read(filename,':')
+    try:
+        atoms = read(filename,':')
+    except:
+        pass
     feval = len(atoms)
     print('Number of function evaluations using ' + filename + ':', feval)

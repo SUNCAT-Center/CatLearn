@@ -12,7 +12,7 @@ import os
     Benchmark GPAW calculations.
 """
 
-catlearn_version = '_u_1_4_6'
+catlearn_version = '_u_1_5_0'
 
 results_dir = './Results/'
 

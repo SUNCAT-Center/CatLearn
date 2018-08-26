@@ -1,4 +1,4 @@
-# @Version u1.4.8
+# @Version u1.5.0
 
 import numpy as np
 from catlearn.optimize.constraints import apply_mask_ase_constraints
@@ -41,7 +41,7 @@ class CatLearnASE(Calculator):
 
             post_mean = predictions['pred_mean'][0][0]
             unc = predictions['uncertainty'][0]
-            acq_val = post_mean #+ (kappa * unc)
+            acq_val = post_mean + kappa * unc
             return [acq_val, unc]
 
         Calculator.calculate(self, atoms, properties, system_changes)

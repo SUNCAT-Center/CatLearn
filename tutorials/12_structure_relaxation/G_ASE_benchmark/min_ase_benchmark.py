@@ -16,7 +16,7 @@ import shutil
    ASE Benchmark.
 """
 
-catlearn_version = '_u_1_4_6'
+catlearn_version = '_u_1_5_0'
 
 # Systems = ['H2', 'Au8CO', 'Cu2']
 system = '_C5H12'
@@ -33,19 +33,21 @@ db = ase.db.connect('systems.db')
 mol = db.get_atoms(formula='C5H12')
 
 np.random.seed(1)
-for i in mol:
-    if i.position[2] > 8.50:
-        i.position = i.position + np.random.normal(scale=0.0)
+# for i in mol:
+#     if i.position[2] > 8.50:
+#         i.position = i.position + np.random.normal(scale=0.0)
 
-# 3. Benchmark.
-###############################################################################
+# mol.rattle(stdev=0.0, seed=1)
+#
+# # 3. Benchmark.
+# ###############################################################################
 results_dir = './Results/'
 
 if not os.path.exists(results_dir):
     os.makedirs(results_dir)
 
 
-minimizers = ['BFGS', 'FIRE', 'LBFGS']
+minimizers = ['BFGS', 'FIRE']
 
 for i in minimizers:
     filename = i + system + '_opt.traj'
@@ -56,7 +58,7 @@ for i in minimizers:
         opt.run(fmax=0.02, steps=500)
         shutil.copy('./' + filename, results_dir + filename)
 
-minimizers = ['BFGS', 'FIRE']
+minimizers = ['BFGS', 'FIRE', 'BFGSLineSearch']
 
 for i in minimizers:
     filename = i + system + '_opt' + catlearn_version
@@ -76,6 +78,9 @@ print('\n Summary of the results:\n ------------------------------------')
 
 # Function evaluations:
 for filename in os.listdir(results_dir):
-    atoms = read(filename,':')
+    try:
+        atoms = read(filename,':')
+    except:
+        pass
     feval = len(atoms)
     print('Number of function evaluations using ' + filename + ':', feval)

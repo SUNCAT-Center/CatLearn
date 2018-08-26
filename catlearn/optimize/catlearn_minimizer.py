@@ -1,4 +1,4 @@
-# @Version u1.4.8
+# @Version u1.5.0
 
 import numpy as np
 from catlearn.optimize.warnings import *
@@ -18,6 +18,7 @@ from catlearn.optimize.catlearn_ase_calc import CatLearnASE
 from catlearn.optimize.plots import get_plot_step
 from ase.data import covalent_radii
 import os
+
 
 class CatLearnMinimizer(object):
 
@@ -165,22 +166,22 @@ class CatLearnMinimizer(object):
         # Configure ML calculator.
 
         # Guess hyperparameter boundaries using covalent radii:
-        atomic_numbers_array = []
-        for i in self.ase_ini:
-            atomic_numbers_array.append(i.number)
-            atomic_numbers_array.append(i.number)
-            atomic_numbers_array.append(i.number)
-        list_bounds = ()
-        upper_list = []
-        for i in self.ind_mask_constr:
-            upper_i = (1.0 / covalent_radii[atomic_numbers_array[i[0]]]) / 2.0
-            upper_list.append(upper_i/2.0)
-            list_bounds += ((0.01, upper_i),)
+        # atomic_numbers_array = []
+        # for i in self.ase_ini:
+        #     atomic_numbers_array.append(i.number)
+        #     atomic_numbers_array.append(i.number)
+        #     atomic_numbers_array.append(i.number)
+        # list_bounds = ()
+        # upper_list = []
+        # for i in self.ind_mask_constr:
+        #     upper_i = (1.0 / covalent_radii[atomic_numbers_array[i[0]]]) / 2.0
+        #     upper_list.append(upper_i/2.0)
+        #     list_bounds += ((0.01, upper_i),)
 
         if self.ml_calc is None:
-            self.kdict = {'k1': {'type': 'gaussian', 'width': upper_list,
-                                 'dimension': 'features',
-                                 'bounds': list_bounds,
+            self.kdict = {'k1': {'type': 'gaussian', 'width': 0.25,
+                                 'dimension': 'single',
+                                 'bounds': ((1e-3, 0.5),),
                                  'scaling': 1.0,
                                  'scaling_bounds': ((1.0, 1.0), )}
                           }
