@@ -1,4 +1,4 @@
-# @Version u1.5.0
+# @Version u1.7.0
 
 import numpy as np
 from catlearn.optimize.warnings import *
@@ -18,6 +18,7 @@ from catlearn.optimize.catlearn_ase_calc import CatLearnASE
 from catlearn.optimize.plots import get_plot_step
 from ase.data import covalent_radii
 import os
+from ase.visualize import view
 
 
 class CatLearnMinimizer(object):
@@ -106,7 +107,7 @@ class CatLearnMinimizer(object):
                     self.ase_ini, self.constraints)
 
     def run(self, fmax=0.05, ml_algo='FIRE', max_iter=500,
-            min_iter=0, ml_max_iter=250, penalty=0.0,
+            min_iter=0, ml_max_iter=250, penalty=1.0,
             plots=False):
 
         """Executing run will start the optimization process.
@@ -178,21 +179,69 @@ class CatLearnMinimizer(object):
         #     upper_list.append(upper_i/2.0)
         #     list_bounds += ((0.01, upper_i),)
 
-        if self.ml_calc is None:
-            self.kdict = {'k1': {'type': 'gaussian', 'width': 0.25,
-                                 'dimension': 'single',
-                                 'bounds': ((1e-3, 0.5),),
-                                 'scaling': 1.0,
-                                 'scaling_bounds': ((1.0, 1.0), )}
-                          }
-            self.ml_calc = GPCalculator(
-                kernel_dict=self.kdict, opt_hyperparam=True, scale_data=False,
-                scale_optimizer=False, calc_uncertainty=True,
-                algo_opt_hyperparamters='L-BFGS-B',
-                global_opt_hyperparameters=False,
-                regularization=1e-5, regularization_bounds=(1e-6, 1e-3))
+
+        # For isotropic kernel:
+        # atomic_numbers = []
+        # for i in self.ase_ini:
+        #     atomic_numbers.append(i.number)
+        #
+        # cov_r = covalent_radii[atomic_numbers_array[[0]]]
 
         while not converged(self):
+
+            ########## UNDER TEST #####################################
+
+            list_fmax = get_fmax(-np.array([self.list_gradients[-1]]),
+                                 self.num_atoms)
+            max_abs_forces = np.max(np.abs(list_fmax))
+
+            # TIER 1:
+            self.kdict = {'k1': {'type': 'gaussian', 'width': 0.25,
+                         'dimension': 'features',
+                         'bounds': ((1e-3, 0.50),) * len(self.ind_mask_constr),
+                         'scaling': 1.0,
+                         'scaling_bounds': ((1.0, 1.0), )}
+                  }
+            self.ml_calc = GPCalculator(
+                    kernel_dict=self.kdict, opt_hyperparam=True, scale_data=False,
+                    scale_optimizer=False, calc_uncertainty=True,
+                    algo_opt_hyperparamters='L-BFGS-B',
+                    global_opt_hyperparameters=False,
+                    regularization=1e-3, regularization_bounds=(1e-4, 1e-2))
+
+            # TIER 2:
+            if max_abs_forces <= 0.50:
+                self.kdict = {'k1': {'type': 'gaussian', 'width': 0.25,
+                        'dimension': 'features',
+                        'bounds': ((1e-3, 0.25),) * len(self.ind_mask_constr),
+                        'scaling': 1.0,
+                        'scaling_bounds': ((1.0, 1.0), )}
+                  }
+                self.ml_calc = GPCalculator(
+                    kernel_dict=self.kdict, opt_hyperparam=True,
+                    scale_data=False,
+                    scale_optimizer=False, calc_uncertainty=True,
+                    algo_opt_hyperparamters='L-BFGS-B',
+                    global_opt_hyperparameters=False,
+                    regularization=1e-5, regularization_bounds=(1e-6, 1e-3))
+
+            # TIER 3:
+            if max_abs_forces <= 0.10:
+                self.kdict = {'k1': {'type': 'gaussian', 'width': 0.25,
+                         'dimension': 'single',
+                         'bounds': ((1e-4, 0.5),),
+                         'scaling': 1.0,
+                         'scaling_bounds': ((1.0, 1.0), )}
+                  }
+                self.ml_calc = GPCalculator(
+                    kernel_dict=self.kdict, opt_hyperparam=True,
+                    scale_data=False,
+                    scale_optimizer=False, calc_uncertainty=True,
+                    algo_opt_hyperparamters='L-BFGS-B',
+                    global_opt_hyperparameters=False,
+                    regularization=1e-5, regularization_bounds=(1e-6, 1e-3))
+
+            ########## UNDER TEST #####################################
 
             # Limited memory.
             if len(self.list_train) >= max_memory:
@@ -222,11 +271,22 @@ class CatLearnMinimizer(object):
             ml_calc = process['ml_calc']
             print('ML process trained.')
 
+            ########## UNDER TEST #####################################
+            # Copy hyperparameters:
+            if self.ml_calc.__dict__['opt_hyperparam'] is True:
+                self.ml_calc.update_hyperparameters(trained_process=trained_process)
+            ########## UNDER TEST #####################################
+
+
             # 2. Setup and run optimization.
 
             # Attach CatLearn calculator.
-            if self.iter <= 2:
-                guess = self.ase_ini
+
+            # Start from the most stable.
+            guess = self.ase_ini
+
+            guess_pos = self.list_train[np.argmin(self.list_targets)]
+            guess.positions = guess_pos.reshape(-1, 3)
 
             guess.set_calculator(CatLearnASE(
                                     trained_process=trained_process,
@@ -281,14 +341,15 @@ class CatLearnMinimizer(object):
                 break
 
             ########## UNDER TEST #####################################
-            # list_fmax = get_fmax(-np.array([self.list_gradients[-1]]),
-            #                       self.num_atoms)
-            # max_abs_forces = np.max(np.abs(list_fmax))
+            list_fmax = get_fmax(-np.array([self.list_gradients[-1]]),
+                                  self.num_atoms)
+            max_abs_forces = np.max(np.abs(list_fmax))
             # if max_abs_forces <= 0.10:
             #     self.ml_calc.__dict__['opt_hyperparam'] = True
             # if max_abs_forces > 0.10:
             #     self.ml_calc.__dict__['opt_hyperparam'] = False
             ########## UNDER TEST #####################################
+
 
 
 def initialize(self, i_step=1e-3):

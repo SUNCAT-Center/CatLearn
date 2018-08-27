@@ -13,9 +13,8 @@ import os, shutil
     Minimization example. 
 """
 
-catlearn_version = '_u_1_5_0'
+catlearn_version = '_u_1_7_0'
 
-# Systems = ['H2', 'Au8CO', 'Cu2']
 system = '_rattle01'
 
 # 1. Structural relaxation. ##################################################

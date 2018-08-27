@@ -1,4 +1,4 @@
-# @Version u1.4.8
+# @Version u1.8.0
 
 import numpy as np
 from catlearn.optimize.warnings import *
@@ -23,7 +23,7 @@ from ase.data import covalent_radii
 class CatLearnNEB(object):
 
     def __init__(self, start, end, path=None, n_images=None, spring=None,
-                 interpolation=None, mic=False, neb_method='improvedtangent',
+                 interpolation=None, mic=False, neb_method='aseneb',
                  ml_calc=None, ase_calc=None, inc_prev_calcs=False,
                  stabilize=False, restart=False):
         """ Nudged elastic band (NEB) setup.
@@ -250,22 +250,28 @@ class CatLearnNEB(object):
         """
 
         # Guess hyperparameter boundaries using covalent radii:
-        atomic_numbers_array = []
-        for i in self.ase_ini:
-            atomic_numbers_array.append(i.number)
-            atomic_numbers_array.append(i.number)
-            atomic_numbers_array.append(i.number)
-        list_bounds = ()
-        upper_list = []
-        for i in self.ind_mask_constr:
-            upper_i = (1.0 / covalent_radii[atomic_numbers_array[i[0]]]) / 2.0
-            upper_list.append(upper_i/2.0)
-            list_bounds += ((0.01, upper_i),)
+        # atomic_numbers_array = []
+        # for i in self.ase_ini:
+        #     atomic_numbers_array.append(i.number)
+        #     atomic_numbers_array.append(i.number)
+        #     atomic_numbers_array.append(i.number)
+        # list_bounds = ()
+        # upper_list = []
+        # list_cov = []
+        # for i in self.ind_mask_constr:
+        #     list_cov.append(covalent_radii[atomic_numbers_array[i[0]]])
+        #     upper_i = (1.0 / covalent_radii[atomic_numbers_array[i[0]]]) / 2.0
+        #     upper_list.append(upper_i/2.0)
+        #     list_bounds += ((0.01, upper_i),)
+        #
+        # # For isotropic:
+        # guessed_width = np.min(list_cov)
 
         if self.ml_calc is None:
-            self.kdict = {'k1': {'type': 'gaussian', 'width': upper_list,
+            self.kdict = {'k1': {'type': 'gaussian', 'width': 0.5,
                                  'dimension': 'features',
-                                 'bounds': list_bounds,
+                                 'bounds': ((1e-4, 0.5),) * len(
+                                 self.ind_mask_constr),
                                  'scaling': 1.0,
                                  'scaling_bounds': ((1.0, 1.0), )}
                           }
@@ -481,6 +487,15 @@ class CatLearnNEB(object):
                 stationary_point_not_found()
                 if self.feval > 5:
                     break
+
+            # Update hyper:
+            if self.iter < 10:
+                self.ml_calc.update_hyperparameters(
+                            trained_process=trained_process)
+            # Fix hyper:
+            if self.iter >= 10:
+                self.ml_calc.__dict__['opt_hyperparam'] = False
+
 
             ##################################################################
             # # Remove outliers from the training list.

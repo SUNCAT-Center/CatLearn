@@ -119,10 +119,10 @@ class GPCalculator(object):
         return res
 
     def update_hyperparameters(self, trained_process):
-        if 'constant' in self.guess_hyper:
-            new_constant = np.std(self.target_calc)
-            trained_process.kernel_dict['k2']['const'] = new_constant
-            print('Guessed constant:', new_constant)
+        hyper_opt = trained_process.theta_opt['x']
+        print(trained_process.__dict__['kernel_dict']['k1']['width'])
+
+        trained_process.__dict__['kernel_dict']['k1']['width'] = hyper_opt[1:-1]
         return trained_process
 
 

@@ -9,10 +9,10 @@ import shutil
 import os
 
 """ 
-    Benchmark GPAW calculations.
+    Benchmark GPAW H2O calculations.
 """
 
-catlearn_version = '_u_1_5_0'
+catlearn_version = '_u_1_7_0'
 
 results_dir = './Results/'
 
@@ -48,7 +48,7 @@ for i in minimizers:
         opt.run(fmax=0.05)
         shutil.copy('./' + filename, results_dir + filename)
 
-minimizers = ['FIRE', 'BFGS', 'LBFGS' ]
+minimizers = ['FIRE', 'BFGS', 'LBFGS']
 
 for i in minimizers:
     filename = i + '_opt' + catlearn_version

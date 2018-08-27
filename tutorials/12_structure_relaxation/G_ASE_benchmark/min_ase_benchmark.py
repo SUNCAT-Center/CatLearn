@@ -16,10 +16,10 @@ import shutil
    ASE Benchmark.
 """
 
-catlearn_version = '_u_1_5_0'
+catlearn_version = '_u_1_7_0'
 
 # Systems = ['H2', 'Au8CO', 'Cu2']
-system = '_C5H12'
+system = '_C5H12_rattle01'
 
 # 1. Setup calculator:
 ###############################################################################
@@ -37,7 +37,7 @@ np.random.seed(1)
 #     if i.position[2] > 8.50:
 #         i.position = i.position + np.random.normal(scale=0.0)
 
-# mol.rattle(stdev=0.0, seed=1)
+mol.rattle(stdev=0.1, seed=1)
 #
 # # 3. Benchmark.
 # ###############################################################################
@@ -80,7 +80,7 @@ print('\n Summary of the results:\n ------------------------------------')
 for filename in os.listdir(results_dir):
     try:
         atoms = read(filename,':')
+        feval = len(atoms)
+        print('Number of function evaluations using ' + filename + ':', feval)
     except:
         pass
-    feval = len(atoms)
-    print('Number of function evaluations using ' + filename + ':', feval)
