@@ -1,4 +1,4 @@
-# @Version u1.8.0
+# @Version u1.9.5
 
 import numpy as np
 from catlearn.optimize.warnings import *
@@ -18,7 +18,7 @@ from catlearn.optimize.catlearn_ase_calc import CatLearnASE
 from catlearn.optimize.plots import get_plot_step
 from ase.data import covalent_radii
 import os
-from ase.visualize import view
+from ase.data import covalent_radii
 
 
 class CatLearnMinimizer(object):
@@ -382,13 +382,26 @@ def predefined_calculators(self):
                              self.num_atoms)
         max_abs_forces = np.max(np.abs(list_fmax))
 
+        # Guess hyperparameter boundaries using covalent radii:
+        atomic_numbers_array = []
+        for i in self.ase_ini:
+            atomic_numbers_array.append(i.number)
+            atomic_numbers_array.append(i.number)
+            atomic_numbers_array.append(i.number)
+        list_bounds = ()
+        upper_list = []
+        for i in self.ind_mask_constr:
+            upper_i = covalent_radii[atomic_numbers_array[i[0]]] / 1.0
+            upper_list.append(upper_i/2.0)
+            list_bounds += ((1e-4, upper_i),)
+
         # Step 1:
         if max_abs_forces > 1.00:
-            print('Sequential mode. Stage 1: SQE anisotropic. Relaxed bounds.')
+            print('Sequential mode. Stage 1: SQE anisotropic. Loose bounds.')
             self.ml_calc.__dict__['regularization_bounds'] = (1e-4, 1e-2)
             self.ml_calc.__dict__['kdict']['k1']['dimension'] = 'features'
-            self.ml_calc.__dict__['kdict']['k1']['width'] = 0.5/2.0
-            self.ml_calc.__dict__['kdict']['k1']['bounds'] = ((1e-4, 0.50),) * len(self.ind_mask_constr)
+            self.ml_calc.__dict__['kdict']['k1']['width'] = upper_i/2.0
+            self.ml_calc.__dict__['kdict']['k1']['bounds'] = list_bounds
 
         # Step 2:
         if 0.50 < max_abs_forces <= 1.00:
@@ -396,7 +409,7 @@ def predefined_calculators(self):
             self.ml_calc.__dict__['regularization_bounds'] = (1e-6, 1e-3)
             self.ml_calc.__dict__['kdict']['k1']['dimension'] = 'features'
             self.ml_calc.__dict__['kdict']['k1']['width'] = 0.25/2.0
-            self.ml_calc.__dict__['kdict']['k1']['bounds'] = ((1e-4, 0.25),) * len(self.ind_mask_constr)
+            self.ml_calc.__dict__['kdict']['k1']['bounds'] = ((1e-4, 0.50),) * len(self.ind_mask_constr)
 
         # Step 3:
         if max_abs_forces <= 0.50:
@@ -404,4 +417,4 @@ def predefined_calculators(self):
             self.ml_calc.__dict__['regularization_bounds'] = (1e-6, 1e-3)
             self.ml_calc.__dict__['kdict']['k1']['dimension'] = 'single'
             self.ml_calc.__dict__['kdict']['k1']['width'] = 0.5/2.0
-            self.ml_calc.__dict__['kdict']['k1']['bounds'] = ((1e-4, 0.5),)
+            self.ml_calc.__dict__['kdict']['k1']['bounds'] = ((1e-4, 0.25),)
