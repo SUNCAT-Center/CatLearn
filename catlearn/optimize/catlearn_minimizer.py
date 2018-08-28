@@ -1,4 +1,4 @@
-# @Version u1.9.5
+# @Version u2.0.0
 
 import numpy as np
 from catlearn.optimize.warnings import *
@@ -412,9 +412,17 @@ def predefined_calculators(self):
             self.ml_calc.__dict__['kdict']['k1']['bounds'] = ((1e-4, 0.50),) * len(self.ind_mask_constr)
 
         # Step 3:
-        if max_abs_forces <= 0.50:
+        if 0.10 < max_abs_forces <= 0.50:
             print('Sequential mode. Stage 3: SQE isotropic.')
             self.ml_calc.__dict__['regularization_bounds'] = (1e-6, 1e-3)
             self.ml_calc.__dict__['kdict']['k1']['dimension'] = 'single'
             self.ml_calc.__dict__['kdict']['k1']['width'] = 0.5/2.0
             self.ml_calc.__dict__['kdict']['k1']['bounds'] = ((1e-4, 0.25),)
+
+        # Step 4:
+        if max_abs_forces <= 0.10:
+            print('Sequential mode. Stage 4: SQE static.')
+            self.ml_calc.__dict__['regularization_bounds'] = (1e-6, 1e-3)
+            self.ml_calc.__dict__['kdict']['k1']['dimension'] = 'single'
+            self.ml_calc.__dict__['kdict']['k1']['width'] = 0.01
+            self.ml_calc.__dict__['kdict']['k1']['bounds'] = ((0.1, 0.5),)
