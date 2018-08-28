@@ -7,12 +7,14 @@ from ase.io import read
 import copy
 import shutil
 import os
+from ase.constraints import FixAtoms
+from ase.visualize import view
 
 """ 
     Benchmark GPAW H2O calculations.
 """
 
-catlearn_version = '_u_1_7_0'
+catlearn_version = '_u_1_8_0_sequential'
 
 results_dir = './Results/'
 

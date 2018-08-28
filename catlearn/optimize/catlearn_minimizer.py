@@ -1,4 +1,4 @@
-# @Version u1.7.0
+# @Version u1.8.0
 
 import numpy as np
 from catlearn.optimize.warnings import *
@@ -23,7 +23,8 @@ from ase.visualize import view
 
 class CatLearnMinimizer(object):
 
-    def __init__(self, x0, ase_calc=None, ml_calc=None, filename='results'):
+    def __init__(self, x0, ase_calc=None, ml_calc='SQE_sequential',
+                 filename='results'):
 
         """Optimization setup.
 
@@ -106,8 +107,29 @@ class CatLearnMinimizer(object):
                 self.ind_mask_constr = create_mask_ase_constraints(
                     self.ase_ini, self.constraints)
 
+        # Default kernel:
+
+        if isinstance(self.ml_calc, str):
+            implemented_kernels = ['SQE_static', 'SQE_isotropic',
+                                   'SQE_anisotropic', 'SQE_sequential']
+            assert self.ml_calc in implemented_kernels, error_not_ml_calc()
+            self.kernel_mode = self.ml_calc
+            self.kdict = {'k1': {'type': 'gaussian', 'width': 0.50,
+                         'dimension': 'features',
+                         'bounds': ((1e-3, 0.50),) * len(self.ind_mask_constr),
+                         'scaling': 1.0,
+                         'scaling_bounds': ((1.0, 1.0), )}
+                  }
+            self.ml_calc = GPCalculator(
+                    kernel_dict=self.kdict, opt_hyperparam=True, scale_data=False,
+                    scale_optimizer=False, calc_uncertainty=True,
+                    algo_opt_hyperparamters='L-BFGS-B',
+                    global_opt_hyperparameters=False,
+                    regularization=1e-6, regularization_bounds=(1e-6, 1e-2))
+        assert self.ml_calc, error_not_ml_calc()
+
     def run(self, fmax=0.05, ml_algo='FIRE', max_iter=500,
-            min_iter=0, ml_max_iter=250, penalty=1.0,
+            min_iter=0, ml_max_iter=250, penalty=0.0,
             plots=False):
 
         """Executing run will start the optimization process.
@@ -166,81 +188,10 @@ class CatLearnMinimizer(object):
 
         # Configure ML calculator.
 
-        # Guess hyperparameter boundaries using covalent radii:
-        # atomic_numbers_array = []
-        # for i in self.ase_ini:
-        #     atomic_numbers_array.append(i.number)
-        #     atomic_numbers_array.append(i.number)
-        #     atomic_numbers_array.append(i.number)
-        # list_bounds = ()
-        # upper_list = []
-        # for i in self.ind_mask_constr:
-        #     upper_i = (1.0 / covalent_radii[atomic_numbers_array[i[0]]]) / 2.0
-        #     upper_list.append(upper_i/2.0)
-        #     list_bounds += ((0.01, upper_i),)
-
-
-        # For isotropic kernel:
-        # atomic_numbers = []
-        # for i in self.ase_ini:
-        #     atomic_numbers.append(i.number)
-        #
-        # cov_r = covalent_radii[atomic_numbers_array[[0]]]
-
         while not converged(self):
 
             ########## UNDER TEST #####################################
-
-            list_fmax = get_fmax(-np.array([self.list_gradients[-1]]),
-                                 self.num_atoms)
-            max_abs_forces = np.max(np.abs(list_fmax))
-
-            # TIER 1:
-            self.kdict = {'k1': {'type': 'gaussian', 'width': 0.25,
-                         'dimension': 'features',
-                         'bounds': ((1e-3, 0.50),) * len(self.ind_mask_constr),
-                         'scaling': 1.0,
-                         'scaling_bounds': ((1.0, 1.0), )}
-                  }
-            self.ml_calc = GPCalculator(
-                    kernel_dict=self.kdict, opt_hyperparam=True, scale_data=False,
-                    scale_optimizer=False, calc_uncertainty=True,
-                    algo_opt_hyperparamters='L-BFGS-B',
-                    global_opt_hyperparameters=False,
-                    regularization=1e-3, regularization_bounds=(1e-4, 1e-2))
-
-            # TIER 2:
-            if max_abs_forces <= 0.50:
-                self.kdict = {'k1': {'type': 'gaussian', 'width': 0.25,
-                        'dimension': 'features',
-                        'bounds': ((1e-3, 0.25),) * len(self.ind_mask_constr),
-                        'scaling': 1.0,
-                        'scaling_bounds': ((1.0, 1.0), )}
-                  }
-                self.ml_calc = GPCalculator(
-                    kernel_dict=self.kdict, opt_hyperparam=True,
-                    scale_data=False,
-                    scale_optimizer=False, calc_uncertainty=True,
-                    algo_opt_hyperparamters='L-BFGS-B',
-                    global_opt_hyperparameters=False,
-                    regularization=1e-5, regularization_bounds=(1e-6, 1e-3))
-
-            # TIER 3:
-            if max_abs_forces <= 0.10:
-                self.kdict = {'k1': {'type': 'gaussian', 'width': 0.25,
-                         'dimension': 'single',
-                         'bounds': ((1e-4, 0.5),),
-                         'scaling': 1.0,
-                         'scaling_bounds': ((1.0, 1.0), )}
-                  }
-                self.ml_calc = GPCalculator(
-                    kernel_dict=self.kdict, opt_hyperparam=True,
-                    scale_data=False,
-                    scale_optimizer=False, calc_uncertainty=True,
-                    algo_opt_hyperparamters='L-BFGS-B',
-                    global_opt_hyperparameters=False,
-                    regularization=1e-5, regularization_bounds=(1e-6, 1e-3))
-
+            predefined_calculators(self)
             ########## UNDER TEST #####################################
 
             # Limited memory.
@@ -277,7 +228,6 @@ class CatLearnMinimizer(object):
                 self.ml_calc.update_hyperparameters(trained_process=trained_process)
             ########## UNDER TEST #####################################
 
-
             # 2. Setup and run optimization.
 
             # Attach CatLearn calculator.
@@ -300,7 +250,7 @@ class CatLearnMinimizer(object):
             opt_ml = eval(ml_algo)(guess)
             print('Starting ML optimization...')
             if ml_algo in self.list_minimizers_grad:
-                opt_ml.run(fmax=fmax, steps=ml_max_iter)
+                opt_ml.run(fmax=fmax/1.1, steps=ml_max_iter)
             else:
                 opt_ml.run(steps=ml_max_iter)
             print('ML optimized.')
@@ -339,17 +289,6 @@ class CatLearnMinimizer(object):
             if self.iter > max_iter:
                 print('Not converged. Maximum number of iterations reached.')
                 break
-
-            ########## UNDER TEST #####################################
-            list_fmax = get_fmax(-np.array([self.list_gradients[-1]]),
-                                  self.num_atoms)
-            max_abs_forces = np.max(np.abs(list_fmax))
-            # if max_abs_forces <= 0.10:
-            #     self.ml_calc.__dict__['opt_hyperparam'] = True
-            # if max_abs_forces > 0.10:
-            #     self.ml_calc.__dict__['opt_hyperparam'] = False
-            ########## UNDER TEST #####################################
-
 
 
 def initialize(self, i_step=1e-3):
@@ -417,3 +356,52 @@ def initialize(self, i_step=1e-3):
             molec_writer = TrajectoryWriter('./' + str(self.filename) +
                                             '_catlearn.traj', mode='a')
             molec_writer.write(self.ase_ini)
+
+
+def predefined_calculators(self):
+
+    if self.kernel_mode is 'SQE_static':
+        print('Using static SQE kernel. Hyperparameters are kept fixed.')
+        self.ml_calc.__dict__['opt_hyperparam'] = False
+
+    if self.kernel_mode is 'SQE_isotropic':
+        print('Using default isotropic SQE kernel. A common length-scale '
+              'paramter is optimized for all dimensions.')
+        self.ml_calc.__dict__['regularization_bounds'] = (1e-6, 1e-3)
+        self.ml_calc.__dict__['kdict']['k1']['dimension'] = 'single'
+        self.ml_calc.__dict__['kdict']['k1']['width'] = 0.5/2.0
+        self.ml_calc.__dict__['kdict']['k1']['bounds'] = ((1e-4, 0.50),)
+
+    if self.kernel_mode is 'SQE_anisotropic':
+        print('Using default anisotropic ARD-SQE kernel. Length-scale '
+              'hyperparameters are optimized for each dimension.')
+
+    if self.kernel_mode is 'SQE_sequential':
+
+        list_fmax = get_fmax(-np.array([self.list_gradients[-1]]),
+                             self.num_atoms)
+        max_abs_forces = np.max(np.abs(list_fmax))
+
+        # Step 1:
+        if max_abs_forces > 1.00:
+            print('Sequential mode. Stage 1: SQE anisotropic. Relaxed bounds.')
+            self.ml_calc.__dict__['regularization_bounds'] = (1e-4, 1e-2)
+            self.ml_calc.__dict__['kdict']['k1']['dimension'] = 'features'
+            self.ml_calc.__dict__['kdict']['k1']['width'] = 0.5/2.0
+            self.ml_calc.__dict__['kdict']['k1']['bounds'] = ((1e-4, 0.50),) * len(self.ind_mask_constr)
+
+        # Step 2:
+        if 0.50 < max_abs_forces <= 1.00:
+            print('Sequential mode. Stage 2: SQE anisotropic. Tight bounds.')
+            self.ml_calc.__dict__['regularization_bounds'] = (1e-6, 1e-3)
+            self.ml_calc.__dict__['kdict']['k1']['dimension'] = 'features'
+            self.ml_calc.__dict__['kdict']['k1']['width'] = 0.25/2.0
+            self.ml_calc.__dict__['kdict']['k1']['bounds'] = ((1e-4, 0.25),) * len(self.ind_mask_constr)
+
+        # Step 3:
+        if max_abs_forces <= 0.50:
+            print('Sequential mode. Stage 3: SQE isotropic.')
+            self.ml_calc.__dict__['regularization_bounds'] = (1e-6, 1e-3)
+            self.ml_calc.__dict__['kdict']['k1']['dimension'] = 'single'
+            self.ml_calc.__dict__['kdict']['k1']['width'] = 0.5/2.0
+            self.ml_calc.__dict__['kdict']['k1']['bounds'] = ((1e-4, 0.5),)

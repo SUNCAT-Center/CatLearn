@@ -186,6 +186,12 @@ def err_not_ase_calc_atoms():
     store_warnings_and_errors(msg)
     return msg
 
+def error_not_ml_calc():
+    msg = "COMPUTER SAYS NO: You must select one of the predefined setting " \
+    "for the machine learning calculator or build your own."
+    store_warnings_and_errors(msg)
+    return msg
+
 
 def err_not_ase_calc_traj():
     msg = "COMPUTER SAYS NO: When importing a trajectory file you must " \
