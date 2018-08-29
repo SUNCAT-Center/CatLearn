@@ -12,11 +12,12 @@ from ase.optimize.sciopt import *
 from catlearn.optimize.get_real_values import eval_and_append, \
                                               get_energy_catlearn, \
                                               get_forces_catlearn
-from ase.atoms import Atoms
 from catlearn.optimize.convergence import converged, get_fmax
 from catlearn.optimize.catlearn_ase_calc import CatLearnASE
 from catlearn.optimize.plots import get_plot_step
 import os
+from ase import Atoms
+
 
 
 class CatLearnMinimizer(object):
