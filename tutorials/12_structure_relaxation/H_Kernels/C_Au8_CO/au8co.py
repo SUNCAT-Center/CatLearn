@@ -10,21 +10,22 @@ from ase.constraints import FixAtoms
 from ase.visualize import view
 from ase.optimize.sciopt import SciPyFminBFGS
 from ase.io import read
+from ase.db import connect
+
 
 """ 
-    Benchmark GPAW H2O calculations.
+    Benchmark GPAW Au8CO system.
 """
 
-list_kernels = ['SQE_static', 'SQE_isotropic', 'SQE_anisotropic',
+list_kernels = [ 'SQE_isotropic', 'SQE_anisotropic',
                 'SQE_sequential']
-
-list_rattle = ['0_00', '0_05', '0_10', '0_15', '0_20']
+list_rattle = ['0_00']
 
 for rattle in list_rattle:
 
     for kernel in list_kernels: # Loop over different default kernels.
 
-        catlearn_version = "_u_2_1_0"
+        catlearn_version = "_u_2_0_0"
         system = '_rattle' + rattle
 
         results_dir = './Results/'
@@ -33,20 +34,13 @@ for rattle in list_rattle:
             os.makedirs(results_dir)
 
         # 0.0 Setup calculator:
-        calc = GPAW(nbands=4, h=0.2, mode='lcao', basis='dzp')
+        calc = GPAW(mode='lcao', basis='dzp', kpts={'density': 2.0})
 
         # 1. Structural relaxation. ##################################
 
         # 1.1. Set up structure:
-        a = 6
-        b = a / 2
-        mol = Atoms('H2O',
-                    [(b, 0.7633 + b, -0.4876 + b),
-                     (b, -0.7633 + b, -0.4876 + b),
-                     (b, b, 0.1219 + b)],
-                    cell=[a, a, a])
-
-        mol.rattle(seed=0, stdev=float(rattle.replace('_', '.')))
+        db = connect('./systems.db')
+        mol = db.get_atoms(formula='Au8CO')
 
         # 3. Benchmark.
         ############################################################
@@ -82,6 +76,7 @@ for rattle in list_rattle:
                 os.remove('./' + filename + '_catlearn.traj')
                 os.remove('./' + filename + '_convergence_catlearn.txt')
                 os.remove('./warnings_and_errors.txt')
+
     # 4. Summary of the results:
     ###############################################################################
     from ase.io import read
@@ -98,15 +93,3 @@ for rattle in list_rattle:
         except:
             pass
 
-# # GENERAL:
-from ase.io import read
-import os
-print('\n Summary of the results:\n ------------------------------------')
-    # Function evaluations:
-for name_of_file in os.listdir('./'):
-        try:
-            atoms = read('./' + name_of_file, ':')
-            feval = len(atoms)
-            print('Number of function evaluations using ' + name_of_file + ':', feval)
-        except:
-            pass

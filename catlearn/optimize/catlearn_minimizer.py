@@ -1,4 +1,4 @@
-# @Version u2.0.0
+# @Version u2.2.0
 
 import numpy as np
 from catlearn.optimize.warnings import *
@@ -16,9 +16,7 @@ from ase.atoms import Atoms
 from catlearn.optimize.convergence import converged, get_fmax
 from catlearn.optimize.catlearn_ase_calc import CatLearnASE
 from catlearn.optimize.plots import get_plot_step
-from ase.data import covalent_radii
 import os
-from ase.data import covalent_radii
 
 
 class CatLearnMinimizer(object):
@@ -114,9 +112,9 @@ class CatLearnMinimizer(object):
                                    'SQE_anisotropic', 'SQE_sequential']
             assert self.ml_calc in implemented_kernels, error_not_ml_calc()
             self.kernel_mode = self.ml_calc
-            self.kdict = {'k1': {'type': 'gaussian', 'width': 0.50,
+            self.kdict = {'k1': {'type': 'gaussian', 'width': 0.40,
                          'dimension': 'features',
-                         'bounds': ((1e-3, 0.50),) * len(self.ind_mask_constr),
+                         'bounds': ((1e-3, 0.40),) * len(self.ind_mask_constr),
                          'scaling': 1.0,
                          'scaling_bounds': ((1.0, 1.0), )}
                   }
@@ -125,7 +123,7 @@ class CatLearnMinimizer(object):
                     scale_optimizer=False, calc_uncertainty=True,
                     algo_opt_hyperparamters='L-BFGS-B',
                     global_opt_hyperparameters=False,
-                    regularization=1e-6, regularization_bounds=(1e-6, 1e-2))
+                    regularization=2e-5, regularization_bounds=(2e-5, 1e-2))
         assert self.ml_calc, error_not_ml_calc()
 
     def run(self, fmax=0.05, ml_algo='FIRE', max_iter=500,
@@ -190,9 +188,7 @@ class CatLearnMinimizer(object):
 
         while not converged(self):
 
-            ########## UNDER TEST #####################################
             predefined_calculators(self)
-            ########## UNDER TEST #####################################
 
             # Limited memory.
             if len(self.list_train) >= max_memory:
@@ -201,8 +197,8 @@ class CatLearnMinimizer(object):
                 self.list_gradients = self.list_gradients[-max_memory:]
 
             # Update scaling.
-            scale_targets = np.max(self.list_targets)
-
+            scale_targets = np.min(self.list_targets) + 2.0
+            # scale_targets = np.max(self.list_targets)
             # 1. Train Machine Learning process.
 
             # Check that the user is not feeding redundant information to ML.
@@ -222,11 +218,10 @@ class CatLearnMinimizer(object):
             ml_calc = process['ml_calc']
             print('ML process trained.')
 
-            ########## UNDER TEST #####################################
             # Copy hyperparameters:
             if self.ml_calc.__dict__['opt_hyperparam'] is True:
-                self.ml_calc.update_hyperparameters(trained_process=trained_process)
-            ########## UNDER TEST #####################################
+                self.ml_calc.update_hyperparameters(
+                                               trained_process=trained_process)
 
             # 2. Setup and run optimization.
 
@@ -367,7 +362,7 @@ def predefined_calculators(self):
     if self.kernel_mode is 'SQE_isotropic':
         print('Using default isotropic SQE kernel. A common length-scale '
               'paramter is optimized for all dimensions.')
-        self.ml_calc.__dict__['regularization_bounds'] = (1e-6, 1e-3)
+        self.ml_calc.__dict__['regularization_bounds'] = (1e-5, 1e-3)
         self.ml_calc.__dict__['kdict']['k1']['dimension'] = 'single'
         self.ml_calc.__dict__['kdict']['k1']['width'] = 0.5/2.0
         self.ml_calc.__dict__['kdict']['k1']['bounds'] = ((1e-4, 0.50),)
@@ -382,47 +377,19 @@ def predefined_calculators(self):
                              self.num_atoms)
         max_abs_forces = np.max(np.abs(list_fmax))
 
-        # Guess hyperparameter boundaries using covalent radii:
-        atomic_numbers_array = []
-        for i in self.ase_ini:
-            atomic_numbers_array.append(i.number)
-            atomic_numbers_array.append(i.number)
-            atomic_numbers_array.append(i.number)
-        list_bounds = ()
-        upper_list = []
-        for i in self.ind_mask_constr:
-            upper_i = covalent_radii[atomic_numbers_array[i[0]]] / 1.0
-            upper_list.append(upper_i/2.0)
-            list_bounds += ((1e-4, upper_i),)
-
         # Step 1:
         if max_abs_forces > 1.00:
-            print('Sequential mode. Stage 1: SQE anisotropic. Loose bounds.')
+            print('Sequential mode. Stage 1: ARD-SQE (anisotropic).')
             self.ml_calc.__dict__['regularization_bounds'] = (1e-4, 1e-2)
             self.ml_calc.__dict__['kdict']['k1']['dimension'] = 'features'
-            self.ml_calc.__dict__['kdict']['k1']['width'] = upper_i/2.0
-            self.ml_calc.__dict__['kdict']['k1']['bounds'] = list_bounds
+            self.ml_calc.__dict__['kdict']['k1']['width'] = 0.5/2.0
+            self.ml_calc.__dict__['kdict']['k1']['bounds'] = ((1e-4, 0.5),
+            ) * len(self.ind_mask_constr)
 
         # Step 2:
-        if 0.50 < max_abs_forces <= 1.00:
-            print('Sequential mode. Stage 2: SQE anisotropic. Tight bounds.')
-            self.ml_calc.__dict__['regularization_bounds'] = (1e-6, 1e-3)
-            self.ml_calc.__dict__['kdict']['k1']['dimension'] = 'features'
-            self.ml_calc.__dict__['kdict']['k1']['width'] = 0.25/2.0
-            self.ml_calc.__dict__['kdict']['k1']['bounds'] = ((1e-4, 0.50),) * len(self.ind_mask_constr)
-
-        # Step 3:
-        if 0.10 < max_abs_forces <= 0.50:
-            print('Sequential mode. Stage 3: SQE isotropic.')
-            self.ml_calc.__dict__['regularization_bounds'] = (1e-6, 1e-3)
+        if max_abs_forces <= 1.00:
+            print('Sequential mode. Stage 2: SQE (isotropic).')
+            self.ml_calc.__dict__['regularization_bounds'] = (1e-5, 1e-3)
             self.ml_calc.__dict__['kdict']['k1']['dimension'] = 'single'
             self.ml_calc.__dict__['kdict']['k1']['width'] = 0.5/2.0
-            self.ml_calc.__dict__['kdict']['k1']['bounds'] = ((1e-4, 0.25),)
-
-        # Step 4:
-        if max_abs_forces <= 0.10:
-            print('Sequential mode. Stage 4: SQE static.')
-            self.ml_calc.__dict__['regularization_bounds'] = (1e-6, 1e-3)
-            self.ml_calc.__dict__['kdict']['k1']['dimension'] = 'single'
-            self.ml_calc.__dict__['kdict']['k1']['width'] = 0.01
-            self.ml_calc.__dict__['kdict']['k1']['bounds'] = ((0.1, 0.5),)
+            self.ml_calc.__dict__['kdict']['k1']['bounds'] = ((1e-4, 0.5),)

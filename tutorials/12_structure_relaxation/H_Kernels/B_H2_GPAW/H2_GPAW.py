@@ -17,15 +17,15 @@ from ase.db import connect
     Benchmark GPAW H2 molecule.
 """
 
-list_kernels = [
+list_kernels = ['SQE_static', 'SQE_isotropic', 'SQE_anisotropic',
                 'SQE_sequential']
-list_rattle = ['0_00', '0_05', '0_10', '0_15', '0_20', '0_25', '0_30']
+list_rattle = ['0_00']
 
 for rattle in list_rattle:
 
     for kernel in list_kernels: # Loop over different default kernels.
 
-        catlearn_version = "_u_1_9_5"
+        catlearn_version = "_u_2_1_0"
         system = '_rattle' + rattle
 
         results_dir = './Results/'
