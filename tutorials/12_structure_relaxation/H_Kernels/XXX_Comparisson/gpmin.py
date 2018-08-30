@@ -26,14 +26,14 @@ mol = Atoms('H2O',
              (b, b, 0.1219 + b)],
             cell=[a, a, a])
 
-mol.rattle(seed=0, stdev=0.1)
+mol.rattle(seed=0, stdev=0.0)
 
 
 # 2.A. Optimize structure using ASE.
 initial_catlearn = mol.copy()
 initial_catlearn.set_calculator(calc)
 ase_opt = CatLearnMinimizer(initial_catlearn,
-                            filename='results',
+                            trajectory='results_catlearn.traj',
                             ml_calc='SQE_isotropic')
 ase_opt.run(fmax=0.01)
 

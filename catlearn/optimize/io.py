@@ -246,15 +246,15 @@ def backup_old_calcs(filename):
     """ This function will copy (backup) previous files if they filename is
         already in the same directory. Avoids overwriting information.
     """
-    if os.path.isfile("./" + filename + "_catlearn.traj"):
+    if os.path.isfile("./" + filename + ".traj"):
         i = 1
         n_backup = str('{:05d}'.format(i))
-        while os.path.isfile("./" + filename + "_catlearn_old" + n_backup +
+        while os.path.isfile("./" + filename + "_old" + n_backup +
                              ".traj"):
             i += 1
             n_backup = str('{:05d}'.format(i))
-        os.rename("./" + filename + "_catlearn.traj", "./" + filename +
-                  "_catlearn_old" + n_backup + ".traj")
+        os.rename("./" + filename + ".traj", "./" + filename +
+                  "_old" + n_backup + ".traj")
 
     if os.path.isfile("./" + filename + "_convergence_catlearn.txt"):
         j = 1

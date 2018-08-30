@@ -23,7 +23,7 @@ import numpy as np
 class CatLearnMinimizer(object):
 
     def __init__(self, x0, ase_calc=None, ml_calc='SQE_sequential',
-                 filename='results'):
+                 trajectory='results'):
 
         """Optimization setup.
 
@@ -35,12 +35,12 @@ class CatLearnMinimizer(object):
             When using ASE the user must pass an ASE calculator.
         ml_calc : Machine Learning calculator object.
             Machine Learning calculator (e.g. Gaussian Processes).
-        filename: string
+        trajectory: string
             Filename to store the output.
         """
 
         # General variables.
-        base=os.path.basename(filename) # Remove extension if added.
+        base=os.path.basename(trajectory) # Remove extension if added.
         self.filename = os.path.splitext(base)[0] # Remove extension if added.
         self.ml_calc = ml_calc
         self.iter = 0
@@ -98,7 +98,7 @@ class CatLearnMinimizer(object):
             for i in range(1, len(trj_images)):
                 self.ase_ini = trj_images[i]
                 molec_writer = TrajectoryWriter('./' + str(self.filename) +
-                                                '_catlearn.traj', mode='a')
+                                                '.traj', mode='a')
                 molec_writer.write(self.ase_ini)
             if len(self.constraints) < 0:
                 self.constraints = None
@@ -268,7 +268,7 @@ class CatLearnMinimizer(object):
             # Save evaluated image.
             TrajectoryWriter(atoms=self.ase_ini,
                              filename='./' + str(self.filename) +
-                             '_catlearn.traj', mode='a').write()
+                             '.traj', mode='a').write()
 
             # Printing:
             max_forces = get_fmax(-np.array([self.list_gradients[-1]]),
@@ -336,7 +336,7 @@ def initialize(self, i_step=1e-3):
 
         if self.ase:
             molec_writer = TrajectoryWriter('./' + str(self.filename) +
-                                            '_catlearn.traj', mode='a')
+                                            '.traj', mode='a')
             molec_writer.write(self.ase_ini)
         self.iter += 1
 
@@ -350,7 +350,7 @@ def initialize(self, i_step=1e-3):
         self.feval = len(self.list_targets)
         if self.ase:
             molec_writer = TrajectoryWriter('./' + str(self.filename) +
-                                            '_catlearn.traj', mode='a')
+                                            '.traj', mode='a')
             molec_writer.write(self.ase_ini)
 
 

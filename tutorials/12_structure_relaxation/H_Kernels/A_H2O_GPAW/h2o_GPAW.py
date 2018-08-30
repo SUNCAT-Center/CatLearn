@@ -4,12 +4,13 @@ from ase.optimize import *
 from ase.optimize.sciopt import *
 from catlearn.optimize.catlearn_minimizer import CatLearnMinimizer
 import copy
-import shutil
-import os
 from ase.constraints import FixAtoms
 from ase.visualize import view
-from ase.optimize.sciopt import SciPyFminBFGS
+from ase.optimize.sciopt import *
 from ase.io import read
+from ase.optimize.gpmin.gpmin import GPMin
+import shutil
+import os
 
 """ 
     Benchmark GPAW H2O calculations.
@@ -24,7 +25,7 @@ for rattle in list_rattle:
 
     for kernel in list_kernels: # Loop over different default kernels.
 
-        catlearn_version = "_u_2_1_0"
+        catlearn_version = "_u_2_3_0"
         system = '_rattle' + rattle
 
         results_dir = './Results/'
@@ -55,7 +56,7 @@ for rattle in list_rattle:
         if not os.path.exists(results_dir):
             os.makedirs(results_dir)
 
-        minimizers = ['BFGS', 'FIRE']
+        minimizers = ['GPMin', 'SciPyFminBFGS', 'FIRE']
 
         for i in minimizers:
             filename = i + system + '.traj'
@@ -67,21 +68,24 @@ for rattle in list_rattle:
                 shutil.copy('./' + filename, results_dir + filename)
                 os.remove('./' + filename)
 
-        minimizers = ['BFGS', 'FIRE']
+        list_kernels = [ 'SQE_isotropic', 'SQE_anisotropic', 'SQE_sequential',
+                         'SQE_static']
 
-        for i in minimizers:
-            filename = i + system + '_' + kernel + catlearn_version
-            if not os.path.exists(results_dir + filename + '_catlearn.traj'):
-                initial = mol.copy()
-                initial.set_calculator(calc)
-                opt = CatLearnMinimizer(initial, filename=filename,
-                                        ml_calc=kernel)
-                opt.run(fmax=0.01, ml_algo=i, max_iter=300)
-                shutil.copy('./' + filename + '_catlearn.traj',
-                            results_dir + filename + '_catlearn.traj')
-                os.remove('./' + filename + '_catlearn.traj')
-                os.remove('./' + filename + '_convergence_catlearn.txt')
-                os.remove('./warnings_and_errors.txt')
+        for kernel in list_kernels:
+            minimizers = ['BFGS', 'FIRE', 'SciPyFminBFGS']
+            for i in minimizers:
+                filename = i + system + '_' + kernel + catlearn_version
+                if not os.path.exists(results_dir + filename + '_catlearn.traj'):
+                    initial = mol.copy()
+                    initial.set_calculator(calc)
+                    opt = CatLearnMinimizer(initial, filename=filename,
+                                            ml_calc=kernel)
+                    opt.run(fmax=0.01, ml_algo=i, max_iter=300)
+                    shutil.copy('./' + filename + '_catlearn.traj',
+                                results_dir + filename + '_catlearn.traj')
+                    os.remove('./' + filename + '_catlearn.traj')
+                    os.remove('./' + filename + '_convergence_catlearn.txt')
+                    os.remove('./warnings_and_errors.txt')
     # 4. Summary of the results:
     ###############################################################################
     from ase.io import read
