@@ -30,50 +30,36 @@ np.random.seed(1)
 for i in mol:
     if i.position[2] > 14.00:
         i.symbol = 'Au'
-        i.position = i.position + np.random.normal(scale=0.1)
+        i.position = i.position + np.random.normal(scale=0.2)
 
 # 3. Benchmark.
 ###############################################################################
-results_dir = './Results/'
 
-if not os.path.exists(results_dir):
-    os.makedirs(results_dir)
-
-
-minimizers = ['BFGS', 'FIRE', 'LBFGS']
-
-for i in minimizers:
-    filename = i + system + '_opt.traj'
-    if not os.path.exists(results_dir + filename):
-        initial = mol.copy()
-        initial.set_calculator(calc)
-        opt = eval(i)(initial, trajectory=filename, )
-        opt.run(fmax=0.02, steps=500)
-        shutil.copy('./' + filename, results_dir + filename)
-
-minimizers = ['BFGS', 'FIRE']
-
-for i in minimizers:
-    filename = i + system + '_opt' + catlearn_version
-    if not os.path.exists(results_dir + filename + '_catlearn.traj'):
-        initial = mol.copy()
-        initial.set_calculator(calc)
-        opt = CatLearnMinimizer(initial, filename=filename)
-        opt.run(fmax=0.02, ml_algo=i)
-        shutil.copy('./' + filename + '_catlearn.traj',
-                    results_dir + filename + '_catlearn.traj')
+# 2.A. Optimize structure using ASE.
+initial_catlearn = mol.copy()
+initial_catlearn.set_calculator(calc)
+ase_opt = CatLearnMinimizer(initial_catlearn,
+                            filename='results',
+                            ml_calc='SQE_sequential')
+ase_opt.run(fmax=0.01, ml_algo='BFGS')
 
 
-# 4. Summary of the results:
-###############################################################################
+# 2.B Optimize using GPMin.
+initial_gpmin = mol.copy()
+initial_gpmin.set_calculator(calc)
+gpmin_opt = GPMin(initial_gpmin, trajectory='results_gpmin.traj')
+gpmin_opt.run(fmax=0.01)
 
+
+# 3. Summary of the results:
 print('\n Summary of the results:\n ------------------------------------')
 
-# Function evaluations:
-for filename in os.listdir(results_dir):
-    try:
-        atoms = read(filename,':')
-    except:
-        pass
-    feval = len(atoms)
-    print('Number of function evaluations using ' + filename + ':', feval)
+gpmin_results = read('results_gpmin.traj', ':')
+
+print('Number of function evaluations using ASE:', len(gpmin_results))
+print('Energy GPMin (eV):', gpmin_results[-1].get_potential_energy())
+
+catlearn_results = read('results_catlearn.traj', ':')
+
+print('Number of function evaluations using CatLearn:', len(catlearn_results))
+print('Energy CatLearn (eV):', catlearn_results[-1].get_potential_energy())

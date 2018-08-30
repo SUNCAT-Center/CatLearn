@@ -95,3 +95,14 @@ for structure in all_structures:
         except:
             pass
 
+from ase.io import read
+import os
+print('\n Summary of the results:\n ------------------------------------')
+#     Function evaluations:
+for name_of_file in os.listdir('./'):
+        try:
+            atoms = read('./' + name_of_file, ':')
+            feval = len(atoms)
+            print('Number of function evaluations using ' + name_of_file + ':', feval)
+        except:
+            pass
