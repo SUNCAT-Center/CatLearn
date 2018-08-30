@@ -5,8 +5,7 @@ from ase.io.trajectory import TrajectoryWriter
 from ase.optimize import *
 from catlearn.optimize.warnings import *
 from catlearn.optimize.ml_calculator import GPCalculator, train_ml_process
-from catlearn.optimize.io import backup_old_calcs, ase_traj_to_catlearn, \
-                                 print_info
+from catlearn.optimize.io import ase_traj_to_catlearn, print_info
 from catlearn.optimize.constraints import create_mask_ase_constraints
 
 from ase.optimize.sciopt import *
@@ -40,8 +39,7 @@ class CatLearnMinimizer(object):
         """
 
         # General variables.
-        base=os.path.basename(trajectory) # Remove extension if added.
-        self.filename = os.path.splitext(base)[0] # Remove extension if added.
+        self.filename = trajectory # Remove extension if added.
         self.ml_calc = ml_calc
         self.iter = 0
         self.feval = 0
@@ -54,7 +52,7 @@ class CatLearnMinimizer(object):
 
         self.ase_calc = ase_calc
 
-        backup_old_calcs(self.filename)
+        #backup_old_calcs(self.filename)
 
         assert x0 is not None, err_not_x0()
 
@@ -97,8 +95,8 @@ class CatLearnMinimizer(object):
                     trj['constraints'], trj['num_atoms']]
             for i in range(1, len(trj_images)):
                 self.ase_ini = trj_images[i]
-                molec_writer = TrajectoryWriter('./' + str(self.filename) +
-                                                '.traj', mode='a')
+                molec_writer = TrajectoryWriter('./' + str(self.filename),
+                                                mode='a')
                 molec_writer.write(self.ase_ini)
             if len(self.constraints) < 0:
                 self.constraints = None
@@ -267,8 +265,8 @@ class CatLearnMinimizer(object):
 
             # Save evaluated image.
             TrajectoryWriter(atoms=self.ase_ini,
-                             filename='./' + str(self.filename) +
-                             '.traj', mode='a').write()
+                             filename='./' + str(self.filename),
+                             mode='a').write()
 
             # Printing:
             max_forces = get_fmax(-np.array([self.list_gradients[-1]]),
@@ -335,8 +333,8 @@ def initialize(self, i_step=1e-3):
         self.feval = len(self.list_targets)
 
         if self.ase:
-            molec_writer = TrajectoryWriter('./' + str(self.filename) +
-                                            '.traj', mode='a')
+            molec_writer = TrajectoryWriter('./' + str(self.filename),
+                                            mode='a')
             molec_writer.write(self.ase_ini)
         self.iter += 1
 
@@ -349,8 +347,8 @@ def initialize(self, i_step=1e-3):
                                    -get_forces_catlearn(self).flatten())]
         self.feval = len(self.list_targets)
         if self.ase:
-            molec_writer = TrajectoryWriter('./' + str(self.filename) +
-                                            '.traj', mode='a')
+            molec_writer = TrajectoryWriter('./' + str(self.filename),
+                                            mode='w')
             molec_writer.write(self.ase_ini)
 
 

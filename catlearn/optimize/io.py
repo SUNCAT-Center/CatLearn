@@ -242,31 +242,6 @@ def store_results(self):
     f_res.write(str(dict))
 
 
-def backup_old_calcs(filename):
-    """ This function will copy (backup) previous files if they filename is
-        already in the same directory. Avoids overwriting information.
-    """
-    if os.path.isfile("./" + filename + ".traj"):
-        i = 1
-        n_backup = str('{:05d}'.format(i))
-        while os.path.isfile("./" + filename + "_old" + n_backup +
-                             ".traj"):
-            i += 1
-            n_backup = str('{:05d}'.format(i))
-        os.rename("./" + filename + ".traj", "./" + filename +
-                  "_old" + n_backup + ".traj")
-
-    if os.path.isfile("./" + filename + "_convergence_catlearn.txt"):
-        j = 1
-        n_backup = str('{:05d}'.format(j))
-        while os.path.isfile("./" + filename + "_convergence_catlearn_old" +
-                             n_backup + ".txt"):
-            j += 1
-            n_backup = str('{:05d}'.format(j))
-        os.rename("./" + filename + "_convergence_catlearn.txt", "./" +
-                  filename + "_convergence_catlearn_old" + n_backup + ".txt")
-
-
 def store_results_neb(s, e, sfit, efit, uncertainty_path):
     """ Function that print in csv files the predicted NEB curves after
         each iteration"""
