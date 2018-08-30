@@ -1,12 +1,12 @@
-# @Version u2.3.0
+# @Version u2.4.0
 
 from ase import Atoms
 from ase.io.trajectory import TrajectoryWriter
 from ase.optimize import *
 from catlearn.optimize.warnings import *
 from catlearn.optimize.ml_calculator import GPCalculator, train_ml_process
-from catlearn.optimize.io import ase_traj_to_catlearn, print_info
-from catlearn.optimize.constraints import create_mask_ase_constraints
+from catlearn.optimize.io import ase_traj_to_catlearn, print_info, array_to_ase
+from catlearn.optimize.constraints import create_mask_ase_constraints, unmask_geometry
 
 from ase.optimize.sciopt import *
 from catlearn.optimize.get_real_values import eval_and_append, \
@@ -14,10 +14,9 @@ from catlearn.optimize.get_real_values import eval_and_append, \
                                               get_forces_catlearn
 from catlearn.optimize.convergence import converged, get_fmax
 from catlearn.optimize.catlearn_ase_calc import CatLearnASE
-# from catlearn.optimize.plots import get_plot_step
 import os
 import numpy as np
-
+from catlearn.optimize.ml_optimize import optimize_ml_using_scipy
 
 class CatLearnMinimizer(object):
 
@@ -39,7 +38,7 @@ class CatLearnMinimizer(object):
         """
 
         # General variables.
-        self.filename = trajectory # Remove extension if added.
+        self.filename = trajectory  # Remove extension if added.
         self.ml_calc = ml_calc
         self.iter = 0
         self.feval = 0
@@ -51,8 +50,6 @@ class CatLearnMinimizer(object):
         open('warnings_and_errors.txt', 'w')
 
         self.ase_calc = ase_calc
-
-        #backup_old_calcs(self.filename)
 
         assert x0 is not None, err_not_x0()
 
@@ -125,9 +122,8 @@ class CatLearnMinimizer(object):
                     regularization=1e-6, regularization_bounds=(1e-6, 1e-3))
         assert self.ml_calc, error_not_ml_calc()
 
-    def run(self, fmax=0.05, ml_algo='BFGS', max_iter=500,
-            min_iter=0, ml_max_iter=250, penalty=0.0,
-            plots=False):
+    def run(self, fmax=0.05, ml_algo='L-BFGS-B', max_iter=500,
+            min_iter=0, ml_max_iter=250, penalty=0.0):
 
         """Executing run will start the optimization process.
 
@@ -175,13 +171,24 @@ class CatLearnMinimizer(object):
         converged(self)
         print_info(self)
 
-        if self.ase_calc is 'BFGSLineSearch':
+        if ml_algo is 'BFGSLineSearch':
             initialize(self, i_step='BFGS')
+        if ml_algo not in self.list_minimizers_grad:
+            initialize(self, i_step='SciPyFminCG')
         else:
             initialize(self, i_step=ml_algo)
 
         converged(self)
         print_info(self)
+
+        ase_minimizers = ['BFGS', 'LBFGS', 'SciPyFminCG', 'MDMin',
+                        'FIRE', 'BFGSLineSearch', 'SciPyFminBFGS',
+                        'QuasiNewton', 'GoodOldQuasiNewton']
+        if ml_algo in ase_minimizers:
+            self.ase = True
+        if ml_algo not in ase_minimizers:
+            self.ase = False
+
 
         # Configure ML calculator.
 
@@ -227,39 +234,44 @@ class CatLearnMinimizer(object):
             # Attach CatLearn calculator.
 
             # Start from the most stable.
-            guess = self.ase_ini
+            if self.ase:
+                guess = self.ase_ini
 
-            guess_pos = self.list_train[np.argmin(self.list_targets)]
-            guess.positions = guess_pos.reshape(-1, 3)
+                guess_pos = self.list_train[np.argmin(self.list_targets)]
+                guess.positions = guess_pos.reshape(-1, 3)
 
-            guess.set_calculator(CatLearnASE(
-                                    trained_process=trained_process,
-                                    ml_calc=ml_calc,
-                                    kappa=penalty,
-                                    index_constraints=self.ind_mask_constr
-                                         ))
-            guess.info['iteration'] = self.iter
+                guess.set_calculator(CatLearnASE(
+                                        trained_process=trained_process,
+                                        ml_calc=ml_calc,
+                                        kappa=penalty,
+                                        index_constraints=self.ind_mask_constr
+                                             ))
+                guess.info['iteration'] = self.iter
 
-            # Run optimization of the predicted PES.
-            opt_ml = eval(ml_algo)(guess)
-            print('Starting ML optimization...')
-            if ml_algo in self.list_minimizers_grad:
-                opt_ml.run(fmax=fmax/1.1, steps=ml_max_iter)
-            else:
-                opt_ml.run(steps=ml_max_iter)
-            print('ML optimized.')
+                # Run optimization of the predicted PES.
+                opt_ml = eval(ml_algo)(guess)
+                print('Starting ML optimization...')
+                if ml_algo in self.list_minimizers_grad:
+                    opt_ml.run(fmax=fmax/1.0, steps=ml_max_iter)
+                else:
+                    opt_ml.run(steps=ml_max_iter)
+                print('ML optimized.')
+
+                interesting_point = guess.get_positions().flatten()
+
+            if not self.ase:
+                x0 = self.list_train[np.argmin(self.list_targets)]
+                int_p = optimize_ml_using_scipy(x0=x0,
+                                        ml_calc=self.ml_calc,
+                                        trained_process=trained_process,
+                                        ml_algo=ml_algo)
+                interesting_point = unmask_geometry(
+                                    org_list=self.list_train,
+                                    masked_geom=int_p,
+                                    mask_index=self.ind_mask_constr)
 
             # 3. Evaluate and append interesting point.
-
-            interesting_point = guess.get_positions().flatten()
             eval_and_append(self, interesting_point)
-
-            # Optional. Plots.
-            if plots is True:
-                get_plot_step(images=guess,
-                              trained_process=trained_process,
-                              list_train=self.list_train,
-                              scale=scale_targets)
 
             # 4. Convergence and output.
 

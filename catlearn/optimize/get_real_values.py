@@ -27,19 +27,14 @@ def get_energy_catlearn(self, x=None):
         x = self.list_train[-1]
 
     # Get energies using ASE:
-    if self.ase:
-        pos_ase = array_to_ase(x, self.num_atoms)
+    pos_ase = array_to_ase(x, self.num_atoms)
 
-        self.ase_ini.set_calculator(None)
-        self.ase_ini = Atoms(self.ase_ini, positions=pos_ase,
-                             calculator=self.ase_calc)
-        energy = self.ase_ini.get_potential_energy()
-        print('Energy of the geometry evaluated (eV):', energy)
+    self.ase_ini.set_calculator(None)
+    self.ase_ini = Atoms(self.ase_ini, positions=pos_ase,
+                         calculator=self.ase_calc)
+    energy = self.ase_ini.get_potential_energy()
+    print('Energy of the geometry evaluated (eV):', energy)
 
-    # When not using ASE:
-    if not self.ase:
-        energy = self.fun.evaluate(x)
-        print('Function evaluation:', energy)
     return energy
 
 
@@ -67,15 +62,11 @@ def get_forces_catlearn(self, x=None):
         x = self.list_train[-1]
 
     # Get energies using ASE:
-    if self.ase:
-        forces = self.ase_ini.get_forces().flatten()
-        print("Forces of the geometry evaluated (eV/Angst):\n",
-              array_to_atoms(forces))
 
-    # When not using ASE:
-    if not self.ase:
-        forces = -self.fun.jacobian(x)
-        print("\nForces:\n", forces)
+    forces = self.ase_ini.get_forces().flatten()
+    print("Forces of the geometry evaluated (eV/Angst):\n",
+          array_to_atoms(forces))
+
     return forces
 
 

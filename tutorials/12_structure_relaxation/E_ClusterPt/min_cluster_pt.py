@@ -21,24 +21,28 @@ calc = EMT()
 # 1.1. Structures:
 
 mol = read('./A_structure/POSCAR')
-mol.rattle(stdev=0.3, seed=6)
+mol.rattle(stdev=0.1, seed=3)
 
 # 3. Benchmark.
 ###############################################################################
 
 # 2.A. Optimize structure using ASE.
+
 initial_catlearn = mol.copy()
 initial_catlearn.set_calculator(calc)
 ase_opt = CatLearnMinimizer(initial_catlearn,
-                            filename='results',
-                            ml_calc='SQE_isotropic')
-ase_opt.run(fmax=0.01, ml_algo='BFGS')
+                            trajectory='results_catlearn.traj',
+                            ml_calc='SQE_sequential')
+ase_opt.run(fmax=0.01)
+atoms = read('results_catlearn.traj', ':')
+
 
 
 # 2.B Optimize using GPMin.
 initial_gpmin = mol.copy()
 initial_gpmin.set_calculator(calc)
-gpmin_opt = GPMin(initial_gpmin, trajectory='results_gpmin.traj')
+gpmin_opt = GPMin(initial_gpmin, trajectory='results_gpmin.traj',
+                  update_hyperparams=True)
 gpmin_opt.run(fmax=0.01)
 
 

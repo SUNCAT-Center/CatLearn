@@ -39,7 +39,8 @@ ase_opt.run(fmax=0.01, ml_algo='FIRE')
 # 2.B Optimize using GPMin.
 initial_gpmin = mol.copy()
 initial_gpmin.set_calculator(calc)
-gpmin_opt = GPMin(initial_gpmin, trajectory='results_gpmin.traj')
+gpmin_opt = GPMin(initial_gpmin, trajectory='results_gpmin.traj',
+                  opt=True)
 gpmin_opt.run(fmax=0.01)
 
 # 3. Summary of the results:

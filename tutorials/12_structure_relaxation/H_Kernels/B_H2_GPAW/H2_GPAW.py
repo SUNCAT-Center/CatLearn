@@ -17,6 +17,9 @@ from ase.db import connect
     Benchmark GPAW H2 molecule.
 """
 
+
+
+
 list_kernels = ['SQE_static', 'SQE_isotropic', 'SQE_anisotropic',
                 'SQE_sequential']
 list_rattle = ['0_00']
