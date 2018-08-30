@@ -127,7 +127,7 @@ class CatLearnMinimizer(object):
                     regularization=1e-6, regularization_bounds=(1e-6, 1e-3))
         assert self.ml_calc, error_not_ml_calc()
 
-    def run(self, fmax=0.05, ml_algo='FIRE', max_iter=500,
+    def run(self, fmax=0.05, ml_algo='BFGS', max_iter=500,
             min_iter=0, ml_max_iter=250, penalty=0.0,
             plots=False):
 
