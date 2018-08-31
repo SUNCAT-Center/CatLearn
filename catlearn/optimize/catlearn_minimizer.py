@@ -6,7 +6,8 @@ from ase.optimize import *
 from catlearn.optimize.warnings import *
 from catlearn.optimize.ml_calculator import GPCalculator, train_ml_process
 from catlearn.optimize.io import ase_traj_to_catlearn, print_info, array_to_ase
-from catlearn.optimize.constraints import create_mask_ase_constraints, unmask_geometry
+from catlearn.optimize.constraints import create_mask_ase_constraints, \
+                                    unmask_geometry, apply_mask_ase_constraints
 
 from ase.optimize.sciopt import *
 from catlearn.optimize.get_real_values import eval_and_append, \
@@ -261,6 +262,10 @@ class CatLearnMinimizer(object):
 
             if not self.ase:
                 x0 = self.list_train[np.argmin(self.list_targets)]
+
+                x0 = np.array(apply_mask_ase_constraints(list_to_mask=[x0],
+                mask_index=self.ind_mask_constr)[1])
+
                 int_p = optimize_ml_using_scipy(x0=x0,
                                         ml_calc=self.ml_calc,
                                         trained_process=trained_process,
