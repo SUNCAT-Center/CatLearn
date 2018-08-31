@@ -1,4 +1,4 @@
-# @Version u2.4.0
+# @Version u2.5.0
 
 from ase import Atoms
 from ase.io.trajectory import TrajectoryWriter
@@ -108,9 +108,9 @@ class CatLearnMinimizer(object):
                                    'SQE_anisotropic', 'SQE_sequential']
             assert self.ml_calc in implemented_kernels, error_not_ml_calc()
             self.kernel_mode = self.ml_calc
-            self.kdict = {'k1': {'type': 'gaussian', 'width': 0.40,
+            self.kdict = {'k1': {'type': 'gaussian', 'width': 0.25,
                          'dimension': 'features',
-                         'bounds': ((1e-3, 0.40),) * len(self.ind_mask_constr),
+                         'bounds': ((1e-3, 0.5),) * len(self.ind_mask_constr),
                          'scaling': 1.0,
                          'scaling_bounds': ((1.0, 1.0), )}
                   }
@@ -119,7 +119,7 @@ class CatLearnMinimizer(object):
                     scale_optimizer=False, calc_uncertainty=True,
                     algo_opt_hyperparamters='L-BFGS-B',
                     global_opt_hyperparameters=False,
-                    regularization=1e-6, regularization_bounds=(1e-6, 1e-3))
+                    regularization=1e-4, regularization_bounds=(1e-5, 1e-3))
         assert self.ml_calc, error_not_ml_calc()
 
     def run(self, fmax=0.05, ml_algo='L-BFGS-B', max_iter=500,
@@ -252,7 +252,7 @@ class CatLearnMinimizer(object):
                 opt_ml = eval(ml_algo)(guess)
                 print('Starting ML optimization...')
                 if ml_algo in self.list_minimizers_grad:
-                    opt_ml.run(fmax=fmax/1.0, steps=ml_max_iter)
+                    opt_ml.run(fmax=1e-4, steps=ml_max_iter)
                 else:
                     opt_ml.run(steps=ml_max_iter)
                 print('ML optimized.')
@@ -373,10 +373,10 @@ def predefined_calculators(self):
     if self.kernel_mode is 'SQE_isotropic':
         print('Using default isotropic SQE kernel. A common length-scale '
               'paramter is optimized for all dimensions.')
-        self.ml_calc.__dict__['regularization_bounds'] = (1e-6, 1e-3)
+        self.ml_calc.__dict__['regularization_bounds'] = (1e-5, 1e-3)
         self.ml_calc.__dict__['kdict']['k1']['dimension'] = 'single'
-        self.ml_calc.__dict__['kdict']['k1']['width'] = 0.5/2.0
-        self.ml_calc.__dict__['kdict']['k1']['bounds'] = ((1e-4, 0.40),)
+        self.ml_calc.__dict__['kdict']['k1']['width'] = 0.25
+        self.ml_calc.__dict__['kdict']['k1']['bounds'] = ((1e-4, 0.5),)
 
     if self.kernel_mode is 'SQE_anisotropic':
         print('Using default anisotropic ARD-SQE kernel. Length-scale '
@@ -391,16 +391,16 @@ def predefined_calculators(self):
         # Step 1:
         if max_abs_forces > 1.00:
             print('Sequential mode. Stage 1: ARD-SQE (anisotropic).')
-            self.ml_calc.__dict__['regularization_bounds'] = (1e-5, 1e-2)
+            self.ml_calc.__dict__['regularization_bounds'] = (1e-4, 1e-2)
             self.ml_calc.__dict__['kdict']['k1']['dimension'] = 'features'
-            self.ml_calc.__dict__['kdict']['k1']['width'] = 0.5/2.0
-            self.ml_calc.__dict__['kdict']['k1']['bounds'] = ((1e-4, 0.40),
+            self.ml_calc.__dict__['kdict']['k1']['width'] = 0.25
+            self.ml_calc.__dict__['kdict']['k1']['bounds'] = ((1e-4, 0.5),
             ) * len(self.ind_mask_constr)
 
         # Step 2:
         if max_abs_forces <= 1.00:
             print('Sequential mode. Stage 2: SQE (isotropic).')
-            self.ml_calc.__dict__['regularization_bounds'] = (1e-6, 1e-3)
+            self.ml_calc.__dict__['regularization_bounds'] = (1e-5, 1e-3)
             self.ml_calc.__dict__['kdict']['k1']['dimension'] = 'single'
-            self.ml_calc.__dict__['kdict']['k1']['width'] = 0.5/2.0
-            self.ml_calc.__dict__['kdict']['k1']['bounds'] = ((1e-4, 0.40),)
+            self.ml_calc.__dict__['kdict']['k1']['width'] = 0.25
+            self.ml_calc.__dict__['kdict']['k1']['bounds'] = ((1e-4, 0.5),)

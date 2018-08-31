@@ -18,10 +18,10 @@ from ase.db import connect
 # Save in csv file:
 results = [['Minimizer', 'Rattle', 'Sample', 'Feval', 'Converged', 'Version']]
 
-catlearn_version = "u_2_3_0"
+catlearn_version = "u_2_5_0"
 
 list_rattle = np.linspace(0.1, 0.30, 3)  # Rattle magnitude.
-random_samples = np.arange(5)  # Number of random samples.
+random_samples = np.arange(10)  # Number of random samples.
 
 for sample in random_samples:
     for rattle in list_rattle:
@@ -49,7 +49,7 @@ for sample in random_samples:
         if not os.path.exists(results_dir):
             os.makedirs(results_dir)
 
-        list_minimizers = ['GPMin', 'FIRE']
+        list_minimizers = ['GPMin', 'GPMin_update']
 
         for minimizer in list_minimizers:
 
@@ -61,7 +61,11 @@ for sample in random_samples:
                 if not os.path.exists(results_dir + filename):
                     initial = mol.copy()
                     initial.set_calculator(calc)
-                    opt = eval(minimizer)(initial, trajectory=filename)
+                    if minimizer is not 'GPMin_update':
+                        opt = eval(minimizer)(initial, trajectory=filename)
+                    if minimizer is 'GPMin_update':
+                        opt = GPMin(initial, trajectory=filename,
+                                    update_hyperparams=True)
                     opt.run(fmax=0.01, steps=200)
                     shutil.copy('./' + filename, results_dir + filename)
                     os.remove('./' + filename)
@@ -83,7 +87,7 @@ for sample in random_samples:
             df = pd.DataFrame(results)
             df.to_csv('results.csv', index=False, header=False)
 
-        list_kernels = ['SQE_isotropic', 'SQE_anisotropic', 'SQE_sequential']
+        list_kernels = ['SQE_isotropic', 'SQE_sequential']
 
         for kernel in list_kernels:
             filename = 'catlearn' + '_' + kernel + '_' + str(rattle) + '_' +\
@@ -95,7 +99,7 @@ for sample in random_samples:
                 initial.set_calculator(calc)
                 opt = CatLearnMinimizer(initial, trajectory=filename,
                                         ml_calc=kernel)
-                opt.run(fmax=0.01, ml_algo='BFGS', max_iter=200)
+                opt.run(fmax=0.01, ml_algo='L-BFGS-B', max_iter=200)
                 shutil.copy('./' + filename, results_dir + filename)
                 os.remove('./' + filename)
             # Save results:
@@ -112,5 +116,4 @@ for sample in random_samples:
             print('Function evaluations performed by ' + kernel + ':', feval)
             df = pd.DataFrame(results)
             df.to_csv('results.csv', index=False, header=False)
-
 
