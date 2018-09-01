@@ -47,9 +47,6 @@ class CatLearnMin(object):
         self.min_iter = 0
         self.jac = True
 
-        # Create new file to store warnings and errors.
-        open('warnings_and_errors.txt', 'w')
-
         self.ase_calc = ase_calc
 
         assert x0 is not None, err_not_x0()
@@ -159,7 +156,7 @@ class CatLearnMin(object):
             optimization process.
             3) An additional file 'warning_and_errors.txt' is included.
         """
-
+        self.ml_algo = ml_algo
         self.list_minimizers_grad = ['BFGS', 'LBFGS', 'SciPyFminCG', 'MDMin',
                                      'FIRE', 'BFGSLineSearch',
                                      'QuasiNewton', 'GoodOldQuasiNewton']
@@ -187,14 +184,13 @@ class CatLearnMin(object):
                         'FIRE', 'BFGSLineSearch', 'SciPyFminBFGS',
                         'QuasiNewton', 'GoodOldQuasiNewton']
         if ml_algo in ase_minimizers:
-            self.ase = True
+            self.ase_opt = True
         if ml_algo not in ase_minimizers:
-            self.ase = False
+            self.ase_opt = False
 
         # Configure ML calculator.
 
         while not converged(self):
-
             predefined_calculators(self)
             update_prior(self)
 
@@ -233,7 +229,7 @@ class CatLearnMin(object):
             # Attach CatLearn calculator.
 
             # Start from the most stable.
-            if self.ase:
+            if self.ase_opt:
                 guess = self.ase_ini
 
                 guess_pos = self.list_train[np.argmin(self.list_targets)]
@@ -258,7 +254,7 @@ class CatLearnMin(object):
 
                 interesting_point = guess.get_positions().flatten()
 
-            if not self.ase:
+            if not self.ase_opt:
                 x0 = self.list_train[np.argmin(self.list_targets)]
 
                 x0 = np.array(apply_mask_ase_constraints(list_to_mask=[x0],
@@ -284,10 +280,9 @@ class CatLearnMin(object):
                              mode='a').write()
 
             # Printing:
-            self.max_forces = get_fmax(-np.array([self.list_gradients[-1]]),
+            self.list_fmax = get_fmax(-np.array([self.list_gradients[-1]]),
                                   self.num_atoms)
-            self.max_abs_forces = np.max(np.abs(self.max_forces))
-
+            self.max_abs_forces = np.max(np.abs(self.list_fmax))
             print_info(self)
             # Maximum number of iterations reached.
             if self.iter > max_iter:

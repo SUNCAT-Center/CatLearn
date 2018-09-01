@@ -140,7 +140,7 @@ def print_info(self):
         if self.start_mode is 'trajectory':
             _start_table(self)
             for i in range(0, self.feval-1):
-                self.table_results.add_row(['Traj. ASE', self.iter-1, i+1,
+                self.table_results.add_row(['Trajectory', self.iter-1, i+1,
                                            self.list_targets[i][0],
                                            self.list_fmax[i][0],
                                            converged(self)])
@@ -187,12 +187,14 @@ def print_info(self):
 
     if self.iter > 0:
         if not self.jac:
-            self.table_results.add_row(['CatLearn', self.iter,
+            self.table_results.add_row(['CatLearn' + '('+ self.ml_algo + ')',
+                                        self.iter,
                                         self.feval,
                                         self.list_targets[-1][0],
                                         self.e_diff, converged(self)])
         if self.jac:
-            self.table_results.add_row(['CatLearn', self.iter,
+            self.table_results.add_row(['CatLearn' + '(' + self.ml_algo + ')',
+                                        self.iter,
                                         self.feval,
                                         self.list_targets[-1][0],
                                         self.max_abs_forces, converged(self)])
