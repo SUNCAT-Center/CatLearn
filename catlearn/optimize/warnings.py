@@ -1,13 +1,6 @@
-def store_warnings_and_errors(msg):
-    warn_and_errors = open('warnings_and_errors.txt', "a")
-    warn_and_errors.write(msg + "\n")
-    warn_and_errors.close()
-
-
 def warning_using_ase():
     msg = "Atoms have been detected. Using ASE..."
     print(msg)
-    store_warnings_and_errors(msg)
 
 
 def warning_first_step_ase(self):
@@ -18,7 +11,6 @@ def warning_first_step_ase(self):
         "user don't set the 'i_ase_step' flag the default algorithm is " \
         "ASE_BFGS for atomistic systems.)"
     print(msg)
-    store_warnings_and_errors(msg)
 
 
 def warning_prev_data_intro():
@@ -26,26 +18,22 @@ def warning_prev_data_intro():
             Remember that the data must be passed as a dictionary 'train', 
             'targets' (and 'gradients', optional)."""
     print(msg)
-    store_warnings_and_errors(msg)
 
 
 def warning_ml_algo(self):
     msg = 'Using ASE (' + self.ml_algo + ') for the optimization of ' \
                 'the ML predicted function.'
     print(msg)
-    store_warnings_and_errors(msg)
 
 
 def warning_traj_detected():
     msg = 'Trajectory file has been detected. Using ASE...'
     print(msg)
-    store_warnings_and_errors(msg)
 
 
 def warning_max_iter_reached():
     msg = 'WARNING: Maximum number iterations reached. Not converged.'
     print(msg)
-    store_warnings_and_errors(msg)
 
 
 def warning_max_step():
@@ -53,7 +41,6 @@ def warning_max_step():
         "this can lead to instability problems in the optimization."
     ""
     print(msg)
-    store_warnings_and_errors(msg)
 
 
 def warning_max_step_radii(max_step):
@@ -63,7 +50,6 @@ def warning_max_step_radii(max_step):
         "the system. For this optimization the maximum step is set to" + str(
          max_step)+" Angstrom."
     print(msg)
-    store_warnings_and_errors(msg)
 
 
 def warning_kernel():
@@ -73,14 +59,12 @@ def warning_kernel():
             "smooth functions (defaults are designed for best performance " \
             "for atomistic systems)."
     print(msg)
-    store_warnings_and_errors(msg)
 
 
 def warning_spin_neb():
     msg = "WARNING: Spin-polarized NEB. Spin-polarized calculations are " \
     "not not supported."
     print(msg)
-    store_warnings_and_errors(msg)
 
 
 def warning_restart_neb():
@@ -91,7 +75,6 @@ def warning_restart_neb():
           "non-converged calculation, you must keep the " \
           "'evaluated_structures.traj' file."
     print(msg)
-    store_warnings_and_errors(msg)
 
 
 def err_first_step_ase():
@@ -100,7 +83,6 @@ def err_first_step_ase():
             \n HINT: Create an Atoms object using ASE and pass it in x0.
             \n HINT_2: Remember that you can also pass a trajectory file from 
             a previous calculation."""
-    store_warnings_and_errors(msg)
     return msg
 
 
@@ -113,7 +95,6 @@ def err_not_ase_algoml():
     \n HINT: Please use a Scipy algorithms instead of an ASE minimizer. 
     Implemented Scipy algorithms are: 'BFGS', 'L-BFGS-B', 'CG', 'Nelder-Mead' 
     and 'Powell'. """
-    store_warnings_and_errors(msg)
     return msg
 
 
@@ -124,7 +105,6 @@ def err_not_x0():
             array with the starting point or a dictionary containing list of 
             'train', 'targets' (and gradients', optional).
             """
-    store_warnings_and_errors(msg)
     return msg
 
 
@@ -135,7 +115,6 @@ def err_not_real_func(self):
     msg += "Alternatively, you can add a function into functions.py"
     msg += " In this case, the analytical function and its first derivative " \
            "in each dimension must be added by you. "
-    store_warnings_and_errors(msg)
     return msg
 
 
@@ -147,33 +126,28 @@ def err_not_real_func_2(self):
     msg += "Alternatively, you can add a function into functions.py"
     msg += " In this case, the analytical function and its first derivative " \
         "in each dimension must be added by manually the user. "
-    store_warnings_and_errors(msg)
     return msg
 
 
 def err_train_data():
     msg = "COMPUTER SAYS NO: You must include at least two trained points."
-    store_warnings_and_errors(msg)
     return msg
 
 
 def err_target_data():
     msg = "COMPUTER SAYS NO: You must include at least two target features."
-    store_warnings_and_errors(msg)
     return msg
 
 
 def err_gradients_data():
-    msg = "COMPUTER SAYS NO: You must include at least two gradients."
-    store_warnings_and_errors(msg)
+    msg = "COMPUTER SAYS NO: You must include at least two first derivative " \
+          "observations."
     return msg
 
 
 def err_diff_data_size():
     msg = """COMPUTER SAYS NO: You have introduced a different number of 
-    train, target and 
-                gradients. Please be consistent!"""
-    store_warnings_and_errors(msg)
+    train, target and gradients. Please be consistent!"""
     return msg
 
 
@@ -183,13 +157,12 @@ def err_not_ase_calc_atoms():
           "'ase calc' flag. You can attach the calculator to the atoms " \
           "object prior feeding it to CatLearn or alternatively you can " \
           "pass it to CatLearn in the 'ase_calc' flag."
-    store_warnings_and_errors(msg)
     return msg
+
 
 def error_not_ml_calc():
     msg = "COMPUTER SAYS NO: You must select one of the predefined setting " \
     "for the machine learning calculator or build your own."
-    store_warnings_and_errors(msg)
     return msg
 
 
@@ -197,7 +170,6 @@ def err_not_ase_calc_traj():
     msg = "COMPUTER SAYS NO: When importing a trajectory file you must " \
           "include the ASE calculator ('ase_calc' flag). Please be " \
           "consistent with your previous run."
-    store_warnings_and_errors(msg)
     return msg
 
 
@@ -209,7 +181,6 @@ def err_not_ml_algo(self):
                 "only " \
                 "for input structures in ASE format, i.e. Atoms objects or " \
                 "trajectory files): " + str(self.ase_optimizers) + "."
-    store_warnings_and_errors(msg)
     return msg
 
 
@@ -221,7 +192,6 @@ def err_not_neb_start():
             trajectory file, the last image must contain the converged 
             structure).
             """
-    store_warnings_and_errors(msg)
     return msg
 
 
@@ -233,13 +203,11 @@ def err_not_neb_end():
             trajectory file, the last image must contain the converged 
             structure).
             """
-    store_warnings_and_errors(msg)
     return msg
 
 
 def err_not_enough_images():
     msg = """ COMPUTER SAYS NO: You must include at least 4 NEB images."""
-    store_warnings_and_errors(msg)
     return msg
 
 
@@ -247,7 +215,6 @@ def congrats_stationary_neb():
     msg = "Congratulations! Stationary point is found! Check the file " \
           "'evaluated_geometries.traj' using ASE."
     print(msg)
-    store_warnings_and_errors(msg)
 
 
 def congrats_neb_converged():
@@ -257,7 +224,6 @@ def congrats_neb_converged():
           "check the files 'results_neb.csv' " \
           "and 'results_neb_interpolation.csv'."
     print(msg)
-    store_warnings_and_errors(msg)
 
 
 def stationary_point_not_found():
@@ -267,4 +233,3 @@ def stationary_point_not_found():
           "the ML NEB predicted path you should also check the files " \
           "'results_neb.csv' and 'results_neb_interpolation.csv'."
     print(msg)
-    store_warnings_and_errors(msg)

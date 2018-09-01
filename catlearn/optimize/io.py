@@ -197,9 +197,9 @@ def print_info(self):
                                         self.list_targets[-1][0],
                                         self.max_abs_forces, converged(self)])
     print(self.table_results)
-    f_print = open(str(self.filename)+'_convergence_catlearn.txt', 'w')
-    f_print.write(str(self.table_results))
-    f_print.close()
+    # f_print = open(str(self.filename)+'_convergence_catlearn.txt', 'w')
+    # f_print.write(str(self.table_results))
+    # f_print.close()
 
 
 def print_info_ml(self):
@@ -216,9 +216,9 @@ def print_info_ml(self):
                                    self.interesting_point,
                                    self.ml_f_min_pred_mean,
                                    self.ml_convergence])
-    f_ml_print = open(str(self.filename)+'_convergence_ml.txt', 'w')
-    f_ml_print.write(str(self.table_ml_results))
-    f_ml_print.close()
+    # f_ml_print = open(str(self.filename)+'_convergence_ml.txt', 'w')
+    # f_ml_print.write(str(self.table_ml_results))
+    # f_ml_print.close()
 
 
 def store_results(self):
@@ -237,9 +237,9 @@ def store_results(self):
                         'f_eval': self.feval,
                         'converged': converged(self)}
 
-    f_res = open(str(self.filename) + "_data.txt", "w")
-    f_res.write(str(self.results))
-    f_res.write(str(dict))
+    # f_res = open(str(self.filename) + "_data.txt", "w")
+    # f_res.write(str(self.results))
+    # f_res.write(str(dict))
 
 
 def store_results_neb(s, e, sfit, efit, uncertainty_path):

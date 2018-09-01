@@ -33,8 +33,6 @@ def get_energy_catlearn(self, x=None):
     self.ase_ini = Atoms(self.ase_ini, positions=pos_ase,
                          calculator=self.ase_calc)
     energy = self.ase_ini.get_potential_energy()
-    print('Energy of the geometry evaluated (eV):', energy)
-
     return energy
 
 
@@ -62,11 +60,7 @@ def get_forces_catlearn(self, x=None):
         x = self.list_train[-1]
 
     # Get energies using ASE:
-
     forces = self.ase_ini.get_forces().flatten()
-    print("Forces of the geometry evaluated (eV/Angst):\n",
-          array_to_atoms(forces))
-
     return forces
 
 
