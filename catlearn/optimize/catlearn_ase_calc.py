@@ -3,6 +3,7 @@
 import numpy as np
 from catlearn.optimize.constraints import apply_mask_ase_constraints
 from ase.calculators.calculator import Calculator, all_changes
+from scipy.optimize import *
 import copy
 
 
@@ -76,3 +77,71 @@ class CatLearnASE(Calculator):
         # Results:
         self.results['energy'] = energy
         self.results['forces'] = forces
+
+
+def predicted_energy_test(test, ml_calc, trained_process):
+
+        """Function that returns the value of the predicted mean for a given
+        test point. This function can be penalised w.r.t. to the distance of
+        the test and the previously trained points (optional).
+
+        Parameters
+        ----------
+        test : array
+            Test point. This point will be tested in the ML in order to get
+            a predicted value.
+        ml_calc : object
+            Machine learning calculator.
+        trained_process : object
+            Includes the trained process.
+
+        Returns
+        -------
+        pred_value : float
+            Surrogate model prediction.
+
+        """
+        pred_value = 0
+
+        # Get predicted mean.
+
+        pred_value = ml_calc.get_predictions(trained_process,
+        test_data=test)['pred_mean']
+        return pred_value[0][0]  # For minimization problems.
+
+
+def optimize_ml_using_scipy(x0, ml_calc, trained_process, ml_algo):
+
+    args = (ml_calc, trained_process)
+
+    if ml_algo == 'Powell':
+        result_min = fmin_powell(func=predicted_energy_test, x0=x0,
+                                 args=args, maxiter=None, xtol=1e-12,
+                                 full_output=False, disp=False)
+        interesting_point = result_min
+
+    if ml_algo == 'sBFGS':
+        result_min = fmin_bfgs(f=predicted_energy_test, x0=x0,
+                               args=args, disp=False, full_output=False,
+                               gtol=1e-6)
+        interesting_point = result_min
+
+    if ml_algo == 'L-BFGS-B':
+        result_min = fmin_l_bfgs_b(func=predicted_energy_test, x0=x0,
+                                   approx_grad=True, args=args, disp=False,
+                                   pgtol= 1e-7)
+        interesting_point = result_min[0]
+
+    if ml_algo == 'CG':
+        result_min = fmin_cg(f=predicted_energy_test, x0=x0, args=args,
+                             disp=False, full_output=True, retall=True,
+                             gtol=1e-6)
+        interesting_point = result_min[-1][-1]
+
+    if ml_algo == 'Nelder-Mead':
+        result_min = fmin(func=predicted_energy_test, x0=x0, args=args,
+                          disp=False, full_output=True, retall=True,
+                          xtol=1e-8, ftol=1e-8)
+        interesting_point = result_min[-1][-1]
+
+    return interesting_point

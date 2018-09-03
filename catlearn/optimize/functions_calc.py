@@ -1,6 +1,5 @@
 import numpy as np
 from ase.calculators.calculator import Calculator
-import math
 
 class MullerBrown(Calculator):
 

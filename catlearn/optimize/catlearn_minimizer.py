@@ -3,21 +3,20 @@
 from ase import Atoms
 from ase.io.trajectory import TrajectoryWriter
 from ase.optimize import *
+from ase.optimize.sciopt import *
 from catlearn.optimize.warnings import *
 from catlearn.optimize.ml_calculator import GPCalculator, train_ml_process
-from catlearn.optimize.io import ase_traj_to_catlearn, print_info, array_to_ase
+from catlearn.optimize.io import ase_traj_to_catlearn, print_info
 from catlearn.optimize.constraints import create_mask_ase_constraints, \
                                     unmask_geometry, apply_mask_ase_constraints
-
-from ase.optimize.sciopt import *
 from catlearn.optimize.get_real_values import eval_and_append, \
                                               get_energy_catlearn, \
                                               get_forces_catlearn
 from catlearn.optimize.convergence import converged, get_fmax
-from catlearn.optimize.catlearn_ase_calc import CatLearnASE
-import os
+from catlearn.optimize.catlearn_ase_calc import CatLearnASE, \
+                                                optimize_ml_using_scipy
 import numpy as np
-from catlearn.optimize.ml_optimize import optimize_ml_using_scipy
+
 
 class CatLearnMin(object):
 

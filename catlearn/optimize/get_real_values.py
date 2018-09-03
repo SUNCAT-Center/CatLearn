@@ -1,7 +1,6 @@
 import numpy as np
 from ase.atoms import Atoms
-import copy
-from catlearn.optimize.io import array_to_ase, array_to_atoms
+from catlearn.optimize.io import array_to_ase
 
 
 def get_energy_catlearn(self, x=None):
