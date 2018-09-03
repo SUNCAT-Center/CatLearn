@@ -40,7 +40,8 @@ class CatLearnASE(Calculator):
                                                   test_data=test[0])
 
             post_mean = predictions['pred_mean'][0][0]
-            unc = predictions['uncertainty'][0]
+            # unc = predictions['uncertainty'][0]
+            unc = 0.0
             acq_val = post_mean + kappa * unc
             return [acq_val, unc]
 

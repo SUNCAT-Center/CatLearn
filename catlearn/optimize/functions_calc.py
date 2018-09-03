@@ -261,13 +261,11 @@ class NoiseHimmelblau(Calculator):
         forces[0][1] = -fy
         forces[0][2] = -fz
 
-        # noise_energy = 10.0 * ((np.sin(x[0]) + np.sin(x[1])))
-
-        forces[0][0] -= 2.0 * np.sin(fx)
-        forces[0][1] -= 1.0 * np.sin(fy)
-
-        self.results['energy'] = 0.05 * energy
-        self.results['forces'] = 0.05 * forces
+        noise_energy = energy * np.random.normal(scale=1e-5)
+        noise_energy =0.0
+        self.results['energy'] = energy + noise_energy
+        noise_force = forces * np.random.normal(scale=0.7)
+        self.results['forces'] = forces + noise_force
 
 
 class Rosenbrock(Calculator):

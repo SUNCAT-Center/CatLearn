@@ -12,7 +12,6 @@ from ase.io import read
     Optimization of CO on Au(111) using GPAW.     
 """
 
-
 # Setup calculator:
 
 calculator = GPAW(mode='lcao',

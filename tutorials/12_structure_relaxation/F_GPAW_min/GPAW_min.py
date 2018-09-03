@@ -16,14 +16,13 @@ import ase.db
     Benchmark GPAW H2O calculations.
 """
 
-
 calculator = GPAW(mode='lcao',
                   basis='dzp',
                   kpts={'density': 2.0})
 
 # 1.1. Structures:
 db = ase.db.connect('systems.db')
-initial_structure = db.get_atoms(formula='C5H12')
+initial_structure = db.get_atoms(formula='Cu2')
 
 initial_structure.rattle(stdev=0.1, seed=1)
 ##############################################################################

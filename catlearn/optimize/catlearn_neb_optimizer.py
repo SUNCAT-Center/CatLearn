@@ -1,4 +1,4 @@
-# @Version u1.8.0
+# @Version 1.0.0
 
 import numpy as np
 from catlearn.optimize.warnings import *
@@ -17,7 +17,6 @@ from ase.optimize import FIRE, MDMin, BFGS , LBFGS
 from scipy.spatial import distance
 import copy
 import os
-from ase.data import covalent_radii
 
 
 class CatLearnNEB(object):
@@ -531,10 +530,7 @@ def create_ml_neb(is_endpoint, fs_endpoint, images_interpolation, kappa,
     return imgs
 
 def update_prior(self):
-    if self.list_targets[0] > 0.0:
-        prior_const = 1/4 * ((self.list_targets[0]) - (self.list_targets[-1]))
-        self.prior = np.min(self.list_targets) - prior_const
-    if self.list_targets[0] <= 0.0:
-        prior_const = 1/4 * ((self.list_targets[0]) - (self.list_targets[-1]))
-        self.prior = -np.min(self.list_targets) + prior_const
+    # prior_const = 1/4 * ((self.list_targets[0]) - (self.list_targets[-1]))
+    prior_const = np.mean(self.list_targets)
+    self.prior = np.abs(np.min(self.list_targets)) + np.abs(prior_const)
     print('Guessed prior', self.prior)

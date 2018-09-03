@@ -1,4 +1,4 @@
-# @Version u2.6.0
+# @Version 1.0.0
 
 from ase import Atoms
 from ase.io.trajectory import TrajectoryWriter
@@ -18,11 +18,10 @@ from catlearn.optimize.catlearn_ase_calc import CatLearnASE
 import os
 import numpy as np
 from catlearn.optimize.ml_optimize import optimize_ml_using_scipy
-from ase.data import covalent_radii
 
 class CatLearnMin(object):
 
-    def __init__(self, x0, ase_calc=None, ml_calc='SQE_sequential',
+    def __init__(self, x0, ase_calc=None, ml_calc='SQE',
                  trajectory='catlearn_opt.traj'):
 
         """Optimization setup.
@@ -137,9 +136,6 @@ class CatLearnMin(object):
         """
         # Default kernel:
 
-
-
-
         self.ml_algo = ml_algo
         self.list_minimizers_grad = ['BFGS', 'LBFGS', 'SciPyFminCG', 'MDMin',
                                      'FIRE', 'BFGSLineSearch',
@@ -157,7 +153,7 @@ class CatLearnMin(object):
         if ml_algo is 'BFGSLineSearch':
             initialize(self, i_step='BFGS')
         if ml_algo not in self.list_minimizers_grad:
-            initialize(self, i_step='SciPyFminBFGS')
+            initialize(self, i_step='BFGS')
         else:
             initialize(self, i_step=ml_algo)
 
@@ -178,7 +174,7 @@ class CatLearnMin(object):
             update_prior(self)
 
             if isinstance(self.ml_calc, str):
-                implemented_kernels = ['SQE_static', 'SQE_isotropic', 'ARD_SQE',
+                implemented_kernels = ['SQE', 'SQE_isotropic',
                                        'SQE_anisotropic', 'SQE_sequential']
                 assert self.ml_calc in implemented_kernels, error_not_ml_calc()
                 self.kernel_mode = self.ml_calc
