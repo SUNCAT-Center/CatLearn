@@ -11,8 +11,6 @@ from ase.visualize import view
     Optimization of a Au cluster in gas phase. 
 """
 
-# 1. Structural relaxation. ##################################################
-
 # Setup calculator:
 calculator = EMT()
 
@@ -26,16 +24,17 @@ initial_structure.rattle(stdev=0.1, seed=3)
 initial_catlearn = initial_structure.copy()
 initial_catlearn.set_calculator(calculator)
 
-catlearn_opt = CatLearnMin(initial_catlearn, trajectory='catlearn_opt.traj')
-catlearn_opt.run(fmax=0.05)
+catlearn_opt = CatLearnMin(initial_catlearn, trajectory='catlearn_opt.traj',
+                           ml_calc='SQE_sequential')
+catlearn_opt.run(fmax=0.01)
 
 # 2.B. Optimize structure using ASE.
 initial_ase = initial_structure.copy()
 initial_ase.set_calculator(calculator)
 
 ase_opt = GPMin(initial_ase, trajectory='ase_opt.traj',
-                update_hyperparams=True)
-ase_opt.run(fmax=0.05)
+                update_hyperparams=False)
+ase_opt.run(fmax=0.01)
 
 # 3. Summary of the results:
 print('\n Summary of the results:\n ------------------------------------')

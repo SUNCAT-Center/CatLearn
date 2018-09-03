@@ -120,8 +120,6 @@ class GPCalculator(object):
 
     def update_hyperparameters(self, trained_process):
         hyper_opt = trained_process.theta_opt['x']
-        print('Optimized hyperparamters:',
-              trained_process.__dict__['kernel_dict']['k1']['width'])
         trained_process.__dict__['kernel_dict']['k1']['width'] = hyper_opt[1:-1]
         return trained_process
 

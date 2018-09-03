@@ -2,72 +2,51 @@ from ase import Atoms
 from gpaw import GPAW
 from ase.optimize import *
 from ase.optimize.sciopt import *
-from catlearn.optimize.catlearn_minimizer import CatLearnMinimizer
+from catlearn.optimize.catlearn_minimizer import CatLearnMin
 from ase.io import read
 import copy
 import shutil
 import os
 from ase.constraints import FixAtoms
 from ase.visualize import view
+import ase.db
+
 
 """ 
     Benchmark GPAW H2O calculations.
 """
 
-catlearn_version = '_u_1_8_0_sequential'
 
-results_dir = './Results/'
+calculator = GPAW(mode='lcao',
+                  basis='dzp',
+                  kpts={'density': 2.0})
 
-if not os.path.exists(results_dir):
-    os.makedirs(results_dir)
+# 1.1. Structures:
+db = ase.db.connect('systems.db')
+initial_structure = db.get_atoms(formula='C5H12')
 
-# 0.0 Setup calculator:
-calc = GPAW(nbands=4, h=0.2, mode='lcao', basis='dzp')
-
-# 1. Structural relaxation. ##################################################
-
-# 1.1. Set up structure:
-a = 6
-b = a / 2
-mol = Atoms('H2O',
-            [(b, 0.7633 + b, -0.4876 + b),
-             (b, -0.7633 + b, -0.4876 + b),
-             (b, b, 0.1219 + b)],
-            cell=[a, a, a])
-
-mol.rattle(seed=0, stdev=0.2)
-
+initial_structure.rattle(stdev=0.1, seed=1)
 ##############################################################################
 
-minimizers = ['BFGS', 'LBFGS', 'FIRE']
+# 2.A. Optimize structure using CatLearn:
+initial_catlearn = initial_structure.copy()
+initial_catlearn.set_calculator(calculator)
 
-for i in minimizers:
-    filename = i + '_opt.traj'
-    if not os.path.exists(results_dir + filename):
-        initial = mol.copy()
-        initial.set_calculator(calc)
-        opt = eval(i)(initial, trajectory=filename)
-        opt.run(fmax=0.05)
-        shutil.copy('./' + filename, results_dir + filename)
+catlearn_opt = CatLearnMin(initial_catlearn, trajectory='catlearn_opt.traj')
+catlearn_opt.run(fmax=0.05)
 
-minimizers = ['FIRE', 'BFGS', 'LBFGS']
+# 2.B. Optimize structure using ASE.
+initial_ase = initial_structure.copy()
+initial_ase.set_calculator(calculator)
 
-for i in minimizers:
-    filename = i + '_opt' + catlearn_version
-    if not os.path.exists(results_dir + filename + '_catlearn.traj'):
-        initial = mol.copy()
-        initial.set_calculator(calc)
-        opt = CatLearnMinimizer(initial, filename=filename)
-        opt.run(fmax=0.05, ml_algo=i)
-        shutil.copy('./' + filename + '_catlearn.traj',
-                    results_dir + filename + '_catlearn.traj')
+ase_opt = GPMin(initial_ase, trajectory='ase_opt.traj')
+ase_opt.run(fmax=0.05)
 
-
-# # 3. Summary of the results:
+# 3. Summary of the results:
 print('\n Summary of the results:\n ------------------------------------')
 
-# Function evaluations:
-for filename in os.listdir(results_dir):
-    atoms = read(filename,':')
-    feval = len(atoms)
-    print('Number of function evaluations using ' + filename+ ':', feval)
+catlearn_results = read('catlearn_opt.traj', ':')
+print('Number of function evaluations using CatLearn:', len(catlearn_results))
+
+ase_results = read('ase_opt.traj', ':')
+print('Number of function evaluations using ASE:', len(ase_results))

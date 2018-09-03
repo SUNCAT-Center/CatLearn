@@ -1,10 +1,8 @@
-from catlearn.optimize.catlearn_minimizer import CatLearnMinimizer
-from ase.calculators.emt import EMT
+from catlearn.optimize.catlearn_minimizer import CatLearnMin
 from ase.io import read
 from ase.optimize import *
 from ase.optimize.sciopt import *
 from ase.visualize import view
-import copy
 from ase import Atoms
 from ase.calculators.emt import EMT
 from ase.constraints import FixAtoms
@@ -17,13 +15,10 @@ import shutil
     Minimization example. 
 """
 
-catlearn_version = '_u_1_7_0'
-system = '_N2_Cu111_rattle01'
-
 # 1. Structural relaxation. ##################################################
 
 # Setup calculator.
-calc = EMT()
+calculator = EMT()
 
 # 1.1. Structures:
 
@@ -38,47 +33,31 @@ add_adsorbate(slab, molecule, h, 'ontop')
 constraint = FixAtoms(mask=[atom.position[2] < 14.0 for atom in slab])
 slab.set_constraint(constraint)
 
-mol = slab.copy()
+initial_structure = slab.copy()
 
-# 3. Benchmark.
-###############################################################################
-results_dir = './Results/'
+# 2.A. Optimize structure using CatLearn:
 
-if not os.path.exists(results_dir):
-    os.makedirs(results_dir)
+initial_catlearn = initial_structure.copy()
+initial_catlearn.set_calculator(calculator)
 
+catlearn_opt = CatLearnMin(initial_catlearn, trajectory='catlearn_opt.traj',
+                           ml_calc='SQE_sequential')
+catlearn_opt.run(fmax=0.01)
 
-minimizers = ['BFGS', 'FIRE', 'LBFGS']
+# 2.B. Optimize structure using ASE.
+initial_ase = initial_structure.copy()
+initial_ase.set_calculator(calculator)
 
-for i in minimizers:
-    filename = i + system + '_opt.traj'
-    if not os.path.exists(results_dir + filename):
-        initial = mol.copy()
-        initial.set_calculator(calc)
-        opt = eval(i)(initial, trajectory=filename, )
-        opt.run(fmax=0.02, steps=500)
-        shutil.copy('./' + filename, results_dir + filename)
+ase_opt = GPMin(initial_ase, trajectory='ase_opt.traj',
+                update_hyperparams=False)
+ase_opt.run(fmax=0.01)
 
-minimizers = ['BFGS', 'FIRE']
-
-for i in minimizers:
-    filename = i + system + '_opt' + catlearn_version
-    if not os.path.exists(results_dir + filename + '_catlearn.traj'):
-        initial = mol.copy()
-        initial.set_calculator(calc)
-        opt = CatLearnMinimizer(initial, filename=filename)
-        opt.run(fmax=0.02, ml_algo=i)
-        shutil.copy('./' + filename + '_catlearn.traj',
-                    results_dir + filename + '_catlearn.traj')
-
-
-# 4. Summary of the results:
-###############################################################################
-
+# 3. Summary of the results:
 print('\n Summary of the results:\n ------------------------------------')
 
-# Function evaluations:
-for filename in os.listdir(results_dir):
-    atoms = read(filename,':')
-    feval = len(atoms)
-    print('Number of function evaluations using ' + filename + ':', feval)
+catlearn_results = read('catlearn_opt.traj', ':')
+print('Number of function evaluations using CatLearn:', len(catlearn_results))
+
+ase_results = read('ase_opt.traj', ':')
+print('Number of function evaluations using ASE:', len(ase_results))
+

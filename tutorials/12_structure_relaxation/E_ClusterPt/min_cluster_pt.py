@@ -1,4 +1,4 @@
-from catlearn.optimize.catlearn_minimizer import CatLearnMinimizer
+from catlearn.optimize.catlearn_minimizer import CatLearnMin
 from ase.calculators.emt import EMT
 from ase.io import read
 from ase.optimize import BFGS, FIRE, MDMin
@@ -21,7 +21,7 @@ calc = EMT()
 # 1.1. Structures:
 
 mol = read('./A_structure/POSCAR')
-mol.rattle(stdev=0.1, seed=3)
+mol.rattle(stdev=0.1, seed=30)
 
 # 3. Benchmark.
 ###############################################################################
@@ -30,7 +30,7 @@ mol.rattle(stdev=0.1, seed=3)
 
 initial_catlearn = mol.copy()
 initial_catlearn.set_calculator(calc)
-ase_opt = CatLearnMinimizer(initial_catlearn,
+ase_opt = CatLearnMin(initial_catlearn,
                             trajectory='results_catlearn.traj',
                             ml_calc='SQE_sequential')
 ase_opt.run(fmax=0.01)
@@ -42,7 +42,7 @@ atoms = read('results_catlearn.traj', ':')
 initial_gpmin = mol.copy()
 initial_gpmin.set_calculator(calc)
 gpmin_opt = GPMin(initial_gpmin, trajectory='results_gpmin.traj',
-                  update_hyperparams=True)
+                  update_hyperparams=False)
 gpmin_opt.run(fmax=0.01)
 
 

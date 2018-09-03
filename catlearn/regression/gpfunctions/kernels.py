@@ -48,6 +48,60 @@ def constant_kernel(theta, log_scale, m1, m2=None, eval_gradients=False):
     return k
 
 
+def constant_multi_kernel(theta, log_scale, m1, m2=None, eval_gradients=False):
+    """Return constant to add to the kernel.
+
+    Parameters
+    ----------
+    theta : list
+        A list containing the constants.
+    log_scale : boolean
+        Scaling hyperparameters in the kernel can be useful for optimization.
+    eval_gradients : boolean
+        Analytical gradients of the training features can be included.
+    m1 : list
+        A list of the training fingerprint vectors.
+    m2 : list
+        A list of the training fingerprint vectors.
+
+    Returns
+    -------
+    k : array
+        The covariance matrix.
+    """
+    if log_scale:
+        theta = np.exp(theta)
+
+    # Constants:
+    c_1 = theta[0]
+    c_2 = theta[1]
+    c_3 = theta[2]
+
+    # Check if gradients are evaluated.
+    if not eval_gradients:
+        if m2 is None:
+            m2 = m1
+        return np.ones([len(m1), len(m2)]) * c_1
+
+    # Account for gradients in constant kernel.
+    size_m1 = np.shape(m1)
+    N = size_m1[0]
+    D = size_m1[1]
+    if m2 is None:
+        k = np.zeros((N + N * D, N + N * D))
+        k[0:N, 0:N] = np.ones([N, N]) * c_1
+        k[0:N, N:] = np.ones([N, N*D]) * c_2
+        k[N:, 0:N] = np.ones([N, N*D]).T * c_2
+        k[N:, N:] = np.ones([N*D, N*D]) * c_3
+    else:
+        size_m2 = np.shape(m2)
+        T = size_m2[0]
+        k = np.zeros([N, T + T * D])
+        k[0:N, 0:T] = np.ones([N, T]) * c_1
+        k[0:, T:] = np.ones([N, T*D]) * c_2
+    return k
+
+
 def gaussian_kernel(theta, log_scale, m1, m2=None, eval_gradients=False):
     """Generate the covariance between data with a Gaussian kernel.
 
@@ -114,19 +168,19 @@ def gaussian_xx_gradients(m1, kwidth, k):
         big_kgd_i = ((ldist).T * k[i]).T
         big_kgd[:, (size[1] * i):(size[1] + size[1] * i)] = big_kgd_i
         #### BROADCASTING ###########
-        k_dd = ((I_m - (ldist[:, None, :] * ldist[:, :, None])) *
-                (k[i, None, None].T)).reshape(-1, size[1])
-        big_kdd[:, size[1] * i:size[1] + size[1] * i] = k_dd
+        # k_dd = ((I_m - (ldist[:, None, :] * ldist[:, :, None])) *
+        #         (k[i, None, None].T)).reshape(-1, size[1])
+        # big_kdd[:, size[1] * i:size[1] + size[1] * i] = k_dd
         #### BROADCASTING ###########
 
         ## ONE LOOP ##############
-        # for j in range(i, size[0]):
-        #     k_dd = (I_m - np.outer(ldist[j], ldist[j].T)) * k[i, j]
-        #     big_kdd[i * size[1]:(i + 1) * size[1],
-        #             j * size[1]:(j + 1) * size[1]] = k_dd
-        #     if j != i:
-        #         big_kdd[j * size[1]:(j + 1) * size[1],
-        #                 i * size[1]:(i + 1) * size[1]] = k_dd.T
+        for j in range(i, size[0]):
+            k_dd = (I_m - np.outer(ldist[j], ldist[j].T)) * k[i, j]
+            big_kdd[i * size[1]:(i + 1) * size[1],
+                    j * size[1]:(j + 1) * size[1]] = k_dd
+            if j != i:
+                big_kdd[j * size[1]:(j + 1) * size[1],
+                        i * size[1]:(i + 1) * size[1]] = k_dd.T
         ## ONE LOOP ##############
     return np.block([[k, big_kgd], [np.transpose(big_kgd), big_kdd]])
 

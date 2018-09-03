@@ -216,7 +216,7 @@ class CatLearnNEB(object):
         self.path_distance = copy.deepcopy(self.d_start_end)
 
     def run(self, fmax=0.05, unc_convergence=0.020, max_iter=500,
-            ml_algo='FIRE', ml_max_iter=200, plot_neb_paths=False,
+            ml_algo='FIRE', ml_max_iter=100, plot_neb_paths=False,
             penalty=0.0, acquisition='acq_3'):
 
         """Executing run will start the optimization process.
@@ -249,44 +249,32 @@ class CatLearnNEB(object):
         Files :
         """
 
-        # Guess hyperparameter boundaries using covalent radii:
-        # atomic_numbers_array = []
-        # for i in self.ase_ini:
-        #     atomic_numbers_array.append(i.number)
-        #     atomic_numbers_array.append(i.number)
-        #     atomic_numbers_array.append(i.number)
-        # list_bounds = ()
-        # upper_list = []
-        # list_cov = []
-        # for i in self.ind_mask_constr:
-        #     list_cov.append(covalent_radii[atomic_numbers_array[i[0]]])
-        #     upper_i = (1.0 / covalent_radii[atomic_numbers_array[i[0]]]) / 2.0
-        #     upper_list.append(upper_i/2.0)
-        #     list_bounds += ((0.01, upper_i),)
-        #
-        # # For isotropic:
-        # guessed_width = np.min(list_cov)
-
-        if self.ml_calc is None:
-            self.kdict = {'k1': {'type': 'gaussian', 'width': 0.5,
-                                 'dimension': 'features',
-                                 'bounds': ((1e-4, 0.5),) * len(
-                                 self.ind_mask_constr),
+        while True:
+            self.scale_targets = np.max(self.list_targets)
+            # 1) Train Machine Learning process:
+            update_prior(self)
+            self.kernel_mode = self.ml_calc
+            self.kdict = {'k1': {'type': 'gaussian', 'width': 0.4,
+                                 'dimension': 'single',
+                                 'bounds': ((0.4, 0.4),),
                                  'scaling': 1.0,
-                                 'scaling_bounds': ((1.0, 1.0), )}
+                                 'scaling_bounds': ((1.0, 1.0),)},
+                          'k2': {'type': 'constant_multi',
+                                         'hyperparameters': [1e-8,
+                                                             1e-8,
+                                                             1e-8],
+                                         'bounds': ((0.1, self.prior),
+                                                    (0.0, 0.0),
+                                                    (0.0, 0.0),)}
                           }
             self.ml_calc = GPCalculator(
-                kernel_dict=self.kdict, opt_hyperparam=True, scale_data=False,
-                scale_optimizer=False, calc_uncertainty=True,
-                algo_opt_hyperparamters='L-BFGS-B',
-                global_opt_hyperparameters=False,
-                regularization=1e-5, regularization_bounds=(1e-6, 1e-3))
-
-        while True:
-            # 1) Train Machine Learning process:
-
-            # Scale:
-            self.scale_targets = np.max(self.list_targets)
+                    kernel_dict=self.kdict, opt_hyperparam=False,
+                    scale_data=False,
+                    scale_optimizer=False, calc_uncertainty=True,
+                    algo_opt_hyperparamters='L-BFGS-B',
+                    global_opt_hyperparameters=False,
+                    regularization=2.5e-6,
+                    regularization_bounds=(2.5e-6, 1e-4))
 
             # Check that the user is not feeding redundant information to ML.
 
@@ -310,7 +298,8 @@ class CatLearnNEB(object):
 
             # 2) Setup and run ML NEB:
 
-            starting_path = copy.deepcopy(self.initial_images)
+            # starting_path = copy.deepcopy(self.initial_images)
+            starting_path = self.images
 
             self.images = create_ml_neb(is_endpoint=self.initial_endpoint,
                                         fs_endpoint=self.final_endpoint,
@@ -348,7 +337,7 @@ class CatLearnNEB(object):
                 neb_opt = eval(ml_algo)(ml_neb, dt=0.1)
             if ml_algo is 'BFGS' or ml_algo is 'LBFGS':
                 neb_opt = eval(ml_algo)(ml_neb)
-            neb_opt.run(fmax=fmax, steps=ml_max_iter)
+            neb_opt.run(fmax=fmax/1.1, steps=ml_max_iter)
             print('ML NEB optimized.')
 
             # 3) Get results from ML NEB using ASE NEB tools:
@@ -488,31 +477,6 @@ class CatLearnNEB(object):
                 if self.feval > 5:
                     break
 
-            # Update hyper:
-            if self.iter < 10:
-                self.ml_calc.update_hyperparameters(
-                            trained_process=trained_process)
-            # Fix hyper:
-            if self.iter >= 10:
-                self.ml_calc.__dict__['opt_hyperparam'] = False
-
-
-            ##################################################################
-            # # Remove outliers from the training list.
-            # def reject_outliers(data, m=2):
-            #     index = abs(data - np.mean(data)) > m * np.std(data)
-            #     return index
-            #
-            # outliers_index = reject_outliers(self.list_targets)
-            #
-            # if len(self.list_targets) > 50:
-            #     for i in range(0, len(outliers_index)):
-            #         if outliers_index[i] is True:
-            #             self.list_targets = np.delete(self.list_targets, [i], axis=0)
-            #             self.list_train = np.delete(self.list_train, [i], axis=0)
-            #             self.list_gradients = np.delete(self.list_gradients, [i], axis=0)
-            ##################################################################
-
         # Print Final convergence:
         print('Number of function evaluations in this run:', self.iter)
 
@@ -565,3 +529,12 @@ def create_ml_neb(is_endpoint, fs_endpoint, images_interpolation, kappa,
     imgs[-1].info['iteration'] = iteration
 
     return imgs
+
+def update_prior(self):
+    if self.list_targets[0] > 0.0:
+        prior_const = 1/4 * ((self.list_targets[0]) - (self.list_targets[-1]))
+        self.prior = np.min(self.list_targets) - prior_const
+    if self.list_targets[0] <= 0.0:
+        prior_const = 1/4 * ((self.list_targets[0]) - (self.list_targets[-1]))
+        self.prior = -np.min(self.list_targets) + prior_const
+    print('Guessed prior', self.prior)

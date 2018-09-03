@@ -51,7 +51,7 @@ def prepare_kernels(kernel_dict, regularization_bounds, eval_gradients, N_D):
                 bounds = eval(cmd)
             except NameError:
                 msg = '{} kernel not implemented'.format(ktype)
-                raise NotImplementedError(msg)
+                # raise NotImplementedError(msg)
 
     # Bounds for the regularization
     bounds += (regularization_bounds,)
