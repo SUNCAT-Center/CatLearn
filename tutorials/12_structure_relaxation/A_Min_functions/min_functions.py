@@ -36,7 +36,7 @@ catlearn_opt.run(fmax=0.05)
 initial_ase = initial_structure.copy()
 initial_ase.set_calculator(calculator)
 
-ase_opt = BFGS(initial_ase, trajectory='ase_opt.traj')
+ase_opt = GPMin(initial_ase, trajectory='ase_opt.traj')
 ase_opt.run(fmax=0.05, steps=500)
 
 # 3. Summary of the results:

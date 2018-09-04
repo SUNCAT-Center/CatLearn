@@ -16,7 +16,8 @@ class CatLearnASE(Calculator):
     nolabel = True
 
     def __init__(self, trained_process, ml_calc, index_constraints,
-                 finite_step=5e-4, kappa=0.0, **kwargs):
+                 calc_uncertainty=False, finite_step=5e-4, kappa=0.0,
+                 **kwargs):
 
         Calculator.__init__(self, **kwargs)
 
@@ -25,6 +26,7 @@ class CatLearnASE(Calculator):
         self.fs = finite_step
         self.ind_constraints = index_constraints
         self.kappa = kappa
+        self.calc_uncertainty = calc_uncertainty
 
     def calculate(self, atoms=None, properties=['energy', 'forces'],
                   system_changes=all_changes):
@@ -41,9 +43,12 @@ class CatLearnASE(Calculator):
                                                   test_data=test[0])
 
             post_mean = predictions['pred_mean'][0][0]
-            # unc = predictions['uncertainty'][0]
+            acq_val = post_mean
             unc = 0.0
-            acq_val = post_mean + kappa * unc
+            if self.calc_uncertainty is True:
+                unc = predictions['uncertainty'][0]
+                acq_val = post_mean + kappa * unc
+
             return [acq_val, unc]
 
         Calculator.calculate(self, atoms, properties, system_changes)
@@ -129,7 +134,7 @@ def optimize_ml_using_scipy(x0, ml_calc, trained_process, ml_algo):
     if ml_algo == 'L-BFGS-B':
         result_min = fmin_l_bfgs_b(func=predicted_energy_test, x0=x0,
                                    approx_grad=True, args=args, disp=False,
-                                   pgtol= 1e-7)
+                                   pgtol= 1e-8, epsilon=1e-6)
         interesting_point = result_min[0]
 
     if ml_algo == 'CG':

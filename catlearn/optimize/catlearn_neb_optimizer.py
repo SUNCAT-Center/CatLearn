@@ -509,7 +509,8 @@ def create_ml_neb(is_endpoint, fs_endpoint, images_interpolation, kappa,
         image.set_calculator(CatLearnASE(trained_process=trained_process,
                                          ml_calc=ml_calculator,
                                          index_constraints=index_constraints,
-                                         kappa=kappa
+                                         kappa=kappa,
+                                         calc_uncertainty=True
                                          ))
         if images_interpolation is not None:
             image.set_positions(images_interpolation[i].get_positions())
@@ -529,8 +530,8 @@ def create_ml_neb(is_endpoint, fs_endpoint, images_interpolation, kappa,
 
     return imgs
 
+
 def update_prior(self):
-    # prior_const = 1/4 * ((self.list_targets[0]) - (self.list_targets[-1]))
-    prior_const = np.mean(self.list_targets)
+    prior_const = 1/4 * ((self.list_targets[0]) - (self.list_targets[-1]))
     self.prior = np.abs(np.min(self.list_targets)) + np.abs(prior_const)
     print('Guessed prior', self.prior)

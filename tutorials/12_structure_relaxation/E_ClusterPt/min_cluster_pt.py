@@ -21,7 +21,7 @@ calc = EMT()
 # 1.1. Structures:
 
 mol = read('./A_structure/POSCAR')
-mol.rattle(stdev=0.1, seed=30)
+mol.rattle(stdev=0.1, seed=0)
 
 # 3. Benchmark.
 ###############################################################################
@@ -41,8 +41,7 @@ atoms = read('results_catlearn.traj', ':')
 # 2.B Optimize using GPMin.
 initial_gpmin = mol.copy()
 initial_gpmin.set_calculator(calc)
-gpmin_opt = GPMin(initial_gpmin, trajectory='results_gpmin.traj',
-                  update_hyperparams=False)
+gpmin_opt = GPMin(initial_gpmin, trajectory='results_gpmin.traj')
 gpmin_opt.run(fmax=0.01)
 
 

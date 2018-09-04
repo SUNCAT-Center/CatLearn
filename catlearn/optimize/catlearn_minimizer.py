@@ -144,6 +144,10 @@ class CatLearnMin(object):
         self.min_iter = min_iter
         max_memory = 50
 
+        self.calc_uncertainty = False
+        if penalty != 0.0:
+            self.calc_uncertainty = True
+
         # Initialization (evaluate two points).
         initialize(self)
         converged(self)
@@ -193,7 +197,8 @@ class CatLearnMin(object):
                 self.ml_calc = GPCalculator(
                         kernel_dict=self.kdict, opt_hyperparam=False,
                         scale_data=False,
-                        scale_optimizer=False, calc_uncertainty=False,
+                        scale_optimizer=False,
+                        calc_uncertainty=self.calc_uncertainty,
                         algo_opt_hyperparamters='L-BFGS-B',
                         global_opt_hyperparameters=False,
                         regularization=2.5e-6,
@@ -237,7 +242,6 @@ class CatLearnMin(object):
             # Start from the most stable.
             if self.ase_opt is True:
                 guess = self.ase_ini
-
                 guess_pos = self.list_train[np.argmin(self.list_targets)]
                 guess.positions = guess_pos.reshape(-1, 3)
 
@@ -245,12 +249,13 @@ class CatLearnMin(object):
                                         trained_process=trained_process,
                                         ml_calc=ml_calc,
                                         kappa=penalty,
-                                        index_constraints=self.ind_mask_constr
+                                        index_constraints=self.ind_mask_constr,
+                                        calc_uncertainty=self.calc_uncertainty
                                              ))
                 guess.info['iteration'] = self.iter
 
                 # Run optimization of the predicted PES.
-                opt_ml = eval(ml_algo)(guess)
+                opt_ml = eval(ml_algo)(guess, logfile=None)
                 print('Starting ML optimization...')
                 if ml_algo in self.list_minimizers_grad:
                     opt_ml.run(fmax=1e-4, steps=ml_max_iter)
@@ -363,10 +368,6 @@ def initialize(self, i_step=1e-3):
 
 
 def update_prior(self):
-    if self.list_targets[0] > 0.0:
-        prior_const = 1/4 * ((self.list_targets[0]) - (self.list_targets[-1]))
-        self.prior = np.min(self.list_targets) - prior_const
-    if self.list_targets[0] <= 0.0:
-        prior_const = 1/4 * ((self.list_targets[0]) - (self.list_targets[-1]))
-        self.prior = -np.min(self.list_targets) + prior_const
+    prior_const = 1/4 * ((self.list_targets[0]) - (self.list_targets[-1]))
+    self.prior = np.abs(np.min(self.list_targets)) + np.abs(prior_const)
     print('Guessed prior', self.prior)
