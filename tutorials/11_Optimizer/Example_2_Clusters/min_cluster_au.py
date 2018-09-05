@@ -17,7 +17,7 @@ calculator = EMT()
 # 1.1. Structures:
 
 initial_structure = read('preoptimized_structure.traj')
-initial_structure.rattle(stdev=0.1, seed=3)
+initial_structure.rattle(stdev=0.1, seed=46)
 
 # 2.A. Optimize structure using CatLearn:
 
@@ -33,7 +33,7 @@ initial_ase = initial_structure.copy()
 initial_ase.set_calculator(calculator)
 
 ase_opt = GPMin(initial_ase, trajectory='ase_opt.traj',
-                update_hyperparams=False)
+                update_hyperparams=True)
 ase_opt.run(fmax=0.01)
 
 # 3. Summary of the results:

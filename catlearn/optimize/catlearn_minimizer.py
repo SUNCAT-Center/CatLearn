@@ -5,7 +5,7 @@ from ase.io.trajectory import TrajectoryWriter
 from ase.optimize import *
 from ase.optimize.sciopt import *
 from catlearn.optimize.warnings import *
-from catlearn.optimize.ml_calculator import GPCalculator, train_ml_process, default_kernel_dict
+from catlearn.optimize.ml_calculator import GPCalculator, train_ml_process
 from catlearn.optimize.io import ase_traj_to_catlearn, print_info
 from catlearn.optimize.constraints import create_mask_ase_constraints, \
                                     unmask_geometry, apply_mask_ase_constraints
@@ -16,7 +16,7 @@ from catlearn.optimize.convergence import converged, get_fmax
 from catlearn.optimize.catlearn_ase_calc import CatLearnASE, \
                                                 optimize_ml_using_scipy
 import numpy as np
-
+SciPyFminCG
 
 class CatLearnMin(object):
 
@@ -182,18 +182,11 @@ class CatLearnMin(object):
                 assert self.ml_calc in implemented_kernels, error_not_ml_calc()
                 self.kernel_mode = self.ml_calc
                 self.kdict = {'k1': {'type': 'gaussian', 'width': 0.2,
-                                     'dimension': 'features',
-                                     'bounds': ((0.1, 0.50),) * len(
-                                     self.ind_mask_constr),
-                                     'scaling': 1.0,
-                                     'scaling_bounds': ((1.0, 1.0),)},
-                              'k2': {'type': 'constant_multi',
-                                     'hyperparameters': [self.prior[0],
-                                                                 1e-7,
-                                                                 1e-7],
-                                     'bounds': ((0.1, self.prior[0]),
-                                                 (1e-7, 1e-3),
-                                                 (1e-7, 1e-3),)}
+                                     'dimension': 'single',
+                                     'bounds': ((0.4, 0.4),),
+                                     'scaling': self.prior[0],
+                                     'scaling_bounds': ((np.max(self.list_targets),
+                                     np.max(self.list_targets)),)}
                              }
                 self.ml_calc = GPCalculator(
                         kernel_dict=self.kdict, opt_hyperparam=True,
@@ -226,7 +219,7 @@ class CatLearnMin(object):
                                        list_gradients=self.list_gradients,
                                        index_constraints=self.ind_mask_constr,
                                        ml_calculator=self.ml_calc,
-                                       scaling_targets=0.0)
+                                       scaling_targets=np.max(self.list_targets))
             trained_process = process['trained_process']
             ml_calc = process['ml_calc']
             print('GP process trained.')

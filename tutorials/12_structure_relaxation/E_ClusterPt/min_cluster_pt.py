@@ -41,7 +41,8 @@ atoms = read('results_catlearn.traj', ':')
 # 2.B Optimize using GPMin.
 initial_gpmin = mol.copy()
 initial_gpmin.set_calculator(calc)
-gpmin_opt = GPMin(initial_gpmin, trajectory='results_gpmin.traj')
+gpmin_opt = GPMin(initial_gpmin, trajectory='results_gpmin.traj',
+                  update_hyperparams=True)
 gpmin_opt.run(fmax=0.05)
 
 
