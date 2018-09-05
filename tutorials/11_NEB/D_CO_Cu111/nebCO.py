@@ -17,7 +17,7 @@ import copy
 
 # Calculator:
 ase_calculator = EMT()
-n_images = 8
+n_images = 9
 
 # Distance between Cu atoms on a (111) surface:
 a = 3.6
@@ -97,7 +97,7 @@ write('final.traj', images[-1])
 neb_catlearn = CatLearnNEB(start='initial.traj',
                            end='final.traj',
                            ase_calc=copy.deepcopy(ase_calculator),
-                           n_images=n_images,
+                           n_images='auto',
                            interpolation='idpp', restart=False)
 
 neb_catlearn.run(fmax=0.05, plot_neb_paths=True)

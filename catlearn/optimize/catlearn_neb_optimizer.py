@@ -148,6 +148,10 @@ class CatLearnNEB(object):
         # A) Create images using interpolation if user do not feed a path:
         if path is None:
             self.d_start_end = np.abs(distance.euclidean(is_pos, fs_pos))
+            if self.n_images == 'auto':
+                self.n_images = int(self.d_start_end/0.4)
+                if self. n_images <= 6:
+                    self.n_images = 6
             if self.spring is None:
                 self.spring = np.sqrt((self.n_images-1) / self.d_start_end)
             self.images = create_ml_neb(is_endpoint=self.initial_endpoint,
@@ -255,25 +259,25 @@ class CatLearnNEB(object):
             self.kernel_mode = self.ml_calc
             self.kdict = {'k1': {'type': 'gaussian', 'width': 0.4,
                                  'dimension': 'single',
-                                 'bounds': ((0.4, 0.4),),
+                                 'bounds': ((0.01, 0.4),),
                                  'scaling': 1.0,
                                  'scaling_bounds': ((1.0, 1.0),)},
                           'k2': {'type': 'constant_multi',
                                          'hyperparameters': [1e-8,
                                                              1e-8,
                                                              1e-8],
-                                         'bounds': ((0.1, self.prior),
+                                         'bounds': ((0.01, self.prior),
                                                     (0.0, 0.0),
                                                     (0.0, 0.0),)}
                           }
             self.ml_calc = GPCalculator(
-                    kernel_dict=self.kdict, opt_hyperparam=False,
+                    kernel_dict=self.kdict, opt_hyperparam=True,
                     scale_data=False,
                     scale_optimizer=False, calc_uncertainty=True,
                     algo_opt_hyperparamters='L-BFGS-B',
                     global_opt_hyperparameters=False,
                     regularization=2.5e-6,
-                    regularization_bounds=(2.5e-6, 1e-4))
+                    regularization_bounds=(2.5e-6, 1e-5))
 
             # Check that the user is not feeding redundant information to ML.
 

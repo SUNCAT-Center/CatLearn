@@ -118,11 +118,6 @@ class GPCalculator(object):
                'uncertainty_with_reg': uncertainty_with_reg}
         return res
 
-    def update_hyperparameters(self, trained_process):
-        hyper_opt = trained_process.theta_opt['x']
-        trained_process.__dict__['kernel_dict']['k1']['width'] = hyper_opt[1:-1]
-        return trained_process
-
 
 def train_ml_process(list_train, list_targets, list_gradients,
                      index_constraints, ml_calculator, scaling_targets):

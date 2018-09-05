@@ -31,7 +31,7 @@ def get_energy_catlearn(self, x=None):
     self.ase_ini.set_calculator(None)
     self.ase_ini = Atoms(self.ase_ini, positions=pos_ase,
                          calculator=self.ase_calc)
-    energy = self.ase_ini.get_potential_energy()
+    energy = self.ase_ini.get_potential_energy(force_consistent=None)
     return energy
 
 

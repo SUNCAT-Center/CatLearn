@@ -22,10 +22,10 @@ calculator = GPAW(mode='lcao',
 db = ase.db.connect('systems.db')
 initial_structure = db.get_atoms(formula='Au8CO')
 
-np.random.seed(1)
+np.random.seed(2)
 for i in initial_structure:
     if i.position[2] > 8.50:
-        i.position = i.position + np.random.normal(scale=0.1)
+        i.position = i.position + np.random.normal(scale=0.2)
 
 # 2.A. Optimize structure using CatLearn:
 initial_catlearn = initial_structure.copy()

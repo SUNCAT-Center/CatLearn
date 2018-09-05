@@ -1,11 +1,11 @@
-# @Version 1.0.0
+# CatLearn 1.0.0
 
 from ase import Atoms
 from ase.io.trajectory import TrajectoryWriter
 from ase.optimize import *
 from ase.optimize.sciopt import *
 from catlearn.optimize.warnings import *
-from catlearn.optimize.ml_calculator import GPCalculator, train_ml_process
+from catlearn.optimize.ml_calculator import GPCalculator, train_ml_process, default_kernel_dict
 from catlearn.optimize.io import ase_traj_to_catlearn, print_info
 from catlearn.optimize.constraints import create_mask_ase_constraints, \
                                     unmask_geometry, apply_mask_ase_constraints
@@ -154,9 +154,9 @@ class CatLearnMin(object):
         print_info(self)
 
         if ml_algo is 'BFGSLineSearch':
-            initialize(self, i_step='BFGS')
+            initialize(self, i_step='SciPyFminBFGS')
         if ml_algo not in self.list_minimizers_grad:
-            initialize(self, i_step='BFGS')
+            initialize(self, i_step='SciPyFminCG')
         else:
             initialize(self, i_step=ml_algo)
 
@@ -181,28 +181,29 @@ class CatLearnMin(object):
                                        'SQE_anisotropic', 'SQE_sequential']
                 assert self.ml_calc in implemented_kernels, error_not_ml_calc()
                 self.kernel_mode = self.ml_calc
-                self.kdict = {'k1': {'type': 'gaussian', 'width': 0.4,
-                                     'dimension': 'single',
-                                     'bounds': ((0.4, 0.4),),
+                self.kdict = {'k1': {'type': 'gaussian', 'width': 0.2,
+                                     'dimension': 'features',
+                                     'bounds': ((0.1, 0.50),) * len(
+                                     self.ind_mask_constr),
                                      'scaling': 1.0,
                                      'scaling_bounds': ((1.0, 1.0),)},
                               'k2': {'type': 'constant_multi',
-                                             'hyperparameters': [self.prior,
+                                     'hyperparameters': [self.prior[0],
                                                                  1e-7,
                                                                  1e-7],
-                                      'bounds': ((0.1, self.prior),
-                                                 (0.0, 0.0),
-                                                 (0.0, 0.0),)}
+                                     'bounds': ((0.1, self.prior[0]),
+                                                 (1e-7, 1e-3),
+                                                 (1e-7, 1e-3),)}
                              }
                 self.ml_calc = GPCalculator(
-                        kernel_dict=self.kdict, opt_hyperparam=False,
+                        kernel_dict=self.kdict, opt_hyperparam=True,
                         scale_data=False,
                         scale_optimizer=False,
                         calc_uncertainty=self.calc_uncertainty,
                         algo_opt_hyperparamters='L-BFGS-B',
                         global_opt_hyperparameters=False,
                         regularization=2.5e-6,
-                        regularization_bounds=(2.5e-6, 1e-4))
+                        regularization_bounds=(2.5e-6, 1e-3))
             assert self.ml_calc, error_not_ml_calc()
 
             # Limited memory.
@@ -218,7 +219,7 @@ class CatLearnMin(object):
                                      axis=0)[1]
             msg = 'Your training list contains 1 or more duplicated elements'
             assert np.any(count_unique) < 2, msg
-            print('Training a ML process...')
+            print('Training a GP process...')
             print('Number of training points:', len(self.list_targets))
             process = train_ml_process(list_train=self.list_train,
                                        list_targets=self.list_targets,
@@ -228,12 +229,7 @@ class CatLearnMin(object):
                                        scaling_targets=0.0)
             trained_process = process['trained_process']
             ml_calc = process['ml_calc']
-            print('ML process trained.')
-
-            # Copy hyperparameters:
-            if self.ml_calc.__dict__['opt_hyperparam'] is True:
-                self.ml_calc.update_hyperparameters(
-                                               trained_process=trained_process)
+            print('GP process trained.')
 
             # 2. Setup and run optimization.
 
@@ -325,7 +321,8 @@ def initialize(self, i_step=1e-3):
 
         if isinstance(i_step, str):
             if i_step in self.list_minimizers_grad:
-                eval(i_step)(self.ase_ini).run(fmax=0.05, steps=1)
+                eval(i_step)(self.ase_ini, logfile=None).run(fmax=0.05,
+                                                             steps=1)
             else:
                 eval(i_step)(self.ase_ini).run(steps=1)
             ini_train = [self.ase_ini.get_positions().flatten()]
@@ -370,4 +367,3 @@ def initialize(self, i_step=1e-3):
 def update_prior(self):
     prior_const = 1/4 * ((self.list_targets[0]) - (self.list_targets[-1]))
     self.prior = np.abs(np.min(self.list_targets)) + np.abs(prior_const)
-    print('Guessed prior', self.prior)

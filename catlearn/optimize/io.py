@@ -1,9 +1,9 @@
 from catlearn.optimize.convergence import converged
 from prettytable import PrettyTable
-import os
 import numpy as np
 from ase.io import Trajectory
 import pandas as pd
+import datetime
 
 
 def ase_traj_to_catlearn(traj_file):
@@ -101,15 +101,15 @@ def array_to_atoms(input_array):
 
 def _start_table(self):
         if not self.jac:
-            self.table_results = PrettyTable(['Method', 'Iterations',
-                                              'Func. evaluations',
-                                              'Function value',
+            self.table_results = PrettyTable(['Method', 'Iter.',
+                                              'Time',
+                                              'Energy',
                                               'e_diff',
                                               'Converged?'])
         if self.jac:
-            self.table_results = PrettyTable(['Method', 'Iterations',
-                                              'Func. evaluations', 'Function '
-                                              'value', 'fmax', 'Converged?'])
+            self.table_results = PrettyTable(['Method', 'Iter.',
+                                              'Time', 'Energy', 'fmax',
+                                              'Converged?'])
 
 
 def print_info(self):
@@ -149,12 +149,12 @@ def print_info(self):
         if self.feval == 1:
             if not self.jac:
                 self.table_results.add_row(['Eval.', self.iter,
-                                           self.feval,
+                                           print_time(),
                                            self.list_targets[-1][0], '-',
                                            converged(self)])
             if self.jac:
                 self.table_results.add_row(['Eval.', self.iter,
-                                            self.feval,
+                                            print_time(),
                                             self.list_targets[-1][0],
                                             self.max_abs_forces,
                                             converged(self)])
@@ -163,24 +163,24 @@ def print_info(self):
             if not self.i_ase_step:
                 if not self.jac:
                     self.table_results.add_row(['LineSearch', self.iter,
-                                                self.feval,
+                                                print_time(),
                                                 self.list_targets[-1][0], '-',
                                                 converged(self)])
                 if self.jac:
                     self.table_results.add_row(['LineSearch', self.iter,
-                                                self.feval,
+                                                print_time(),
                                                 self.list_targets[-1][0],
                                                 self.max_abs_forces,
                                                 converged(self)])
             if self.i_ase_step:
                 if not self.jac:
                     self.table_results.add_row([self.i_ase_step, self.iter,
-                                                self.feval,
+                                                print_time(),
                                                 self.list_targets[-1][0],
                                                 self.e_diff, converged(self)])
                 if self.jac:
                     self.table_results.add_row([self.i_ase_step, self.iter,
-                                                self.feval,
+                                                print_time(),
                                                 self.list_targets[-1][0],
                                                 self.max_abs_forces,
                                                 converged(self)])
@@ -189,16 +189,17 @@ def print_info(self):
         if not self.jac:
             self.table_results.add_row(['CatLearn' + '('+ self.ml_algo + ')',
                                         self.iter,
-                                        self.feval,
+                                        print_time(),
                                         self.list_targets[-1][0],
                                         self.e_diff, converged(self)])
         if self.jac:
             self.table_results.add_row(['CatLearn' + '(' + self.ml_algo + ')',
                                         self.iter,
-                                        self.feval,
+                                        print_time(),
                                         self.list_targets[-1][0],
                                         self.max_abs_forces, converged(self)])
     print(self.table_results)
+
     # f_print = open(str(self.filename)+'_convergence_catlearn.txt', 'w')
     # f_print.write(str(self.table_results))
     # f_print.close()
@@ -263,3 +264,8 @@ def store_results_neb(s, e, sfit, efit, uncertainty_path):
     df = pd.DataFrame(data,
                       columns=['Path distance (Angstrom)', 'Energy (eV)'])
     df.to_csv('results_neb_interpolation.csv')
+
+
+def print_time():
+    now = datetime.datetime.now()
+    return now.strftime("%Y-%m-%d %H:%M:%S")

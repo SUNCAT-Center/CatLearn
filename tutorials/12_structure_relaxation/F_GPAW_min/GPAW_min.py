@@ -24,7 +24,7 @@ calculator = GPAW(mode='lcao',
 db = ase.db.connect('systems.db')
 initial_structure = db.get_atoms(formula='C5H12')
 
-initial_structure.rattle(stdev=0.1, seed=1)
+initial_structure.rattle(stdev=0.1, seed=0)
 ##############################################################################
 
 # 2.A. Optimize structure using CatLearn:

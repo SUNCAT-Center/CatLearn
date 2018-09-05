@@ -51,9 +51,10 @@ def prepare_kernels(kernel_dict, regularization_bounds, eval_gradients, N_D):
                 bounds = eval(cmd)
             except NameError:
                 msg = '{} kernel not implemented'.format(ktype)
-                # raise NotImplementedError(msg)
+                raise NotImplementedError(msg)
 
     # Bounds for the regularization
+
     bounds += (regularization_bounds,)
 
     return kernel_dict, bounds
@@ -70,10 +71,27 @@ def _scaling_setup(kdict_param, bounds, default_bounds):
     return bounds
 
 
+def _constant_multi_setup(kdict_param, bounds, N_D, default_bounds):
+    """Setup the constant kernel."""
+    allowed_keys = ['type', 'operation', 'hyperparameters',
+                    'bounds']
+    msg1 = "An undefined key, '"
+    msg2 = "', has been provided in a 'constant' type kernel dict."
+    for k in kdict_param:
+        assert k in allowed_keys, msg1 + k + msg2
+
+    if 'bounds' in kdict_param:
+        bounds += kdict_param['bounds']
+    else:
+        bounds += default_bounds * 3
+
+    return bounds
+
+
 def _constant_setup(kdict_param, bounds, N_D, default_bounds):
     """Setup the constant kernel."""
     allowed_keys = ['type', 'operation', 'features', 'dimension', 'const',
-                    'bounds', 'scaling_bounds']
+                    'bounds']
     msg1 = "An undefined key, '"
     msg2 = "', has been provided in a 'constant' type kernel dict."
     for k in kdict_param:

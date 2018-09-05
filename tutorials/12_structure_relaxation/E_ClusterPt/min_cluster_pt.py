@@ -21,7 +21,7 @@ calc = EMT()
 # 1.1. Structures:
 
 mol = read('./A_structure/POSCAR')
-mol.rattle(stdev=0.1, seed=0)
+mol.rattle(stdev=0.10, seed=0)
 
 # 3. Benchmark.
 ###############################################################################
@@ -33,7 +33,7 @@ initial_catlearn.set_calculator(calc)
 ase_opt = CatLearnMin(initial_catlearn,
                             trajectory='results_catlearn.traj',
                             ml_calc='SQE_sequential')
-ase_opt.run(fmax=0.01)
+ase_opt.run(fmax=0.05)
 atoms = read('results_catlearn.traj', ':')
 
 
@@ -42,7 +42,7 @@ atoms = read('results_catlearn.traj', ':')
 initial_gpmin = mol.copy()
 initial_gpmin.set_calculator(calc)
 gpmin_opt = GPMin(initial_gpmin, trajectory='results_gpmin.traj')
-gpmin_opt.run(fmax=0.01)
+gpmin_opt.run(fmax=0.05)
 
 
 # 3. Summary of the results:

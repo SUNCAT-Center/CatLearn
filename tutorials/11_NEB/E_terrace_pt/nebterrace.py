@@ -76,7 +76,7 @@ n_images = 7
 neb_catlearn = CatLearnNEB(start='initial_opt.traj',
                            end='final_opt.traj',
                            ase_calc=copy.deepcopy(ase_calculator),
-                           n_images=n_images,
+                           n_images='auto',
                            interpolation='idpp', restart=False)
 
-neb_catlearn.run(fmax=0.05, plot_neb_paths=True, acquisition='acq_1')
+neb_catlearn.run(fmax=0.05, plot_neb_paths=True)
