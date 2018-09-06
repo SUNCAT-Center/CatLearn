@@ -20,7 +20,7 @@ calculator = GPAW(mode='lcao',
 
 # 1.1. Structures:
 db = ase.db.connect('systems.db')
-initial_structure = db.get_atoms(formula='Au8CO')
+initial_structure = db.get_atoms(formula='Cu2')
 
 np.random.seed(1)
 for i in initial_structure:
@@ -38,7 +38,8 @@ catlearn_opt.run(fmax=0.05)
 initial_ase = initial_structure.copy()
 initial_ase.set_calculator(calculator)
 
-ase_opt = GPMin(initial_ase, trajectory='ase_opt.traj')
+ase_opt = GPMin(initial_ase, trajectory='ase_opt.traj',
+                update_hyperparams=True)
 ase_opt.run(fmax=0.05)
 
 # 3. Summary of the results:
@@ -48,4 +49,4 @@ catlearn_results = read('catlearn_opt.traj', ':')
 print('Number of function evaluations using CatLearn:', len(catlearn_results))
 
 ase_results = read('ase_opt.traj', ':')
-print('Number of function evaluations using ASE:', len(ase_results))
+print('Number of function evaluations using ASE:', ase_opt.function_calls)

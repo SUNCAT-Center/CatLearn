@@ -6,14 +6,13 @@ from catlearn.optimize.constraints import apply_mask_ase_constraints
 class GPCalculator(object):
 
     def __init__(self, kernel_dict=None,
-                 regularization=1e-3,
-                 regularization_bounds=((1e-5, 1e-3),),
+                 regularization=0.0,
+                 regularization_bounds=(0.0, 0.0),
                  algo_opt_hyperparamters='L-BFGS-B',
                  global_opt_hyperparameters=False,
                  scale_data=False,
                  scale_optimizer=False,
                  opt_hyperparam=False,
-                 guess_hyper=None,
                  calc_uncertainty=False):
 
         """GP calculator.
@@ -48,13 +47,10 @@ class GPCalculator(object):
         self.glob_opt = global_opt_hyperparameters
         self.algo_opt_hyperparamters = algo_opt_hyperparamters
         self.opt_hyperparam = opt_hyperparam
-        self.guess_hyper = guess_hyper
         self.calc_uncertainty = calc_uncertainty
-
         self.train_calc = None
         self.target_calc = None
         self.gradient_calc = None
-
         self.trained_process = None
 
     def train_process(self, train_data, target_data, gradients_data=None):
@@ -100,7 +96,7 @@ class GPCalculator(object):
                                         algomin=self.algo_opt_hyperparamters)
 
         print('Hyperparameter optimization is switched on.')
-        print('Optimized Hyperparameters: ', self.trained_process.theta_opt)
+        print('Optimized Hyperparameters: ', self.trained_process.theta_opt['x'])
         print('Log marginal likelihood: ',
               self.trained_process.log_marginal_likelihood)
         return self.trained_process
@@ -121,38 +117,7 @@ class GPCalculator(object):
 
 def train_ml_process(list_train, list_targets, list_gradients,
                      index_constraints, ml_calculator, scaling_targets):
-    """Trains a machine learning process.
-
-    Parameters (self):
-
-    Parameters
-    ----------
-    list_train : ndarray
-        List of positions (in Cartesian).
-    list_targets : ndarray
-        List of energies.
-    list_gradients : ndarray
-        List of gradients.
-    index_constraints : ndarray
-        List of constraints constraints generated
-        previously. In order to 'hide' fixed atoms to the ML
-        algorithm we create a constraints mask. This
-        allows to reduce the size of the training
-        features (avoids creating a large covariance matrix).
-    ml_calculator: object
-        Machine learning calculator. See above.
-    scaling_targets: float
-        Scaling of the train targets.
-    Returns
-    --------
-    dictionary containing:
-        scaling_targets : scaling for the energies of the training set.
-        trained_process : trained process ready for testing.
-        ml_calc : returns the ML calculator (if changes have been made,
-              e.g. hyperparamter optimization).
-
-
-    """
+    """Train a machine learning process."""
 
     if index_constraints is not None:
         list_train = apply_mask_ase_constraints(
@@ -169,7 +134,8 @@ def train_ml_process(list_train, list_targets, list_gradients,
     trained_process = ml_calculator.train_process(
                                                  train_data=list_train,
                                                  target_data=list_targets,
-                                                 gradients_data=list_gradients)
+                                                 gradients_data=list_gradients
+                                                 )
 
     if ml_calculator.__dict__['opt_hyperparam'] is True:
         ml_calculator.opt_hyperparameters()

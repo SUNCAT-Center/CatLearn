@@ -71,20 +71,19 @@ def _scaling_setup(kdict_param, bounds, default_bounds):
     return bounds
 
 
-def _constant_multi_setup(kdict_param, bounds, N_D, default_bounds):
-    """Setup the constant kernel."""
+def _noise_multi_setup(kdict_param, bounds, N_D, default_bounds):
+    """Setup the noise kernel."""
     allowed_keys = ['type', 'operation', 'hyperparameters',
                     'bounds']
     msg1 = "An undefined key, '"
-    msg2 = "', has been provided in a 'constant' type kernel dict."
+    msg2 = "', has been provided in a 'noise' type kernel dict."
     for k in kdict_param:
         assert k in allowed_keys, msg1 + k + msg2
 
     if 'bounds' in kdict_param:
         bounds += kdict_param['bounds']
     else:
-        bounds += default_bounds * 3
-
+        bounds += default_bounds * 2
     return bounds
 
 

@@ -22,7 +22,7 @@ catlearn_version = '1_0_0'
 calculator = NoiseHimmelblau()
 
 # 1. Set common initial structure.
-initial_structure = Atoms('C', positions=[(-1.0, -1.0, 0.0)])
+initial_structure = Atoms('C', positions=[(-1.2, -1.5, 0.0)])
 
 # 2. Benchmark.
 # 2.A. Optimize structure using CatLearn:
@@ -36,7 +36,7 @@ catlearn_opt.run(fmax=0.05)
 initial_ase = initial_structure.copy()
 initial_ase.set_calculator(calculator)
 
-ase_opt = GPMin(initial_ase, trajectory='ase_opt.traj',update_hyperparams=True)
+ase_opt = GPMin(initial_ase, trajectory='ase_opt.traj')
 ase_opt.run(fmax=0.05, steps=500)
 
 # 3. Summary of the results:
