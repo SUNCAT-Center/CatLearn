@@ -1,4 +1,4 @@
-from catlearn.optimize.catlearn_minimizer import CatLearnMinimizer
+from catlearn.optimize.catlearn_minimizer import CatLearnMin
 from ase.calculators.emt import EMT
 from ase.io import read
 from ase.optimize import *
@@ -30,7 +30,7 @@ np.random.seed(1)
 for i in mol:
     if i.position[2] > 14.00:
         i.symbol = 'Au'
-        i.position = i.position + np.random.normal(scale=0.2)
+        i.position = i.position + np.random.normal(scale=0.1)
 
 # 3. Benchmark.
 ###############################################################################
@@ -38,9 +38,7 @@ for i in mol:
 # 2.A. Optimize structure using ASE.
 initial_catlearn = mol.copy()
 initial_catlearn.set_calculator(calc)
-ase_opt = CatLearnMinimizer(initial_catlearn,
-                            filename='results',
-                            ml_calc='SQE_sequential')
+ase_opt = CatLearnMin(initial_catlearn, trajectory='results',)
 ase_opt.run(fmax=0.01, ml_algo='BFGS')
 
 
@@ -50,13 +48,12 @@ initial_gpmin.set_calculator(calc)
 gpmin_opt = GPMin(initial_gpmin, trajectory='results_gpmin.traj')
 gpmin_opt.run(fmax=0.01)
 
-
 # 3. Summary of the results:
 print('\n Summary of the results:\n ------------------------------------')
 
 gpmin_results = read('results_gpmin.traj', ':')
 
-print('Number of function evaluations using ASE:', len(gpmin_results))
+print('Number of function evaluations using ASE:', gpmin_opt.function_calls)
 print('Energy GPMin (eV):', gpmin_results[-1].get_potential_energy())
 
 catlearn_results = read('results_catlearn.traj', ':')

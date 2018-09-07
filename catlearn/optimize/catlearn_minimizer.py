@@ -1,5 +1,3 @@
-# @Version 1.0.0
-
 from ase import Atoms
 from ase.io.trajectory import TrajectoryWriter
 from ase.optimize import *
@@ -20,7 +18,7 @@ import numpy as np
 
 class CatLearnMin(object):
 
-    def __init__(self, x0, ase_calc=None, ml_calc='SQE_sequential',
+    def __init__(self, x0, ase_calc=None, ml_calc='SQE',
                  trajectory='catlearn_opt.traj'):
 
         """Optimization setup.
@@ -181,7 +179,6 @@ class CatLearnMin(object):
         while not converged(self):
 
             # Configure ML calculator.
-            scaling_constant = update_prior(self)
             get_default_kernel(self)
 
             # Limited memory.
@@ -205,7 +202,7 @@ class CatLearnMin(object):
                                        list_gradients=self.list_gradients,
                                        index_constraints=self.ind_mask_constr,
                                        ml_calculator=self.ml_calc,
-                                       scaling_targets=scaling_constant)
+                                       scaling_targets=0.0)
             trained_process = process['trained_process']
             ml_calc = process['ml_calc']
             print('ML process trained.')
@@ -343,27 +340,27 @@ def initialize(self, i_step=1e-3):
             molec_writer.write(self.ase_ini)
 
 
-def update_prior(self):
-    prior_const = 1/4 * np.abs(np.mean(self.list_targets))
-    self.prior = np.min(self.list_targets) + prior_const
-    print('Guessed constant', self.prior)
-    return self.prior
-
-
 def get_default_kernel(self):
 
     type = self.kernel_type
 
     if type == 'SQE_sequential':
-        if self.max_abs_forces >= 2.0:
+        if self.max_abs_forces >= 5.0:
             type = 'SQE_anisotropic'
-        if 0.05 < self.max_abs_forces <= 2.0:
+        if 0.05 < self.max_abs_forces <= 5.0:
             type = 'SQE_isotropic'
         if self.max_abs_forces <= 0.05:
             type = 'SQE'
 
+    cmax = np.abs(self.list_targets[0])
     kdict = {'k1': {'type': 'gaussian', 'dimension': 'single',
-                    'scaling': 1.0, 'scaling_bounds': ((1.0, 1.0),)}}
+                    'scaling': 1.0, 'scaling_bounds': ((1.0, 1.0),)},
+             'k2': {'type': 'constant_multi',
+                    'hyperparameters':[cmax, 0.0, 0.0],
+                    'bounds': ((cmax, cmax),
+                               (0.0, 0.0),
+                               (0.0, 0.0),)},
+             }
 
     if type == 'SQE':
         kdict['k1']['width'] = 0.4
@@ -371,16 +368,15 @@ def get_default_kernel(self):
 
     if type == 'SQE_isotropic':
         kdict['k1']['width'] = 0.25
-        kdict['k1']['bounds'] = ((0.1, 0.4),)
+        kdict['k1']['bounds'] = ((0.2, 0.4),)
 
     if type == 'SQE_anisotropic':
         kdict['k1']['dimension'] = 'features'
         kdict['k1']['width'] = 0.25
-        kdict['k1']['bounds'] = ((0.1, 1.0),) * len(self.ind_mask_constr)
-
-    kdict['k2'] = {'type': 'noise_multi', 'hyperparameters': [2.0e-6, 2.0e-6],
-                   'bounds': ((2.0e-6, 1e-3), (2.0e-6, 1e-3),)}
+        kdict['k1']['bounds'] = ((0.1, 0.4),) * len(self.ind_mask_constr)
 
     print('Type of kernel:', type)
     self.ml_calc = GPCalculator(kernel_dict=kdict, opt_hyperparam=True,
-                                calc_uncertainty=self.calc_uncertainty)
+                                calc_uncertainty=self.calc_uncertainty,
+                                regularization_bounds=(1e-6, 1e-6),
+                                regularization=1e-6)

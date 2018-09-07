@@ -48,6 +48,67 @@ def constant_kernel(theta, log_scale, m1, m2=None, eval_gradients=False):
     return k
 
 
+def constant_multi_kernel(theta, log_scale, m1, m2=None, eval_gradients=False):
+    """Return constant to add to the kernel.
+
+    Parameters
+    ----------
+    theta : list
+        A list containing the constants.
+    log_scale : boolean
+        Scaling hyperparameters in the kernel can be useful for optimization.
+    eval_gradients : boolean
+        Analytical gradients of the training features can be included.
+    m1 : list
+        A list of the training fingerprint vectors.
+    m2 : list
+        A list of the training fingerprint vectors.
+
+    Returns
+    -------
+    k : array
+        The covariance matrix.
+    """
+
+    msg = "This kernel only make sense when the model constains first " \
+          "derivative observations. Otherwise you should use the standard " \
+          "'constant_kernel.'"
+    assert eval_gradients, msg
+
+    if log_scale:
+        theta = np.exp(theta)
+
+    # Constants:
+    c_1 = theta[0]
+    c_2 = theta[1]
+    c_3 = theta[2]
+
+    # Check if gradients are evaluated.
+    if not eval_gradients:
+        if m2 is None:
+            m2 = m1
+        return np.ones([len(m1), len(m2)]) * c_1
+
+    # Account for gradients in constant kernel.
+    size_m1 = np.shape(m1)
+    N = size_m1[0]
+    D = size_m1[1]
+    if m2 is None:
+        k = np.zeros((N + N * D, N + N * D))
+        k[0:N, 0:N] = np.ones([N, N]) * c_1
+        k[0:N, N:] = np.ones([N, N*D]) * c_2
+        k[N:, 0:N] = np.ones([N, N*D]).T * c_2
+        k[N:, N:] = np.ones([N*D, N*D]) * c_3
+    else:
+        size_m2 = np.shape(m2)
+        T = size_m2[0]
+        k = np.zeros([N, T + T * D])
+        k[0:N, 0:T] = np.ones([N, T]) * c_1
+        k[0:, T:] = np.ones([N, T*D]) * c_2
+
+    return k
+
+
 def noise_multi_kernel(theta, log_scale, m1, m2=None, eval_gradients=False):
     """Return constant to add to the kernel.
 

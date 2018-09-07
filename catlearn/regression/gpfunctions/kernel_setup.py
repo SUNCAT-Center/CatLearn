@@ -44,6 +44,7 @@ def prepare_kernels(kernel_dict, regularization_bounds, eval_gradients, N_D):
             bounds = _scaling_setup(kdict, bounds, default_bounds)
 
         ktype = kdict['type']
+
         if ktype != 'user' and ktype != 'linear':
             cmd = '_{}_setup(kdict, bounds, cN_D, default_bounds)'.format(
                 ktype)
@@ -52,7 +53,6 @@ def prepare_kernels(kernel_dict, regularization_bounds, eval_gradients, N_D):
             except NameError:
                 msg = '{} kernel not implemented'.format(ktype)
                 raise NotImplementedError(msg)
-
     # Bounds for the regularization
 
     bounds += (regularization_bounds,)
@@ -68,22 +68,6 @@ def _scaling_setup(kdict_param, bounds, default_bounds):
     else:
         bounds += default_bounds
 
-    return bounds
-
-
-def _noise_multi_setup(kdict_param, bounds, N_D, default_bounds):
-    """Setup the noise kernel."""
-    allowed_keys = ['type', 'operation', 'hyperparameters',
-                    'bounds']
-    msg1 = "An undefined key, '"
-    msg2 = "', has been provided in a 'noise' type kernel dict."
-    for k in kdict_param:
-        assert k in allowed_keys, msg1 + k + msg2
-
-    if 'bounds' in kdict_param:
-        bounds += kdict_param['bounds']
-    else:
-        bounds += default_bounds * 2
     return bounds
 
 
@@ -103,6 +87,39 @@ def _constant_setup(kdict_param, bounds, N_D, default_bounds):
         bounds += kdict_param['bounds']
     else:
         bounds += default_bounds
+
+    return bounds
+
+
+def _constant_multi_setup(kdict_param, bounds, N_D, default_bounds):
+    """Setup the multi constant constant kernel."""
+    allowed_keys = ['type', 'operation', 'hyperparameters',
+                    'bounds']
+    msg1 = "An undefined key, '"
+    msg2 = "', has been provided in a 'multi constant' type kernel dict."
+    for k in kdict_param:
+        assert k in allowed_keys, msg1 + k + msg2
+    if 'bounds' in kdict_param:
+        bounds += kdict_param['bounds']
+    else:
+        bounds += default_bounds * 3
+
+    return bounds
+
+
+def _noise_multi_setup(kdict_param, bounds, N_D, default_bounds):
+    """Setup the noise kernel."""
+    allowed_keys = ['type', 'operation', 'hyperparameters',
+                    'bounds']
+    msg1 = "An undefined key, '"
+    msg2 = "', has been provided in a 'noise' type kernel dict."
+    for k in kdict_param:
+        assert k in allowed_keys, msg1 + k + msg2
+
+    if 'bounds' in kdict_param:
+        bounds += kdict_param['bounds']
+    else:
+        bounds += default_bounds * 2
 
     return bounds
 

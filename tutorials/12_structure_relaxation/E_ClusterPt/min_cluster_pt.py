@@ -19,33 +19,31 @@ calc = EMT()
 # 1.1. Structures:
 
 mol = read('./A_structure/POSCAR')
-mol.rattle(stdev=0.20, seed=3)
+mol.rattle(stdev=0.30, seed=0)
 
 # 2.A. Optimize structure using ASE.
 
 initial_catlearn = mol.copy()
 initial_catlearn.set_calculator(calc)
-ase_opt = CatLearnMin(initial_catlearn, trajectory='results_catlearn.traj',
-                      ml_calc='SQE')
-ase_opt.run(fmax=0.01)
-atoms = read('results_catlearn.traj', ':')
+catlearn_opt = CatLearnMin(initial_catlearn, trajectory='catlearn_opt.traj')
+catlearn_opt.run(fmax=0.01)
 
 # 2.B Optimize using ASE.
 initial_ase = mol.copy()
 initial_ase.set_calculator(calc)
-ase_opt = GPMin(initial_ase, trajectory='results_ase.traj',
-                update_hyperparams=True)
+ase_opt = GPMin(initial_ase, trajectory='ase_opt.traj',
+                update_hyperparams=False)
 ase_opt.run(fmax=0.01)
 
 # 3. Summary of the results:
 print('\n Summary of the results:\n ------------------------------------')
 
-catlearn_results = read('results_catlearn.traj', ':')
+catlearn_results = read('catlearn_opt.traj', ':')
 
-print('Number of function evaluations using CatLearn:', len(catlearn_results))
+print('Number of function evaluations using CatLearn:', catlearn_opt.feval)
 print('Energy CatLearn (eV):', catlearn_results[-1].get_potential_energy())
 
-ase_results = read('results_ase.traj', ':')
+ase_results = read('ase_opt.traj', ':')
 
 print('Number of function evaluations using ASE:', ase_opt.function_calls)
 print('Energy ASE (eV):', ase_results[-1].get_potential_energy())

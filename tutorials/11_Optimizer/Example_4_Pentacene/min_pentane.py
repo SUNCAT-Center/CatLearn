@@ -8,8 +8,8 @@ from ase.optimize.sciopt import *
 from ase.io import read
 """ 
     CatLearn Minimizer. 
-    Example 3.
-    Optimization of CO on Au(111) using GPAW.     
+    Example 4.
+    Optimization of C5H12 (pentane) using GPAW.     
 """
 
 # Setup calculator:
@@ -20,12 +20,8 @@ calculator = GPAW(mode='lcao',
 
 # 1.1. Structures:
 db = ase.db.connect('systems.db')
-initial_structure = db.get_atoms(formula='Cu8C')
-
-np.random.seed(1)
-for i in initial_structure:
-    if i.position[2] > 5.00: # 8.50
-        i.position = i.position + np.random.normal(scale=0.1)
+initial_structure = db.get_atoms(formula='C5H12')
+initial_structure.rattle(stdev=0.1, seed=0)
 
 # 2.A. Optimize structure using CatLearn:
 initial_catlearn = initial_structure.copy()
@@ -47,6 +43,4 @@ print('\n Summary of the results:\n ------------------------------------')
 
 catlearn_results = read('catlearn_opt.traj', ':')
 print('Number of function evaluations using CatLearn:', len(catlearn_results))
-
-ase_results = read('ase_opt.traj', ':')
 print('Number of function evaluations using ASE:', ase_opt.function_calls)

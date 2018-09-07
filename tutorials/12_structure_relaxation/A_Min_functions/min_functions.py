@@ -16,14 +16,12 @@ import shutil
     Goldstein-Price or Rosenbrock.       
 """
 
-catlearn_version = '1_0_0'
-
 # 0. Set calculator.
 calculator = NoiseHimmelblau()
 
 # 1. Set common initial structure.
-initial_structure = Atoms('C', positions=[(-1.2, -1.5, 0.0)])
-
+initial_structure = Atoms('H', positions=[(1.0, 1.0, 0.0)])
+initial_structure.rattle(seed=0, stdev=0.1)
 # 2. Benchmark.
 # 2.A. Optimize structure using CatLearn:
 initial_catlearn = initial_structure.copy()
@@ -33,11 +31,28 @@ catlearn_opt = CatLearnMin(initial_catlearn, trajectory='catlearn_opt.traj')
 catlearn_opt.run(fmax=0.05)
 
 # 2.B. Optimize structure using ASE.
-initial_ase = initial_structure.copy()
-initial_ase.set_calculator(calculator)
+initial_gpmin = initial_structure.copy()
+initial_gpmin.set_calculator(calculator)
 
-ase_opt = GPMin(initial_ase, trajectory='ase_opt.traj')
-ase_opt.run(fmax=0.05, steps=500)
+gpmin_opt = GPMin(initial_gpmin, trajectory='gpmin_opt.traj',
+                 update_hyperparams=True)
+gpmin_opt.run(fmax=0.05, steps=200)
+
+# 2.C. Optimize structure using BFGS.
+initial_bfgs = initial_structure.copy()
+initial_bfgs.set_calculator(calculator)
+
+bfgs_opt = SciPyFminBFGS(initial_bfgs, trajectory='bfgs_opt.traj')
+bfgs_opt.run(fmax=0.05, steps=200)
+print(bfgs_opt.force_calls)
+print(bfgs_opt.__dict__)
+
+# 2.D. Optimize structure using BFGS.
+initial_fire = initial_structure.copy()
+initial_fire.set_calculator(calculator)
+
+fire_opt = FIRE(initial_fire, trajectory='fire_opt.traj')
+fire_opt.run(fmax=0.05, steps=200)
 
 # 3. Summary of the results:
 print('\n Summary of the results:\n ------------------------------------')
@@ -45,8 +60,17 @@ print('\n Summary of the results:\n ------------------------------------')
 catlearn_results = read('catlearn_opt.traj', ':')
 print('Number of function evaluations using CatLearn:', len(catlearn_results))
 
-ase_results = read('ase_opt.traj', ':')
-print('Number of function evaluations using ASE:', len(ase_results))
+gpmin_results = read('gpmin_opt.traj', ':')
+print('Number of function evaluations using GPMin:', gpmin_opt.function_calls)
+
+bfgs_results = read('bfgs_opt.traj', ':')
+print('Number of function evaluations using BFGS:', len(bfgs_results))
+
+fire_results = read('fire_opt.traj', ':')
+print('Number of function evaluations using FIRE:', len(fire_results))
+
 
 print('Energy CatLearn:', catlearn_results[-1].get_potential_energy())
-print('Energy ASE:', ase_results[-1].get_potential_energy())
+print('Energy GPMin:', gpmin_results[-1].get_potential_energy())
+print('Energy BFGS:', bfgs_results[-1].get_potential_energy())
+print('Energy FIRE:', fire_results[-1].get_potential_energy())
