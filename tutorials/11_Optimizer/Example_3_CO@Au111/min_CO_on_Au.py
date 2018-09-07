@@ -20,7 +20,7 @@ calculator = GPAW(mode='lcao',
 
 # 1.1. Structures:
 db = ase.db.connect('systems.db')
-initial_structure = db.get_atoms(formula='Cu8C')
+initial_structure = db.get_atoms(formula='Au8CO')
 
 np.random.seed(1)
 for i in initial_structure:

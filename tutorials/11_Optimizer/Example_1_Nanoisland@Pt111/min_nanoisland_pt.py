@@ -37,7 +37,7 @@ initial_ase = initial_structure.copy()
 initial_ase.set_calculator(calculator)
 
 ase_opt = GPMin(initial_ase, trajectory='ase_opt.traj',
-                update_hyperparams=True)
+                update_hyperparams=False)
 ase_opt.run(fmax=0.05)
 
 
@@ -48,5 +48,5 @@ catlearn_results = read('catlearn_opt.traj', ':')
 print('Number of function evaluations using CatLearn:', len(catlearn_results))
 
 ase_results = read('ase_opt.traj', ':')
-print('Number of function evaluations using ASE:', len(ase_results))
+print('Number of function evaluations using ASE:', ase_opt.function_calls)
 

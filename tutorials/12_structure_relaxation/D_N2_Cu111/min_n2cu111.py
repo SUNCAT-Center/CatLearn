@@ -41,7 +41,7 @@ initial_catlearn = initial_structure.copy()
 initial_catlearn.set_calculator(calculator)
 
 catlearn_opt = CatLearnMin(initial_catlearn, trajectory='catlearn_opt.traj',
-                           ml_calc='SQE_sequential')
+                           ml_calc='SQE')
 catlearn_opt.run(fmax=0.01)
 
 # 2.B. Optimize structure using ASE.
@@ -59,5 +59,5 @@ catlearn_results = read('catlearn_opt.traj', ':')
 print('Number of function evaluations using CatLearn:', len(catlearn_results))
 
 ase_results = read('ase_opt.traj', ':')
-print('Number of function evaluations using ASE:', len(ase_results))
+print('Number of function evaluations using ASE:', ase_opt.function_calls)
 

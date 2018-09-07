@@ -101,12 +101,6 @@ class CatLearnNEB(object):
         if not np.array_equal(self.magmom_fs, np.zeros_like(self.magmom_fs)):
             warning_spin_neb()
 
-        # Obtain the energy of the endpoints for scaling:
-        energy_is = is_endpoint[-1].get_potential_energy()
-        energy_fs = fs_endpoint[-1].get_potential_energy()
-
-        # Set scaling of the targets:
-        self.scale_targets = np.max([energy_is, energy_fs])
 
         # Convert atoms information into data to feed the ML process.
 
@@ -139,6 +133,19 @@ class CatLearnNEB(object):
             self.ind_mask_constr = create_mask_ase_constraints(
                                                 self.ase_ini, self.constraints)
 
+
+        # Obtain the energy of the endpoints for scaling:
+        energy_is = is_endpoint[-1].get_potential_energy()
+        energy_fs = fs_endpoint[-1].get_potential_energy()
+
+        # Set scaling of the targets:
+        # self.scale_targets = np.max([energy_is, energy_fs])
+
+        self.list_targets = self.list_targets - np.min(self.list_targets)
+        print(self.list_targets)
+        exit()
+
+
         # Settings for the NEB.
         self.neb_method = neb_method
         self.spring = spring
@@ -162,7 +169,7 @@ class CatLearnNEB(object):
                                         index_constraints=self.ind_mask_constr,
                                         trained_process=None,
                                         ml_calculator=None,
-                                        scaling_targets=self.scale_targets,
+                                        scaling_targets=0.0,
                                         iteration=self.iter,
                                         kappa=0.0
                                         )
@@ -219,7 +226,7 @@ class CatLearnNEB(object):
         self.path_distance = copy.deepcopy(self.d_start_end)
 
     def run(self, fmax=0.05, unc_convergence=0.020, max_iter=500,
-            ml_algo='FIRE', ml_max_iter=100, plot_neb_paths=False,
+            ml_algo='LBFGS', ml_max_iter=100, plot_neb_paths=False,
             penalty=0.0, acquisition='acq_3'):
 
         """Executing run will start the optimization process.
@@ -252,23 +259,27 @@ class CatLearnNEB(object):
         Files :
         """
 
+        self.org_list_targets = self.list_targets.copy()
+
         while True:
-            self.scale_targets = np.max(self.list_targets)
+
+            self.list_targets = self.org_list_targets.copy() + \
+            self.list_targets[0]
             # 1) Train Machine Learning process:
-            update_prior(self)
-            self.kernel_mode = self.ml_calc
+
+            self.sigma = np.mean(self.list_targets)**2
+
             self.kdict = {'k1': {'type': 'gaussian', 'width': 0.4,
                                  'dimension': 'single',
-                                 'bounds': ((0.01, 0.4),),
+                                 'bounds': ((0.4, 0.4),),
                                  'scaling': 1.0,
                                  'scaling_bounds': ((1.0, 1.0),)},
-                          'k2': {'type': 'constant_multi',
-                                         'hyperparameters': [1e-8,
-                                                             1e-8,
-                                                             1e-8],
-                                         'bounds': ((0.01, self.prior),
-                                                    (0.0, 0.0),
-                                                    (0.0, 0.0),)}
+                          'k2': {'type': 'constant',
+                                 'const': self.sigma,
+                                 'bounds': ((self.sigma, self.sigma),)},
+                         'k3': {'type':'noise_multi',
+                          'hyperparameters': [1e-7, 1e-7],
+                         'bounds': ((1e-7, 1e-4), (1e-7, 1e-4))}
                           }
             self.ml_calc = GPCalculator(
                     kernel_dict=self.kdict, opt_hyperparam=True,
@@ -293,7 +304,7 @@ class CatLearnNEB(object):
                                        list_gradients=self.list_gradients,
                                        index_constraints=self.ind_mask_constr,
                                        ml_calculator=self.ml_calc,
-                                       scaling_targets=self.scale_targets)
+                                       scaling_targets=0.0)
 
             trained_process = process['trained_process']
             ml_calc = process['ml_calc']
@@ -312,7 +323,7 @@ class CatLearnNEB(object):
                                         index_constraints=self.ind_mask_constr,
                                         trained_process=trained_process,
                                         ml_calculator=ml_calc,
-                                        scaling_targets=self.scale_targets,
+                                        scaling_targets=0.0,
                                         iteration=self.iter,
                                         kappa=penalty
                                         )
@@ -539,3 +550,4 @@ def update_prior(self):
     prior_const = 1/4 * ((self.list_targets[0]) - (self.list_targets[-1]))
     self.prior = np.abs(np.min(self.list_targets)) + np.abs(prior_const)
     print('Guessed prior', self.prior)
+    return self.prior

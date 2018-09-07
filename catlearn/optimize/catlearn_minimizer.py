@@ -18,7 +18,7 @@ import numpy as np
 
 class CatLearnMin(object):
 
-    def __init__(self, x0, ase_calc=None, ml_calc='SQE',
+    def __init__(self, x0, ase_calc=None, ml_calc='SQE_sequential',
                  trajectory='catlearn_opt.traj'):
 
         """Optimization setup.
@@ -353,7 +353,11 @@ def get_default_kernel(self):
         if self.max_abs_forces <= 0.10:
             type = 'SQE_anisotropic'
 
-    self.sigma = np.mean(self.list_targets)**2
+    prior_const = 1/4 * np.abs(np.mean(self.list_targets))
+    if self.list_targets[0] >= 0.0:
+        self.sigma = np.min(self.list_targets) + prior_const
+    if self.list_targets[0] < 0.0:
+        self.sigma = -np.min(self.list_targets) + prior_const
 
     kdict = {'k1': {'type': 'gaussian', 'dimension': 'single',
                     'scaling': 1.0, 'scaling_bounds': ((1.0, 1.0),)},
@@ -362,7 +366,7 @@ def get_default_kernel(self):
                     'bounds': ((self.sigma, self.sigma),)},
              'k3': {'type':'noise_multi',
                     'hyperparameters': [1e-7, 1e-7],
-                    'bounds': ((1e-7, 1e-4), (1e-7, 1e-4))}
+                    'bounds': ((5e-6, 1e-4), (5e-6, 1e-4))}
              }
 
     if type == 'SQE':

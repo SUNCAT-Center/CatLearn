@@ -18,7 +18,7 @@ calc = EMT()
 # 1.1. Structures:
 
 mol = read('./A_structure/POSCAR')
-mol.rattle(stdev=0.34, seed=2)
+mol.rattle(stdev=0.1, seed=2)
 
 # 3. Benchmark.
 ###############################################################################
@@ -32,8 +32,6 @@ ase_opt = CatLearnMin(initial_catlearn,
                             ml_calc='SQE_sequential')
 ase_opt.run(fmax=0.05)
 atoms = read('results_catlearn.traj', ':')
-
-
 
 # 2.B Optimize using GPMin.
 initial_gpmin = mol.copy()
@@ -54,5 +52,5 @@ print('Energy CatLearn (eV):', catlearn_results[-1].get_potential_energy())
 
 gpmin_results = read('results_gpmin.traj', ':')
 
-print('Number of function evaluations using GPMin:', len(gpmin_results))
+print('Number of function evaluations using GPMin:', gpmin_opt.force_calls)
 print('Energy GPMin (eV):', gpmin_results[-1].get_potential_energy())
