@@ -48,7 +48,7 @@ def constant_kernel(theta, log_scale, m1, m2=None, eval_gradients=False):
     return k
 
 
-def constant_multi_kernel(theta, log_scale, m1, m2=None, eval_gradients=False):
+def constant_multi_kernel(theta, log_scale, m1, m2=None, eval_gradients=True):
     """Return constant to add to the kernel.
 
     Parameters
@@ -70,7 +70,7 @@ def constant_multi_kernel(theta, log_scale, m1, m2=None, eval_gradients=False):
         The covariance matrix.
     """
 
-    msg = "This kernel only make sense when the model constains first " \
+    msg = "Using this kernel only makes sense when the model constains first " \
           "derivative observations. Otherwise you should use the standard " \
           "'constant_kernel.'"
     assert eval_gradients, msg

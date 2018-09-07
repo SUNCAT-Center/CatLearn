@@ -246,7 +246,8 @@ class CatLearnMin(object):
                                             x0=x0,
                                             ml_calc=self.ml_calc,
                                             trained_process=trained_process,
-                                            ml_algo=ml_algo)
+                                            ml_algo=ml_algo,
+                                            kappa=penalty)
                 interesting_point = unmask_geometry(
                                             org_list=self.list_train,
                                             masked_geom=int_p,
@@ -345,21 +346,23 @@ def get_default_kernel(self):
     type = self.kernel_type
 
     if type == 'SQE_sequential':
-        if self.max_abs_forces >= 5.0:
-            type = 'SQE_anisotropic'
-        if 0.05 < self.max_abs_forces <= 5.0:
-            type = 'SQE_isotropic'
-        if self.max_abs_forces <= 0.05:
+        if self.max_abs_forces >= 1.0:
             type = 'SQE'
+        if 0.10 < self.max_abs_forces <= 1.0:
+            type = 'SQE_isotropic'
+        if self.max_abs_forces <= 0.10:
+            type = 'SQE_anisotropic'
 
-    cmax = np.abs(self.list_targets[0])
+    self.sigma = np.mean(self.list_targets)**2
+
     kdict = {'k1': {'type': 'gaussian', 'dimension': 'single',
                     'scaling': 1.0, 'scaling_bounds': ((1.0, 1.0),)},
-             'k2': {'type': 'constant_multi',
-                    'hyperparameters':[cmax, 0.0, 0.0],
-                    'bounds': ((cmax, cmax),
-                               (0.0, 0.0),
-                               (0.0, 0.0),)},
+             'k2': {'type': 'constant',
+                    'const': self.sigma,
+                    'bounds': ((self.sigma, self.sigma),)},
+             'k3': {'type':'noise_multi',
+                    'hyperparameters': [1e-7, 1e-7],
+                    'bounds': ((1e-7, 1e-4), (1e-7, 1e-4))}
              }
 
     if type == 'SQE':
@@ -367,16 +370,16 @@ def get_default_kernel(self):
         kdict['k1']['bounds'] = ((0.4, 0.4),)
 
     if type == 'SQE_isotropic':
-        kdict['k1']['width'] = 0.25
-        kdict['k1']['bounds'] = ((0.2, 0.4),)
+        kdict['k1']['width'] = 0.4
+        kdict['k1']['bounds'] = ((0.01, 0.4),)
 
     if type == 'SQE_anisotropic':
         kdict['k1']['dimension'] = 'features'
-        kdict['k1']['width'] = 0.25
-        kdict['k1']['bounds'] = ((0.1, 0.4),) * len(self.ind_mask_constr)
+        kdict['k1']['width'] = 0.4
+        kdict['k1']['bounds'] = ((0.01, 0.4),) * len(self.ind_mask_constr)
 
     print('Type of kernel:', type)
     self.ml_calc = GPCalculator(kernel_dict=kdict, opt_hyperparam=True,
                                 calc_uncertainty=self.calc_uncertainty,
-                                regularization_bounds=(1e-6, 1e-6),
-                                regularization=1e-6)
+                                regularization_bounds=(5e-6, 5e-6),
+                                regularization=5e-6)

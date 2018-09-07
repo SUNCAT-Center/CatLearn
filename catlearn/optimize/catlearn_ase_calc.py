@@ -82,7 +82,7 @@ class CatLearnASE(Calculator):
         self.results['forces'] = forces
 
 
-def predicted_energy_test(test, ml_calc, trained_process):
+def predicted_energy_test(test_point, ml_calc, trained_process, kappa):
 
         """Function that returns the value of the predicted mean for a given
         test point. This function can be penalised w.r.t. to the distance of
@@ -90,13 +90,16 @@ def predicted_energy_test(test, ml_calc, trained_process):
 
         Parameters
         ----------
-        test : array
+        test_point : array
             Test point. This point will be tested in the ML in order to get
             a predicted value.
         ml_calc : object
             Machine learning calculator.
         trained_process : object
             Includes the trained process.
+        kappa:
+            Parameter controlling the penalization of the function w.r.t
+            uncertainty.
 
         Returns
         -------
@@ -105,17 +108,15 @@ def predicted_energy_test(test, ml_calc, trained_process):
 
         """
         pred_value = 0
-
         # Get predicted mean.
-
         pred_value = ml_calc.get_predictions(trained_process,
-        test_data=test)['pred_mean']
+                                    test_data=test_point)['pred_mean']
         return pred_value[0][0]  # For minimization problems.
 
 
-def optimize_ml_using_scipy(x0, ml_calc, trained_process, ml_algo):
+def optimize_ml_using_scipy(x0, ml_calc, trained_process, ml_algo, kappa):
 
-    args = (ml_calc, trained_process)
+    args = (ml_calc, trained_process, kappa)
 
     if ml_algo == 'Powell':
         result_min = fmin_powell(func=predicted_energy_test, x0=x0,
