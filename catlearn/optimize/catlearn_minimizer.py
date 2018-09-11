@@ -1,9 +1,10 @@
+# CatLearn 1.0.5
+
 from ase import Atoms
 from ase.io.trajectory import TrajectoryWriter
 from ase.optimize import *
 from ase.optimize.sciopt import *
 from catlearn.optimize.warnings import *
-from catlearn.optimize.ml_calculator import GPCalculator, train_ml_process
 from catlearn.optimize.io import ase_traj_to_catlearn, print_info
 from catlearn.optimize.constraints import create_mask_ase_constraints, \
                                     unmask_geometry, apply_mask_ase_constraints
@@ -14,11 +15,12 @@ from catlearn.optimize.convergence import converged, get_fmax
 from catlearn.optimize.catlearn_ase_calc import CatLearnASE, \
                                                 optimize_ml_using_scipy
 import numpy as np
+from catlearn.regression import GaussianProcess
 
 
 class CatLearnMin(object):
 
-    def __init__(self, x0, ase_calc=None, ml_calc='SQE_sequential',
+    def __init__(self, x0, ase_calc=None, ml_calc='SQE',
                  trajectory='catlearn_opt.traj'):
 
         """Optimization setup.
@@ -43,17 +45,11 @@ class CatLearnMin(object):
         self.fmax = 0.0
         self.min_iter = 0
         self.jac = True
+        self.version = 'Min. v.1.0.7'
 
         self.ase_calc = ase_calc
 
         assert x0 is not None, err_not_x0()
-
-        if isinstance(self.ml_calc, str):
-                implemented_kernels = ['SQE', 'SQE_isotropic',
-                                       'SQE_anisotropic', 'SQE_sequential']
-                assert self.ml_calc in implemented_kernels, error_not_ml_calc()
-                self.kernel_type = self.ml_calc
-        assert self.ml_calc, error_not_ml_calc()
 
         if isinstance(x0, Atoms):
             self.start_mode = 'atoms'
@@ -103,8 +99,8 @@ class CatLearnMin(object):
                 self.ind_mask_constr = create_mask_ase_constraints(
                     self.ase_ini, self.constraints)
 
-    def run(self, fmax=0.05, ml_algo='L-BFGS-B', max_iter=500,
-            min_iter=0, ml_max_iter=250, penalty=0.0):
+    def run(self, fmax=0.05, ml_algo='LBFGS', max_iter=500,
+            min_iter=0, ml_max_iter=250, max_memory=50):
 
         """Executing run will start the optimization process.
 
@@ -123,9 +119,6 @@ class CatLearnMin(object):
             Min. number of optimizations steps
         ml_max_iter : int
             Max. number of iterations of the machine learning surrogate model.
-        penalty : float
-            Number of times the predicted energy is penalized w.r.t the
-            uncertainty during the machine learning optimization.
 
         Returns
         -------
@@ -141,36 +134,23 @@ class CatLearnMin(object):
         # Default kernel:
 
         self.ml_algo = ml_algo
-        self.list_minimizers_grad = ['BFGS', 'LBFGS', 'SciPyFminCG', 'MDMin',
-                                     'FIRE', 'BFGSLineSearch',
-                                     'QuasiNewton', 'GoodOldQuasiNewton']
-
         self.fmax = fmax
         self.min_iter = min_iter
-        max_memory = 50
-
-        self.calc_uncertainty = False
-        if penalty != 0.0:
-            self.calc_uncertainty = True
 
         # Initialization (evaluate two points).
         initialize(self)
         converged(self)
         print_info(self)
 
-        if ml_algo is 'BFGSLineSearch':
-            initialize(self, i_step='BFGS')
-        if ml_algo not in self.list_minimizers_grad:
-            initialize(self, i_step='BFGS')
-        else:
-            initialize(self, i_step=ml_algo)
+        initialize(self, i_step='BFGS')
 
         converged(self)
         print_info(self)
 
-        ase_minimizers = ['BFGS', 'LBFGS', 'SciPyFminCG', 'MDMin',
-                        'FIRE', 'BFGSLineSearch', 'SciPyFminBFGS',
-                        'QuasiNewton', 'GoodOldQuasiNewton']
+        ase_minimizers = ['BFGS', 'LBFGS', 'SciPyFminCG',
+                          'FIRE', 'BFGSLineSearch', 'SciPyFminBFGS',
+                          'QuasiNewton', 'GoodOldQuasiNewton']
+
         if ml_algo in ase_minimizers:
             self.ase_opt = True
         if ml_algo not in ase_minimizers:
@@ -179,60 +159,76 @@ class CatLearnMin(object):
         while not converged(self):
 
             # Configure ML calculator.
-            get_default_kernel(self)
 
-            # Limited memory.
-            if len(self.list_train) >= max_memory:
-                self.list_train = self.list_train[-max_memory:]
-                self.list_targets = self.list_targets[-max_memory:]
-                self.list_gradients = self.list_gradients[-max_memory:]
+            mean_target = np.max(self.list_targets)
+            scaled_targets = self.list_targets.copy() - mean_target
+            scaling = 1.0 + np.std(scaled_targets)**2
+
+            width = 0.4
+            noise_energy = 0.0005
+            noise_forces = 0.0005 * width**2
+
+            kdict = {'k1': {'type': 'gaussian', 'width': width,
+                            'dimension': 'single',
+                            'bounds': ((width, width),),
+                            'scaling': scaling,
+                            'scaling_bounds': ((scaling, scaling),)},
+                     'k2': {'type': 'noise_multi',
+                            'hyperparameters': [noise_energy, noise_forces],
+                            'bounds': ((noise_energy, 1e-2),
+                                       (noise_forces, 1e-2),)}
+                    }
 
             # 1. Train Machine Learning process.
+            train = self.list_train.copy()
+            gradients = self.list_gradients.copy()
 
-            # Check that the user is not feeding redundant information to ML.
-            count_unique = np.unique(self.list_train, return_counts=True,
-                                     axis=0)[1]
-            msg = 'Your training list contains 1 or more duplicated elements'
-            assert np.any(count_unique) < 2, msg
-            print('Training a ML process...')
-            print('Number of training points:', len(self.list_targets))
+            if self.ind_mask_constr is not None:
+                train = apply_mask_ase_constraints(
+                                   list_to_mask=self.list_train,
+                                   mask_index=self.ind_mask_constr)[1]
+                gradients = apply_mask_ase_constraints(
+                                        list_to_mask=self.list_gradients,
+                                        mask_index=self.ind_mask_constr)[1]
 
-            process = train_ml_process(list_train=self.list_train,
-                                       list_targets=self.list_targets,
-                                       list_gradients=self.list_gradients,
-                                       index_constraints=self.ind_mask_constr,
-                                       ml_calculator=self.ml_calc,
-                                       scaling_targets=0.0)
-            trained_process = process['trained_process']
-            ml_calc = process['ml_calc']
-            print('ML process trained.')
+            # Limited memory.
+            if len(train) >= max_memory:
+                train = train[-max_memory:]
+                scaled_targets = scaled_targets[-max_memory:]
+                gradients = gradients[-max_memory:]
 
-            # 2. Setup and run optimization.
+            print('Training a GP process...')
+            print('Number of training points:', len(scaled_targets))
 
-            # Attach CatLearn calculator.
+            gp = GaussianProcess(kernel_dict=kdict,
+                                 regularization=0.0,
+                                 regularization_bounds=(0.0, 0.0),
+                                 train_fp=train,
+                                 train_target=scaled_targets,
+                                 gradients=gradients,
+                                 optimize_hyperparameters=False,
+                                 scale_data=False)
+            gp.optimize_hyperparameters(global_opt=False)
+            print('GP process trained.')
 
-            # Start from the most stable.
+            # 2. Optimize Machine Learning process.
+
+            interesting_point = []
+
             if self.ase_opt is True:
                 guess = self.ase_ini
                 guess_pos = self.list_train[np.argmin(self.list_targets)]
                 guess.positions = guess_pos.reshape(-1, 3)
-
                 guess.set_calculator(CatLearnASE(
-                                        trained_process=trained_process,
-                                        ml_calc=ml_calc,
-                                        kappa=penalty,
-                                        index_constraints=self.ind_mask_constr,
-                                        calc_uncertainty=self.calc_uncertainty
-                                             ))
+                                        gp=gp,
+                                        index_constraints=self.ind_mask_constr)
+                                     )
                 guess.info['iteration'] = self.iter
 
                 # Run optimization of the predicted PES.
                 opt_ml = eval(ml_algo)(guess, logfile=None)
                 print('Starting ML optimization...')
-                if ml_algo in self.list_minimizers_grad:
-                    opt_ml.run(fmax=1e-4, steps=ml_max_iter)
-                else:
-                    opt_ml.run(steps=ml_max_iter)
+                opt_ml.run(fmax=1e-4, steps=ml_max_iter)
                 print('ML optimized.')
 
                 interesting_point = guess.get_positions().flatten()
@@ -242,16 +238,12 @@ class CatLearnMin(object):
                 x0 = np.array(apply_mask_ase_constraints(list_to_mask=[x0],
                               mask_index=self.ind_mask_constr)[1])
 
-                int_p = optimize_ml_using_scipy(
-                                            x0=x0,
-                                            ml_calc=self.ml_calc,
-                                            trained_process=trained_process,
-                                            ml_algo=ml_algo,
-                                            kappa=penalty)
+                int_p = optimize_ml_using_scipy(x0=x0, gp=gp,
+                                                ml_algo=ml_algo)
                 interesting_point = unmask_geometry(
-                                            org_list=self.list_train,
-                                            masked_geom=int_p,
-                                            mask_index=self.ind_mask_constr)
+                                    org_list=self.list_train,
+                                    masked_geom=int_p,
+                                    mask_index=self.ind_mask_constr)
 
             # 3. Evaluate and append interesting point.
             eval_and_append(self, interesting_point)
@@ -274,7 +266,7 @@ class CatLearnMin(object):
                 break
 
 
-def initialize(self, i_step=1e-3):
+def initialize(self, i_step='BFGS'):
     """ The GPR model needs two points to start the ML surrogate model.
     This function takes care of the two first optimization steps.
     First, evaluates the "real" function for a given initial guess. Secondly,
@@ -298,10 +290,8 @@ def initialize(self, i_step=1e-3):
                              self.list_gradients[-1]]
 
         if isinstance(i_step, str):
-            if i_step in self.list_minimizers_grad:
-                eval(i_step)(self.ase_ini).run(steps=1)
-            else:
-                eval(i_step)(self.ase_ini).run(steps=1)
+            eval(i_step)(self.ase_ini, logfile=None).run(fmax=0.05,
+                                                             steps=1)
             ini_train = [self.ase_ini.get_positions().flatten()]
 
         self.list_train = np.append(self.list_train, ini_train, axis=0)
@@ -339,51 +329,3 @@ def initialize(self, i_step=1e-3):
             molec_writer = TrajectoryWriter('./' + str(self.filename),
                                             mode='w')
             molec_writer.write(self.ase_ini)
-
-
-def get_default_kernel(self):
-
-    type = self.kernel_type
-
-    if type == 'SQE_sequential':
-        if self.max_abs_forces >= 1.0:
-            type = 'SQE'
-        if 0.10 < self.max_abs_forces <= 1.0:
-            type = 'SQE_isotropic'
-        if self.max_abs_forces <= 0.10:
-            type = 'SQE_anisotropic'
-
-    prior_const = 1/4 * np.abs(np.mean(self.list_targets))
-    if self.list_targets[0] >= 0.0:
-        self.sigma = np.min(self.list_targets) + prior_const
-    if self.list_targets[0] < 0.0:
-        self.sigma = -np.min(self.list_targets) + prior_const
-
-    kdict = {'k1': {'type': 'gaussian', 'dimension': 'single',
-                    'scaling': 1.0, 'scaling_bounds': ((1.0, 1.0),)},
-             'k2': {'type': 'constant',
-                    'const': self.sigma,
-                    'bounds': ((self.sigma, self.sigma),)},
-             'k3': {'type':'noise_multi',
-                    'hyperparameters': [1e-7, 1e-7],
-                    'bounds': ((5e-6, 1e-4), (5e-6, 1e-4))}
-             }
-
-    if type == 'SQE':
-        kdict['k1']['width'] = 0.4
-        kdict['k1']['bounds'] = ((0.4, 0.4),)
-
-    if type == 'SQE_isotropic':
-        kdict['k1']['width'] = 0.4
-        kdict['k1']['bounds'] = ((0.01, 0.4),)
-
-    if type == 'SQE_anisotropic':
-        kdict['k1']['dimension'] = 'features'
-        kdict['k1']['width'] = 0.4
-        kdict['k1']['bounds'] = ((0.01, 0.4),) * len(self.ind_mask_constr)
-
-    print('Type of kernel:', type)
-    self.ml_calc = GPCalculator(kernel_dict=kdict, opt_hyperparam=True,
-                                calc_uncertainty=self.calc_uncertainty,
-                                regularization_bounds=(5e-6, 5e-6),
-                                regularization=5e-6)

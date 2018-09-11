@@ -117,6 +117,13 @@ def print_info(self):
     """
 
     if self.iter == 0 and self.feval == 1:
+        print(""" 
+       ____      _   _                          
+      / ___|__ _| |_| |    ___  __ _ _ __ _ __  
+     | |   / _` | __| |   / _ \/ _` | '__| '_ \ 
+     | |__| (_| | |_| |__|  __/ (_| | |  | | | |
+      \____\__,_|\__|_____\___|\__,_|_|  |_| |_| """ + self.version)
+
         _start_table(self)
 
     if self.iter == 1 and self.feval > 1:

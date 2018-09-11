@@ -1,4 +1,4 @@
-# @Version 1.0.0
+# @Version 1.0.4
 
 import numpy as np
 from catlearn.optimize.warnings import *
@@ -139,11 +139,7 @@ class CatLearnNEB(object):
         energy_fs = fs_endpoint[-1].get_potential_energy()
 
         # Set scaling of the targets:
-        # self.scale_targets = np.max([energy_is, energy_fs])
-
-        self.list_targets = self.list_targets - np.min(self.list_targets)
-        print(self.list_targets)
-        exit()
+        self.scale_targets = np.max([energy_is, energy_fs])
 
 
         # Settings for the NEB.
@@ -169,7 +165,7 @@ class CatLearnNEB(object):
                                         index_constraints=self.ind_mask_constr,
                                         trained_process=None,
                                         ml_calculator=None,
-                                        scaling_targets=0.0,
+                                        scaling_targets=self.scale_targets,
                                         iteration=self.iter,
                                         kappa=0.0
                                         )
@@ -259,43 +255,42 @@ class CatLearnNEB(object):
         Files :
         """
 
-        self.org_list_targets = self.list_targets.copy()
 
         while True:
 
-            self.list_targets = self.org_list_targets.copy() + \
-            self.list_targets[0]
             # 1) Train Machine Learning process:
 
-            self.sigma = np.mean(self.list_targets)**2
+            # Configure ML calculator.
+
+            scale_targets = np.max(self.list_targets)
+
+            scale_prior = np.max(self.list_targets)
+
+            prior = np.std(self.list_targets-scale_prior)**2
+
+            width = 0.4
+            noise_energy = 0.005
+            noise_forces = 0.005 * width**2
 
             self.kdict = {'k1': {'type': 'gaussian', 'width': 0.4,
                                  'dimension': 'single',
-                                 'bounds': ((0.4, 0.4),),
-                                 'scaling': 1.0,
-                                 'scaling_bounds': ((1.0, 1.0),)},
-                          'k2': {'type': 'constant',
-                                 'const': self.sigma,
-                                 'bounds': ((self.sigma, self.sigma),)},
-                         'k3': {'type':'noise_multi',
-                          'hyperparameters': [1e-7, 1e-7],
-                         'bounds': ((1e-7, 1e-4), (1e-7, 1e-4))}
-                          }
+                                 'bounds': ((width, width),),
+                                 'scaling': prior+1.0,
+                                 'scaling_bounds': ((prior, prior+10.0),)},
+                          'k2': {'type': 'noise_multi',
+                                 'hyperparameters': [noise_energy, noise_forces],
+                                 'bounds': ((noise_energy, 1e-2),
+                                            (noise_forces, 1e-2),)}
+                         }
             self.ml_calc = GPCalculator(
                     kernel_dict=self.kdict, opt_hyperparam=True,
                     scale_data=False,
-                    scale_optimizer=False, calc_uncertainty=True,
+                    scale_optimizer=False,
+                    calc_uncertainty=True,
                     algo_opt_hyperparamters='L-BFGS-B',
                     global_opt_hyperparameters=False,
-                    regularization=2.5e-6,
-                    regularization_bounds=(2.5e-6, 1e-5))
-
-            # Check that the user is not feeding redundant information to ML.
-
-            count_unique = np.unique(self.list_train, return_counts=True,
-                                     axis=0)[1]
-            msg = 'Your training list contains 1 or more duplicated elements'
-            assert np.any(count_unique) < 2, msg
+                    regularization=0.0,
+                    regularization_bounds=(0.0, 0.0))
 
             print('Training a ML process...')
             print('Number of training points:', len(self.list_targets))
@@ -304,7 +299,7 @@ class CatLearnNEB(object):
                                        list_gradients=self.list_gradients,
                                        index_constraints=self.ind_mask_constr,
                                        ml_calculator=self.ml_calc,
-                                       scaling_targets=0.0)
+                                       scaling_targets=scale_targets)
 
             trained_process = process['trained_process']
             ml_calc = process['ml_calc']
@@ -323,7 +318,7 @@ class CatLearnNEB(object):
                                         index_constraints=self.ind_mask_constr,
                                         trained_process=trained_process,
                                         ml_calculator=ml_calc,
-                                        scaling_targets=0.0,
+                                        scaling_targets=scale_targets,
                                         iteration=self.iter,
                                         kappa=penalty
                                         )

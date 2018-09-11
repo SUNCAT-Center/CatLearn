@@ -13,17 +13,15 @@ class CatLearnASE(Calculator):
     implemented_properties = ['energy', 'forces']
     nolabel = True
 
-    def __init__(self, trained_process, ml_calc, index_constraints,
-                 calc_uncertainty=False, finite_step=5e-5, kappa=0.0,
-                 **kwargs):
+    def __init__(self, gp, index_constraints, scaling_targets=0.0,
+                 calc_uncertainty=False, finite_step=5e-5, **kwargs):
 
         Calculator.__init__(self, **kwargs)
 
-        self.trained_process = trained_process
-        self.ml_calc = ml_calc
+        self.gp = gp
+        self.scaling = scaling_targets
         self.fs = finite_step
         self.ind_constraints = index_constraints
-        self.kappa = kappa
         self.calc_uncertainty = calc_uncertainty
 
     def calculate(self, atoms=None, properties=['energy', 'forces'],
@@ -32,22 +30,11 @@ class CatLearnASE(Calculator):
         # Atoms object.
         self.atoms = atoms
 
-        def pred_energy_test(test, ml_calc=self.ml_calc,
-                             trained_process=self.trained_process,
-                             kappa=self.kappa):
+        def pred_energy_test(test, gp=self.gp, scaling=self.scaling):
 
             # Get predictions.
-            predictions = ml_calc.get_predictions(trained_process,
-                                                  test_data=test[0])
-
-            post_mean = predictions['pred_mean'][0][0]
-            acq_val = post_mean
-            unc = 0.0
-            if self.calc_uncertainty is True:
-                unc = predictions['uncertainty'][0]
-                acq_val = post_mean + kappa * unc
-
-            return [acq_val, unc]
+            predictions = gp.predict(test_fp=test)
+            return predictions['prediction'][0][0] + scaling
 
         Calculator.calculate(self, atoms, properties, system_changes)
 
@@ -57,11 +44,8 @@ class CatLearnASE(Calculator):
                                             list_to_mask=[pos_flatten],
                                             mask_index=self.ind_constraints)[1]
 
-        # Get energy and uncertainty.
-        energy, uncertainty = pred_energy_test(test=test_point)
-
-        # Attach uncertainty to Atoms object.
-        atoms.info['uncertainty'] = uncertainty
+        # Get energy.
+        energy = pred_energy_test(test=test_point)
 
         # Get forces:
         gradients = np.zeros(len(pos_flatten))
@@ -69,10 +53,10 @@ class CatLearnASE(Calculator):
             index_force = self.ind_constraints[i]
             pos = copy.deepcopy(test_point)
             pos[0][i] = pos_flatten[index_force] + self.fs
-            f_pos = pred_energy_test(test=pos)[0]
+            f_pos = pred_energy_test(test=pos)
             pos = copy.deepcopy(test_point)
             pos[0][i] = pos_flatten[index_force] - self.fs
-            f_neg = pred_energy_test(test=pos)[0]
+            f_neg = pred_energy_test(test=pos)
             gradients[index_force] = (-f_neg + f_pos) / (2.0 * self.fs)
 
         forces = np.reshape(-gradients, (self.atoms.get_number_of_atoms(), 3))
@@ -82,41 +66,13 @@ class CatLearnASE(Calculator):
         self.results['forces'] = forces
 
 
-def predicted_energy_test(test_point, ml_calc, trained_process, kappa):
-
-        """Function that returns the value of the predicted mean for a given
-        test point. This function can be penalised w.r.t. to the distance of
-        the test and the previously trained points (optional).
-
-        Parameters
-        ----------
-        test_point : array
-            Test point. This point will be tested in the ML in order to get
-            a predicted value.
-        ml_calc : object
-            Machine learning calculator.
-        trained_process : object
-            Includes the trained process.
-        kappa:
-            Parameter controlling the penalization of the function w.r.t
-            uncertainty.
-
-        Returns
-        -------
-        pred_value : float
-            Surrogate model prediction.
-
-        """
-        pred_value = 0
-        # Get predicted mean.
-        pred_value = ml_calc.get_predictions(trained_process,
-                                    test_data=test_point)['pred_mean']
-        return pred_value[0][0]  # For minimization problems.
+def predicted_energy_test(x0, gp):
+    return gp.predict(test_fp=[x0])['prediction'][0][0]
 
 
-def optimize_ml_using_scipy(x0, ml_calc, trained_process, ml_algo, kappa):
+def optimize_ml_using_scipy(x0, gp, ml_algo):
 
-    args = (ml_calc, trained_process, kappa)
+    args = (gp, )
 
     if ml_algo == 'Powell':
         result_min = fmin_powell(func=predicted_energy_test, x0=x0,

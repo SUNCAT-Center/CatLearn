@@ -40,9 +40,9 @@ exit()
 # Final end-point:
 slab = read('final.traj')
 slab.set_calculator(copy.deepcopy(ase_calculator))
-qn = BFGS(slab, trajectory='final_opt.traj')
+qn = CatLearnMin(slab, trajectory='final_opt.traj')
 qn.run(fmax=0.01)
-
+exit()
 
 # Define number of images:
 n_images = 7

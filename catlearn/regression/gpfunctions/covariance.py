@@ -74,6 +74,6 @@ def get_covariance(kernel_dict, log_scale, matrix1, matrix2=None,
     if regularization is not None:
         if log_scale:
             regularization = np.exp(regularization)
-        cov += regularization * np.identity(len(cov))
+        cov += (regularization * np.identity(len(cov)))**2
 
     return cov

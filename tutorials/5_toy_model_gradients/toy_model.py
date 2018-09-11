@@ -15,8 +15,10 @@ from catlearn.regression.cost_function import get_error
 # A known underlying function in one dimension (y) and first derivative (dy).
 def afunc(x):
     """Function (y) and first derivative (dy)."""
-    y = 100 + (x-4) * np.sin(x)
-    dy = (x-4) * np.cos(x) + np.sin(x)
+    y = 10000 * (10 + (x-4) * np.sin(x))
+    for i in y:
+        i += np.random.normal(scale=0.25)
+    dy = 10000 *((x-4) * np.cos(x) + np.sin(x))
     return [y, dy]
 
 
@@ -26,9 +28,9 @@ def afunc(x):
 train_points = 4
 
 # Each element in the list train can be referred to as a fingerprint.
-np.random.seed(104)
-train = 2*np.random.randn(train_points, 1) + 3.0
-train = np.concatenate((train, [[0.0], [7.0]]))
+
+train = [[1.0]]
+train = np.concatenate((train, [[0.0], [2.0], [4.0], [6.0], [7.0]]))
 
 # Call the underlying function to produce the target values.
 target = np.array(afunc(train)[0])
@@ -55,29 +57,47 @@ gradients = org_gradients
 
 # Define initial prediction parameters.
 
-sdt1 = 0.01  # Regularisation parameter.
+mean_target = np.mean(target)
+target = target.copy() - mean_target
+
+sigma_n = 0.2 # Regularisation parameter.
 w1 = 1.0  # Length scale parameter.
-scaling = 1.0  # Scaling parameter.
+scaling = np.std(target)**2 + 20000.  # Scaling parameter.
+print('standard:', scaling)
+# Prior
+sigma_c = 0.0
 
 # Set up the prediction routine and optimize hyperparameters.
 # Note that the default algorithm is L-BFGS-B but one could use also TNC.
 # Note also that global optimisation using basinhopping can be activated when
 # setting the flag global_opt=True.
 
-kdict = {'k1': {'type': 'gaussian', 'width': w1, 'scaling': scaling}}
+kdict = {'k1': {'type': 'gaussian', 'width': w1, 'dimension':'features',
+                'bounds': ((w1, w1),),
+                'scaling': scaling,
+                'scaling_bounds': ((scaling, scaling+10.0),),
+                },
+         'k2': {'type': 'constant',
+                    'const': sigma_c,
+                    'bounds': ((sigma_c, sigma_c),)}
+         }
 
 gp = GaussianProcess(
-    kernel_dict=kdict, regularization=sdt1**2, train_fp=train,
-    train_target=target, gradients=gradients, optimize_hyperparameters=True,
-    scale_data=True)
-print('Optimized kernel:', gp.kernel_dict)
+    kernel_dict=kdict, regularization=sigma_n, regularization_bounds=(sigma_n,
+    sigma_n),
+    train_fp=train,
+    train_target=target, gradients=gradients, optimize_hyperparameters=False,
+    scale_data=False)
 
+gp.optimize_hyperparameters(global_opt=False)
+print('Optimized hyperparameters:', gp.kernel_dict)
+print('logmarg', gp.log_marginal_likelihood)
 # Do the optimized predictions.
 pred = gp.predict(test_fp=test, uncertainty=True)
-prediction = np.array(pred['prediction'][:, 0])
+prediction = np.array(pred['prediction'][:, 0]) + mean_target
 
 # Calculate the uncertainty of the predictions.
-uncertainty = np.array(pred['uncertainty'])
+uncertainty = np.sqrt(np.array(pred['uncertainty']))
 
 # Get confidence interval on predictions.
 upper = prediction + uncertainty

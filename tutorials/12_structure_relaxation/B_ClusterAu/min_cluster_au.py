@@ -28,9 +28,8 @@ mol.rattle(stdev=0.1, seed=2)
 initial_catlearn = mol.copy()
 initial_catlearn.set_calculator(calc)
 ase_opt = CatLearnMin(initial_catlearn,
-                            trajectory='results_catlearn.traj',
-                            ml_calc='SQE_sequential')
-ase_opt.run(fmax=0.05)
+                            trajectory='results_catlearn.traj')
+ase_opt.run(fmax=0.01)
 atoms = read('results_catlearn.traj', ':')
 
 # 2.B Optimize using GPMin.
@@ -38,7 +37,7 @@ initial_gpmin = mol.copy()
 initial_gpmin.set_calculator(calc)
 gpmin_opt = GPMin(initial_gpmin, trajectory='results_gpmin.traj',
                   update_hyperparams=False)
-gpmin_opt.run(fmax=0.05)
+gpmin_opt.run(fmax=0.01)
 
 
 # 3. Summary of the results:
