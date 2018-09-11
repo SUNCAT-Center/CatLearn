@@ -8,7 +8,7 @@ from ase.atoms import Atoms
 from catlearn.optimize.io import array_to_ase
 
 
-def get_plot_mullerbrown(images, interesting_point, trained_process,
+def get_plot_mullerbrown(images, interesting_point, gp,
                          list_train):
     """ Function for plotting each step of the toy model Muller-Brown .
     """
@@ -45,8 +45,9 @@ def get_plot_mullerbrown(images, interesting_point, trained_process,
 
     # Plot predicted function.
 
-    pred = trained_process.predict(test_fp=test)
+    pred = gp.predict(test_fp=test)
     prediction = np.array(pred['prediction'][:, 0])
+
     crange = np.linspace(np.min(prediction), np.max(prediction), 200)
 
 

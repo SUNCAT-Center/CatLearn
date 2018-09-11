@@ -69,7 +69,7 @@ Ef_neb_ase, dE_neb_ase = nebtools_ase.get_barrier(fit=False)
 nebtools_ase.plot_band()
 
 plt.show()
-exit()
+
 # 2.B. NEB using CatLearn ####################################################
 
 initial = read('initial_optimized.traj')

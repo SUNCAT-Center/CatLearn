@@ -3,11 +3,10 @@
 import numpy as np
 from catlearn.optimize.warnings import *
 from catlearn.optimize.io import ase_traj_to_catlearn, store_results_neb
-from catlearn.optimize.ml_calculator import GPCalculator, train_ml_process
 from catlearn.optimize.convergence import get_fmax
 from catlearn.optimize.get_real_values import eval_and_append
 from catlearn.optimize.catlearn_ase_calc import CatLearnASE
-from catlearn.optimize.constraints import create_mask_ase_constraints
+from catlearn.optimize.constraints import create_mask_ase_constraints, apply_mask_ase_constraints
 from catlearn.optimize.plots import get_plot_mullerbrown, get_plots_neb
 from ase.io.trajectory import TrajectoryWriter
 from ase.neb import NEB
@@ -17,6 +16,8 @@ from ase.optimize import FIRE, MDMin, BFGS , LBFGS
 from scipy.spatial import distance
 import copy
 import os
+from catlearn.regression import GaussianProcess
+
 
 
 class CatLearnNEB(object):
@@ -163,11 +164,8 @@ class CatLearnNEB(object):
                                         n_images=self.n_images,
                                         constraints=self.constraints,
                                         index_constraints=self.ind_mask_constr,
-                                        trained_process=None,
-                                        ml_calculator=None,
                                         scaling_targets=self.scale_targets,
                                         iteration=self.iter,
-                                        kappa=0.0
                                         )
 
             neb_interpolation = NEB(self.images, k=self.spring)
@@ -194,11 +192,8 @@ class CatLearnNEB(object):
                                         n_images=self.n_images,
                                         constraints=self.constraints,
                                         index_constraints=self.ind_mask_constr,
-                                        trained_process=None,
-                                        ml_calculator=None,
                                         scaling_targets=self.scale_targets,
                                         iteration=self.iter,
-                                        kappa=0.0
                                         )
             self.d_start_end = np.abs(distance.euclidean(is_pos, fs_pos))
 
@@ -223,7 +218,7 @@ class CatLearnNEB(object):
 
     def run(self, fmax=0.05, unc_convergence=0.020, max_iter=500,
             ml_algo='LBFGS', ml_max_iter=100, plot_neb_paths=False,
-            penalty=0.0, acquisition='acq_3'):
+            acquisition='acq_2'):
 
         """Executing run will start the optimization process.
 
@@ -262,53 +257,53 @@ class CatLearnNEB(object):
 
             # Configure ML calculator.
 
-            scale_targets = np.max(self.list_targets)
-
-            scale_prior = np.max(self.list_targets)
-
-            prior = np.std(self.list_targets-scale_prior)**2
+            max_target = np.max(self.list_targets)
+            scaled_targets = self.list_targets.copy() - max_target
+            scaling = 1.0 + np.std(scaled_targets)**2
 
             width = 0.4
-            noise_energy = 0.005
-            noise_forces = 0.005 * width**2
+            noise_energy = 0.0005
+            noise_forces = 0.0005 * width**2
 
-            self.kdict = {'k1': {'type': 'gaussian', 'width': 0.4,
-                                 'dimension': 'single',
-                                 'bounds': ((width, width),),
-                                 'scaling': prior+1.0,
-                                 'scaling_bounds': ((prior, prior+10.0),)},
-                          'k2': {'type': 'noise_multi',
-                                 'hyperparameters': [noise_energy, noise_forces],
-                                 'bounds': ((noise_energy, 1e-2),
-                                            (noise_forces, 1e-2),)}
-                         }
-            self.ml_calc = GPCalculator(
-                    kernel_dict=self.kdict, opt_hyperparam=True,
-                    scale_data=False,
-                    scale_optimizer=False,
-                    calc_uncertainty=True,
-                    algo_opt_hyperparamters='L-BFGS-B',
-                    global_opt_hyperparameters=False,
-                    regularization=0.0,
-                    regularization_bounds=(0.0, 0.0))
+            kdict = {'k1': {'type': 'gaussian', 'width': width,
+                            'dimension': 'single',
+                            'bounds': ((width, width),),
+                            'scaling': scaling,
+                            'scaling_bounds': ((scaling, scaling),)},
+                     'k2': {'type': 'noise_multi',
+                            'hyperparameters': [noise_energy, noise_forces],
+                            'bounds': ((noise_energy, 1e-2),
+                                       (noise_forces, 1e-2),)}
+                    }
 
-            print('Training a ML process...')
-            print('Number of training points:', len(self.list_targets))
-            process = train_ml_process(list_train=self.list_train,
-                                       list_targets=self.list_targets,
-                                       list_gradients=self.list_gradients,
-                                       index_constraints=self.ind_mask_constr,
-                                       ml_calculator=self.ml_calc,
-                                       scaling_targets=scale_targets)
+            train = self.list_train.copy()
+            gradients = self.list_gradients.copy()
+            if self.ind_mask_constr is not None:
+                train = apply_mask_ase_constraints(
+                                   list_to_mask=self.list_train,
+                                   mask_index=self.ind_mask_constr)[1]
+                gradients = apply_mask_ase_constraints(
+                                        list_to_mask=self.list_gradients,
+                                        mask_index=self.ind_mask_constr)[1]
 
-            trained_process = process['trained_process']
-            ml_calc = process['ml_calc']
-            print('ML process trained.')
+            print('Training a GP process...')
+            print('Number of training points:', len(scaled_targets))
+
+            gp = GaussianProcess(kernel_dict=kdict,
+                                 regularization=0.0,
+                                 regularization_bounds=(0.0, 0.0),
+                                 train_fp=train,
+                                 train_target=scaled_targets,
+                                 gradients=gradients,
+                                 optimize_hyperparameters=False,
+                                 scale_data=False)
+            gp.optimize_hyperparameters(global_opt=False)
+            print('GP process trained.')
 
             # 2) Setup and run ML NEB:
 
-            # starting_path = copy.deepcopy(self.initial_images)
-            starting_path = self.images
+            starting_path = copy.deepcopy(self.initial_images)
+            # starting_path = self.images
 
             self.images = create_ml_neb(is_endpoint=self.initial_endpoint,
                                         fs_endpoint=self.final_endpoint,
@@ -316,11 +311,9 @@ class CatLearnNEB(object):
                                         n_images=self.n_images,
                                         constraints=self.constraints,
                                         index_constraints=self.ind_mask_constr,
-                                        trained_process=trained_process,
-                                        ml_calculator=ml_calc,
-                                        scaling_targets=scale_targets,
-                                        iteration=self.iter,
-                                        kappa=penalty
+                                        gp=gp,
+                                        scaling_targets=max_target,
+                                        iteration=self.iter
                                         )
 
             ml_neb = NEB(self.images, climb=False,
@@ -363,7 +356,13 @@ class CatLearnNEB(object):
             self.uncertainty_path = []
             energies_path = []
             for i in self.images:
-                self.uncertainty_path.append(i.info['uncertainty'])
+                pos_unc = [i.get_positions().flatten()]
+                pos_unc = apply_mask_ase_constraints(list_to_mask=pos_unc,
+                                            mask_index=self.ind_mask_constr)[1]
+                u = gp.predict(test_fp=pos_unc, uncertainty=True)
+                uncertainty = u['uncertainty'][0]
+                i.info['uncertainty'] = uncertainty
+                self.uncertainty_path.append(uncertainty)
                 energies_path.append(i.get_total_energy())
 
             # Select next point to train:
@@ -416,7 +415,7 @@ class CatLearnNEB(object):
                 if self.ase_calc.__dict__['name'] == 'mullerbrown':
                     get_plot_mullerbrown(images=self.images,
                                          interesting_point=interesting_point,
-                                         trained_process=trained_process,
+                                         gp=gp,
                                          list_train=self.list_train,
                                          )
             # Store results each iteration:
@@ -490,9 +489,9 @@ class CatLearnNEB(object):
         print('Number of function evaluations in this run:', self.iter)
 
 
-def create_ml_neb(is_endpoint, fs_endpoint, images_interpolation, kappa,
-                  n_images, constraints, index_constraints, trained_process,
-                  ml_calculator, scaling_targets, iteration):
+def create_ml_neb(is_endpoint, fs_endpoint, images_interpolation,
+                  n_images, constraints, index_constraints,
+                  scaling_targets, iteration, gp=None):
 
     # End-points of the NEB path:
     s_guess_ml = copy.deepcopy(is_endpoint)
@@ -516,11 +515,8 @@ def create_ml_neb(is_endpoint, fs_endpoint, images_interpolation, kappa,
         image.info['label'] = i
         image.info['uncertainty'] = 0.0
         image.info['iteration'] = iteration
-        image.set_calculator(CatLearnASE(trained_process=trained_process,
-                                         ml_calc=ml_calculator,
+        image.set_calculator(CatLearnASE(gp=gp,
                                          index_constraints=index_constraints,
-                                         kappa=kappa,
-                                         calc_uncertainty=True
                                          ))
         if images_interpolation is not None:
             image.set_positions(images_interpolation[i].get_positions())

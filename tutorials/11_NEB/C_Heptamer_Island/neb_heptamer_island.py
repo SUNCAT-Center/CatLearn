@@ -32,8 +32,8 @@ slab_initial.set_calculator(copy.deepcopy(ase_calculator))
 slab_final = read('./I_structure/POSCAR')
 # slab_final = read('./translate_H_final/POSCAR')
 slab_final.set_calculator(ase_calculator)
-#
-#
+
+
 # 1.2. Optimize initial and final end-points.
 
 # Initial end-point:

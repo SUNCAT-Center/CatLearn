@@ -14,7 +14,7 @@ class CatLearnASE(Calculator):
     nolabel = True
 
     def __init__(self, gp, index_constraints, scaling_targets=0.0,
-                 calc_uncertainty=False, finite_step=5e-5, **kwargs):
+                 finite_step=5e-5, **kwargs):
 
         Calculator.__init__(self, **kwargs)
 
@@ -22,7 +22,6 @@ class CatLearnASE(Calculator):
         self.scaling = scaling_targets
         self.fs = finite_step
         self.ind_constraints = index_constraints
-        self.calc_uncertainty = calc_uncertainty
 
     def calculate(self, atoms=None, properties=['energy', 'forces'],
                   system_changes=all_changes):

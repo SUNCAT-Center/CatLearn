@@ -35,14 +35,12 @@ slab = read('initial.traj')
 slab.set_calculator(copy.deepcopy(ase_calculator))
 qn = CatLearnMin(slab, trajectory='initial_opt.traj')
 qn.run(fmax=0.01)
-exit()
 
 # Final end-point:
 slab = read('final.traj')
 slab.set_calculator(copy.deepcopy(ase_calculator))
 qn = CatLearnMin(slab, trajectory='final_opt.traj')
 qn.run(fmax=0.01)
-exit()
 
 # Define number of images:
 n_images = 7
