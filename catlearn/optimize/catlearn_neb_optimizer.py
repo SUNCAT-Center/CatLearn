@@ -218,7 +218,7 @@ class CatLearnNEB(object):
 
     def run(self, fmax=0.05, unc_convergence=0.020, steps=200,
             ml_algo='FIRE', ml_max_iter=100, plot_neb_paths=False,
-            acquisition='acq_1'):
+            acquisition='acq_2'):
 
         """Executing run will start the optimization process.
 
@@ -258,7 +258,7 @@ class CatLearnNEB(object):
 
             max_target = np.max(self.list_targets)
             scaled_targets = self.list_targets.copy() - max_target
-            scaling = 1.0 + np.std(scaled_targets)**2
+            scaling = np.abs(max_target) + np.std(scaled_targets)**2
 
             width = 0.4
             noise_energy = 0.005
