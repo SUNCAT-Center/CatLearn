@@ -99,7 +99,7 @@ class CatLearnMin(object):
                 self.ind_mask_constr = create_mask_ase_constraints(
                     self.ase_ini, self.constraints)
 
-    def run(self, fmax=0.05, ml_algo='LBFGS', max_iter=500,
+    def run(self, fmax=0.05, ml_algo='LBFGS', steps=200,
             min_iter=0, ml_max_iter=250, max_memory=50):
 
         """Executing run will start the optimization process.
@@ -113,7 +113,7 @@ class CatLearnMin(object):
             'BFGS', 'LBFGS', 'SciPyFminCG', 'SciPyFminBFGS', 'MDMin' and
             'FIRE' as implemented in ASE.
             See https://wiki.fysik.dtu.dk/ase/ase/optimize.html
-        max_iter : int
+        steps : int
             Max. number of optimization steps.
         min_iter : int
             Min. number of optimizations steps
@@ -261,7 +261,7 @@ class CatLearnMin(object):
             self.max_abs_forces = np.max(np.abs(self.list_fmax))
             print_info(self)
             # Maximum number of iterations reached.
-            if self.iter > max_iter:
+            if self.iter >= steps:
                 print('Not converged. Maximum number of iterations reached.')
                 break
 

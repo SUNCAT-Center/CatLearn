@@ -6,7 +6,8 @@ from catlearn.optimize.io import ase_traj_to_catlearn, store_results_neb
 from catlearn.optimize.convergence import get_fmax
 from catlearn.optimize.get_real_values import eval_and_append
 from catlearn.optimize.catlearn_ase_calc import CatLearnASE
-from catlearn.optimize.constraints import create_mask_ase_constraints, apply_mask_ase_constraints
+from catlearn.optimize.constraints import create_mask_ase_constraints, \
+                                          apply_mask_ase_constraints
 from catlearn.optimize.plots import get_plot_mullerbrown, get_plots_neb
 from ase.io.trajectory import TrajectoryWriter
 from ase.neb import NEB
@@ -17,7 +18,6 @@ from scipy.spatial import distance
 import copy
 import os
 from catlearn.regression import GaussianProcess
-
 
 
 class CatLearnNEB(object):
@@ -216,7 +216,7 @@ class CatLearnNEB(object):
         # Get path distance:
         self.path_distance = copy.deepcopy(self.d_start_end)
 
-    def run(self, fmax=0.05, unc_convergence=0.020, max_iter=500,
+    def run(self, fmax=0.05, unc_convergence=0.020, steps=200,
             ml_algo='FIRE', ml_max_iter=100, plot_neb_paths=False,
             acquisition='acq_1'):
 
@@ -228,7 +228,7 @@ class CatLearnNEB(object):
             Convergence criteria (in eV/Angs).
         unc_convergence: float
             Maximum uncertainty for convergence (in eV).
-        max_iter : int
+        steps : int
             Maximum number of iterations in the surrogate model.
         ml_algo : string
             Algorithm for the surrogate model. Implemented are:
@@ -474,7 +474,7 @@ class CatLearnNEB(object):
                     break
 
             # Break if reaches the max number of iterations set by the user.
-            if max_iter <= self.iter:
+            if steps <= self.iter:
                 warning_max_iter_reached()
                 break
 
