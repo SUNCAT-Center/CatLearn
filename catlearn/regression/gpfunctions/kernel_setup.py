@@ -53,6 +53,7 @@ def prepare_kernels(kernel_dict, regularization_bounds, eval_gradients, N_D):
             except NameError:
                 msg = '{} kernel not implemented'.format(ktype)
                 raise NotImplementedError(msg)
+
     # Bounds for the regularization
 
     bounds += (regularization_bounds,)
@@ -118,6 +119,7 @@ def _noise_multi_setup(kdict_param, bounds, N_D, default_bounds):
 
     if 'bounds' in kdict_param:
         bounds += kdict_param['bounds']
+
     else:
         bounds += default_bounds * 2
 

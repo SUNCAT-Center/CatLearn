@@ -256,25 +256,26 @@ class CatLearnNEB(object):
 
             # Configure ML calculator.
 
-            max_target = np.max(self.list_targets)
-            scaled_targets = self.list_targets.copy() - max_target
-            scaling = 1.0 + np.std(scaled_targets)**2
+            mean_target = np.max(self.list_targets)
+            scaled_targets = self.list_targets.copy() - mean_target
+            scaling = 0.1 + np.std(scaled_targets)**2
 
             width = 0.4
-            noise_energy = 0.005
-            noise_forces = 0.005 * width**2
+            noise_energy = 0.0005
+            noise_forces = 0.0005 * width**2
 
-            kdict = {'k1': {'type': 'gaussian', 'width': width,
+            kdict = {'k2': {'type': 'gaussian', 'width': width,
                             'dimension': 'single',
                             'bounds': ((width, width),),
                             'scaling': scaling,
-                            'scaling_bounds': ((scaling, scaling),)},
-                     'k2': {'type': 'noise_multi',
+                            'scaling_bounds': ((scaling, scaling+100.0),)},
+                     'k1': {'type': 'noise_multi',
                             'hyperparameters': [noise_energy, noise_forces],
                             'bounds': ((noise_energy, 1e-2),
                                        (noise_forces, 1e-2),)}
                     }
 
+            # 1. Train Machine Learning process.
             train = self.list_train.copy()
             gradients = self.list_gradients.copy()
             if self.ind_mask_constr is not None:
