@@ -217,8 +217,8 @@ class CatLearnNEB(object):
         self.path_distance = copy.deepcopy(self.d_start_end)
 
     def run(self, fmax=0.05, unc_convergence=0.020, max_iter=500,
-            ml_algo='LBFGS', ml_max_iter=100, plot_neb_paths=False,
-            acquisition='acq_2'):
+            ml_algo='FIRE', ml_max_iter=100, plot_neb_paths=False,
+            acquisition='acq_1'):
 
         """Executing run will start the optimization process.
 
@@ -250,7 +250,6 @@ class CatLearnNEB(object):
         Files :
         """
 
-
         while True:
 
             # 1) Train Machine Learning process:
@@ -262,8 +261,8 @@ class CatLearnNEB(object):
             scaling = 1.0 + np.std(scaled_targets)**2
 
             width = 0.4
-            noise_energy = 0.0005
-            noise_forces = 0.0005 * width**2
+            noise_energy = 0.005
+            noise_forces = 0.005 * width**2
 
             kdict = {'k1': {'type': 'gaussian', 'width': width,
                             'dimension': 'single',
@@ -500,11 +499,6 @@ def create_ml_neb(is_endpoint, fs_endpoint, images_interpolation,
     # Create ML NEB path:
     imgs = [s_guess_ml]
 
-    # Scale energies (initial):
-    imgs[0].__dict__['_calc'].__dict__['results']['energy'] = \
-        imgs[0].__dict__['_calc'].__dict__['results']['energy'] - \
-        scaling_targets
-
     # Append labels, uncertainty and iter to the first end-point:
     imgs[0].info['label'] = 0
     imgs[0].info['uncertainty'] = 0.0
@@ -517,6 +511,7 @@ def create_ml_neb(is_endpoint, fs_endpoint, images_interpolation,
         image.info['iteration'] = iteration
         image.set_calculator(CatLearnASE(gp=gp,
                                          index_constraints=index_constraints,
+                                         scaling_targets=scaling_targets
                                          ))
         if images_interpolation is not None:
             image.set_positions(images_interpolation[i].get_positions())
@@ -525,9 +520,6 @@ def create_ml_neb(is_endpoint, fs_endpoint, images_interpolation,
 
     # Scale energies (final):
     imgs.append(f_guess_ml)
-    imgs[-1].__dict__['_calc'].__dict__['results']['energy'] = \
-        imgs[-1].__dict__['_calc'].__dict__['results']['energy'] - \
-        scaling_targets
 
     # Append labels, uncertainty and iter to the last end-point:
     imgs[-1].info['label'] = n_images-1
