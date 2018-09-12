@@ -256,8 +256,8 @@ class CatLearnNEB(object):
 
             # Configure ML calculator.
 
-            mean_target = np.max(self.list_targets)
-            scaled_targets = self.list_targets.copy() - mean_target
+            max_target = np.max(self.list_targets)
+            scaled_targets = self.list_targets.copy() - max_target
             scaling = 0.1 + np.std(scaled_targets)**2
 
             width = 0.4
