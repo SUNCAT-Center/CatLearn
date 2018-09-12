@@ -154,8 +154,8 @@ class CatLearnNEB(object):
             self.d_start_end = np.abs(distance.euclidean(is_pos, fs_pos))
             if self.n_images == 'auto':
                 self.n_images = int(self.d_start_end/0.4)
-                if self. n_images <= 7:
-                    self.n_images = 7
+                if self. n_images <= 6:
+                    self.n_images = 6
             if self.spring is None:
                 self.spring = np.sqrt((self.n_images-1) / self.d_start_end)
             self.images = create_ml_neb(is_endpoint=self.initial_endpoint,
@@ -218,7 +218,7 @@ class CatLearnNEB(object):
 
     def run(self, fmax=0.05, unc_convergence=0.020, steps=200,
             ml_algo='FIRE', ml_max_iter=100, plot_neb_paths=False,
-            acquisition='acq_2'):
+            acquisition='acq_1'):
 
         """Executing run will start the optimization process.
 
@@ -258,7 +258,7 @@ class CatLearnNEB(object):
 
             max_target = np.max(self.list_targets)
             scaled_targets = self.list_targets.copy() - max_target
-            scaling = np.std(scaled_targets)**2
+            scaling = 1.0 + np.std(scaled_targets)**2
 
             width = 0.4
             noise_energy = 0.005
@@ -268,12 +268,11 @@ class CatLearnNEB(object):
                             'dimension': 'single',
                             'bounds': ((width, width),),
                             'scaling': scaling,
-                            'scaling_bounds': ((scaling+1e-3,
-                                                scaling+100.0),)},
+                            'scaling_bounds': ((scaling, scaling),)},
                      'k2': {'type': 'noise_multi',
                             'hyperparameters': [noise_energy, noise_forces],
-                            'bounds': ((noise_energy, noise_energy),
-                                       (noise_forces, noise_forces),)}
+                            'bounds': ((noise_energy, 1e-2),
+                                       (noise_forces, 1e-2),)}
                     }
 
             train = self.list_train.copy()
@@ -298,7 +297,6 @@ class CatLearnNEB(object):
                                  optimize_hyperparameters=False,
                                  scale_data=False)
             gp.optimize_hyperparameters(global_opt=False)
-            print('Optimized hyperparameters:', gp.theta_opt)
             print('GP process trained.')
 
             # 2) Setup and run ML NEB:
