@@ -364,6 +364,8 @@ class CatLearnNEB(object):
                 i.info['uncertainty'] = uncertainty
                 self.uncertainty_path.append(uncertainty)
                 energies_path.append(i.get_total_energy())
+            self.images[0].info['uncertainty'] = 0.0
+            self.images[-1].info['uncertainty'] = 0.0
 
             # Select next point to train:
 
