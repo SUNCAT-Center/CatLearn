@@ -168,16 +168,16 @@ class CatLearnMin(object):
             noise_energy = 0.0005
             noise_forces = 0.0005 * width**2
 
-            kdict = {'k2': {'type': 'gaussian', 'width': width,
+            kdict = [{'type': 'gaussian', 'width': width,
                             'dimension': 'single',
                             'bounds': ((width, width),),
                             'scaling': scaling,
                             'scaling_bounds': ((scaling, scaling+100.0),)},
-                     'k1': {'type': 'noise_multi',
+                     {'type': 'noise_multi',
                             'hyperparameters': [noise_energy, noise_forces],
                             'bounds': ((noise_energy, 1e-2),
                                        (noise_forces, 1e-2),)}
-                    }
+                     ]
 
             # 1. Train Machine Learning process.
             train = self.list_train.copy()
