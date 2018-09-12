@@ -3,7 +3,7 @@ import numpy as np
 
 import time
 import multiprocessing
-from tqdm import trange, tqdm
+from tqdm import trange
 
 from .data_process import data_process
 from .placeholder import placeholder
@@ -72,15 +72,13 @@ class LearningCurve(object):
             args = (
                 (x, step, train, test, target,
                  test_target, model) for x in tasks)
-            for r in tqdm(pool.imap_unordered(
-                    _single_test, args), total=total,
-                    desc='nested              ', leave=False):
+            for r in pool.imap_unordered(_single_test, args):
                 output.append(r)
                 # Wait to make things more stable.
                 time.sleep(0.001)
             pool.close()
         else:
-            # Then a more clear serial implementation.
+            # Then a more verbose serial implementation.
             for x in trange(
                     total,
                     desc='nested              ', leave=False):

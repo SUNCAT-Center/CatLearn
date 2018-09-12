@@ -4,17 +4,17 @@ from __future__ import absolute_import
 
 import os
 import unittest
+import numpy as np
 
 from ase.ga.data import DataConnection
 
 from catlearn.api.ase_data_setup import get_unique, get_train
 from catlearn.fingerprint.setup import FeatureGenerator
 from catlearn.regression import GaussianProcess
-from catlearn.regression.acquisition_functions import (rank, classify,
-                                                       optimistic_proximity,
-                                                       proximity,
-                                                       probability_density)
-from catlearn.utilities.surrogate_model import SurrogateModel
+from catlearn.surrogate_model.acquisition_functions import (
+    rank, classify, optimistic_proximity, proximity, probability_density)
+from catlearn.surrogate_model.algorithm import SurrogateModel
+
 
 wkdir = os.getcwd()
 
@@ -111,7 +111,7 @@ class TestAcquisition(unittest.TestCase):
         train_features, train_targets, train_atoms, test_features, \
             test_targets, test_atoms = self.get_data()
 
-        sg0 = SurrogateModel(_train_model, _predict, probability_density,
+        sg0 = SurrogateModel(_train_model, _predict, _rank_pdf,
                              train_features, train_targets)
         batch_size = 10
         sg0.test_acquisition(batch_size=batch_size)
@@ -159,6 +159,10 @@ def _predict(model, test_features, test_targets=None):
                         score['prediction'],
                         score['uncertainty']]
     return acquisition_args, score
+
+
+def _rank_pdf(y_best, predictions, uncertainty):
+    return np.argsort(probability_density(y_best, predictions, uncertainty))
 
 
 if __name__ == '__main__':
