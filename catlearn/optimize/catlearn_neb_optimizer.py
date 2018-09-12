@@ -258,7 +258,7 @@ class CatLearnNEB(object):
 
             max_target = np.max(self.list_targets)
             scaled_targets = self.list_targets.copy() - max_target
-            scaling = 0.1 + np.std(scaled_targets)**2
+            scaling = 1.0 + np.std(scaled_targets)**2
 
             width = 0.4
             noise_energy = 0.0005
