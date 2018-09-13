@@ -20,7 +20,7 @@ from catlearn.regression import GaussianProcess
 
 class CatLearnMin(object):
 
-    def __init__(self, x0, ase_calc=None, ml_calc=None,
+    def __init__(self, x0, ase_calc=None, ml_calc='ARD_SQE',
                  trajectory='catlearn_opt.traj'):
 
         """Optimization setup.
@@ -166,9 +166,16 @@ class CatLearnMin(object):
             noise_energy = 0.005
             noise_forces = 0.005 * width**2
 
+            if self.ml_calc == 'SQE':
+                dimension = 'single'
+                bounds = ((0.01, 0.4),)
+            if self.ml_calc == 'ARD_SQE':
+                dimension = 'features'
+                bounds = ((0.01, 0.4),) * len(self.index_mask)
+
             kdict = [{'type': 'gaussian', 'width': width,
-                      'dimension': 'features',
-                      'bounds': ((0.01, 0.4),) * len(self.index_mask),
+                      'dimension': dimension,
+                      'bounds': bounds,
                       'scaling': 1.0,
                       'scaling_bounds': ((1.0, 1.0),)},
                      {'type': 'noise_multi',

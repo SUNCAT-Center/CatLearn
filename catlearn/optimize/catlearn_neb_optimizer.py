@@ -23,7 +23,7 @@ class CatLearnNEB(object):
 
     def __init__(self, start, end, path=None, n_images=None, spring=None,
                  interpolation=None, mic=False, neb_method='aseneb',
-                 ml_calc=None, ase_calc=None, inc_prev_calcs=False,
+                 ml_calc='ARD_SQE', ase_calc=None, inc_prev_calcs=False,
                  stabilize=False, restart=False):
         """ Nudged elastic band (NEB) setup.
 
@@ -256,9 +256,16 @@ class CatLearnNEB(object):
             noise_energy = 0.005
             noise_forces = 0.005 * width**2
 
+            if self.ml_calc == 'SQE':
+                dimension = 'single'
+                bounds = ((0.01, 0.4),)
+            if self.ml_calc == 'ARD_SQE':
+                dimension = 'features'
+                bounds = ((0.01, 0.4),) * len(self.index_mask)
+
             kdict = [{'type': 'gaussian', 'width': width,
-                      'dimension': 'features',
-                      'bounds': ((0.01, 0.4),) * len(self.index_mask),
+                      'dimension': dimension,
+                      'bounds': bounds,
                       'scaling': 1.0,
                       'scaling_bounds': ((1.0, 1.0),)},
                      {'type': 'noise_multi',
@@ -287,6 +294,7 @@ class CatLearnNEB(object):
                                  optimize_hyperparameters=False,
                                  scale_data=False)
             gp.optimize_hyperparameters(global_opt=False)
+            print('Optimized hyperparameters:', gp.theta_opt)
             print('GP process trained.')
 
             # 2. Setup and run ML NEB:
