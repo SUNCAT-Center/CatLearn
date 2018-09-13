@@ -261,8 +261,8 @@ class CatLearnNEB(object):
             scaling = 1.0 + np.std(scaled_targets)**2
 
             width = 0.4
-            noise_energy = 0.0005
-            noise_forces = 0.0005 * width**2
+            noise_energy = 0.005
+            noise_forces = 0.005 * width**2
 
             kdict = [{'type': 'gaussian', 'width': width,
                             'dimension': 'single',

@@ -165,8 +165,8 @@ class CatLearnMin(object):
             scaling = 1.0 + np.std(scaled_targets)**2
 
             width = 0.4
-            noise_energy = 0.0005
-            noise_forces = 0.0005 * width**2
+            noise_energy = 0.005
+            noise_forces = 0.005 * width**2
 
             kdict = [{'type': 'gaussian', 'width': width,
                             'dimension': 'single',
@@ -209,6 +209,7 @@ class CatLearnMin(object):
                                  optimize_hyperparameters=False,
                                  scale_data=False)
             gp.optimize_hyperparameters(global_opt=False)
+            print('Optimized hyperparameters:', gp.theta_opt)
             print('GP process trained.')
 
             # 2. Optimize Machine Learning process.
