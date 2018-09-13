@@ -98,7 +98,7 @@ class CatLearnMin(object):
                 self.index_mask = create_mask(self.ase_ini, self.constraints)
             self.feval = len(self.list_targets)
 
-    def run(self, fmax=0.05, ml_algo='LBFGS', steps=200,
+    def run(self, fmax=0.05, ml_algo='L-BFGS-B', steps=200,
             min_iter=0, ml_max_steps=250, max_memory=50):
 
         """Executing run will start the optimization process.
