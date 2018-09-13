@@ -1,7 +1,7 @@
 import numpy as np
 
 
-def create_mask_ase_constraints(ini, constraints):
+def create_mask(ini, constraints):
     mask_constraints = np.ones_like(ini.positions, dtype=bool)
     len_contrains = len(constraints)
     for i in range(0, len_contrains):
@@ -33,7 +33,7 @@ def create_mask_ase_constraints(ini, constraints):
     return index_mask_constraints
 
 
-def apply_mask_ase_constraints(list_to_mask=None, mask_index=None):
+def apply_mask(list_to_mask=None, mask_index=None):
     org_list_to_mask = list_to_mask
     masked_list = np.zeros((len(org_list_to_mask), len(mask_index)))
     for i in range(0, len(org_list_to_mask)):

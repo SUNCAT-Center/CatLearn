@@ -6,8 +6,8 @@ from ase.optimize import *
 from ase.optimize.sciopt import *
 from catlearn.optimize.warnings import *
 from catlearn.optimize.io import ase_traj_to_catlearn, print_info
-from catlearn.optimize.constraints import create_mask_ase_constraints, \
-                                    unmask_geometry, apply_mask_ase_constraints
+from catlearn.optimize.constraints import create_mask, unmask_geometry, \
+                                          apply_mask
 from catlearn.optimize.get_real_values import eval_and_append, \
                                               get_energy_catlearn, \
                                               get_forces_catlearn
@@ -72,8 +72,7 @@ class CatLearnMin(object):
             if len(self.constraints) < 0:
                 self.constraints = None
             if self.constraints is not None:
-                self.ind_mask_constr = create_mask_ase_constraints(
-                                                self.ase_ini, self.constraints)
+                self.index_mask = create_mask(self.ase_ini, self.constraints)
 
         if isinstance(x0, str):
             self.start_mode = 'trajectory'
@@ -96,8 +95,7 @@ class CatLearnMin(object):
             if len(self.constraints) < 0:
                 self.constraints = None
             if self.constraints is not None:
-                self.ind_mask_constr = create_mask_ase_constraints(
-                    self.ase_ini, self.constraints)
+                self.index_mask = create_mask(self.ase_ini, self.constraints)
             self.feval = len(self.list_targets)
 
     def run(self, fmax=0.05, ml_algo='LBFGS', steps=200,
@@ -163,34 +161,31 @@ class CatLearnMin(object):
 
             max_target = np.max(self.list_targets)
             scaled_targets = self.list_targets.copy() - max_target
-            scaling = 1.0 + np.std(scaled_targets)**2
 
             width = 0.4
             noise_energy = 0.005
             noise_forces = 0.005 * width**2
 
             kdict = [{'type': 'gaussian', 'width': width,
-                            'dimension': 'single',
-                            'bounds': ((width, width),),
-                            'scaling': scaling,
-                            'scaling_bounds': ((scaling, scaling+100.0),)},
+                      'dimension': 'features',
+                      'bounds': ((0.01, 0.4),) * len(self.index_mask),
+                      'scaling': 1.0,
+                      'scaling_bounds': ((1.0, 1.0),)},
                      {'type': 'noise_multi',
-                            'hyperparameters': [noise_energy, noise_forces],
-                            'bounds': ((noise_energy, 1e-2),
-                                       (noise_forces, 1e-2),)}
+                      'hyperparameters': [noise_energy, noise_forces],
+                      'bounds': ((noise_energy * 2.0, 1e-2),
+                                 (noise_forces * 2.0, 1e-2),)}
                      ]
 
             # 1. Train Machine Learning process.
             train = self.list_train.copy()
             gradients = self.list_gradients.copy()
 
-            if self.ind_mask_constr is not None:
-                train = apply_mask_ase_constraints(
-                                   list_to_mask=self.list_train,
-                                   mask_index=self.ind_mask_constr)[1]
-                gradients = apply_mask_ase_constraints(
-                                        list_to_mask=self.list_gradients,
-                                        mask_index=self.ind_mask_constr)[1]
+            if self.index_mask is not None:
+                train = apply_mask(list_to_mask=self.list_train,
+                                   mask_index=self.index_mask)[1]
+                gradients = apply_mask(list_to_mask=self.list_gradients,
+                                       mask_index=self.index_mask)[1]
 
             # Limited memory.
             if len(train) >= max_memory:
@@ -223,7 +218,7 @@ class CatLearnMin(object):
                 guess.positions = guess_pos.reshape(-1, 3)
                 guess.set_calculator(CatLearnASE(
                                         gp=gp,
-                                        index_constraints=self.ind_mask_constr)
+                                        index_constraints=self.index_mask)
                                      )
                 guess.info['iteration'] = self.iter
 
@@ -237,15 +232,15 @@ class CatLearnMin(object):
 
             if self.ase_opt is False:
                 x0 = self.list_train[np.argmin(self.list_targets)]
-                x0 = np.array(apply_mask_ase_constraints(list_to_mask=[x0],
-                              mask_index=self.ind_mask_constr)[1])
+                x0 = np.array(apply_mask(list_to_mask=[x0],
+                              mask_index=self.index_mask)[1])
 
                 int_p = optimize_ml_using_scipy(x0=x0, gp=gp,
                                                 ml_algo=ml_algo)
                 interesting_point = unmask_geometry(
                                     org_list=self.list_train,
                                     masked_geom=int_p,
-                                    mask_index=self.ind_mask_constr)
+                                    mask_index=self.index_mask)
 
             # 3. Evaluate and append interesting point.
             eval_and_append(self, interesting_point)

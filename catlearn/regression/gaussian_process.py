@@ -30,8 +30,8 @@ class GaussianProcess(object):
             A list of training fingerprint vectors.
         train_target : list
             A list of training targets used to generate the predictions.
-        kernel_dict : dict
-            This dict can contain many other dictionarys, each one containing
+        kernel_dict : list
+            This list can contain many dictionaries, each one containing
             parameters for separate kernels.
             Each kernel dict contains information on a kernel such as:
             -   The 'type' key containing the name of kernel function.

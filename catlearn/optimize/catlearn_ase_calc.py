@@ -1,5 +1,5 @@
 import numpy as np
-from catlearn.optimize.constraints import apply_mask_ase_constraints
+from catlearn.optimize.constraints import apply_mask
 from ase.calculators.calculator import Calculator, all_changes
 from scipy.optimize import *
 import copy
@@ -39,9 +39,8 @@ class CatLearnASE(Calculator):
 
         pos_flatten = self.atoms.get_positions().flatten()
 
-        test_point = apply_mask_ase_constraints(
-                                            list_to_mask=[pos_flatten],
-                                            mask_index=self.ind_constraints)[1]
+        test_point = apply_mask(list_to_mask=[pos_flatten],
+                                mask_index=self.ind_constraints)[1]
 
         # Get energy.
         energy = pred_energy_test(test=test_point)
