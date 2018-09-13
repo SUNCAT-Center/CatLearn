@@ -143,7 +143,7 @@ class CatLearnMin(object):
         converged(self)
         print_info(self)
 
-        initialize(self, i_step='SciPyFminCG')
+        initialize(self, i_step='BFGS')
 
         converged(self)
         print_info(self)
