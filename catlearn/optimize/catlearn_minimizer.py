@@ -20,7 +20,7 @@ from catlearn.regression import GaussianProcess
 
 class CatLearnMin(object):
 
-    def __init__(self, x0, ase_calc=None, ml_calc='SQE',
+    def __init__(self, x0, ase_calc=None, ml_calc=None,
                  trajectory='catlearn_opt.traj'):
 
         """Optimization setup.
@@ -98,9 +98,10 @@ class CatLearnMin(object):
             if self.constraints is not None:
                 self.ind_mask_constr = create_mask_ase_constraints(
                     self.ase_ini, self.constraints)
+            self.feval = len(self.list_targets)
 
     def run(self, fmax=0.05, ml_algo='LBFGS', steps=200,
-            min_iter=0, ml_max_iter=250, max_memory=50):
+            min_iter=0, ml_max_steps=250, max_memory=50):
 
         """Executing run will start the optimization process.
 
@@ -117,7 +118,7 @@ class CatLearnMin(object):
             Max. number of optimization steps.
         min_iter : int
             Min. number of optimizations steps
-        ml_max_iter : int
+        ml_max_steps : int
             Max. number of iterations of the machine learning surrogate model.
 
         Returns
@@ -142,7 +143,7 @@ class CatLearnMin(object):
         converged(self)
         print_info(self)
 
-        initialize(self, i_step='BFGS')
+        initialize(self, i_step='SciPyFminCG')
 
         converged(self)
         print_info(self)
@@ -229,7 +230,7 @@ class CatLearnMin(object):
                 # Run optimization of the predicted PES.
                 opt_ml = eval(ml_algo)(guess, logfile=None)
                 print('Starting ML optimization...')
-                opt_ml.run(fmax=1e-4, steps=ml_max_iter)
+                opt_ml.run(fmax=1e-4, steps=ml_max_steps)
                 print('ML optimized.')
 
                 interesting_point = guess.get_positions().flatten()
@@ -291,8 +292,10 @@ def initialize(self, i_step='BFGS'):
                              self.list_gradients[-1]]
 
         if isinstance(i_step, str):
-            eval(i_step)(self.ase_ini, logfile=None).run(fmax=0.05,
-                                                             steps=1)
+            opt_ini = eval(i_step)(self.ase_ini, logfile=None)
+            opt_ini.run(fmax=0.05, steps=1)
+            if i_step == 'SciPyFminCG':
+                self.feval += opt_ini.force_calls - 2
             ini_train = [self.ase_ini.get_positions().flatten()]
 
         self.list_train = np.append(self.list_train, ini_train, axis=0)
@@ -310,7 +313,6 @@ def initialize(self, i_step='BFGS'):
                                         (len(self.list_targets), np.shape(
                                             self.list_train)[1])
                                         )
-        self.feval = len(self.list_targets)
 
         if self.ase:
             molec_writer = TrajectoryWriter('./' + str(self.filename),

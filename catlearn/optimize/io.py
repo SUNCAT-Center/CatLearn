@@ -101,13 +101,13 @@ def array_to_atoms(input_array):
 
 def _start_table(self):
         if not self.jac:
-            self.table_results = PrettyTable(['Method', 'Iter.',
+            self.table_results = PrettyTable(['Method', 'Step',
                                               'Time',
                                               'Energy',
                                               'e_diff',
                                               'Converged?'])
         if self.jac:
-            self.table_results = PrettyTable(['Method', 'Iter.',
+            self.table_results = PrettyTable(['Method', 'Step',
                                               'Time', 'Energy', 'fmax',
                                               'Converged?'])
 
