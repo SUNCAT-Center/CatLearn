@@ -1,11 +1,12 @@
-# CatLearn 1.0.5
+# CatLearn 1.1.0
 
 from ase import Atoms
 from ase.io.trajectory import TrajectoryWriter
 from ase.optimize import *
 from ase.optimize.sciopt import *
 from catlearn.optimize.warnings import *
-from catlearn.optimize.io import ase_traj_to_catlearn, print_info
+from catlearn.optimize.io import ase_traj_to_catlearn, print_info, \
+                                 print_version
 from catlearn.optimize.constraints import create_mask, unmask_geometry, \
                                           apply_mask
 from catlearn.optimize.get_real_values import eval_and_append, \
@@ -45,7 +46,8 @@ class CatLearnMin(object):
         self.fmax = 0.0
         self.min_iter = 0
         self.jac = True
-        self.version = 'Min. v.1.0.7'
+        self.version = 'Min. v.1.1.0'
+        print_version(self.version)
 
         self.ase_calc = ase_calc
 
@@ -98,7 +100,7 @@ class CatLearnMin(object):
                 self.index_mask = create_mask(self.ase_ini, self.constraints)
             self.feval = len(self.list_targets)
 
-    def run(self, fmax=0.05, ml_algo='L-BFGS-B', steps=200,
+    def run(self, fmax=0.05, ml_algo='SciPyFminCG', steps=200,
             min_iter=0, ml_max_steps=250, max_memory=50):
 
         """Executing run will start the optimization process.
@@ -164,16 +166,16 @@ class CatLearnMin(object):
             max_target = np.max(self.list_targets)
             scaled_targets = self.list_targets.copy() - max_target
 
-            width = 0.45
+            width = 0.4
             noise_energy = 0.005
             noise_forces = 0.001 * width**2
 
             if self.ml_calc == 'SQE':
                 dimension = 'single'
-                bounds = ((0.01, 0.45),)
+                bounds = ((0.01, 0.40),)
             if self.ml_calc == 'ARD_SQE':
                 dimension = 'features'
-                bounds = ((0.01, 0.45),) * len(self.index_mask)
+                bounds = ((0.01, 0.40),) * len(self.index_mask)
 
             kdict = [{'type': 'gaussian', 'width': width,
                       'dimension': dimension,

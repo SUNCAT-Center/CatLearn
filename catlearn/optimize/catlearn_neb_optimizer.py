@@ -1,8 +1,9 @@
-# @Version 1.0.4
+# @Version 1.1.0
 
 import numpy as np
 from catlearn.optimize.warnings import *
-from catlearn.optimize.io import ase_traj_to_catlearn, store_results_neb
+from catlearn.optimize.io import ase_traj_to_catlearn, store_results_neb, \
+                                 print_version
 from catlearn.optimize.convergence import get_fmax
 from catlearn.optimize.get_real_values import eval_and_append
 from catlearn.optimize.catlearn_ase_calc import CatLearnASE
@@ -39,7 +40,7 @@ class CatLearnNEB(object):
         n_images: int
             Number of images of the path (if not included a path before).
              The number of images include the 2 end-points of the NEB path.
-        spring: float
+        spring: float or list
             Spring constant(s) in eV/Ang.
         interpolation: string
             Automatic interpolation can be done ('idpp' and 'linear' as
@@ -68,6 +69,8 @@ class CatLearnNEB(object):
         self.ase_calc = ase_calc
         self.ase = True
         self.mic = mic
+        self.version = 'NEB v.1.1.0'
+        print_version(self.version)
 
         # Reset:
         self.constraints = None
