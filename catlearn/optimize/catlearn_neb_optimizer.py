@@ -272,8 +272,8 @@ class CatLearnNEB(object):
                       'scaling_bounds': ((1.0, 1.0),)},
                      {'type': 'noise_multi',
                       'hyperparameters': [noise_energy, noise_forces],
-                      'bounds': ((noise_energy * 2.0, 1e-2),
-                                 (noise_forces * 2.0, 1e-2),)}
+                      'bounds': ((noise_energy, 1e-2),
+                                 (noise_forces, 1e-2),)}
                      ]
 
             train = self.list_train.copy()

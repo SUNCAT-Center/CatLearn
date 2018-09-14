@@ -1,6 +1,6 @@
 import numpy as np
 from catlearn.regression import GaussianProcess
-from catlearn.optimize.constraints import apply_mask_ase_constraints
+from catlearn.optimize.constraints import apply_mask
 
 
 class GPCalculator(object):

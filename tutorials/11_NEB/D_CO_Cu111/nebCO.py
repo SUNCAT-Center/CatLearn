@@ -8,7 +8,6 @@ from ase.io import Trajectory
 from ase.visualize import view
 from ase.io import read, write
 from catlearn.optimize.catlearn_neb_optimizer import CatLearnNEB
-from catlearn.optimize.catlearn_autoneb_optimizer import CatLearnAutoNEB
 import matplotlib.pyplot as plt
 
 from ase.neb import NEBTools
