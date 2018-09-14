@@ -1,4 +1,4 @@
-# CatLearn 1.1.0
+# CatLearn 1.2.0
 
 from ase import Atoms
 from ase.io.trajectory import TrajectoryWriter
@@ -21,7 +21,7 @@ from catlearn.regression import GaussianProcess
 
 class CatLearnMin(object):
 
-    def __init__(self, x0, ase_calc=None, ml_calc='ARD_SQE',
+    def __init__(self, x0, ase_calc=None, ml_calc=None,
                  trajectory='catlearn_opt.traj'):
 
         """Optimization setup.
@@ -46,7 +46,7 @@ class CatLearnMin(object):
         self.fmax = 0.0
         self.min_iter = 0
         self.jac = True
-        self.version = 'Min. v.1.1.0'
+        self.version = 'Min. v.1.2.0'
         print_version(self.version)
 
         self.ase_calc = ase_calc
@@ -100,7 +100,7 @@ class CatLearnMin(object):
                 self.index_mask = create_mask(self.ase_ini, self.constraints)
             self.feval = len(self.list_targets)
 
-    def run(self, fmax=0.05, ml_algo='SciPyFminCG', steps=200,
+    def run(self, fmax=0.05, ml_algo='LBFGS', steps=200,
             min_iter=0, ml_max_steps=250, max_memory=50):
 
         """Executing run will start the optimization process.
@@ -157,35 +157,28 @@ class CatLearnMin(object):
         if ml_algo not in ase_minimizers:
             self.ase_opt = False
 
-        gp = None
-
         while not converged(self):
 
             # Configure ML calculator.
 
             max_target = np.max(self.list_targets)
             scaled_targets = self.list_targets.copy() - max_target
+            scaling = 1.0 + np.std(scaled_targets)**2
 
             width = 0.4
-            noise_energy = 0.005
-            noise_forces = 0.001 * width**2
-
-            if self.ml_calc == 'SQE':
-                dimension = 'single'
-                bounds = ((0.01, 0.40),)
-            if self.ml_calc == 'ARD_SQE':
-                dimension = 'features'
-                bounds = ((0.01, 0.40),) * len(self.index_mask)
+            noise_energy = 0.0005
+            noise_forces = 0.0005 * width**2
 
             kdict = [{'type': 'gaussian', 'width': width,
-                      'dimension': dimension,
-                      'bounds': bounds,
-                      'scaling': 1.0,
-                      'scaling_bounds': ((1.0, 1.0),)},
+                            'dimension': 'single',
+                            'bounds': ((width, width),),
+                            'scaling': scaling,
+                            'scaling_bounds': ((scaling, scaling+100.0),)},
                      {'type': 'noise_multi',
-                      'hyperparameters': [noise_energy, noise_forces],
-                      'bounds': ((noise_energy, 1e-2),
-                                 (noise_forces, 1e-2),)}
+                            'hyperparameters': [noise_energy * 2.0,
+                                                noise_forces * 2.0],
+                            'bounds': ((noise_energy, 1e-1),
+                                       (noise_forces, 1e-1),)}
                      ]
 
             # 1. Train Machine Learning process.
@@ -206,20 +199,14 @@ class CatLearnMin(object):
 
             print('Training a GP process...')
             print('Number of training points:', len(scaled_targets))
-            if gp is None:
-                gp = GaussianProcess(kernel_dict=kdict,
-                                     regularization=0.0,
-                                     regularization_bounds=(0.0, 0.0),
-                                     train_fp=train,
-                                     train_target=scaled_targets,
-                                     gradients=gradients,
-                                     optimize_hyperparameters=False,
-                                     scale_data=False)
-            if gp is not None:
-                gp.update_data(train_fp=train,
-                               train_target=scaled_targets,
-                               gradients=gradients)
-
+            gp = GaussianProcess(kernel_dict=kdict,
+                                 regularization=0.0,
+                                 regularization_bounds=(0.0, 0.0),
+                                 train_fp=train,
+                                 train_target=scaled_targets,
+                                 gradients=gradients,
+                                 optimize_hyperparameters=False,
+                                 scale_data=False)
             gp.optimize_hyperparameters(global_opt=False)
             print('Optimized hyperparameters:', gp.theta_opt)
             print('GP process trained.')

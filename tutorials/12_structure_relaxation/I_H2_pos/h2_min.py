@@ -27,7 +27,7 @@ calculator = GPAW(mode='lcao',
 a = 6
 b = a / 2
 initial_structure = read('POSCAR')
-initial_structure.rattle(stdev=0.1, seed=4)
+initial_structure.rattle(stdev=0.1, seed=0)
 
 
 
@@ -39,7 +39,7 @@ initial_catlearn = initial_structure.copy()
 initial_catlearn.set_calculator(calculator)
 
 catlearn_opt = CatLearnMin(initial_catlearn, trajectory='catlearn_opt.traj')
-catlearn_opt.run(fmax=0.05)
+catlearn_opt.run(fmax=0.01)
 
 # 2.B. Optimize structure using ASE.
 initial_ase = initial_structure.copy()
@@ -47,7 +47,7 @@ initial_ase.set_calculator(calculator)
 
 ase_opt = GPMin(initial_ase, trajectory='ase_opt.traj',
                 update_hyperparams=True)
-ase_opt.run(fmax=0.05)
+ase_opt.run(fmax=0.01)
 
 # 3. Summary of the results:
 print('\n Summary of the results:\n ------------------------------------')

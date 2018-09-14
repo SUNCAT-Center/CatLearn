@@ -1,4 +1,4 @@
-# @Version 1.1.0
+# @Version 1.2.0
 
 import numpy as np
 from catlearn.optimize.warnings import *
@@ -24,7 +24,7 @@ class CatLearnNEB(object):
 
     def __init__(self, start, end, path=None, n_images=None, spring=None,
                  interpolation=None, mic=False, neb_method='aseneb',
-                 ml_calc='ARD_SQE', ase_calc=None, inc_prev_calcs=False,
+                 ml_calc=None, ase_calc=None, inc_prev_calcs=False,
                  stabilize=False, restart=False):
         """ Nudged elastic band (NEB) setup.
 
@@ -69,7 +69,7 @@ class CatLearnNEB(object):
         self.ase_calc = ase_calc
         self.ase = True
         self.mic = mic
-        self.version = 'NEB v.1.1.0'
+        self.version = 'NEB v.1.2.0'
         print_version(self.version)
 
         # Reset:
@@ -213,7 +213,7 @@ class CatLearnNEB(object):
         # Get path distance:
         self.path_distance = copy.deepcopy(self.d_start_end)
 
-    def run(self, fmax=0.05, unc_convergence=0.020, steps=200,
+    def run(self, fmax=0.05, unc_convergence=0.025, steps=200,
             ml_algo='FIRE', ml_max_iter=100, plot_neb_paths=False,
             acquisition='acq_1'):
 
@@ -246,8 +246,6 @@ class CatLearnNEB(object):
         Files :
         """
 
-        gp = None
-
         while True:
 
             # 1. Train Machine Learning process.
@@ -256,27 +254,21 @@ class CatLearnNEB(object):
 
             max_target = np.max(self.list_targets)
             scaled_targets = self.list_targets.copy() - max_target
+            scaling = 1.0 + np.std(scaled_targets)**2
 
             width = 0.4
-            noise_energy = 0.005
-            noise_forces = 0.005 * width**2
-
-            if self.ml_calc == 'SQE':
-                dimension = 'single'
-                bounds = ((0.01, 0.4),)
-            if self.ml_calc == 'ARD_SQE':
-                dimension = 'features'
-                bounds = ((0.01, 0.4),) * len(self.index_mask)
+            noise_energy = 0.0005
+            noise_forces = 0.0005 * width**2
 
             kdict = [{'type': 'gaussian', 'width': width,
-                      'dimension': dimension,
-                      'bounds': bounds,
-                      'scaling': 1.0,
-                      'scaling_bounds': ((1.0, 1.0),)},
+                            'dimension': 'single',
+                            'bounds': ((width, width),),
+                            'scaling': scaling,
+                            'scaling_bounds': ((scaling, scaling+100.0),)},
                      {'type': 'noise_multi',
-                      'hyperparameters': [noise_energy, noise_forces],
-                      'bounds': ((noise_energy, 1e-2),
-                                 (noise_forces, 1e-2),)}
+                            'hyperparameters': [noise_energy, noise_forces],
+                            'bounds': ((noise_energy * 2.0, 1e-2),
+                                       (noise_forces * 2.0, 1e-2),)}
                      ]
 
             train = self.list_train.copy()
@@ -290,19 +282,14 @@ class CatLearnNEB(object):
             print('Training a GP process...')
             print('Number of training points:', len(scaled_targets))
 
-            if gp is None:
-                gp = GaussianProcess(kernel_dict=kdict,
-                                     regularization=0.0,
-                                     regularization_bounds=(0.0, 0.0),
-                                     train_fp=train,
-                                     train_target=scaled_targets,
-                                     gradients=gradients,
-                                     optimize_hyperparameters=False,
-                                     scale_data=False)
-            if gp is not None:
-                gp.update_data(train_fp=train,
-                               train_target=scaled_targets,
-                               gradients=gradients)
+            gp = GaussianProcess(kernel_dict=kdict,
+                                 regularization=0.0,
+                                 regularization_bounds=(0.0, 0.0),
+                                 train_fp=train,
+                                 train_target=scaled_targets,
+                                 gradients=gradients,
+                                 optimize_hyperparameters=False,
+                                 scale_data=False)
 
             gp.optimize_hyperparameters(global_opt=False)
             print('Optimized hyperparameters:', gp.theta_opt)
