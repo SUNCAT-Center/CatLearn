@@ -44,38 +44,60 @@ qn.run(fmax=0.01)
 n_images = 7
 
 # 2.A. NEB using ASE #########################################################
-#
-# initial_ase = read('initial_opt.traj')
-# final_ase = read('final_opt.traj')
-#
-# images_ase = [initial_ase]
-# for i in range(1, n_images-1):
-#     image = initial_ase.copy()
-#     image.set_calculator(copy.deepcopy(ase_calculator))
-#     images_ase.append(image)
-# images_ase.append(final_ase)
-#
-# neb_ase = NEB(images_ase, climb=True, method='aseneb')
-# neb_ase.interpolate(method='idpp')
-#
-# qn_ase = MDMin(neb_ase, trajectory='neb_ase.traj')
-# qn_ase.run(fmax=0.05)
-#
-# nebtools_ase = NEBTools(images_ase)
-#
-# Sf_ase = nebtools_ase.get_fit()[2]
-# Ef_ase = nebtools_ase.get_fit()[3]
-#
-# Ef_neb_ase, dE_neb_ase = nebtools_ase.get_barrier(fit=False)
-# nebtools_ase.plot_band()
-#
-# plt.show()
+
+initial_ase = read('initial_opt.traj')
+final_ase = read('final_opt.traj')
+
+images_ase = [initial_ase]
+for i in range(1, n_images-1):
+    image = initial_ase.copy()
+    image.set_calculator(copy.deepcopy(ase_calculator))
+    images_ase.append(image)
+images_ase.append(final_ase)
+
+neb_ase = NEB(images_ase, climb=True, method='aseneb')
+neb_ase.interpolate(method='idpp')
+
+qn_ase = MDMin(neb_ase, trajectory='neb_ase.traj')
+qn_ase.run(fmax=0.05)
+
+nebtools_ase = NEBTools(images_ase)
+
+Sf_ase = nebtools_ase.get_fit()[2]
+Ef_ase = nebtools_ase.get_fit()[3]
+
+Ef_neb_ase, dE_neb_ase = nebtools_ase.get_barrier(fit=False)
+nebtools_ase.plot_band()
+
+plt.show()
 
 
 neb_catlearn = CatLearnNEB(start='initial_opt.traj',
                            end='final_opt.traj',
                            ase_calc=copy.deepcopy(ase_calculator),
-                           n_images=7,
+                           n_images=n_images,
                            interpolation='idpp', restart=False)
 
 neb_catlearn.run(fmax=0.05, plot_neb_paths=True)
+
+# 3. Summary of the results #################################################
+
+# NEB ASE:
+print('\nSummary of the results: ', '\n------------------------\n')
+
+atoms_ase = read('neb_ase.traj', ':')
+n_eval_ase = len(atoms_ase) - 2 * n_images
+
+print('Number of function evaluations CI-NEB implemented in ASE:', n_eval_ase)
+
+# CatLearn:
+atoms_catlearn = read('evaluated_structures.traj', ':')
+n_eval_catlearn = len(atoms_catlearn) - 2
+print('Number of function evaluations CatLearn:', n_eval_catlearn)
+
+# Comparison:
+print('\nThe CatLearn algorithm required ',
+      (n_eval_ase/n_eval_catlearn),
+      'times less number of function evaluations than '
+      'the standard NEB algorithm.')
+

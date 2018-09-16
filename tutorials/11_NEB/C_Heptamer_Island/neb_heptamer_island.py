@@ -4,6 +4,7 @@ from ase.neb import NEB
 from ase.optimize import BFGS, MDMin
 from ase.visualize import view
 import matplotlib.pyplot as plt
+from catlearn.optimize.catlearn_minimizer import CatLearnMin
 from catlearn.optimize.catlearn_neb_optimizer import CatLearnNEB
 from ase.neb import NEBTools
 import copy
@@ -37,11 +38,11 @@ slab_final.set_calculator(ase_calculator)
 # 1.2. Optimize initial and final end-points.
 
 # Initial end-point:
-qn = BFGS(slab_initial, trajectory='initial.traj')
+qn = CatLearnMin(slab_initial, trajectory='initial.traj')
 qn.run(fmax=0.01)
 
 # Final end-point:
-qn = BFGS(slab_final, trajectory='final.traj')
+qn = CatLearnMin(slab_final, trajectory='final.traj')
 qn.run(fmax=0.01)
 
 # Set number of images

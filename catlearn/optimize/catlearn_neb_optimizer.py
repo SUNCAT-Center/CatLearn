@@ -1,4 +1,4 @@
-# @Version 1.2.0
+# @Version 1.3.0
 
 import numpy as np
 from catlearn.optimize.warnings import *
@@ -24,7 +24,7 @@ class CatLearnNEB(object):
 
     def __init__(self, start, end, path=None, n_images=None, spring=None,
                  interpolation=None, mic=False, neb_method='aseneb',
-                 ml_calc=None, ase_calc=None, inc_prev_calcs=False,
+                 ml_calc=None, ase_calc=None, include_previous_calcs=False,
                  stabilize=False, restart=False):
         """ Nudged elastic band (NEB) setup.
 
@@ -69,7 +69,7 @@ class CatLearnNEB(object):
         self.ase_calc = ase_calc
         self.ase = True
         self.mic = mic
-        self.version = 'NEB v.1.2.0'
+        self.version = 'NEB v.1.3.0'
         print_version(self.version)
 
         # Reset:
@@ -88,7 +88,7 @@ class CatLearnNEB(object):
         fs_endpoint = read(end, ':')
 
         # B) Only include initial and final (optimized) images.
-        if inc_prev_calcs is False:
+        if include_previous_calcs is False:
             is_endpoint = read(start, '-1:')
             fs_endpoint = read(end, '-1:')
         is_pos = is_endpoint[-1].get_positions().flatten()
@@ -213,7 +213,12 @@ class CatLearnNEB(object):
         # Get path distance:
         self.path_distance = copy.deepcopy(self.d_start_end)
 
-    def run(self, fmax=0.05, unc_convergence=0.025, steps=200,
+        # Save original features, energies and gradients:
+        self.org_list_features = self.list_train.tolist()
+        self.org_list_energies = self.list_targets.tolist()
+        self.org_list_gradients = self.list_gradients.tolist()
+
+    def run(self, fmax=0.05, unc_convergence=0.020, steps=200,
             ml_algo='FIRE', ml_max_iter=100, plot_neb_paths=False,
             acquisition='acq_1'):
 
@@ -247,6 +252,9 @@ class CatLearnNEB(object):
         """
 
         while True:
+
+            # Clean data from outliers:
+            clean_data(self)
 
             # 1. Train Machine Learning process.
 
@@ -355,12 +363,15 @@ class CatLearnNEB(object):
                 pos_unc = apply_mask(list_to_mask=pos_unc,
                                      mask_index=self.index_mask)[1]
                 u = gp.predict(test_fp=pos_unc, uncertainty=True)
-                uncertainty = u['uncertainty'][0]
+                uncertainty = u['uncertainty_with_reg'][0]**2
                 i.info['uncertainty'] = uncertainty
                 self.uncertainty_path.append(uncertainty)
                 energies_path.append(i.get_total_energy())
             self.images[0].info['uncertainty'] = 0.0
             self.images[-1].info['uncertainty'] = 0.0
+
+            pred_plus_unc = np.array(energies_path[1:-1]) + \
+                                    np.array(self.uncertainty_path[1:-1])
 
             # 4. Select next point to train (acquisition function):
 
@@ -374,7 +385,7 @@ class CatLearnNEB(object):
 
                 # Select image with max. predicted value.
                 if self.iter % 2 == 1:
-                    argmax_unc = np.argmax(energies_path[1:-1])
+                    argmax_unc = np.argmax(pred_plus_unc)
                     interesting_point = self.images[1:-1][
                                               int(argmax_unc)].get_positions(
                                               ).flatten()
@@ -388,7 +399,7 @@ class CatLearnNEB(object):
                 # Select image with max. predicted value.
                 if np.max(self.uncertainty_path[1:-1]) < unc_convergence:
 
-                    argmax_unc = np.argmax(energies_path[1:-1])
+                    argmax_unc = np.argmax(pred_plus_unc)
                     interesting_point = self.images[1:-1][
                                               int(argmax_unc)].get_positions(
                                               ).flatten()
@@ -421,6 +432,9 @@ class CatLearnNEB(object):
             # 5. Add a new training point and evaluate it.
 
             eval_and_append(self, interesting_point)
+            self.org_list_features.append(self.list_train[-1])
+            self.org_list_energies.append(self.list_targets[-1])
+            self.org_list_gradients.append(self.list_gradients[-1])
 
             # 6. Store results.
 
@@ -530,3 +544,38 @@ def update_prior(self):
     self.prior = np.abs(np.min(self.list_targets)) + np.abs(prior_const)
     print('Guessed prior', self.prior)
     return self.prior
+
+
+def clean_data(self):
+    if len(self.list_targets) >= 10:
+        if self.iter % 5 == 0:
+            tra, targ, grad = remove_outliers(self.org_list_features,
+                                              self.org_list_energies,
+                                              self.org_list_gradients,
+                                              outlierConstant=20.0)
+            targ = np.reshape(targ, (len(targ), -1))
+            grad = np.reshape(grad, (len(targ),
+                                     np.shape(self.list_gradients)[1]))
+            tra = np.reshape(tra, (len(targ),
+                                   np.shape(self.list_train)[1]))
+            self.list_train = tra.copy()
+            self.list_targets = targ.copy()
+            self.list_gradients = grad.copy()
+
+
+def remove_outliers(list_train, list_targets, list_gradients, outlierConstant):
+    a = np.array(list_targets)
+    upper_quartile = np.percentile(a, 75)
+    lower_quartile = np.percentile(a, 25)
+    IQR = (upper_quartile - lower_quartile) * outlierConstant
+    quartileSet = (lower_quartile - IQR, upper_quartile + IQR)
+    result_targets = []
+    results_gradients = []
+    results_train = []
+    for y in range(0, len(a)):
+        if a[y] >= quartileSet[0] and a[y] <= quartileSet[1]:
+            result_targets.append(a[y])
+            results_gradients.append(list_gradients[y])
+            results_train.append(list_train[y])
+
+    return [results_train, result_targets, results_gradients]
