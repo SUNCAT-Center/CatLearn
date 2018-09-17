@@ -58,6 +58,21 @@ def images_connectivity(images, check_cn_max=False):
     return images
 
 
+def images_pair_distances(images, mic=True):
+    """Return a list of atoms objects imported from an ase database.
+
+    Parameters
+    ----------
+    fname : str
+        path/filename of ase database.
+    selection : list
+        search filters to limit the import.
+    """
+    for atoms in tqdm(images):
+        atoms.pair_distances = np.array(atoms.get_all_distances(mic=mic))
+    return images
+
+
 def extend_atoms_class(atoms):
     """A wrapper to add extra functionality to ase atoms objects.
 
