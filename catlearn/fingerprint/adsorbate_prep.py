@@ -401,7 +401,7 @@ def tags2ads_index(atoms):
             species = atoms.info['key_value_pairs']['species']
             numbers = sorted(symbols2numbers(species))
             if numbers != sorted(atoms[ads_atoms].numbers):
-                msg = 'Incorret tags!'
+                msg = 'Incorrect tags!'
                 raise AssertionError(msg)
     return ads_atoms
 
