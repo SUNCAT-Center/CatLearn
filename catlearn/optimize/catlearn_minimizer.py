@@ -1,4 +1,4 @@
-# CatLearn 1.2.0
+# CatLearn 1.4.0
 
 from ase import Atoms
 from ase.io.trajectory import TrajectoryWriter
@@ -21,7 +21,7 @@ from catlearn.regression import GaussianProcess
 
 class CatLearnMin(object):
 
-    def __init__(self, x0, ase_calc=None, ml_calc=None,
+    def __init__(self, x0, ase_calc=None, ml_calc='ARD_SQE',
                  trajectory='catlearn_opt.traj'):
 
         """Optimization setup.
@@ -100,7 +100,7 @@ class CatLearnMin(object):
                 self.index_mask = create_mask(self.ase_ini, self.constraints)
             self.feval = len(self.list_targets)
 
-    def run(self, fmax=0.05, ml_algo='LBFGS', steps=200,
+    def run(self, fmax=0.05, ml_algo='FIRE', steps=200,
             min_iter=0, ml_max_steps=250, max_memory=50):
 
         """Executing run will start the optimization process.
@@ -144,7 +144,6 @@ class CatLearnMin(object):
         print_info(self)
 
         initialize(self, i_step='BFGS')
-
         converged(self)
         print_info(self)
 
@@ -157,6 +156,13 @@ class CatLearnMin(object):
         if ml_algo not in ase_minimizers:
             self.ase_opt = False
 
+        # Save original features, energies and gradients:
+        self.org_list_features = self.list_train.tolist()
+        self.org_list_energies = self.list_targets.tolist()
+        self.org_list_gradients = self.list_gradients.tolist()
+
+        gp = None
+
         while not converged(self):
 
             # Configure ML calculator.
@@ -166,19 +172,28 @@ class CatLearnMin(object):
             scaling = 1.0 + np.std(scaled_targets)**2
 
             width = 0.4
-            noise_energy = 0.0005
-            noise_forces = 0.0005 * width**2
+            noise_energy = 0.001
+            noise_forces = 0.001 * width**2
+
+            if self.ml_calc == 'SQE_fixed':
+                dimension = 'single'
+                bounds = ((0.40, 0.40),)
+            if self.ml_calc == 'SQE':
+                dimension = 'single'
+                bounds = ((0.35, 0.40),)
+            if self.ml_calc == 'ARD_SQE':
+                dimension = 'features'
+                bounds = ((0.35, 0.40),) * len(self.index_mask)
 
             kdict = [{'type': 'gaussian', 'width': width,
-                            'dimension': 'single',
-                            'bounds': ((width, width),),
-                            'scaling': scaling,
-                            'scaling_bounds': ((scaling, scaling+100.0),)},
+                      'dimension': dimension,
+                      'bounds': bounds,
+                      'scaling': scaling,
+                      'scaling_bounds': ((scaling, scaling+100.0),)},
                      {'type': 'noise_multi',
-                            'hyperparameters': [noise_energy * 2.0,
-                                                noise_forces * 2.0],
-                            'bounds': ((noise_energy, 1e-1),
-                                       (noise_forces, 1e-1),)}
+                      'hyperparameters': [noise_energy, noise_forces],
+                      'bounds': ((noise_energy, 1e-1),
+                                 (noise_forces, 1e-1),)}
                      ]
 
             # 1. Train Machine Learning process.
@@ -200,13 +215,18 @@ class CatLearnMin(object):
             print('Training a GP process...')
             print('Number of training points:', len(scaled_targets))
             gp = GaussianProcess(kernel_dict=kdict,
-                                 regularization=0.0,
-                                 regularization_bounds=(0.0, 0.0),
-                                 train_fp=train,
-                                 train_target=scaled_targets,
-                                 gradients=gradients,
-                                 optimize_hyperparameters=False,
-                                 scale_data=False)
+                                     regularization=0.0,
+                                     regularization_bounds=(0.0, 0.0),
+                                     train_fp=train,
+                                     train_target=scaled_targets,
+                                     gradients=gradients,
+                                     optimize_hyperparameters=False,
+                                     scale_data=False)
+            if gp is not None:
+                gp.update_data(train_fp=train,
+                               train_target=scaled_targets,
+                               gradients=gradients)
+
             gp.optimize_hyperparameters(global_opt=False)
             print('Optimized hyperparameters:', gp.theta_opt)
             print('GP process trained.')
@@ -247,6 +267,9 @@ class CatLearnMin(object):
 
             # 3. Evaluate and append interesting point.
             eval_and_append(self, interesting_point)
+            self.org_list_features.append(self.list_train[-1])
+            self.org_list_energies.append(self.list_targets[-1])
+            self.org_list_gradients.append(self.list_gradients[-1])
 
             # 4. Convergence and output.
 

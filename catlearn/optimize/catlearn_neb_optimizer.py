@@ -1,4 +1,4 @@
-# @Version 1.3.0
+# @Version 1.4.0
 
 import numpy as np
 from catlearn.optimize.warnings import *
@@ -22,9 +22,10 @@ from catlearn.regression import GaussianProcess
 
 class CatLearnNEB(object):
 
-    def __init__(self, start, end, path=None, n_images=None, spring=None,
+    def __init__(self, start, end, path=None, n_images='auto', spring=None,
                  interpolation=None, mic=False, neb_method='aseneb',
-                 ml_calc=None, ase_calc=None, include_previous_calcs=False,
+                 ml_calc='SQE', ase_calc=None,
+                 include_previous_calcs=False,
                  stabilize=False, restart=False):
         """ Nudged elastic band (NEB) setup.
 
@@ -250,11 +251,12 @@ class CatLearnNEB(object):
         NEB optimized path.
         Files :
         """
+        gp = None
 
         while True:
 
             # Clean data from outliers:
-            clean_data(self)
+            # clean_data(self)
 
             # 1. Train Machine Learning process.
 
@@ -265,18 +267,28 @@ class CatLearnNEB(object):
             scaling = 1.0 + np.std(scaled_targets)**2
 
             width = 0.4
-            noise_energy = 0.0005
-            noise_forces = 0.0005 * width**2
+            noise_energy = 0.001
+            noise_forces = 0.001 * width**2
+
+            if self.ml_calc == 'SQE_fixed':
+                dimension = 'single'
+                bounds = ((0.35, 0.40),)
+            if self.ml_calc == 'SQE':
+                dimension = 'single'
+                bounds = ((0.35, 0.40),)
+            if self.ml_calc == 'ARD_SQE':
+                dimension = 'features'
+                bounds = ((0.35, 0.40),) * len(self.index_mask)
 
             kdict = [{'type': 'gaussian', 'width': width,
-                            'dimension': 'single',
-                            'bounds': ((width, width),),
-                            'scaling': scaling,
-                            'scaling_bounds': ((scaling, scaling+100.0),)},
+                      'dimension': dimension,
+                      'bounds': bounds,
+                      'scaling': scaling,
+                      'scaling_bounds': ((scaling, scaling+100.0),)},
                      {'type': 'noise_multi',
-                            'hyperparameters': [noise_energy, noise_forces],
-                            'bounds': ((noise_energy * 2.0, 1e-2),
-                                       (noise_forces * 2.0, 1e-2),)}
+                      'hyperparameters': [noise_energy, noise_forces],
+                      'bounds': ((noise_energy, 1e-2),
+                                 (noise_forces, 1e-2),)}
                      ]
 
             train = self.list_train.copy()
@@ -290,14 +302,19 @@ class CatLearnNEB(object):
             print('Training a GP process...')
             print('Number of training points:', len(scaled_targets))
 
-            gp = GaussianProcess(kernel_dict=kdict,
-                                 regularization=0.0,
-                                 regularization_bounds=(0.0, 0.0),
-                                 train_fp=train,
-                                 train_target=scaled_targets,
-                                 gradients=gradients,
-                                 optimize_hyperparameters=False,
-                                 scale_data=False)
+            if gp is None:
+                gp = GaussianProcess(kernel_dict=kdict,
+                                     regularization=0.0,
+                                     regularization_bounds=(0.0, 0.0),
+                                     train_fp=train,
+                                     train_target=scaled_targets,
+                                     gradients=gradients,
+                                     optimize_hyperparameters=False,
+                                     scale_data=False)
+            if gp is not None:
+                gp.update_data(train_fp=train,
+                               train_target=scaled_targets,
+                               gradients=gradients)
 
             gp.optimize_hyperparameters(global_opt=False)
             print('Optimized hyperparameters:', gp.theta_opt)
@@ -539,20 +556,13 @@ def create_ml_neb(is_endpoint, fs_endpoint, images_interpolation,
     return imgs
 
 
-def update_prior(self):
-    prior_const = 1/4 * ((self.list_targets[0]) - (self.list_targets[-1]))
-    self.prior = np.abs(np.min(self.list_targets)) + np.abs(prior_const)
-    print('Guessed prior', self.prior)
-    return self.prior
-
-
 def clean_data(self):
     if len(self.list_targets) >= 10:
         if self.iter % 5 == 0:
             tra, targ, grad = remove_outliers(self.org_list_features,
                                               self.org_list_energies,
                                               self.org_list_gradients,
-                                              outlierConstant=20.0)
+                                              outlierConstant=25.0)
             targ = np.reshape(targ, (len(targ), -1))
             grad = np.reshape(grad, (len(targ),
                                      np.shape(self.list_gradients)[1]))
@@ -564,18 +574,14 @@ def clean_data(self):
 
 
 def remove_outliers(list_train, list_targets, list_gradients, outlierConstant):
-    a = np.array(list_targets)
-    upper_quartile = np.percentile(a, 75)
-    lower_quartile = np.percentile(a, 25)
-    IQR = (upper_quartile - lower_quartile) * outlierConstant
-    quartileSet = (lower_quartile - IQR, upper_quartile + IQR)
-    result_targets = []
+    scaled_targets = list_targets - np.min(list_targets)
+    results_targets = []
     results_gradients = []
     results_train = []
-    for y in range(0, len(a)):
-        if a[y] >= quartileSet[0] and a[y] <= quartileSet[1]:
-            result_targets.append(a[y])
-            results_gradients.append(list_gradients[y])
-            results_train.append(list_train[y])
+    for i in range(0, len(scaled_targets)):
+        if scaled_targets[i] < outlierConstant:
+            results_targets.append(list_targets[i])
+            results_gradients.append(list_gradients[i])
+            results_train.append(list_train[i])
 
-    return [results_train, result_targets, results_gradients]
+    return [results_train, results_targets, results_gradients]
