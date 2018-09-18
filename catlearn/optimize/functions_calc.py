@@ -261,9 +261,9 @@ class NoiseHimmelblau(Calculator):
         forces[0][2] = -fz
 
 
-        noise_energy = energy * np.random.normal(scale=0.03)
+        noise_energy = energy * np.random.normal(scale=0.10)
         self.results['energy'] = (energy + noise_energy)
-        noise_force = forces * np.random.normal(scale=0.04)
+        noise_force = forces * np.random.normal(scale=0.80)
         self.results['forces'] = (forces + noise_force)
 
 

@@ -274,7 +274,7 @@ class CatLearnNEB(object):
                          method=self.neb_method,
                          k=self.spring)
 
-            neb_opt = FIRE(ml_neb, dt=0.1, downhill_check=True)
+            neb_opt = FIRE(ml_neb, dt=0.1, downhill_check=False)
 
             print('Starting ML NEB optimization...')
             neb_opt.run(fmax=fmax * 2.0, steps=ml_max_iter)
@@ -380,10 +380,6 @@ class CatLearnNEB(object):
                   max_abs_forces)
             print('Energy of the last image evaluated (eV):',
                   self.list_targets[-1][0])
-            print('Energy of the last image evaluated w.r.t. to initial '
-                  'end point (eV):', self.list_targets[-1][
-                  0]-self.initial_images[0].get_potential_energy())
-
             print('Forward reaction barrier energy (eV):',
                   self.list_targets[-1][0] - self.list_targets[0][0])
             print('Backward reaction barrier energy (eV):',
@@ -471,7 +467,7 @@ def create_ml_neb(is_endpoint, fs_endpoint, images_interpolation,
 def train_gp_model(self):
     self.max_target = np.max(self.list_targets)
     scaled_targets = self.list_targets.copy() - self.max_target
-    scaling = 1.0 + np.std(scaled_targets)**2
+    scaling = 0.1 + np.std(scaled_targets)**2
 
     width = 0.4
     noise_energy = 0.001
@@ -491,7 +487,7 @@ def train_gp_model(self):
               'dimension': dimension,
               'bounds': bounds,
               'scaling': scaling,
-              'scaling_bounds': ((scaling, scaling+100.0),)},
+              'scaling_bounds': ((scaling, scaling + 100.0),)},
              {'type': 'noise_multi',
               'hyperparameters': [noise_energy, noise_forces],
               'bounds': ((noise_energy, 1e-1),

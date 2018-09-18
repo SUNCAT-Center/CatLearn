@@ -36,7 +36,7 @@ initial_gpmin.set_calculator(calculator)
 
 gpmin_opt = GPMin(initial_gpmin, trajectory='gpmin_opt.traj',
                  update_hyperparams=True)
-gpmin_opt.run(fmax=0.05, steps=200)
+# gpmin_opt.run(fmax=0.05, steps=200)
 
 # 2.C. Optimize structure using BFGS.
 initial_bfgs = initial_structure.copy()
@@ -58,17 +58,17 @@ print('\n Summary of the results:\n ------------------------------------')
 catlearn_results = read('catlearn_opt.traj', ':')
 print('Number of function evaluations using CatLearn:', len(catlearn_results))
 
-gpmin_results = read('gpmin_opt.traj', ':')
-print('Number of function evaluations using GPMin:', gpmin_opt.function_calls)
-
 bfgs_results = read('bfgs_opt.traj', ':')
 print('Number of function evaluations using BFGS:', len(bfgs_results))
 
 fire_results = read('fire_opt.traj', ':')
 print('Number of function evaluations using FIRE:', len(fire_results))
 
+# gpmin_results = read('gpmin_opt.traj', ':')
+# print('Number of function evaluations using GPMin:', gpmin_opt.function_calls)
 
-print('Energy CatLearn:', catlearn_results[-1].get_potential_energy())
-print('Energy GPMin:', gpmin_results[-1].get_potential_energy())
+
 print('Energy BFGS:', bfgs_results[-1].get_potential_energy())
 print('Energy FIRE:', fire_results[-1].get_potential_energy())
+print('Energy CatLearn:', catlearn_results[-1].get_potential_energy())
+print('Energy GPMin:', gpmin_results[-1].get_potential_energy())

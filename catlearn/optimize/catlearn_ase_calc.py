@@ -14,7 +14,7 @@ class CatLearnASE(Calculator):
     nolabel = True
 
     def __init__(self, gp, index_constraints, scaling_targets=0.0,
-                 finite_step=5e-5, **kwargs):
+                 finite_step=1e-4, **kwargs):
 
         Calculator.__init__(self, **kwargs)
 
