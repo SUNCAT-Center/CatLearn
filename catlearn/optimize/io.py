@@ -1,9 +1,10 @@
 from catlearn.optimize.convergence import converged
 from prettytable import PrettyTable
 import numpy as np
-from ase.io import Trajectory
+from ase.io import Trajectory, write
 import pandas as pd
 import datetime
+from ase.io.trajectory import TrajectoryWriter
 
 
 def ase_traj_to_catlearn(traj_file):
@@ -245,30 +246,46 @@ def store_results(self):
     # f_res.write(str(dict))
 
 
-def store_results_neb(s, e, sfit, efit, uncertainty_path):
+def store_results_neb(self):
     """ Function that print in csv files the predicted NEB curves after
         each iteration"""
 
     # Save discrete path:
-    data = {'Path distance (Angstrom)': s,
-            'Energy (eV)': e,
-            'Uncertainty (eV)': uncertainty_path}
+    data = {'Path distance (Angstrom)': self.s,
+            'Energy (eV)': self.e,
+            'Uncertainty (eV)': self.uncertainty_path}
     df = pd.DataFrame(data,
                       columns=['Path distance (Angstrom)', 'Energy (eV)',
                                'Uncertainty (eV)'])
     df.to_csv('results_neb.csv')
 
     # Save interpolated path:
-    data = {'Path distance (Angstrom)': sfit, 'Energy (eV)': efit}
+    data = {'Path distance (Angstrom)': self.sfit, 'Energy (eV)': self.efit}
 
     df = pd.DataFrame(data,
                       columns=['Path distance (Angstrom)', 'Energy (eV)'])
     df.to_csv('results_neb_interpolation.csv')
 
 
+def store_trajectory_neb(self):
+    # Evaluated images.
+    TrajectoryWriter(atoms=self.ase_ini,
+                     filename='./evaluated_structures.traj',
+                     mode='a').write()
+    # Last path.
+    write('last_predicted_path.traj', self.images)
+
+    # All paths.
+    for i in self.images:
+        TrajectoryWriter(atoms=i,
+                         filename='all_predicted_paths.traj',
+                         mode='a').write()
+
+
 def print_time():
     now = datetime.datetime.now()
     return now.strftime("%Y-%m-%d %H:%M:%S")
+
 
 def print_version(version):
     print(""" 

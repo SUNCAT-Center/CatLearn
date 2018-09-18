@@ -214,6 +214,7 @@ class CatLearnMin(object):
 
             print('Training a GP process...')
             print('Number of training points:', len(scaled_targets))
+
             gp = GaussianProcess(kernel_dict=kdict,
                                      regularization=0.0,
                                      regularization_bounds=(0.0, 0.0),
@@ -222,10 +223,6 @@ class CatLearnMin(object):
                                      gradients=gradients,
                                      optimize_hyperparameters=False,
                                      scale_data=False)
-            if gp is not None:
-                gp.update_data(train_fp=train,
-                               train_target=scaled_targets,
-                               gradients=gradients)
 
             gp.optimize_hyperparameters(global_opt=False)
             print('Optimized hyperparameters:', gp.theta_opt)
