@@ -150,8 +150,8 @@ class CatLearnNEB(object):
         # A) Create images using interpolation if user do not feed a path:
         if path is None:
             self.d_start_end = np.abs(distance.euclidean(is_pos, fs_pos))
-            if self.n_images == 'auto':
-                self.n_images = int(self.d_start_end/0.4)
+            if isinstance(self.n_images, float):
+                self.n_images = int(self.d_start_end/self.n_images)
                 if self. n_images <= 6:
                     self.n_images = 6
             if self.spring is None:
