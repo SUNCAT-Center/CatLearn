@@ -23,7 +23,7 @@ from catlearn.regression import GaussianProcess
 class CatLearnNEB(object):
 
     def __init__(self, start, end, path=None, n_images='auto', spring=None,
-                 interpolation=None, mic=True, neb_method='eb',
+                 interpolation=None, mic=False, neb_method='eb',
                  ml_calc='SQE', ase_calc=None,
                  include_previous_calcs=False,
                  stabilize=False, restart=False):
