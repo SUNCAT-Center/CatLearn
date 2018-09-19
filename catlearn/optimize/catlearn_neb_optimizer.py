@@ -478,10 +478,10 @@ def train_gp_model(self):
         bounds = ((0.40, 0.40),)
     if self.ml_calc == 'SQE':
         dimension = 'single'
-        bounds = ((0.35, 0.40),)
+        bounds = ((0.10, 0.40),)
     if self.ml_calc == 'ARD_SQE':
         dimension = 'features'
-        bounds = ((0.35, 0.40),) * len(self.index_mask)
+        bounds = ((0.10, 0.40),) * len(self.index_mask)
 
     kdict = [{'type': 'gaussian', 'width': width,
               'dimension': dimension,

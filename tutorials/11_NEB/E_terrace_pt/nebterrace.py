@@ -44,7 +44,7 @@ qn.run(fmax=0.01)
 n_images = 7
 
 # 2.A. NEB using ASE #########################################################
-#
+
 # initial_ase = read('initial_opt.traj')
 # final_ase = read('final_opt.traj')
 #
