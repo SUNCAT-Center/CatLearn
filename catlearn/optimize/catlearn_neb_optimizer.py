@@ -521,21 +521,3 @@ def get_results_predicted_path(self):
     self.images[0].info['uncertainty'] = 0.0
     self.images[-1].info['uncertainty'] = 0.0
 
-
-def clean_data(self, energy_threshold=8.0):
-    if len(self.list_targets) >= 10:
-        if self.iter % 5 == 0:
-            max_energy = np.max([self.energy_is, self.energy_fs])
-            scaled_energies = self.org_list_energies - max_energy
-
-            # Detect features with abnormal energy:
-            delete_points = []
-            for i in range(0, len(scaled_energies)):
-                if scaled_energies[i] > energy_threshold:
-                    delete_points.append([i])
-
-            self.list_targets = np.delete(self.list_targets, delete_points,
-                                          axis=0)
-            self.list_train = np.delete(self.list_train, delete_points, axis=0)
-            self.list_gradients = np.delete(self.list_gradients,
-                                            delete_points, axis=0)

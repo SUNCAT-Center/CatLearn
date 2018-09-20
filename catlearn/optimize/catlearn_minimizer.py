@@ -1,4 +1,4 @@
-# CatLearn 1.4.0
+# CatLearn 1.5.0
 
 from ase import Atoms
 from ase.io.trajectory import TrajectoryWriter
@@ -21,8 +21,7 @@ from catlearn.regression import GaussianProcess
 
 class CatLearnMin(object):
 
-    def __init__(self, x0, ase_calc=None, ml_calc='ARD_SQE',
-                 trajectory='catlearn_opt.traj'):
+    def __init__(self, x0, ase_calc=None, trajectory='catlearn_opt.traj'):
 
         """Optimization setup.
 
@@ -32,21 +31,18 @@ class CatLearnMin(object):
             Initial guess.
         ase_calc: ASE calculator object.
             When using ASE the user must pass an ASE calculator.
-        ml_calc : Machine Learning calculator object.
-            Machine Learning calculator (e.g. Gaussian Processes).
         trajectory: string
             Filename to store the output.
         """
 
         # General variables.
         self.filename = trajectory  # Remove extension if added.
-        self.ml_calc = ml_calc
         self.iter = 0
         self.feval = 0
         self.fmax = 0.0
         self.min_iter = 0
         self.jac = True
-        self.version = 'Min. v.1.2.0'
+        self.version = 'Min. v.1.5.0'
         print_version(self.version)
 
         self.ase_calc = ase_calc
@@ -100,8 +96,8 @@ class CatLearnMin(object):
                 self.index_mask = create_mask(self.ase_ini, self.constraints)
             self.feval = len(self.list_targets)
 
-    def run(self, fmax=0.05, ml_algo='FIRE', steps=200,
-            min_iter=0, ml_max_steps=250, max_memory=50):
+    def run(self, fmax=0.05, ml_algo='L-BFGS-B', steps=200,
+            min_iter=0, max_memory=50):
 
         """Executing run will start the optimization process.
 
@@ -118,8 +114,6 @@ class CatLearnMin(object):
             Max. number of optimization steps.
         min_iter : int
             Min. number of optimizations steps
-        ml_max_steps : int
-            Max. number of iterations of the machine learning surrogate model.
 
         Returns
         -------
@@ -164,30 +158,22 @@ class CatLearnMin(object):
         while not converged(self):
 
             # Configure ML calculator.
-
-            max_target = np.max(self.list_targets)
+            max_target = np.abs(np.min(self.list_targets)) + 5.0
             scaled_targets = self.list_targets.copy() - max_target
             scaling = 0.1 + np.std(scaled_targets)**2
 
             width = 0.4
-            noise_energy = 0.001
-            noise_forces = 0.001 * width**2
+            dimension = 'single'
+            bounds = ((width, width),)
 
-            if self.ml_calc == 'SQE_fixed':
-                dimension = 'single'
-                bounds = ((0.40, 0.40),)
-            if self.ml_calc == 'SQE':
-                dimension = 'single'
-                bounds = ((0.10, 0.40),)
-            if self.ml_calc == 'ARD_SQE':
-                dimension = 'features'
-                bounds = ((0.10, 0.40),) * len(self.index_mask)
+            noise_energy = 0.0001
+            noise_forces = 0.00001
 
             kdict = [{'type': 'gaussian', 'width': width,
                       'dimension': dimension,
                       'bounds': bounds,
                       'scaling': scaling,
-                      'scaling_bounds': ((scaling, scaling+100.0),)},
+                      'scaling_bounds': ((scaling, scaling + 10.0),)},
                      {'type': 'noise_multi',
                       'hyperparameters': [noise_energy, noise_forces],
                       'bounds': ((noise_energy, 1e-1),
@@ -241,9 +227,9 @@ class CatLearnMin(object):
                 guess.info['iteration'] = self.iter
 
                 # Run optimization of the predicted PES.
-                opt_ml = eval(ml_algo)(guess, logfile=None)
+                opt_ml = eval(ml_algo)(guess)#, logfile=None)
                 print('Starting ML optimization...')
-                opt_ml.run(fmax=1e-4, steps=ml_max_steps)
+                opt_ml.run(fmax=fmax/1.1, steps=500)
                 print('ML optimized.')
 
                 interesting_point = guess.get_positions().flatten()
