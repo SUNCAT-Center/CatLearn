@@ -217,7 +217,7 @@ class CatLearnNEB(object):
         self.org_list_energies = self.list_targets.tolist()
         self.org_list_gradients = self.list_gradients.tolist()
 
-    def run(self, fmax=0.05, unc_convergence=0.050, steps=200,
+    def run(self, fmax=0.05, unc_convergence=0.025, steps=200,
             ml_max_iter=500, plot_neb_paths=False, acquisition='acq_2'):
 
         """Executing run will start the optimization process.
@@ -254,8 +254,8 @@ class CatLearnNEB(object):
 
             # 2. Setup and run ML NEB:
 
-            # starting_path = copy.deepcopy(self.initial_images)
-            starting_path = self.images
+            starting_path = copy.deepcopy(self.initial_images)
+            # starting_path = self.images
 
             self.images = create_ml_neb(is_endpoint=self.initial_endpoint,
                                         fs_endpoint=self.final_endpoint,
@@ -272,7 +272,7 @@ class CatLearnNEB(object):
                          method=self.neb_method,
                          k=self.spring)
 
-            neb_opt = MDMin(ml_neb, dt=0.075)
+            neb_opt = MDMin(ml_neb, dt=0.05)
 
             print('Starting ML NEB optimization...')
             neb_opt.run(fmax=fmax * 2.0, steps=ml_max_iter)
@@ -281,7 +281,7 @@ class CatLearnNEB(object):
             ml_neb = NEB(self.images, climb=True,
                          method=self.neb_method,
                          k=self.spring)
-            neb_opt = MDMin(ml_neb, dt=0.075)
+            neb_opt = MDMin(ml_neb, dt=0.05)
             neb_opt.run(fmax=fmax/1.1, steps=ml_max_iter)
             print('ML NEB optimized.')
 
@@ -466,11 +466,11 @@ def train_gp_model(self):
     scaling = 0.1 + np.std(scaled_targets)**2
 
     width = 0.4
-    noise_energy = 0.0001
-    noise_forces = 0.00001
+    noise_energy = 0.001
+    noise_forces = 0.0001
 
     dimension = 'single'
-    bounds = ((width, width),)
+    bounds = ((0.01, 0.4),)
 
     kdict = [{'type': 'gaussian', 'width': width,
               'dimension': dimension,
@@ -518,7 +518,7 @@ def get_results_predicted_path(self):
         pos_unc = apply_mask(list_to_mask=pos_unc,
                              mask_index=self.index_mask)[1]
         u = self.gp.predict(test_fp=pos_unc, uncertainty=True)
-        uncertainty = u['uncertainty_with_reg'][0]
+        uncertainty = (u['uncertainty'][0]**2) * 4.0
         i.info['uncertainty'] = uncertainty
         self.uncertainty_path.append(uncertainty)
         self.e_path.append(i.get_total_energy())
