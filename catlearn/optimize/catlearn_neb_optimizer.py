@@ -1,4 +1,4 @@
-# @Version 1.4.0
+# @Version 1.5.0
 
 import numpy as np
 from catlearn.optimize.warnings import *
@@ -13,7 +13,7 @@ from ase.neb import NEB
 from ase.neb import NEBTools
 from ase.io import read, write
 from ase.io.trajectory import TrajectoryWriter
-from ase.optimize import FIRE
+from ase.optimize import MDMin
 from scipy.spatial import distance
 import copy
 import os
@@ -22,10 +22,9 @@ from catlearn.regression import GaussianProcess
 
 class CatLearnNEB(object):
 
-    def __init__(self, start, end, path=None, n_images='auto', spring=None,
-                 interpolation=None, mic=False, neb_method='eb',
-                 ml_calc='SQE', ase_calc=None,
-                 include_previous_calcs=False,
+    def __init__(self, start, end, path=None, n_images=0.5, spring=None,
+                 interpolation=None, mic=False, neb_method='improvedtangent',
+                 ase_calc=None, include_previous_calcs=False,
                  stabilize=False, restart=False):
         """ Nudged elastic band (NEB) setup.
 
@@ -38,7 +37,7 @@ class CatLearnNEB(object):
         path: Trajectory file (in ASE format) (optional).
             Atoms trajectory with the intermediate images of the path
             between the two end-points.
-        n_images: int
+        n_images: int or float
             Number of images of the path (if not included a path before).
              The number of images include the 2 end-points of the NEB path.
         spring: float or list
@@ -66,7 +65,6 @@ class CatLearnNEB(object):
 
         # General setup:
         self.iter = 0
-        self.ml_calc = ml_calc
         self.ase_calc = ase_calc
         self.ase = True
         self.mic = mic
@@ -219,8 +217,8 @@ class CatLearnNEB(object):
         self.org_list_energies = self.list_targets.tolist()
         self.org_list_gradients = self.list_gradients.tolist()
 
-    def run(self, fmax=0.05, unc_convergence=0.020, steps=200,
-            ml_max_iter=100, plot_neb_paths=False, acquisition='acq_1'):
+    def run(self, fmax=0.05, unc_convergence=0.050, steps=200,
+            ml_max_iter=500, plot_neb_paths=False, acquisition='acq_2'):
 
         """Executing run will start the optimization process.
 
@@ -256,8 +254,8 @@ class CatLearnNEB(object):
 
             # 2. Setup and run ML NEB:
 
-            starting_path = copy.deepcopy(self.initial_images)
-            # starting_path = self.images
+            # starting_path = copy.deepcopy(self.initial_images)
+            starting_path = self.images
 
             self.images = create_ml_neb(is_endpoint=self.initial_endpoint,
                                         fs_endpoint=self.final_endpoint,
@@ -274,7 +272,7 @@ class CatLearnNEB(object):
                          method=self.neb_method,
                          k=self.spring)
 
-            neb_opt = FIRE(ml_neb, dt=0.1, downhill_check=False)
+            neb_opt = MDMin(ml_neb, dt=0.075)
 
             print('Starting ML NEB optimization...')
             neb_opt.run(fmax=fmax * 2.0, steps=ml_max_iter)
@@ -283,7 +281,7 @@ class CatLearnNEB(object):
             ml_neb = NEB(self.images, climb=True,
                          method=self.neb_method,
                          k=self.spring)
-            neb_opt = FIRE(ml_neb, dt=0.1, downhill_check=False)
+            neb_opt = MDMin(ml_neb, dt=0.075)
             neb_opt.run(fmax=fmax/1.1, steps=ml_max_iter)
             print('ML NEB optimized.')
 
@@ -414,12 +412,6 @@ class CatLearnNEB(object):
                 warning_max_iter_reached()
                 break
 
-            # Break if the uncertainty goes below 1 mev.
-            if np.max(self.uncertainty_path[1:-1]) < 0.0005:
-                stationary_point_not_found()
-                if self.feval > 5:
-                    break
-
         print('Number of steps performed in this run:', self.iter)
 
 
@@ -469,19 +461,12 @@ def train_gp_model(self):
     scaled_targets = self.list_targets.copy() - self.max_target
     scaling = 0.1 + np.std(scaled_targets)**2
 
-    width = 0.4
-    noise_energy = 0.001
-    noise_forces = 0.001 * width**2
+    width = self.path_distance/(self.n_images+2)
+    noise_energy = 0.0001
+    noise_forces = 0.00001
 
-    if self.ml_calc == 'SQE_fixed':
-        dimension = 'single'
-        bounds = ((0.40, 0.40),)
-    if self.ml_calc == 'SQE':
-        dimension = 'single'
-        bounds = ((0.10, 0.40),)
-    if self.ml_calc == 'ARD_SQE':
-        dimension = 'features'
-        bounds = ((0.10, 0.40),) * len(self.index_mask)
+    dimension = 'single'
+    bounds = ((width, width),)
 
     kdict = [{'type': 'gaussian', 'width': width,
               'dimension': dimension,
@@ -529,7 +514,7 @@ def get_results_predicted_path(self):
         pos_unc = apply_mask(list_to_mask=pos_unc,
                              mask_index=self.index_mask)[1]
         u = self.gp.predict(test_fp=pos_unc, uncertainty=True)
-        uncertainty = u['uncertainty_with_reg'][0]**2
+        uncertainty = u['uncertainty_with_reg'][0]
         i.info['uncertainty'] = uncertainty
         self.uncertainty_path.append(uncertainty)
         self.e_path.append(i.get_total_energy())

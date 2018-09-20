@@ -88,7 +88,7 @@ n_images = 11
 
 neb_catlearn = CatLearnNEB(start='initial.traj', end='final.traj',
                            ase_calc=copy.deepcopy(ase_calculator),
-                           n_images=n_images,
+                           n_images=0.5,
                            interpolation='idpp')
 
 neb_catlearn.run(fmax=0.05, plot_neb_paths=True)
