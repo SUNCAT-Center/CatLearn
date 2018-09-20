@@ -158,26 +158,26 @@ class CatLearnMin(object):
         while not converged(self):
 
             # Configure ML calculator.
-            max_target = np.abs(np.min(self.list_targets)) + 5.0
+            max_target = np.max(self.list_targets)
             scaled_targets = self.list_targets.copy() - max_target
             scaling = 0.1 + np.std(scaled_targets)**2
 
             width = 0.4
-            dimension = 'single'
-            bounds = ((width, width),)
+            noise_energy = 0.001
+            noise_forces = 0.0001
 
-            noise_energy = 0.0001
-            noise_forces = 0.00001
+            dimension = 'single'
+            bounds = ((0.01, 0.4),)
 
             kdict = [{'type': 'gaussian', 'width': width,
                       'dimension': dimension,
                       'bounds': bounds,
                       'scaling': scaling,
-                      'scaling_bounds': ((scaling, scaling + 10.0),)},
+                      'scaling_bounds': ((scaling, scaling + 1e2),)},
                      {'type': 'noise_multi',
                       'hyperparameters': [noise_energy, noise_forces],
-                      'bounds': ((noise_energy, 1e-1),
-                                 (noise_forces, 1e-1),)}
+                      'bounds': ((noise_energy, noise_energy),
+                                 (noise_forces, noise_forces),)}
                      ]
 
             # 1. Train Machine Learning process.
