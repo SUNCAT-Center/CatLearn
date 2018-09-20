@@ -476,11 +476,11 @@ def train_gp_model(self):
               'dimension': dimension,
               'bounds': bounds,
               'scaling': scaling,
-              'scaling_bounds': ((scaling, scaling + 100.0),)},
+              'scaling_bounds': ((scaling, scaling + 1e2),)},
              {'type': 'noise_multi',
               'hyperparameters': [noise_energy, noise_forces],
-              'bounds': ((noise_energy, 1e-1),
-                         (noise_forces, 1e-1),)}
+              'bounds': ((noise_energy, noise_energy),
+                         (noise_forces, noise_forces),)}
              ]
 
     train = self.list_train.copy()
