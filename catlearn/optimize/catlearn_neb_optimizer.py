@@ -430,6 +430,8 @@ def create_ml_neb(is_endpoint, fs_endpoint, images_interpolation,
     imgs[0].info['label'] = 0
     imgs[0].info['uncertainty'] = 0.0
     imgs[0].info['iteration'] = iteration
+    imgs[0].__dict__['_calc'].__dict__['results']['energy'] = imgs[
+    0].__dict__['_calc'].__dict__['results']['energy'] - scaling_targets
 
     for i in range(1, n_images-1):
         image = copy.deepcopy(s_guess_ml)
@@ -438,7 +440,7 @@ def create_ml_neb(is_endpoint, fs_endpoint, images_interpolation,
         image.info['iteration'] = iteration
         image.set_calculator(CatLearnASE(gp=gp,
                                          index_constraints=index_constraints,
-                                         scaling_targets=scaling_targets
+                                         scaling_targets=0.0
                                          ))
         if images_interpolation is not None:
             image.set_positions(images_interpolation[i].get_positions())
@@ -452,6 +454,8 @@ def create_ml_neb(is_endpoint, fs_endpoint, images_interpolation,
     imgs[-1].info['label'] = n_images-1
     imgs[-1].info['uncertainty'] = 0.0
     imgs[-1].info['iteration'] = iteration
+    imgs[-1].__dict__['_calc'].__dict__['results']['energy'] = imgs[
+    -1].__dict__['_calc'].__dict__['results']['energy'] - scaling_targets
 
     return imgs
 
@@ -461,7 +465,7 @@ def train_gp_model(self):
     scaled_targets = self.list_targets.copy() - self.max_target
     scaling = 0.1 + np.std(scaled_targets)**2
 
-    width = self.path_distance/(self.n_images+2)
+    width = 0.4
     noise_energy = 0.0001
     noise_forces = 0.00001
 

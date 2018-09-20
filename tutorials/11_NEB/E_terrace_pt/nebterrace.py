@@ -28,17 +28,17 @@ from catlearn.optimize.catlearn_minimizer import CatLearnMin
 
 # Setup calculator:
 ase_calculator = EMT()
-
-slab = read('initial.traj')
-slab.set_calculator(copy.deepcopy(ase_calculator))
-qn = CatLearnMin(slab, trajectory='initial_opt.traj')
-qn.run(fmax=0.01)
-
-# Final end-point:
-slab = read('final.traj')
-slab.set_calculator(copy.deepcopy(ase_calculator))
-qn = CatLearnMin(slab, trajectory='final_opt.traj')
-qn.run(fmax=0.01)
+#
+# slab = read('initial.traj')
+# slab.set_calculator(copy.deepcopy(ase_calculator))
+# qn = CatLearnMin(slab, trajectory='initial_opt.traj')
+# qn.run(fmax=0.01)
+#
+# # Final end-point:
+# slab = read('final.traj')
+# slab.set_calculator(copy.deepcopy(ase_calculator))
+# qn = CatLearnMin(slab, trajectory='final_opt.traj')
+# qn.run(fmax=0.01)
 
 # Define number of images:
 n_images = 7
@@ -75,7 +75,7 @@ n_images = 7
 neb_catlearn = CatLearnNEB(start='initial_opt.traj',
                            end='final_opt.traj',
                            ase_calc=copy.deepcopy(ase_calculator),
-                           n_images=0.5,
+                           n_images=0.1,
                            interpolation='idpp', restart=False)
 
 neb_catlearn.run(fmax=0.05, plot_neb_paths=True)
