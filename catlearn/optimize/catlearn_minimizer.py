@@ -21,7 +21,7 @@ from catlearn.regression import GaussianProcess
 
 class CatLearnMin(object):
 
-    def __init__(self, x0, ase_calc=None, ml_calc='ARD_SQE',
+    def __init__(self, x0, ase_calc=None, ml_calc='SQE',
                  trajectory='catlearn_opt.traj'):
 
         """Optimization setup.
@@ -100,7 +100,7 @@ class CatLearnMin(object):
                 self.index_mask = create_mask(self.ase_ini, self.constraints)
             self.feval = len(self.list_targets)
 
-    def run(self, fmax=0.05, ml_algo='FIRE', steps=200,
+    def run(self, fmax=0.05, ml_algo='L-BFGS-B', steps=200,
             min_iter=0, ml_max_steps=250, max_memory=50):
 
         """Executing run will start the optimization process.
@@ -187,11 +187,11 @@ class CatLearnMin(object):
                       'dimension': dimension,
                       'bounds': bounds,
                       'scaling': scaling,
-                      'scaling_bounds': ((scaling, scaling + 100.),)},
+                      'scaling_bounds': ((scaling, scaling * 2.0),)},
                      {'type': 'noise_multi',
                       'hyperparameters': [noise_energy, noise_forces],
-                      'bounds': ((noise_energy, 1e-1),
-                                 (noise_forces, 1e-1),)}
+                      'bounds': ((noise_energy, noise_energy * 2.0),
+                                 (noise_forces, noise_forces * 2.0),)}
                      ]
 
             # 1. Train Machine Learning process.
