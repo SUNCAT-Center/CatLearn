@@ -18,14 +18,14 @@ from scipy.spatial import distance
 import copy
 import os
 from catlearn.regression import GaussianProcess
-
+from ase.visualize import view
 
 class CatLearnNEB(object):
 
     def __init__(self, start, end, path=None, n_images=0.5, spring=None,
                  interpolation=None, mic=False, neb_method='improvedtangent',
                  ase_calc=None, include_previous_calcs=False,
-                 stabilize=False, restart=False):
+                 stabilize=False, restart=True):
         """ Nudged elastic band (NEB) setup.
 
         Parameters
@@ -136,9 +136,6 @@ class CatLearnNEB(object):
         self.energy_is = is_endpoint[-1].get_potential_energy()
         self.energy_fs = fs_endpoint[-1].get_potential_energy()
 
-        # Set scaling of the targets:
-        self.max_targets = np.max([self.energy_is, self.energy_fs])
-
         # Settings for the NEB.
         self.neb_method = neb_method
         self.spring = spring
@@ -150,8 +147,6 @@ class CatLearnNEB(object):
             self.d_start_end = np.abs(distance.euclidean(is_pos, fs_pos))
             if isinstance(self.n_images, float):
                 self.n_images = int(self.d_start_end/self.n_images)
-                if self. n_images <= 6:
-                    self.n_images = 6
             if self.spring is None:
                 self.spring = np.sqrt((self.n_images-1) / self.d_start_end)
             self.images = create_ml_neb(is_endpoint=self.initial_endpoint,
@@ -160,7 +155,6 @@ class CatLearnNEB(object):
                                         n_images=self.n_images,
                                         constraints=self.constraints,
                                         index_constraints=self.index_mask,
-                                        scaling_targets=self.max_targets,
                                         iteration=self.iter,
                                         )
 
@@ -188,7 +182,6 @@ class CatLearnNEB(object):
                                         n_images=self.n_images,
                                         constraints=self.constraints,
                                         index_constraints=self.index_mask,
-                                        scaling_targets=self.max_targets,
                                         iteration=self.iter,
                                         )
             self.d_start_end = np.abs(distance.euclidean(is_pos, fs_pos))
@@ -254,8 +247,8 @@ class CatLearnNEB(object):
 
             # 2. Setup and run ML NEB:
 
-            starting_path = copy.deepcopy(self.initial_images)
-            # starting_path = self.images
+            # starting_path = copy.deepcopy(self.initial_images)
+            starting_path = self.images
 
             self.images = create_ml_neb(is_endpoint=self.initial_endpoint,
                                         fs_endpoint=self.final_endpoint,
@@ -264,9 +257,22 @@ class CatLearnNEB(object):
                                         constraints=self.constraints,
                                         index_constraints=self.index_mask,
                                         gp=self.gp,
-                                        scaling_targets=self.max_target,
                                         iteration=self.iter
                                         )
+
+            pos_pred_neb = []
+            for i in self.images:
+                pos_pred_neb.append(i.get_positions().flatten())
+
+            from scipy.spatial.distance import euclidean
+
+            distance_i_i1 = []
+            for j in range(0, len(pos_pred_neb)-1):
+                distance_i_i1.append(euclidean(pos_pred_neb[j], pos_pred_neb[
+                j+1]))
+            print(distance_i_i1)
+            print('before opt')
+
 
             ml_neb = NEB(self.images, climb=False,
                          method=self.neb_method,
@@ -277,6 +283,21 @@ class CatLearnNEB(object):
             print('Starting ML NEB optimization...')
             neb_opt.run(fmax=fmax * 2.0, steps=ml_max_iter)
 
+            pos_pred_neb = []
+            for i in self.images:
+                pos_pred_neb.append(i.get_positions().flatten())
+
+            from scipy.spatial.distance import euclidean
+
+            distance_i_i1 = []
+            for j in range(0, len(pos_pred_neb)-1):
+                distance_i_i1.append(euclidean(pos_pred_neb[j], pos_pred_neb[
+                j+1]))
+            print(distance_i_i1)
+            print('after neb opt (no climb)')
+
+
+
             print('Starting ML NEB optimization using climbing image...')
             ml_neb = NEB(self.images, climb=True,
                          method=self.neb_method,
@@ -284,6 +305,8 @@ class CatLearnNEB(object):
             neb_opt = MDMin(ml_neb, dt=0.05)
             neb_opt.run(fmax=fmax/1.1, steps=ml_max_iter)
             print('ML NEB optimized.')
+
+
 
             # 3. Get results from ML NEB using ASE NEB tools:
             # See https://wiki.fysik.dtu.dk/ase/ase/neb.html
@@ -417,7 +440,7 @@ class CatLearnNEB(object):
 
 def create_ml_neb(is_endpoint, fs_endpoint, images_interpolation,
                   n_images, constraints, index_constraints,
-                  scaling_targets, iteration, gp=None):
+                  iteration, gp=None):
 
     # End-points of the NEB path:
     s_guess_ml = copy.deepcopy(is_endpoint)
@@ -430,8 +453,6 @@ def create_ml_neb(is_endpoint, fs_endpoint, images_interpolation,
     imgs[0].info['label'] = 0
     imgs[0].info['uncertainty'] = 0.0
     imgs[0].info['iteration'] = iteration
-    imgs[0].__dict__['_calc'].__dict__['results']['energy'] = imgs[
-    0].__dict__['_calc'].__dict__['results']['energy'] - scaling_targets
 
     for i in range(1, n_images-1):
         image = copy.deepcopy(s_guess_ml)
@@ -440,7 +461,6 @@ def create_ml_neb(is_endpoint, fs_endpoint, images_interpolation,
         image.info['iteration'] = iteration
         image.set_calculator(CatLearnASE(gp=gp,
                                          index_constraints=index_constraints,
-                                         scaling_targets=0.0
                                          ))
         if images_interpolation is not None:
             image.set_positions(images_interpolation[i].get_positions())
@@ -454,15 +474,12 @@ def create_ml_neb(is_endpoint, fs_endpoint, images_interpolation,
     imgs[-1].info['label'] = n_images-1
     imgs[-1].info['uncertainty'] = 0.0
     imgs[-1].info['iteration'] = iteration
-    imgs[-1].__dict__['_calc'].__dict__['results']['energy'] = imgs[
-    -1].__dict__['_calc'].__dict__['results']['energy'] - scaling_targets
 
     return imgs
 
 
 def train_gp_model(self):
-    self.max_target = np.max(self.list_targets)
-    scaled_targets = self.list_targets.copy() - self.max_target
+    scaled_targets = self.list_targets.copy()
     scaling = 0.1 + np.std(scaled_targets)**2
 
     width = 0.4

@@ -13,13 +13,12 @@ class CatLearnASE(Calculator):
     implemented_properties = ['energy', 'forces']
     nolabel = True
 
-    def __init__(self, gp, index_constraints, scaling_targets=0.0,
-                 finite_step=1e-4, **kwargs):
+    def __init__(self, gp, index_constraints,
+                 finite_step=1e-5, **kwargs):
 
         Calculator.__init__(self, **kwargs)
 
         self.gp = gp
-        self.scaling = scaling_targets
         self.fs = finite_step
         self.ind_constraints = index_constraints
 
@@ -29,11 +28,11 @@ class CatLearnASE(Calculator):
         # Atoms object.
         self.atoms = atoms
 
-        def pred_energy_test(test, gp=self.gp, scaling=self.scaling):
+        def pred_energy_test(test, gp=self.gp):
 
             # Get predictions.
             predictions = gp.predict(test_fp=test)
-            return predictions['prediction'][0][0] + scaling
+            return predictions['prediction'][0][0]
 
         Calculator.calculate(self, atoms, properties, system_changes)
 

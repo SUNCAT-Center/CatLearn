@@ -165,7 +165,7 @@ class CatLearnMin(object):
 
             # Configure ML calculator.
 
-            max_target = np.max(self.list_targets)
+            max_target = self.list_targets[0]
             scaled_targets = self.list_targets.copy() - max_target
             scaling = 0.1 + np.std(scaled_targets)**2
 
