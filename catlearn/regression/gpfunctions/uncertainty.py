@@ -38,6 +38,6 @@ def get_uncertainty(kernel_dict, test_fp, ktb, cinv, log_scale):
     # Calculate the prediction variance for test data.
     scale = np.diagonal(kxx)
     var = np.einsum("ij,ij->i", np.dot(ktb, cinv), ktb)
-    uncertainty = np.sqrt((scale - var))
+    uncertainty = (scale - var)
 
     return uncertainty
