@@ -3,7 +3,6 @@ from catlearn.optimize.constraints import apply_mask
 from ase.calculators.calculator import Calculator, all_changes
 from scipy.optimize import *
 import copy
-from ase.calculators.emt import EMT
 
 
 class CatLearnASE(Calculator):
@@ -14,31 +13,27 @@ class CatLearnASE(Calculator):
     implemented_properties = ['energy', 'forces']
     nolabel = True
 
-    def __init__(self, gp, index_constraints, prior,
-                 finite_step=1e-5, **kwargs):
+    def __init__(self, gp, index_constraints, scaling_targets=0.0,
+                 finite_step=1e-4, **kwargs):
 
         Calculator.__init__(self, **kwargs)
 
         self.gp = gp
+        self.scaling = scaling_targets
         self.fs = finite_step
-        self.prior = prior
         self.ind_constraints = index_constraints
 
     def calculate(self, atoms=None, properties=['energy', 'forces'],
                   system_changes=all_changes):
 
-        self.atoms = 0.0
-        energy = 0.0
-        forces = 0.0
-
         # Atoms object.
         self.atoms = atoms
 
-        def pred_energy_test(test, gp=self.gp, prior=self.prior):
+        def pred_energy_test(test, gp=self.gp, scaling=self.scaling):
 
             # Get predictions.
             predictions = gp.predict(test_fp=test)
-            return predictions['prediction'][0][0] + prior
+            return predictions['prediction'][0][0] + scaling
 
         Calculator.calculate(self, atoms, properties, system_changes)
 
@@ -46,7 +41,6 @@ class CatLearnASE(Calculator):
 
         test_point = apply_mask(list_to_mask=[pos_flatten],
                                 mask_index=self.ind_constraints)[1]
-
 
         # Get energy.
         energy = pred_energy_test(test=test_point)
@@ -64,11 +58,6 @@ class CatLearnASE(Calculator):
             gradients[index_force] = (-f_neg + f_pos) / (2.0 * self.fs)
 
         forces = np.reshape(-gradients, (self.atoms.get_number_of_atoms(), 3))
-
-        # copy_atoms = copy.deepcopy(self.atoms)
-        # copy_atoms.set_calculator(EMT())
-        # forces = copy_atoms.get_forces()
-        # energy = copy_atoms.get_potential_energy()
 
         # Results:
         self.results['energy'] = energy
