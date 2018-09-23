@@ -245,12 +245,9 @@ def train_gp_model(self):
     # self.list_targets[-1]-self.list_targets[0])
     scaled_targets = self.list_targets.copy() - self.max_target
 
-    # from scipy.spatial.distance import euclidean
-    # self.d_i_i += euclidean(self.list_train[0], self.list_train[-1])
-
     width = 1.0
     dimension = 'single'
-    bounds = ((0.1, width),)
+    bounds = ((0.001, width),)
 
     kdict = [{'type': 'gaussian', 'width': width,
               'dimension': dimension,
@@ -271,7 +268,6 @@ def train_gp_model(self):
         train = train[-self.max_memory:]
         scaled_targets = scaled_targets[-self.max_memory:]
         gradients = gradients[-self.max_memory:]
-
 
     print('Training a GP process...')
     print('Number of training points:', len(scaled_targets))
