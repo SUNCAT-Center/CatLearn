@@ -240,9 +240,9 @@ class CatLearnMin(object):
 
 
 def train_gp_model(self):
-    # self.max_target = np.abs(np.max(self.list_targets))
-    self.max_target = np.abs(np.min(self.list_targets)) + 2.0 * np.abs(
-    self.list_targets[-1]-self.list_targets[0])
+    self.max_target = np.abs(np.max(self.list_targets))
+    # self.max_target = np.abs(np.min(self.list_targets)) + 2.0 * np.abs(
+    # self.list_targets[-1]-self.list_targets[0])
     scaled_targets = self.list_targets.copy() - self.max_target
 
     # from scipy.spatial.distance import euclidean
