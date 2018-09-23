@@ -31,7 +31,7 @@ initial_structure = Atoms('H2O',
              (b, -0.7633 + b, -0.4876 + b),
              (b, b, 0.1219 + b)],
                     cell=[a, a, a])
-initial_structure.rattle(stdev=0.1, seed=3)
+initial_structure.rattle(stdev=0.1, seed=0)
 ##############################################################################
 
 # 2.A. Optimize structure using CatLearn:

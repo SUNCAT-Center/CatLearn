@@ -64,13 +64,13 @@ class CatLearnASE(Calculator):
         self.results['forces'] = forces
 
 
-def predicted_energy_test(x0, gp):
-    return gp.predict(test_fp=[x0])['prediction'][0][0]
+def predicted_energy_test(x0, gp, scaling=0.0):
+    return gp.predict(test_fp=[x0])['prediction'][0][0] + scaling
 
 
-def optimize_ml_using_scipy(x0, gp, ml_algo):
+def optimize_ml_using_scipy(x0, gp, ml_algo, scaling):
 
-    args = (gp, )
+    args = (gp, scaling,)
 
     if ml_algo == 'Powell':
         result_min = fmin_powell(func=predicted_energy_test, x0=x0,

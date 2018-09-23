@@ -46,7 +46,7 @@ class CatLearnMin(object):
         self.fmax = 0.0
         self.min_iter = 0
         self.jac = True
-        self.version = 'Min. v.1.5.0'
+        self.version = 'Min. v.1.6.0'
         print_version(self.version)
 
         self.ase_calc = ase_calc
@@ -68,9 +68,9 @@ class CatLearnMin(object):
             self.x0 = self.ase_ini.get_positions().flatten()
             self.num_atoms = self.ase_ini.get_number_of_atoms()
             self.formula = self.ase_ini.get_chemical_formula()
-            self.list_train = [self.x0]
-            self.list_targets = []
-            self.list_gradients = []
+            self.list_train = np.array([])
+            self.list_targets = np.array([])
+            self.list_gradients = np.array([])
             if len(self.constraints) < 0:
                 self.constraints = None
             if self.constraints is not None:
@@ -99,8 +99,9 @@ class CatLearnMin(object):
             if self.constraints is not None:
                 self.index_mask = create_mask(self.ase_ini, self.constraints)
             self.feval = len(self.list_targets)
+        self.d_i_i = 0.0
 
-    def run(self, fmax=0.05, ml_algo='L-BFGS-B', steps=200,
+    def run(self, fmax=0.05, ml_algo='L-BFGS-B', steps=200, alpha=1e-2,
             min_iter=0, ml_max_steps=250, max_memory=50):
 
         """Executing run will start the optimization process.
@@ -137,17 +138,36 @@ class CatLearnMin(object):
         self.ml_algo = ml_algo
         self.fmax = fmax
         self.min_iter = min_iter
+        self.max_memory = max_memory
 
         # Initialization (evaluate two points).
-        initialize(self)
+
+        if len(self.list_targets) == 0:
+            self.list_train = [self.ase_ini.get_positions().flatten()]
+            self.list_targets = [np.append(self.list_targets,
+                                 get_energy_catlearn(self))]
+            self.list_gradients = [np.append(self.list_gradients,
+                                   -get_forces_catlearn(self).flatten())]
+            self.feval += 1
+            molec_writer = TrajectoryWriter('./' + str(self.filename),
+                                            mode='w')
+            molec_writer.write(self.ase_ini)
+
         converged(self)
         print_info(self)
 
-        initialize(self, i_step='BFGS')
+        if not converged(self):
+            i_step = alpha + np.zeros_like(self.list_train[0])
+            steepest_geometry = [self.list_train[0] - i_step *
+                                 self.list_gradients[0]]
+            eval_and_append(self, steepest_geometry)
+            molec_writer = TrajectoryWriter('./' + str(self.filename),
+                                            mode='a')
+            molec_writer.write(self.ase_ini)
         converged(self)
         print_info(self)
 
-        ase_minimizers = ['BFGS', 'LBFGS', 'SciPyFminCG',
+        ase_minimizers = ['BFGS', 'LBFGS', 'SciPyFminCG', 'MDMin',
                           'FIRE', 'BFGSLineSearch', 'SciPyFminBFGS',
                           'QuasiNewton', 'GoodOldQuasiNewton']
 
@@ -156,87 +176,24 @@ class CatLearnMin(object):
         if ml_algo not in ase_minimizers:
             self.ase_opt = False
 
-        # Save original features, energies and gradients:
-        self.org_list_features = self.list_train.tolist()
-        self.org_list_energies = self.list_targets.tolist()
-        self.org_list_gradients = self.list_gradients.tolist()
-
         while not converged(self):
 
-            # Configure ML calculator.
+            # 1. Train Machine Learning model.
+            train_gp_model(self)
 
-            max_target = self.list_targets[0]
-            scaled_targets = self.list_targets.copy() - max_target
-            scaling = 0.1 + np.std(scaled_targets)**2
-
-            width = 0.4
-            noise_energy = 0.001
-            noise_forces = 0.001 * width**2
-
-            if self.ml_calc == 'SQE_fixed':
-                dimension = 'single'
-                bounds = ((0.4, 0.4),)
-            if self.ml_calc == 'SQE':
-                dimension = 'single'
-                bounds = ((0.01, 0.4),)
-            if self.ml_calc == 'ARD_SQE':
-                dimension = 'features'
-                bounds = ((0.01, 0.4),) * len(self.index_mask)
-
-            kdict = [{'type': 'gaussian', 'width': width,
-                      'dimension': dimension,
-                      'bounds': bounds,
-                      'scaling': scaling,
-                      'scaling_bounds': ((scaling, scaling * 2.0),)},
-                     {'type': 'noise_multi',
-                      'hyperparameters': [noise_energy, noise_forces],
-                      'bounds': ((noise_energy, noise_energy * 2.0),
-                                 (noise_forces, noise_forces * 2.0),)}
-                     ]
-
-            # 1. Train Machine Learning process.
-            train = self.list_train.copy()
-            gradients = self.list_gradients.copy()
-
-            if self.index_mask is not None:
-                train = apply_mask(list_to_mask=self.list_train,
-                                   mask_index=self.index_mask)[1]
-                gradients = apply_mask(list_to_mask=self.list_gradients,
-                                       mask_index=self.index_mask)[1]
-
-            # Limited memory.
-            if len(train) >= max_memory:
-                train = train[-max_memory:]
-                scaled_targets = scaled_targets[-max_memory:]
-                gradients = gradients[-max_memory:]
-
-            print('Training a GP process...')
-            print('Number of training points:', len(scaled_targets))
-
-            gp = GaussianProcess(kernel_dict=kdict,
-                                     regularization=0.0,
-                                     regularization_bounds=(0.0, 0.0),
-                                     train_fp=train,
-                                     train_target=scaled_targets,
-                                     gradients=gradients,
-                                     optimize_hyperparameters=False,
-                                     scale_data=False)
-
-            gp.optimize_hyperparameters(global_opt=False)
-            print('Optimized hyperparameters:', gp.theta_opt)
-            print('GP process trained.')
-
-            # 2. Optimize Machine Learning process.
+            # 2. Optimize Machine Learning model.
 
             interesting_point = []
 
             if self.ase_opt is True:
                 guess = self.ase_ini
-                guess_pos = self.list_train[np.argmin(self.list_targets)]
+                # guess_pos = self.list_train[np.argmin(self.list_targets)]
+                guess_pos = self.list_train[0]
                 guess.positions = guess_pos.reshape(-1, 3)
                 guess.set_calculator(CatLearnASE(
-                                        gp=gp,
-                                        index_constraints=self.index_mask)
+                                        gp=self.gp,
+                                        index_constraints=self.index_mask,
+                                        scaling_targets=self.max_target)
                                      )
                 guess.info['iteration'] = self.iter
 
@@ -253,7 +210,8 @@ class CatLearnMin(object):
                 x0 = np.array(apply_mask(list_to_mask=[x0],
                               mask_index=self.index_mask)[1])
 
-                int_p = optimize_ml_using_scipy(x0=x0, gp=gp,
+                int_p = optimize_ml_using_scipy(x0=x0, gp=self.gp,
+                                                scaling=self.max_target,
                                                 ml_algo=ml_algo)
                 interesting_point = unmask_geometry(
                                     org_list=self.list_train,
@@ -262,9 +220,6 @@ class CatLearnMin(object):
 
             # 3. Evaluate and append interesting point.
             eval_and_append(self, interesting_point)
-            self.org_list_features.append(self.list_train[-1])
-            self.org_list_energies.append(self.list_targets[-1])
-            self.org_list_gradients.append(self.list_gradients[-1])
 
             # 4. Convergence and output.
 
@@ -284,67 +239,52 @@ class CatLearnMin(object):
                 break
 
 
-def initialize(self, i_step='BFGS'):
-    """ The GPR model needs two points to start the ML surrogate model.
-    This function takes care of the two first optimization steps.
-    First, evaluates the "real" function for a given initial guess. Secondly,
-    obtains the function value of a second guessed point originated using the
-    same optimizor used for the optimization of the predicted PES. This
-    function is exclusively called when the optimization is initialized and
-    the user has not provided any trained data.
-    """
+def train_gp_model(self):
+    # self.max_target = np.abs(np.max(self.list_targets))
+    self.max_target = np.abs(np.min(self.list_targets)) + 2.0 * np.abs(
+    self.list_targets[-1]-self.list_targets[0])
+    scaled_targets = self.list_targets.copy() - self.max_target
 
-    if len(self.list_targets) == 1:
+    # from scipy.spatial.distance import euclidean
+    # self.d_i_i += euclidean(self.list_train[0], self.list_train[-1])
 
-        if self.jac is False:
-            alpha = np.random.normal(loc=0.0, scale=i_step,
-                                     size=np.shape(self.list_train[0]))
-            ini_train = [self.list_train[-1] - alpha]
+    width = 1.0
+    dimension = 'single'
+    bounds = ((0.1, width),)
 
-        if isinstance(i_step, float):
-            if self.jac is True:
-                alpha = i_step + np.zeros_like(self.list_train[0])
-                ini_train = [self.list_train[-1] - alpha *
-                             self.list_gradients[-1]]
+    kdict = [{'type': 'gaussian', 'width': width,
+              'dimension': dimension,
+              'bounds': bounds,
+              'scaling': 1.,
+              'scaling_bounds': ((1., 1.),)},
+             ]
 
-        if isinstance(i_step, str):
-            opt_ini = eval(i_step)(self.ase_ini, logfile=None)
-            opt_ini.run(fmax=0.05, steps=1)
-            if i_step == 'SciPyFminCG':
-                self.feval += opt_ini.force_calls - 2
-            ini_train = [self.ase_ini.get_positions().flatten()]
+    train = self.list_train.copy()
+    gradients = self.list_gradients.copy()
+    if self.index_mask is not None:
+        train = apply_mask(list_to_mask=self.list_train,
+                           mask_index=self.index_mask)[1]
+        gradients = apply_mask(list_to_mask=self.list_gradients,
+                               mask_index=self.index_mask)[1]
 
-        self.list_train = np.append(self.list_train, ini_train, axis=0)
-        self.list_targets = np.append(self.list_targets,
-                                      get_energy_catlearn(self))
-        self.feval += 1
-        self.list_targets = np.reshape(self.list_targets,
-                                       (len(self.list_targets), 1))
-        if self.jac is True:
-            self.list_gradients = np.append(
-                                        self.list_gradients,
-                                        -get_forces_catlearn(self).flatten())
-            self.list_gradients = np.reshape(
-                                        self.list_gradients,
-                                        (len(self.list_targets), np.shape(
-                                            self.list_train)[1])
-                                        )
+    if len(train) >= self.max_memory:
+        train = train[-self.max_memory:]
+        scaled_targets = scaled_targets[-self.max_memory:]
+        gradients = gradients[-self.max_memory:]
 
-        if self.ase:
-            molec_writer = TrajectoryWriter('./' + str(self.filename),
-                                            mode='a')
-            molec_writer.write(self.ase_ini)
-        self.iter += 1
 
-    if len(self.list_targets) == 0:
-        self.list_targets = [np.append(self.list_targets,
-                             get_energy_catlearn(self))]
-        self.feval += 1
-        if self.jac is True:
-            self.list_gradients = [np.append(self.list_gradients,
-                                   -get_forces_catlearn(self).flatten())]
-        self.feval = len(self.list_targets)
-        if self.ase:
-            molec_writer = TrajectoryWriter('./' + str(self.filename),
-                                            mode='w')
-            molec_writer.write(self.ase_ini)
+    print('Training a GP process...')
+    print('Number of training points:', len(scaled_targets))
+
+    self.gp = GaussianProcess(kernel_dict=kdict,
+                         regularization=0.001,
+                         regularization_bounds=(0.0001, 0.001),
+                         train_fp=train,
+                         train_target=scaled_targets,
+                         gradients=gradients,
+                         optimize_hyperparameters=False,
+                         scale_data=False)
+    self.gp.optimize_hyperparameters(global_opt=False)
+    print('Optimized hyperparameters:', self.gp.theta_opt)
+    print('GP process trained.')
+

@@ -1,4 +1,4 @@
-# @Version 1.5.0
+# @Version 1.6.0
 
 import numpy as np
 from catlearn.optimize.warnings import *
@@ -22,7 +22,7 @@ from catlearn.regression import GaussianProcess
 
 class CatLearnNEB(object):
 
-    def __init__(self, start, end, path=None, n_images=0.5, spring=None,
+    def __init__(self, start, end, path=None, n_images=0.25, spring=None,
                  interpolation=None, mic=False, neb_method='improvedtangent',
                  ase_calc=None, include_previous_calcs=False,
                  stabilize=False, restart=False):
@@ -68,7 +68,7 @@ class CatLearnNEB(object):
         self.ase_calc = ase_calc
         self.ase = True
         self.mic = mic
-        self.version = 'NEB v.1.3.0'
+        self.version = 'NEB v.1.6.0'
         print_version(self.version)
 
         # Reset:
@@ -218,7 +218,7 @@ class CatLearnNEB(object):
         self.org_list_gradients = self.list_gradients.tolist()
 
     def run(self, fmax=0.05, unc_convergence=0.010, steps=200,
-            ml_max_iter=500, plot_neb_paths=False, acquisition='acq_1'):
+            ml_max_iter=500, plot_neb_paths=False, acquisition='acq_2'):
 
         """Executing run will start the optimization process.
 
@@ -244,10 +244,11 @@ class CatLearnNEB(object):
         NEB optimized path.
         Files :
         """
+
         if len(self.list_targets) == 2:
 
             interesting_point = self.images[int(len(
-            self.images)/3)].get_positions().flatten()
+            self.images)/2)].get_positions().flatten()
             eval_and_append(self, interesting_point)
 
         while True:
@@ -273,20 +274,11 @@ class CatLearnNEB(object):
                                         iteration=self.iter
                                         )
 
-            ml_neb = NEB(self.images, climb=False,
-                         method=self.neb_method,
-                         k=self.spring)
-
-            neb_opt = MDMin(ml_neb, dt=0.1)
-
-            print('Starting ML NEB optimization...')
-            neb_opt.run(fmax=fmax * 2.0, steps=ml_max_iter)
-
             print('Starting ML NEB optimization using climbing image...')
             ml_neb = NEB(self.images, climb=True,
                          method=self.neb_method,
                          k=self.spring)
-            neb_opt = MDMin(ml_neb, dt=0.1)
+            neb_opt = MDMin(ml_neb, dt=0.025)
             neb_opt.run(fmax=fmax/1.1, steps=ml_max_iter)
             print('ML NEB optimized.')
 
@@ -435,8 +427,6 @@ def create_ml_neb(is_endpoint, fs_endpoint, images_interpolation,
     imgs[0].info['label'] = 0
     imgs[0].info['uncertainty'] = 0.0
     imgs[0].info['iteration'] = iteration
-    # imgs[0].__dict__['_calc'].__dict__['results']['energy'] = imgs[
-    # 0].__dict__['_calc'].__dict__['results']['energy'] - scaling_targets
 
     for i in range(1, n_images-1):
         image = copy.deepcopy(s_guess_ml)
@@ -459,8 +449,6 @@ def create_ml_neb(is_endpoint, fs_endpoint, images_interpolation,
     imgs[-1].info['label'] = n_images-1
     imgs[-1].info['uncertainty'] = 0.0
     imgs[-1].info['iteration'] = iteration
-    # imgs[-1].__dict__['_calc'].__dict__['results']['energy'] = imgs[
-    # -1].__dict__['_calc'].__dict__['results']['energy'] - scaling_targets
 
     return imgs
 
@@ -470,21 +458,15 @@ def train_gp_model(self):
     scaled_targets = self.list_targets.copy() - self.max_target
 
     width = 0.4
-    noise_energy = 0.001
-    noise_forces = 0.0001
 
     dimension = 'single'
-    bounds = ((0.01, self.path_distance * 1.0),)
+    bounds = ((0.01, self.path_distance/2),)
 
     kdict = [{'type': 'gaussian', 'width': width,
               'dimension': dimension,
               'bounds': bounds,
               'scaling': 1.,
               'scaling_bounds': ((1., 1.),)},
-             {'type': 'noise_multi',
-              'hyperparameters': [noise_energy, noise_forces],
-              'bounds': ((noise_energy, noise_energy),
-                         (noise_forces, noise_forces),)}
              ]
 
     train = self.list_train.copy()
@@ -499,8 +481,8 @@ def train_gp_model(self):
     print('Number of training points:', len(scaled_targets))
 
     self.gp = GaussianProcess(kernel_dict=kdict,
-                         regularization=0.0,
-                         regularization_bounds=(0.0, 0.0),
+                         regularization=0.0001,
+                         regularization_bounds=(0.0001, 0.0001),
                          train_fp=train,
                          train_target=scaled_targets,
                          gradients=gradients,
@@ -522,7 +504,7 @@ def get_results_predicted_path(self):
         pos_unc = apply_mask(list_to_mask=pos_unc,
                              mask_index=self.index_mask)[1]
         u = self.gp.predict(test_fp=pos_unc, uncertainty=True)
-        uncertainty = (u['uncertainty'][0]**2) * 1.0
+        uncertainty = u['uncertainty'][0]
         i.info['uncertainty'] = uncertainty
         self.uncertainty_path.append(uncertainty)
         self.e_path.append(i.get_total_energy())

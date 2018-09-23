@@ -188,13 +188,13 @@ def print_info(self):
 
     if self.iter > 0:
         if not self.jac:
-            self.table_results.add_row(['CatLearn' + '('+ self.ml_algo + ')',
+            self.table_results.add_row(['CatLearn',
                                         self.iter,
                                         print_time(),
                                         self.list_targets[-1][0],
                                         self.e_diff, converged(self)])
         if self.jac:
-            self.table_results.add_row(['CatLearn' + '(' + self.ml_algo + ')',
+            self.table_results.add_row(['CatLearn',
                                         self.iter,
                                         print_time(),
                                         self.list_targets[-1][0],
@@ -215,7 +215,7 @@ def print_info_ml(self):
                                              'ML func. evaluations',
                                              'Suggested point (x)',
                                              'Predicted value', 'Converged?'])
-    self.table_ml_results.add_row([self.iter, self.ml_algo,
+    self.table_ml_results.add_row([self.iter,
                                    self.ml_feval_pred_mean,
                                    self.interesting_point,
                                    self.ml_f_min_pred_mean,
