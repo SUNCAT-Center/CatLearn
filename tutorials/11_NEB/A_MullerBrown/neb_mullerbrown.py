@@ -78,7 +78,7 @@ final = read('final_optimized.traj')
 neb_catlearn = CatLearnNEB(start='initial_optimized.traj',
                            end='final_optimized.traj',
                            ase_calc=copy.deepcopy(ase_calculator),
-                           n_images=0.25,
+                           n_images=6,
                            interpolation='linear')
 
 neb_catlearn.run(fmax=0.05, plot_neb_paths=True)

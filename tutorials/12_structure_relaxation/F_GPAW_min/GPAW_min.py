@@ -38,8 +38,8 @@ initial_structure.rattle(stdev=0.1, seed=0)
 initial_catlearn = initial_structure.copy()
 initial_catlearn.set_calculator(calculator)
 
-catlearn_opt = CatLearnMin(initial_catlearn, trajectory='catlearn_opt.traj')
-catlearn_opt.run(fmax=0.05)
+# catlearn_opt = CatLearnMin(initial_catlearn, trajectory='catlearn_opt.traj')
+# catlearn_opt.run(fmax=0.05)
 
 # 2.B. Optimize structure using ASE.
 initial_ase = initial_structure.copy()
@@ -51,5 +51,5 @@ ase_opt.run(fmax=0.05)
 
 # 3. Summary of the results:
 print('\n Summary of the results:\n ------------------------------------')
-print('Number of function evaluations using CatLearn:', catlearn_opt.feval)
+dprint('Number of function evaluations using CatLearn:', catlearn_opt.feval)
 print('Number of function evaluations using ASE:', ase_opt.function_calls)

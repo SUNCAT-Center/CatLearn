@@ -212,10 +212,7 @@ class CatLearnNEB(object):
         # Get path distance:
         self.path_distance = copy.deepcopy(self.d_start_end)
 
-        # Save original features, energies and gradients:
-        self.org_list_features = self.list_train.tolist()
-        self.org_list_energies = self.list_targets.tolist()
-        self.org_list_gradients = self.list_gradients.tolist()
+        self.gp = None
 
     def run(self, fmax=0.05, unc_convergence=0.010, steps=200,
             ml_max_iter=500, plot_neb_paths=False, acquisition='acq_2'):
@@ -350,9 +347,6 @@ class CatLearnNEB(object):
             # 5. Add a new training point and evaluate it.
 
             eval_and_append(self, interesting_point)
-            self.org_list_features.append(self.list_train[-1])
-            self.org_list_energies.append(self.list_targets[-1])
-            self.org_list_gradients.append(self.list_gradients[-1])
 
             # 6. Store results.
             store_results_neb(self)
@@ -457,16 +451,26 @@ def train_gp_model(self):
     self.max_target = np.max(self.list_targets)
     scaled_targets = self.list_targets.copy() - self.max_target
 
-    width = 0.4
-
     dimension = 'single'
     bounds = ((0.01, self.path_distance/2),)
+
+    if self.gp is None:
+        width = 0.4
+    if self.gp is not None:
+        width = self.gp.theta_opt['x'][1]
+
+    noise_energy = 0.001
+    noise_forces = 0.001 * (width**2)
 
     kdict = [{'type': 'gaussian', 'width': width,
               'dimension': dimension,
               'bounds': bounds,
               'scaling': 1.,
               'scaling_bounds': ((1., 1.),)},
+             {'type': 'noise_multi',
+              'hyperparameters': [noise_energy, noise_forces],
+              'bounds': ((noise_energy, noise_energy),
+                         (noise_forces, noise_forces),)}
              ]
 
     train = self.list_train.copy()
@@ -481,8 +485,8 @@ def train_gp_model(self):
     print('Number of training points:', len(scaled_targets))
 
     self.gp = GaussianProcess(kernel_dict=kdict,
-                         regularization=0.0001,
-                         regularization_bounds=(0.0001, 0.0001),
+                         regularization=0.0,
+                         regularization_bounds=(0.0, 0.0),
                          train_fp=train,
                          train_target=scaled_targets,
                          gradients=gradients,
