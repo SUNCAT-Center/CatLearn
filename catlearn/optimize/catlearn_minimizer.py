@@ -99,10 +99,11 @@ class CatLearnMin(object):
             if self.constraints is not None:
                 self.index_mask = create_mask(self.ase_ini, self.constraints)
             self.feval = len(self.list_targets)
-        self.d_i_i = 0.0
 
-    def run(self, fmax=0.05, ml_algo='L-BFGS-B', steps=200, alpha=1e-2,
-            min_iter=0, ml_max_steps=250, max_memory=50):
+        self.gp = None
+
+    def run(self, fmax=0.05, ml_algo='L-BFGS-B', steps=200, alpha=(0.4)**4,
+            min_iter=0, max_memory=50):
 
         """Executing run will start the optimization process.
 
@@ -119,8 +120,6 @@ class CatLearnMin(object):
             Max. number of optimization steps.
         min_iter : int
             Min. number of optimizations steps
-        ml_max_steps : int
-            Max. number of iterations of the machine learning surrogate model.
 
         Returns
         -------
@@ -187,8 +186,8 @@ class CatLearnMin(object):
 
             if self.ase_opt is True:
                 guess = self.ase_ini
-                # guess_pos = self.list_train[np.argmin(self.list_targets)]
-                guess_pos = self.list_train[0]
+                guess_pos = self.list_train[np.argmin(self.list_targets)]
+                # guess_pos = self.list_train[0]
                 guess.positions = guess_pos.reshape(-1, 3)
                 guess.set_calculator(CatLearnASE(
                                         gp=self.gp,
@@ -200,7 +199,7 @@ class CatLearnMin(object):
                 # Run optimization of the predicted PES.
                 opt_ml = eval(ml_algo)(guess, logfile=None)
                 print('Starting ML optimization...')
-                opt_ml.run(fmax=1e-4, steps=ml_max_steps)
+                opt_ml.run(fmax=1e-4, steps=500)
                 print('ML optimized.')
 
                 interesting_point = guess.get_positions().flatten()
@@ -240,20 +239,28 @@ class CatLearnMin(object):
 
 
 def train_gp_model(self):
-    self.max_target = np.abs(np.max(self.list_targets))
+    self.max_target = np.max(self.list_targets[:,0])
+
     # self.max_target = np.abs(np.min(self.list_targets)) + 2.0 * np.abs(
     # self.list_targets[-1]-self.list_targets[0])
     scaled_targets = self.list_targets.copy() - self.max_target
 
-    width = 1.0
     dimension = 'single'
-    bounds = ((0.001, width),)
+    lower_width = 0.01
+    upper_width = .35
 
-    kdict = [{'type': 'gaussian', 'width': width,
+    noise_energy = 0.001
+    noise_forces = 0.001 * (0.35**2)
+
+    kdict = [{'type': 'gaussian', 'width': 0.4,
               'dimension': dimension,
-              'bounds': bounds,
+              'bounds': ((lower_width, upper_width),),
               'scaling': 1.,
               'scaling_bounds': ((1., 1.),)},
+             {'type': 'noise_multi',
+              'hyperparameters': [noise_energy, noise_forces],
+              'bounds': ((noise_energy, noise_energy),
+                         (noise_forces, noise_forces),)}
              ]
 
     train = self.list_train.copy()
@@ -273,8 +280,8 @@ def train_gp_model(self):
     print('Number of training points:', len(scaled_targets))
 
     self.gp = GaussianProcess(kernel_dict=kdict,
-                         regularization=0.001,
-                         regularization_bounds=(0.0001, 0.001),
+                         regularization=0.0,
+                         regularization_bounds=(0.0, 0.0),
                          train_fp=train,
                          train_target=scaled_targets,
                          gradients=gradients,

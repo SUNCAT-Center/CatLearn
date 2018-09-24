@@ -482,7 +482,7 @@ def train_gp_model(self):
 
     self.gp = GaussianProcess(kernel_dict=kdict,
                          regularization=0.0001,
-                         regularization_bounds=(0.0001, 0.001),
+                         regularization_bounds=(0.0001, 0.0001),
                          train_fp=train,
                          train_target=scaled_targets,
                          gradients=gradients,

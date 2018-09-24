@@ -27,7 +27,7 @@ d = 1.10
 
 slab = fcc111('Cu', size=(2, 2, 4), vacuum=10.0)
 molecule = Atoms('CO', positions=[(0., 0., 0.), (0., 0., d)])
-molecule.rattle(stdev=0.1, seed=0)
+molecule.rattle(stdev=0.1, seed=1)
 add_adsorbate(slab, molecule, h, 'ontop')
 
 constraint = FixAtoms(mask=[atom.position[2] < 14.0 for atom in slab])
@@ -42,7 +42,7 @@ initial_catlearn.set_calculator(calculator)
 
 catlearn_opt = CatLearnMin(initial_catlearn, trajectory='catlearn_opt.traj',
                            ml_calc='SQE')
-catlearn_opt.run(fmax=0.01)
+catlearn_opt.run(fmax=0.05)
 
 # 2.B. Optimize structure using ASE.
 initial_ase = initial_structure.copy()
@@ -50,7 +50,7 @@ initial_ase.set_calculator(calculator)
 
 ase_opt = GPMin(initial_ase, trajectory='ase_opt.traj',
                 update_hyperparams=False)
-ase_opt.run(fmax=0.01)
+ase_opt.run(fmax=0.05)
 
 # 3. Summary of the results:
 print('\n Summary of the results:\n ------------------------------------')

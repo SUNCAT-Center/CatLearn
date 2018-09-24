@@ -133,8 +133,8 @@ def noise_multi_kernel(theta, log_scale, m1, m2=None, eval_gradients=False):
         theta = np.exp(theta)
 
     # Constants:
-    c_1 = theta[0]
-    c_2 = theta[1]
+    c_1 = theta[0]**2
+    c_2 = theta[1]**2
 
     size_m1 = np.shape(m1)
     N = size_m1[0]

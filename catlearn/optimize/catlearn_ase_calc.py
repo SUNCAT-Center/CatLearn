@@ -87,7 +87,7 @@ def optimize_ml_using_scipy(x0, gp, ml_algo, scaling):
     if ml_algo == 'L-BFGS-B':
         result_min = fmin_l_bfgs_b(func=predicted_energy_test, x0=x0,
                                    approx_grad=True, args=args, disp=False,
-                                   pgtol= 1e-8, epsilon=1e-6)
+                                   pgtol=1e-6, epsilon=1e-8)
         interesting_point = result_min[0]
 
     if ml_algo == 'CG':

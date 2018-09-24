@@ -3,7 +3,7 @@ from __future__ import absolute_import
 from __future__ import division
 
 import numpy as np
-from scipy.linalg import cholesky, cho_solve
+from scipy.linalg import cho_solve ,cho_factor
 from .covariance import get_covariance
 from .kernel_setup import list2kdict, kdict2list
 from catlearn.regression.gpfunctions import kernels as ak
@@ -46,11 +46,11 @@ def log_marginal_likelihood(theta, train_matrix, targets, kernel_dict,
         kernel_dict=kernel_dict, matrix1=train_matrix,
         regularization=theta[-1], log_scale=scale_optimizer,
         eval_gradients=eval_gradients)
-    L = cholesky(K, overwrite_a=False, lower=True, check_finite=True)
+    L, lower = cho_factor(K, overwrite_a=False, lower=True, check_finite=True)
 
     # Invert the covariance matrix.
     if cinv is None:
-        a = cho_solve((L, True), y, check_finite=False)
+        a = cho_solve((L, lower), y, check_finite=False)
     else:
         a = np.dot(cinv, y)
 
