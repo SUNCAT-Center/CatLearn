@@ -16,41 +16,14 @@ def get_fmax(gradients_flatten, num_atoms):
 def converged(self):
     """Function that checks the convergence in each optimization step."""
 
-    #  The force on all individual atoms should be less than fmax.
-    if self.ase is True:
-        if self.jac is True:
-            self.list_fmax = get_fmax(-np.array([self.list_gradients[-1]]),
-                                  self.num_atoms)
-            self.max_abs_forces = np.max(np.abs(self.list_fmax))
-            if self.min_iter:
-                if self.iter <= self.min_iter:
-                    return False
-            if self.max_abs_forces < self.fmax:
-                return True
-
-    # The force on all individual components should be less than fmax.
-    if self.ase is False:
-        if self.jac is True:
-            self.list_fmax = np.amax(np.abs(self.list_gradients), axis=1)
-            forces_last_iteration = -self.list_fmax[-1]
-            self.max_abs_forces = np.max(np.abs(forces_last_iteration))
-            if self.min_iter:
-                if self.iter <= self.min_iter:
-                    return False
-            if self.max_abs_forces < self.fmax:
-                return True
-
-    # Check energy convergence.
-    if self.feval > 1:
-        self.e_diff = np.abs(self.list_targets[-1] - self.list_targets[-2])
+    self.list_fmax = get_fmax(-np.array([self.list_gradients[-1]]),
+                          self.num_atoms)
+    self.max_abs_forces = np.max(np.abs(self.list_fmax))
 
     if self.min_iter:
         if self.iter <= self.min_iter:
             return False
-
-    if not self.jac:
-        if len(self.list_targets) > 1:
-            if self.e_diff < self.e_max:
-                return True
+    if self.max_abs_forces < self.fmax:
+        return True
 
     return False

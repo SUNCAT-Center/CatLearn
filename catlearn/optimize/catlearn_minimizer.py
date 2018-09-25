@@ -100,9 +100,10 @@ class CatLearnMin(object):
                 self.index_mask = create_mask(self.ase_ini, self.constraints)
             self.feval = len(self.list_targets)
 
+        self.list_max_abs_forces = []
         self.gp = None
 
-    def run(self, fmax=0.05, ml_algo='L-BFGS-B', steps=200, alpha=1e-3,
+    def run(self, fmax=0.05, ml_algo='L-BFGS-B', steps=200, alpha=5e-3,
             min_iter=0, max_memory=50):
 
         """Executing run will start the optimization process.
@@ -153,6 +154,7 @@ class CatLearnMin(object):
             molec_writer.write(self.ase_ini)
 
         converged(self)
+        self.list_max_abs_forces.append(self.max_abs_forces)
         print_info(self)
 
         if not converged(self):
@@ -164,6 +166,7 @@ class CatLearnMin(object):
                                             mode='a')
             molec_writer.write(self.ase_ini)
         converged(self)
+        self.list_max_abs_forces.append(self.max_abs_forces)
         print_info(self)
 
         ase_minimizers = ['BFGS', 'LBFGS', 'SciPyFminCG', 'MDMin',
@@ -236,6 +239,8 @@ class CatLearnMin(object):
             if self.iter >= steps:
                 print('Not converged. Maximum number of iterations reached.')
                 break
+            self.list_max_abs_forces.append(self.max_abs_forces)
+
 
 
 def train_gp_model(self):
@@ -244,18 +249,22 @@ def train_gp_model(self):
     # self.max_target = np.max(self.list_targets[:, 0])
 
     # New prior:
-    deg_free = 30./(len(self.index_mask)/3.)
-    prefact = deg_free * np.abs(self.list_targets[-1]-self.list_targets[0])
-    self.max_target = np.min(self.list_targets) + prefact
+    # prefact = deg_free * np.abs(self.list_targets[-1]-self.list_targets[0])
+
+    # New prior:
+    abs_forces = np.abs(self.list_max_abs_forces[
+    -1]-self.list_max_abs_forces[-2])
+    deg_free = abs_forces/(np.abs(self.list_targets[-1]-self.list_targets[-2]))
+    self.max_target = np.min(self.list_targets) + deg_free
 
     scaled_targets = self.list_targets.copy() - self.max_target
 
     dimension = 'single'
     lower_width = 0.0001
-    upper_width = 0.5
+    upper_width = 0.4
 
-    noise_energy = 0.001
-    noise_forces = 0.0001
+    noise_energy = 0.005
+    noise_forces = 0.0005
 
     kdict = [{'type': 'gaussian', 'width': 0.40,
               'dimension': dimension,

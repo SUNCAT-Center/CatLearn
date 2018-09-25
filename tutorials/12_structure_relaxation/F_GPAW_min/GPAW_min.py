@@ -26,10 +26,10 @@ calculator = GPAW(mode='lcao',
 # 1.1. Set up structure:
 a = 6
 b = a / 2
-initial_structure = Atoms('H2O',
+initial_structure = Atoms('H2',
             [(b, 0.7633 + b, -0.4876 + b),
              (b, -0.7633 + b, -0.4876 + b),
-             (b, b, 0.1219 + b)],
+             ],
                     cell=[a, a, a])
 initial_structure.rattle(stdev=0.1, seed=0)
 ##############################################################################
