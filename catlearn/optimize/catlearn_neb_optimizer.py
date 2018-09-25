@@ -75,6 +75,9 @@ class CatLearnNEB(object):
         self.constraints = None
         self.interesting_point = None
 
+        if not os.path.isfile('evaluated_structures.traj'):
+            restart=False
+
         # Create new file to store warnings and errors:
         open('warnings_and_errors.txt', 'w')
 
@@ -145,13 +148,11 @@ class CatLearnNEB(object):
         self.initial_endpoint = is_endpoint[-1]
         self.final_endpoint = fs_endpoint[-1]
 
-        # A) Create images using interpolation if user do not feed a path:
+        # A) Create images using interpolation if user does not set a path:
         if path is None:
             self.d_start_end = np.abs(distance.euclidean(is_pos, fs_pos))
             if isinstance(self.n_images, float):
                 self.n_images = int(self.d_start_end/self.n_images)
-                if self. n_images <= 6:
-                    self.n_images = 6
             if self.spring is None:
                 self.spring = np.sqrt((self.n_images-1) / self.d_start_end)
             self.images = create_ml_neb(is_endpoint=self.initial_endpoint,
@@ -193,7 +194,7 @@ class CatLearnNEB(object):
                                         )
             self.d_start_end = np.abs(distance.euclidean(is_pos, fs_pos))
 
-        # Save files with all the paths tested:
+        # Save files with all the paths that have been predicted:
         write('all_predicted_paths.traj', self.images)
 
         if stabilize is True:
@@ -205,14 +206,17 @@ class CatLearnNEB(object):
                                  mode='a').write()
         self.uncertainty_path = np.zeros(len(self.images))
 
-        # Stabilize spring constant:
+        # Guess spring constant if spring was not set by the user:
         if self.spring is None:
             self.spring = np.sqrt(self.n_images-1) / self.d_start_end
 
-        # Get path distance:
+        # Get initial path distance:
         self.path_distance = copy.deepcopy(self.d_start_end)
 
-        self.gp = None
+        self.max_forces = get_fmax(-np.array([self.list_gradients[-1]]),
+                                   self.num_atoms)
+        self.max_abs_forces = np.max(np.abs(self.max_forces))
+
 
     def run(self, fmax=0.05, unc_convergence=0.010, steps=200,
             ml_max_iter=500, plot_neb_paths=False, acquisition='acq_2'):
@@ -242,17 +246,15 @@ class CatLearnNEB(object):
         Files :
         """
 
+        # Calculate the middle-point if only known initial & final structures.
         if len(self.list_targets) == 2:
-
-            interesting_point = self.images[int(len(
-            self.images)/2)].get_positions().flatten()
+            middle = int(self.n_images * (1./2.))
+            interesting_point = self.images[middle].get_positions().flatten()
             eval_and_append(self, interesting_point)
 
         while True:
 
             # 1. Train Machine Learning process.
-
-            # Configure ML calculator.
             train_gp_model(self)
 
             # 2. Setup and run ML NEB:
@@ -279,7 +281,7 @@ class CatLearnNEB(object):
             neb_opt.run(fmax=fmax/1.1, steps=ml_max_iter)
             print('ML NEB optimized.')
 
-            # 3. Get results from ML NEB using ASE NEB tools:
+            # 3. Get results from ML NEB using ASE NEB Tools:
             # See https://wiki.fysik.dtu.dk/ase/ase/neb.html
 
             interesting_point = []
@@ -361,12 +363,12 @@ class CatLearnNEB(object):
                   np.argmax(self.uncertainty_path[1:-1]) + 2)
             print('Number of iterations:', self.iter)
 
-            max_forces = get_fmax(-np.array([self.list_gradients[-1]]),
+            self.max_forces = get_fmax(-np.array([self.list_gradients[-1]]),
                                   self.num_atoms)
-            max_abs_forces = np.max(np.abs(max_forces))
+            self.max_abs_forces = np.max(np.abs(self.max_forces))
 
             print('Max. force of the last image evaluated (eV/Angstrom):',
-                  max_abs_forces)
+                  self.max_abs_forces)
             print('Energy of the last image evaluated (eV):',
                   self.list_targets[-1][0])
             print('Forward reaction barrier energy (eV):',
@@ -378,7 +380,7 @@ class CatLearnNEB(object):
             # 7. Check convergence:
 
             # Check whether the evaluated point is a stationary point.
-            if max_abs_forces <= fmax:
+            if self.max_abs_forces <= fmax:
                 congrats_stationary_neb()
 
                 if np.max(self.uncertainty_path[1:-1]) < unc_convergence:
@@ -410,12 +412,8 @@ def create_ml_neb(is_endpoint, fs_endpoint, images_interpolation,
                   n_images, constraints, index_constraints,
                   scaling_targets, iteration, gp=None):
 
-    # End-points of the NEB path:
-    s_guess_ml = copy.deepcopy(is_endpoint)
-    f_guess_ml = copy.deepcopy(fs_endpoint)
-
     # Create ML NEB path:
-    imgs = [s_guess_ml]
+    imgs = [is_endpoint]
 
     # Append labels, uncertainty and iter to the first end-point:
     imgs[0].info['label'] = 0
@@ -423,7 +421,7 @@ def create_ml_neb(is_endpoint, fs_endpoint, images_interpolation,
     imgs[0].info['iteration'] = iteration
 
     for i in range(1, n_images-1):
-        image = copy.deepcopy(s_guess_ml)
+        image = is_endpoint.copy()
         image.info['label'] = i
         image.info['uncertainty'] = 0.0
         image.info['iteration'] = iteration
@@ -437,7 +435,7 @@ def create_ml_neb(is_endpoint, fs_endpoint, images_interpolation,
         imgs.append(image)
 
     # Scale energies (final):
-    imgs.append(f_guess_ml)
+    imgs.append(fs_endpoint)
 
     # Append labels, uncertainty and iter to the last end-point:
     imgs[-1].info['label'] = n_images-1
@@ -452,15 +450,12 @@ def train_gp_model(self):
     scaled_targets = self.list_targets.copy() - self.max_target
 
     dimension = 'single'
-    bounds = ((0.01, self.path_distance/2),)
+    bounds = ((0.01, self.path_distance),)
 
-    if self.gp is None:
-        width = 0.4
-    if self.gp is not None:
-        width = self.gp.theta_opt['x'][1]
+    width = self.path_distance/2
 
-    noise_energy = 0.001
-    noise_forces = 0.001 * (width**2)
+    noise_energy = 0.005
+    noise_forces = 0.0005
 
     kdict = [{'type': 'gaussian', 'width': width,
               'dimension': dimension,
@@ -508,7 +503,7 @@ def get_results_predicted_path(self):
         pos_unc = apply_mask(list_to_mask=pos_unc,
                              mask_index=self.index_mask)[1]
         u = self.gp.predict(test_fp=pos_unc, uncertainty=True)
-        uncertainty = u['uncertainty'][0]
+        uncertainty = u['uncertainty'][0] * 5.0
         i.info['uncertainty'] = uncertainty
         self.uncertainty_path.append(uncertainty)
         self.e_path.append(i.get_total_energy())

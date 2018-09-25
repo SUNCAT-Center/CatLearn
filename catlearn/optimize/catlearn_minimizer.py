@@ -102,7 +102,7 @@ class CatLearnMin(object):
 
         self.gp = None
 
-    def run(self, fmax=0.05, ml_algo='L-BFGS-B', steps=200, alpha=(0.4)**4,
+    def run(self, fmax=0.05, ml_algo='L-BFGS-B', steps=200, alpha=1e-3,
             min_iter=0, max_memory=50):
 
         """Executing run will start the optimization process.
@@ -239,20 +239,25 @@ class CatLearnMin(object):
 
 
 def train_gp_model(self):
-    self.max_target = np.max(self.list_targets[:,0])
 
-    # self.max_target = np.abs(np.min(self.list_targets)) + 2.0 * np.abs(
-    # self.list_targets[-1]-self.list_targets[0])
+    # Old prior:
+    # self.max_target = np.max(self.list_targets[:, 0])
+
+    # New prior:
+    deg_free = 30./(len(self.index_mask)/3.)
+    prefact = deg_free * np.abs(self.list_targets[-1]-self.list_targets[0])
+    self.max_target = np.min(self.list_targets) + prefact
+
     scaled_targets = self.list_targets.copy() - self.max_target
 
     dimension = 'single'
-    lower_width = 0.01
-    upper_width = .35
+    lower_width = 0.0001
+    upper_width = 0.5
 
     noise_energy = 0.001
-    noise_forces = 0.001 * (0.35**2)
+    noise_forces = 0.0001
 
-    kdict = [{'type': 'gaussian', 'width': 0.4,
+    kdict = [{'type': 'gaussian', 'width': 0.40,
               'dimension': dimension,
               'bounds': ((lower_width, upper_width),),
               'scaling': 1.,
