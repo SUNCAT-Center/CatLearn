@@ -13,7 +13,7 @@ from ase.neb import NEB
 from ase.neb import NEBTools
 from ase.io import read, write
 from ase.io.trajectory import TrajectoryWriter
-from ase.optimize import MDMin
+from ase.optimize import MDMin, FIRE
 from scipy.spatial import distance
 import copy
 import os
@@ -217,9 +217,8 @@ class CatLearnNEB(object):
                                    self.num_atoms)
         self.max_abs_forces = np.max(np.abs(self.max_forces))
 
-
     def run(self, fmax=0.05, unc_convergence=0.010, steps=200,
-            ml_max_iter=500, plot_neb_paths=False, acquisition='acq_2'):
+            plot_neb_paths=False, acquisition='acq_2'):
 
         """Executing run will start the optimization process.
 
@@ -231,8 +230,6 @@ class CatLearnNEB(object):
             Maximum uncertainty for convergence (in eV).
         steps : int
             Maximum number of iterations in the surrogate model.
-        ml_max_iter : int
-            Maximum number of ML NEB iterations.
         plot_neb_paths: bool
             If True it prints and stores (in csv format) the last predicted
             NEB path obtained by the surrogate ML model. Note: Python package
@@ -248,7 +245,7 @@ class CatLearnNEB(object):
 
         # Calculate the middle-point if only known initial & final structures.
         if len(self.list_targets) == 2:
-            middle = int(self.n_images * (1./2.))
+            middle = int(self.n_images * (1./3.))
             interesting_point = self.images[middle].get_positions().flatten()
             eval_and_append(self, interesting_point)
 
@@ -277,8 +274,8 @@ class CatLearnNEB(object):
             ml_neb = NEB(self.images, climb=True,
                          method=self.neb_method,
                          k=self.spring)
-            neb_opt = MDMin(ml_neb, dt=0.025)
-            neb_opt.run(fmax=fmax/1.1, steps=ml_max_iter)
+            neb_opt = MDMin(ml_neb, dt=0.050)
+            neb_opt.run(fmax=fmax/1.1, steps=300)
             print('ML NEB optimized.')
 
             # 3. Get results from ML NEB using ASE NEB Tools:
@@ -450,22 +447,16 @@ def train_gp_model(self):
     scaled_targets = self.list_targets.copy() - self.max_target
 
     dimension = 'single'
-    bounds = ((0.01, self.path_distance),)
 
-    width = self.path_distance/2
+    bounds = ((0.1, self.path_distance),)
 
-    noise_energy = 0.005
-    noise_forces = 0.0005
+    width = np.mean([0.1, self.path_distance])
 
     kdict = [{'type': 'gaussian', 'width': width,
               'dimension': dimension,
               'bounds': bounds,
               'scaling': 1.,
               'scaling_bounds': ((1., 1.),)},
-             {'type': 'noise_multi',
-              'hyperparameters': [noise_energy, noise_forces],
-              'bounds': ((noise_energy, noise_energy),
-                         (noise_forces, noise_forces),)}
              ]
 
     train = self.list_train.copy()
@@ -480,8 +471,8 @@ def train_gp_model(self):
     print('Number of training points:', len(scaled_targets))
 
     self.gp = GaussianProcess(kernel_dict=kdict,
-                         regularization=0.0,
-                         regularization_bounds=(0.0, 0.0),
+                         regularization=0.003,
+                         regularization_bounds=(0.003, 0.005),
                          train_fp=train,
                          train_target=scaled_targets,
                          gradients=gradients,
@@ -503,7 +494,7 @@ def get_results_predicted_path(self):
         pos_unc = apply_mask(list_to_mask=pos_unc,
                              mask_index=self.index_mask)[1]
         u = self.gp.predict(test_fp=pos_unc, uncertainty=True)
-        uncertainty = u['uncertainty'][0] * 5.0
+        uncertainty = u['uncertainty'][0] * 1.0
         i.info['uncertainty'] = uncertainty
         self.uncertainty_path.append(uncertainty)
         self.e_path.append(i.get_total_energy())

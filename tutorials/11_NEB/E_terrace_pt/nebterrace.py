@@ -75,10 +75,12 @@ n_images = 7
 neb_catlearn = CatLearnNEB(start='initial_opt.traj',
                            end='final_opt.traj',
                            ase_calc=copy.deepcopy(ase_calculator),
-                           n_images=3,
+                           n_images=7,
                            interpolation='idpp', restart=False)
 
 neb_catlearn.run(fmax=0.05, plot_neb_paths=True)
+
+
 
 # 3. Summary of the results #################################################
 
@@ -101,3 +103,4 @@ print('\nThe CatLearn algorithm required ',
       'times less number of function evaluations than '
       'the standard NEB algorithm.')
 
+view(read('last_predicted_path.traj', ':'))

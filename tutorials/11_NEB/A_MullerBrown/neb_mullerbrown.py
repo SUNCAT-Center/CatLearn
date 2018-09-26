@@ -45,30 +45,30 @@ final_opt.run(fmax=0.01)
 n_images = 9
 
 # 2.A. NEB using ASE #########################################################
-
-initial_ase = read('initial_optimized.traj')
-final_ase = read('final_optimized.traj')
-images_ase = [initial_ase]
-for i in range(1, n_images-1):
-    image_ase = initial_ase.copy()
-    image_ase.set_calculator(copy.deepcopy(ase_calculator))
-    images_ase.append(image_ase)
-images_ase.append(final_ase)
-
-neb_ase = NEB(images_ase, climb=True, method='improvedtangent')
-neb_ase.interpolate()
-qn_ase = MDMin(neb_ase, trajectory='neb_ase.traj')
-qn_ase.run(fmax=0.05)
-
-nebtools_ase = NEBTools(images_ase)
-
-Sf_ase = nebtools_ase.get_fit()[2]
-Ef_ase = nebtools_ase.get_fit()[3]
-
-Ef_neb_ase, dE_neb_ase = nebtools_ase.get_barrier(fit=False)
-nebtools_ase.plot_band()
-
-plt.show()
+#
+# initial_ase = read('initial_optimized.traj')
+# final_ase = read('final_optimized.traj')
+# images_ase = [initial_ase]
+# for i in range(1, n_images-1):
+#     image_ase = initial_ase.copy()
+#     image_ase.set_calculator(copy.deepcopy(ase_calculator))
+#     images_ase.append(image_ase)
+# images_ase.append(final_ase)
+#
+# neb_ase = NEB(images_ase, climb=True, method='improvedtangent')
+# neb_ase.interpolate()
+# qn_ase = MDMin(neb_ase, trajectory='neb_ase.traj')
+# qn_ase.run(fmax=0.05)
+#
+# nebtools_ase = NEBTools(images_ase)
+#
+# Sf_ase = nebtools_ase.get_fit()[2]
+# Ef_ase = nebtools_ase.get_fit()[3]
+#
+# Ef_neb_ase, dE_neb_ase = nebtools_ase.get_barrier(fit=False)
+# nebtools_ase.plot_band()
+#
+# plt.show()
 
 # 2.B. NEB using CatLearn ####################################################
 
@@ -78,7 +78,7 @@ final = read('final_optimized.traj')
 neb_catlearn = CatLearnNEB(start='initial_optimized.traj',
                            end='final_optimized.traj',
                            ase_calc=copy.deepcopy(ase_calculator),
-                           n_images=7,
+                           n_images=11,
                            interpolation='linear', restart=False)
 
 neb_catlearn.run(fmax=0.05, plot_neb_paths=True)
