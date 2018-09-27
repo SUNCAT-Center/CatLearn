@@ -5,6 +5,7 @@ from ase.optimize.sciopt import *
 from catlearn.optimize.catlearn_minimizer import CatLearnMin
 from ase.visualize import view
 
+
 """ 
     CatLearn Minimizer. 
     Example 2.
@@ -16,7 +17,8 @@ calculator = EMT()
 
 # 1.1. Structures:
 
-initial_structure = read('preoptimized_structure.traj')
+initial_structure = read('preoptimized_structure.traj',)
+
 initial_structure.rattle(stdev=0.05, seed=1)
 
 # 2.A. Optimize structure using CatLearn:

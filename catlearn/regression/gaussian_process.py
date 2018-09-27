@@ -53,8 +53,8 @@ class GaussianProcess(object):
             Default is False.
         """
         # Perform some sanity checks.
-        msg = 'GP must be trained on more than one data point.'
-        assert np.shape(train_fp)[0] > 1, msg
+        # msg = 'GP must be trained on more than one data point.'
+        # assert np.shape(train_fp)[0] > 1, msg
         msg = 'The number of data does not match the number of targets.'
         assert np.shape(train_fp)[0] == len(train_target), msg
 
@@ -245,8 +245,6 @@ class GaussianProcess(object):
         d, f = np.shape(train_fp)
 
         # Perform some sanity checks.
-        msg = 'GP must be trained on more than one data point.'
-        assert d > 1, msg
         if self.N_D != f:
             msg = str(f) + '!=' + str(self.N_D)
             msg += '\n The number of features has changed. Train a new '

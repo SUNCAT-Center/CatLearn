@@ -3,8 +3,6 @@ from gpaw import GPAW
 from ase.optimize import *
 from ase.optimize.sciopt import *
 from catlearn.optimize.catlearn_minimizer import CatLearnMin
-from catlearn.optimize.gptools_optimizer import GPTMin
-
 from ase.io import read
 import copy
 import shutil
@@ -18,10 +16,7 @@ import ase.db
     Benchmark GPAW H2O calculations.
 """
 
-calculator = GPAW(mode='lcao',
-                  basis='dzp',
-                  kpts={'density': 2.0})
-
+calculator = GPAW(nbands=4, h=0.2, mode='lcao', basis='dzp')
 
 # 1. Structural relaxation. ##################################
 
@@ -33,14 +28,14 @@ initial_structure = Atoms('H2O',
              (b, -0.7633 + b, -0.4876 + b),
              (b, b, 0.1219 + b)],
                     cell=[a, a, a])
-initial_structure.rattle(stdev=0.1, seed=3)
+initial_structure.rattle(stdev=0.10, seed=0)
 ##############################################################################
 
 # 2.A. Optimize structure using CatLearn:
 initial_catlearn = initial_structure.copy()
 initial_catlearn.set_calculator(calculator)
 
-catlearn_opt = GPTMin(initial_catlearn, trajectory='catlearn_opt.traj')
+catlearn_opt = CatLearnMin(initial_catlearn, trajectory='catlearn_opt.traj')
 catlearn_opt.run(fmax=0.05)
 
 # 2.B. Optimize structure using ASE.
@@ -48,7 +43,7 @@ initial_ase = initial_structure.copy()
 initial_ase.set_calculator(calculator)
 
 ase_opt = GPMin(initial_ase, trajectory='ase_opt.traj',
-                update_hyperparams=True)
+                update_hyperparams=False)
 ase_opt.run(fmax=0.05)
 
 # 3. Summary of the results:

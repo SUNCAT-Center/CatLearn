@@ -97,7 +97,6 @@ class CatLearnMin(object):
                 self.max_abs_forces = np.max(np.abs(self.list_fmax))
                 self.list_max_abs_forces.append(self.max_abs_forces)
 
-
     def run(self, fmax=0.05, steps=200, min_iter=0):
 
         """Executing run will start the optimization process.
@@ -119,7 +118,6 @@ class CatLearnMin(object):
 
         self.fmax = fmax
         self.min_iter = min_iter
-
         # Initialization (evaluate two points).
 
         if len(self.list_targets) == 0:
@@ -134,32 +132,19 @@ class CatLearnMin(object):
             molec_writer.write(self.ase_ini)
 
         converged(self)
-
-        self.list_max_abs_forces.append(self.max_abs_forces)
-        print_info(self)
-
-        if not converged(self):
-            steepest_geometry = [self.list_train[0] - 0.1 * (
-            self.list_gradients[0])]
-
-            eval_and_append(self, steepest_geometry)
-            molec_writer = TrajectoryWriter('./' + str(self.filename),
-                                            mode='a')
-            molec_writer.write(self.ase_ini)
-        converged(self)
         self.list_max_abs_forces.append(self.max_abs_forces)
         print_info(self)
 
         while not converged(self):
 
             # 1. Train Machine Learning model.
-            train = self.list_train.copy()
-            targets = self.list_targets.copy()
-            gradients = self.list_gradients.copy()
+            train = np.copy(self.list_train)
+            targets = np.copy(self.list_targets)
+            gradients = np.copy(self.list_gradients)
 
             u_prior = np.max(targets[:, 0])
 
-            scaled_targets = targets.copy() - u_prior
+            scaled_targets = targets - u_prior
 
             dimension = 'single'
 
@@ -169,9 +154,9 @@ class CatLearnMin(object):
                       'scaling': 1.,
                       'scaling_bounds': ((1., 1.),)},
                      {'type': 'noise_multi',
-                      'hyperparameters': [0.005, 0.005],
-                      'bounds': ((0.005, 0.005),
-                                 (0.005* (0.4**2), 0.005 * (0.4**2)),)}
+                      'hyperparameters': [0.005*0.4**2, 0.005],
+                      'bounds': ((0.005 * (0.4**2), 0.005 * (0.4**2)),
+                                 (0.005, 0.005),)}
                      ]
 
             if self.index_mask is not None:
@@ -206,7 +191,7 @@ class CatLearnMin(object):
 
             result_min = fmin_l_bfgs_b(func=predicted_energy_test, x0=guess,
                                        approx_grad=True, args=args, disp=False,
-                                       pgtol=1e-6, epsilon=1e-8)
+                                       )
             pred_pos = result_min[0]
 
             interesting_point = unmask_geometry(

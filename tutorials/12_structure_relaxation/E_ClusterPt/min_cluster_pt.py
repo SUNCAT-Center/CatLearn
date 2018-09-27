@@ -1,6 +1,4 @@
 from catlearn.optimize.catlearn_minimizer import CatLearnMin
-from catlearn.optimize.gptools_optimizer import GPTMin
-
 from ase.calculators.emt import EMT
 from ase.io import read
 from ase.optimize import BFGS, FIRE, MDMin
@@ -21,12 +19,12 @@ calc = EMT()
 # 1.1. Structures:
 
 mol = read('./A_structure/POSCAR')
-mol.rattle(stdev=0.05, seed=10)
+mol.rattle(stdev=0.1, seed=5)
 # 2.A. Optimize structure using ASE.
 
 initial_catlearn = mol.copy()
 initial_catlearn.set_calculator(calc)
-catlearn_opt = GPTMin(initial_catlearn, trajectory='catlearn_opt.traj')
+catlearn_opt = CatLearnMin(initial_catlearn, trajectory='catlearn_opt.traj')
 catlearn_opt.run(fmax=0.05)
 
 

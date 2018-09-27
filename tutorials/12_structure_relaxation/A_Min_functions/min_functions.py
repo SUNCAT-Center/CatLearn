@@ -17,10 +17,10 @@ import shutil
 """
 
 # 0. Set calculator.
-calculator = NoiseHimmelblau()
+calculator = Himmelblau()
 
 # 1. Set common initial structure.
-initial_structure = Atoms('H', positions=[( 4.0, -2.0, 0.0)])
+initial_structure = Atoms('H', positions=[( 1.0, -1.0, 0.0)])
 initial_structure.rattle(seed=0, stdev=0.1)
 # 2. Benchmark.
 # 2.A. Optimize structure using CatLearn:
@@ -36,7 +36,7 @@ initial_gpmin.set_calculator(calculator)
 
 gpmin_opt = GPMin(initial_gpmin, trajectory='gpmin_opt.traj',
                  update_hyperparams=True)
-# gpmin_opt.run(fmax=0.05, steps=200)
+gpmin_opt.run(fmax=0.05, steps=200)
 
 # 2.C. Optimize structure using BFGS.
 initial_bfgs = initial_structure.copy()
@@ -64,8 +64,8 @@ print('Number of function evaluations using BFGS:', len(bfgs_results))
 fire_results = read('fire_opt.traj', ':')
 print('Number of function evaluations using FIRE:', len(fire_results))
 
-# gpmin_results = read('gpmin_opt.traj', ':')
-# print('Number of function evaluations using GPMin:', gpmin_opt.function_calls)
+gpmin_results = read('gpmin_opt.traj', ':')
+print('Number of function evaluations using GPMin:', gpmin_opt.function_calls)
 
 
 print('Energy BFGS:', bfgs_results[-1].get_potential_energy())

@@ -27,7 +27,6 @@ def get_covariance(kernel_dict, log_scale, matrix1, matrix2=None,
     n1, n1_D = np.shape(matrix1)
     # Make a copy of the feature matrix.
     store1, store2 = matrix1.copy(), None
-
     if matrix2 is not None:
         assert n1_D == np.shape(matrix2)[1]
         store2 = matrix2.copy()
@@ -42,8 +41,6 @@ def get_covariance(kernel_dict, log_scale, matrix1, matrix2=None,
 
         # Select a subset of features for the kernel
         if 'features' in key:
-            print(key)
-            exit()
             matrix1 = matrix1[:, key['features']]
             if matrix2 is not None:
                 matrix2 = matrix2[:, key['features']]
@@ -76,5 +73,4 @@ def get_covariance(kernel_dict, log_scale, matrix1, matrix2=None,
         if log_scale:
             regularization = np.exp(regularization)
         cov += (regularization * np.identity(len(cov)))**2
-
     return cov

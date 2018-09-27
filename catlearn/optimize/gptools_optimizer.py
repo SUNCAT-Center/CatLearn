@@ -97,9 +97,8 @@ class GPTMin(object):
                 self.max_abs_forces = np.max(np.abs(self.list_fmax))
                 self.list_max_abs_forces.append(self.max_abs_forces)
 
-
     def run(self, fmax=0.05, steps=200, min_iter=0,
-            kernel='Matern52', optimize_hyperparameters=True):
+            kernel='RationalQuadratic', optimize_hyperparameters=False):
 
         """Executing run will start the optimization process.
 
@@ -162,7 +161,7 @@ class GPTMin(object):
             print('Number of training points:', len(scaled_targets))
 
             if kernel == 'RationalQuadratic':
-                gp_bounds = [(1., 1.)] + [(0.5, 2.0)] + [(0.1, 2.0)] * \
+                gp_bounds = [(1., 1.)] + [(1.0, 1.0)] + [(0.4, 0.4)] * \
                              n_dim
 
                 kernel = gptools.RationalQuadraticKernel(
@@ -177,7 +176,7 @@ class GPTMin(object):
                 print('Hyperparameters:', self.gp.free_param_names)
 
             if kernel == 'Matern52':
-                gp_bounds = [(1., 1.)] + [(0.1, 2.0)] * n_dim
+                gp_bounds = [(1., 1.)] + [(0.4, 1.0)] * n_dim
                 kernel = gptools.Matern52Kernel(
                                                param_bounds=gp_bounds,
                                                num_dim=n_dim)
@@ -189,7 +188,7 @@ class GPTMin(object):
 
             if kernel == 'SQE':
                 n_dim = len(self.index_mask)
-                gp_bounds = [(1., 1.)] + [(0.1, 2.0)] * n_dim
+                gp_bounds = [(1., 1.)] + [(0.4, 0.4)] * n_dim
                 kernel = gptools.SquaredExponentialKernel(
                                                param_bounds=gp_bounds,
                                                num_dim=n_dim)
@@ -204,7 +203,7 @@ class GPTMin(object):
                 g_i = gradients[:, i]
                 n_i = np.zeros(np.shape(gradients))
                 n_i[:, i] = 1.0
-                self.gp.add_data(train, g_i, n=n_i, err_y=0.005)
+                self.gp.add_data(train, g_i, n=n_i, err_y=0.005*0.4**2)
 
             if optimize_hyperparameters is True:
                 try:
@@ -217,12 +216,11 @@ class GPTMin(object):
             # 2. Optimize Machine Learning model.
 
             def predicted_energy_test(x0, gp, u_prior=0.0):
-
                 return gp.predict(x0, return_std=False)[0] + u_prior
 
-            guess = self.list_train[np.argmin(self.list_targets)]
+            guess = self.list_train[-1]
             guess = np.array(apply_mask(list_to_mask=[guess],
-                          mask_index=self.index_mask)[1])
+                                        mask_index=self.index_mask)[1])
 
             args = (self.gp, u_prior,)
 
