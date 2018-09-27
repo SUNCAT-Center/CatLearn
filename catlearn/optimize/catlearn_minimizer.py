@@ -97,7 +97,7 @@ class CatLearnMin(object):
                 self.max_abs_forces = np.max(np.abs(self.list_fmax))
                 self.list_max_abs_forces.append(self.max_abs_forces)
 
-    def run(self, fmax=0.05, steps=200, min_iter=0):
+    def run(self, fmax=0.05, steps=200, kernel='SQE_opt'):
 
         """Executing run will start the optimization process.
 
@@ -107,8 +107,6 @@ class CatLearnMin(object):
             Convergence criteria (in eV/Angstrom).
         steps : int
             Max. number of optimization steps.
-        min_iter : int
-            Min. number of optimizations steps
 
         Returns
         -------
@@ -117,7 +115,6 @@ class CatLearnMin(object):
         """
 
         self.fmax = fmax
-        self.min_iter = min_iter
         # Initialization (evaluate two points).
 
         if len(self.list_targets) == 0:
@@ -148,16 +145,41 @@ class CatLearnMin(object):
 
             dimension = 'single'
 
-            kdict = [{'type': 'gaussian', 'width': 0.40,
-                      'dimension': dimension,
-                      'bounds': ((0.4, 0.4),),
-                      'scaling': 1.,
-                      'scaling_bounds': ((1., 1.),)},
-                     {'type': 'noise_multi',
-                      'hyperparameters': [0.005*0.4**2, 0.005],
-                      'bounds': ((0.005 * (0.4**2), 0.005 * (0.4**2)),
-                                 (0.005, 0.005),)}
-                     ]
+            if kernel == 'SQE':
+                kdict = [{'type': 'gaussian', 'width': 0.40,
+                          'dimension': dimension,
+                          'bounds': ((0.4, 0.4),),
+                          'scaling': 1.,
+                          'scaling_bounds': ((1., 1.),)},
+                         {'type': 'noise_multi',
+                          'hyperparameters': [0.005*0.4**2, 0.005],
+                          'bounds': ((0.005 * (0.4**2), 0.005 * (0.4**2)),
+                                     (0.005, 0.005),)}
+                         ]
+
+            if kernel == 'SQE_opt':
+                kdict = [{'type': 'gaussian', 'width': 0.40,
+                          'dimension': dimension,
+                          'bounds': ((1e-3, 1.0),),
+                          'scaling': 1.,
+                          'scaling_bounds': ((1., 1.),)},
+                         {'type': 'noise_multi',
+                          'hyperparameters': [0.005*0.4**2, 0.005],
+                          'bounds': ((0.005 * (0.4**2), 0.005 * (0.4**2)),
+                                     (0.005, 0.005),)}
+                         ]
+
+            if kernel == 'ARD_SQE_opt':
+                kdict = [{'type': 'gaussian', 'width': 0.40,
+                          'dimension': 'features',
+                          'bounds': ((1e-3, 1.0),) * len(self.index_mask),
+                          'scaling': 1.,
+                          'scaling_bounds': ((1., 1.),)},
+                         {'type': 'noise_multi',
+                          'hyperparameters': [0.005*0.4**2, 0.005],
+                          'bounds': ((0.005 * (0.4**2), 0.005 * (0.4**2)),
+                                     (0.005, 0.005),)}
+                         ]
 
             if self.index_mask is not None:
                 train = apply_mask(list_to_mask=train,

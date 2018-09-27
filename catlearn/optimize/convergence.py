@@ -20,9 +20,6 @@ def converged(self):
                           self.num_atoms)
     self.max_abs_forces = np.max(np.abs(self.list_fmax))
 
-    if self.min_iter:
-        if self.iter <= self.min_iter:
-            return False
     if self.max_abs_forces < self.fmax:
         return True
 
