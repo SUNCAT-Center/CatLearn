@@ -3,6 +3,8 @@ from gpaw import GPAW
 from ase.optimize import *
 from ase.optimize.sciopt import *
 from catlearn.optimize.catlearn_minimizer import CatLearnMin
+from catlearn.optimize.gptools_optimizer import GPTMin
+
 from ase.io import read
 import copy
 import shutil
@@ -26,19 +28,19 @@ calculator = GPAW(mode='lcao',
 # 1.1. Set up structure:
 a = 6
 b = a / 2
-initial_structure = Atoms('H2',
+initial_structure = Atoms('H2O',
             [(b, 0.7633 + b, -0.4876 + b),
              (b, -0.7633 + b, -0.4876 + b),
-             ],
+             (b, b, 0.1219 + b)],
                     cell=[a, a, a])
-initial_structure.rattle(stdev=0.1, seed=0)
+initial_structure.rattle(stdev=0.1, seed=3)
 ##############################################################################
 
 # 2.A. Optimize structure using CatLearn:
 initial_catlearn = initial_structure.copy()
 initial_catlearn.set_calculator(calculator)
 
-catlearn_opt = CatLearnMin(initial_catlearn, trajectory='catlearn_opt.traj')
+catlearn_opt = GPTMin(initial_catlearn, trajectory='catlearn_opt.traj')
 catlearn_opt.run(fmax=0.05)
 
 # 2.B. Optimize structure using ASE.

@@ -26,13 +26,13 @@ ase_calculator = EMT()
 
 # 1.1. Structures:
 #
-# slab_initial = read('./A_structure/POSCAR')
-# # slab_initial = read('./translate_H_initial/POSCAR')
-# slab_initial.set_calculator(copy.deepcopy(ase_calculator))
-#
-# slab_final = read('./I_structure/POSCAR')
-# # slab_final = read('./translate_H_final/POSCAR')
-# slab_final.set_calculator(ase_calculator)
+slab_initial = read('./A_structure/POSCAR')
+# slab_initial = read('./translate_H_initial/POSCAR')
+slab_initial.set_calculator(copy.deepcopy(ase_calculator))
+
+slab_final = read('./I_structure/POSCAR')
+# slab_final = read('./translate_H_final/POSCAR')
+slab_final.set_calculator(ase_calculator)
 #
 #
 # # 1.2. Optimize initial and final end-points.

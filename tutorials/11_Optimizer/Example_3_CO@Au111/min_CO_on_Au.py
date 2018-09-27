@@ -6,6 +6,8 @@ from ase.visualize import view
 from ase.optimize import BFGS, FIRE, GPMin
 from ase.optimize.sciopt import *
 from ase.io import read
+from catlearn.optimize.gptools_optimizer import GPTMin
+
 """ 
     CatLearn Minimizer. 
     Example 3.
@@ -20,9 +22,9 @@ calculator = GPAW(mode='lcao',
 
 # 1.1. Structures:
 db = ase.db.connect('systems.db')
-initial_structure = db.get_atoms(formula='Au8CO')
+initial_structure = db.get_atoms(formula='H2')
 
-np.random.seed(5)
+np.random.seed(1)
 for i in initial_structure:
     if i.position[2] > 8.50:
         i.position = i.position + np.random.normal(scale=0.1)
@@ -31,7 +33,7 @@ for i in initial_structure:
 initial_catlearn = initial_structure.copy()
 initial_catlearn.set_calculator(calculator)
 
-catlearn_opt = CatLearnMin(initial_catlearn, trajectory='catlearn_opt.traj')
+catlearn_opt = GPTMin(initial_catlearn, trajectory='catlearn_opt.traj')
 catlearn_opt.run(fmax=0.05)
 
 # 2.B. Optimize structure using ASE.
@@ -39,7 +41,7 @@ initial_ase = initial_structure.copy()
 initial_ase.set_calculator(calculator)
 
 ase_opt = GPMin(initial_ase, trajectory='ase_opt.traj',
-                update_hyperparams=True)
+                update_hyperparams=False)
 ase_opt.run(fmax=0.05)
 
 # 3. Summary of the results:

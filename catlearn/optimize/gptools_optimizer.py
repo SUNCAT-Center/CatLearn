@@ -1,4 +1,4 @@
-# CatLearn 1.5.0
+# CatLearn + GPTools.
 
 from ase import Atoms
 from ase.io.trajectory import TrajectoryWriter
@@ -13,10 +13,10 @@ from catlearn.optimize.get_real_values import eval_and_append, \
 from catlearn.optimize.convergence import converged, get_fmax
 from scipy.optimize import fmin_l_bfgs_b
 import numpy as np
-from catlearn.regression import GaussianProcess
+import gptools
 
 
-class CatLearnMin(object):
+class GPTMin(object):
 
     def __init__(self, x0, ase_calc=None, trajectory='catlearn_opt.traj'):
 
@@ -98,7 +98,8 @@ class CatLearnMin(object):
                 self.list_max_abs_forces.append(self.max_abs_forces)
 
 
-    def run(self, fmax=0.05, steps=200, min_iter=0):
+    def run(self, fmax=0.05, steps=200, min_iter=0,
+            kernel='Matern52', optimize_hyperparameters=True):
 
         """Executing run will start the optimization process.
 
@@ -138,41 +139,18 @@ class CatLearnMin(object):
         self.list_max_abs_forces.append(self.max_abs_forces)
         print_info(self)
 
-        if not converged(self):
-            steepest_geometry = [self.list_train[0] - 0.1 * (
-            self.list_gradients[0])]
-
-            eval_and_append(self, steepest_geometry)
-            molec_writer = TrajectoryWriter('./' + str(self.filename),
-                                            mode='a')
-            molec_writer.write(self.ase_ini)
-        converged(self)
-        self.list_max_abs_forces.append(self.max_abs_forces)
-        print_info(self)
-
         while not converged(self):
 
             # 1. Train Machine Learning model.
-            train = self.list_train.copy()
-            targets = self.list_targets.copy()
-            gradients = self.list_gradients.copy()
+            train = self.list_train
+            targets = self.list_targets
+            gradients = self.list_gradients
 
-            u_prior = np.max(targets[:, 0])
+            u_prior = np.max(targets)
 
-            scaled_targets = targets.copy() - u_prior
+            scaled_targets = targets - u_prior
 
-            dimension = 'single'
-
-            kdict = [{'type': 'gaussian', 'width': 0.40,
-                      'dimension': dimension,
-                      'bounds': ((0.4, 0.4),),
-                      'scaling': 1.,
-                      'scaling_bounds': ((1., 1.),)},
-                     {'type': 'noise_multi',
-                      'hyperparameters': [0.005, 0.005],
-                      'bounds': ((0.005, 0.005),
-                                 (0.005* (0.4**2), 0.005 * (0.4**2)),)}
-                     ]
+            n_dim = len(self.index_mask)
 
             if self.index_mask is not None:
                 train = apply_mask(list_to_mask=train,
@@ -183,20 +161,64 @@ class CatLearnMin(object):
             print('Training a GP process...')
             print('Number of training points:', len(scaled_targets))
 
-            self.gp = GaussianProcess(kernel_dict=kdict,
-                                      regularization=0.0,
-                                      regularization_bounds=(0.0, 0.0),
-                                      train_fp=train,
-                                      train_target=scaled_targets,
-                                      gradients=gradients,
-                                      optimize_hyperparameters=True)
-            print('Optimized hyperparameters:', self.gp.theta_opt)
+            if kernel == 'RationalQuadratic':
+                gp_bounds = [(1., 1.)] + [(0.5, 2.0)] + [(0.1, 2.0)] * \
+                             n_dim
+
+                kernel = gptools.RationalQuadraticKernel(
+                                               param_bounds=gp_bounds,
+                                               num_dim=n_dim)
+
+                self.gp = gptools.GaussianProcess(kernel)
+
+                self.gp.free_params = np.ones(n_dim + 2) * 0.4  # l1, l2, l3
+                self.gp.free_params[0] = 1.0  # sigma_f
+                self.gp.free_params[1] = 1.0  # alpha
+                print('Hyperparameters:', self.gp.free_param_names)
+
+            if kernel == 'Matern52':
+                gp_bounds = [(1., 1.)] + [(0.1, 2.0)] * n_dim
+                kernel = gptools.Matern52Kernel(
+                                               param_bounds=gp_bounds,
+                                               num_dim=n_dim)
+                self.gp = gptools.GaussianProcess(kernel)
+                self.gp.free_params = np.ones(n_dim + 1) * 0.4  # l1, l2, l3
+                self.gp.free_params[0] = 1.0  # sigma_f
+
+                print('Hyperparamers:', self.gp.free_param_names)
+
+            if kernel == 'SQE':
+                n_dim = len(self.index_mask)
+                gp_bounds = [(1., 1.)] + [(0.1, 2.0)] * n_dim
+                kernel = gptools.SquaredExponentialKernel(
+                                               param_bounds=gp_bounds,
+                                               num_dim=n_dim)
+                self.gp = gptools.GaussianProcess(kernel)
+                self.gp.free_params = np.ones(n_dim + 1) * 0.4  # l1, l2, l3
+                self.gp.free_params[0] = 1.0  # sigma_f
+                print('Hyperparameters:', self.gp.free_param_names)
+
+            self.gp.add_data(train, scaled_targets.flatten(), err_y=0.005)
+
+            for i in range(0, np.shape(gradients)[1]):
+                g_i = gradients[:, i]
+                n_i = np.zeros(np.shape(gradients))
+                n_i[:, i] = 1.0
+                self.gp.add_data(train, g_i, n=n_i, err_y=0.005)
+
+            if optimize_hyperparameters is True:
+                try:
+                    self.gp.optimize_hyperparameters()
+                except:
+                    pass
+
             print('GP process trained.')
 
             # 2. Optimize Machine Learning model.
 
-            def predicted_energy_test(x0, gp, scaling=0.0):
-                return gp.predict(test_fp=[x0])['prediction'][0][0] + scaling
+            def predicted_energy_test(x0, gp, u_prior=0.0):
+
+                return gp.predict(x0, return_std=False)[0] + u_prior
 
             guess = self.list_train[np.argmin(self.list_targets)]
             guess = np.array(apply_mask(list_to_mask=[guess],
@@ -204,9 +226,10 @@ class CatLearnMin(object):
 
             args = (self.gp, u_prior,)
 
-            result_min = fmin_l_bfgs_b(func=predicted_energy_test, x0=guess,
-                                       approx_grad=True, args=args, disp=False,
-                                       pgtol=1e-6, epsilon=1e-8)
+            result_min = fmin_l_bfgs_b(func=predicted_energy_test,
+                                       approx_grad=True,
+                                       x0=guess,
+                                       args=args)
             pred_pos = result_min[0]
 
             interesting_point = unmask_geometry(
@@ -233,4 +256,3 @@ class CatLearnMin(object):
             if self.iter >= steps:
                 print('Not converged. Maximum number of iterations reached.')
                 break
-

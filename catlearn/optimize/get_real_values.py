@@ -12,7 +12,7 @@ def get_energy_catlearn(self, x=None):
     self: arrays
         Previous information from the CatLearn optimizer.
     x : array
-        Array containing the atomic positions (flatten) or point in space.
+        Array containing the atomic positions (flatten).
 
     Returns
     -------
@@ -50,8 +50,7 @@ def get_forces_catlearn(self, x=None):
     Returns
     -------
     forces : array
-        Forces of the atomic structure (flatten) or the negative value of the
-        Jacobian for non atomistic functions.
+        Forces of the atomic structure (flatten).
     """
     forces = 0.0
     # If no point is passed, evaluate the last trained point.

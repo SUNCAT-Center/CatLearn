@@ -1,4 +1,6 @@
 from catlearn.optimize.catlearn_minimizer import CatLearnMin
+from catlearn.optimize.gptools_optimizer import GPTMin
+
 from ase.calculators.emt import EMT
 from ase.io import read
 from ase.optimize import BFGS, FIRE, MDMin
@@ -24,14 +26,15 @@ mol.rattle(stdev=0.05, seed=10)
 
 initial_catlearn = mol.copy()
 initial_catlearn.set_calculator(calc)
-catlearn_opt = CatLearnMin(initial_catlearn, trajectory='catlearn_opt.traj')
+catlearn_opt = GPTMin(initial_catlearn, trajectory='catlearn_opt.traj')
 catlearn_opt.run(fmax=0.05)
+
 
 # 2.B Optimize using ASE.
 initial_ase = mol.copy()
 initial_ase.set_calculator(calc)
 ase_opt = GPMin(initial_ase, trajectory='ase_opt.traj',
-                update_hyperparams=True)
+                update_hyperparams=False)
 ase_opt.run(fmax=0.05)
 
 # 3. Summary of the results:
