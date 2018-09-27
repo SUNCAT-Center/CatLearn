@@ -1,4 +1,4 @@
-# CatLearn 1.5.0
+# CatLearn 1.8.0
 
 from ase import Atoms
 from ase.io.trajectory import TrajectoryWriter
@@ -38,7 +38,8 @@ class CatLearnMin(object):
         self.feval = 0
         self.fmax = 0.0
         self.min_iter = 0
-        self.version = 'Min. v.1.6.0'
+        self.gp = None
+        self.version = 'Min. v.1.8.0'
         print_version(self.version)
 
         self.ase_calc = ase_calc
@@ -107,6 +108,9 @@ class CatLearnMin(object):
             Convergence criteria (in eV/Angstrom).
         steps : int
             Max. number of optimization steps.
+        kernel: string
+            Type of covariance function to be used.
+            Implemented are: SQE (fixed hyperparamters), SQE_opt and ARD_SQE.
 
         Returns
         -------
@@ -169,7 +173,7 @@ class CatLearnMin(object):
                                      (0.005, 0.005),)}
                          ]
 
-            if kernel == 'ARD_SQE_opt':
+            if kernel == 'ARD_SQE':
                 kdict = [{'type': 'gaussian', 'width': 0.40,
                           'dimension': 'features',
                           'bounds': ((1e-3, 1.0),) * len(self.index_mask),
@@ -190,14 +194,20 @@ class CatLearnMin(object):
             print('Training a GP process...')
             print('Number of training points:', len(scaled_targets))
 
+            opt_hyp = False
+            if self.iter % 2 == 0:
+                opt_hyp = True
+
             self.gp = GaussianProcess(kernel_dict=kdict,
                                       regularization=0.0,
                                       regularization_bounds=(0.0, 0.0),
                                       train_fp=train,
                                       train_target=scaled_targets,
                                       gradients=gradients,
-                                      optimize_hyperparameters=True)
-            print('Optimized hyperparameters:', self.gp.theta_opt)
+                                      optimize_hyperparameters=opt_hyp)
+            if opt_hyp is True:
+                print('Optimized hyperparameters:', self.gp.theta_opt)
+
             print('GP process trained.')
 
             # 2. Optimize Machine Learning model.
@@ -207,7 +217,7 @@ class CatLearnMin(object):
 
             guess = self.list_train[np.argmin(self.list_targets)]
             guess = np.array(apply_mask(list_to_mask=[guess],
-                          mask_index=self.index_mask)[1])
+                             mask_index=self.index_mask)[1])
 
             args = (self.gp, u_prior,)
 

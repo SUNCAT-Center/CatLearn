@@ -375,8 +375,6 @@ class GaussianProcess(object):
             Optional to change the bounds for the regularization.
         """
         if train_fp is not None:
-            msg = 'GP must be trained on more than one data point.'
-            assert np.shape(train_fp)[0] > 1, msg
             _, self.N_D = np.shape(train_fp)
             self.train_fp = np.asarray(train_fp)
 
