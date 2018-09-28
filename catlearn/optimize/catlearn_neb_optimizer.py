@@ -262,7 +262,7 @@ class CatLearnNEB(object):
 
             dimension = 'single'
 
-            bounds = ((1e-3, 0.75),)
+            bounds = ((0.25, 0.75),)
 
             width = np.mean([1e-3, 0.75])
 
@@ -298,8 +298,8 @@ class CatLearnNEB(object):
                           'scaling_bounds': ((1., 1.),)},
                          {'type': 'noise_multi',
                           'hyperparameters': [0.005*0.4**2, 0.005],
-                          'bounds': ((0.005 * (0.4**2), 0.005 * (0.4**2)),
-                                     (0.005, 0.005),)}
+                          'bounds': ((0.003 * (0.4**2), 0.010 * (0.4**2)),
+                                     (0.003, 0.010),)}
                          ]
 
             if self.index_mask is not None:

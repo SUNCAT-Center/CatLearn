@@ -19,20 +19,19 @@ calc = EMT()
 # 1.1. Structures:
 
 mol = read('./A_structure/POSCAR')
-mol.rattle(stdev=0.1, seed=5)
-# 2.A. Optimize structure using ASE.
+mol.rattle(stdev=0.05, seed=46)
 
+# 2.A. Optimize structure using ASE.
 initial_catlearn = mol.copy()
 initial_catlearn.set_calculator(calc)
 catlearn_opt = CatLearnMin(initial_catlearn, trajectory='catlearn_opt.traj')
-catlearn_opt.run(fmax=0.05)
-
+catlearn_opt.run(fmax=0.05, kernel='ARD_SQE')
 
 # 2.B Optimize using ASE.
 initial_ase = mol.copy()
 initial_ase.set_calculator(calc)
 ase_opt = GPMin(initial_ase, trajectory='ase_opt.traj',
-                update_hyperparams=False)
+                update_hyperparams=True)
 ase_opt.run(fmax=0.05)
 
 # 3. Summary of the results:

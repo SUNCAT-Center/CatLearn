@@ -136,6 +136,11 @@ class CatLearnMin(object):
         self.list_max_abs_forces.append(self.max_abs_forces)
         print_info(self)
 
+        # Initial hyperparameters:
+        sigma_f = 1.0
+        length_scale = 0.4
+        sigma_n = [0.005 * 0.4**2, 0.005]
+
         while not converged(self):
 
             # 1. Train Machine Learning model.
@@ -144,45 +149,42 @@ class CatLearnMin(object):
             gradients = np.copy(self.list_gradients)
 
             u_prior = np.max(targets[:, 0])
-
             scaled_targets = targets - u_prior
 
-            dimension = 'single'
-
             if kernel == 'SQE':
-                kdict = [{'type': 'gaussian', 'width': 0.40,
-                          'dimension': dimension,
-                          'bounds': ((0.4, 0.4),),
-                          'scaling': 1.,
-                          'scaling_bounds': ((1., 1.),)},
+                kdict = [{'type': 'gaussian', 'width': length_scale,
+                          'dimension': 'single',
+                          'bounds': ((length_scale, length_scale),),
+                          'scaling': sigma_f,
+                          'scaling_bounds': ((sigma_f, sigma_f),)},
                          {'type': 'noise_multi',
-                          'hyperparameters': [0.005*0.4**2, 0.005],
-                          'bounds': ((0.005 * (0.4**2), 0.005 * (0.4**2)),
-                                     (0.005, 0.005),)}
+                          'hyperparameters': sigma_n,
+                          'bounds': ((sigma_n[0], sigma_n[0]),
+                                     (sigma_n[1], sigma_n[1]),)}
                          ]
 
             if kernel == 'SQE_opt':
-                kdict = [{'type': 'gaussian', 'width': 0.40,
-                          'dimension': dimension,
-                          'bounds': ((1e-3, 1.0),),
-                          'scaling': 1.,
-                          'scaling_bounds': ((1., 1.),)},
+                kdict = [{'type': 'gaussian', 'width': length_scale,
+                          'dimension': 'single',
+                          'bounds': ((1e-3, 1.),),
+                          'scaling': sigma_f,
+                          'scaling_bounds': ((sigma_f, sigma_f),)},
                          {'type': 'noise_multi',
-                          'hyperparameters': [0.005*0.4**2, 0.005],
-                          'bounds': ((0.005 * (0.4**2), 0.005 * (0.4**2)),
-                                     (0.005, 0.005),)}
+                          'hyperparameters': sigma_n,
+                          'bounds': ((0.003 * (0.4**2), 0.010 * (0.4**2)),
+                                     (0.003, 0.010),)}
                          ]
 
             if kernel == 'ARD_SQE':
-                kdict = [{'type': 'gaussian', 'width': 0.40,
+                kdict = [{'type': 'gaussian', 'width': length_scale,
                           'dimension': 'features',
-                          'bounds': ((1e-3, 1.0),) * len(self.index_mask),
+                          'bounds': ((1e-3, 1.),) * len(self.index_mask),
                           'scaling': 1.,
-                          'scaling_bounds': ((1., 1.),)},
+                          'scaling_bounds': ((sigma_f, sigma_f),)},
                          {'type': 'noise_multi',
-                          'hyperparameters': [0.005*0.4**2, 0.005],
-                          'bounds': ((0.005 * (0.4**2), 0.005 * (0.4**2)),
-                                     (0.005, 0.005),)}
+                          'hyperparameters': sigma_n,
+                          'bounds': ((0.003 * (0.4**2), 0.010 * (0.4**2)),
+                                     (0.003, 0.010),)}
                          ]
 
             if self.index_mask is not None:
@@ -194,9 +196,11 @@ class CatLearnMin(object):
             print('Training a GP process...')
             print('Number of training points:', len(scaled_targets))
 
-            opt_hyp = False
-            if self.iter % 2 == 0:
-                opt_hyp = True
+
+            # Start when the training list has more than 5 points:
+            opt_hyper = False
+            if self.feval > 10 == 0:
+                    opt_hyper = True
 
             self.gp = GaussianProcess(kernel_dict=kdict,
                                       regularization=0.0,
@@ -204,9 +208,9 @@ class CatLearnMin(object):
                                       train_fp=train,
                                       train_target=scaled_targets,
                                       gradients=gradients,
-                                      optimize_hyperparameters=opt_hyp)
-            if opt_hyp is True:
-                print('Optimized hyperparameters:', self.gp.theta_opt)
+                                      optimize_hyperparameters=opt_hyper)
+            if opt_hyper is True:
+                print('Hyperparameter optimization:', self.gp.theta_opt)
 
             print('GP process trained.')
 
@@ -241,7 +245,8 @@ class CatLearnMin(object):
                              filename='./' + str(self.filename),
                              mode='a').write()
 
-            if self.list_targets[-1] < self.list_targets[-2]:
+            if self.list_targets[-1] < np.min(self.list_targets[:-1]):
+
                 self.iter += 1
 
                 # Printing:

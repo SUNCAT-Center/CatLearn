@@ -17,7 +17,7 @@ import shutil
 """
 
 # 0. Set calculator.
-calculator = Himmelblau()
+calculator = GoldsteinPrice()
 
 # 1. Set common initial structure.
 initial_structure = Atoms('H', positions=[( 1.0, -1.0, 0.0)])

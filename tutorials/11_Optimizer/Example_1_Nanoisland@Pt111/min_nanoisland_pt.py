@@ -30,7 +30,7 @@ initial_catlearn = initial_structure.copy()
 initial_catlearn.set_calculator(calculator)
 
 catlearn_opt = CatLearnMin(initial_catlearn, trajectory='catlearn_opt.traj')
-catlearn_opt.run(fmax=0.05, kernel='SQE')
+catlearn_opt.run(fmax=0.05, kernel='SQE_opt')
 
 # 2.B. Optimize structure using ASE.
 initial_ase = initial_structure.copy()
