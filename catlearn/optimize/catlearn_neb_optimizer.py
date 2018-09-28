@@ -74,7 +74,7 @@ class CatLearnNEB(object):
         self.interesting_point = None
 
         if not os.path.isfile('evaluated_structures.traj'):
-            restart=False
+            restart = False
 
         # Create new file to store warnings and errors:
         open('warnings_and_errors.txt', 'w')
@@ -216,8 +216,7 @@ class CatLearnNEB(object):
         self.max_abs_forces = np.max(np.abs(self.max_forces))
 
     def run(self, fmax=0.05, unc_convergence=0.010, steps=200,
-            plot_neb_paths=False, acquisition='acq_2',
-            kernel='SQE_opt'):
+            plot_neb_paths=False, acquisition='acq_2', kernel='SQE_opt'):
 
         """Executing run will start the optimization process.
 
@@ -235,11 +234,13 @@ class CatLearnNEB(object):
             matplotlib is required.
         acquisition : string
             Acquisition function.
+        kernel: string
+            Type of covariance function to be used.
+            Implemented are: SQE (fixed hyperparamters), SQE_opt and ARD_SQE.
 
         Returns
         -------
         NEB optimized path.
-        Files :
         """
 
         # Calculate the middle-point if only known initial & final structures.
@@ -261,9 +262,9 @@ class CatLearnNEB(object):
 
             dimension = 'single'
 
-            bounds = ((1e-3, 0.8),)
+            bounds = ((1e-3, 0.75),)
 
-            width = np.mean([1e-3, 0.8])
+            width = np.mean([1e-3, 0.75])
 
             if kernel == 'SQE':
                 kdict = [{'type': 'gaussian', 'width': 0.40,
@@ -324,7 +325,6 @@ class CatLearnNEB(object):
                 print('Optimized hyperparameters:', self.gp.theta_opt)
 
             print('GP process trained.')
-
 
             # 2. Setup and run ML NEB:
 
@@ -432,7 +432,7 @@ class CatLearnNEB(object):
             # 5. Add a new training point and evaluate it.
 
             eval_and_append(self, interesting_point)
-
+            self.iter += 1
             # 6. Store results.
             store_results_neb(self)
             store_trajectory_neb(self)
@@ -447,7 +447,7 @@ class CatLearnNEB(object):
             print('Number of iterations:', self.iter)
 
             self.max_forces = get_fmax(-np.array([self.list_gradients[-1]]),
-                                  self.num_atoms)
+                                       self.num_atoms)
             self.max_abs_forces = np.max(np.abs(self.max_forces))
 
             print('Max. force of the last image evaluated (eV/Angstrom):',
@@ -503,10 +503,9 @@ def create_ml_neb(is_endpoint, fs_endpoint, images_interpolation,
         image.info['label'] = i
         image.info['uncertainty'] = 0.0
         image.info['iteration'] = iteration
-        image.set_calculator(ASECalculator(gp=gp,
-                                         index_constraints=index_constraints,
-                                         scaling_targets=scaling_targets
-                                         ))
+        image.set_calculator(ASECalc(gp=gp,
+                                     index_constraints=index_constraints,
+                                     scaling_targets=scaling_targets))
         if images_interpolation is not None:
             image.set_positions(images_interpolation[i].get_positions())
         image.set_constraint(constraints)
@@ -523,7 +522,7 @@ def create_ml_neb(is_endpoint, fs_endpoint, images_interpolation,
     return imgs
 
 
-class ASECalculator(Calculator):
+class ASECalc(Calculator):
 
     """Artificial CatLearn/ASE calculator.
     """
