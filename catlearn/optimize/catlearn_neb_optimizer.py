@@ -6,18 +6,18 @@ from catlearn.optimize.io import ase_traj_to_catlearn, store_results_neb, \
                                  print_version, store_trajectory_neb
 from catlearn.optimize.convergence import get_fmax
 from catlearn.optimize.get_real_values import eval_and_append
-from catlearn.optimize.catlearn_ase_calc import CatLearnASE
 from catlearn.optimize.constraints import create_mask, apply_mask
 from catlearn.optimize.plots import get_plot_mullerbrown, get_plots_neb
 from ase.neb import NEB
 from ase.neb import NEBTools
 from ase.io import read, write
 from ase.io.trajectory import TrajectoryWriter
-from ase.optimize import MDMin, FIRE
+from ase.optimize import MDMin
 from scipy.spatial import distance
 import copy
 import os
 from catlearn.regression import GaussianProcess
+from ase.calculators.calculator import Calculator, all_changes
 
 
 class CatLearnNEB(object):
@@ -50,8 +50,6 @@ class CatLearnNEB(object):
             NEB method as implemented in ASE. ('aseneb', 'improvedtangent'
             or 'eb').
             See https://wiki.fysik.dtu.dk/ase/ase/neb.html.
-        ml_calc : ML calculator Object.
-            Machine Learning calculator (e.g. Gaussian Process). Default is GP.
         ase_calc: ASE calculator Object.
             ASE calculator as implemented in ASE.
             See https://wiki.fysik.dtu.dk/ase/ase/calculators/calculators.html
@@ -140,7 +138,7 @@ class CatLearnNEB(object):
         self.energy_fs = fs_endpoint[-1].get_potential_energy()
 
         # Set scaling of the targets:
-        self.max_targets = np.max([self.energy_is, self.energy_fs])
+        u_prior = np.max([self.energy_is, self.energy_fs])
 
         # Settings for the NEB.
         self.neb_method = neb_method
@@ -161,7 +159,7 @@ class CatLearnNEB(object):
                                         n_images=self.n_images,
                                         constraints=self.constraints,
                                         index_constraints=self.index_mask,
-                                        scaling_targets=self.max_targets,
+                                        scaling_targets=u_prior,
                                         iteration=self.iter,
                                         )
 
@@ -189,7 +187,7 @@ class CatLearnNEB(object):
                                         n_images=self.n_images,
                                         constraints=self.constraints,
                                         index_constraints=self.index_mask,
-                                        scaling_targets=self.max_targets,
+                                        scaling_targets=u_prior,
                                         iteration=self.iter,
                                         )
             self.d_start_end = np.abs(distance.euclidean(is_pos, fs_pos))
@@ -218,7 +216,8 @@ class CatLearnNEB(object):
         self.max_abs_forces = np.max(np.abs(self.max_forces))
 
     def run(self, fmax=0.05, unc_convergence=0.010, steps=200,
-            plot_neb_paths=False, acquisition='acq_2'):
+            plot_neb_paths=False, acquisition='acq_2',
+            kernel='SQE_opt'):
 
         """Executing run will start the optimization process.
 
@@ -252,12 +251,85 @@ class CatLearnNEB(object):
         while True:
 
             # 1. Train Machine Learning process.
-            train_gp_model(self)
+            train = np.copy(self.list_train)
+            targets = np.copy(self.list_targets)
+            gradients = np.copy(self.list_gradients)
+
+            u_prior = np.max(targets)
+
+            scaled_targets = targets - u_prior
+
+            dimension = 'single'
+
+            bounds = ((1e-3, 0.8),)
+
+            width = np.mean([1e-3, 0.8])
+
+            if kernel == 'SQE':
+                kdict = [{'type': 'gaussian', 'width': 0.40,
+                          'dimension': dimension,
+                          'bounds': ((0.4, 0.4),),
+                          'scaling': 1.,
+                          'scaling_bounds': ((1., 1.),)},
+                         {'type': 'noise_multi',
+                          'hyperparameters': [0.005*0.4**2, 0.005],
+                          'bounds': ((0.005 * (0.4**2), 0.005 * (0.4**2)),
+                                     (0.005, 0.005),)}
+                         ]
+
+            if kernel == 'SQE_opt':
+                kdict = [{'type': 'gaussian', 'width': width,
+                          'dimension': dimension,
+                          'bounds': bounds,
+                          'scaling': 1.,
+                          'scaling_bounds': ((1., 1.),)},
+                         {'type': 'noise_multi',
+                          'hyperparameters': [0.005*0.4**2, 0.005],
+                          'bounds': ((0.003 * (0.4**2), 0.010 * (0.4**2)),
+                                     (0.003, 0.010),)}
+                         ]
+
+            if kernel == 'ARD_SQE':
+                kdict = [{'type': 'gaussian', 'width': width,
+                          'dimension': 'features',
+                          'bounds': bounds * len(self.index_mask),
+                          'scaling': 1.,
+                          'scaling_bounds': ((1., 1.),)},
+                         {'type': 'noise_multi',
+                          'hyperparameters': [0.005*0.4**2, 0.005],
+                          'bounds': ((0.005 * (0.4**2), 0.005 * (0.4**2)),
+                                     (0.005, 0.005),)}
+                         ]
+
+            if self.index_mask is not None:
+                train = apply_mask(list_to_mask=train,
+                                   mask_index=self.index_mask)[1]
+                gradients = apply_mask(list_to_mask=gradients,
+                                       mask_index=self.index_mask)[1]
+
+            print('Training a GP process...')
+            print('Number of training points:', len(scaled_targets))
+            opt_hyp = False
+            if self.iter % 2 == 0:
+                opt_hyp = True
+
+            self.gp = GaussianProcess(kernel_dict=kdict,
+                                      regularization=0.0,
+                                      regularization_bounds=(0.0, 0.0),
+                                      train_fp=train,
+                                      train_target=scaled_targets,
+                                      gradients=gradients,
+                                      optimize_hyperparameters=opt_hyp)
+            if opt_hyp is True:
+                print('Optimized hyperparameters:', self.gp.theta_opt)
+
+            print('GP process trained.')
+
 
             # 2. Setup and run ML NEB:
 
-            starting_path = copy.deepcopy(self.initial_images)
-            # starting_path = self.images
+            # starting_path = copy.deepcopy(self.initial_images)
+            starting_path = self.images
 
             self.images = create_ml_neb(is_endpoint=self.initial_endpoint,
                                         fs_endpoint=self.final_endpoint,
@@ -266,7 +338,7 @@ class CatLearnNEB(object):
                                         constraints=self.constraints,
                                         index_constraints=self.index_mask,
                                         gp=self.gp,
-                                        scaling_targets=self.max_target,
+                                        scaling_targets=u_prior,
                                         iteration=self.iter
                                         )
 
@@ -275,16 +347,30 @@ class CatLearnNEB(object):
                          method=self.neb_method,
                          k=self.spring)
             neb_opt = MDMin(ml_neb, dt=0.050)
-            neb_opt.run(fmax=fmax/1.1, steps=300)
+            neb_opt.run(fmax=fmax/1.0, steps=200)
             print('ML NEB optimized.')
 
             # 3. Get results from ML NEB using ASE NEB Tools:
             # See https://wiki.fysik.dtu.dk/ase/ase/neb.html
 
-            interesting_point = []
+            neb_tools = NEBTools(self.images)
+            [self.s, self.e, self.sfit, self.efit] = neb_tools.get_fit()[0:4]
+            self.path_distance = self.s[-1]
+            self.uncertainty_path = []
+            self.e_path = []
+            for i in self.images:
+                pos_unc = [i.get_positions().flatten()]
+                pos_unc = apply_mask(list_to_mask=pos_unc,
+                                     mask_index=self.index_mask)[1]
+                u = self.gp.predict(test_fp=pos_unc, uncertainty=True)
+                uncertainty = u['uncertainty'][0]
+                i.info['uncertainty'] = uncertainty
+                self.uncertainty_path.append(uncertainty)
+                self.e_path.append(i.get_total_energy())
+            self.images[0].info['uncertainty'] = 0.0
+            self.images[-1].info['uncertainty'] = 0.0
 
-            # Get fit of the discrete path.
-            get_results_predicted_path(self)
+            interesting_point = []
 
             pred_plus_unc = np.array(self.e_path[1:-1]) + \
                                     np.array(self.uncertainty_path[1:-1])
@@ -381,20 +467,15 @@ class CatLearnNEB(object):
                 congrats_stationary_neb()
 
                 if np.max(self.uncertainty_path[1:-1]) < unc_convergence:
-                    # Save results of the final step (converged):
-                    train_gp_model(self)
-                    get_results_predicted_path(self)
                     store_results_neb(self)
                     # Last path.
                     write('last_predicted_path.traj', self.images)
-
                     # All paths.
                     for i in self.images:
                         TrajectoryWriter(atoms=i,
                                          filename='all_predicted_paths.traj',
                                          mode='a').write()
                     congrats_neb_converged()
-
                     break
 
             # Break if reaches the max number of iterations set by the user.
@@ -422,7 +503,7 @@ def create_ml_neb(is_endpoint, fs_endpoint, images_interpolation,
         image.info['label'] = i
         image.info['uncertainty'] = 0.0
         image.info['iteration'] = iteration
-        image.set_calculator(CatLearnASE(gp=gp,
+        image.set_calculator(ASECalculator(gp=gp,
                                          index_constraints=index_constraints,
                                          scaling_targets=scaling_targets
                                          ))
@@ -442,61 +523,60 @@ def create_ml_neb(is_endpoint, fs_endpoint, images_interpolation,
     return imgs
 
 
-def train_gp_model(self):
-    self.max_target = np.max(self.list_targets)
-    scaled_targets = self.list_targets.copy() - self.max_target
+class ASECalculator(Calculator):
 
-    dimension = 'single'
+    """Artificial CatLearn/ASE calculator.
+    """
 
-    bounds = ((0.1, self.path_distance),)
+    implemented_properties = ['energy', 'forces']
+    nolabel = True
 
-    width = np.mean([0.1, self.path_distance])
+    def __init__(self, gp, index_constraints, scaling_targets=0.0,
+                 finite_step=1e-4, **kwargs):
 
-    kdict = [{'type': 'gaussian', 'width': width,
-              'dimension': dimension,
-              'bounds': bounds,
-              'scaling': 1.,
-              'scaling_bounds': ((1., 1.),)},
-             ]
+        Calculator.__init__(self, **kwargs)
 
-    train = self.list_train.copy()
-    gradients = self.list_gradients.copy()
-    if self.index_mask is not None:
-        train = apply_mask(list_to_mask=self.list_train,
-                           mask_index=self.index_mask)[1]
-        gradients = apply_mask(list_to_mask=self.list_gradients,
-                               mask_index=self.index_mask)[1]
+        self.gp = gp
+        self.scaling = scaling_targets
+        self.fs = finite_step
+        self.ind_constraints = index_constraints
 
-    print('Training a GP process...')
-    print('Number of training points:', len(scaled_targets))
+    def calculate(self, atoms=None, properties=['energy', 'forces'],
+                  system_changes=all_changes):
 
-    self.gp = GaussianProcess(kernel_dict=kdict,
-                         regularization=0.003,
-                         regularization_bounds=(0.003, 0.005),
-                         train_fp=train,
-                         train_target=scaled_targets,
-                         gradients=gradients,
-                         optimize_hyperparameters=False,
-                         scale_data=False)
-    self.gp.optimize_hyperparameters(global_opt=False)
-    print('Optimized hyperparameters:', self.gp.theta_opt)
-    print('GP process trained.')
+        # Atoms object.
+        self.atoms = atoms
 
+        def pred_energy_test(test, gp=self.gp, scaling=self.scaling):
 
-def get_results_predicted_path(self):
-    neb_tools = NEBTools(self.images)
-    [self.s, self.e, self.sfit, self.efit] = neb_tools.get_fit()[0:4]
-    self.path_distance = self.s[-1]
-    self.uncertainty_path = []
-    self.e_path = []
-    for i in self.images:
-        pos_unc = [i.get_positions().flatten()]
-        pos_unc = apply_mask(list_to_mask=pos_unc,
-                             mask_index=self.index_mask)[1]
-        u = self.gp.predict(test_fp=pos_unc, uncertainty=True)
-        uncertainty = u['uncertainty'][0] * 1.0
-        i.info['uncertainty'] = uncertainty
-        self.uncertainty_path.append(uncertainty)
-        self.e_path.append(i.get_total_energy())
-    self.images[0].info['uncertainty'] = 0.0
-    self.images[-1].info['uncertainty'] = 0.0
+            # Get predictions.
+            predictions = gp.predict(test_fp=test, uncertainty=False)
+            return predictions['prediction'][0][0] + scaling
+
+        Calculator.calculate(self, atoms, properties, system_changes)
+
+        pos_flatten = self.atoms.get_positions().flatten()
+
+        test_point = apply_mask(list_to_mask=[pos_flatten],
+                                mask_index=self.ind_constraints)[1]
+
+        # Get energy.
+        energy = pred_energy_test(test=test_point)
+
+        # Get forces:
+        gradients = np.zeros(len(pos_flatten))
+        for i in range(len(self.ind_constraints)):
+            index_force = self.ind_constraints[i]
+            pos = copy.deepcopy(test_point)
+            pos[0][i] = pos_flatten[index_force] + self.fs
+            f_pos = pred_energy_test(test=pos)
+            pos = copy.deepcopy(test_point)
+            pos[0][i] = pos_flatten[index_force] - self.fs
+            f_neg = pred_energy_test(test=pos)
+            gradients[index_force] = (-f_neg + f_pos) / (2.0 * self.fs)
+
+        forces = np.reshape(-gradients, (self.atoms.get_number_of_atoms(), 3))
+
+        # Results:
+        self.results['energy'] = energy
+        self.results['forces'] = forces

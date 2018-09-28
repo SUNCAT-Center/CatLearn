@@ -241,13 +241,16 @@ class CatLearnMin(object):
                              filename='./' + str(self.filename),
                              mode='a').write()
 
-            # Printing:
-            self.list_fmax = get_fmax(-np.array([self.list_gradients[-1]]),
-                                      self.num_atoms)
-            self.max_abs_forces = np.max(np.abs(self.list_fmax))
-            print_info(self)
+            if self.list_targets[-1] < self.list_targets[-2]:
+                self.iter += 1
+
+                # Printing:
+                self.list_fmax = get_fmax(-np.array([self.list_gradients[-1]]),
+                                          self.num_atoms)
+                self.max_abs_forces = np.max(np.abs(self.list_fmax))
+                print_info(self)
+
             # Maximum number of iterations reached.
             if self.iter >= steps:
                 print('Not converged. Maximum number of iterations reached.')
                 break
-
