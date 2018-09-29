@@ -37,7 +37,7 @@ initial_ase = initial_structure.copy()
 initial_ase.set_calculator(calculator)
 
 ase_opt = GPMin(initial_ase, trajectory='ase_opt.traj',
-                update_hyperparams=False)
+                update_hyperparams=True)
 ase_opt.run(fmax=0.05)
 
 

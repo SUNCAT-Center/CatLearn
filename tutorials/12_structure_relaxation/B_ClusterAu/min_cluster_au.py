@@ -36,7 +36,7 @@ atoms = read('results_catlearn.traj', ':')
 initial_gpmin = mol.copy()
 initial_gpmin.set_calculator(calc)
 gpmin_opt = GPMin(initial_gpmin, trajectory='results_gpmin.traj',
-                  update_hyperparams=True)
+                  update_hyperparams=False)
 gpmin_opt.run(fmax=0.05)
 
 

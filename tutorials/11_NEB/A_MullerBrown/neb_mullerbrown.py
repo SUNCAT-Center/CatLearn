@@ -58,7 +58,7 @@ n_images = 9
 # neb_ase = NEB(images_ase, climb=True, method='improvedtangent')
 # neb_ase.interpolate()
 # qn_ase = MDMin(neb_ase, trajectory='neb_ase.traj')
-# qn_ase.run(fmax=0.05)
+# qn_ase.run(fmax=0.01)
 #
 # nebtools_ase = NEBTools(images_ase)
 #
@@ -78,10 +78,10 @@ final = read('final_optimized.traj')
 neb_catlearn = CatLearnNEB(start='initial_optimized.traj',
                            end='final_optimized.traj',
                            ase_calc=copy.deepcopy(ase_calculator),
-                           n_images=7,
+                           n_images=6,
                            interpolation='linear', restart=False)
 
-neb_catlearn.run(fmax=0.05, plot_neb_paths=True)
+neb_catlearn.run(fmax=0.01, plot_neb_paths=True)
 
 # 3. Summary of the results #################################################
 

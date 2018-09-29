@@ -1,5 +1,3 @@
-# @Version 1.6.0
-
 import numpy as np
 from catlearn.optimize.warnings import *
 from catlearn.optimize.io import ase_traj_to_catlearn, store_results_neb, \
@@ -66,7 +64,7 @@ class CatLearnNEB(object):
         self.ase_calc = ase_calc
         self.ase = True
         self.mic = mic
-        self.version = 'NEB v.1.6.0'
+        self.version = 'NEB v.2.0.0'
         print_version(self.version)
 
         # Reset:
@@ -249,55 +247,53 @@ class CatLearnNEB(object):
             interesting_point = self.images[middle].get_positions().flatten()
             eval_and_append(self, interesting_point)
 
+        # Initial hyperparameters:
+        length_scale = 0.25
+        sigma_n = [0.005 * 0.4**2, 0.005]
+
         while True:
 
-            # 1. Train Machine Learning process.
+            # 1. Train Machine Learning model.
             train = np.copy(self.list_train)
             targets = np.copy(self.list_targets)
             gradients = np.copy(self.list_gradients)
 
-            u_prior = np.max(targets)
-
+            u_prior = np.max(targets[:, 0])
             scaled_targets = targets - u_prior
-
-            dimension = 'single'
-
-            bounds = ((0.25, 0.75),)
-
-            width = np.mean([1e-3, 0.75])
+            sigma_f = 1e-3 + np.std(scaled_targets)**2
 
             if kernel == 'SQE':
-                kdict = [{'type': 'gaussian', 'width': 0.40,
-                          'dimension': dimension,
-                          'bounds': ((0.4, 0.4),),
-                          'scaling': 1.,
-                          'scaling_bounds': ((1., 1.),)},
+                kdict = [{'type': 'gaussian', 'width': length_scale,
+                          'dimension': 'single',
+                          'bounds': ((length_scale, length_scale),),
+                          'scaling': sigma_f,
+                          'scaling_bounds': ((sigma_f, sigma_f),)},
                          {'type': 'noise_multi',
-                          'hyperparameters': [0.005*0.4**2, 0.005],
-                          'bounds': ((0.005 * (0.4**2), 0.005 * (0.4**2)),
-                                     (0.005, 0.005),)}
+                          'hyperparameters': sigma_n,
+                          'bounds': ((sigma_n[0], sigma_n[0]),
+                                     (sigma_n[1], sigma_n[1]),)}
                          ]
 
             if kernel == 'SQE_opt':
-                kdict = [{'type': 'gaussian', 'width': width,
-                          'dimension': dimension,
-                          'bounds': bounds,
-                          'scaling': 1.,
-                          'scaling_bounds': ((1., 1.),)},
+                kdict = [{'type': 'gaussian', 'width': length_scale,
+                          'dimension': 'single',
+                          'bounds': ((1e-3, self.path_distance/2.),),
+                          'scaling': sigma_f,
+                          'scaling_bounds': ((sigma_f, sigma_f),)},
                          {'type': 'noise_multi',
-                          'hyperparameters': [0.005*0.4**2, 0.005],
+                          'hyperparameters': sigma_n,
                           'bounds': ((0.003 * (0.4**2), 0.010 * (0.4**2)),
                                      (0.003, 0.010),)}
                          ]
 
             if kernel == 'ARD_SQE':
-                kdict = [{'type': 'gaussian', 'width': width,
+                kdict = [{'type': 'gaussian', 'width': length_scale,
                           'dimension': 'features',
-                          'bounds': bounds * len(self.index_mask),
+                          'bounds': ((1e-3, self.path_distance/2.),) * len(self.index_mask),
                           'scaling': 1.,
-                          'scaling_bounds': ((1., 1.),)},
+                          'scaling_bounds': ((sigma_f, sigma_f),)},
                          {'type': 'noise_multi',
-                          'hyperparameters': [0.005*0.4**2, 0.005],
+                          'hyperparameters': sigma_n,
                           'bounds': ((0.003 * (0.4**2), 0.010 * (0.4**2)),
                                      (0.003, 0.010),)}
                          ]
@@ -310,9 +306,11 @@ class CatLearnNEB(object):
 
             print('Training a GP process...')
             print('Number of training points:', len(scaled_targets))
-            opt_hyp = False
-            if self.iter % 2 == 0:
-                opt_hyp = True
+
+            # Start when the training list has more than 5 points:
+            opt_hyper = False
+            if self.feval > self.n_images-2:
+                    opt_hyper = True
 
             self.gp = GaussianProcess(kernel_dict=kdict,
                                       regularization=0.0,
@@ -320,9 +318,9 @@ class CatLearnNEB(object):
                                       train_fp=train,
                                       train_target=scaled_targets,
                                       gradients=gradients,
-                                      optimize_hyperparameters=opt_hyp)
-            if opt_hyp is True:
-                print('Optimized hyperparameters:', self.gp.theta_opt)
+                                      optimize_hyperparameters=opt_hyper)
+            if opt_hyper is True:
+                print('Hyperparameter optimization:', self.gp.theta_opt)
 
             print('GP process trained.')
 
@@ -341,14 +339,21 @@ class CatLearnNEB(object):
                                         scaling_targets=u_prior,
                                         iteration=self.iter
                                         )
+            print('Starting ML NEB optimization...')
+            ml_neb = NEB(self.images, climb=False,
+                         method=self.neb_method,
+                         k=self.spring)
+            neb_opt = MDMin(ml_neb, dt=0.050)
+            neb_opt.run(fmax=fmax/1.0, steps=50)
+            print('ML NEB optimized.')
 
             print('Starting ML NEB optimization using climbing image...')
             ml_neb = NEB(self.images, climb=True,
                          method=self.neb_method,
                          k=self.spring)
             neb_opt = MDMin(ml_neb, dt=0.050)
-            neb_opt.run(fmax=fmax/1.0, steps=200)
-            print('ML NEB optimized.')
+            neb_opt.run(fmax=fmax/1.0, steps=50)
+            print('ML CI-NEB optimized.')
 
             # 3. Get results from ML NEB using ASE NEB Tools:
             # See https://wiki.fysik.dtu.dk/ase/ase/neb.html

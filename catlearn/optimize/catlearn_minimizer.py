@@ -1,5 +1,3 @@
-# CatLearn 1.8.0
-
 from ase import Atoms
 from ase.io.trajectory import TrajectoryWriter
 from catlearn.optimize.warnings import *
@@ -39,7 +37,7 @@ class CatLearnMin(object):
         self.fmax = 0.0
         self.min_iter = 0
         self.gp = None
-        self.version = 'Min. v.1.8.0'
+        self.version = 'Min. v.2.0.0'
         print_version(self.version)
 
         self.ase_calc = ase_calc
@@ -137,7 +135,6 @@ class CatLearnMin(object):
         print_info(self)
 
         # Initial hyperparameters:
-        sigma_f = 1.0
         length_scale = 0.4
         sigma_n = [0.005 * 0.4**2, 0.005]
 
@@ -150,6 +147,7 @@ class CatLearnMin(object):
 
             u_prior = np.max(targets[:, 0])
             scaled_targets = targets - u_prior
+            sigma_f = 1e-6 + np.std(scaled_targets)**2
 
             if kernel == 'SQE':
                 kdict = [{'type': 'gaussian', 'width': length_scale,
@@ -196,10 +194,9 @@ class CatLearnMin(object):
             print('Training a GP process...')
             print('Number of training points:', len(scaled_targets))
 
-
             # Start when the training list has more than 5 points:
             opt_hyper = False
-            if self.feval > 10 == 0:
+            if self.feval > 10:
                     opt_hyper = True
 
             self.gp = GaussianProcess(kernel_dict=kdict,

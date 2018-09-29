@@ -25,7 +25,7 @@ mol.rattle(stdev=0.05, seed=46)
 initial_catlearn = mol.copy()
 initial_catlearn.set_calculator(calc)
 catlearn_opt = CatLearnMin(initial_catlearn, trajectory='catlearn_opt.traj')
-catlearn_opt.run(fmax=0.05, kernel='ARD_SQE')
+catlearn_opt.run(fmax=0.05, kernel='SQE_opt')
 
 # 2.B Optimize using ASE.
 initial_ase = mol.copy()
