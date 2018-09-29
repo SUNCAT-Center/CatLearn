@@ -147,7 +147,7 @@ class CatLearnMin(object):
 
             u_prior = np.max(targets[:, 0])
             scaled_targets = targets - u_prior
-            sigma_f = 1e-6 + np.std(scaled_targets)**2
+            sigma_f = 1e-3 + np.std(scaled_targets)**2
 
             if kernel == 'SQE':
                 kdict = [{'type': 'gaussian', 'width': length_scale,
