@@ -352,7 +352,7 @@ class CatLearnNEB(object):
                          method=self.neb_method,
                          k=self.spring)
             neb_opt = MDMin(ml_neb, dt=0.050)
-            neb_opt.run(fmax=fmax/1.0, steps=100)
+            neb_opt.run(fmax=fmax/1.2, steps=100)
             print('ML CI-NEB optimized.')
 
             # 3. Get results from ML NEB using ASE NEB Tools:
@@ -368,7 +368,7 @@ class CatLearnNEB(object):
                 pos_unc = apply_mask(list_to_mask=pos_unc,
                                      mask_index=self.index_mask)[1]
                 u = self.gp.predict(test_fp=pos_unc, uncertainty=True)
-                uncertainty = np.sqrt(u['uncertainty'][0])
+                uncertainty = (u['uncertainty'][0]) * 4.0
                 i.info['uncertainty'] = uncertainty
                 self.uncertainty_path.append(uncertainty)
                 self.e_path.append(i.get_total_energy())
