@@ -29,16 +29,16 @@ from catlearn.optimize.catlearn_minimizer import CatLearnMin
 # Setup calculator:
 ase_calculator = EMT()
 #
-# slab = read('initial.traj')
-# slab.set_calculator(copy.deepcopy(ase_calculator))
-# qn = CatLearnMin(slab, trajectory='initial_opt.traj')
-# qn.run(fmax=0.01)
+slab = read('initial.traj')
+slab.set_calculator(copy.deepcopy(ase_calculator))
+qn = CatLearnMin(slab, trajectory='initial_opt.traj')
+qn.run(fmax=0.01)
 #
 # # Final end-point:
-# slab = read('final.traj')
-# slab.set_calculator(copy.deepcopy(ase_calculator))
-# qn = CatLearnMin(slab, trajectory='final_opt.traj')
-# qn.run(fmax=0.01)
+slab = read('final.traj')
+slab.set_calculator(copy.deepcopy(ase_calculator))
+qn = CatLearnMin(slab, trajectory='final_opt.traj')
+qn.run(fmax=0.01)
 
 # Define number of images:
 n_images = 7

@@ -19,7 +19,7 @@ calc = EMT()
 # 1.1. Structures:
 
 mol = read('./A_structure/POSCAR')
-mol.rattle(stdev=0.05, seed=46)
+mol.rattle(stdev=0.1, seed=0)
 
 # 2.A. Optimize structure using ASE.
 initial_catlearn = mol.copy()

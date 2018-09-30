@@ -19,7 +19,7 @@ calculator = EMT()
 
 initial_structure = read('preoptimized_structure.traj',)
 
-initial_structure.rattle(stdev=0.05, seed=1)
+initial_structure.rattle(stdev=0.10, seed=1)
 
 # 2.A. Optimize structure using CatLearn:
 

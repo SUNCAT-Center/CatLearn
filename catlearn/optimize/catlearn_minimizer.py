@@ -131,7 +131,9 @@ class CatLearnMin(object):
             molec_writer.write(self.ase_ini)
 
         converged(self)
-        self.list_max_abs_forces.append(self.max_abs_forces)
+        self.list_fmax = get_fmax(-np.array([self.list_gradients[-1]]),
+                                          self.num_atoms)
+        self.max_abs_forces = np.max(np.abs(self.list_fmax))
         print_info(self)
 
         # Initial hyperparameters:
@@ -146,6 +148,14 @@ class CatLearnMin(object):
             gradients = np.copy(self.list_gradients)
 
             u_prior = np.max(targets[:, 0])
+
+            ###############################################################
+            if self.iter >= 2:
+                from scipy.spatial.distance import euclidean
+                length_scale = euclidean(train[0], train[np.argmin(
+                                         self.list_max_abs_forces) + 1])
+            ###############################################################
+
             scaled_targets = targets - u_prior
             sigma_f = 1e-3 + np.std(scaled_targets)**2
 
@@ -162,9 +172,9 @@ class CatLearnMin(object):
                          ]
 
             if kernel == 'SQE_opt':
-                kdict = [{'type': 'gaussian', 'width': length_scale,
+                kdict = [{'type': 'gaussian', 'width': 0.4,
                           'dimension': 'single',
-                          'bounds': ((1e-3, 1.),),
+                          'bounds': ((1e-6, length_scale/2),),
                           'scaling': sigma_f,
                           'scaling_bounds': ((sigma_f, sigma_f),)},
                          {'type': 'noise_multi',
@@ -174,10 +184,10 @@ class CatLearnMin(object):
                          ]
 
             if kernel == 'ARD_SQE':
-                kdict = [{'type': 'gaussian', 'width': length_scale,
+                kdict = [{'type': 'gaussian', 'width': 0.4,
                           'dimension': 'features',
-                          'bounds': ((1e-3, 1.),) * len(self.index_mask),
-                          'scaling': 1.,
+                          'bounds': ((1e-6, length_scale/2),) * len(self.index_mask),
+                          'scaling': sigma_f,
                           'scaling_bounds': ((sigma_f, sigma_f),)},
                          {'type': 'noise_multi',
                           'hyperparameters': sigma_n,
@@ -196,7 +206,7 @@ class CatLearnMin(object):
 
             # Start when the training list has more than 5 points:
             opt_hyper = False
-            if self.feval > 10:
+            if self.feval > 1:
                     opt_hyper = True
 
             self.gp = GaussianProcess(kernel_dict=kdict,
@@ -242,15 +252,15 @@ class CatLearnMin(object):
                              filename='./' + str(self.filename),
                              mode='a').write()
 
-            if self.list_targets[-1] < np.min(self.list_targets[:-1]):
-
-                self.iter += 1
-
-                # Printing:
-                self.list_fmax = get_fmax(-np.array([self.list_gradients[-1]]),
+            # Printing:
+            self.list_fmax = get_fmax(-np.array([self.list_gradients[-1]]),
                                           self.num_atoms)
-                self.max_abs_forces = np.max(np.abs(self.list_fmax))
-                print_info(self)
+            self.max_abs_forces = np.max(np.abs(self.list_fmax))
+            self.list_max_abs_forces.append(self.max_abs_forces)
+
+            # if self.list_targets[-1] < np.min(self.list_targets[:-1]):
+            self.iter += 1
+            print_info(self)
 
             # Maximum number of iterations reached.
             if self.iter >= steps:

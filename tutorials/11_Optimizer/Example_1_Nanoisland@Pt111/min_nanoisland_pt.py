@@ -47,6 +47,6 @@ print('\n Summary of the results:\n ------------------------------------')
 catlearn_results = read('catlearn_opt.traj', ':')
 print('Number of function evaluations using CatLearn:', len(catlearn_results))
 
-ase_results = read('ase_opt.traj', ':')
-print('Number of function evaluations using ASE:', ase_opt.function_calls)
+# ase_results = read('ase_opt.traj', ':')
+# print('Number of function evaluations using ASE:', ase_opt.function_calls)
 
