@@ -150,7 +150,7 @@ class CatLearnMin(object):
             u_prior = np.max(targets[:, 0])
 
             ###############################################################
-            if self.feval >= 2:
+            if self.feval >= 5:
                 from scipy.spatial.distance import euclidean
                 length_scale = euclidean(train[0], train[np.argmin(
                                          self.list_max_abs_forces) + 1])
