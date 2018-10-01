@@ -21,7 +21,7 @@ from ase.calculators.calculator import Calculator, all_changes
 class CatLearnNEB(object):
 
     def __init__(self, start, end, path=None, n_images=0.25, spring=None,
-                 interpolation=None, mic=False, neb_method='aseneb',
+                 interpolation=None, mic=False, neb_method='improvedtangent',
                  ase_calc=None, include_previous_calcs=False,
                  stabilize=False, restart=False):
         """ Nudged elastic band (NEB) setup.
@@ -368,7 +368,7 @@ class CatLearnNEB(object):
                 pos_unc = apply_mask(list_to_mask=pos_unc,
                                      mask_index=self.index_mask)[1]
                 u = self.gp.predict(test_fp=pos_unc, uncertainty=True)
-                uncertainty = np.sqrt(u['uncertainty'][0]) / 2.0
+                uncertainty = (u['uncertainty'][0]) * 4.0
                 i.info['uncertainty'] = uncertainty
                 self.uncertainty_path.append(uncertainty)
                 self.e_path.append(i.get_total_energy())
