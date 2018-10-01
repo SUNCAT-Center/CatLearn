@@ -28,7 +28,7 @@ initial_structure = Atoms('H2',
              (b, -0.7633 + b, -0.4876 + b),
              ],
                     cell=[a, a, a])
-initial_structure.rattle(stdev=0.10, seed=0)
+initial_structure.rattle(stdev=0.10, seed=1)
 ##############################################################################
 
 # 2.A. Optimize structure using CatLearn:
@@ -36,7 +36,7 @@ initial_catlearn = initial_structure.copy()
 initial_catlearn.set_calculator(calculator)
 
 catlearn_opt = CatLearnMin(initial_catlearn, trajectory='catlearn_opt.traj')
-catlearn_opt.run(fmax=0.05, kernel='SQE_opt')
+catlearn_opt.run(fmax=0.01, kernel='SQE_opt')
 
 # 2.B. Optimize structure using ASE.
 initial_ase = initial_structure.copy()
@@ -44,7 +44,7 @@ initial_ase.set_calculator(calculator)
 
 ase_opt = GPMin(initial_ase, trajectory='ase_opt.traj',
                 update_hyperparams=True)
-ase_opt.run(fmax=0.05)
+ase_opt.run(fmax=0.01)
 
 # 3. Summary of the results:
 print('\n Summary of the results:\n ------------------------------------')

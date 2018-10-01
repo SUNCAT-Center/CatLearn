@@ -21,7 +21,7 @@ from ase.calculators.calculator import Calculator, all_changes
 class CatLearnNEB(object):
 
     def __init__(self, start, end, path=None, n_images=0.25, spring=None,
-                 interpolation=None, mic=False, neb_method='improvedtangent',
+                 interpolation=None, mic=False, neb_method='eb',
                  ase_calc=None, include_previous_calcs=False,
                  stabilize=False, restart=False):
         """ Nudged elastic band (NEB) setup.

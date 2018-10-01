@@ -15,8 +15,8 @@ def get_plot_mullerbrown(images, interesting_point, gp,
 
     # Generate test datapoints in x and y.
 
-    x_lim = [-1.2, 1.1]
-    y_lim = [-0.4, 1.8]
+    x_lim = [-1.6, 1.2]
+    y_lim = [-0.6, 2.0]
 
     test_points = 50  # Length of the grid test points (nxn).
 
