@@ -150,7 +150,7 @@ class CatLearnMin(object):
             u_prior = np.max(targets[:, 0])
 
             ###############################################################
-            if self.iter >= 2:
+            if self.feval >= 2:
                 from scipy.spatial.distance import euclidean
                 length_scale = euclidean(train[0], train[np.argmin(
                                          self.list_max_abs_forces) + 1])
@@ -206,7 +206,7 @@ class CatLearnMin(object):
 
             # Start when the training list has more than 5 points:
             opt_hyper = False
-            if self.feval > 1:
+            if self.feval > 5:
                     opt_hyper = True
 
             self.gp = GaussianProcess(kernel_dict=kdict,
@@ -258,7 +258,7 @@ class CatLearnMin(object):
             self.max_abs_forces = np.max(np.abs(self.list_fmax))
             self.list_max_abs_forces.append(self.max_abs_forces)
 
-            # if self.list_targets[-1] < np.min(self.list_targets[:-1]):
+            #if self.list_targets[-1] < np.min(self.list_targets[:-1]):
             self.iter += 1
             print_info(self)
 
