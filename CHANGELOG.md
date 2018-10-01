@@ -1,5 +1,7 @@
 # dev
 
+-   Restructure of fingerprint module
+-   Pandas DataFrame getter in FeatureGenerator
 -   CatMAP API using ASE database.
 -   New surrogate model module.
 -   Small fixes in adsorbate fingerprinter.

@@ -328,3 +328,25 @@ class FeatureGenerator(
                 max_len = len(a)
 
         self.atom_len = max_len
+
+    def get_dataframe(self, candidates, vec_names):
+        """Sequentially combine feature vectors. Padding handled automatically.
+
+        Parameters
+        ----------
+        candidates : list or dict
+            Atoms objects to construct fingerprints for.
+        vec_name : list of / single vec class(es)
+            List of fingerprinting classes.
+
+        Returns
+        -------
+        df : DataFrame
+          Fingerprint dataframe with n rows and m columns (n, m) where
+          n is the number of candidates and m is the summed number of features
+          from all fingerprint classes supplied.
+        """
+        matrix = self.return_vec(candidates, vec_names)
+        columns = self.return_names(vec_names)
+
+        return pd.DataFrame(data=matrix, columns=columns)
