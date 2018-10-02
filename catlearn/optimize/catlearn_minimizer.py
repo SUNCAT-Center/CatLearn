@@ -134,6 +134,7 @@ class CatLearnMin(object):
         self.list_fmax = get_fmax(-np.array([self.list_gradients[-1]]),
                                           self.num_atoms)
         self.max_abs_forces = np.max(np.abs(self.list_fmax))
+        self.list_max_abs_forces.append(self.max_abs_forces)
         print_info(self)
 
         # Initial hyperparameters:
@@ -152,8 +153,8 @@ class CatLearnMin(object):
             ###############################################################
             if self.feval >= 5:
                 from scipy.spatial.distance import euclidean
-                length_scale = euclidean(train[0], train[np.argmin(
-                                         self.list_max_abs_forces) + 1])
+                length_scale = euclidean(train[np.argmax(self.list_max_abs_forces)],
+                                         train[np.argmin(self.list_max_abs_forces)])
             ###############################################################
 
             scaled_targets = targets - u_prior
