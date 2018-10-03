@@ -151,7 +151,7 @@ class CatLearnMin(object):
             u_prior = np.max(targets[:, 0])
 
             ###############################################################
-            if self.feval >= 5:
+            if self.feval >= 10:
                 from scipy.spatial.distance import euclidean
                 length_scale = euclidean(train[np.argmax(self.list_max_abs_forces)],
                                          train[np.argmin(self.list_max_abs_forces)])
@@ -161,39 +161,39 @@ class CatLearnMin(object):
             sigma_f = 1e-3 + np.std(scaled_targets)**2
 
             if kernel == 'SQE':
-                kdict = [{'type': 'gaussian', 'width': length_scale,
+                kdict = [{'type': 'gaussian', 'width': 0.4,
                           'dimension': 'single',
-                          'bounds': ((length_scale, length_scale),),
-                          'scaling': sigma_f,
-                          'scaling_bounds': ((sigma_f, sigma_f),)},
+                          'bounds': ((0.4, 0.4),),
+                          'scaling': 1.0,
+                          'scaling_bounds': ((1.0, 1.0),)},
                          {'type': 'noise_multi',
-                          'hyperparameters': sigma_n,
-                          'bounds': ((sigma_n[0], sigma_n[0]),
-                                     (sigma_n[1], sigma_n[1]),)}
+                          'hyperparameters': [0.005 * 0.4**2, 0.005],
+                          'bounds': ((0.005 * 0.4**2, 0.005 * 0.4**2),
+                                     (0.005, 0.005),)}
                          ]
 
             if kernel == 'SQE_opt':
                 kdict = [{'type': 'gaussian', 'width': 0.4,
                           'dimension': 'single',
-                          'bounds': ((1e-6, length_scale/2),),
+                          'bounds': ((1e-2, length_scale),),
                           'scaling': sigma_f,
-                          'scaling_bounds': ((sigma_f, sigma_f),)},
+                          'scaling_bounds': ((sigma_f / 2., sigma_f * 2.),)},
                          {'type': 'noise_multi',
                           'hyperparameters': sigma_n,
-                          'bounds': ((0.003 * (0.4**2), 0.010 * (0.4**2)),
-                                     (0.003, 0.010),)}
+                          'bounds': ((0.001, 0.010),
+                                     (0.001, 0.010),)}
                          ]
 
             if kernel == 'ARD_SQE':
                 kdict = [{'type': 'gaussian', 'width': 0.4,
                           'dimension': 'features',
-                          'bounds': ((1e-6, length_scale/2),) * len(self.index_mask),
+                          'bounds': ((1e-2, 0.4),) * len(self.index_mask),
                           'scaling': sigma_f,
-                          'scaling_bounds': ((sigma_f, sigma_f),)},
+                          'scaling_bounds': ((sigma_f / 2., sigma_f * 2.),)},
                          {'type': 'noise_multi',
                           'hyperparameters': sigma_n,
-                          'bounds': ((0.003 * (0.4**2), 0.010 * (0.4**2)),
-                                     (0.003, 0.010),)}
+                          'bounds': ((0.001, 0.010),
+                                     (0.001, 0.010),)}
                          ]
 
             if self.index_mask is not None:

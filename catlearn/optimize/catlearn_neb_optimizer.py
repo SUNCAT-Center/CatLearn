@@ -21,7 +21,7 @@ from ase.calculators.calculator import Calculator, all_changes
 class CatLearnNEB(object):
 
     def __init__(self, start, end, path=None, n_images=0.25, spring=None,
-                 interpolation=None, mic=False, neb_method='eb',
+                 interpolation=None, mic=False, neb_method='improvedtangent',
                  ase_calc=None, include_previous_calcs=False,
                  stabilize=False, restart=False):
         """ Nudged elastic band (NEB) setup.
@@ -213,8 +213,8 @@ class CatLearnNEB(object):
                                    self.num_atoms)
         self.max_abs_forces = np.max(np.abs(self.max_forces))
 
-    def run(self, fmax=0.05, unc_convergence=0.010, steps=200,
-            plot_neb_paths=False, acquisition='acq_2', kernel='SQE_opt'):
+    def run(self, fmax=0.05, unc_convergence=0.05, steps=200,
+            plot_neb_paths=False, acquisition='acq_1'):
 
         """Executing run will start the optimization process.
 
@@ -246,10 +246,10 @@ class CatLearnNEB(object):
             middle = int(self.n_images * (1./3.))
             interesting_point = self.images[middle].get_positions().flatten()
             eval_and_append(self, interesting_point)
-
-        # Initial hyperparameters:
-        length_scale = 0.25
-        sigma_n = [0.005 * 0.4**2, 0.005]
+            TrajectoryWriter(atoms=self.ase_ini,
+                                 filename='./evaluated_structures.traj',
+                                 mode='a').write()
+            self.iter += 1
 
         while True:
 
@@ -260,43 +260,19 @@ class CatLearnNEB(object):
 
             u_prior = np.max(targets[:, 0])
             scaled_targets = targets - u_prior
-            sigma_f = 1e-3 + np.std(scaled_targets)**2
 
-            if kernel == 'SQE':
-                kdict = [{'type': 'gaussian', 'width': length_scale,
-                          'dimension': 'single',
-                          'bounds': ((length_scale, length_scale),),
-                          'scaling': sigma_f,
-                          'scaling_bounds': ((sigma_f, sigma_f),)},
-                         {'type': 'noise_multi',
-                          'hyperparameters': sigma_n,
-                          'bounds': ((sigma_n[0], sigma_n[0]),
-                                     (sigma_n[1], sigma_n[1]),)}
-                         ]
+            sigma_f = np.std(scaled_targets)**2
 
-            if kernel == 'SQE_opt':
-                kdict = [{'type': 'gaussian', 'width': length_scale,
-                          'dimension': 'single',
-                          'bounds': ((1e-3, self.path_distance/2.),),
-                          'scaling': sigma_f,
-                          'scaling_bounds': ((sigma_f, sigma_f),)},
-                         {'type': 'noise_multi',
-                          'hyperparameters': sigma_n,
-                          'bounds': ((0.003 * (0.4**2), 0.010 * (0.4**2)),
-                                     (0.003, 0.010),)}
-                         ]
-
-            if kernel == 'ARD_SQE':
-                kdict = [{'type': 'gaussian', 'width': length_scale,
-                          'dimension': 'features',
-                          'bounds': ((1e-3, self.path_distance/2.),) * len(self.index_mask),
-                          'scaling': 1.,
-                          'scaling_bounds': ((sigma_f, sigma_f),)},
-                         {'type': 'noise_multi',
-                          'hyperparameters': sigma_n,
-                          'bounds': ((0.003 * (0.4**2), 0.010 * (0.4**2)),
-                                     (0.003, 0.010),)}
-                         ]
+            kdict = [{'type': 'gaussian', 'width': 0.4,
+                      'dimension': 'single',
+                      'bounds': ((0.01, self.path_distance),),
+                      'scaling': sigma_f,
+                      'scaling_bounds': ((sigma_f, sigma_f),)},
+                     {'type': 'noise_multi',
+                      'hyperparameters': [0.001, 0.001],
+                      'bounds': ((0.001, 0.010),
+                                 (0.001, 0.010),)}
+                     ]
 
             if self.index_mask is not None:
                 train = apply_mask(list_to_mask=train,
@@ -307,10 +283,10 @@ class CatLearnNEB(object):
             print('Training a GP process...')
             print('Number of training points:', len(scaled_targets))
 
-            # Start when the training list has more than 5 points:
+            # Optimize when n_training points is bigger than the n_images:
             opt_hyper = False
-            if self.feval > self.n_images-2:
-                    opt_hyper = True
+            if self.feval > (self.n_images - 2):
+                opt_hyper = True
 
             self.gp = GaussianProcess(kernel_dict=kdict,
                                       regularization=0.0,
@@ -326,8 +302,8 @@ class CatLearnNEB(object):
 
             # 2. Setup and run ML NEB:
 
-            # starting_path = copy.deepcopy(self.initial_images)
-            starting_path = self.images
+            starting_path = copy.deepcopy(self.initial_images)
+            # starting_path = self.images
 
             self.images = create_ml_neb(is_endpoint=self.initial_endpoint,
                                         fs_endpoint=self.final_endpoint,
@@ -344,7 +320,7 @@ class CatLearnNEB(object):
                          method=self.neb_method,
                          k=self.spring)
             neb_opt = MDMin(ml_neb, dt=0.050)
-            neb_opt.run(fmax=fmax/1.0, steps=100)
+            neb_opt.run(fmax=fmax * 2., steps=200)
             print('ML NEB optimized.')
 
             print('Starting ML NEB optimization using climbing image...')
@@ -352,7 +328,7 @@ class CatLearnNEB(object):
                          method=self.neb_method,
                          k=self.spring)
             neb_opt = MDMin(ml_neb, dt=0.050)
-            neb_opt.run(fmax=fmax/1.2, steps=100)
+            neb_opt.run(fmax=fmax/1.2, steps=200)
             print('ML CI-NEB optimized.')
 
             # 3. Get results from ML NEB using ASE NEB Tools:
@@ -368,7 +344,7 @@ class CatLearnNEB(object):
                 pos_unc = apply_mask(list_to_mask=pos_unc,
                                      mask_index=self.index_mask)[1]
                 u = self.gp.predict(test_fp=pos_unc, uncertainty=True)
-                uncertainty = (u['uncertainty'][0]) * 4.0
+                uncertainty = np.sqrt(u['uncertainty'][0])/4
                 i.info['uncertainty'] = uncertainty
                 self.uncertainty_path.append(uncertainty)
                 self.e_path.append(i.get_total_energy())
@@ -435,9 +411,9 @@ class CatLearnNEB(object):
                                          )
 
             # 5. Add a new training point and evaluate it.
-
             eval_and_append(self, interesting_point)
             self.iter += 1
+
             # 6. Store results.
             store_results_neb(self)
             store_trajectory_neb(self)
@@ -503,7 +479,7 @@ def create_ml_neb(is_endpoint, fs_endpoint, images_interpolation,
     imgs[0].info['uncertainty'] = 0.0
     imgs[0].info['iteration'] = iteration
 
-    for i in range(1, n_images-1):
+    for i in range(1, n_images - 1):
         image = is_endpoint.copy()
         image.info['label'] = i
         image.info['uncertainty'] = 0.0
@@ -520,7 +496,7 @@ def create_ml_neb(is_endpoint, fs_endpoint, images_interpolation,
     imgs.append(fs_endpoint)
 
     # Append labels, uncertainty and iter to the last end-point:
-    imgs[-1].info['label'] = n_images-1
+    imgs[-1].info['label'] = n_images - 1
     imgs[-1].info['uncertainty'] = 0.0
     imgs[-1].info['iteration'] = iteration
 
@@ -535,7 +511,7 @@ class ASECalc(Calculator):
     implemented_properties = ['energy', 'forces']
     nolabel = True
 
-    def __init__(self, gp, index_constraints, scaling_targets=0.0,
+    def __init__(self, gp, index_constraints, scaling_targets,
                  finite_step=1e-4, **kwargs):
 
         Calculator.__init__(self, **kwargs)
