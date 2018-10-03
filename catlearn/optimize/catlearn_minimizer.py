@@ -175,21 +175,9 @@ class CatLearnMin(object):
             if kernel == 'SQE_opt':
                 kdict = [{'type': 'gaussian', 'width': 0.4,
                           'dimension': 'single',
-                          'bounds': ((1e-2, length_scale),),
+                          'bounds': ((0.01, length_scale/2),),
                           'scaling': sigma_f,
-                          'scaling_bounds': ((sigma_f / 2., sigma_f * 2.),)},
-                         {'type': 'noise_multi',
-                          'hyperparameters': sigma_n,
-                          'bounds': ((0.001, 0.010),
-                                     (0.001, 0.010),)}
-                         ]
-
-            if kernel == 'ARD_SQE':
-                kdict = [{'type': 'gaussian', 'width': 0.4,
-                          'dimension': 'features',
-                          'bounds': ((1e-2, 0.4),) * len(self.index_mask),
-                          'scaling': sigma_f,
-                          'scaling_bounds': ((sigma_f / 2., sigma_f * 2.),)},
+                          'scaling_bounds': ((sigma_f, sigma_f * 10.),)},
                          {'type': 'noise_multi',
                           'hyperparameters': sigma_n,
                           'bounds': ((0.001, 0.010),
