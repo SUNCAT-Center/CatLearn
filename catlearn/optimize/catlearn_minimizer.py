@@ -137,10 +137,6 @@ class CatLearnMin(object):
         self.list_max_abs_forces.append(self.max_abs_forces)
         print_info(self)
 
-        # Initial hyperparameters:
-        length_scale = 0.4
-        sigma_n = [0.005 * 0.4**2, 0.005]
-
         while not converged(self):
 
             # 1. Train Machine Learning model.
@@ -150,15 +146,8 @@ class CatLearnMin(object):
 
             u_prior = np.max(targets[:, 0])
 
-            ###############################################################
-            if self.feval >= 10:
-                from scipy.spatial.distance import euclidean
-                length_scale = euclidean(train[np.argmax(self.list_max_abs_forces)],
-                                         train[np.argmin(self.list_max_abs_forces)])
-            ###############################################################
-
             scaled_targets = targets - u_prior
-            sigma_f = 1e-3 + np.std(scaled_targets)**2
+            sigma_f = 0.1 + np.std(scaled_targets)**2
 
             if kernel == 'SQE':
                 kdict = [{'type': 'gaussian', 'width': 0.4,
@@ -173,15 +162,29 @@ class CatLearnMin(object):
                          ]
 
             if kernel == 'SQE_opt':
+                u_prior = 0.0
                 kdict = [{'type': 'gaussian', 'width': 0.4,
                           'dimension': 'single',
-                          'bounds': ((0.01, length_scale/2),),
+                          'bounds': ((0.01, 0.4),),
                           'scaling': sigma_f,
-                          'scaling_bounds': ((sigma_f, sigma_f * 10.),)},
+                          'scaling_bounds': ((sigma_f, sigma_f + 1e2),)},
                          {'type': 'noise_multi',
-                          'hyperparameters': sigma_n,
-                          'bounds': ((0.001, 0.010),
-                                     (0.001, 0.010),)}
+                          'hyperparameters': [0.001, 0.001 * 0.4**2],
+                          'bounds': ((0.001, 1e-1),
+                                     (0.001 * 0.4**2, 1e-1),)}
+                         ]
+
+            if kernel == 'ARD_SQE':
+                u_prior = 0.0
+                kdict = [{'type': 'gaussian', 'width': 0.4,
+                          'dimension': 'features',
+                          'bounds': ((0.01, 0.4),) * len(self.index_mask),
+                          'scaling': sigma_f,
+                          'scaling_bounds': ((sigma_f, sigma_f + 1e2),)},
+                         {'type': 'noise_multi',
+                          'hyperparameters': [0.001, 0.001 * 0.4**2],
+                          'bounds': ((0.001, 1e-1),
+                                     (0.001 * 0.4**2, 1e-1),)}
                          ]
 
             if self.index_mask is not None:

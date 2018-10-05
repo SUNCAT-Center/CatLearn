@@ -21,7 +21,7 @@ from ase.calculators.calculator import Calculator, all_changes
 class CatLearnNEB(object):
 
     def __init__(self, start, end, path=None, n_images=0.25, spring=None,
-                 interpolation=None, mic=False, neb_method='improvedtangent',
+                 interpolation=None, mic=False, neb_method='eb',
                  ase_calc=None, include_previous_calcs=False,
                  stabilize=False, restart=False):
         """ Nudged elastic band (NEB) setup.
@@ -214,7 +214,7 @@ class CatLearnNEB(object):
         self.max_abs_forces = np.max(np.abs(self.max_forces))
 
     def run(self, fmax=0.05, unc_convergence=0.05, steps=200,
-            plot_neb_paths=False, acquisition='acq_1'):
+            plot_neb_paths=False, acquisition='acq_2'):
 
         """Executing run will start the optimization process.
 
@@ -261,7 +261,7 @@ class CatLearnNEB(object):
             u_prior = np.max(targets[:, 0])
             scaled_targets = targets - u_prior
 
-            sigma_f = np.std(scaled_targets)**2
+            sigma_f = 0.1 + np.std(scaled_targets)**2
 
             kdict = [{'type': 'gaussian', 'width': 0.4,
                       'dimension': 'single',
@@ -269,9 +269,9 @@ class CatLearnNEB(object):
                       'scaling': sigma_f,
                       'scaling_bounds': ((sigma_f, sigma_f),)},
                      {'type': 'noise_multi',
-                      'hyperparameters': [0.001, 0.001],
-                      'bounds': ((0.001, 0.010),
-                                 (0.001, 0.010),)}
+                          'hyperparameters': [0.001, 0.001 * 0.4**2],
+                          'bounds': ((0.001, 1e-1),
+                                     (0.001 * 0.4**2, 1e-1),)}
                      ]
 
             if self.index_mask is not None:
@@ -320,7 +320,7 @@ class CatLearnNEB(object):
                          method=self.neb_method,
                          k=self.spring)
             neb_opt = MDMin(ml_neb, dt=0.050)
-            neb_opt.run(fmax=fmax * 2., steps=200)
+            neb_opt.run(fmax=fmax * 2., steps=500)
             print('ML NEB optimized.')
 
             print('Starting ML NEB optimization using climbing image...')
@@ -328,7 +328,7 @@ class CatLearnNEB(object):
                          method=self.neb_method,
                          k=self.spring)
             neb_opt = MDMin(ml_neb, dt=0.050)
-            neb_opt.run(fmax=fmax/1.2, steps=200)
+            neb_opt.run(fmax=fmax/1.2, steps=500)
             print('ML CI-NEB optimized.')
 
             # 3. Get results from ML NEB using ASE NEB Tools:

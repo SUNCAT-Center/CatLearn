@@ -31,7 +31,7 @@ catlearn_opt.run(fmax=0.05)
 initial_ase = mol.copy()
 initial_ase.set_calculator(calc)
 ase_opt = GPMin(initial_ase, trajectory='ase_opt.traj',
-                update_hyperparams=True)
+                update_hyperparams=False)
 ase_opt.run(fmax=0.05)
 
 # 3. Summary of the results:
