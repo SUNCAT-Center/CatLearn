@@ -96,7 +96,7 @@ class CatLearnMin(object):
                 self.max_abs_forces = np.max(np.abs(self.list_fmax))
                 self.list_max_abs_forces.append(self.max_abs_forces)
 
-    def run(self, fmax=0.05, steps=200, kernel='SQE_opt'):
+    def run(self, fmax=0.05, steps=200, kernel='SQE'):
 
         """Executing run will start the optimization process.
 
@@ -149,7 +149,7 @@ class CatLearnMin(object):
             scaled_targets = targets - u_prior
             sigma_f = 0.1 + np.std(scaled_targets)**2
 
-            if kernel == 'SQE':
+            if kernel == 'SQE_fixed':
                 kdict = [{'type': 'gaussian', 'width': 0.4,
                           'dimension': 'single',
                           'bounds': ((0.4, 0.4),),
@@ -161,7 +161,7 @@ class CatLearnMin(object):
                                      (0.005, 0.005),)}
                          ]
 
-            if kernel == 'SQE_opt':
+            if kernel == 'SQE':
                 u_prior = 0.0
                 kdict = [{'type': 'gaussian', 'width': 0.4,
                           'dimension': 'single',
