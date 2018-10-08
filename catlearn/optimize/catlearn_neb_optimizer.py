@@ -213,7 +213,7 @@ class CatLearnNEB(object):
                                    self.num_atoms)
         self.max_abs_forces = np.max(np.abs(self.max_forces))
 
-    def run(self, fmax=0.05, unc_convergence=0.075, steps=200,
+    def run(self, fmax=0.05, unc_convergence=0.015, steps=200,
             plot_neb_paths=False, acquisition='acq_2'):
 
         """Executing run will start the optimization process.
@@ -258,16 +258,16 @@ class CatLearnNEB(object):
             targets = np.copy(self.list_targets)
             gradients = np.copy(self.list_gradients)
 
-            u_prior = np.max(targets[:, 0])
+            u_prior = np.max(targets)
             scaled_targets = targets - u_prior
 
             sigma_f = 0.1 + np.std(scaled_targets)**2
 
             kdict = [{'type': 'gaussian', 'width': 0.4,
                       'dimension': 'single',
-                      'bounds': ((0.01, 0.4),),
+                      'bounds': ((0.01, self.path_distance),),
                       'scaling': sigma_f,
-                      'scaling_bounds': ((sigma_f, sigma_f + 1e2),)},
+                      'scaling_bounds': ((sigma_f, sigma_f),)},
                      {'type': 'noise_multi',
                           'hyperparameters': [0.001, 0.001 * 0.4**2],
                           'bounds': ((0.001, 1e-1),
@@ -344,7 +344,7 @@ class CatLearnNEB(object):
                 pos_unc = apply_mask(list_to_mask=pos_unc,
                                      mask_index=self.index_mask)[1]
                 u = self.gp.predict(test_fp=pos_unc, uncertainty=True)
-                uncertainty = np.sqrt(u['uncertainty'][0])
+                uncertainty = (u['uncertainty'][0]) * 4.
                 i.info['uncertainty'] = uncertainty
                 self.uncertainty_path.append(uncertainty)
                 self.e_path.append(i.get_total_energy())
