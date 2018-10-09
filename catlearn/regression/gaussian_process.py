@@ -116,9 +116,8 @@ class GaussianProcess(object):
         Returns
         ----------
         data : dictionary
+            Gaussian process predictions and meta data:
 
-            Keys
-            ----------
             prediction : vector
                 Predicted mean.
             uncertainty : vector

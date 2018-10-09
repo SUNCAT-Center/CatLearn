@@ -3,7 +3,7 @@
 -   Restructure of fingerprint module
 -   Pandas DataFrame getter in FeatureGenerator
 -   CatMAP API using ASE database.
--   New surrogate model module.
+-   New active learning module.
 -   Small fixes in adsorbate fingerprinter.
 
 # Version 0.4.4 (August 2018)

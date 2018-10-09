@@ -8,14 +8,6 @@ catlearn.regression
 
 
 
-catlearn.regression.acquisition\_functions
-------------------------------------------
-
-.. automodule:: catlearn.regression.acquisition_functions
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
 catlearn.regression.cost\_function
 ----------------------------------
 
