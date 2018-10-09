@@ -6,60 +6,29 @@ import time
 import multiprocessing
 
 
-class SurrogateModel(object):
-    """Surrogate modeling class. Intended for screening or optimizing in a
+class ActiveLearning(object):
+    """Active learning class, intended for screening or optimizing in a
     predefined and finite search space."""
 
-    def __init__(self, train_model, predict, acquisition_function,
-                 train_data, target):
+    def __init__(self, surrogate_model, train_data, target):
         """Initialize the class.
 
         Parameters
         ----------
-        train_model : object
+        surrogate_model : object
             function which returns a trained regression model. This function
-            should either train or update the regression model.
+            should either setup and train or
+            load and update the regression model.
+
             Parameters
             ----------
 
             train_fp : array
-                training data matrix.
+                Training data matrix.
             target : list
-                training target feature.
-
-            Returns
-            ----------
-            model : object
-                Trained model object, which can be accepted by predict.
-
-        predict : object
-            function which returns predictions, error estimates and meta data.
-
-            Parameters
-            ----------
-
-            model : object
-                model returned by train_model.
-            test_fp : array
-                test data matrix.
-            test_target : list
-                test target feature.
-
-            Returns
-            ----------
-            acquition_args : list
-                ordered list of arguments for aqcuisition_function.
-            score : object
-                arbitratry meta data for output.
-
-        acquisition_function : object
-            function which returns a list of indices of candidates to be
-            acquired.
-
-            Parameters
-            ----------
-
-            *aqcuisition_args
+                Training target feature.
+            unlabeled_data : array
+                Data matrix representing an unlabeled search space.
 
             Returns
             ----------
@@ -71,9 +40,7 @@ class SurrogateModel(object):
         target : list
             training target feature.
         """
-        self.train_model = train_model
-        self.predict = predict
-        self.acquisition_function = acquisition_function
+        self.surrogate_model = surrogate_model
         self.train_data = train_data
         self.target = target
 
@@ -122,14 +89,10 @@ class SurrogateModel(object):
                 break
             elif len(test_target) < batch_size:
                 batch_size = len(test_target)
-            # Train regression model.
-            model = self.train_model(train_fp, train_target)
 
-            # Make predictions.
-            aqcuisition_args, score = self.predict(model, test_fp, test_target)
-
-            # Get indices to acquire from user defined function.
-            sample = self.acquisition_function(*aqcuisition_args)
+            # Call surrogate model.
+            sample, score = self.surrogate_model(train_fp, train_target,
+                                                 test_fp, test_target)
 
             to_acquire = test_index[sample[:batch_size]]
             assert len(to_acquire) == batch_size
@@ -157,21 +120,16 @@ class SurrogateModel(object):
         Returns
         ----------
         to_acquire : list
-            Indices in order of relevance from user defined function.
+            Row indices of unlabeled data to acquire.
         score
             User defined output from predict.
         """
-        # Do regression.
-        model = self.train_model(self.train_data, self.target)
-
-        # Make predictions.
-        aqcuisition_args, score = self.predict(model, unlabeled_data)
-
-        # Get list of indices in order of relevance from user defined function.
-        sample = self.acquisition_function(*aqcuisition_args)
+        # Call surrogate model.
+        sample, score = self.surrogate_model(self.train_data,
+                                             self.target,
+                                             unlabeled_data)
 
         to_acquire = sample[:batch_size]
-        assert len(to_acquire) == batch_size
 
         # Return best candidates and meta data.
         return list(to_acquire), score
@@ -211,8 +169,7 @@ class SurrogateModel(object):
             pool = multiprocessing.Pool(nprocs)
             args = (
                     (initial_subset, batch_size, n_max, seed_list[x],
-                     self.train_data, self.target,
-                     self.train_model, self.predict, self.acquisition_function)
+                     self.train_data, self.target, self.surrogate_model)
                     for x in np.arange(size))
             for r in pool.imap_unordered(_test_acquisition, args):
                 ensemble.append(r)
@@ -222,9 +179,7 @@ class SurrogateModel(object):
         else:
             for x in np.arange(size):
                 arg = (initial_subset, batch_size, n_max, seed_list[x],
-                       self.train_data, self.target,
-                       self.train_model, self.predict,
-                       self.acquisition_function)
+                       self.train_data, self.target, self.surrogate_model)
                 ensemble.append(_test_acquisition(arg))
         return ensemble
 
@@ -304,9 +259,7 @@ def _test_acquisition(args):
         seed = args[3]
         train_data = args[4]
         target = args[5]
-        train_model = args[6]
-        predict = args[7]
-        acquisition_function = args[8]
+        surrogate_model = args[6]
 
         if initial_subset is None:
             train_index = list(range(max(batch_size, 2)))
@@ -339,17 +292,12 @@ def _test_acquisition(args):
                 break
             elif len(test_target) < batch_size:
                 batch_size = len(test_target)
-            # Do regression.
-            model = train_model(train_fp, train_target)
 
-            # Make predictions.
-            aqcuisition_args, score = predict(model, test_fp, test_target)
-
-            # Calculate acquisition values.
-            sample = acquisition_function(*aqcuisition_args)
+            # Call surrogate model.
+            sample, score = surrogate_model(train_fp, train_target,
+                                            test_fp, test_target)
 
             to_acquire = test_index[sample[:batch_size]]
-            assert len(to_acquire) == batch_size
 
             # Append best candidates to be acquired.
             train_index += list(to_acquire)

@@ -122,6 +122,7 @@ There is much functionality in CatLearn to assist in handling atom data and buil
   catlearn.learning_curve
   catlearn.preprocess
   catlearn.regression
+  catlearn.active_learning
   catlearn.setup
   catlearn.utilities
 

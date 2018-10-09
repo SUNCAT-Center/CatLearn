@@ -385,8 +385,8 @@ class AdsorbateFingerprintGenerator(BaseGenerator):
 
     def count_chemisorbed_fragment(self, atoms=None):
         """Function that takes an atoms objects and returns a fingerprint
-        vector containing the count of C, O, H, N and also metal atoms,
-        that are neighbors to the binding atom.
+        vector containing the count over atom types,
+        that are neighbors to the chemisorbing atom.
 
         Parameters
         ----------
@@ -397,10 +397,15 @@ class AdsorbateFingerprintGenerator(BaseGenerator):
                       self.atom_types] + ['boc_site', 'n_site']
             return labels
         else:
+            # Adsorbate atoms connected to the surface.
             chemi = atoms.subsets['chemisorbed_atoms']
             cm = np.array(atoms.connectivity)
+
+            # Prepare bag of atom types.
             bag = np.zeros(len(self.atom_types))
+            # Loop over elements that are present in the data set.
             for j, z in enumerate(self.atom_types):
+                # Add neighbor counts to the bag of the relevant element.
                 bag[j] += np.sum(cm[:, chemi] * np.vstack(atoms.numbers == z))
 
             boc_site = np.sum(cm[:, chemi][atoms.subsets['site_atoms'], :])

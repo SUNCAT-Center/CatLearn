@@ -50,14 +50,6 @@ catlearn.utilities.sammon
     :undoc-members:
     :show-inheritance:
 
-catlearn.utilities.surrogate\_model
------------------------------------
-
-.. automodule:: catlearn.utilities.surrogate_model
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
 catlearn.utilities.utilities
 ----------------------------
 

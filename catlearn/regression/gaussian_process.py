@@ -112,6 +112,20 @@ class GaussianProcess(object):
             of data if True. Default is False.
         epsilon : float
             Threshold for insensitive error calculation.
+
+        Returns
+        ----------
+        data : dictionary
+            Gaussian process predictions and meta data:
+
+            prediction : vector
+                Predicted mean.
+            uncertainty : vector
+                Predicted standard deviation of the Gaussian posterior.
+            training_error : dictionary
+                Error metrics on training targets.
+            validation_error : dictionary
+                Error metrics on test targets.
         """
         # Perform some sanity checks.
         if get_validation_error:
