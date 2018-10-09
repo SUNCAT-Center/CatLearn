@@ -1,1 +1,1 @@
-from .algorithm import SurrogateModel
+from .algorithm import ActiveLearning
