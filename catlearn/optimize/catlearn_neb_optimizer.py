@@ -475,8 +475,8 @@ def train_gp_model(self):
               'scaling_bounds': ((scaling, scaling + 1e2),)},
              {'type': 'noise_multi',
               'hyperparameters': [0.005, 0.005 * 0.4**2],
-              'bounds': ((0.001, 0.050),
-                         (0.001 * 0.4**2, 0.050),)}
+              'bounds': ((0.003, 0.050),
+                         (0.003 * 0.4**2, 0.050),)}
              ]
 
     train = self.list_train.copy()
