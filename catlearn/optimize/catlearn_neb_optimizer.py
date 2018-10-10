@@ -10,7 +10,7 @@ from ase.neb import NEB
 from ase.neb import NEBTools
 from ase.io import read, write
 from ase.io.trajectory import TrajectoryWriter
-from ase.optimize import MDMin
+from ase.optimize import MDMin, FIRE
 from scipy.spatial import distance
 import copy
 import os
@@ -21,7 +21,7 @@ from ase.calculators.calculator import Calculator, all_changes
 class CatLearnNEB(object):
 
     def __init__(self, start, end, path=None, n_images=0.3, spring=None,
-                 interpolation=None, mic=False, neb_method='eb',
+                 interpolation=None, mic=False, neb_method='improvedtangent',
                  ase_calc=None, include_previous_calcs=False,
                  stabilize=False, restart=False):
 
@@ -270,7 +270,7 @@ class CatLearnNEB(object):
                          method=self.neb_method,
                          k=self.spring)
 
-            neb_opt = MDMin(ml_neb, dt=0.025)
+            neb_opt = FIRE(ml_neb, dt=0.05, downhill_check=True)
 
             print('Starting ML NEB optimization...')
             neb_opt.run(fmax=fmax * 2.0, steps=ml_max_iter)
@@ -279,7 +279,7 @@ class CatLearnNEB(object):
             ml_neb = NEB(self.images, climb=True,
                          method=self.neb_method,
                          k=self.spring)
-            neb_opt = MDMin(ml_neb, dt=0.025)
+            neb_opt = MDMin(ml_neb, dt=0.05)
             neb_opt.run(fmax=fmax/1.2, steps=ml_max_iter)
             print('ML NEB optimized.')
 
@@ -466,7 +466,7 @@ def train_gp_model(self):
 
     width = 0.4
     dimension = 'single'
-    bounds = ((0.01, 0.4),)
+    bounds = ((0.1, 0.4),)
 
     kdict = [{'type': 'gaussian', 'width': width,
               'dimension': dimension,
@@ -475,8 +475,8 @@ def train_gp_model(self):
               'scaling_bounds': ((scaling, scaling + 1e2),)},
              {'type': 'noise_multi',
               'hyperparameters': [0.005, 0.005 * 0.4**2],
-              'bounds': ((0.003, 0.050),
-                         (0.003 * 0.4**2, 0.050),)}
+              'bounds': ((0.001, 0.050),
+                         (0.001 * 0.4**2, 0.050),)}
              ]
 
     train = self.list_train.copy()
