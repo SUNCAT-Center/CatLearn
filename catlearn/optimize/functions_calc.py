@@ -95,8 +95,8 @@ class MullerBrown(Calculator):
         forces[0][1] = -Fy
         forces[0][2] = -Fz
 
-        self.results['energy'] = energy / 10.0
-        self.results['forces'] = forces / 10.0
+        self.results['energy'] = energy / 20.0
+        self.results['forces'] = forces / 20.0
 
 
 class GoldsteinPrice(Calculator):
