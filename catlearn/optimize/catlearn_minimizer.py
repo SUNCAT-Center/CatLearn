@@ -37,7 +37,7 @@ class CatLearnMin(object):
         self.fmax = 0.0
         self.min_iter = 0
         self.gp = None
-        self.version = 'Min. v.2.0.0'
+        self.version = 'Min. v.3.0.0'
         print_version(self.version)
 
         self.ase_calc = ase_calc
@@ -170,8 +170,8 @@ class CatLearnMin(object):
                           'scaling_bounds': ((sigma_f, sigma_f + 1e2),)},
                          {'type': 'noise_multi',
                           'hyperparameters': [0.001, 0.001 * 0.4**2],
-                          'bounds': ((0.001, 1e-1),
-                                     (0.001 * 0.4**2, 1e-1),)}
+                          'bounds': ((0.003, 0.050),
+                                     (0.003 * 0.4**2, 0.050),)}
                          ]
 
             if kernel == 'ARD_SQE':
@@ -183,8 +183,8 @@ class CatLearnMin(object):
                           'scaling_bounds': ((sigma_f, sigma_f + 1e2),)},
                          {'type': 'noise_multi',
                           'hyperparameters': [0.001, 0.001 * 0.4**2],
-                          'bounds': ((0.001, 1e-1),
-                                     (0.001 * 0.4**2, 1e-1),)}
+                          'bounds': ((0.003, 0.050),
+                                     (0.003 * 0.4**2, 0.050),)}
                          ]
 
             if self.index_mask is not None:
