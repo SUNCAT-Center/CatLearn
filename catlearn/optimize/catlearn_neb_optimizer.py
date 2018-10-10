@@ -276,14 +276,14 @@ class CatLearnNEB(object):
             ml_neb = NEB(self.images, climb=False,
                          method=self.neb_method,
                          k=self.spring)
-            neb_opt = FIRE(ml_neb, dt=0.05, downhill_check=True)
+            neb_opt = FIRE(ml_neb, dt=0.050, downhill_check=True)
             neb_opt.run(fmax=fmax * 2.0, steps=100)
 
             print('Starting ML NEB optimization using climbing image...')
             ml_neb = NEB(self.images, climb=True,
                          method=self.neb_method,
                          k=self.spring)
-            neb_opt = MDMin(ml_neb, dt=0.05)
+            neb_opt = MDMin(ml_neb, dt=0.025)
             neb_opt.run(fmax=fmax/1.2, steps=1000)
             print('ML NEB optimized.')
 
