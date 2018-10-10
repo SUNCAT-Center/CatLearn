@@ -458,7 +458,7 @@ def create_ml_neb(is_endpoint, fs_endpoint, images_interpolation,
 def train_gp_model(self):
     self.max_target = np.max(self.list_targets)
     scaled_targets = self.list_targets.copy() - self.max_target
-
+    sigma_f = 0.01 + np.std(scaled_targets)**2
     dimension = 'single'
 
     bounds = ((0.01, self.path_distance),)
@@ -468,8 +468,8 @@ def train_gp_model(self):
     kdict = [{'type': 'gaussian', 'width': width,
               'dimension': dimension,
               'bounds': bounds,
-              'scaling': 1.,
-              'scaling_bounds': ((1., 1.),)},
+              'scaling': sigma_f,
+              'scaling_bounds': ((sigma_f, sigma_f),)},
              ]
 
     train = self.list_train.copy()
