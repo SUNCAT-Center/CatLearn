@@ -152,18 +152,19 @@ final_structure.set_calculator(calc)
 
 # Initial end-point:
 initial_opt = BFGS(initial_structure, trajectory='initial_optimized.traj')
-initial_opt.run(fmax=0.01)
+initial_opt.run(fmax=0.005)
 
 # Final end-point:
 final_opt = BFGS(final_structure, trajectory='final_optimized.traj')
-final_opt.run(fmax=0.01)
+final_opt.run(fmax=0.005)
 
 # Define number of images for the NEB:
 n_images = 11
 
 # 2.B. NEB using CatLearn ####################################################
 
-steps_plots = [2, 3, 8, 9, 200]
+steps_plots = [1, 2, 3, 4, 5, 6, 7, 8]
+steps_plots = [200]
 
 for max_steps in steps_plots:
     initial = read('initial_optimized.traj')
@@ -175,7 +176,7 @@ for max_steps in steps_plots:
                                n_images=n_images,
                                interpolation='linear', restart=False)
 
-    catlearn_neb.run(fmax=0.05, steps=max_steps, acquisition='acq_2')
+    catlearn_neb.run(fmax=0.01, steps=max_steps, acquisition='acq_2')
     get_plot_mullerbrown(catlearn_neb)
     plt.show()
     get_plots_neb(catlearn_neb)
