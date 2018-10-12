@@ -4,7 +4,7 @@ import warnings
 import numpy as np
 import ase.db
 from catlearn.utilities.neighborlist import ase_connectivity
-from catlearn.fingerprint.periodic_table_data import default_catlearn_radius
+from catlearn.featurize.periodic_table_data import default_catlearn_radius
 from tqdm import tqdm
 
 

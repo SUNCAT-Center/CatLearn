@@ -2,7 +2,7 @@
 import numpy as np
 
 from ase.neighborlist import NeighborList
-from catlearn.fingerprint.periodic_table_data import get_radius
+from catlearn.featurize.periodic_table_data import get_radius
 
 
 def ase_neighborlist(atoms, cutoffs=None):

@@ -9,19 +9,19 @@ import pandas as pd
 from collections import defaultdict
 import multiprocessing
 from tqdm import tqdm
-from .adsorbate_fingerprint import (AdsorbateFingerprintGenerator,
-                                    default_adsorbate_fingerprinters)
-from .convoluted_fingerprint import (ConvolutedFingerprintGenerator,
-                                     default_convoluted_fingerprinters)
-from .particle_fingerprint import (ParticleFingerprintGenerator,
-                                   default_particle_fingerprinters)
-from .standard_fingerprint import (StandardFingerprintGenerator,
-                                   default_molecule_fingerprinters)
-from .graph_fingerprint import GraphFingerprintGenerator
-from .bulk_fingerprint import (BulkFingerprintGenerator,
-                               default_bulk_fingerprinters)
-from .chalcogenide_fingerprint import (ChalcogenideFingerprintGenerator,
-                                       default_chalcogenide_fingerprinters)
+from catlearn.fingerprint.adsorbate import (AdsorbateFingerprintGenerator,
+                                            default_adsorbate_fingerprinters)
+from catlearn.fingerprint.convoluted import (ConvolutedFingerprintGenerator,
+                                             default_convoluted_fingerprinters)
+from catlearn.fingerprint.particle import (ParticleFingerprintGenerator,
+                                           default_particle_fingerprinters)
+from catlearn.fingerprint.standard import (StandardFingerprintGenerator,
+                                           default_molecule_fingerprinters)
+from catlearn.fingerprint.graph import GraphFingerprintGenerator
+from catlearn.fingerprint.bulk import (BulkFingerprintGenerator,
+                                       default_bulk_fingerprinters)
+from catlearn.fingerprint.chalcogenide import \
+    ChalcogenideFingerprintGenerator, default_chalcogenide_fingerprinters
 
 
 default_sets = {'bulk': default_bulk_fingerprinters,

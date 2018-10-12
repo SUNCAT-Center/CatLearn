@@ -7,12 +7,12 @@ import numpy as np
 import unittest
 
 from catlearn.api.ase_atoms_api import database_to_list, images_connectivity
-from catlearn.fingerprint.adsorbate_prep import (slab_positions2ads_index,
-                                                 slab_index,
-                                                 attach_cations,
-                                                 info2primary_index)
-from catlearn.fingerprint.periodic_table_data import stat_mendeleev_params
-from catlearn.fingerprint.setup import FeatureGenerator, default_fingerprinters
+from catlearn.featurize.adsorbate_prep import (slab_positions2ads_index,
+                                               slab_index,
+                                               attach_cations,
+                                               info2primary_index)
+from catlearn.featurize.periodic_table_data import stat_mendeleev_params
+from catlearn.featurize.setup import FeatureGenerator, default_fingerprinters
 from catlearn.utilities.utilities import formal_charges
 
 
