@@ -269,9 +269,9 @@ class CatLearnNEB(object):
                       'scaling': sigma_f,
                       'scaling_bounds': ((sigma_f, sigma_f),)},
                      {'type': 'noise_multi',
-                      'hyperparameters': [0.001, 0.001 * 0.4**2],
-                      'bounds': ((0.001, 1e-1),
-                                 (0.001 * 0.4**2, 1e-1),)}
+                      'hyperparameters': [0.005, 0.005],
+                      'bounds': ((0.001, 0.050),
+                                 (0.001, 0.050),)}
                      ]
 
             if self.index_mask is not None:
