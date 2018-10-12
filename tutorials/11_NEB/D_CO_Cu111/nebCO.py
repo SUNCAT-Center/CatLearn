@@ -49,7 +49,7 @@ n_images = 9
 #
 # # Make band:
 # images = [slab]
-# for i in range(n_images):
+# for i in range(n_images-1):
 #     image = slab.copy()
 #     # Set constraints and calculator:
 #     image.set_constraint(constraint)
@@ -96,7 +96,7 @@ n_images = 9
 neb_catlearn = CatLearnNEB(start='initial.traj',
                            end='final.traj',
                            ase_calc=copy.deepcopy(ase_calculator),
-                           n_images=7,
-                           interpolation='linear', restart=False)
+                           n_images=n_images,
+                           interpolation='idpp', restart=False)
 
 neb_catlearn.run(fmax=0.05, plot_neb_paths=True)

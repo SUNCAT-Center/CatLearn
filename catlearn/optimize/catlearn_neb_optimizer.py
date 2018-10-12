@@ -10,7 +10,7 @@ from ase.neb import NEB
 from ase.neb import NEBTools
 from ase.io import read, write
 from ase.io.trajectory import TrajectoryWriter
-from ase.optimize import FIRE, MDMin
+from ase.optimize import MDMin
 from scipy.spatial import distance
 import copy
 import os
@@ -21,7 +21,7 @@ from ase.calculators.calculator import Calculator, all_changes
 class CatLearnNEB(object):
 
     def __init__(self, start, end, path=None, n_images=0.25, spring=None,
-                 interpolation=None, mic=False, neb_method='eb',
+                 interpolation=None, mic=False, neb_method='improvedtangent',
                  ase_calc=None, include_previous_calcs=False,
                  stabilize=False, restart=False):
         """ Nudged elastic band (NEB) setup.
@@ -213,7 +213,7 @@ class CatLearnNEB(object):
                                    self.num_atoms)
         self.max_abs_forces = np.max(np.abs(self.max_forces))
 
-    def run(self, fmax=0.05, unc_convergence=0.100, steps=200,
+    def run(self, fmax=0.05, unc_convergence=0.020, steps=500,
             plot_neb_paths=False, acquisition='acq_2'):
 
         """Executing run will start the optimization process.
@@ -265,7 +265,7 @@ class CatLearnNEB(object):
 
             kdict = [{'type': 'gaussian', 'width': 0.4,
                       'dimension': 'single',
-                      'bounds': ((0.01, self.path_distance),),
+                      'bounds': ((0.1, self.path_distance),),
                       'scaling': sigma_f,
                       'scaling_bounds': ((sigma_f, sigma_f),)},
                      {'type': 'noise_multi',
@@ -283,53 +283,57 @@ class CatLearnNEB(object):
             print('Training a GP process...')
             print('Number of training points:', len(scaled_targets))
 
-            # Optimize when n_training points is bigger than the n_images:
-            opt_hyper = False
-            if self.feval > (self.n_images - 2):
-                opt_hyper = True
-
             self.gp = GaussianProcess(kernel_dict=kdict,
                                       regularization=0.0,
                                       regularization_bounds=(0.0, 0.0),
                                       train_fp=train,
                                       train_target=scaled_targets,
                                       gradients=gradients,
-                                      optimize_hyperparameters=opt_hyper)
-            if opt_hyper is True:
-                print('Hyperparameter optimization:', self.gp.theta_opt)
+                                      optimize_hyperparameters=True)
+            print('Hyperparameter optimization:', self.gp.theta_opt)
 
             print('GP process trained.')
 
             # 2. Setup and run ML NEB:
 
-            starting_path = copy.deepcopy(self.initial_images)
-            # starting_path = self.images
+            # Settings optimization cycle:
+            ml_steps = (len(self.index_mask) * self.n_images)
+            ml_steps = 100 if ml_steps <= 100 else ml_steps  # Min steps.
+            dt = 0.07
+            ml_cycle = 0
 
-            self.images = create_ml_neb(is_endpoint=self.initial_endpoint,
-                                        fs_endpoint=self.final_endpoint,
-                                        images_interpolation=starting_path,
-                                        n_images=self.n_images,
-                                        constraints=self.constraints,
-                                        index_constraints=self.index_mask,
-                                        gp=self.gp,
-                                        scaling_targets=u_prior,
-                                        iteration=self.iter
-                                        )
-            print('Starting ML NEB optimization...')
-            ml_neb = NEB(self.images, climb=False,
-                         method=self.neb_method,
-                         k=self.spring)
-            neb_opt = FIRE(ml_neb, dt=0.050, downhill_check=True)
-            neb_opt.run(fmax=fmax, steps=100)
-            print('ML NEB optimized.')
+            while True:
 
-            print('Starting ML NEB optimization using climbing image...')
-            ml_neb = NEB(self.images, climb=True,
-                         method=self.neb_method,
-                         k=self.spring)
-            neb_opt = MDMin(ml_neb, dt=0.05)
-            neb_opt.run(fmax=fmax/1.2, steps=1000)
-            print('ML CI-NEB optimized.')
+                self.images = create_ml_neb(is_endpoint=self.initial_endpoint,
+                                            fs_endpoint=self.final_endpoint,
+                                            images_interpolation=self.images,
+                                            n_images=self.n_images,
+                                            constraints=self.constraints,
+                                            index_constraints=self.index_mask,
+                                            gp=self.gp,
+                                            scaling_targets=u_prior,
+                                            iteration=self.iter
+                                            )
+
+                print('Starting ML NEB optimization using climbing image...')
+                ml_neb = NEB(self.images, climb=True,
+                             method=self.neb_method,
+                             k=self.spring)
+
+                neb_opt = MDMin(ml_neb, dt=dt)
+                neb_opt.run(fmax=fmax/1.1, steps=ml_steps)
+
+                if neb_opt.__dict__['nsteps'] <= ml_steps-1:
+                    break
+
+                dt = dt/1.1
+                print('New dt:', dt)
+                ml_cycle += 1
+
+                if ml_cycle >= 10:
+                    break
+
+            print('Predicted ML CI-NEB converged.')
 
             # 3. Get results from ML NEB using ASE NEB Tools:
             # See https://wiki.fysik.dtu.dk/ase/ase/neb.html
