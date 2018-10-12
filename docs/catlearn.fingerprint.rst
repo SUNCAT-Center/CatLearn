@@ -1,127 +1,92 @@
-catlearn.fingerprint
-====================
+catlearn.fingerprint package
+============================
 
+Submodules
+----------
 
-catlearn.fingerprint.adsorbate\_fingerprint
--------------------------------------------
-
-.. automodule:: catlearn.fingerprint.adsorbate_fingerprint
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-catlearn.fingerprint.adsorbate\_prep
-------------------------------------
-
-.. automodule:: catlearn.fingerprint.adsorbate_prep
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-catlearn.fingerprint.asap\_wrapper
-----------------------------------
-
-.. automodule:: catlearn.fingerprint.asap_wrapper
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-catlearn.fingerprint.base
--------------------------
-
-.. automodule:: catlearn.fingerprint.base
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-catlearn.fingerprint.bulk\_fingerprint
---------------------------------------
-
-.. automodule:: catlearn.fingerprint.bulk_fingerprint
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-catlearn.fingerprint.convoluted\_fingerprint
---------------------------------------------
-
-.. automodule:: catlearn.fingerprint.convoluted_fingerprint
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-catlearn.fingerprint.graph\_fingerprint
----------------------------------------
-
-.. automodule:: catlearn.fingerprint.graph_fingerprint
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-catlearn.fingerprint.molecule\_fingerprint
-------------------------------------------
-
-.. automodule:: catlearn.fingerprint.molecule_fingerprint
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-catlearn.fingerprint.neighbor\_matrix
+catlearn.fingerprint.adsorbate module
 -------------------------------------
 
-.. automodule:: catlearn.fingerprint.neighbor_matrix
+.. automodule:: catlearn.fingerprint.adsorbate
     :members:
     :undoc-members:
     :show-inheritance:
 
-catlearn.fingerprint.particle\_fingerprint
-------------------------------------------
+catlearn.fingerprint.bulk module
+--------------------------------
 
-.. automodule:: catlearn.fingerprint.particle_fingerprint
+.. automodule:: catlearn.fingerprint.bulk
     :members:
     :undoc-members:
     :show-inheritance:
 
-catlearn.fingerprint.periodic\_table\_data
-------------------------------------------
+catlearn.fingerprint.chalcogenide module
+----------------------------------------
 
-.. automodule:: catlearn.fingerprint.periodic_table_data
+.. automodule:: catlearn.fingerprint.chalcogenide
     :members:
     :undoc-members:
     :show-inheritance:
 
-catlearn.fingerprint.prototype\_fingerprint
--------------------------------------------
-
-.. automodule:: catlearn.fingerprint.prototype_fingerprint
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-catlearn.fingerprint.setup
---------------------------
-
-.. automodule:: catlearn.fingerprint.setup
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-catlearn.fingerprint.standard\_fingerprint
-------------------------------------------
-
-.. automodule:: catlearn.fingerprint.standard_fingerprint
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-catlearn.fingerprint.voro\_fingerprint
+catlearn.fingerprint.convoluted module
 --------------------------------------
 
-.. automodule:: catlearn.fingerprint.voro_fingerprint
+.. automodule:: catlearn.fingerprint.convoluted
     :members:
     :undoc-members:
     :show-inheritance:
 
+catlearn.fingerprint.graph module
+---------------------------------
+
+.. automodule:: catlearn.fingerprint.graph
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+catlearn.fingerprint.molecule module
+------------------------------------
+
+.. automodule:: catlearn.fingerprint.molecule
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+catlearn.fingerprint.particle module
+------------------------------------
+
+.. automodule:: catlearn.fingerprint.particle
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+catlearn.fingerprint.prototype module
+-------------------------------------
+
+.. automodule:: catlearn.fingerprint.prototype
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+catlearn.fingerprint.standard module
+------------------------------------
+
+.. automodule:: catlearn.fingerprint.standard
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+catlearn.fingerprint.voro module
+--------------------------------
+
+.. automodule:: catlearn.fingerprint.voro
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+
+Module contents
+---------------
 
 .. automodule:: catlearn.fingerprint
     :members:
