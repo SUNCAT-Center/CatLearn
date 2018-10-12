@@ -193,7 +193,7 @@ class CatLearnNEB(object):
                                         )
             self.d_start_end = np.abs(distance.euclidean(is_pos, fs_pos))
 
-        # Save files with all the paths tested:
+        # Save files with all the paths that have been predicted:
         write('all_predicted_paths.traj', self.images)
 
         if stabilize is True:
@@ -206,20 +206,20 @@ class CatLearnNEB(object):
                                  mode='a').write()
         self.uncertainty_path = np.zeros(len(self.images))
 
-        # Stabilize spring constant:
+        # Guess spring constant if spring was not set by the user:
         if self.spring is None:
             self.spring = np.sqrt(self.n_images-1) / self.d_start_end
 
-        # Get path distance:
+        # Get initial path distance:
         self.path_distance = copy.deepcopy(self.d_start_end)
 
-        # Save original features, energies and gradients:
-        self.org_list_features = self.list_train.tolist()
-        self.org_list_energies = self.list_targets.tolist()
-        self.org_list_gradients = self.list_gradients.tolist()
+        self.max_forces = get_fmax(-np.array([self.list_gradients[-1]]),
+                                   self.num_atoms)
+        self.max_abs_forces = np.max(np.abs(self.max_forces))
 
-    def run(self, fmax=0.05, percentage_convergence=10., steps=500,
-            plot_neb_paths=False, acquisition='acq_2'):
+
+    def run(self, fmax=0.05, unc_convergence=0.010, steps=200,
+            ml_max_iter=500, plot_neb_paths=False, acquisition='acq_2'):
 
         """Executing run will start the optimization process.
 
