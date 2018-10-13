@@ -217,9 +217,8 @@ class CatLearnNEB(object):
                                    self.num_atoms)
         self.max_abs_forces = np.max(np.abs(self.max_forces))
 
-
     def run(self, fmax=0.05, unc_convergence=0.010, steps=200,
-            ml_max_iter=500, plot_neb_paths=False, acquisition='acq_2'):
+            plot_neb_paths=False, acquisition='acq_2'):
 
         """Executing run will start the optimization process.
 
@@ -227,12 +226,10 @@ class CatLearnNEB(object):
         ----------
         fmax : float
             Convergence criteria (in eV/Angs).
-        percentage_convergence: float
-            Maximum uncertainty for convergence (in percentage).
+        unc_convergence: float
+            Maximum uncertainty for convergence (in eV).
         steps : int
             Maximum number of iterations in the surrogate model.
-        ml_max_iter : int
-            Maximum number of ML NEB iterations.
         plot_neb_paths: bool
             If True it prints and stores (in csv format) the last predicted
             NEB path obtained by the surrogate ML model. Note: Python package
@@ -248,7 +245,9 @@ class CatLearnNEB(object):
 
         # Calculate the middle-point if only known initial & final structures.
         if len(self.list_targets) == 2:
-            middle = int(self.n_images * (1./3.))
+            middle = int(self.n_images * (2./3.))
+            if self.energy_is >= self.energy_fs:
+                middle = int(self.n_images * (1./3.))
             interesting_point = self.images[middle].get_positions().flatten()
             eval_and_append(self, interesting_point)
             self.iter += 1
@@ -259,28 +258,45 @@ class CatLearnNEB(object):
             train_gp_model(self)
 
             # 2. Setup and run ML NEB:
+            ml_steps = (len(self.index_mask) * self.n_images)
+            ml_steps = 250 if ml_steps <= 250 else ml_steps  # Min steps.
+            dt = 0.025
+            ml_cycle = 0
 
             starting_path = copy.deepcopy(self.initial_images)
-            # starting_path = self.images
 
-            self.images = create_ml_neb(is_endpoint=self.initial_endpoint,
-                                        fs_endpoint=self.final_endpoint,
-                                        images_interpolation=starting_path,
-                                        n_images=self.n_images,
-                                        constraints=self.constraints,
-                                        index_constraints=self.index_mask,
-                                        gp=self.gp,
-                                        scaling_targets=self.max_target,
-                                        iteration=self.iter
-                                        )
+            while True:
 
-            print('Starting ML NEB optimization using climbing image...')
-            ml_neb = NEB(self.images, climb=True,
-                         method=self.neb_method,
-                         k=self.spring)
-            neb_opt = MDMin(ml_neb, dt=0.025)
-            neb_opt.run(fmax=fmax/1.1, steps=ml_max_iter)
-            print('ML NEB optimized.')
+                print('Starting ML NEB optimization using climbing image...')
+                self.images = create_ml_neb(is_endpoint=self.initial_endpoint,
+                                            fs_endpoint=self.final_endpoint,
+                                            images_interpolation=starting_path,
+                                            n_images=self.n_images,
+                                            constraints=self.constraints,
+                                            index_constraints=self.index_mask,
+                                            gp=self.gp,
+                                            scaling_targets=self.max_target,
+                                            iteration=self.iter
+                                            )
+
+                ml_neb = NEB(self.images, climb=True,
+                             method=self.neb_method,
+                             k=self.spring)
+                neb_opt = MDMin(ml_neb, dt=dt)
+                neb_opt.run(fmax=fmax/1.1, steps=ml_steps)
+
+                starting_path = self.images
+                if neb_opt.__dict__['nsteps'] <= ml_steps-1:
+                    break
+
+                dt = dt/1.1
+                print('New dt:', dt)
+                ml_cycle += 1
+
+                if ml_cycle >= 15:
+                    break
+
+                print('ML NEB optimized.')
 
             # 3. Get results from ML NEB using ASE NEB Tools:
             # See https://wiki.fysik.dtu.dk/ase/ase/neb.html
