@@ -1,4 +1,4 @@
-# @Version 1.0.0
+# @Version 1.0.2
 
 import numpy as np
 from catlearn.optimize.warnings import *
@@ -68,7 +68,7 @@ class CatLearnNEB(object):
         self.ase_calc = ase_calc
         self.ase = True
         self.mic = mic
-        self.version = 'NEB v.1.0.0'
+        self.version = 'NEB v.1.0.2'
         print_version(self.version)
 
         # Reset:
@@ -137,7 +137,7 @@ class CatLearnNEB(object):
         self.energy_fs = fs_endpoint[-1].get_potential_energy()
 
         # Set scaling of the targets:
-        self.scale_is_fs = np.max([self.energy_is, self.energy_fs])
+        self.max_targets = np.max([self.energy_is, self.energy_fs])
 
         # Settings for the NEB.
         self.neb_method = neb_method
@@ -160,7 +160,7 @@ class CatLearnNEB(object):
                                         n_images=self.n_images,
                                         constraints=self.constraints,
                                         index_constraints=self.index_mask,
-                                        scaling_targets=self.scale_is_fs,
+                                        scaling_targets=self.max_targets,
                                         iteration=self.iter,
                                         )
 
@@ -188,7 +188,7 @@ class CatLearnNEB(object):
                                         n_images=self.n_images,
                                         constraints=self.constraints,
                                         index_constraints=self.index_mask,
-                                        scaling_targets=self.scale_is_fs,
+                                        scaling_targets=self.max_targets,
                                         iteration=self.iter,
                                         )
             self.d_start_end = np.abs(distance.euclidean(is_pos, fs_pos))
@@ -282,6 +282,12 @@ class CatLearnNEB(object):
                 ml_neb = NEB(self.images, climb=True,
                              method=self.neb_method,
                              k=self.spring)
+
+                if ml_cycle > 3:
+                    ml_neb = NEB(self.images, climb=True,
+                                 method='eb',
+                                 k=self.spring)
+
                 neb_opt = MDMin(ml_neb, dt=dt)
                 neb_opt.run(fmax=fmax/1.1, steps=ml_steps)
 
@@ -472,15 +478,18 @@ def train_gp_model(self):
 
     width = self.path_distance/2
 
+    noise_energy = 0.005
+    noise_forces = 0.0005
+
     kdict = [{'type': 'gaussian', 'width': width,
               'dimension': dimension,
               'bounds': bounds,
               'scaling': 1.,
               'scaling_bounds': ((1., 1.),)},
              {'type': 'noise_multi',
-              'hyperparameters': [0.005, 0.0005],
-              'bounds': ((0.001, 0.010),
-                         (0.0001, 0.0010),)}
+              'hyperparameters': [noise_energy, noise_forces],
+              'bounds': ((noise_energy, noise_energy),
+                         (noise_forces, noise_forces),)}
              ]
 
     train = self.list_train.copy()
@@ -518,7 +527,7 @@ def get_results_predicted_path(self):
         pos_unc = apply_mask(list_to_mask=pos_unc,
                              mask_index=self.index_mask)[1]
         u = self.gp.predict(test_fp=pos_unc, uncertainty=True)
-        uncertainty = u['uncertainty'][0] * 4.0
+        uncertainty = 2. * u['uncertainty'][0] + 0.005
         i.info['uncertainty'] = uncertainty
         self.uncertainty_path.append(uncertainty)
         self.e_path.append(i.get_total_energy())
