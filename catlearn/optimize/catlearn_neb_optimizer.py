@@ -1,4 +1,4 @@
-# @Version 1.0.2
+# @Version 1.0.3
 
 import numpy as np
 from catlearn.optimize.warnings import *
@@ -22,7 +22,7 @@ from ase.calculators.calculator import Calculator, all_changes
 
 class CatLearnNEB(object):
 
-    def __init__(self, start, end, path=None, n_images=0.25, spring=None,
+    def __init__(self, start, end, path=None, n_images=0.25, k=None,
                  interpolation=None, mic=False, neb_method='improvedtangent',
                  ase_calc=None, include_previous_calcs=False,
                  stabilize=False, restart=False):
@@ -40,7 +40,7 @@ class CatLearnNEB(object):
         n_images: int or float
             Number of images of the path (if not included a path before).
              The number of images include the 2 end-points of the NEB path.
-        spring: float or list
+        k: float or list
             Spring constant(s) in eV/Ang.
         interpolation: string
             Automatic interpolation can be done ('idpp' and 'linear' as
@@ -50,8 +50,6 @@ class CatLearnNEB(object):
             NEB method as implemented in ASE. ('aseneb', 'improvedtangent'
             or 'eb').
             See https://wiki.fysik.dtu.dk/ase/ase/neb.html.
-        ml_calc : ML calculator Object.
-            Machine Learning calculator (e.g. Gaussian Process). Default is GP.
         ase_calc: ASE calculator Object.
             ASE calculator as implemented in ASE.
             See https://wiki.fysik.dtu.dk/ase/ase/calculators/calculators.html
@@ -68,7 +66,7 @@ class CatLearnNEB(object):
         self.ase_calc = ase_calc
         self.ase = True
         self.mic = mic
-        self.version = 'NEB v.1.0.2'
+        self.version = 'NEB v.1.0.3'
         print_version(self.version)
 
         # Reset:
@@ -141,7 +139,7 @@ class CatLearnNEB(object):
 
         # Settings for the NEB.
         self.neb_method = neb_method
-        self.spring = spring
+        self.spring = k
         self.initial_endpoint = is_endpoint[-1]
         self.final_endpoint = fs_endpoint[-1]
 
@@ -312,8 +310,8 @@ class CatLearnNEB(object):
             # Get fit of the discrete path.
             get_results_predicted_path(self)
 
-            pred_plus_unc = np.array(self.e_path[1:-1]) + \
-                                    np.array(self.uncertainty_path[1:-1])
+            pred_plus_unc = np.array(self.e_path[1:-1]) + np.array(
+                                                   self.uncertainty_path[1:-1])
 
             # 4. Select next point to train (acquisition function):
 
@@ -388,7 +386,7 @@ class CatLearnNEB(object):
             print('Number of iterations:', self.iter)
 
             self.max_forces = get_fmax(-np.array([self.list_gradients[-1]]),
-                                  self.num_atoms)
+                                       self.num_atoms)
             self.max_abs_forces = np.max(np.abs(self.max_forces))
 
             print('Max. force of the last image evaluated (eV/Angstrom):',
@@ -450,9 +448,9 @@ def create_ml_neb(is_endpoint, fs_endpoint, images_interpolation,
         image.info['uncertainty'] = 0.0
         image.info['iteration'] = iteration
         image.set_calculator(ASECalc(gp=gp,
-                                         index_constraints=index_constraints,
-                                         scaling_targets=scaling_targets
-                                         ))
+                                     index_constraints=index_constraints,
+                                     scaling_targets=scaling_targets
+                                     ))
         if images_interpolation is not None:
             image.set_positions(images_interpolation[i].get_positions())
         image.set_constraint(constraints)
@@ -488,8 +486,8 @@ def train_gp_model(self):
               'scaling_bounds': ((1., 1.),)},
              {'type': 'noise_multi',
               'hyperparameters': [noise_energy, noise_forces],
-              'bounds': ((noise_energy, noise_energy),
-                         (noise_forces, noise_forces),)}
+              'bounds': ((0.001, 0.010),
+                         (0.0001, 0.0010),)}
              ]
 
     train = self.list_train.copy()
@@ -504,13 +502,13 @@ def train_gp_model(self):
     print('Number of training points:', len(scaled_targets))
 
     self.gp = GaussianProcess(kernel_dict=kdict,
-                         regularization=0.0,
-                         regularization_bounds=(0.0, 0.0),
-                         train_fp=train,
-                         train_target=scaled_targets,
-                         gradients=gradients,
-                         optimize_hyperparameters=False,
-                         scale_data=False)
+                              regularization=0.0,
+                              regularization_bounds=(0.0, 0.0),
+                              train_fp=train,
+                              train_target=scaled_targets,
+                              gradients=gradients,
+                              optimize_hyperparameters=False,
+                              scale_data=False)
     self.gp.optimize_hyperparameters(global_opt=False)
     print('Optimized hyperparameters:', self.gp.theta_opt)
     print('GP process trained.')
@@ -527,7 +525,7 @@ def get_results_predicted_path(self):
         pos_unc = apply_mask(list_to_mask=pos_unc,
                              mask_index=self.index_mask)[1]
         u = self.gp.predict(test_fp=pos_unc, uncertainty=True)
-        uncertainty = 2. * u['uncertainty'][0] + 0.005
+        uncertainty = 2. * u['uncertainty_with_reg'][0]
         i.info['uncertainty'] = uncertainty
         self.uncertainty_path.append(uncertainty)
         self.e_path.append(i.get_total_energy())
@@ -537,7 +535,7 @@ def get_results_predicted_path(self):
 
 class ASECalc(Calculator):
 
-    """Artificial CatLearn/ASE calculator.
+    """ CatLearn/ASE calculator.
     """
 
     implemented_properties = ['energy', 'forces']
