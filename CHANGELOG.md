@@ -1,5 +1,7 @@
 # dev
 
+# Version 0.5.0 (August 2018)
+
 -   Restructure of fingerprint module
 -   Pandas DataFrame getter in FeatureGenerator
 -   CatMAP API using ASE database.
