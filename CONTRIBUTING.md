@@ -32,7 +32,7 @@ It is a bad idea to develop directly on the on the main CatLearn repository. Ins
 -   Fork the repository and then clone it to your local machine.
 
     ```shell
-    $ git clone https://github.com/SUNCAT-Center/CatLearn.git
+    $ git clone https://github.com/<your-github-user-name>/CatLearn.git
     ```
 
 -   Add and track upstream to the local copy.
