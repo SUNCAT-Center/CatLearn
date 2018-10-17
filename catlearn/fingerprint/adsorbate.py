@@ -535,7 +535,7 @@ class AdsorbateFingerprintGenerator(BaseGenerator):
 
     def bag_connections_ads(self, atoms):
         """Returns bag of connections, counting only the bonds within the
-        adsorbate and the connections between adsorbate and surface.
+        adsorbate.
 
         Parameters
         ----------
@@ -577,7 +577,7 @@ class AdsorbateFingerprintGenerator(BaseGenerator):
 
     def bag_connections_chemi(self, atoms):
         """Returns bag of connections, counting only the bonds within the
-        adsorbate.
+        adsorbate and the connections between adsorbate and surface.
 
         Parameters
         ----------
