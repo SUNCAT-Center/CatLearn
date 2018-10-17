@@ -1,4 +1,5 @@
-from catlearn.fingerprint.molecule_fingerprint import AutoCorrelationFingerprintGenerator as ACG
+from catlearn.fingerprint.molecule import \
+    AutoCorrelationFingerprintGenerator as ACG
 from ase.build import molecule
 import numpy as np
 import unittest

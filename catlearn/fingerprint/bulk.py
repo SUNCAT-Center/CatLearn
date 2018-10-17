@@ -4,9 +4,9 @@ import numpy as np
 
 from ase.data import ground_state_magnetic_moments as gs_magmom
 
-from .periodic_table_data import (list_mendeleev_params,
-                                  default_params)
-from .base import BaseGenerator
+from catlearn.featurize.periodic_table_data import (list_mendeleev_params,
+                                                    default_params)
+from catlearn.featurize.base import BaseGenerator
 
 default_extra_params = ['c6',
                         'c6_gb',

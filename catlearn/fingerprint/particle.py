@@ -17,7 +17,7 @@ import warnings
 from ase.ga.utilities import (get_atoms_distribution, get_atoms_connections,
                               get_rdf)
 
-from .base import BaseGenerator
+from catlearn.featurize.base import BaseGenerator
 
 no_asap = False
 try:

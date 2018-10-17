@@ -16,7 +16,7 @@ import warnings
 from ase.data import chemical_symbols
 
 from catlearn import __path__ as catlearn_path
-from .base import BaseGenerator
+from catlearn.featurize.base import BaseGenerator
 
 
 default_molecule_fingerprinters = [

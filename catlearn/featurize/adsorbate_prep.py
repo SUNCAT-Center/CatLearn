@@ -12,7 +12,7 @@ from ase.atoms import string2symbols, symbols2numbers
 # get_distances requires ASE 3.16 or above.
 from ase.geometry import get_layers, get_distances
 from catlearn.api.ase_atoms_api import images_connectivity
-from catlearn.fingerprint.periodic_table_data import get_radius
+from catlearn.featurize.periodic_table_data import get_radius
 
 
 ads_syms = ['H', 'C', 'O', 'N', 'S', 'F', 'Cl', 'P', 'Na', 'K']

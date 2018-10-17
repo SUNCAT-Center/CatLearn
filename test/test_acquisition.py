@@ -9,7 +9,7 @@ import numpy as np
 from ase.ga.data import DataConnection
 
 from catlearn.api.ase_data_setup import get_unique, get_train
-from catlearn.fingerprint.setup import FeatureGenerator
+from catlearn.featurize.setup import FeatureGenerator
 from catlearn.regression import GaussianProcess
 from catlearn.active_learning.acquisition_functions import (
     rank, classify, probability_density)

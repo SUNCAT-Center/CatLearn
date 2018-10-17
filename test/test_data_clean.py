@@ -3,7 +3,7 @@ import numpy as np
 import unittest
 
 from catlearn.preprocess import clean_data as clean
-from catlearn.setup.general_preprocess import GeneralPrepreprocess
+from catlearn.estimator.general_preprocess import GeneralPrepreprocess
 
 from common import get_data
 

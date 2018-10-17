@@ -12,7 +12,7 @@ from catlearn.api.ase_atoms_api import extend_atoms_class
 from catlearn.api.catmap import catmap_energy_landscape
 from catlearn.api.networkx_graph_api import (ase_to_networkx,
                                              networkx_to_adjacency)
-from catlearn.fingerprint.setup import FeatureGenerator
+from catlearn.featurize.setup import FeatureGenerator
 
 wkdir = os.getcwd()
 

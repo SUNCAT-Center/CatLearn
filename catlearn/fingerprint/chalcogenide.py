@@ -1,11 +1,13 @@
 """Slab adsorbate fingerprint functions for machine learning."""
 import numpy as np
 from ase.data import ground_state_magnetic_moments as gs_magmom
-from .periodic_table_data import (get_mendeleev_params,
-                                  list_mendeleev_params,
-                                  default_params, make_labels)
-from .base import BaseGenerator, check_labels
-from .adsorbate_fingerprint import extra_slab_params
+
+from catlearn.featurize.periodic_table_data import (get_mendeleev_params,
+                                                    list_mendeleev_params,
+                                                    default_params,
+                                                    make_labels)
+from catlearn.featurize.base import BaseGenerator, check_labels
+from .adsorbate import extra_slab_params
 
 
 default_chalcogenide_fingerprinters = ['formal_charges',

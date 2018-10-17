@@ -11,12 +11,12 @@ from ase.data import atomic_numbers
 from ase.constraints import FixAtoms
 from catlearn.api.ase_atoms_api import (database_to_list, images_connectivity,
                                         images_pair_distances)
-from catlearn.fingerprint.adsorbate_prep import (autogen_info,
-                                                 check_reconstructions,
-                                                 connectivity2ads_index)
-from catlearn.fingerprint.periodic_table_data import (get_radius,
-                                                      default_catlearn_radius)
-from catlearn.fingerprint.setup import FeatureGenerator, default_fingerprinters
+from catlearn.featurize.adsorbate_prep import (autogen_info,
+                                               check_reconstructions,
+                                               connectivity2ads_index)
+from catlearn.featurize.periodic_table_data import (get_radius,
+                                                    default_catlearn_radius)
+from catlearn.featurize.setup import FeatureGenerator, default_fingerprinters
 
 wkdir = os.getcwd()
 
