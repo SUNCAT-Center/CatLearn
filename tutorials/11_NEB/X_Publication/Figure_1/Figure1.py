@@ -164,7 +164,7 @@ final_opt.run(fmax=0.01)
 n_images = 11
 
 # Define steps and acquisition functions to plot.
-steps_plots = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
+steps_plots = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]
 acquisition_functions = ['acq_1', 'acq_2', 'acq_3']
 
 for acq in acquisition_functions:

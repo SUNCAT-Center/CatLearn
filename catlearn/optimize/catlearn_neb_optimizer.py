@@ -215,7 +215,7 @@ class CatLearnNEB(object):
                                    self.num_atoms)
         self.max_abs_forces = np.max(np.abs(self.max_forces))
 
-    def run(self, fmax=0.05, unc_convergence=0.050, steps=200,
+    def run(self, fmax=0.05, unc_convergence=0.010, steps=200,
             plot_neb_paths=False, acquisition='acq_2'):
 
         """Executing run will start the optimization process.
@@ -514,7 +514,7 @@ def get_results_predicted_path(self):
         pos_unc = apply_mask(list_to_mask=pos_unc,
                              mask_index=self.index_mask)[1]
         u = self.gp.predict(test_fp=pos_unc, uncertainty=True)
-        uncertainty = np.sqrt(u['uncertainty_with_reg'][0])
+        uncertainty = u['uncertainty'][0] * 10.0
         i.info['uncertainty'] = uncertainty
         self.uncertainty_path.append(uncertainty)
         self.e_path.append(i.get_total_energy())

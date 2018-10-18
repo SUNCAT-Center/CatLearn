@@ -13,6 +13,10 @@ from catlearn.optimize.constraints import apply_mask
 """ 
     Figure 2. Accuracy of the predicted NEB.
 """
+
+# # Define number of images:
+n_images = 7
+
 # 1. Structural relaxation. ##################################################
 
 # Setup calculator:
@@ -41,9 +45,6 @@ qn.run(fmax=0.01)
 slab[-1].x += slab.get_cell()[0, 0] / 2
 qn = BFGS(slab, trajectory='final.traj')
 qn.run(fmax=0.01)
-
-# # Define number of images:
-n_images = 7
 
 # 2.A. NEB using ASE #########################################################
 
@@ -104,12 +105,12 @@ for i in neb_catlearn.images:
 
 normalised_energy = np.array(energy) - np.array(energy[0])
 normalised_pred_energy = np.array(pred_energy) - np.array(pred_energy[0])
-diff_e_epred = normalised_energy - normalised_pred_energy
+diff_e_epred = np.abs(normalised_energy - normalised_pred_energy)
 
 print('Energy (eV): ', energy)
 print('Predicted energy (eV): ', pred_energy)
-print('Uncertainty predicted path (2 var): ', 2. * np.array(pred_uncertainty))
-print('Diff. E and Epred (eV): ', diff_e_epred)
+print('Uncertainty predicted path (2 var): ', np.array(pred_uncertainty))
+print('Error ( Abs(Diff(E-Epred)) (eV): ', diff_e_epred)
 
 # Plots.
 
@@ -117,11 +118,6 @@ print('Diff. E and Epred (eV): ', diff_e_epred)
 
 plt.plot(neb_catlearn.sfit, neb_catlearn.efit, color='black',
              linestyle='--', linewidth=1.5)
-
-plt.errorbar(neb_catlearn.s, neb_catlearn.e,
-             yerr=neb_catlearn.uncertainty_path,
-             markersize=0.0, ecolor='darkslateblue',
-             ls='', elinewidth=2.0, capsize=1.0)
 plt.plot(neb_catlearn.s, neb_catlearn.e,
          color='red', alpha=0.5,
          marker='o', markersize=10.0, ls='',
@@ -135,12 +131,12 @@ plt.close()
 # Figure 1.B.
 plt.plot(neb_catlearn.s, diff_e_epred, color='black',
              linestyle='--', linewidth=1.5, markersize=10.0)
-plt.errorbar(neb_catlearn.s, diff_e_epred,
-             yerr=pred_uncertainty,
-             markersize=0.0, ecolor='darkslateblue',
-             ls='', elinewidth=2.0, capsize=1.0)
+# plt.errorbar(neb_catlearn.s, diff_e_epred,
+#              yerr=pred_uncertainty,
+#              markersize=0.0, ecolor='darkslateblue',
+#              ls='', elinewidth=2.0, capsize=1.0)
 plt.xlabel('Path (Angstrom)')
-plt.ylabel('Energy difference (E-Epred) (eV)')
+plt.ylabel('Error |(E-Epred)| (eV)')
 plt.tight_layout(h_pad=1)
 plt.savefig('./figures/1_Au_diff_e_epred.pdf', format='pdf', dpi=300)
 plt.close()
