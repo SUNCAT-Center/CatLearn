@@ -5,7 +5,6 @@ from catlearn.optimize.functions_calc import MullerBrown
 from ase import Atoms
 from ase.optimize import BFGS
 from catlearn.optimize.catlearn_neb_optimizer import CatLearnNEB
-import matplotlib
 
 """ 
     Figure 1. Acquisition functions.
@@ -15,9 +14,6 @@ import matplotlib
 def get_plot_mullerbrown(catlearn_neb):
     """ Function for plotting each step of the toy model Muller-Brown .
     """
-
-    # Colors:
-
 
     # Grid test points (x,y).
     x_lim = [-1.4, 1.3]
@@ -71,7 +67,6 @@ def get_plot_mullerbrown(catlearn_neb):
     crange2 = np.linspace(min_color, max_color, 10)
     ax.contour(testx, testy, zi, crange2, alpha=0.6, antialiased=True)
 
-    # Colorbar
     interval_colorbar = np.linspace(min_color, max_color, 5)
 
     fig.colorbar(image, ax=ax, ticks=interval_colorbar, extend='None',
@@ -116,7 +111,6 @@ def get_plots_neb(catlearn_neb):
                     color='yellow', linewidth=20.0, alpha=0.3)
     plt.plot(catlearn_neb.sfit, catlearn_neb.efit, color='black',
              linestyle='--', linewidth=1.5)
-
     plt.errorbar(catlearn_neb.s, catlearn_neb.e,
                  yerr=catlearn_neb.uncertainty_path,
                  markersize=0.0, ecolor='darkslateblue',
@@ -143,10 +137,10 @@ def get_plots_neb(catlearn_neb):
 
 # 1. Structural relaxation. ##################################################
 
-# Setup calculator:
+# Setup calculator.
 calc = MullerBrown()
 
-# # 1.1. Structures:
+# 1.1. Structures.
 initial_structure = Atoms('C', positions=[(-0.55, 1.41, 0.0)])
 final_structure = Atoms('C', positions=[(0.626, 0.025, 0.0)])
 
@@ -155,19 +149,21 @@ final_structure.set_calculator(calc)
 
 # 1.2. Optimize initial and final end-points.
 
-# Initial end-point:
+# 1.2.1. Initial end-point.
 initial_opt = BFGS(initial_structure, trajectory='initial_optimized.traj')
 initial_opt.run(fmax=0.01)
 
-# Final end-point:
+# 1.2.2 Final end-point:
 final_opt = BFGS(final_structure, trajectory='final_optimized.traj')
 final_opt.run(fmax=0.01)
+
+
+# 2. Plot Muller step for each acquisition function.
 
 # Define number of images for the NEB:
 n_images = 11
 
-# 2.B. Plot Muller step for each acquisition function.
-
+# Define steps and acquisition functions to plot.
 steps_plots = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
 acquisition_functions = ['acq_1', 'acq_2', 'acq_3']
 
