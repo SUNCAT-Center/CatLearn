@@ -3,7 +3,7 @@ from ase.calculators.emt import EMT
 from ase.io import read
 from ase.constraints import FixAtoms
 from ase.neb import NEB
-from ase.optimize import BFGS, FIRE
+from ase.optimize import BFGS, FIRE, MDMin
 import matplotlib.pyplot as plt
 from catlearn.optimize.catlearn_neb_optimizer import CatLearnNEB
 from ase.neb import NEBTools
@@ -37,15 +37,11 @@ slab.set_calculator(copy.deepcopy(ase_calculator))
 mask = [atom.tag > 1 for atom in slab]
 slab.set_constraint(FixAtoms(mask=mask))
 
-slab[12].magmom = 1.0
-
 # 1.2. Optimize initial and final end-points.
 
 # Initial end-point:
 qn = BFGS(slab, trajectory='initial.traj')
 qn.run(fmax=0.01)
-
-slab[12].magmom = -1.0
 
 # Final end-point:
 slab[-1].x += slab.get_cell()[0, 0] / 2
@@ -53,7 +49,7 @@ qn = BFGS(slab, trajectory='final.traj')
 qn.run(fmax=0.01)
 
 # # Define number of images:
-n_images = 3
+n_images = 7
 
 # 2.A. NEB using ASE #########################################################
 
@@ -70,10 +66,10 @@ for i in range(1, n_images-1):
 
 images_ase.append(final_ase)
 
-neb_ase = NEB(images_ase, climb=True, method='improvedtangent')
+neb_ase = NEB(images_ase, climb=True)
 neb_ase.interpolate(method='idpp')
 
-qn_ase = FIRE(neb_ase, trajectory='neb_ase.traj')
+qn_ase = MDMin(neb_ase, trajectory='neb_ase.traj')
 qn_ase.run(fmax=0.05)
 
 nebtools_ase = NEBTools(images_ase)
@@ -91,7 +87,7 @@ plt.show()
 neb_catlearn = CatLearnNEB(start='initial.traj',
                            end='final.traj',
                            ase_calc=copy.deepcopy(ase_calculator),
-                           n_images=7,
+                           n_images=n_images,
                            interpolation='idpp')
 
 neb_catlearn.run(fmax=0.05, plot_neb_paths=True)

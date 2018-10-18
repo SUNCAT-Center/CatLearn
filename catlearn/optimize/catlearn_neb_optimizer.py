@@ -196,8 +196,8 @@ class CatLearnNEB(object):
 
         if stabilize is True:
             for i in self.images[1:-1]:
-                interesting_point = i.get_positions().flatten()
-                eval_and_append(self, interesting_point)
+                self.interesting_point = i.get_positions().flatten()
+                eval_and_append(self, self.interesting_point)
                 self.iter += 1
                 TrajectoryWriter(atoms=self.ase_ini,
                                  filename='./evaluated_structures.traj',
@@ -246,8 +246,8 @@ class CatLearnNEB(object):
             middle = int(self.n_images * (2./3.))
             if self.energy_is >= self.energy_fs:
                 middle = int(self.n_images * (1./3.))
-            interesting_point = self.images[middle].get_positions().flatten()
-            eval_and_append(self, interesting_point)
+            self.interesting_point = self.images[middle].get_positions().flatten()
+            eval_and_append(self, self.interesting_point)
             self.iter += 1
 
         while True:
@@ -305,7 +305,7 @@ class CatLearnNEB(object):
             # 3. Get results from ML NEB using ASE NEB Tools:
             # See https://wiki.fysik.dtu.dk/ase/ase/neb.html
 
-            interesting_point = []
+            self.interesting_point = []
 
             # Get fit of the discrete path.
             get_results_predicted_path(self)
@@ -319,36 +319,36 @@ class CatLearnNEB(object):
             if acquisition == 'acq_1':
                 # Select image with max. uncertainty.
                 if self.iter % 2 == 0:
-                    argmax_unc = np.argmax(self.uncertainty_path[1:-1])
-                    interesting_point = self.images[1:-1][
-                                      argmax_unc].get_positions().flatten()
+                    self.argmax_unc = np.argmax(self.uncertainty_path[1:-1])
+                    self.interesting_point = self.images[1:-1][
+                                      self.argmax_unc].get_positions().flatten()
 
                 # Select image with max. predicted value.
                 if self.iter % 2 == 1:
-                    argmax_unc = np.argmax(pred_plus_unc)
-                    interesting_point = self.images[1:-1][
-                                              int(argmax_unc)].get_positions(
+                    self.argmax_unc = np.argmax(pred_plus_unc)
+                    self.interesting_point = self.images[1:-1][
+                                              int(self.argmax_unc)].get_positions(
                                               ).flatten()
             # Acquisition function 2:
             if acquisition == 'acq_2':
                 # Select image with max. uncertainty.
-                argmax_unc = np.argmax(self.uncertainty_path[1:-1])
-                interesting_point = self.images[1:-1][
-                                  argmax_unc].get_positions().flatten()
+                self.argmax_unc = np.argmax(self.uncertainty_path[1:-1])
+                self.interesting_point = self.images[1:-1][
+                                  self.argmax_unc].get_positions().flatten()
 
                 # Select image with max. predicted value.
                 if np.max(self.uncertainty_path[1:-1]) < unc_convergence:
 
-                    argmax_unc = np.argmax(pred_plus_unc)
-                    interesting_point = self.images[1:-1][
-                                              int(argmax_unc)].get_positions(
+                    self.argmax_unc = np.argmax(pred_plus_unc)
+                    self.interesting_point = self.images[1:-1][
+                                              int(self.argmax_unc)].get_positions(
                                               ).flatten()
             # Acquisition function 3:
             if acquisition == 'acq_3':
                 # Select image with max. uncertainty.
-                argmax_unc = np.argmax(self.uncertainty_path[1:-1])
-                interesting_point = self.images[1:-1][
-                                  argmax_unc].get_positions().flatten()
+                self.argmax_unc = np.argmax(self.uncertainty_path[1:-1])
+                self.interesting_point = self.images[1:-1][
+                                  self.argmax_unc].get_positions().flatten()
 
                 # When reached certain uncertainty apply acq. 1.
                 if np.max(self.uncertainty_path[1:-1]) < unc_convergence:
@@ -357,19 +357,19 @@ class CatLearnNEB(object):
             # Plots results in each iteration.
             if plot_neb_paths is True:
                 get_plots_neb(images=self.images,
-                              selected=int(argmax_unc), iter=self.iter)
+                              selected=int(self.argmax_unc), iter=self.iter)
 
             if plot_neb_paths is True:
                 if self.ase_calc.__dict__['name'] == 'mullerbrown':
                     get_plot_mullerbrown(images=self.images,
-                                         interesting_point=interesting_point,
+                                         interesting_point=self.interesting_point,
                                          gp=self.gp,
                                          list_train=self.list_train,
                                          )
 
             # 5. Add a new training point and evaluate it.
 
-            eval_and_append(self, interesting_point)
+            eval_and_append(self, self.interesting_point)
             self.iter += 1
 
             # 6. Store results.
@@ -397,7 +397,7 @@ class CatLearnNEB(object):
                   self.list_targets[-1][0] - self.list_targets[0][0])
             print('Backward reaction barrier energy (eV):',
                   self.list_targets[-1][0] - self.list_targets[1][0])
-            print('Number #id of the last evaluated image:', argmax_unc + 2)
+            print('Number #id of the last evaluated image:', self.argmax_unc + 2)
 
             # 7. Check convergence:
 
@@ -410,16 +410,8 @@ class CatLearnNEB(object):
                     train_gp_model(self)
                     get_results_predicted_path(self)
                     store_results_neb(self)
-                    # Last path.
-                    write('last_predicted_path.traj', self.images)
-
-                    # All paths.
-                    for i in self.images:
-                        TrajectoryWriter(atoms=i,
-                                         filename='all_predicted_paths.traj',
-                                         mode='a').write()
+                    store_trajectory_neb(self)
                     congrats_neb_converged()
-
                     break
 
             # Break if reaches the max number of iterations set by the user.
@@ -449,8 +441,7 @@ def create_ml_neb(is_endpoint, fs_endpoint, images_interpolation,
         image.info['iteration'] = iteration
         image.set_calculator(ASECalc(gp=gp,
                                      index_constraints=index_constraints,
-                                     scaling_targets=scaling_targets
-                                     ))
+                                     scaling_targets=scaling_targets))
         if images_interpolation is not None:
             image.set_positions(images_interpolation[i].get_positions())
         image.set_constraint(constraints)
@@ -468,6 +459,9 @@ def create_ml_neb(is_endpoint, fs_endpoint, images_interpolation,
 
 
 def train_gp_model(self):
+    """
+    Train GP Process
+    """
     self.max_target = np.max(self.list_targets)
     scaled_targets = self.list_targets.copy() - self.max_target
 
@@ -535,7 +529,8 @@ def get_results_predicted_path(self):
 
 class ASECalc(Calculator):
 
-    """ CatLearn/ASE calculator.
+    """
+    CatLearn/ASE calculator.
     """
 
     implemented_properties = ['energy', 'forces']

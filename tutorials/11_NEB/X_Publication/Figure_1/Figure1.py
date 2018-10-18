@@ -8,8 +8,9 @@ from catlearn.optimize.catlearn_neb_optimizer import CatLearnNEB
 import matplotlib
 
 """ 
-    Figure 1. Explanation of Acquisition functions.
+    Figure 1. Acquisition functions.
 """
+
 
 def get_plot_mullerbrown(catlearn_neb):
     """ Function for plotting each step of the toy model Muller-Brown .
@@ -23,8 +24,8 @@ def get_plot_mullerbrown(catlearn_neb):
     y_lim = [-0.6, 2.0]
 
     # Range of energies:
-    max_color = 0.7
-    min_color = -1.6
+    max_color = 0.75
+    min_color = -1.5
 
     # Length of the grid test points (nxn).
     test_points = 250
@@ -57,15 +58,18 @@ def get_plot_mullerbrown(catlearn_neb):
     pred = catlearn_neb.gp.predict(test_fp=test)
     prediction = np.array(pred['prediction'][:, 0])
 
-    crange = np.linspace(min_color, max_color, 800)
+    crange = np.linspace(min_color, max_color, 400)
 
     zi = plt.mlab.griddata(x, y, prediction, testx, testy, interp='linear')
 
     image = ax.contourf(testx, testy, zi, crange, alpha=1., cmap='Spectral_r',
-                 extend='neither', antialiased=False)
+                        extend='both', antialiased=False)
+    for c in image.collections:
+        c.set_edgecolor("face")
+        c.set_linewidth(0.0000000001)
 
     crange2 = np.linspace(min_color, max_color, 10)
-    ax.contour(testx, testy, zi, crange2, alpha=0.8, antialiased=True)
+    ax.contour(testx, testy, zi, crange2, alpha=0.6, antialiased=True)
 
     # Colorbar
     interval_colorbar = np.linspace(min_color, max_color, 5)
@@ -111,7 +115,7 @@ def get_plots_neb(catlearn_neb):
         plt.axvline(x=catlearn_neb.s[int(catlearn_neb.argmax_unc)+1],
                     color='yellow', linewidth=20.0, alpha=0.3)
     plt.plot(catlearn_neb.sfit, catlearn_neb.efit, color='black',
-    linestyle='--', linewidth=1.5)
+             linestyle='--', linewidth=1.5)
 
     plt.errorbar(catlearn_neb.s, catlearn_neb.e,
                  yerr=catlearn_neb.uncertainty_path,
@@ -136,6 +140,7 @@ def get_plots_neb(catlearn_neb):
     plt.xlabel('Predicted path (Angstrom)')
     plt.ylabel('Energy (eV)')
 
+
 # 1. Structural relaxation. ##################################################
 
 # Setup calculator:
@@ -152,32 +157,37 @@ final_structure.set_calculator(calc)
 
 # Initial end-point:
 initial_opt = BFGS(initial_structure, trajectory='initial_optimized.traj')
-initial_opt.run(fmax=0.005)
+initial_opt.run(fmax=0.01)
 
 # Final end-point:
 final_opt = BFGS(final_structure, trajectory='final_optimized.traj')
-final_opt.run(fmax=0.005)
+final_opt.run(fmax=0.01)
 
 # Define number of images for the NEB:
 n_images = 11
 
-# 2.B. NEB using CatLearn ####################################################
+# 2.B. Plot Muller step for each acquisition function.
 
-steps_plots = [1, 2, 3, 4, 5, 6, 7, 8]
-steps_plots = [200]
+steps_plots = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
+acquisition_functions = ['acq_1', 'acq_2', 'acq_3']
 
-for max_steps in steps_plots:
-    initial = read('initial_optimized.traj')
-    final = read('final_optimized.traj')
+for acq in acquisition_functions:
+    for max_steps in steps_plots:
+        initial = read('initial_optimized.traj')
+        final = read('final_optimized.traj')
 
-    catlearn_neb = CatLearnNEB(start='initial_optimized.traj',
-                               end='final_optimized.traj',
-                               ase_calc=calc,
-                               n_images=n_images,
-                               interpolation='linear', restart=False)
+        catlearn_neb = CatLearnNEB(start='initial_optimized.traj',
+                                   end='final_optimized.traj',
+                                   ase_calc=calc,
+                                   n_images=n_images,
+                                   interpolation='linear', restart=False)
 
-    catlearn_neb.run(fmax=0.01, steps=max_steps, acquisition='acq_2')
-    get_plot_mullerbrown(catlearn_neb)
-    plt.show()
-    get_plots_neb(catlearn_neb)
-    plt.show()
+        catlearn_neb.run(fmax=0.05, steps=max_steps, acquisition=acq)
+        get_plot_mullerbrown(catlearn_neb)
+        plt.savefig('./figures/muller_acq_' + acq + '_iter_' + str(
+                    max_steps) + '.pdf', format='pdf', dpi=300)
+        plt.close()
+        get_plots_neb(catlearn_neb)
+        plt.savefig('./figures/path_acq_' + acq + '_iter_' + str(
+                    max_steps) + '.pdf', format='pdf', dpi=300)
+        plt.close()
