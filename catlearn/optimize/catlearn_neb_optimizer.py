@@ -406,6 +406,11 @@ class CatLearnNEB(object):
                 congrats_stationary_neb()
 
                 if np.max(self.uncertainty_path[1:-1]) < unc_convergence:
+                    # Save results of the final step (converged):
+                    train_gp_model(self)
+                    get_results_predicted_path(self)
+                    store_results_neb(self)
+                    store_trajectory_neb(self)
                     congrats_neb_converged()
                     break
 
@@ -514,7 +519,7 @@ def get_results_predicted_path(self):
         pos_unc = apply_mask(list_to_mask=pos_unc,
                              mask_index=self.index_mask)[1]
         u = self.gp.predict(test_fp=pos_unc, uncertainty=True)
-        uncertainty = u['uncertainty'][0] * 10.0
+        uncertainty = 2. * u['uncertainty_with_reg'][0]
         i.info['uncertainty'] = uncertainty
         self.uncertainty_path.append(uncertainty)
         self.e_path.append(i.get_total_energy())

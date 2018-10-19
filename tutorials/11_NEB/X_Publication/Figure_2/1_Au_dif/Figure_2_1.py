@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from ase.io import read, write
-from ase.optimize import BFGS, FIRE, MDMin
+from ase.optimize import BFGS
 from catlearn.optimize.catlearn_neb_optimizer import CatLearnNEB
 from ase.calculators.emt import EMT
 from ase.io import read
@@ -11,11 +11,11 @@ from ase.build import fcc100, add_adsorbate
 import copy
 from catlearn.optimize.constraints import apply_mask
 """ 
-    Figure 2. Accuracy of the predicted NEB.
+    Figure 2. Accuracy of the predicted NEB. Diffusion Au atom on Al(111).
 """
 
 # # Define number of images:
-n_images = 7
+n_images = 11
 
 # 1. Structural relaxation. ##################################################
 
@@ -38,18 +38,18 @@ slab.set_constraint(FixAtoms(mask=mask))
 # 1.2. Optimize initial and final end-points.
 
 # Initial end-point:
-qn = BFGS(slab, trajectory='initial.traj')
+qn = BFGS(slab, trajectory='initial_opt.traj')
 qn.run(fmax=0.01)
 
 # Final end-point:
 slab[-1].x += slab.get_cell()[0, 0] / 2
-qn = BFGS(slab, trajectory='final.traj')
+qn = BFGS(slab, trajectory='final_opt.traj')
 qn.run(fmax=0.01)
 
 # 2.A. NEB using ASE #########################################################
 
-initial_ase = read('initial.traj')
-final_ase = read('final.traj')
+initial_ase = read('initial_opt.traj')
+final_ase = read('final_opt.traj')
 constraint = FixAtoms(mask=[atom.tag > 1 for atom in initial_ase])
 
 images_ase = [initial_ase]
@@ -64,7 +64,7 @@ images_ase.append(final_ase)
 neb_ase = NEB(images_ase, climb=True)
 neb_ase.interpolate(method='idpp')
 
-qn_ase = MDMin(neb_ase, trajectory='neb_ase.traj')
+qn_ase = BFGS(neb_ase, trajectory='neb_ase.traj')
 qn_ase.run(fmax=0.05)
 
 nebtools_ase = NEBTools(images_ase)
@@ -81,8 +81,8 @@ nebtools_ase.plot_band()
 
 # 2.B. NEB using CatLearn ####################################################
 
-neb_catlearn = CatLearnNEB(start='initial.traj',
-                           end='final.traj',
+neb_catlearn = CatLearnNEB(start='initial_opt.traj',
+                           end='final_opt.traj',
                            ase_calc=copy.deepcopy(ase_calculator),
                            n_images=n_images,
                            interpolation='idpp')
@@ -103,18 +103,18 @@ for i in neb_catlearn.images:
     pred_energy.append(i.get_potential_energy())
     pred_uncertainty.append(i.info['uncertainty'])
 
-normalised_energy = np.array(energy) - np.array(energy[0])
-normalised_pred_energy = np.array(pred_energy) - np.array(pred_energy[0])
-diff_e_epred = np.abs(normalised_energy - normalised_pred_energy)
+energy = np.array(energy)
+pred_energy = np.array(pred_energy)
+diff_e_epred = energy - pred_energy
 
 print('Energy (eV): ', energy)
 print('Predicted energy (eV): ', pred_energy)
 print('Uncertainty predicted path (2 var): ', np.array(pred_uncertainty))
-print('Error ( Abs(Diff(E-Epred)) (eV): ', diff_e_epred)
+print('Error [Abs(Diff(E-Epred))] (eV): ', diff_e_epred)
 
 # Plots.
 
-# Figure 1.A.
+# Figure A.
 
 plt.plot(neb_catlearn.sfit, neb_catlearn.efit, color='black',
              linestyle='--', linewidth=1.5)
@@ -128,13 +128,9 @@ plt.tight_layout(h_pad=1)
 plt.savefig('./figures/1_Au_pred_neb.pdf', format='pdf', dpi=300)
 plt.close()
 
-# Figure 1.B.
+# Figure B.
 plt.plot(neb_catlearn.s, diff_e_epred, color='black',
              linestyle='--', linewidth=1.5, markersize=10.0)
-# plt.errorbar(neb_catlearn.s, diff_e_epred,
-#              yerr=pred_uncertainty,
-#              markersize=0.0, ecolor='darkslateblue',
-#              ls='', elinewidth=2.0, capsize=1.0)
 plt.xlabel('Path (Angstrom)')
 plt.ylabel('Error |(E-Epred)| (eV)')
 plt.tight_layout(h_pad=1)

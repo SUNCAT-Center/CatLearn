@@ -28,26 +28,27 @@ from catlearn.optimize.catlearn_minimizer import CatLearnMin
 
 # Setup calculator:
 ase_calculator = EMT()
-# #
-# slab = read('initial.traj')
-# slab.set_calculator(copy.deepcopy(ase_calculator))
-# qn = CatLearnMin(slab, trajectory='initial_opt.traj')
-# qn.run(fmax=0.01)
-# #
-# # # Final end-point:
-# slab = read('final.traj')
-# slab.set_calculator(copy.deepcopy(ase_calculator))
-# qn = CatLearnMin(slab, trajectory='final_opt.traj')
-# qn.run(fmax=0.01)
+#
+slab = read('initial.traj')
+slab.set_calculator(copy.deepcopy(ase_calculator))
+qn = CatLearnMin(slab, trajectory='initial_opt.traj')
+qn.run(fmax=0.01)
+
+# Final end-point:
+slab = read('final.traj')
+slab.set_calculator(copy.deepcopy(ase_calculator))
+qn = CatLearnMin(slab, trajectory='final_opt.traj')
+qn.run(fmax=0.01)
 #
 # # Define number of images:
 n_images = 7
-#
+
 # # 2.A. NEB using ASE #########################################################
 #
-# initial_ase = read('initial_opt.traj')
-# final_ase = read('final_opt.traj')
-#
+initial_ase = read('initial_opt.traj')
+final_ase = read('final_opt.traj')
+constraint = FixAtoms(mask=[atom.tag > 1 for atom in initial_ase])
+
 # images_ase = [initial_ase]
 # for i in range(1, n_images-1):
 #     image = initial_ase.copy()
