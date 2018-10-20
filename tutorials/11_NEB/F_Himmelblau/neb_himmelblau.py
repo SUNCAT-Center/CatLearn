@@ -1,16 +1,15 @@
-from ase.build import fcc100, add_adsorbate
-from ase.calculators.emt import EMT
 from ase.io import read
-from ase.constraints import FixAtoms
 from ase.neb import NEB
-from ase.optimize import BFGS, FIRE, MDMin
 import matplotlib.pyplot as plt
 from catlearn.optimize.catlearn_neb_optimizer import CatLearnNEB
 from ase.neb import NEBTools
 import copy
+from catlearn.optimize.functions_calc import Himmelblau
+from ase import Atoms
+from ase.optimize import BFGS, MDMin
 
 """ 
-    Toy model for the diffusion of a Au atom on an Al(111) surface.  
+    Toy model using the Himmelblau potential.  
     This example contains: 
     1) Optimization of the initial and final end-points of the reaction path. 
     2A) NEB optimization using NEB-CI as implemented in ASE. 
@@ -22,55 +21,44 @@ import copy
 # 1. Structural relaxation. ##################################################
 
 # Setup calculator:
-ase_calculator = EMT()
+ase_calculator = Himmelblau()
 
-# 1.1. Structures:
+# # 1.1. Structures:
+initial_structure = Atoms('C', positions=[(-3., -3., 0.)])
+final_structure = Atoms('C', positions=[(3., 3., 0.)])
 
-# 2x2-Al(001) surface with 3 layers and an
-# Au atom adsorbed in a hollow site:
-slab = fcc100('Al', size=(2, 2, 3))
-add_adsorbate(slab, 'Au', 1.7, 'hollow')
-slab.center(axis=2, vacuum=4.0)
-slab.set_calculator(copy.deepcopy(ase_calculator))
-
-# Fix second and third layers:
-mask = [atom.tag > 1 for atom in slab]
-slab.set_constraint(FixAtoms(mask=mask))
+initial_structure.set_calculator(copy.deepcopy(ase_calculator))
+final_structure.set_calculator(copy.deepcopy(ase_calculator))
 
 # 1.2. Optimize initial and final end-points.
 
 # Initial end-point:
-qn = BFGS(slab, trajectory='initial.traj')
-qn.run(fmax=0.01)
+initial_opt = BFGS(initial_structure, trajectory='initial_optimized.traj')
+initial_opt.run(fmax=0.01)
 
 # Final end-point:
-slab[-1].x += slab.get_cell()[0, 0] / 2
-qn = BFGS(slab, trajectory='final.traj')
-qn.run(fmax=0.01)
+final_opt = BFGS(final_structure, trajectory='final_optimized.traj')
+final_opt.run(fmax=0.01)
 
-# # Define number of images:
-n_images = 3
+# # Define number of images for the NEB:
+
+n_images = 11
 
 # 2.A. NEB using ASE #########################################################
 
-initial_ase = read('initial.traj')
-final_ase = read('final.traj')
-constraint = FixAtoms(mask=[atom.tag > 1 for atom in initial_ase])
-
+initial_ase = read('initial_optimized.traj')
+final_ase = read('final_optimized.traj')
 images_ase = [initial_ase]
 for i in range(1, n_images-1):
-    image = initial_ase.copy()
-    image.set_calculator(copy.deepcopy(ase_calculator))
-    image.set_constraint(constraint)
-    images_ase.append(image)
-
+    image_ase = initial_ase.copy()
+    image_ase.set_calculator(copy.deepcopy(ase_calculator))
+    images_ase.append(image_ase)
 images_ase.append(final_ase)
 
-neb_ase = NEB(images_ase, climb=True)
-neb_ase.interpolate(method='idpp')
-
+neb_ase = NEB(images_ase, climb=True, method='improvedtangent')
+neb_ase.interpolate()
 qn_ase = MDMin(neb_ase, trajectory='neb_ase.traj')
-qn_ase.run(fmax=0.05)
+qn_ase.run(fmax=0.01)
 
 nebtools_ase = NEBTools(images_ase)
 
@@ -84,25 +72,28 @@ plt.show()
 
 # 2.B. NEB using CatLearn ####################################################
 
-neb_catlearn = CatLearnNEB(start='initial.traj',
-                           end='final.traj',
-                           ase_calc=copy.deepcopy(ase_calculator),
-                           n_images=n_images,
-                           interpolation='idpp')
+initial = read('initial_optimized.traj')
+final = read('final_optimized.traj')
 
-neb_catlearn.run(fmax=0.05, plot_neb_paths=True)
+neb_catlearn = CatLearnNEB(start='initial_optimized.traj',
+                           end='final_optimized.traj',
+                           ase_calc=copy.deepcopy(ase_calculator),
+                           n_images=7,
+                           interpolation='linear', restart=False)
+
+neb_catlearn.run(fmax=0.05, plot_neb_paths=True, acquisition='acq_2')
 
 # 3. Summary of the results #################################################
 
 # NEB ASE:
-print('\nSummary of the results: \n')
+print('\nSummary of the results: ', '\n------------------------\n')
 
 atoms_ase = read('neb_ase.traj', ':')
 n_eval_ase = len(atoms_ase) - 2 * n_images
 
 print('Number of function evaluations CI-NEB implemented in ASE:', n_eval_ase)
 
-# Catlearn:
+# CatLearn:
 atoms_catlearn = read('evaluated_structures.traj', ':')
 n_eval_catlearn = len(atoms_catlearn) - 2
 print('Number of function evaluations CatLearn:', n_eval_catlearn)

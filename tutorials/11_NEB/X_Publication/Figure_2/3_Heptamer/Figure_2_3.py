@@ -103,7 +103,7 @@ diff_e_epred = np.abs(normalised_energy - normalised_pred_energy)
 
 print('Energy (eV): ', energy)
 print('Predicted energy (eV): ', pred_energy)
-print('Uncertainty predicted path (2 var): ', np.array(pred_uncertainty))
+print('Uncertainty predicted path: ', np.array(pred_uncertainty))
 print('Error [Abs(Diff(E-Epred))] (eV): ', diff_e_epred)
 
 # Plots.
@@ -111,7 +111,7 @@ print('Error [Abs(Diff(E-Epred))] (eV): ', diff_e_epred)
 # Figure A.
 
 plt.plot(neb_catlearn.sfit, neb_catlearn.efit, color='black',
-             linestyle='--', linewidth=1.5)
+         linestyle='--', linewidth=1.5)
 plt.plot(neb_catlearn.s, neb_catlearn.e,
          color='red', alpha=0.5,
          marker='o', markersize=10.0, ls='',

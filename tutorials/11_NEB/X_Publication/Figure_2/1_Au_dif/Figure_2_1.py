@@ -15,7 +15,7 @@ from catlearn.optimize.constraints import apply_mask
 """
 
 # # Define number of images:
-n_images = 11
+n_images = 9
 
 # 1. Structural relaxation. ##################################################
 
@@ -75,64 +75,89 @@ Sf_ase = nebtools_ase.get_fit()[2]
 Ef_ase = nebtools_ase.get_fit()[3]
 
 Ef_neb_ase, dE_neb_ase = nebtools_ase.get_barrier(fit=False)
-nebtools_ase.plot_band()
 
-# plt.show()
+# Generate plots.
+fig = plt.figure(figsize=(5, 5))
+ax1 = plt.subplot2grid((3,1), (0,0), rowspan=2)
+ax2 = plt.subplot2grid((3,1), (2,0))
+
+# Plot for different uncertainties.
+list_of_uncertainties = [0.100, 0.075, 0.050, 0.025]
+list_colors = ['tomato', 'steelblue', 'mediumseagreen', 'gold']
+list_markers = ['D', '>', 's', 'h']
 
 # 2.B. NEB using CatLearn ####################################################
 
-neb_catlearn = CatLearnNEB(start='initial_opt.traj',
-                           end='final_opt.traj',
-                           ase_calc=copy.deepcopy(ase_calculator),
-                           n_images=n_images,
-                           interpolation='idpp')
+for loop in range(0, len(list_of_uncertainties)):
 
-neb_catlearn.run(fmax=0.05, plot_neb_paths=False)
+    neb_catlearn = CatLearnNEB(start='initial_opt.traj',
+                               end='final_opt.traj',
+                               ase_calc=copy.deepcopy(ase_calculator),
+                               n_images=n_images,
+                               interpolation='idpp')
 
-# Difference between real value of the energy and the predicted one.
+    neb_catlearn.run(fmax=0.05, plot_neb_paths=False,
+                     acquisition='acq_1',
+                     unc_convergence=list_of_uncertainties[loop])
 
-energy = []
-pred_energy = []
-pred_uncertainty = []
-for i in neb_catlearn.images:
-    path_pos_i = i.get_positions()
-    structure_i = copy.deepcopy(slab)
-    structure_i.positions = path_pos_i
-    energy_i = structure_i.get_potential_energy()
-    energy.append(energy_i)
-    pred_energy.append(i.get_potential_energy())
-    pred_uncertainty.append(i.info['uncertainty'])
+    # Difference between real value of the energy and the predicted one.
 
-energy = np.array(energy)
-pred_energy = np.array(pred_energy)
-diff_e_epred = energy - pred_energy
+    energy = []
+    pred_energy = []
+    pred_uncertainty = []
+    for i in neb_catlearn.images:
+        path_pos_i = i.get_positions()
+        structure_i = copy.deepcopy(slab)
+        structure_i.positions = path_pos_i
+        energy_i = structure_i.get_potential_energy()
+        energy.append(energy_i)
+        pred_energy.append(i.get_potential_energy())
+        pred_uncertainty.append(i.info['uncertainty'])
 
-print('Energy (eV): ', energy)
-print('Predicted energy (eV): ', pred_energy)
-print('Uncertainty predicted path (2 var): ', np.array(pred_uncertainty))
-print('Error [Abs(Diff(E-Epred))] (eV): ', diff_e_epred)
+    energy = np.array(energy)
+    pred_energy = np.array(pred_energy)
+    diff_e_epred = np.abs(energy - pred_energy)
 
-# Plots.
+    print('Energy (eV): ', energy)
+    print('Predicted energy (eV): ', pred_energy)
+    print('Uncertainty predicted path: ', np.array(pred_uncertainty))
+    print('Error [Abs(Diff(E-Epred))] (eV): ', diff_e_epred)
 
-# Figure A.
+    # Plot predicted path.
 
-plt.plot(neb_catlearn.sfit, neb_catlearn.efit, color='black',
+    unc_string_mev = str(int(1e3 * list_of_uncertainties[loop]))
+
+    ax1.plot(neb_catlearn.sfit, neb_catlearn.efit, color=list_colors[loop],
              linestyle='--', linewidth=1.5)
-plt.plot(neb_catlearn.s, neb_catlearn.e,
-         color='red', alpha=0.5,
-         marker='o', markersize=10.0, ls='',
-         markeredgecolor='black', markeredgewidth=0.9)
-plt.xlabel('Path (Angstrom)')
-plt.ylabel('Energy (eV)')
-plt.tight_layout(h_pad=1)
-plt.savefig('./figures/1_Au_pred_neb.pdf', format='pdf', dpi=300)
-plt.close()
+    ax1.plot(neb_catlearn.s, neb_catlearn.e,
+             color=list_colors[loop], alpha=0.9,
+             marker=list_markers[loop], markersize=8.5, ls='',
+             markeredgecolor='black', markeredgewidth=0.7,
+             label=unc_string_mev + ' meV (' + str(neb_catlearn.iter) + ')')
 
-# Figure B.
-plt.plot(neb_catlearn.s, diff_e_epred, color='black',
-             linestyle='--', linewidth=1.5, markersize=10.0)
-plt.xlabel('Path (Angstrom)')
-plt.ylabel('Error |(E-Epred)| (eV)')
-plt.tight_layout(h_pad=1)
-plt.savefig('./figures/1_Au_diff_e_epred.pdf', format='pdf', dpi=300)
-plt.close()
+    # Plot error for given predicted path.
+    ax2.plot(neb_catlearn.s, diff_e_epred, color=list_colors[loop], alpha=0.9,
+             linestyle='-.', linewidth=1.5, markersize=8.0,
+             marker=list_markers[loop],
+             markeredgecolor='black', markeredgewidth=0.7,
+             label=unc_string_mev + ' meV (' + str(neb_catlearn.iter) + ')'
+             )
+
+# Set labels for the plots:
+ax1.legend(loc="upper right")
+ax1.set_ylabel('Energy (eV)')
+ax2.set_xlabel('Path (Angstrom)')
+ax2.set_ylabel('Error |(E-Epred)| (eV)')
+ax2.set_ylim([-0.030, 0.100])
+
+
+# Plot for ASE NEB.
+ax1.plot(Sf_ase, Ef_ase, ls='-', marker='', color='black', )
+ax1.plot(aseneb_path, aseneb_energy, ls='', marker='o', color='lightgray',
+           markeredgecolor='black', markeredgewidth=0.9,
+           markersize=8.5, label='ASE')
+
+plt.savefig('./figures/Au_NEB_' + neb_catlearn.acq + '.pdf',
+            format='pdf',
+            dpi=300)
+

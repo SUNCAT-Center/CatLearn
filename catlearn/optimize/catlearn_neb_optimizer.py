@@ -7,7 +7,8 @@ from catlearn.optimize.io import ase_traj_to_catlearn, store_results_neb, \
 from catlearn.optimize.convergence import get_fmax
 from catlearn.optimize.get_real_values import eval_and_append
 from catlearn.optimize.constraints import create_mask, apply_mask
-from catlearn.optimize.plots import get_plot_mullerbrown, get_plots_neb
+from catlearn.optimize.plots import get_plot_mullerbrown, get_plots_neb, \
+                                    get_plot_himmelblau
 from ase.neb import NEB
 from ase.neb import NEBTools
 from ase.io import read, write
@@ -215,7 +216,7 @@ class CatLearnNEB(object):
                                    self.num_atoms)
         self.max_abs_forces = np.max(np.abs(self.max_forces))
 
-    def run(self, fmax=0.05, unc_convergence=0.010, steps=200,
+    def run(self, fmax=0.05, unc_convergence=0.050, steps=200,
             plot_neb_paths=False, acquisition='acq_2'):
 
         """Executing run will start the optimization process.
@@ -240,6 +241,7 @@ class CatLearnNEB(object):
         NEB optimized path.
         Files :
         """
+        self.acq = acquisition
 
         # Calculate the middle-point if only known initial & final structures.
         if len(self.list_targets) == 2:
@@ -316,7 +318,7 @@ class CatLearnNEB(object):
             # 4. Select next point to train (acquisition function):
 
             # Acquisition function 1:
-            if acquisition == 'acq_1':
+            if self.acq == 'acq_1':
                 # Select image with max. uncertainty.
                 if self.iter % 2 == 0:
                     self.argmax_unc = np.argmax(self.uncertainty_path[1:-1])
@@ -330,7 +332,7 @@ class CatLearnNEB(object):
                                               int(self.argmax_unc)].get_positions(
                                               ).flatten()
             # Acquisition function 2:
-            if acquisition == 'acq_2':
+            if self.acq == 'acq_2':
                 # Select image with max. uncertainty.
                 self.argmax_unc = np.argmax(self.uncertainty_path[1:-1])
                 self.interesting_point = self.images[1:-1][
@@ -344,7 +346,7 @@ class CatLearnNEB(object):
                                               int(self.argmax_unc)].get_positions(
                                               ).flatten()
             # Acquisition function 3:
-            if acquisition == 'acq_3':
+            if self.acq == 'acq_3':
                 # Select image with max. uncertainty.
                 self.argmax_unc = np.argmax(self.uncertainty_path[1:-1])
                 self.interesting_point = self.images[1:-1][
@@ -352,7 +354,18 @@ class CatLearnNEB(object):
 
                 # When reached certain uncertainty apply acq. 1.
                 if np.max(self.uncertainty_path[1:-1]) < unc_convergence:
-                    acquisition = 'acq_1'
+                    # Select image with max. uncertainty.
+                    if self.iter % 2 == 0:
+                        self.argmax_unc = np.argmax(self.uncertainty_path[1:-1])
+                        self.interesting_point = self.images[1:-1][
+                                          self.argmax_unc].get_positions().flatten()
+
+                    # Select image with max. predicted value.
+                    if self.iter % 2 == 1:
+                        self.argmax_unc = np.argmax(pred_plus_unc)
+                        self.interesting_point = self.images[1:-1][
+                                                  int(self.argmax_unc)].get_positions(
+                                                  ).flatten()
 
             # Plots results in each iteration.
             if plot_neb_paths is True:
@@ -362,6 +375,12 @@ class CatLearnNEB(object):
             if plot_neb_paths is True:
                 if self.ase_calc.__dict__['name'] == 'mullerbrown':
                     get_plot_mullerbrown(images=self.images,
+                                         interesting_point=self.interesting_point,
+                                         gp=self.gp,
+                                         list_train=self.list_train,
+                                         )
+                if self.ase_calc.__dict__['name'] == 'himmelblau':
+                    get_plot_himmelblau(images=self.images,
                                          interesting_point=self.interesting_point,
                                          gp=self.gp,
                                          list_train=self.list_train,
@@ -519,7 +538,7 @@ def get_results_predicted_path(self):
         pos_unc = apply_mask(list_to_mask=pos_unc,
                              mask_index=self.index_mask)[1]
         u = self.gp.predict(test_fp=pos_unc, uncertainty=True)
-        uncertainty = 2. * u['uncertainty_with_reg'][0]
+        uncertainty = np.sqrt(u['uncertainty_with_reg'][0])
         i.info['uncertainty'] = uncertainty
         self.uncertainty_path.append(uncertainty)
         self.e_path.append(i.get_total_energy())
