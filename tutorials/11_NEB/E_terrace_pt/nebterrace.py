@@ -24,6 +24,9 @@ from catlearn.optimize.catlearn_minimizer import CatLearnMin
        algorithm.
 """
 
+# Define number of images:
+n_images = 11
+
 # 1. Structural relaxation. ##################################################
 
 # Setup calculator:
@@ -39,12 +42,9 @@ slab = read('final.traj')
 slab.set_calculator(copy.deepcopy(ase_calculator))
 qn = CatLearnMin(slab, trajectory='final_opt.traj')
 qn.run(fmax=0.01)
-#
-# # Define number of images:
-n_images = 7
 
-# # 2.A. NEB using ASE #########################################################
-#
+# 2.A. NEB using ASE #########################################################
+
 initial_ase = read('initial_opt.traj')
 final_ase = read('final_opt.traj')
 constraint = FixAtoms(mask=[atom.tag > 1 for atom in initial_ase])
@@ -76,7 +76,7 @@ constraint = FixAtoms(mask=[atom.tag > 1 for atom in initial_ase])
 neb_catlearn = CatLearnNEB(start='initial_opt.traj',
                            end='final_opt.traj',
                            ase_calc=copy.deepcopy(ase_calculator),
-                           n_images=7,
+                           n_images=11,
                            interpolation='idpp', restart=False)
 
 neb_catlearn.run(fmax=0.05, plot_neb_paths=True)

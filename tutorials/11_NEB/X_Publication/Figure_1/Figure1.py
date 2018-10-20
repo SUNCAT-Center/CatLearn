@@ -5,10 +5,15 @@ from catlearn.optimize.functions_calc import MullerBrown
 from ase import Atoms
 from ase.optimize import BFGS
 from catlearn.optimize.catlearn_neb_optimizer import CatLearnNEB
+import seaborn as sns
+sns.set_style("ticks")
 
-""" 
+""" w
     Figure 1. Acquisition functions (Muller-Brown potential).
 """
+
+# Define number of images for the NEB:
+n_images = 7
 
 def get_plots_neb(catlearn_neb):
 
@@ -141,9 +146,6 @@ final_opt.run(fmax=0.01)
 
 
 # 2. Plot Muller step for each acquisition function.
-
-# Define number of images for the NEB:
-n_images = 9
 
 # Define steps and acquisition functions to plot.
 steps_plots = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
