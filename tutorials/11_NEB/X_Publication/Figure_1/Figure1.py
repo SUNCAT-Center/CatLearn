@@ -8,12 +8,12 @@ from catlearn.optimize.catlearn_neb_optimizer import CatLearnNEB
 import seaborn as sns
 sns.set_style("ticks")
 
-""" w
+"""
     Figure 1. Acquisition functions (Muller-Brown potential).
 """
 
 # Define number of images for the NEB:
-n_images = 7
+n_images = 11
 
 def get_plots_neb(catlearn_neb):
 

@@ -25,7 +25,7 @@ from catlearn.optimize.catlearn_minimizer import CatLearnMin
 """
 
 # Define number of images:
-n_images = 11
+n_images = 7
 
 # 1. Structural relaxation. ##################################################
 
@@ -76,7 +76,7 @@ constraint = FixAtoms(mask=[atom.tag > 1 for atom in initial_ase])
 neb_catlearn = CatLearnNEB(start='initial_opt.traj',
                            end='final_opt.traj',
                            ase_calc=copy.deepcopy(ase_calculator),
-                           n_images=11,
+                           n_images=n_images,
                            interpolation='idpp', restart=False)
 
 neb_catlearn.run(fmax=0.05, plot_neb_paths=True)

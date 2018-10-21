@@ -15,7 +15,7 @@ import itertools
 """
 
 # Define number of images:
-n_images = 7
+n_images = 11
 
 # 1. Structural relaxation. ##################################################
 
@@ -168,11 +168,11 @@ for acq in range(len(acquisition_functions)):
     ax1.legend(loc="upper right")
     ax1.set_ylabel('Energy (eV)')
     ax1.set_xticklabels('')
-    ax2.set_ylim([-0.050, 1.00])
+    ax1.set_ylim([-0.050, 1.00])
 
     ax2.set_xlabel('Path (Angstrom)')
     ax2.set_ylabel('Error |(E-Epred)| (eV)')
-    # ax2.set_ylim([-0.030, 0.100])
+    ax2.set_ylim([-0.030, 0.100])
 
     plt.savefig('./figures/Heptamer_island_NEB_' + neb_catlearn.acq + '.pdf',
                 format='pdf',

@@ -16,7 +16,7 @@ import itertools
 """
 
 # Define number of images:
-n_images = 7
+n_images = 11
 
 # 1. Structural relaxation. ##################################################
 
@@ -162,7 +162,7 @@ for acq in range(len(acquisition_functions)):
 
     ax2.set_xlabel('Path (Angstrom)')
     ax2.set_ylabel('Error |(E-Epred)| (eV)')
-    # ax2.set_ylim([-0.030, 0.100])
+    ax2.set_ylim([-0.030, 0.100])
 
     plt.savefig('./figures/Terrace_NEB_' + neb_catlearn.acq + '.pdf',
                 format='pdf',
