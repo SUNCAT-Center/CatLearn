@@ -86,7 +86,7 @@ def get_plots_neb(catlearn_neb):
                  orientation='horizontal', label='Function value (a.u.)')
 
     # Plot each point evaluated.
-    geometry_data = catlearn_neb.list_train.copy()
+    geometry_data = catlearn_neb.list_train.copy()[0:-1]
 
     ax1.scatter(geometry_data[:, 0], geometry_data[:, 1], marker='x',
                 s=50.0, c='black', alpha=1.0)
@@ -104,7 +104,7 @@ def get_plots_neb(catlearn_neb):
     plt.tight_layout(h_pad=1)
 
     # Text in box:
-    t = ax1.text(0.9, 0.87, str(catlearn_neb.iter),
+    t = ax1.text(0.9, 0.87, str(catlearn_neb.iter-1),
                  transform=ax1.transAxes, fontsize=25)
     t.set_bbox(dict(facecolor='white', alpha=1.0, edgecolor='black'))
 
@@ -119,7 +119,7 @@ def get_plots_neb(catlearn_neb):
                  ls='', elinewidth=2.0, capsize=1.0)
     ax2.plot(catlearn_neb.s, catlearn_neb.e,
              color='red', alpha=0.5,
-             marker='o', markersize=10.0, ls='',
+             marker='o', markersize=9.0, ls='',
              markeredgecolor='black', markeredgewidth=0.9)
 
 # 1. Structural relaxation. ##################################################
@@ -148,7 +148,7 @@ final_opt.run(fmax=0.01)
 # 2. Plot Muller step for each acquisition function.
 
 # Define steps and acquisition functions to plot.
-steps_plots = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
+steps_plots = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]
 acquisition_functions = ['acq_1', 'acq_2', 'acq_3']
 
 for acq in acquisition_functions:
@@ -166,5 +166,5 @@ for acq in acquisition_functions:
                          unc_convergence=0.100)
         get_plots_neb(catlearn_neb)
         plt.savefig('./figures/pred_NEB_' + acq + '_iter_' + str(
-                    max_steps) + '.pdf', format='pdf', dpi=300)
+                    max_steps-1) + '.pdf', format='pdf', dpi=300)
         plt.close()

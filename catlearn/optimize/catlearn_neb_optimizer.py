@@ -217,7 +217,7 @@ class CatLearnNEB(object):
         self.max_abs_forces = np.max(np.abs(self.max_forces))
 
     def run(self, fmax=0.05, unc_convergence=0.050, steps=200,
-            plot_neb_paths=False, acquisition='acq_2'):
+            plot_neb_paths=False, acquisition='acq_3'):
 
         """Executing run will start the optimization process.
 
@@ -289,20 +289,21 @@ class CatLearnNEB(object):
                                  k=self.spring)
 
                 neb_opt = MDMin(ml_neb, dt=dt)
-                neb_opt.run(fmax=fmax/1.1, steps=ml_steps)
+                neb_opt.run(fmax=fmax * 0.9, steps=ml_steps)
 
                 starting_path = self.images
                 if neb_opt.__dict__['nsteps'] <= ml_steps-1:
+                    print('ML NEB optimized.')
                     break
 
-                dt = dt/1.1
+                dt = dt * 0.9
                 print('New dt:', dt)
                 ml_cycle += 1
 
                 if ml_cycle >= 15:
+                    self.images = read('./last_predicted_path.traj', ':')
+                    print('ML NEB not optimized. Using last optimized path.')
                     break
-
-                print('ML NEB optimized.')
 
             # 3. Get results from ML NEB using ASE NEB Tools:
             # See https://wiki.fysik.dtu.dk/ase/ase/neb.html
@@ -398,6 +399,8 @@ class CatLearnNEB(object):
             print('Length of initial path (Angstrom):', self.d_start_end)
             print('Length of the current path (Angstrom):', self.path_distance)
             print('Spring constant (eV/Angstrom):', self.spring)
+            print('Acquisition function:', self.acq)
+            print('Uncertainty convergence set by user (eV):', unc_convergence)
             print('Max. uncertainty (eV):',
                   np.max(self.uncertainty_path[1:-1]))
             print('Image #id with max. uncertainty:',
@@ -538,7 +541,7 @@ def get_results_predicted_path(self):
         pos_unc = apply_mask(list_to_mask=pos_unc,
                              mask_index=self.index_mask)[1]
         u = self.gp.predict(test_fp=pos_unc, uncertainty=True)
-        uncertainty = np.sqrt(u['uncertainty_with_reg'][0])
+        uncertainty = 2.0 * np.sqrt(u['uncertainty_with_reg'][0])
         i.info['uncertainty'] = uncertainty
         self.uncertainty_path.append(uncertainty)
         self.e_path.append(i.get_total_energy())

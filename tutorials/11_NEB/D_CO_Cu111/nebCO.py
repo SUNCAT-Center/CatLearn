@@ -16,7 +16,7 @@ import copy
 
 # Calculator:
 ase_calculator = EMT()
-n_images = 9
+n_images = 11
 
 # # Distance between Cu atoms on a (111) surface:
 # a = 3.6

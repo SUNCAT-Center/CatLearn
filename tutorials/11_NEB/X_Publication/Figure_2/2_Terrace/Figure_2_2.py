@@ -133,13 +133,13 @@ for acq in range(len(acquisition_functions)):
                  linestyle='--', linewidth=1.5)
         ax1.plot(neb_catlearn.s, neb_catlearn.e,
                  color=next_color, alpha=0.9,
-                 marker=list_markers[loop], markersize=8.0, ls='',
+                 marker=list_markers[loop], markersize=7.0, ls='',
                  markeredgecolor='black', markeredgewidth=0.7,
                  label=unc_string_mev + ' meV (' + str(neb_catlearn.iter) + ')')
 
         # Plot error for given predicted path.
         ax2.plot(neb_catlearn.s, diff_e_epred, color=next_color, alpha=0.9,
-                 linestyle='-.', linewidth=1.5, markersize=8.0,
+                 linestyle='-.', linewidth=1.5, markersize=7.0,
                  marker=list_markers[loop],
                  markeredgecolor='black', markeredgewidth=0.7,
                  label=unc_string_mev + ' meV (' + str(neb_catlearn.iter) + ')'
@@ -152,7 +152,7 @@ for acq in range(len(acquisition_functions)):
     ax1.plot(Sf_ase, Ef_ase, ls='-', lw=1.0, marker='', color='black')
     ax1.plot(aseneb_path, aseneb_energy, ls='', marker='o', color='w',
                markeredgecolor='black', markeredgewidth=0.7,
-               markersize=7.0, label='ASE' + ' (' + n_eval_ase + ')')
+               markersize=6.0, label='ASE' + ' (' + n_eval_ase + ')')
 
     # Set labels for the plots:
     ax1.legend(loc="upper right")
@@ -162,7 +162,7 @@ for acq in range(len(acquisition_functions)):
 
     ax2.set_xlabel('Path (Angstrom)')
     ax2.set_ylabel('Error |(E-Epred)| (eV)')
-    ax2.set_ylim([-0.030, 0.100])
+    ax2.set_ylim([-0.030, 0.120])
 
     plt.savefig('./figures/Terrace_NEB_' + neb_catlearn.acq + '.pdf',
                 format='pdf',
