@@ -56,13 +56,13 @@ class CatLearnNEB(object):
             See https://wiki.fysik.dtu.dk/ase/ase/calculators/calculators.html
         """
 
-        # Start end-point, final end-point and path (optional):
+        # Start end-point, final end-point and path (optional).
         self.start = start
         self.end = end
         self.n_images = n_images
         self.feval = 0
 
-        # General setup:
+        # General setup.
         self.iter = 0
         self.ase_calc = ase_calc
         self.ase = True
@@ -70,11 +70,11 @@ class CatLearnNEB(object):
         self.version = 'NEB v.1.0.3'
         print_version(self.version)
 
-        # Reset:
+        # Reset.
         self.constraints = None
         self.interesting_point = None
 
-        # Create new file to store warnings and errors:
+        # Create new file to store warnings and errors.
         open('warnings_and_errors.txt', 'w')
 
         assert start is not None, err_not_neb_start()
@@ -217,7 +217,8 @@ class CatLearnNEB(object):
         self.max_abs_forces = np.max(np.abs(self.max_forces))
 
     def run(self, fmax=0.05, unc_convergence=0.050, steps=200,
-            plot_neb_paths=False, acquisition='acq_3'):
+            trajectory='neb_catlearn.traj', acquisition='acq_2',
+            plot_neb_paths=False):
 
         """Executing run will start the optimization process.
 
@@ -233,6 +234,8 @@ class CatLearnNEB(object):
             If True it prints and stores (in csv format) the last predicted
             NEB path obtained by the surrogate ML model. Note: Python package
             matplotlib is required.
+        trajectory: string
+            Filename to store the output.
         acquisition : string
             Acquisition function.
 
@@ -258,6 +261,7 @@ class CatLearnNEB(object):
             train_gp_model(self)
 
             # 2. Setup and run ML NEB:
+
             ml_steps = (len(self.index_mask) * self.n_images)
             ml_steps = 250 if ml_steps <= 250 else ml_steps  # Min steps.
             dt = 0.025
@@ -267,7 +271,7 @@ class CatLearnNEB(object):
 
             while True:
 
-                print('Starting ML NEB optimization using climbing image...')
+                print('Starting ML NEB optimization...')
                 self.images = create_ml_neb(is_endpoint=self.initial_endpoint,
                                             fs_endpoint=self.final_endpoint,
                                             images_interpolation=starting_path,
@@ -279,14 +283,9 @@ class CatLearnNEB(object):
                                             iteration=self.iter
                                             )
 
-                ml_neb = NEB(self.images, climb=True,
+                ml_neb = NEB(self.images, climb=False,
                              method=self.neb_method,
                              k=self.spring)
-
-                if ml_cycle > 3:
-                    ml_neb = NEB(self.images, climb=True,
-                                 method='eb',
-                                 k=self.spring)
 
                 neb_opt = MDMin(ml_neb, dt=dt)
                 neb_opt.run(fmax=fmax * 0.9, steps=ml_steps)
@@ -303,6 +302,44 @@ class CatLearnNEB(object):
                 if ml_cycle >= 15:
                     self.images = read('./last_predicted_path.traj', ':')
                     print('ML NEB not optimized. Using last optimized path.')
+                    break
+
+            starting_path = self.images
+            ml_cycle = 0
+
+            while True:
+                print('Starting ML NEB optimization using climbing image...')
+                self.images = create_ml_neb(is_endpoint=self.initial_endpoint,
+                                            fs_endpoint=self.final_endpoint,
+                                            images_interpolation=starting_path,
+                                            n_images=self.n_images,
+                                            constraints=self.constraints,
+                                            index_constraints=self.index_mask,
+                                            gp=self.gp,
+                                            scaling_targets=self.max_target,
+                                            iteration=self.iter
+                                            )
+
+                ml_neb = NEB(self.images, climb=True,
+                             method=self.neb_method,
+                             k=self.spring)
+
+                neb_opt = MDMin(ml_neb, dt=dt)
+                neb_opt.run(fmax=fmax * 0.9, steps=ml_steps)
+
+                starting_path = self.images
+                if neb_opt.__dict__['nsteps'] <= ml_steps-1:
+                    print('ML CI-NEB optimized.')
+                    break
+
+                dt = dt * 0.9
+                print('New dt:', dt)
+                ml_cycle += 1
+
+                if ml_cycle >= 15:
+                    self.images = read('./last_predicted_path.traj', ':')
+                    print('ML CI-NEB not optimized. Using last optimized '
+                          'path.')
                     break
 
             # 3. Get results from ML NEB using ASE NEB Tools:
@@ -396,6 +433,7 @@ class CatLearnNEB(object):
             store_results_neb(self)
             store_trajectory_neb(self)
 
+            print('Number of images:', self.n_images)
             print('Length of initial path (Angstrom):', self.d_start_end)
             print('Length of the current path (Angstrom):', self.path_distance)
             print('Spring constant (eV/Angstrom):', self.spring)
@@ -434,6 +472,10 @@ class CatLearnNEB(object):
                     store_results_neb(self)
                     store_trajectory_neb(self)
                     congrats_neb_converged()
+                    # Last path.
+                    write(trajectory, self.images)
+                    print('The last predicted path can be found in: ',
+                          trajectory)
                     break
 
             # Break if reaches the max number of iterations set by the user.

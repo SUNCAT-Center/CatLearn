@@ -25,7 +25,7 @@ from catlearn.optimize.catlearn_minimizer import CatLearnMin
 """
 
 # Define number of images:
-n_images = 11
+n_images = 15
 
 # 1. Structural relaxation. ##################################################
 

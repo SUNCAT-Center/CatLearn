@@ -1,20 +1,21 @@
 import numpy as np
+import matplotlib.pyplot as plt
 from ase.optimize import BFGS, MDMin, FIRE
 from catlearn.optimize.catlearn_neb_optimizer import CatLearnNEB
 from ase.calculators.emt import EMT
 from ase.neb import NEB
-from ase.constraints import FixAtoms
-from ase.build import fcc100, add_adsorbate
-import copy
 from ase.io import read, write
+import copy
+import seaborn as sns
 import os
 import shutil
 import pandas as pd
 
 """ 
-    Figure 3.A. Number of function calls as a function of number of images. 
-    Diffusion Au atom on Al(111).
+    Figure 3.C. Number of function calls as a function of number of images. 
+    Au heptamer island on Pt(111).
 """
+
 
 results_dir = './results/'
 if not os.path.exists(results_dir):
@@ -27,26 +28,21 @@ ase_calculator = EMT()
 
 # 1.1. Structures:
 
-# 2x2-Al(001) surface with 3 layers and an
-# Au atom adsorbed in a hollow site:
-slab = fcc100('Al', size=(2, 2, 3))
-add_adsorbate(slab, 'Au', 1.7, 'hollow')
-slab.center(axis=2, vacuum=4.0)
-slab.set_calculator(copy.deepcopy(ase_calculator))
+slab_initial = read('./initial.traj')
+slab_initial.set_calculator(copy.deepcopy(ase_calculator))
 
-# Fix second and third layers:
-mask = [atom.tag > 1 for atom in slab]
-slab.set_constraint(FixAtoms(mask=mask))
+slab_final = read('./final.traj')
+slab_final.set_calculator(ase_calculator)
+
 
 # 1.2. Optimize initial and final end-points.
 
 # Initial end-point:
-qn = BFGS(slab, trajectory='initial_opt.traj')
+qn = BFGS(slab_initial, trajectory='initial_opt.traj')
 qn.run(fmax=0.01)
 
 # Final end-point:
-slab[-1].x += slab.get_cell()[0, 0] / 2
-qn = BFGS(slab, trajectory='final_opt.traj')
+qn = BFGS(slab_final, trajectory='final_opt.traj')
 qn.run(fmax=0.01)
 
 # Run NEBS.
@@ -63,13 +59,11 @@ for n in n_images:
         if not os.path.exists(results_dir + filename):
             initial_ase = read('initial_opt.traj')
             final_ase = read('final_opt.traj')
-            constraint = FixAtoms(mask=[atom.tag > 1 for atom in initial_ase])
 
             images_ase = [initial_ase]
             for i in range(1, n-1):
                 image = initial_ase.copy()
                 image.set_calculator(copy.deepcopy(ase_calculator))
-                image.set_constraint(constraint)
                 images_ase.append(image)
 
             images_ase.append(final_ase)
@@ -77,8 +71,8 @@ for n in n_images:
             neb_ase = NEB(images_ase, climb=True)
             neb_ase.interpolate(method='idpp')
 
-            qn_ase = eval(algo)(neb_ase, trajectory=filename)
             max_steps = 200
+            qn_ase = eval(algo)(neb_ase, trajectory=filename)
             qn_ase.run(fmax=0.05, steps=max_steps)
 
             # Save results of the run in traj file.
@@ -123,7 +117,7 @@ for n in n_images:
             pred_uncertainty = []
             for i in neb_catlearn.images:
                 path_pos_i = i.get_positions()
-                structure_i = copy.deepcopy(slab)
+                structure_i = copy.deepcopy(slab_initial)
                 structure_i.positions = path_pos_i
                 energy_i = structure_i.get_potential_energy()
                 energy.append(energy_i)
