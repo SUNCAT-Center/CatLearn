@@ -10,6 +10,9 @@ from ase.io import read, write
 import os
 import shutil
 import pandas as pd
+import seaborn as sns
+import matplotlib.pyplot as plt
+import itertools
 
 """ 
     Figure 3.A. Number of function calls as a function of number of images. 
@@ -50,13 +53,13 @@ qn = BFGS(slab, trajectory='final_opt.traj')
 qn.run(fmax=0.01)
 
 # Run NEBS.
-n_images = [7, 8, 9, 10, 11, 12, 15, 21, 25, 31]
+n_images = [7, 11, 15, 19, 23, 27]
 
 for n in n_images:
 
     # 2.A. NEB using ASE ######################################################
 
-    for algo in ['BFGS', 'MDMin', 'FIRE']:
+    for algo in ['MDMin', 'FIRE']:
 
         filename = 'neb_ase_' + algo + '_' + str(n) + '_images.traj'
 
@@ -114,7 +117,7 @@ for n in n_images:
 
             neb_catlearn.run(fmax=0.05, plot_neb_paths=False,
                              acquisition=algo,
-                             unc_convergence=0.050,
+                             unc_convergence=0.100,
                              trajectory=filename)
 
             # Collect data.
@@ -183,3 +186,119 @@ for filename in os.listdir(results_dir):
     except:
         print('Not supported file.')
         pass
+
+df = pd.read_csv('results.csv')
+
+# Plots:
+
+# Colors and markers:
+sns.set_style("ticks")
+flatui = ["#9b59b6",  "#2ecc71", "#3498db", "#e74c3c", "#34495e","#95a5a6"]
+list_markers = itertools.cycle(('D', '>', 's', 'h'))
+palette = itertools.cycle(sns.color_palette())
+
+# Axis:
+fig = plt.figure(figsize=(5, 8))
+ax1 = plt.subplot2grid((3,1), (0,0), rowspan=2)
+ax2 = plt.subplot2grid((3,1), (2,0))
+
+# MDMin:
+next_color = next(palette)
+next_marker = next(list_markers)
+
+df_mdmin = df[df['Algorithm'] == 'MDMin']
+df_mdmin = df_mdmin.sort_values('Number of images')
+df_mdmin.plot(x='Number of images', y='Function evaluations',
+              color=next_color,
+              marker=next_marker, markersize=8.0, ls='--',
+              markeredgecolor='black', markeredgewidth=0.7,
+              label='MDMin', ax=ax1
+              )
+
+# FIRE:
+next_color = next(palette)
+next_marker = next(list_markers)
+
+df_fire = df[df['Algorithm'] == 'FIRE']
+df_fire = df_fire.sort_values('Number of images')
+df_fire.plot(x='Number of images', y='Function evaluations',
+             color=next_color,
+             marker=next_marker, markersize=8.0, ls='--',
+             markeredgecolor='black', markeredgewidth=0.7,
+             label='FIRE', ax=ax1)
+
+
+# CatLearn NEB. Acquisition 1:
+next_color = next(palette)
+next_marker = next(list_markers)
+
+df_acq_1 = df[df['Algorithm'] == 'acq_1']
+df_acq_1 = df_acq_1.sort_values('Number of images')
+df_acq_1.plot(x='Number of images', y='Function evaluations',
+             color=next_color,
+             marker=next_marker, markersize=8.0, ls='--',
+             markeredgecolor='black', markeredgewidth=0.7,
+             label='ML-NEB (Acq. 1)', ax=ax1)
+
+
+df_acq_1.plot(x='Number of images', y='Average error',
+             color=next_color,
+             marker=next_marker, markersize=8.0, ls='--',
+             markeredgecolor='black', markeredgewidth=0.7,
+             label='ML-NEB (Acq. 1)', ax=ax2)
+
+# CatLearn NEB. Acquisition 2:
+next_color = next(palette)
+next_marker = next(list_markers)
+
+df_acq_2 = df[df['Algorithm'] == 'acq_2']
+df_acq_2 = df_acq_2.sort_values('Number of images')
+df_acq_2.plot(x='Number of images', y='Function evaluations',
+             color=next_color,
+             marker=next_marker, markersize=8.0, ls='--',
+             markeredgecolor='black', markeredgewidth=0.7,
+             label='ML-NEB (Acq. 2)', ax=ax1)
+
+df_acq_2.plot(x='Number of images', y='Average error',
+             color=next_color,
+             marker=next_marker, markersize=8.0, ls='--',
+             markeredgecolor='black', markeredgewidth=0.7,
+             label='ML-NEB (Acq. 2)', ax=ax2)
+
+# CatLearn NEB. Acquisition 3:
+next_color = next(palette)
+next_marker = next(list_markers)
+
+df_acq_3 = df[df['Algorithm'] == 'acq_3']
+df_acq_3 = df_acq_3.sort_values('Number of images')
+df_acq_3.plot(x='Number of images', y='Function evaluations',
+             color=next_color,
+             marker=next_marker, markersize=8.0, ls='--',
+             markeredgecolor='black', markeredgewidth=0.7,
+             label='ML-NEB (Acq. 3)', ax=ax1)
+
+df_acq_3.plot(x='Number of images', y='Average error',
+             color=next_color,
+             marker=next_marker, markersize=8.0, ls='--',
+             markeredgecolor='black', markeredgewidth=0.7,
+             label='ML-NEB (Acq. 3)', ax=ax2)
+
+# Labels and text:
+
+ax1.set_ylabel('Function evaluations')
+ax1.set_xlabel('')
+ax1.set_yscale("log", nonposy='clip')
+ax1.legend()
+
+ax2.set_ylabel('Average error (eV)')
+ax2.set_xlabel('')
+ax2.set_ylim([-0.00, 0.05])
+ax2.legend().remove()
+
+plt.savefig('./figures/Figure3_Au_NEB.pdf',
+                format='pdf',
+                dpi=300)
+plt.close()
+
+
+

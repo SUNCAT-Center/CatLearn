@@ -73,6 +73,8 @@ class CatLearnNEB(object):
         # Reset.
         self.constraints = None
         self.interesting_point = None
+        self.acq = None
+        self.gp = None
 
         # Create new file to store warnings and errors.
         open('warnings_and_errors.txt', 'w')
@@ -217,7 +219,7 @@ class CatLearnNEB(object):
         self.max_abs_forces = np.max(np.abs(self.max_forces))
 
     def run(self, fmax=0.05, unc_convergence=0.050, steps=200,
-            trajectory='neb_catlearn.traj', acquisition='acq_2',
+            trajectory='ML_NEB_catlearn.traj', acquisition='acq_2',
             plot_neb_paths=False):
 
         """Executing run will start the optimization process.
@@ -246,7 +248,7 @@ class CatLearnNEB(object):
         """
         self.acq = acquisition
 
-        # Calculate the middle-point if only known initial & final structures.
+        # Calculate a third point if only known initial & final structures.
         if len(self.list_targets) == 2:
             middle = int(self.n_images * (2./3.))
             if self.energy_is >= self.energy_fs:
@@ -261,7 +263,6 @@ class CatLearnNEB(object):
             train_gp_model(self)
 
             # 2. Setup and run ML NEB:
-
             ml_steps = (len(self.index_mask) * self.n_images)
             ml_steps = 250 if ml_steps <= 250 else ml_steps  # Min steps.
             dt = 0.025
@@ -270,7 +271,6 @@ class CatLearnNEB(object):
             starting_path = copy.deepcopy(self.initial_images)
 
             while True:
-
                 print('Starting ML NEB optimization...')
                 self.images = create_ml_neb(is_endpoint=self.initial_endpoint,
                                             fs_endpoint=self.final_endpoint,
@@ -299,7 +299,7 @@ class CatLearnNEB(object):
                 print('New dt:', dt)
                 ml_cycle += 1
 
-                if ml_cycle >= 15:
+                if ml_cycle >= 5:
                     self.images = read('./last_predicted_path.traj', ':')
                     print('ML NEB not optimized. Using last optimized path.')
                     break
@@ -336,7 +336,7 @@ class CatLearnNEB(object):
                 print('New dt:', dt)
                 ml_cycle += 1
 
-                if ml_cycle >= 15:
+                if ml_cycle >= 5:
                     self.images = read('./last_predicted_path.traj', ':')
                     print('ML CI-NEB not optimized. Using last optimized '
                           'path.')
@@ -457,7 +457,8 @@ class CatLearnNEB(object):
                   self.list_targets[-1][0] - self.list_targets[0][0])
             print('Backward reaction barrier energy (eV):',
                   self.list_targets[-1][0] - self.list_targets[1][0])
-            print('Number #id of the last evaluated image:', self.argmax_unc + 2)
+            print('Number #id of the last evaluated image:',
+                  self.argmax_unc + 2)
 
             # 7. Check convergence:
 
@@ -473,8 +474,9 @@ class CatLearnNEB(object):
                     store_trajectory_neb(self)
                     congrats_neb_converged()
                     # Last path.
+                    os.remove('./last_predicted_path.traj')
                     write(trajectory, self.images)
-                    print('The last predicted path can be found in: ',
+                    print('The optimized predicted path can be found in: ',
                           trajectory)
                     break
 

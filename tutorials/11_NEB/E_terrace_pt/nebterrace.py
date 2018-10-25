@@ -25,7 +25,7 @@ from catlearn.optimize.catlearn_minimizer import CatLearnMin
 """
 
 # Define number of images:
-n_images = 15
+# n_images = 7
 
 # 1. Structural relaxation. ##################################################
 
@@ -34,20 +34,20 @@ ase_calculator = EMT()
 #
 slab = read('initial.traj')
 slab.set_calculator(copy.deepcopy(ase_calculator))
-qn = CatLearnMin(slab, trajectory='initial_opt.traj')
+qn = BFGS(slab, trajectory='initial_opt.traj')
 qn.run(fmax=0.01)
 
 # Final end-point:
 slab = read('final.traj')
 slab.set_calculator(copy.deepcopy(ase_calculator))
-qn = CatLearnMin(slab, trajectory='final_opt.traj')
+qn = BFGS(slab, trajectory='final_opt.traj')
 qn.run(fmax=0.01)
-
-# 2.A. NEB using ASE #########################################################
-
-initial_ase = read('initial_opt.traj')
-final_ase = read('final_opt.traj')
-constraint = FixAtoms(mask=[atom.tag > 1 for atom in initial_ase])
+#
+# # 2.A. NEB using ASE #########################################################
+#
+# initial_ase = read('initial_opt.traj')
+# final_ase = read('final_opt.traj')
+# constraint = FixAtoms(mask=[atom.tag > 1 for atom in initial_ase])
 
 # images_ase = [initial_ase]
 # for i in range(1, n_images-1):
@@ -76,10 +76,11 @@ constraint = FixAtoms(mask=[atom.tag > 1 for atom in initial_ase])
 neb_catlearn = CatLearnNEB(start='initial_opt.traj',
                            end='final_opt.traj',
                            ase_calc=copy.deepcopy(ase_calculator),
-                           n_images=n_images,
+                           n_images=8,
                            interpolation='idpp', restart=False)
 
-neb_catlearn.run(fmax=0.05, plot_neb_paths=True)
+neb_catlearn.run(fmax=0.05, plot_neb_paths=False, acquisition='acq_1',
+                 unc_convergence=0.100)
 
 
 
