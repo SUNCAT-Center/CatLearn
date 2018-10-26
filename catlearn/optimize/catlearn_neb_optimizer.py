@@ -265,7 +265,7 @@ class CatLearnNEB(object):
             # 2. Setup and run ML NEB:
             ml_steps = (len(self.index_mask) * self.n_images)
             ml_steps = 250 if ml_steps <= 250 else ml_steps  # Min steps.
-            dt = 0.015
+            dt = 0.50 / self.n_images
             ml_cycle = 0
 
             starting_path = copy.deepcopy(self.initial_images)
@@ -290,23 +290,22 @@ class CatLearnNEB(object):
 
                 if ml_cycle > 5:
                     ml_neb = NEB(self.images, climb=True,
-                                 method='eb',
+                                 method='aseneb',
                                  k=self.spring)
 
                 neb_opt = MDMin(ml_neb, dt=dt)
-                neb_opt.run(fmax=fmax/1.1, steps=ml_steps)
+                neb_opt.run(fmax=fmax * 0.9, steps=ml_steps)
 
                 starting_path = self.images
                 if neb_opt.__dict__['nsteps'] <= ml_steps-1:
                     break
 
-                dt = dt/1.1
+                dt = dt * 0.9
                 print('New dt:', dt)
                 ml_cycle += 1
 
                 if ml_cycle >= 10:
-                    self.images = read('./last_predicted_path.traj', ':')
-                    print('ML NEB not optimized. Using last optimized path.')
+                    print('Error. ML NEB not optimized.')
                     break
 
                 print('ML NEB optimized.')
