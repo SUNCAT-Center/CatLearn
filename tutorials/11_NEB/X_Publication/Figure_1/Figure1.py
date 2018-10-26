@@ -172,7 +172,7 @@ for acq in acquisition_functions:
                                    interpolation='linear', restart=False)
 
         catlearn_neb.run(fmax=0.05, steps=max_steps, acquisition=acq,
-                         unc_convergence=0.050)
+                         unc_convergence=0.100)
         get_plots_neb(catlearn_neb)
         plt.savefig('./figures/pred_NEB_' + acq + '_iter_' + str(
                     max_steps-1) + '.pdf', format='pdf', dpi=300)

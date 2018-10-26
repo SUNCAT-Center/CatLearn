@@ -22,7 +22,6 @@ import itertools
     Diffusion Au atom on Al(111).
 """
 
-
 figures_dir = './figures/'
 if not os.path.exists(figures_dir):
     os.makedirs(figures_dir)
