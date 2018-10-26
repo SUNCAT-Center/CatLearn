@@ -9,11 +9,16 @@ import copy
 from ase.io import read
 import seaborn as sns
 import itertools
+import os
 
 """ 
     Figure 2.B. Accuracy of the predicted NEB. 
     Diffusion of a Pt atom on an Pt(211) surface.
 """
+
+figures_dir = './figures/'
+if not os.path.exists(figures_dir):
+    os.makedirs(figures_dir)
 
 # Define number of images:
 n_images = 11

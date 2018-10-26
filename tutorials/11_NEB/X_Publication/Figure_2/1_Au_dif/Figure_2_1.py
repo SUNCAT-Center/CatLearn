@@ -10,11 +10,16 @@ import copy
 from ase.io import read
 import seaborn as sns
 import itertools
+import os
 
 """ 
     Figure 2.A. Accuracy of the predicted NEB. 
     Diffusion Au atom on Al(111).
 """
+
+figures_dir = './figures/'
+if not os.path.exists(figures_dir):
+    os.makedirs(figures_dir)
 
 # Define number of images:
 n_images = 11
@@ -88,8 +93,8 @@ list_palettes = ['Blues_d', 'BuGn_r', 'Reds']
 for acq in range(len(acquisition_functions)):
 
     fig = plt.figure(figsize=(5, 5))
-    ax1 = plt.subplot2grid((3,1), (0,0), rowspan=2)
-    ax2 = plt.subplot2grid((3,1), (2,0))
+    ax1 = plt.subplot2grid((3, 1), (0, 0), rowspan=2)
+    ax2 = plt.subplot2grid((3, 1), (2, 0))
 
     # Plot for different uncertainties.
     list_of_uncertainties = [0.100, 0.075, 0.050, 0.025]
@@ -105,7 +110,7 @@ for acq in range(len(acquisition_functions)):
     # Markers:
     list_markers = ['D', '>', 's', 'h']
 
-    # 2.B. NEB using CatLearn ####################################################
+    # 2.B. NEB using CatLearn #################################################
 
     for loop in range(0, len(list_of_uncertainties)):
         next_color = next(palette)

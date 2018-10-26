@@ -6,14 +6,22 @@ from ase import Atoms
 from ase.optimize import BFGS
 from catlearn.optimize.catlearn_neb_optimizer import CatLearnNEB
 import seaborn as sns
+import os
+
 sns.set_style("ticks")
+
 
 """
     Figure 1. Acquisition functions (Muller-Brown potential).
 """
 
+figures_dir = './figures/'
+if not os.path.exists(figures_dir):
+    os.makedirs(figures_dir)
+
 # Define number of images for the NEB:
 n_images = 11
+
 
 def get_plots_neb(catlearn_neb):
 
@@ -71,7 +79,7 @@ def get_plots_neb(catlearn_neb):
     zi = plt.mlab.griddata(x, y, prediction, testx, testy, interp='linear')
 
     image = ax1.contourf(testx, testy, zi, crange, alpha=1., cmap='Spectral_r',
-                        extend='both', antialiased=False)
+                         extend='both', antialiased=False)
     for c in image.collections:
         c.set_edgecolor("face")
         c.set_linewidth(0.000001)
@@ -82,7 +90,7 @@ def get_plots_neb(catlearn_neb):
     interval_colorbar = np.linspace(min_color, max_color, 5)
 
     fig.colorbar(image, ax=ax1, ticks=interval_colorbar, extend='None',
-                 panchor=(0.5,0.0),
+                 panchor=(0.5, 0.0),
                  orientation='horizontal', label='Function value (a.u.)')
 
     # Plot each point evaluated.
@@ -123,6 +131,7 @@ def get_plots_neb(catlearn_neb):
              markeredgecolor='black', markeredgewidth=0.9)
 
 # 1. Structural relaxation. ##################################################
+
 
 # Setup calculator.
 calc = MullerBrown()

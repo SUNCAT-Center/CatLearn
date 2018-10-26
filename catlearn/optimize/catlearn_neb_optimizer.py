@@ -291,6 +291,7 @@ class CatLearnNEB(object):
                 neb_opt.run(fmax=fmax * 0.9, steps=ml_steps)
 
                 starting_path = self.images
+
                 if neb_opt.__dict__['nsteps'] <= ml_steps-1:
                     print('ML NEB optimized.')
                     break

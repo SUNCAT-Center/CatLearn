@@ -79,7 +79,7 @@ neb_catlearn = CatLearnNEB(start='initial_opt.traj',
                            n_images=8,
                            interpolation='idpp', restart=False)
 
-neb_catlearn.run(fmax=0.05, plot_neb_paths=False, acquisition='acq_1',
+neb_catlearn.run(fmax=0.05, plot_neb_paths=True, acquisition='acq_1',
                  unc_convergence=0.100)
 
 

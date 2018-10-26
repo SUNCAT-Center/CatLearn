@@ -10,11 +10,17 @@ import seaborn as sns
 import os
 import shutil
 import pandas as pd
+import itertools
+
 
 """ 
     Figure 3.B. Number of function calls as a function of number of images. 
     Diffusion of a Pt atom on an Pt(211) surface.
 """
+
+figures_dir = './figures/'
+if not os.path.exists(figures_dir):
+    os.makedirs(figures_dir)
 
 results_dir = './results/'
 if not os.path.exists(results_dir):
@@ -175,9 +181,9 @@ df = pd.read_csv('results.csv')
 
 # Colors and markers:
 sns.set_style("ticks")
-flatui = ["#9b59b6",  "#2ecc71", "#3498db", "#e74c3c", "#34495e","#95a5a6"]
-list_markers = itertools.cycle(('D', '>', 's', 'h'))
-palette = itertools.cycle(sns.color_palette())
+jagt_col = ["#FD9A44",  "#1f77b4","#5D7C8E", "#31B760","#F66451","#95a5a6"]
+list_markers = itertools.cycle(('D', '>', 's', 'h', 'p'))
+palette = itertools.cycle(sns.color_palette(jagt_col))
 
 # Axis:
 fig = plt.figure(figsize=(5, 8))
@@ -270,10 +276,10 @@ df_acq_3.plot(x='Number of images', y='Average error',
 ax1.set_ylabel('Function evaluations')
 ax1.set_xlabel('')
 ax1.set_yscale("log", nonposy='clip')
-ax1.legend()
+ax1.legend(loc='best')
 
 ax2.set_ylabel('Average error (eV)')
-ax2.set_xlabel('')
+ax2.set_xlabel('Number of images')
 ax2.set_ylim([-0.00, 0.05])
 ax2.legend().remove()
 
