@@ -1,3 +1,6 @@
+import matplotlib
+matplotlib.use('pdf')
+import matplotlib.pyplot as plt
 import numpy as np
 from ase.optimize import BFGS, MDMin, FIRE
 from catlearn.optimize.catlearn_neb_optimizer import CatLearnNEB
@@ -5,14 +8,14 @@ from ase.calculators.emt import EMT
 from ase.neb import NEB
 from ase.constraints import FixAtoms
 from ase.build import fcc100, add_adsorbate
-import copy
 from ase.io import read, write
+import copy
 import os
 import shutil
 import pandas as pd
 import seaborn as sns
-import matplotlib.pyplot as plt
 import itertools
+
 
 """ 
     Figure 3.A. Number of function calls as a function of number of images. 
@@ -198,7 +201,7 @@ df = pd.read_csv('results.csv')
 
 # Colors and markers:
 sns.set_style("ticks")
-jagt_col = ["#FD9A44",  "#1f77b4","#5D7C8E", "#31B760","#F66451","#95a5a6"]
+jagt_col = ["#1f77b4", "#FD9A44", "#5D7C8E", "#31B760","#F66451","#95a5a6"]
 list_markers = itertools.cycle(('D', '>', 's', 'h', 'p'))
 palette = itertools.cycle(sns.color_palette(jagt_col))
 
@@ -207,18 +210,6 @@ fig = plt.figure(figsize=(5, 8))
 ax1 = plt.subplot2grid((3,1), (0,0), rowspan=2)
 ax2 = plt.subplot2grid((3,1), (2,0))
 
-# MDMin:
-next_color = next(palette)
-next_marker = next(list_markers)
-
-df_mdmin = df[df['Algorithm'] == 'MDMin']
-df_mdmin = df_mdmin.sort_values('Number of images')
-df_mdmin.plot(x='Number of images', y='Function evaluations',
-              color=next_color,
-              marker=next_marker, markersize=8.0, ls='--',
-              markeredgecolor='black', markeredgewidth=0.7,
-              label='MDMin', ax=ax1
-              )
 
 # FIRE:
 next_color = next(palette)
@@ -232,6 +223,18 @@ df_fire.plot(x='Number of images', y='Function evaluations',
              markeredgecolor='black', markeredgewidth=0.7,
              label='FIRE', ax=ax1)
 
+# MDMin:
+next_color = next(palette)
+next_marker = next(list_markers)
+
+df_mdmin = df[df['Algorithm'] == 'MDMin']
+df_mdmin = df_mdmin.sort_values('Number of images')
+df_mdmin.plot(x='Number of images', y='Function evaluations',
+              color=next_color,
+              marker=next_marker, markersize=8.0, ls='--',
+              markeredgecolor='black', markeredgewidth=0.7,
+              label='MDMin', ax=ax1
+              )
 
 # CatLearn NEB. Acquisition 1:
 next_color = next(palette)
@@ -294,14 +297,16 @@ ax1.set_ylabel('Function evaluations')
 ax1.set_xlabel('')
 ax1.set_yscale("log", nonposy='clip')
 ax1.legend(loc='best')
+ax1.set_xticks(n_images)
 
 ax2.set_ylabel('Average error (eV)')
 ax2.set_xlabel('Number of images')
 ax2.set_ylim([-0.00, 0.05])
 ax2.legend().remove()
+ax2.set_xticks(n_images)
 
 
-plt.savefig('./figures/Figure3_Terrace.pdf',
+plt.savefig('./figures/Figure3A.pdf',
                 format='pdf',
                 dpi=300)
 plt.close()
