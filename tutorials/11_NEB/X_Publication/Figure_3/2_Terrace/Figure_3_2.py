@@ -2,7 +2,7 @@ import matplotlib
 matplotlib.use('pdf')
 import matplotlib.pyplot as plt
 import numpy as np
-from ase.optimize import BFGS, MDMin, FIRE
+from ase.optimize import LBFGS, MDMin, FIRE
 from catlearn.optimize.catlearn_neb_optimizer import CatLearnNEB
 from ase.calculators.emt import EMT
 from ase.neb import NEB
@@ -36,12 +36,12 @@ ase_calculator = EMT()
 # 1.2. Optimize initial and final end-points.
 slab = read('initial.traj')
 slab.set_calculator(copy.deepcopy(ase_calculator))
-qn = BFGS(slab, trajectory='initial_opt.traj')
+qn = LBFGS(slab, trajectory='initial_opt.traj')
 qn.run(fmax=0.01)
 
 slab = read('final.traj')
 slab.set_calculator(copy.deepcopy(ase_calculator))
-qn = BFGS(slab, trajectory='final_opt.traj')
+qn = LBFGS(slab, trajectory='final_opt.traj')
 qn.run(fmax=0.01)
 
 # Run NEBS.
@@ -51,7 +51,7 @@ for n in n_images:
 
     # 2.A. NEB using ASE ######################################################
 
-    for algo in ['MDMin', 'FIRE']:
+    for algo in ['LBFGS', 'MDMin', 'FIRE']:
 
         filename = 'neb_ase_' + algo + '_' + str(n) + '_images.traj'
 
@@ -183,8 +183,8 @@ df = pd.read_csv('results.csv')
 
 # Colors and markers:
 sns.set_style("ticks")
-jagt_col = ["#1f77b4", "#FD9A44", "#5D7C8E", "#31B760","#F66451","#95a5a6"]
-list_markers = itertools.cycle(('D', '>', 's', 'h', 'p'))
+jagt_col = ["#1f77b4", "#FD9A44", "#95a5a6", "#5D7C8E", "#31B760","#F66451"]
+list_markers = itertools.cycle(('D', '>', 'o', 's', 'h', 'p'))
 palette = itertools.cycle(sns.color_palette(jagt_col))
 
 # Axis:
@@ -203,6 +203,18 @@ df_fire.plot(x='Number of images', y='Function evaluations',
              marker=next_marker, markersize=8.0, ls='--',
              markeredgecolor='black', markeredgewidth=0.7,
              label='FIRE', ax=ax1)
+
+# LBFGS:
+next_color = next(palette)
+next_marker = next(list_markers)
+
+df_lbfgs = df[df['Algorithm'] == 'LBFGS']
+df_lbfgs = df_lbfgs.sort_values('Number of images')
+df_lbfgs.plot(x='Number of images', y='Function evaluations',
+              color=next_color,
+              marker=next_marker, markersize=8.0, ls='--',
+              markeredgecolor='black', markeredgewidth=0.7,
+              label='LBFGS', ax=ax1)
 
 # MDMin:
 next_color = next(palette)
@@ -286,7 +298,8 @@ ax2.set_ylim([-0.00, 0.05])
 ax2.legend().remove()
 ax2.set_xticks(n_images)
 
-plt.savefig('./figures/Figure3B.pdf',
+
+plt.savefig('./figures/Figure3_2.pdf',
                 format='pdf',
                 dpi=300)
 plt.close()
