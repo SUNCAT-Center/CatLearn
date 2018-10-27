@@ -44,37 +44,37 @@ qn = CatLearnMin(slab_final, trajectory='final.traj')
 qn.run(fmax=0.01)
 
 # Set number of images
-n_images = 7
+n_images = 15
 
 # 2.A. NEB using ASE #########################################################
 
-initial_ase = read('initial.traj')
-final_ase = read('final.traj')
-
-ase_calculator = copy.deepcopy(ase_calculator)
-
-images_ase = [initial_ase]
-for i in range(1, n_images-1):
-    image = initial_ase.copy()
-    image.set_calculator(copy.deepcopy(ase_calculator))
-    images_ase.append(image)
-
-images_ase.append(final_ase)
-
-neb_ase = NEB(images_ase, climb=True)
-neb_ase.interpolate(method='idpp')
-
-qn_ase = MDMin(neb_ase, trajectory='neb_ase.traj')
-qn_ase.run(fmax=0.05)
-
-nebtools_ase = NEBTools(images_ase)
-
-Sf_ase = nebtools_ase.get_fit()[2]
-Ef_ase = nebtools_ase.get_fit()[3]
-
-Ef_neb_ase, dE_neb_ase = nebtools_ase.get_barrier(fit=False)
-nebtools_ase.plot_band()
-plt.show()
+# initial_ase = read('initial.traj')
+# final_ase = read('final.traj')
+#
+# ase_calculator = copy.deepcopy(ase_calculator)
+#
+# images_ase = [initial_ase]
+# for i in range(1, n_images-1):
+#     image = initial_ase.copy()
+#     image.set_calculator(copy.deepcopy(ase_calculator))
+#     images_ase.append(image)
+#
+# images_ase.append(final_ase)
+#
+# neb_ase = NEB(images_ase, climb=True)
+# neb_ase.interpolate(method='idpp')
+#
+# qn_ase = MDMin(neb_ase, trajectory='neb_ase.traj')
+# qn_ase.run(fmax=0.05)
+#
+# nebtools_ase = NEBTools(images_ase)
+#
+# Sf_ase = nebtools_ase.get_fit()[2]
+# Ef_ase = nebtools_ase.get_fit()[3]
+#
+# Ef_neb_ase, dE_neb_ase = nebtools_ase.get_barrier(fit=False)
+# nebtools_ase.plot_band()
+# plt.show()
 
 # 2.B. NEB using CatLearn ####################################################
 
@@ -83,7 +83,8 @@ neb_catlearn = CatLearnNEB(start='initial.traj', end='final.traj',
                            n_images=n_images,
                            interpolation='idpp', restart=False)
 
-neb_catlearn.run(fmax=0.05, plot_neb_paths=True)
+neb_catlearn.run(fmax=0.05, plot_neb_paths=True, acquisition='acq_1',
+                 unc_convergence=0.10)
 
 # 3. Summary of the results #################################################
 

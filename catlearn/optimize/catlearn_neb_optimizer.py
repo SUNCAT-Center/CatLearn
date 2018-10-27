@@ -13,7 +13,7 @@ from ase.neb import NEB
 from ase.neb import NEBTools
 from ase.io import read, write
 from ase.io.trajectory import TrajectoryWriter
-from ase.optimize import MDMin
+from ase.optimize import FIRE
 from scipy.spatial import distance
 import copy
 import os
@@ -257,88 +257,54 @@ class CatLearnNEB(object):
             eval_and_append(self, self.interesting_point)
             self.iter += 1
 
+        ml_steps = (len(self.index_mask) * self.n_images)
+        ml_steps = 250 if ml_steps <= 250 else ml_steps  # Min steps.
+
         while True:
 
             # 1. Train Machine Learning process.
             train_gp_model(self)
 
             # 2. Setup and run ML NEB:
-            ml_steps = (len(self.index_mask) * self.n_images)
-            ml_steps = 250 if ml_steps <= 250 else ml_steps  # Min steps.
-            dt = 0.5 / self.n_images
-            ml_cycle = 0
-
             starting_path = copy.deepcopy(self.initial_images)
 
-            while True:
-                print('Starting ML NEB optimization...')
-                self.images = create_ml_neb(is_endpoint=self.initial_endpoint,
-                                            fs_endpoint=self.final_endpoint,
-                                            images_interpolation=starting_path,
-                                            n_images=self.n_images,
-                                            constraints=self.constraints,
-                                            index_constraints=self.index_mask,
-                                            gp=self.gp,
-                                            scaling_targets=self.max_target,
-                                            iteration=self.iter
-                                            )
+            print('Starting ML NEB optimization...')
+            self.images = create_ml_neb(is_endpoint=self.initial_endpoint,
+                                        fs_endpoint=self.final_endpoint,
+                                        images_interpolation=starting_path,
+                                        n_images=self.n_images,
+                                        constraints=self.constraints,
+                                        index_constraints=self.index_mask,
+                                        gp=self.gp,
+                                        scaling_targets=self.max_target,
+                                        iteration=self.iter
+                                        )
 
-                ml_neb = NEB(self.images, climb=False,
-                             method=self.neb_method,
-                             k=self.spring)
+            ml_neb = NEB(self.images, climb=False,
+                         method=self.neb_method,
+                         k=self.spring)
 
-                neb_opt = MDMin(ml_neb, dt=dt)
-                neb_opt.run(fmax=fmax * 1.5, steps=ml_steps)
+            neb_opt = FIRE(ml_neb, dt=0.010, maxmove=0.05)
+            neb_opt.run(fmax=fmax * 1.5, steps=ml_steps)
 
-                starting_path = self.images
+            if neb_opt.__dict__['nsteps'] <= ml_steps-1:
+                print('ML NEB optimized. Optimizing ML CI-NEB...')
+            if neb_opt.__dict__['nsteps'] > ml_steps-1:
+                print('NEB not converged. Optimizing ML CI-NEB...')
 
-                if neb_opt.__dict__['nsteps'] <= ml_steps-1:
-                    print('ML NEB optimized.')
-                    break
+            ml_neb = NEB(self.images, climb=True,
+                         method=self.neb_method,
+                         k=self.spring)
 
-                dt = dt * 0.9
-                print('New dt:', dt)
-                ml_cycle += 1
+            neb_opt = FIRE(ml_neb, dt=0.010, maxmove=0.05)
+            neb_opt.run(fmax=fmax * 0.9, steps=ml_steps)
 
-                if ml_cycle >= 4:
-                    starting_path = copy.deepcopy(self.initial_images)
-                    print('ML NEB not converged.')
-                    break
-
-            while True:
-                print('Starting ML NEB optimization using climbing image...')
-                self.images = create_ml_neb(is_endpoint=self.initial_endpoint,
-                                            fs_endpoint=self.final_endpoint,
-                                            images_interpolation=starting_path,
-                                            n_images=self.n_images,
-                                            constraints=self.constraints,
-                                            index_constraints=self.index_mask,
-                                            gp=self.gp,
-                                            scaling_targets=self.max_target,
-                                            iteration=self.iter
-                                            )
-
-                ml_neb = NEB(self.images, climb=True,
-                             method=self.neb_method,
-                             k=self.spring)
-
-                neb_opt = MDMin(ml_neb, dt=dt)
-                neb_opt.run(fmax=fmax * 0.9, steps=ml_steps)
-
-                starting_path = self.images
-                if neb_opt.__dict__['nsteps'] <= ml_steps-1:
-                    print('ML CI-NEB optimized.')
-                    break
-
-                dt = dt * 0.9
-                print('New dt:', dt)
-                ml_cycle += 1
-
-                if ml_cycle >= 10:
-                    self.images = read('./last_predicted_path.traj', ':')
-                    print('ML CI-NEB not converged. Using last optimized '
-                          'path.')
-                    break
+            if neb_opt.__dict__['nsteps'] <= ml_steps-1:
+                print('ML CI-NEB optimized.')
+            if neb_opt.__dict__['nsteps'] > ml_steps-1:
+                ml_steps = ml_steps * 2.
+                self.images = read('./last_predicted_path.traj', ':')
+                print('ML CI-NEB not converged. Using last opt. path.')
 
             # 3. Get results from ML NEB using ASE NEB Tools:
             # See https://wiki.fysik.dtu.dk/ase/ase/neb.html
