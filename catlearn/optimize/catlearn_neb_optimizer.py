@@ -269,6 +269,7 @@ class CatLearnNEB(object):
 
             # 2. Setup and run ML NEB:
             starting_path = copy.deepcopy(self.initial_images)
+            ml_steps = 250 if ml_steps <= 250 else ml_steps  # Min steps.
 
             # Optimize ML NEB.
             print('Starting ML NEB optimization...')
@@ -307,7 +308,6 @@ class CatLearnNEB(object):
                 print('ML CI-NEB optimized.')
                 # Reset parameters.
                 ml_steps = (len(self.index_mask) * self.n_images)
-                ml_steps = 250 if ml_steps <= 250 else ml_steps  # Min steps.
                 non_conv = 0
                 dt = 0.025
 
