@@ -311,7 +311,7 @@ class CatLearnNEB(object):
                 ml_steps = ml_steps * 2.
                 dt = dt / 1.1
                 self.images = read('./last_predicted_path.traj', ':')
-                non_conv =+ 1
+                non_conv = non_conv + 1
                 if non_conv == self.n_images - 2:
                     self.images = copy.deepcopy(self.initial_images)
                 print('ML CI-NEB not converged. Using last opt. path.')
