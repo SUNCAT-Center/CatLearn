@@ -264,13 +264,12 @@ class CatLearnNEB(object):
 
             # 2. Setup and run ML NEB:
 
-            starting_path = copy.deepcopy(self.initial_images)
-            ml_steps = (self.n_images**2) * len(self.index_mask)
+            ml_steps = 500
             print('Max number steps:', ml_steps)
-            ml_steps = 250 if ml_steps <= 250 else ml_steps  # Min steps.
-            dt = 0.025
+            dt = 0.015
             ml_cycles = 0
 
+            starting_path = self.images
             self.images = create_ml_neb(is_endpoint=self.initial_endpoint,
                                         fs_endpoint=self.final_endpoint,
                                         images_interpolation=starting_path,
@@ -281,6 +280,7 @@ class CatLearnNEB(object):
                                         scaling_targets=self.max_target,
                                         iteration=self.iter
                                         )
+
             while True:
 
                 ml_neb = NEB(self.images, climb=True,
@@ -291,18 +291,37 @@ class CatLearnNEB(object):
                 neb_opt.run(fmax=(fmax * 0.9), steps=ml_steps)
                 n_steps_performed = neb_opt.__dict__['nsteps']
 
-                if n_steps_performed > ml_steps-1:
-                    print('Trying to optimize ML with a lower dt:')
-                    dt = dt * 0.85
-                    ml_cycles += 1
-
-                if ml_cycles >= 10:
-                    print('ML CI-NEB not converged. Using last opt. path.')
-                    self.images = read('./last_predicted_path.traj', ':')
-
                 if n_steps_performed <= ml_steps-1:
                     print('ML CI-NEB converged.')
                     break
+
+                if n_steps_performed > ml_steps-1:
+                    print('Trying to optimize ML with a lower dt:', dt)
+                    dt = dt * 0.80
+                    ml_cycles += 1
+
+                if ml_cycles == 5:
+                    dt = 0.015
+                    starting_path = copy.deepcopy(self.initial_images)
+                    self.images = create_ml_neb(
+                                        is_endpoint=self.initial_endpoint,
+                                        fs_endpoint=self.final_endpoint,
+                                        images_interpolation=starting_path,
+                                        n_images=self.n_images,
+                                        constraints=self.constraints,
+                                        index_constraints=self.index_mask,
+                                        gp=self.gp,
+                                        scaling_targets=self.max_target,
+                                        iteration=self.iter
+                                        )
+                    print('Using initial path as starting guess.')
+
+                if ml_cycles == 10:
+                    self.images = read('./last_predicted_path.traj', ':')
+                    print('ML CI-NEB not converged...not safe...')
+                    print('Using last predicted path images.')
+                    break
+
 
             # 3. Get results from ML NEB using ASE NEB Tools:
             # See https://wiki.fysik.dtu.dk/ase/ase/neb.html

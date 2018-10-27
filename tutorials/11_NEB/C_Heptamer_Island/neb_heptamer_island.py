@@ -26,21 +26,21 @@ ase_calculator = EMT()
 
 # 1.1. Structures:
 
-slab_initial = read('./A_structure/POSCAR')
+slab_initial = read('initial.traj')
 slab_initial.set_calculator(copy.deepcopy(ase_calculator))
 
-slab_final = read('./I_structure/POSCAR')
+slab_final = read('final.traj')
 slab_final.set_calculator(ase_calculator)
 
 
 # 1.2. Optimize initial and final end-points.
 
 # Initial end-point:
-qn = CatLearnMin(slab_initial, trajectory='initial.traj')
+qn = CatLearnMin(slab_initial, trajectory='initial_opt.traj')
 qn.run(fmax=0.01)
 
 # Final end-point:
-qn = CatLearnMin(slab_final, trajectory='final.traj')
+qn = CatLearnMin(slab_final, trajectory='final_opt.traj')
 qn.run(fmax=0.01)
 
 # Set number of images
@@ -78,12 +78,12 @@ n_images = 15
 
 # 2.B. NEB using CatLearn ####################################################
 
-neb_catlearn = CatLearnNEB(start='initial.traj', end='final.traj',
+neb_catlearn = CatLearnNEB(start='initial_opt.traj', end='final_opt.traj',
                            ase_calc=copy.deepcopy(ase_calculator),
                            n_images=n_images,
                            interpolation='idpp', restart=False)
 
-neb_catlearn.run(fmax=0.05, plot_neb_paths=True, acquisition='acq_1',
+neb_catlearn.run(fmax=0.05, plot_neb_paths=True, acquisition='acq_2',
                  unc_convergence=0.10)
 
 # 3. Summary of the results #################################################
