@@ -26,7 +26,7 @@ ase_calculator = Himmelblau()
 # # 1.1. Structures:
 initial_structure = Atoms('C', positions=[(-3., -3., 0.)])
 final_structure = Atoms('C', positions=[(3., 3., 0.)])
-å
+
 initial_structure.set_calculator(copy.deepcopy(ase_calculator))
 final_structure.set_calculator(copy.deepcopy(ase_calculator))
 

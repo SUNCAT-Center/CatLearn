@@ -13,7 +13,7 @@ from ase.neb import NEB
 from ase.neb import NEBTools
 from ase.io import read, write
 from ase.io.trajectory import TrajectoryWriter
-from ase.optimize import FIRE
+from ase.optimize import MDMin
 from scipy.spatial import distance
 import copy
 import os
@@ -257,8 +257,11 @@ class CatLearnNEB(object):
             eval_and_append(self, self.interesting_point)
             self.iter += 1
 
+
         ml_steps = (len(self.index_mask) * self.n_images)
         ml_steps = 250 if ml_steps <= 250 else ml_steps  # Min steps.
+        non_conv = 0
+        dt = 0.025
 
         while True:
 
@@ -284,7 +287,7 @@ class CatLearnNEB(object):
                          method=self.neb_method,
                          k=self.spring)
 
-            neb_opt = FIRE(ml_neb, dt=0.010, maxmove=0.05)
+            neb_opt = MDMin(ml_neb, dt=dt)
             neb_opt.run(fmax=fmax * 1.5, steps=ml_steps)
 
             if neb_opt.__dict__['nsteps'] <= ml_steps-1:
@@ -296,14 +299,21 @@ class CatLearnNEB(object):
                          method=self.neb_method,
                          k=self.spring)
 
-            neb_opt = FIRE(ml_neb, dt=0.010, maxmove=0.05)
+            neb_opt = MDMin(ml_neb, dt=dt)
             neb_opt.run(fmax=fmax * 0.9, steps=ml_steps)
 
             if neb_opt.__dict__['nsteps'] <= ml_steps-1:
+                non_conv = 0
+                dt = 0.025
                 print('ML CI-NEB optimized.')
+
             if neb_opt.__dict__['nsteps'] > ml_steps-1:
                 ml_steps = ml_steps * 2.
+                dt = dt / 1.1
                 self.images = read('./last_predicted_path.traj', ':')
+                non_conv =+ 1
+                if non_conv == self.n_images - 2:
+                    self.images = copy.deepcopy(self.initial_images)
                 print('ML CI-NEB not converged. Using last opt. path.')
 
             # 3. Get results from ML NEB using ASE NEB Tools:
