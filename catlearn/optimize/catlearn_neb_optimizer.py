@@ -257,7 +257,6 @@ class CatLearnNEB(object):
             eval_and_append(self, self.interesting_point)
             self.iter += 1
 
-
         ml_steps = (len(self.index_mask) * self.n_images)
         ml_steps = 250 if ml_steps <= 250 else ml_steps  # Min steps.
         non_conv = 0
@@ -271,6 +270,7 @@ class CatLearnNEB(object):
             # 2. Setup and run ML NEB:
             starting_path = copy.deepcopy(self.initial_images)
 
+            # Optimize ML NEB.
             print('Starting ML NEB optimization...')
             self.images = create_ml_neb(is_endpoint=self.initial_endpoint,
                                         fs_endpoint=self.final_endpoint,
@@ -295,26 +295,31 @@ class CatLearnNEB(object):
             if neb_opt.__dict__['nsteps'] > ml_steps-1:
                 print('NEB not converged. Optimizing ML CI-NEB...')
 
+            # Optimize ML CI-NEB.
             ml_neb = NEB(self.images, climb=True,
                          method=self.neb_method,
                          k=self.spring)
 
             neb_opt = MDMin(ml_neb, dt=dt)
-            neb_opt.run(fmax=fmax * 0.9, steps=ml_steps)
+            neb_opt.run(fmax=(fmax * 0.9), steps=ml_steps)
 
             if neb_opt.__dict__['nsteps'] <= ml_steps-1:
+                print('ML CI-NEB optimized.')
+                # Reset parameters.
+                ml_steps = (len(self.index_mask) * self.n_images)
+                ml_steps = 250 if ml_steps <= 250 else ml_steps  # Min steps.
                 non_conv = 0
                 dt = 0.025
-                print('ML CI-NEB optimized.')
 
             if neb_opt.__dict__['nsteps'] > ml_steps-1:
+                print('ML CI-NEB not converged. Using last opt. path.')
+                # Tighter parameters.
                 ml_steps = ml_steps * 2.
                 dt = dt / 1.1
-                self.images = read('./last_predicted_path.traj', ':')
                 non_conv = non_conv + 1
+                self.images = read('./last_predicted_path.traj', ':')
                 if non_conv == self.n_images - 2:
                     self.images = copy.deepcopy(self.initial_images)
-                print('ML CI-NEB not converged. Using last opt. path.')
 
             # 3. Get results from ML NEB using ASE NEB Tools:
             # See https://wiki.fysik.dtu.dk/ase/ase/neb.html
