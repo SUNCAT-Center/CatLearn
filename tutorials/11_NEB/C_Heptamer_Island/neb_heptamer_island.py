@@ -36,12 +36,12 @@ slab_final.set_calculator(ase_calculator)
 # 1.2. Optimize initial and final end-points.
 
 # Initial end-point:
-qn = CatLearnMin(slab_initial, trajectory='initial_opt.traj')
-qn.run(fmax=0.01)
-
-# Final end-point:
-qn = CatLearnMin(slab_final, trajectory='final_opt.traj')
-qn.run(fmax=0.01)
+# qn = CatLearnMin(slab_initial, trajectory='initial_opt.traj')
+# qn.run(fmax=0.01)
+#
+# # Final end-point:
+# qn = CatLearnMin(slab_final, trajectory='final_opt.traj')
+# qn.run(fmax=0.01)
 
 # Set number of images
 n_images = 15
