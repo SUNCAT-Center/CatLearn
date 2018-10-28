@@ -44,7 +44,7 @@ slab_final.set_calculator(ase_calculator)
 # qn.run(fmax=0.01)
 
 # Set number of images
-n_images = 15
+n_images = 11
 
 # 2.A. NEB using ASE #########################################################
 
@@ -83,7 +83,7 @@ neb_catlearn = CatLearnNEB(start='initial_opt.traj', end='final_opt.traj',
                            n_images=n_images,
                            interpolation='idpp', restart=False)
 
-neb_catlearn.run(fmax=0.05, plot_neb_paths=True, acquisition='acq_2',
+neb_catlearn.run(fmax=0.05, plot_neb_paths=True, acquisition='acq_1',
                  unc_convergence=0.10)
 
 # 3. Summary of the results #################################################

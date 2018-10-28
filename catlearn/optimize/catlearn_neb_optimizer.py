@@ -264,19 +264,19 @@ class CatLearnNEB(object):
 
             # 2. Setup and run ML NEB:
 
-            ml_steps = self.n_images * len(self.index_mask)
+            ml_steps = self.n_images * len(self.index_mask) * 2
             ml_steps = 300 if ml_steps <= 300 else ml_steps  # Min steps.
 
             print('Max number steps:', ml_steps)
-            dt_list = [0.025]
+            dt_list = [0.015]
             ml_cycles = 0
             dt_cycle = 0
 
             while True:
 
-                starting_path = self.images  # Start from last path.
+                starting_path = self.images
 
-                if ml_cycles == len(dt_list) * 0:
+                if ml_cycles == 0:
                     dt_cycle = 0
                     sp = '0:' + str(self.n_images)
                     print('Using initial path.')
@@ -289,10 +289,17 @@ class CatLearnNEB(object):
                     starting_path = read('./all_predicted_paths.traj', sp)
 
                 if ml_cycles == len(dt_list) * 2:
+                    dt_cycle = 0
                     if self.iter > 2:
                         print('Using two to the last predicted paths.')
-                        dt_cycle = 0
                         sp = str(-self.n_images*2)+':'+str(-self.n_images*1)
+                        starting_path = read('./all_predicted_paths.traj', sp)
+
+                if ml_cycles == len(dt_list) * 3:
+                    dt_cycle = 0
+                    if self.iter > 3:
+                        print('Using three to the last predicted paths.')
+                        sp = str(-self.n_images*3)+':'+str(-self.n_images*2)
                         starting_path = read('./all_predicted_paths.traj', sp)
 
                 for i in range(1, len(starting_path)-1):
@@ -324,9 +331,10 @@ class CatLearnNEB(object):
                     break
 
                 ml_cycles += 1
+                dt_cycle += 1
                 print('ML cycles performed:', ml_cycles)
 
-                if ml_cycles == len(dt_list) * 3:
+                if ml_cycles == len(dt_list) * 4:
                     self.images = read('./last_predicted_path.traj', ':')
                     print('ML CI-NEB not converged...not safe...')
                     print('Try changing the number of images and restart.')
