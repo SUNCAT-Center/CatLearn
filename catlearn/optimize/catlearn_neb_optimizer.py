@@ -24,7 +24,7 @@ from ase.calculators.calculator import Calculator, all_changes
 class CatLearnNEB(object):
 
     def __init__(self, start, end, path=None, n_images=0.25, k=None,
-                 interpolation=None, mic=False, neb_method='improvedtangent',
+                 interpolation=None, mic=False, neb_method='eb',
                  ase_calc=None, include_previous_calcs=False,
                  stabilize=False, restart=False):
         """ Nudged elastic band (NEB) setup.
@@ -268,7 +268,7 @@ class CatLearnNEB(object):
             ml_steps = 300 if ml_steps <= 300 else ml_steps  # Min steps.
 
             print('Max number steps:', ml_steps)
-            dt_list = [0.015]
+            dt_list = [0.020]
             ml_cycles = 0
             dt_cycle = 0
 
