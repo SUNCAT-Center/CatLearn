@@ -265,7 +265,7 @@ class CatLearnNEB(object):
             # 2. Setup and run ML NEB:
 
             ml_steps = self.n_images * len(self.index_mask)
-            ml_steps = 250 if ml_steps <= 250 else ml_steps  # Min steps.
+            ml_steps = 300 if ml_steps <= 300 else ml_steps  # Min steps.
 
             print('Max number steps:', ml_steps)
             dt_list = [0.025]
@@ -294,6 +294,9 @@ class CatLearnNEB(object):
                         dt_cycle = 0
                         sp = str(-self.n_images*2)+':'+str(-self.n_images*1)
                         starting_path = read('./all_predicted_paths.traj', sp)
+
+                for i in range(1, len(starting_path)-1):
+                        starting_path[i].rattle(seed=42, stdev=0.1)
 
                 if dt_cycle == 0:
                     self.images = create_ml_neb(is_endpoint=self.initial_endpoint,
