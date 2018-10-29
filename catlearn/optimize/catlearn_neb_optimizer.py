@@ -24,7 +24,7 @@ from ase.calculators.calculator import Calculator, all_changes
 class CatLearnNEB(object):
 
     def __init__(self, start, end, path=None, n_images=0.25, k=None,
-                 interpolation=None, mic=False, neb_method='improvedtangent',
+                 interpolation=None, mic=False, neb_method='eb',
                  ase_calc=None, include_previous_calcs=False,
                  stabilize=False, restart=False):
         """ Nudged elastic band (NEB) setup.
@@ -218,7 +218,7 @@ class CatLearnNEB(object):
                                    self.num_atoms)
         self.max_abs_forces = np.max(np.abs(self.max_forces))
 
-    def run(self, fmax=0.05, unc_convergence=0.100, steps=200,
+    def run(self, fmax=0.05, unc_convergence=0.100, steps=250,
             trajectory='ML_NEB_catlearn.traj', acquisition='acq_2',
             plot_neb_paths=False):
 
@@ -267,12 +267,14 @@ class CatLearnNEB(object):
             ml_steps = self.n_images * len(self.index_mask) * 2
             ml_steps = 250 if ml_steps <= 250 else ml_steps  # Min steps.
 
-            print('Max number steps:', ml_steps)
+            print('Max steps to optimize the predicted NEB:', ml_steps)
             dt_list = [0.050, 0.025, 0.010]
             ml_cycles = 0
             dt_cycle = 0
 
             # ML NEB optimization.
+            print('Optimizing ML NEB...')
+
             while True:
 
                 starting_path = self.images
@@ -334,7 +336,9 @@ class CatLearnNEB(object):
             dt_list = [0.050, 0.025, 0.010]
             ml_cycles = 0
             dt_cycle = 0
-            print('Optimizing ML NEB-CI')
+
+            # CI-NEB optimization.
+            print('Optimizing ML CI-NEB...')
 
             while True:
 
@@ -394,8 +398,10 @@ class CatLearnNEB(object):
                         print('Using converged ML NEB path.')
                         self.images = read('tmp_neb.traj', ':')
                         break
-                    print('ML NEB not converged...')
+                    print('Neither ML NEB nor ML CI-NEB were converged...')
                     print('Using non-converged images...this is not safe.')
+                    print('Please consider changing the number of images '
+                          'and restarting the calculation.')
                     break
 
             # 3. Get results from ML NEB using ASE NEB Tools:
