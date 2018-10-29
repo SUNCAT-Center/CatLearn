@@ -181,7 +181,7 @@ def get_plots_neb(images, selected=None, iter=None):
 
     uncertainty_path = []
     for i in images:
-        uncertainty_path.append(i.info['uncertainty'])
+        uncertainty_path.append(i.info['uncertainty'] / 2.)
 
     plt.errorbar(s, e, yerr=uncertainty_path,
                  ls='none', ecolor='black', capsize=10.0)
