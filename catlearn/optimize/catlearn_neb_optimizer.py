@@ -265,14 +265,14 @@ class CatLearnNEB(object):
 
         stationary_point_found = False
         dt = 0.025
-        ml_steps = 400
+        ml_steps = 500
 
         while True:
 
             # 1. Train Machine Learning process.
             train_gp_model(self)
 
-            # 2. Setup and run ML NEB:
+            # 2. Setup and run ML NEB.
             print('Max steps to optimize the predicted NEB:', ml_steps)
             print('Parameter dt set by the user: ', dt)
 
@@ -280,8 +280,6 @@ class CatLearnNEB(object):
             print('Optimizing ML CI-NEB...')
 
             starting_path = copy.deepcopy(self.initial_images)
-            if self.iter > 2:
-                starting_path = self.images
 
             for i in range(1, len(starting_path)-1):
                 starting_path[i].rattle(stdev=0.01, seed=42)
@@ -301,6 +299,14 @@ class CatLearnNEB(object):
                          method=self.neb_method,
                          k=self.spring)
 
+            neb_opt = FIRE(ml_neb, dt=dt, downhill_check=True,
+                           trajectory='tmp_neb.traj')
+            neb_opt.run(fmax=(fmax * 1.0), steps=100)
+
+            # Optimize CI-NEB.
+            ml_neb = NEB(self.images, climb=True,
+                         method=self.neb_method,
+                         k=self.spring)
             neb_opt = MDMin(ml_neb, dt=dt)
             neb_opt.run(fmax=(fmax * 0.9), steps=ml_steps)
             n_steps_performed = neb_opt.__dict__['nsteps']
@@ -309,25 +315,8 @@ class CatLearnNEB(object):
                 print('ML CI-NEB converged.')
 
             if n_steps_performed > ml_steps-1:
-                print('Safe mode. Optimizing using downhill check...')
-                starting_path = copy.deepcopy(self.initial_images)
-                for i in range(1, len(starting_path)-1):
-                    starting_path[i].rattle(stdev=0.01, seed=42)
-                self.images = create_ml_neb(is_endpoint=self.initial_endpoint,
-                                            fs_endpoint=self.final_endpoint,
-                                            images_interpolation=starting_path,
-                                            n_images=self.n_images,
-                                            constraints=self.constraints,
-                                            index_constraints=self.index_mask,
-                                            gp=self.gp,
-                                            scaling_targets=self.max_target,
-                                            iteration=self.iter
-                                            )
-                ml_neb = NEB(self.images, climb=True,
-                             method=self.neb_method,
-                             k=self.spring)
-                neb_opt = FIRE(ml_neb, dt=dt, downhill_check=True)
-                neb_opt.run(fmax=(fmax * 0.9), steps=100)
+                print('ML CI-NEB not converged. Using NEB path.')
+                self.images = read('tmp_neb.traj', str(-self.n_images) + ':')
 
             # 3. Get results from ML NEB using ASE NEB Tools:
             # See https://wiki.fysik.dtu.dk/ase/ase/neb.html
