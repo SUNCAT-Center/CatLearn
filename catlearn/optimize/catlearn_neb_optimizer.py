@@ -221,9 +221,8 @@ class CatLearnNEB(object):
         self.max_abs_forces = np.max(np.abs(self.max_forces))
 
     def run(self, fmax=0.05, unc_convergence=0.100, steps=200,
-            trajectory='ML_NEB_catlearn.traj', acquisition='acq_1',
-            plot_neb_paths=False, dt=0.025, ml_steps=100,
-            noise_energy=0.001, noise_forces=0.0001):
+            trajectory='ML_NEB_catlearn.traj', acquisition='acq_2',
+            plot_neb_paths=False):
 
         """Executing run will start the optimization process.
 
@@ -254,8 +253,6 @@ class CatLearnNEB(object):
         Files :
         """
         self.acq = acquisition
-        self.noise_energy = noise_energy
-        self.noise_forces = noise_forces
 
         # Calculate a third point if only known initial & final structures.
         if len(self.list_targets) == 2:
@@ -267,6 +264,8 @@ class CatLearnNEB(object):
             self.iter += 1
 
         stationary_point_found = False
+        dt = 0.01
+        ml_steps = 400
 
         while True:
 
@@ -560,15 +559,18 @@ def train_gp_model(self):
 
     width = self.path_distance/2
 
+    noise_energy = 0.005
+    noise_forces = 0.0005
+
     kdict = [{'type': 'gaussian', 'width': width,
               'dimension': dimension,
               'bounds': bounds,
               'scaling': 1.,
               'scaling_bounds': ((1., 1.),)},
              {'type': 'noise_multi',
-              'hyperparameters': [self.noise_energy, self.noise_forces],
-              'bounds': ((self.noise_energy, self.noise_energy),
-                         (self.noise_forces, self.noise_forces),)}
+              'hyperparameters': [noise_energy, noise_forces],
+              'bounds': ((0.001, 0.010),
+                         (0.0001, 0.0010),)}
              ]
 
     train = self.list_train.copy()
