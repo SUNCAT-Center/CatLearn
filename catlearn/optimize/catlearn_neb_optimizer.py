@@ -223,7 +223,7 @@ class CatLearnNEB(object):
     def run(self, fmax=0.05, unc_convergence=0.100, steps=250,
             trajectory='ML_NEB_catlearn.traj', acquisition='acq_2',
             plot_neb_paths=False, dt=0.025, ml_steps=500,
-            noise_energy=0.0005, noise_forces=0.0005):
+            noise_energy=0.005, noise_forces=0.0005):
 
         """Executing run will start the optimization process.
 

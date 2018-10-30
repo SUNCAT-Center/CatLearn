@@ -44,7 +44,7 @@ slab_final.set_calculator(ase_calculator)
 # qn.run(fmax=0.01)
 
 # Set number of images
-n_images = 7
+n_images = 15
 
 # 2.A. NEB using ASE #########################################################
 
