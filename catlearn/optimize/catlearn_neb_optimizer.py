@@ -264,7 +264,7 @@ class CatLearnNEB(object):
             self.iter += 1
 
         stationary_point_found = False
-        dt = 0.01
+        dt = 0.025
         ml_steps = 400
 
         while True:
