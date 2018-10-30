@@ -221,9 +221,9 @@ class CatLearnNEB(object):
         self.max_abs_forces = np.max(np.abs(self.max_forces))
 
     def run(self, fmax=0.05, unc_convergence=0.100, steps=200,
-            trajectory='ML_NEB_catlearn.traj', acquisition='acq_2',
+            trajectory='ML_NEB_catlearn.traj', acquisition='acq_1',
             plot_neb_paths=False, dt=0.025, ml_steps=100,
-            noise_energy=0.005, noise_forces=0.0005):
+            noise_energy=0.001, noise_forces=0.0001):
 
         """Executing run will start the optimization process.
 
@@ -257,17 +257,8 @@ class CatLearnNEB(object):
         self.noise_energy = noise_energy
         self.noise_forces = noise_forces
 
-        # Calculate a third point if only known initial & final structures.
-        if len(self.list_targets) == 2:
-            middle = int(self.n_images * (2./3.))
-            if self.energy_is >= self.energy_fs:
-                middle = int(self.n_images * (1./3.))
-            self.interesting_point = self.images[middle].get_positions().flatten()
-            eval_and_append(self, self.interesting_point)
-            self.iter += 1
-
         stationary_point_found = False
-
+        uncertainty_converged = False
         while True:
 
             # 1. Train Machine Learning process.
@@ -280,7 +271,7 @@ class CatLearnNEB(object):
             # ML NEB optimization.
             print('Optimizing ML CI-NEB...')
 
-            starting_path = self.images
+            starting_path = copy.deepcopy(self.initial_images)
 
             for i in range(1, len(starting_path)-1):
                 starting_path[i].rattle(stdev=0.01, seed=42)
@@ -300,6 +291,11 @@ class CatLearnNEB(object):
                          method=self.neb_method,
                          k=self.spring)
             neb_opt = FIRE(ml_neb, dt=dt, downhill_check=True)
+
+            if uncertainty_converged is True:
+                neb_opt = FIRE(ml_neb, dt=dt, downhill_check=False)
+            if stationary_point_found is True:
+                neb_opt = FIRE(ml_neb, dt=dt, downhill_check=False)
             neb_opt.run(fmax=(fmax * 0.90), steps=ml_steps)
 
             # 3. Get results from ML NEB using ASE NEB Tools:
@@ -452,10 +448,16 @@ class CatLearnNEB(object):
 
             # 7. Check convergence:
 
+            uncertainty_converged = False
+            stationary_point_found = False
+            if np.max(self.uncertainty_path[1:-1]) < unc_convergence:
+                uncertainty_converged = True
+            if self.max_abs_forces <= fmax:
+                stationary_point_found = True
+
             # Check whether the evaluated point is a stationary point.
             if self.max_abs_forces <= fmax:
                 congrats_stationary_neb()
-                stationary_point_found = True
                 if np.max(self.uncertainty_path[1:-1]) < unc_convergence:
                     # Save results of the final step (converged):
                     train_gp_model(self)
