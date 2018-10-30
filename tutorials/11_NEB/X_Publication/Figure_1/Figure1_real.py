@@ -3,8 +3,8 @@ import matplotlib.pyplot as plt
 from ase.io import read
 from catlearn.optimize.functions_calc import MullerBrown
 from ase import Atoms
-from ase.optimize import BFGS
-from catlearn.optimize.catlearn_neb_optimizer import CatLearnNEB
+from ase.optimize import BFGS, MDMin
+from ase.neb import NEB, NEBTools
 import seaborn as sns
 import os
 
@@ -12,7 +12,7 @@ sns.set_style("ticks")
 
 
 """
-    Figure 1. Acquisition functions (Muller-Brown potential).
+    Figure 1 B. NEB Muller-Brown potential.
 """
 
 figures_dir = './figures/'
@@ -23,7 +23,7 @@ if not os.path.exists(figures_dir):
 n_images = 11
 
 
-def get_plots_neb(catlearn_neb):
+def get_plots_neb(neb_ase, steps, images):
 
     """ Function for plotting each step of the toy model Muller-Brown .
     """
@@ -69,14 +69,17 @@ def get_plots_neb(catlearn_neb):
         t = test[i][1]
         y.append(t)
 
-    # Plot predicted function.
+    # Plot real function.
 
-    pred = catlearn_neb.gp.predict(test_fp=test)
-    prediction = np.array(pred['prediction'][:, 0]) + catlearn_neb.max_target
+    energy_ase = []
+    for i in test:
+        test_structure = Atoms('C', positions=[(i[0], i[1], i[2])])
+        test_structure.set_calculator(MullerBrown())
+        energy_ase.append(test_structure.get_potential_energy())
 
     crange = np.linspace(min_color, max_color, 1000)
 
-    zi = plt.mlab.griddata(x, y, prediction, testx, testy, interp='linear')
+    zi = plt.mlab.griddata(x, y, energy_ase, testx, testy, interp='linear')
 
     image = ax1.contourf(testx, testy, zi, crange, alpha=1., cmap='Spectral_r',
                          extend='both', antialiased=False)
@@ -94,38 +97,38 @@ def get_plots_neb(catlearn_neb):
                  orientation='horizontal', label='Function value (a.u.)')
 
     # Plot each point evaluated.
-    geometry_data = catlearn_neb.list_train.copy()[0:-1]
+    all_structures = read('neb_ase.traj', ':')
+
+    geometry_data = []
+    for j in all_structures:
+        geometry_data.append(j.get_positions().flatten())
+    geometry_data = np.reshape(geometry_data, ((len(geometry_data)), 3))
 
     ax1.scatter(geometry_data[:, 0], geometry_data[:, 1], marker='x',
                 s=50.0, c='black', alpha=1.0)
 
     # Plot NEB/GP optimized.
-    for i in catlearn_neb.images:
+
+    opt_images = read('neb_ase.traj', '-11:')
+    for i in opt_images:
         pos_i_x = i.get_positions()[0][0]
         pos_i_y = i.get_positions()[0][1]
         ax1.scatter(pos_i_x, pos_i_y, marker='o', s=20.0,
                     c='red', edgecolors='red', alpha=1.)
-    ax1.scatter(catlearn_neb.interesting_point[0],
-                catlearn_neb.interesting_point[1], s=70.,
-                marker='o', c='white', edgecolors='black')
 
     plt.tight_layout(h_pad=1)
 
     # Text in box:
-    t = ax1.text(0.9, 0.87, str(catlearn_neb.iter-1),
+    t = ax1.text(0.9, 0.87, str(len(all_structures)),
                  transform=ax1.transAxes, fontsize=25)
     t.set_bbox(dict(facecolor='white', alpha=1.0, edgecolor='black'))
 
-    if catlearn_neb.argmax_unc is not None:
-        ax2.axvline(x=catlearn_neb.s[int(catlearn_neb.argmax_unc)+1],
-                    color='yellow', linewidth=20.0, alpha=0.3)
-    ax2.plot(catlearn_neb.sfit, catlearn_neb.efit, color='black',
+    neb_tools = NEBTools(images)
+    fit_neb = neb_tools.get_fit()
+
+    ax2.plot(fit_neb[2], fit_neb[3], color='black',
              linestyle='--', linewidth=1.5)
-    ax2.errorbar(catlearn_neb.s, catlearn_neb.e,
-                 yerr=catlearn_neb.uncertainty_path,
-                 markersize=0.0, ecolor='darkslateblue',
-                 ls='', elinewidth=2.0, capsize=1.0)
-    ax2.plot(catlearn_neb.s, catlearn_neb.e,
+    ax2.plot(fit_neb[0], fit_neb[1],
              color='red', alpha=0.5,
              marker='o', markersize=9.0, ls='',
              markeredgecolor='black', markeredgewidth=0.9)
@@ -154,26 +157,30 @@ final_opt = BFGS(final_structure, trajectory='final_optimized.traj')
 final_opt.run(fmax=0.01)
 
 
-# 2. Plot Muller step for each acquisition function.
+# 2. Plot Muller step.
 
 # Define steps and acquisition functions to plot.
-steps_plots = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]
-acquisition_functions = ['acq_1', 'acq_2', 'acq_3']
+steps_plots = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 200]
 
-for acq in acquisition_functions:
-    for max_steps in steps_plots:
-        initial = read('initial_optimized.traj')
-        final = read('final_optimized.traj')
+for max_steps in steps_plots:
+    initial = read('initial_optimized.traj')
+    final = read('final_optimized.traj')
 
-        catlearn_neb = CatLearnNEB(start='initial_optimized.traj',
-                                   end='final_optimized.traj',
-                                   ase_calc=calc,
-                                   n_images=n_images,
-                                   interpolation='linear', restart=False)
+    images_ase = [initial]
+    for i in range(1, n_images-1):
+        image = initial.copy()
+        image.set_calculator(MullerBrown())
+        images_ase.append(image)
+    images_ase.append(final)
 
-        catlearn_neb.run(fmax=0.05, steps=max_steps, acquisition=acq,
-                         unc_convergence=0.100)
-        get_plots_neb(catlearn_neb)
-        plt.savefig('./figures/pred_NEB_' + acq + '_iter_' + str(
-                    max_steps-1) + '.pdf', format='pdf', dpi=300)
-        plt.close()
+    neb_ase = NEB(images_ase, climb=True)
+    neb_ase.interpolate(method='idpp')
+
+    qn_ase = MDMin(neb_ase, trajectory='neb_ase.traj')
+    qn_ase.run(fmax=0.05, steps=max_steps)
+
+    get_plots_neb(neb_ase, steps=max_steps, images=images_ase)
+
+    plt.savefig('./figures/ASE_NEB_iter_' + str(max_steps) + '.pdf',
+                format='pdf', dpi=300)
+    plt.close()

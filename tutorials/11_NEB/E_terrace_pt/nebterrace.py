@@ -76,13 +76,11 @@ qn.run(fmax=0.01)
 neb_catlearn = CatLearnNEB(start='initial_opt.traj',
                            end='final_opt.traj',
                            ase_calc=copy.deepcopy(ase_calculator),
-                           n_images=11,
+                           n_images=23,
                            interpolation='idpp', restart=False)
 
 neb_catlearn.run(fmax=0.05, plot_neb_paths=True, acquisition='acq_1',
                  unc_convergence=0.025)
-
-
 
 # 3. Summary of the results #################################################
 

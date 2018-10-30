@@ -222,7 +222,8 @@ class CatLearnNEB(object):
 
     def run(self, fmax=0.05, unc_convergence=0.100, steps=250,
             trajectory='ML_NEB_catlearn.traj', acquisition='acq_2',
-            plot_neb_paths=False, dt=0.025, ml_steps=500):
+            plot_neb_paths=False, dt=0.025, ml_steps=500,
+            noise_energy=0.0005, noise_forces=0.0005):
 
         """Executing run will start the optimization process.
 
@@ -253,6 +254,8 @@ class CatLearnNEB(object):
         Files :
         """
         self.acq = acquisition
+        self.noise_energy = noise_energy
+        self.noise_forces = noise_forces
 
         # Calculate a third point if only known initial & final structures.
         if len(self.list_targets) == 2:
@@ -262,6 +265,9 @@ class CatLearnNEB(object):
             self.interesting_point = self.images[middle].get_positions().flatten()
             eval_and_append(self, self.interesting_point)
             self.iter += 1
+
+        ml_conv = False
+        stationary_point_found = False
 
         while True:
 
@@ -275,7 +281,14 @@ class CatLearnNEB(object):
             # ML NEB optimization.
             print('Optimizing ML CI-NEB...')
 
-            starting_path = copy.deepcopy(self.initial_images)
+            if ml_conv is False:
+                starting_path = copy.deepcopy(self.initial_images)
+            if ml_conv is True:
+                starting_path = self.images
+
+            for i in range(1, len(starting_path)-1):
+                starting_path[i].rattle(stdev=0.01, seed=42)
+
             self.images = create_ml_neb(is_endpoint=self.initial_endpoint,
                                         fs_endpoint=self.final_endpoint,
                                         images_interpolation=starting_path,
@@ -295,9 +308,13 @@ class CatLearnNEB(object):
             n_steps_performed = neb_opt.__dict__['nsteps']
 
             if n_steps_performed > ml_steps-1:
+                ml_conv = False
+                self.images = read('last_predicted_path.traj', ':')
                 print('ML NEB not converged. Not safe...')
+                print('Using last optimized path.')
 
             if n_steps_performed <= ml_steps-1:
+                ml_conv = True
                 print('ML NEB converged.')
 
             # 3. Get results from ML NEB using ASE NEB Tools:
@@ -315,6 +332,7 @@ class CatLearnNEB(object):
 
             # Acquisition function 1:
             if self.acq == 'acq_1':
+                # Behave like acquisition 4...
                 # Select image with max. uncertainty.
                 if self.iter % 2 == 0:
                     self.argmax_unc = np.argmax(self.uncertainty_path[1:-1])
@@ -327,6 +345,21 @@ class CatLearnNEB(object):
                     self.interesting_point = self.images[1:-1][
                                               int(self.argmax_unc)].get_positions(
                                               ).flatten()
+                # If stationary point is found behave like acquisition 2...
+                if stationary_point_found is True:
+                    # Select image with max. uncertainty.
+                    self.argmax_unc = np.argmax(self.uncertainty_path[1:-1])
+                    self.interesting_point = self.images[1:-1][
+                                      self.argmax_unc].get_positions().flatten()
+
+                    # Select image with max. predicted value.
+                    if np.max(self.uncertainty_path[1:-1]) < unc_convergence:
+
+                        self.argmax_unc = np.argmax(pred_plus_unc)
+                        self.interesting_point = self.images[1:-1][
+                                                  int(self.argmax_unc)].get_positions(
+                                                  ).flatten()
+
             # Acquisition function 2:
             if self.acq == 'acq_2':
                 # Select image with max. uncertainty.
@@ -362,6 +395,20 @@ class CatLearnNEB(object):
                         self.interesting_point = self.images[1:-1][
                                                   int(self.argmax_unc)].get_positions(
                                                   ).flatten()
+            # Acquisition function 4:
+            if self.acq == 'acq_4':
+                # Select image with max. uncertainty.
+                if self.iter % 2 == 0:
+                    self.argmax_unc = np.argmax(self.uncertainty_path[1:-1])
+                    self.interesting_point = self.images[1:-1][
+                                      self.argmax_unc].get_positions().flatten()
+
+                # Select image with max. predicted value.
+                if self.iter % 2 == 1:
+                    self.argmax_unc = np.argmax(pred_plus_unc)
+                    self.interesting_point = self.images[1:-1][
+                                              int(self.argmax_unc)].get_positions(
+                                              ).flatten()
 
             # Plots results in each iteration.
             if plot_neb_paths is True:
@@ -423,7 +470,7 @@ class CatLearnNEB(object):
             # Check whether the evaluated point is a stationary point.
             if self.max_abs_forces <= fmax:
                 congrats_stationary_neb()
-
+                stationary_point_found = True
                 if np.max(self.uncertainty_path[1:-1]) < unc_convergence:
                     # Save results of the final step (converged):
                     train_gp_model(self)
@@ -494,18 +541,15 @@ def train_gp_model(self):
 
     width = self.path_distance/2
 
-    noise_energy = 0.001
-    noise_forces = 0.001
-
     kdict = [{'type': 'gaussian', 'width': width,
               'dimension': dimension,
               'bounds': bounds,
               'scaling': 1.,
               'scaling_bounds': ((1., 1.),)},
              {'type': 'noise_multi',
-              'hyperparameters': [noise_energy, noise_forces],
-              'bounds': ((0.0005, 0.0005),
-                         (0.0005, 0.0005),)}
+              'hyperparameters': [self.noise_energy, self.noise_forces],
+              'bounds': ((self.noise_energy, self.noise_energy),
+                         (self.noise_forces, self.noise_forces),)}
              ]
 
     train = self.list_train.copy()
