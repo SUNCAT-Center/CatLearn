@@ -22,23 +22,22 @@ def kernel_scaling(scale_data, kernel_dict, rescale):
     for k in kernel_dict.keys():
         mean, std = store_mean, store_std
         # Check hyperparameter dimensions.
-        if 'dimension' in kernel_dict[k] and \
-           kernel_dict[k]['dimension'] == 'single':
+        if 'dimension' in k and k['dimension'] == 'single':
             print('single hyperparameter being used, cant scale')
             continue
 
         # Check feature dimensions.
-        if 'features' in kernel_dict[k]:
-            mean = mean[kernel_dict[k]['features']]
-            std = std[kernel_dict[k]['features']]
+        if 'features' in k:
+            mean = mean[k['features']]
+            std = std[k['features']]
 
-        ktype = kernel_dict[k]['type']
+        ktype = k['type']
         kernel = eval(
-            '_{}_kernel_scale(kernel_dict[k], mean, std, rescale)'.format(
+            '_{}_kernel_scale(k, mean, std, rescale)'.format(
                 ktype))
-        kernel_dict[k] = kernel
+        k = kernel
 
-    return kernel_dict
+    return k
 
 
 def _constant_kernel_scale(kernel, mean, std, rescale):
