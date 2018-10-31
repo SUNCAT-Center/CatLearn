@@ -13,7 +13,7 @@ from ase.neb import NEB
 from ase.neb import NEBTools
 from ase.io import read, write
 from ase.io.trajectory import TrajectoryWriter
-from ase.optimize import MDMin, FIRE
+from ase.optimize import MDMin
 from scipy.spatial import distance
 import copy
 import os
@@ -24,7 +24,7 @@ from ase.calculators.calculator import Calculator, all_changes
 class CatLearnNEB(object):
 
     def __init__(self, start, end, path=None, n_images=0.25, k=None,
-                 interpolation=None, mic=False, neb_method='eb',
+                 interpolation=None, mic=False, neb_method='improvedtangent',
                  ase_calc=None, include_previous_calcs=False,
                  stabilize=False, restart=False):
         """ Nudged elastic band (NEB) setup.
@@ -75,8 +75,6 @@ class CatLearnNEB(object):
         self.interesting_point = None
         self.acq = None
         self.gp = None
-        if os.path.exists('tmp_neb.traj'):
-            os.remove('tmp_neb.traj')
 
         # Create new file to store warnings and errors.
         open('warnings_and_errors.txt', 'w')
@@ -258,7 +256,6 @@ class CatLearnNEB(object):
             self.interesting_point = self.images[middle].get_positions().flatten()
             eval_and_append(self, self.interesting_point)
             self.iter += 1
-
         stationary_point_found = False
 
         while True:
@@ -268,76 +265,63 @@ class CatLearnNEB(object):
 
             # 2. Setup and run ML NEB:
 
-            ml_steps = self.n_images * len(self.index_mask) * 2
-            ml_steps = 300 if ml_steps <= 300 else ml_steps  # Min steps.
+            ml_steps = self.n_images * len(self.index_mask)
+            ml_steps = 250 if ml_steps <= 250 else ml_steps  # Min steps.
 
             print('Max number steps:', ml_steps)
-            dt = 0.020
+            dt_list = [0.025]
             ml_cycles = 0
+            dt_cycle = 0
 
             while True:
 
-                if ml_cycles == 0:
+                starting_path = self.images  # Start from last path.
+
+                if ml_cycles == len(dt_list) * 0:
+                    dt_cycle = 0
                     sp = '0:' + str(self.n_images)
                     print('Using initial path.')
                     starting_path = read('./all_predicted_paths.traj', sp)
 
-                if ml_cycles == 1:
+                if ml_cycles == len(dt_list) * 1:
+                    dt_cycle = 0
                     print('Using last predicted path.')
                     sp = str(-self.n_images*1) + ':' + str(-1)
                     starting_path = read('./all_predicted_paths.traj', sp)
 
-                if ml_cycles == 2:
-                    if self.iter > 2:
-                        print('Using one to the last predicted paths.')
-                        sp = str(-self.n_images*2)+':'+str(-self.n_images*1)
-                        starting_path = read('./all_predicted_paths.traj', sp)
+                if dt_cycle == 0:
+                    self.images = create_ml_neb(is_endpoint=self.initial_endpoint,
+                                                fs_endpoint=self.final_endpoint,
+                                                images_interpolation=starting_path,
+                                                n_images=self.n_images,
+                                                constraints=self.constraints,
+                                                index_constraints=self.index_mask,
+                                                gp=self.gp,
+                                                scaling_targets=self.max_target,
+                                                iteration=self.iter
+                                                )
 
-                if ml_cycles == 3:
-                    sp = '0:' + str(self.n_images)
-                    print('Using initial path. Not using CI...')
-                    starting_path = read('./all_predicted_paths.traj', sp)
+                ml_neb = NEB(self.images, climb=True,
+                             method=self.neb_method,
+                             k=self.spring)
 
-                for i in range(1, len(starting_path)-1):
-                        starting_path[i].rattle(seed=42, stdev=0.1)
+                print('Optimizing ML CI-NEB using dt:', dt_list[dt_cycle])
+                neb_opt = MDMin(ml_neb, dt=dt_list[dt_cycle])
+                neb_opt.run(fmax=(fmax * 0.9), steps=ml_steps)
+                n_steps_performed = neb_opt.__dict__['nsteps']
 
-                self.images = create_ml_neb(is_endpoint=self.initial_endpoint,
-                                            fs_endpoint=self.final_endpoint,
-                                            images_interpolation=starting_path,
-                                            n_images=self.n_images,
-                                            constraints=self.constraints,
-                                            index_constraints=self.index_mask,
-                                            gp=self.gp,
-                                            scaling_targets=self.max_target,
-                                            iteration=self.iter
-                                            )
-
-                if ml_cycles != 3:
-                    ml_neb = NEB(self.images, climb=True,
-                                 method=self.neb_method,
-                                 k=self.spring)
-
-                    print('Optimizing ML CI-NEB using dt:', dt)
-                    neb_opt = MDMin(ml_neb, dt=dt)
-                    neb_opt.run(fmax=(fmax * 0.9), steps=ml_steps)
-                    n_steps_performed = neb_opt.__dict__['nsteps']
-
-                    if n_steps_performed <= ml_steps-1:
-                        print('ML CI-NEB converged.')
-                        break
-
-                if ml_cycles == 3:
-                    ml_neb = NEB(self.images, climb=False,
-                                 method=self.neb_method,
-                                 k=self.spring)
-
-                    print('Optimizing ML NEB in safe mode...')
-                    neb_opt = FIRE(ml_neb, dt=dt, downhill_check=True)
-                    neb_opt.run(fmax=(fmax * 0.9), steps=100)
+                if n_steps_performed <= ml_steps-1:
+                    print('ML CI-NEB converged.')
                     break
 
                 ml_cycles += 1
-                print('ML cycles performed:', ml_cycles+1)
+                print('ML cycles performed:', ml_cycles)
+
+                if ml_cycles == len(dt_list) * 2:
+                    self.images = read('./last_predicted_path.traj', ':')
+                    print('ML CI-NEB not converged...not safe...')
+                    print('Try changing the number of images and restart.')
+                    break
 
             # 3. Get results from ML NEB using ASE NEB Tools:
             # See https://wiki.fysik.dtu.dk/ase/ase/neb.html
@@ -356,13 +340,13 @@ class CatLearnNEB(object):
             if self.acq == 'acq_1':
                 # Behave like acquisition 4...
                 # Select image with max. uncertainty.
-                if self.iter % 2 == 0:
+                if self.iter % 2 == 1:
                     self.argmax_unc = np.argmax(self.uncertainty_path[1:-1])
                     self.interesting_point = self.images[1:-1][
                                       self.argmax_unc].get_positions().flatten()
 
                 # Select image with max. predicted value.
-                if self.iter % 2 == 1:
+                if self.iter % 2 == 0:
                     self.argmax_unc = np.argmax(pred_plus_unc)
                     self.interesting_point = self.images[1:-1][
                                               int(self.argmax_unc)].get_positions(
@@ -406,13 +390,13 @@ class CatLearnNEB(object):
                 # When reached certain uncertainty apply acq. 1.
                 if np.max(self.uncertainty_path[1:-1]) < unc_convergence:
                     # Select image with max. uncertainty.
-                    if self.iter % 2 == 0:
+                    if self.iter % 2 == 1:
                         self.argmax_unc = np.argmax(self.uncertainty_path[1:-1])
                         self.interesting_point = self.images[1:-1][
                                           self.argmax_unc].get_positions().flatten()
 
                     # Select image with max. predicted value.
-                    if self.iter % 2 == 1:
+                    if self.iter % 2 == 0:
                         self.argmax_unc = np.argmax(pred_plus_unc)
                         self.interesting_point = self.images[1:-1][
                                                   int(self.argmax_unc)].get_positions(
@@ -420,13 +404,13 @@ class CatLearnNEB(object):
             # Acquisition function 4:
             if self.acq == 'acq_4':
                 # Select image with max. uncertainty.
-                if self.iter % 2 == 0:
+                if self.iter % 2 == 1:
                     self.argmax_unc = np.argmax(self.uncertainty_path[1:-1])
                     self.interesting_point = self.images[1:-1][
                                       self.argmax_unc].get_positions().flatten()
 
                 # Select image with max. predicted value.
-                if self.iter % 2 == 1:
+                if self.iter % 2 == 0:
                     self.argmax_unc = np.argmax(pred_plus_unc)
                     self.interesting_point = self.images[1:-1][
                                               int(self.argmax_unc)].get_positions(
@@ -439,17 +423,18 @@ class CatLearnNEB(object):
 
             if plot_neb_paths is True:
                 if self.ase_calc.__dict__['name'] == 'mullerbrown':
-                    get_plot_mullerbrown(images=self.images,
-                                         interesting_point=self.interesting_point,
-                                         gp=self.gp,
-                                         list_train=self.list_train,
-                                         )
+                    get_plot_mullerbrown(
+                                    images=self.images,
+                                    interesting_point=self.interesting_point,
+                                    gp=self.gp,
+                                    list_train=self.list_train)
+
                 if self.ase_calc.__dict__['name'] == 'himmelblau':
-                    get_plot_himmelblau(images=self.images,
-                                         interesting_point=self.interesting_point,
-                                         gp=self.gp,
-                                         list_train=self.list_train,
-                                         )
+                    get_plot_himmelblau(
+                                    images=self.images,
+                                    interesting_point=self.interesting_point,
+                                    gp=self.gp,
+                                    list_train=self.list_train)
 
             # 5. Add a new training point and evaluate it.
 
@@ -495,6 +480,7 @@ class CatLearnNEB(object):
             # Check whether the evaluated point is a stationary point.
             if self.max_abs_forces <= fmax:
                 congrats_stationary_neb()
+
                 if np.max(self.uncertainty_path[1:-1]) < unc_convergence:
                     # Save results of the final step (converged):
                     train_gp_model(self)
