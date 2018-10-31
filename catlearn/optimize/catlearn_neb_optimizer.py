@@ -334,13 +334,13 @@ class CatLearnNEB(object):
             if self.acq == 'acq_1':
                 # Behave like acquisition 4...
                 # Select image with max. uncertainty.
-                if self.iter % 2 == 1:
+                if self.iter % 2 == 0:
                     self.argmax_unc = np.argmax(self.uncertainty_path[1:-1])
                     self.interesting_point = self.images[1:-1][
                                       self.argmax_unc].get_positions().flatten()
 
                 # Select image with max. predicted value.
-                if self.iter % 2 == 0:
+                if self.iter % 2 == 1:
                     self.argmax_unc = np.argmax(pred_plus_unc)
                     self.interesting_point = self.images[1:-1][
                                               int(self.argmax_unc)].get_positions(
@@ -384,13 +384,13 @@ class CatLearnNEB(object):
                 # When reached certain uncertainty apply acq. 1.
                 if np.max(self.uncertainty_path[1:-1]) < unc_convergence:
                     # Select image with max. uncertainty.
-                    if self.iter % 2 == 1:
+                    if self.iter % 2 == 0:
                         self.argmax_unc = np.argmax(self.uncertainty_path[1:-1])
                         self.interesting_point = self.images[1:-1][
                                           self.argmax_unc].get_positions().flatten()
 
                     # Select image with max. predicted value.
-                    if self.iter % 2 == 0:
+                    if self.iter % 2 == 1:
                         self.argmax_unc = np.argmax(pred_plus_unc)
                         self.interesting_point = self.images[1:-1][
                                                   int(self.argmax_unc)].get_positions(
@@ -398,13 +398,13 @@ class CatLearnNEB(object):
             # Acquisition function 4:
             if self.acq == 'acq_4':
                 # Select image with max. uncertainty.
-                if self.iter % 2 == 1:
+                if self.iter % 2 == 0:
                     self.argmax_unc = np.argmax(self.uncertainty_path[1:-1])
                     self.interesting_point = self.images[1:-1][
                                       self.argmax_unc].get_positions().flatten()
 
                 # Select image with max. predicted value.
-                if self.iter % 2 == 0:
+                if self.iter % 2 == 1:
                     self.argmax_unc = np.argmax(pred_plus_unc)
                     self.interesting_point = self.images[1:-1][
                                               int(self.argmax_unc)].get_positions(
