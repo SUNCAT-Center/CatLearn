@@ -3,7 +3,7 @@ from __future__ import absolute_import
 from __future__ import division
 
 import numpy as np
-from scipy.linalg import cho_solve ,cho_factor
+from scipy.linalg import cho_solve, cho_factor
 from .covariance import get_covariance
 from .kernel_setup import list2kdict, kdict2list
 from catlearn.regression.gpfunctions import kernels as ak

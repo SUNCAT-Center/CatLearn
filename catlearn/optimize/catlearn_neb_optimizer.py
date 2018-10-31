@@ -1,5 +1,3 @@
-# @Version 1.0.3
-
 import numpy as np
 from catlearn.optimize.warnings import *
 from catlearn.optimize.io import ase_traj_to_catlearn, store_results_neb, \
@@ -67,7 +65,7 @@ class CatLearnNEB(object):
         self.ase_calc = ase_calc
         self.ase = True
         self.mic = mic
-        self.version = 'NEB v.1.0.3'
+        self.version = 'NEB v.1.0.0'
         print_version(self.version)
 
         # Reset.
@@ -220,7 +218,7 @@ class CatLearnNEB(object):
 
     def run(self, fmax=0.05, unc_convergence=0.100, steps=200,
             trajectory='ML_NEB_catlearn.traj', acquisition='acq_2',
-            plot_neb_paths=False):
+            plot_neb_paths=False, dt=0.025):
 
         """Executing run will start the optimization process.
 
@@ -235,11 +233,13 @@ class CatLearnNEB(object):
         plot_neb_paths: bool
             If True it prints and stores (in csv format) the last predicted
             NEB path obtained by the surrogate ML model. Note: Python package
-            matplotlib is required.
+            pyplot.matplotlib is required.
         trajectory: string
             Filename to store the output.
         acquisition : string
             Acquisition function.
+        dt : float
+            dt parameter for MDMin.
 
         Returns
         -------
@@ -269,29 +269,23 @@ class CatLearnNEB(object):
             ml_steps = 250 if ml_steps <= 250 else ml_steps  # Min steps.
 
             print('Max number steps:', ml_steps)
-            dt_list = [0.025]
             ml_cycles = 0
-            dt_cycle = 0
 
             while True:
 
                 starting_path = self.images  # Start from last path.
 
-                if ml_cycles == len(dt_list) * 0:
-                    dt_cycle = 0
+                if ml_cycles == 0:
                     sp = '0:' + str(self.n_images)
                     print('Using initial path.')
                     starting_path = read('./all_predicted_paths.traj', sp)
 
-                if ml_cycles == len(dt_list) * 1:
-                    dt_cycle = 0
+                if ml_cycles == 1:
                     print('Using last predicted path.')
                     sp = str(-self.n_images*1) + ':' + str(-1)
                     starting_path = read('./all_predicted_paths.traj', sp)
 
-                if dt_cycle == 0:
-                    self.images = create_ml_neb(
-                                            is_endpoint=self.initial_endpoint,
+                self.images = create_ml_neb(is_endpoint=self.initial_endpoint,
                                             fs_endpoint=self.final_endpoint,
                                             images_interpolation=starting_path,
                                             n_images=self.n_images,
@@ -299,15 +293,14 @@ class CatLearnNEB(object):
                                             index_constraints=self.index_mask,
                                             gp=self.gp,
                                             scaling_targets=self.max_target,
-                                            iteration=self.iter
-                                            )
+                                            iteration=self.iter)
 
                 ml_neb = NEB(self.images, climb=True,
                              method=self.neb_method,
                              k=self.spring)
 
-                print('Optimizing ML CI-NEB using dt:', dt_list[dt_cycle])
-                neb_opt = MDMin(ml_neb, dt=dt_list[dt_cycle])
+                print('Optimizing ML CI-NEB using dt:', dt)
+                neb_opt = MDMin(ml_neb, dt=dt)
                 neb_opt.run(fmax=(fmax * 0.9), steps=ml_steps)
                 n_steps_performed = neb_opt.__dict__['nsteps']
 
@@ -318,7 +311,7 @@ class CatLearnNEB(object):
                 ml_cycles += 1
                 print('ML cycles performed:', ml_cycles)
 
-                if ml_cycles == len(dt_list) * 2:
+                if ml_cycles == 2:
                     self.images = read('./last_predicted_path.traj', ':')
                     print('ML CI-NEB not converged...not safe...')
                     print('Try changing the number of images and restart.')
@@ -601,7 +594,7 @@ def get_results_predicted_path(self):
         pos_unc = apply_mask(list_to_mask=pos_unc,
                              mask_index=self.index_mask)[1]
         u = self.gp.predict(test_fp=pos_unc, uncertainty=True)
-        uncertainty = 2.0 * np.sqrt(u['uncertainty_with_reg'][0])
+        uncertainty = 2.0 * u['uncertainty_with_reg'][0]
         i.info['uncertainty'] = uncertainty
         self.uncertainty_path.append(uncertainty)
         self.e_path.append(i.get_total_energy())
