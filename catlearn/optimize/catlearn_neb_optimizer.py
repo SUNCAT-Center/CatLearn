@@ -290,16 +290,17 @@ class CatLearnNEB(object):
                     starting_path = read('./all_predicted_paths.traj', sp)
 
                 if dt_cycle == 0:
-                    self.images = create_ml_neb(is_endpoint=self.initial_endpoint,
-                                                fs_endpoint=self.final_endpoint,
-                                                images_interpolation=starting_path,
-                                                n_images=self.n_images,
-                                                constraints=self.constraints,
-                                                index_constraints=self.index_mask,
-                                                gp=self.gp,
-                                                scaling_targets=self.max_target,
-                                                iteration=self.iter
-                                                )
+                    self.images = create_ml_neb(
+                                            is_endpoint=self.initial_endpoint,
+                                            fs_endpoint=self.final_endpoint,
+                                            images_interpolation=starting_path,
+                                            n_images=self.n_images,
+                                            constraints=self.constraints,
+                                            index_constraints=self.index_mask,
+                                            gp=self.gp,
+                                            scaling_targets=self.max_target,
+                                            iteration=self.iter
+                                            )
 
                 ml_neb = NEB(self.images, climb=True,
                              method=self.neb_method,
