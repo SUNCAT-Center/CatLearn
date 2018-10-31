@@ -9,13 +9,14 @@ import unittest
 from ase.build import fcc111, add_adsorbate
 from ase.data import atomic_numbers
 from ase.constraints import FixAtoms
-from catlearn.api.ase_atoms_api import database_to_list, images_connectivity
-from catlearn.fingerprint.adsorbate_prep import (autogen_info,
-                                                 check_reconstructions,
-                                                 connectivity2ads_index)
-from catlearn.fingerprint.periodic_table_data import (get_radius,
-                                                      default_catlearn_radius)
-from catlearn.fingerprint.setup import FeatureGenerator, default_fingerprinters
+from catlearn.api.ase_atoms_api import (database_to_list, images_connectivity,
+                                        images_pair_distances)
+from catlearn.featurize.adsorbate_prep import (autogen_info,
+                                               check_reconstructions,
+                                               connectivity2ads_index)
+from catlearn.featurize.periodic_table_data import (get_radius,
+                                                    default_catlearn_radius)
+from catlearn.featurize.setup import FeatureGenerator, default_fingerprinters
 
 wkdir = os.getcwd()
 
@@ -116,6 +117,12 @@ class TestAdsorbateFeatures(unittest.TestCase):
             species = images[i].info['key_value_pairs']['species']
             connectivity2ads_index(images[i], species)
         self.assertTrue(len(reconstructed) == 0)
+
+    def test_connectivity(self):
+        images = self.setup_metals()
+        images = images_pair_distances(images)
+        gen = FeatureGenerator(nprocs=1)
+        gen.featurize_atomic_pairs(images)
 
 
 if __name__ == '__main__':

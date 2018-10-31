@@ -8,7 +8,7 @@ import unittest
 
 from ase.ga.data import DataConnection
 
-from catlearn.fingerprint.base import BaseGenerator
+from catlearn.featurize.base import BaseGenerator
 from catlearn.utilities.neighborlist import ase_neighborlist
 
 wkdir = os.getcwd()

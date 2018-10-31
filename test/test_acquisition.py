@@ -9,11 +9,11 @@ import numpy as np
 from ase.ga.data import DataConnection
 
 from catlearn.api.ase_data_setup import get_unique, get_train
-from catlearn.fingerprint.setup import FeatureGenerator
+from catlearn.featurize.setup import FeatureGenerator
 from catlearn.regression import GaussianProcess
-from catlearn.surrogate_model.acquisition_functions import (
-    rank, classify, optimistic_proximity, proximity, probability_density)
-from catlearn.surrogate_model.algorithm import SurrogateModel
+from catlearn.active_learning.acquisition_functions import (
+    rank, classify, probability_density)
+from catlearn.active_learning.algorithm import ActiveLearning
 
 
 wkdir = os.getcwd()
@@ -111,7 +111,7 @@ class TestAcquisition(unittest.TestCase):
         train_features, train_targets, train_atoms, test_features, \
             test_targets, test_atoms = self.get_data()
 
-        sg0 = SurrogateModel(_train_model, _predict, _rank_pdf,
+        sg0 = ActiveLearning(_surrogate_model,
                              train_features, train_targets)
         batch_size = 10
         sg0.test_acquisition(batch_size=batch_size)
@@ -119,14 +119,14 @@ class TestAcquisition(unittest.TestCase):
 
         self.assertTrue(len(to_acquire) == batch_size)
 
-        sg1 = SurrogateModel(_train_model, _predict, optimistic_proximity,
+        sg1 = ActiveLearning(_surrogate_model,
                              train_features, train_targets)
         batch_size = 3
         to_acquire, _ = sg1.acquire(test_features, batch_size=batch_size)
 
         self.assertTrue(len(to_acquire) == batch_size)
 
-        sg2 = SurrogateModel(_train_model, _predict, proximity,
+        sg2 = ActiveLearning(_surrogate_model,
                              train_features, train_targets)
         batch_size = 1
         to_acquire, _ = sg2.acquire(test_features, batch_size=batch_size)
@@ -136,33 +136,26 @@ class TestAcquisition(unittest.TestCase):
         sg0.ensemble_test(size=2, batch_size=batch_size)
 
 
-def _train_model(train_features, train_targets):
+def _surrogate_model(train_features, train_targets,
+                     test_features=None, test_targets=None):
     kdict = {'k1': {'type': 'gaussian', 'width': 0.5}}
     gp = GaussianProcess(
         train_fp=train_features, train_target=train_targets,
         kernel_dict=kdict, regularization=1e-3,
         optimize_hyperparameters=False, scale_data=True)
-    return gp
-
-
-def _predict(model, test_features, test_targets=None):
     if test_targets is None:
         get_validation_error = False
     else:
         get_validation_error = True
-    score = model.predict(
+    score = gp.predict(
         test_fp=test_features, test_target=test_targets,
         get_validation_error=get_validation_error,
         get_training_error=False,
         uncertainty=True)
-    acquisition_args = [0.,
-                        score['prediction'],
-                        score['uncertainty']]
-    return acquisition_args, score
-
-
-def _rank_pdf(y_best, predictions, uncertainty):
-    return np.argsort(probability_density(y_best, predictions, uncertainty))
+    to_acquire = np.argsort(probability_density(0.,
+                                                score['prediction'],
+                                                score['uncertainty']))
+    return to_acquire, score
 
 
 if __name__ == '__main__':

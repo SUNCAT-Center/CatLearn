@@ -1,6 +1,6 @@
 """Functions to build a gas phase molecule fingerprint."""
 from catlearn.utilities.neighborlist import catlearn_neighborlist
-from catlearn.fingerprint.periodic_table_data import list_mendeleev_params
+from catlearn.featurize.periodic_table_data import list_mendeleev_params
 import networkx as nx
 import numpy as np
 from ase import Atoms

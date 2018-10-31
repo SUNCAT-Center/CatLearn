@@ -7,7 +7,7 @@ import unittest
 
 from catlearn.regression import RidgeRegression, GaussianProcess
 from catlearn.regression.gpfunctions.sensitivity import SensitivityAnalysis
-from catlearn.setup.general_gp import GeneralGaussianProcess
+from catlearn.estimator.general_gp import GeneralGaussianProcess
 from catlearn.regression.cost_function import get_error
 
 from common import get_data

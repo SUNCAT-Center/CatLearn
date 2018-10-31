@@ -9,8 +9,8 @@ import unittest
 from ase.build import bulk
 from ase.data import atomic_numbers
 
-from catlearn.fingerprint.periodic_table_data import get_radius
-from catlearn.fingerprint.setup import FeatureGenerator, default_fingerprinters
+from catlearn.featurize.periodic_table_data import get_radius
+from catlearn.featurize.setup import FeatureGenerator, default_fingerprinters
 from catlearn.api.ase_atoms_api import images_connectivity
 
 wkdir = os.getcwd()

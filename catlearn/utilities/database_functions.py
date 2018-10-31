@@ -240,7 +240,7 @@ class FingerprintDB():
         d.id : int
             The ase ID colleted for the ase-db object.
         """
-        atoms = asedb_entry.toatoms()
+        asedb_entry.toatoms()
 
         # ase-db ID with identity must be unique. If not, it will be skipped.
         try:
@@ -252,13 +252,13 @@ class FingerprintDB():
                     asedb_entry.id,
                     identity))
 
-        return d.id
+        return asedb_entry.id
 
     def parameter_entry(self, symbol=None, description=None):
         """Function for entering unique parameters into the database.
 
-        Paramters
-        ---------
+        Parameters
+        ----------
         symbol : str
             A unique symbol the entry can be referenced by. If None, the symbol
             will be the ID of the parameter as a string.

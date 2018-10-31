@@ -4,22 +4,24 @@ from __future__ import absolute_import
 from __future__ import division
 
 import numpy as np
+import pandas as pd
+
 from collections import defaultdict
 import multiprocessing
 from tqdm import tqdm
-from .adsorbate_fingerprint import (AdsorbateFingerprintGenerator,
-                                    default_adsorbate_fingerprinters)
-from .convoluted_fingerprint import (ConvolutedFingerprintGenerator,
-                                     default_convoluted_fingerprinters)
-from .particle_fingerprint import (ParticleFingerprintGenerator,
-                                   default_particle_fingerprinters)
-from .standard_fingerprint import (StandardFingerprintGenerator,
-                                   default_molecule_fingerprinters)
-from .graph_fingerprint import GraphFingerprintGenerator
-from .bulk_fingerprint import (BulkFingerprintGenerator,
-                               default_bulk_fingerprinters)
-from .chalcogenide_fingerprint import (ChalcogenideFingerprintGenerator,
-                                       default_chalcogenide_fingerprinters)
+from catlearn.fingerprint.adsorbate import (AdsorbateFingerprintGenerator,
+                                            default_adsorbate_fingerprinters)
+from catlearn.fingerprint.convoluted import (ConvolutedFingerprintGenerator,
+                                             default_convoluted_fingerprinters)
+from catlearn.fingerprint.particle import (ParticleFingerprintGenerator,
+                                           default_particle_fingerprinters)
+from catlearn.fingerprint.standard import (StandardFingerprintGenerator,
+                                           default_molecule_fingerprinters)
+from catlearn.fingerprint.graph import GraphFingerprintGenerator
+from catlearn.fingerprint.bulk import (BulkFingerprintGenerator,
+                                       default_bulk_fingerprinters)
+from catlearn.fingerprint.chalcogenide import \
+    ChalcogenideFingerprintGenerator, default_chalcogenide_fingerprinters
 
 
 default_sets = {'bulk': default_bulk_fingerprinters,
@@ -110,6 +112,45 @@ class FeatureGenerator(
         """
         self._get_atom_types(train_candidates, test_candidates)
         self._get_atom_length(train_candidates, test_candidates)
+
+    def featurize_atomic_pairs(self, candidates):
+        """Featurize pairs of atoms by their elements and pair distances, in
+        order to optimize the bond classifier.
+
+        Parameters
+        ----------
+        candidates : list of atoms objects.
+
+        Returns
+        ----------
+        data : array
+            Data matrix.
+        """
+        # Find the atomic species in data if needed.
+        if self.atom_types is None:
+            self._get_atom_types(candidates)
+
+        data = []
+        for atoms in tqdm(candidates):
+            # One hot encode elements.
+            dummies = pd.get_dummies(atoms.numbers)
+            d = dummies.T.reindex(self.atom_types).fillna(0).T.as_matrix()
+
+            # Number of pairs by 1 + number of element types data matrix.
+            n_pairs = len(atoms) ** 2
+            fingerprint = np.empty([n_pairs, len(self.atom_types) + 3])
+            # Pair distances in first column.
+            fingerprint[:, 0] = atoms.pair_distances.ravel()
+            # Occurrence of element types in the following columns.
+            for i, pair in enumerate(fingerprint):
+                row, col = np.unravel_index(i, [len(atoms), len(atoms)])
+                fingerprint[i, -2:] = np.array([atoms.numbers[row],
+                                                atoms.numbers[col]])
+                fingerprint[i, 1:-2] = d[row, :] + d[col, :]
+
+            data.append(fingerprint.tolist())
+
+        return np.concatenate(data, axis=0)
 
     def return_vec(self, candidates, vec_names):
         """Sequentially combine feature vectors. Padding handled automatically.
@@ -287,3 +328,25 @@ class FeatureGenerator(
                 max_len = len(a)
 
         self.atom_len = max_len
+
+    def get_dataframe(self, candidates, vec_names):
+        """Sequentially combine feature vectors. Padding handled automatically.
+
+        Parameters
+        ----------
+        candidates : list or dict
+            Atoms objects to construct fingerprints for.
+        vec_name : list of / single vec class(es)
+            List of fingerprinting classes.
+
+        Returns
+        -------
+        df : DataFrame
+          Fingerprint dataframe with n rows and m columns (n, m) where
+          n is the number of candidates and m is the summed number of features
+          from all fingerprint classes supplied.
+        """
+        matrix = self.return_vec(candidates, vec_names)
+        columns = self.return_names(vec_names)
+
+        return pd.DataFrame(data=matrix, columns=columns)

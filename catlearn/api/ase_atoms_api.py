@@ -4,7 +4,7 @@ import warnings
 import numpy as np
 import ase.db
 from catlearn.utilities.neighborlist import ase_connectivity
-from catlearn.fingerprint.periodic_table_data import default_catlearn_radius
+from catlearn.featurize.periodic_table_data import default_catlearn_radius
 from tqdm import tqdm
 
 
@@ -55,6 +55,21 @@ def images_connectivity(images, check_cn_max=False):
                     if 'id' in atoms.info:
                         msg += str(atoms.info['id'])
                     warnings.warn(msg)
+    return images
+
+
+def images_pair_distances(images, mic=True):
+    """Return a list of atoms objects imported from an ase database.
+
+    Parameters
+    ----------
+    fname : str
+        path/filename of ase database.
+    selection : list
+        search filters to limit the import.
+    """
+    for atoms in tqdm(images):
+        atoms.pair_distances = np.array(atoms.get_all_distances(mic=mic))
     return images
 
 

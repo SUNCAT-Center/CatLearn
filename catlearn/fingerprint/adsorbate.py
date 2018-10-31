@@ -1,15 +1,18 @@
 """Slab adsorbate fingerprint functions for machine learning."""
 import numpy as np
+import collections
+
 from ase.atoms import string2symbols
 from ase.data import ground_state_magnetic_moments as gs_magmom
 from ase.data import atomic_numbers, chemical_symbols
-from .periodic_table_data import (get_mendeleev_params, n_outer,
-                                  list_mendeleev_params,
-                                  default_params, get_radius,
-                                  electronegativities,
-                                  block2number, make_labels)
-import collections
-from .base import BaseGenerator, check_labels
+
+from catlearn.featurize.periodic_table_data import (get_mendeleev_params,
+                                                    n_outer,
+                                                    list_mendeleev_params,
+                                                    default_params, get_radius,
+                                                    electronegativities,
+                                                    block2number, make_labels)
+from catlearn.featurize.base import BaseGenerator, check_labels
 
 
 default_adsorbate_fingerprinters = ['mean_chemisorbed_atoms',
@@ -385,8 +388,8 @@ class AdsorbateFingerprintGenerator(BaseGenerator):
 
     def count_chemisorbed_fragment(self, atoms=None):
         """Function that takes an atoms objects and returns a fingerprint
-        vector containing the count of C, O, H, N and also metal atoms,
-        that are neighbors to the binding atom.
+        vector containing the count over atom types,
+        that are neighbors to the chemisorbing atom.
 
         Parameters
         ----------
@@ -397,10 +400,15 @@ class AdsorbateFingerprintGenerator(BaseGenerator):
                       self.atom_types] + ['boc_site', 'n_site']
             return labels
         else:
+            # Adsorbate atoms connected to the surface.
             chemi = atoms.subsets['chemisorbed_atoms']
             cm = np.array(atoms.connectivity)
+
+            # Prepare bag of atom types.
             bag = np.zeros(len(self.atom_types))
+            # Loop over elements that are present in the data set.
             for j, z in enumerate(self.atom_types):
+                # Add neighbor counts to the bag of the relevant element.
                 bag[j] += np.sum(cm[:, chemi] * np.vstack(atoms.numbers == z))
 
             boc_site = np.sum(cm[:, chemi][atoms.subsets['site_atoms'], :])
@@ -527,7 +535,7 @@ class AdsorbateFingerprintGenerator(BaseGenerator):
 
     def bag_connections_ads(self, atoms):
         """Returns bag of connections, counting only the bonds within the
-        adsorbate and the connections between adsorbate and surface.
+        adsorbate.
 
         Parameters
         ----------
@@ -569,7 +577,7 @@ class AdsorbateFingerprintGenerator(BaseGenerator):
 
     def bag_connections_chemi(self, atoms):
         """Returns bag of connections, counting only the bonds within the
-        adsorbate.
+        adsorbate and the connections between adsorbate and surface.
 
         Parameters
         ----------

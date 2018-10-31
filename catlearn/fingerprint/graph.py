@@ -8,7 +8,7 @@ import warnings
 
 from catlearn import __path__ as catlearn_path
 from catlearn.utilities.neighborlist import catlearn_neighborlist
-from .base import BaseGenerator
+from catlearn.featurize.base import BaseGenerator
 
 
 class GraphFingerprintGenerator(BaseGenerator):

@@ -10,10 +10,10 @@ import unittest
 from ase.ga.data import DataConnection
 
 from catlearn.api.ase_data_setup import get_unique, get_train
-from catlearn.fingerprint.setup import FeatureGenerator
-from catlearn.fingerprint.neighbor_matrix import neighbor_features
-from catlearn.fingerprint.periodic_table_data import (get_mendeleev_params,
-                                                      default_params)
+from catlearn.featurize.setup import FeatureGenerator
+from catlearn.featurize.neighbor_matrix import neighbor_features
+from catlearn.featurize.periodic_table_data import (get_mendeleev_params,
+                                                    default_params)
 from catlearn.utilities import DescriptorDatabase
 
 wkdir = os.getcwd()
