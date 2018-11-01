@@ -477,7 +477,7 @@ def layers2ads_index(atoms, species):
     species : str
         chemical formula of the adsorbate.
     """
-    lz, li = auto_layers(atoms)
+    li, lz = auto_layers(atoms)
     layers = int(atoms.info['key_value_pairs']['layers'])
     ads_atoms = [a.index for a in atoms if li[a.index] > layers - 1]
     if sorted(symbols2numbers(species)) != sorted(atoms[ads_atoms].numbers):
@@ -504,9 +504,10 @@ def z2ads_index(atoms, species):
     composition = string2symbols(species)
     n_ads = len(composition)
     z = atoms.get_positions()[:, 2]
-    ads_atoms = np.argsort(z)[:n_ads]
+    ads_atoms = np.argsort(z)[-n_ads:]
     if sorted(symbols2numbers(species)) != sorted(atoms[ads_atoms].numbers):
-        raise AssertionError("adsorbate identification by z coord failed.")
+        raise AssertionError("adsorbate identification by z coord failed. " +
+                             str(species))
     return ads_atoms
 
 
@@ -707,8 +708,8 @@ def auto_layers(atoms, miller=(0, 0, 1)):
     """
     radii = [get_radius(z) for z in atoms.numbers[atoms.subsets['slab_atoms']]]
     radius = np.average(radii) / 2.
-    lz, li = get_layers(atoms, miller=miller, tolerance=radius)
-    return lz, li
+    li, lz = get_layers(atoms, miller=miller, tolerance=radius)
+    return li, lz
 
 
 def attach_cations(atoms, anion_number=8):
