@@ -14,16 +14,14 @@ class TestIO(unittest.TestCase):
 
     def train_model(self, train_features, train_targets):
         """Function to train a Gaussian process."""
-        kdict = {
-            'k1': {'type': 'gaussian', 'width': 0.5, 'scaling': 1.},
-            'k2': {'type': 'linear', 'scaling': 1.},
-            'k3': {'type': 'constant', 'const': 1.},
-            'k4': {'type': 'quadratic', 'slope': 1., 'degree': 1.,
-                   'scaling': 1.},
-        }
+        kdict = [{'type': 'gaussian', 'width': 0.5, 'scaling': 1.},
+                 {'type': 'linear', 'scaling': 1.},
+                 {'type': 'constant', 'const': 1.},
+                 {'type': 'quadratic', 'slope': 1., 'degree': 1.,'scaling': 1.}
+                 ]
         self.__class__.gp = GaussianProcess(
             train_fp=train_features, train_target=train_targets,
-            kernel_dict=kdict, regularization=1e-3,
+            kernel_dict=kdict, regularization=np.sqrt(1e-3),
             optimize_hyperparameters=True, scale_data=False)
 
         io.write(filename='test-model', model=self.gp, ext='pkl')

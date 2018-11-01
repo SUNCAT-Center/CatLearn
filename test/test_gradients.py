@@ -19,14 +19,13 @@ constant = np.random.rand()
 
 class TestGaussianKernel(unittest.TestCase):
     def test_cinv_is_good(self):
-        k_dict = {'k1':
-                  {'type': 'gaussian', 'width': width, 'scaling': scaling}
-                  }
+        kdict = [{'type': 'gaussian', 'width': width, 'scaling': scaling}]
         gp = GaussianProcess(
-            kernel_dict=k_dict, train_fp=train, train_target=target,
-            gradients=None, scale_data=True, optimize_hyperparameters=False)
+                kernel_dict=kdict, train_fp=train, train_target=target,
+                gradients=None, scale_data=True,
+                optimize_hyperparameters=False)
         gp_grad = GaussianProcess(
-            kernel_dict=k_dict, train_fp=train, train_target=target,
+            kernel_dict=kdict, train_fp=train, train_target=target,
             gradients=gradients, scale_data=True,
             optimize_hyperparameters=False)
 
@@ -112,13 +111,12 @@ class TestGaussianKernel(unittest.TestCase):
             decimal=15)
 
     def test_hyperparameter_opt(self):
-        k_dict = {'k1': {'type': 'gaussian',
-                         'width': width, 'scaling': scaling}}
+        kdict = [{'type': 'gaussian', 'width': width, 'scaling': scaling}]
         gp_hyp = GaussianProcess(
-            kernel_dict=k_dict, train_fp=train, train_target=target,
+            kernel_dict=kdict, train_fp=train, train_target=target,
             gradients=gradients, scale_data=True,
-            optimize_hyperparameters=False, regularization=1e-3)
-        gp_hyp.optimize_hyperparameters(algomin='L-BFGS-B', global_opt=False)
+            optimize_hyperparameters=False, regularization=np.sqrt(1e-3))
+        gp_hyp.optimize_hyperparameters(global_opt=False)
         bigKtilde_hyp = np.linalg.inv(gp_hyp.cinv)
         bigKdg_hyp = bigKtilde_hyp[n_train:n_train + n_train * D, :n_train]
         bigKgd_hyp = bigKtilde_hyp[:n_train, n_train:n_train + n_train * D]

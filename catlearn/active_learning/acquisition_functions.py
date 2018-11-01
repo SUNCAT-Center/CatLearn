@@ -39,7 +39,7 @@ def optimistic(y_best, predictions, uncertainty):
     return metric
 
 
-def UCB(y_best, predictions, uncertainty, objective='max', kappa=1.5):
+def UCB(predictions, uncertainty, objective='max', kappa=1.5):
     """Upper-confidence bound acq. function.
 
     Parameters

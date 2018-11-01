@@ -72,7 +72,7 @@ class TestAcquisition(unittest.TestCase):
         train_features, train_targets, train_atoms, test_features, \
             test_targets, test_atoms = self.get_data()
         # Test prediction routine with gaussian kernel.
-        kdict = {'k1': {'type': 'gaussian', 'width': 1., 'scaling': 1.}}
+        kdict = [{'type': 'gaussian', 'width': 1., 'scaling': 1.}]
         gp = GaussianProcess(
             train_fp=train_features, train_target=train_targets,
             kernel_dict=kdict, regularization=1e-3,
@@ -138,7 +138,7 @@ class TestAcquisition(unittest.TestCase):
 
 def _surrogate_model(train_features, train_targets,
                      test_features=None, test_targets=None):
-    kdict = {'k1': {'type': 'gaussian', 'width': 0.5}}
+    kdict = [{'type': 'gaussian', 'width': 0.5}]
     gp = GaussianProcess(
         train_fp=train_features, train_target=train_targets,
         kernel_dict=kdict, regularization=1e-3,

@@ -153,10 +153,8 @@ class TestCurve(unittest.TestCase):
         """Ridge regression predictions."""
         # Test ridge regression predictions.
         sigma = 1.
-        kdict = {'gk': {'type': 'gaussian', 'width': sigma,
-                        'dimension': 'single'}
-                 }
-        regularization = 0.001
+        kdict = [{'type': 'gaussian', 'width': sigma, 'dimension': 'single'}]
+        regularization = np.sqrt(0.001)
         gp = GaussianProcess(train_fp=train_features,
                              train_target=train_targets,
                              kernel_dict=kdict,

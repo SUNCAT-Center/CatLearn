@@ -142,9 +142,9 @@ if __name__ == '__main__':
 
     profiler = Profiler()
     profiler.start()
-    kernel_dict = {'k1': {'type': 'gaussian', 'width': 0.5, 'scaling': 2.},
-                   'c1': {'type': 'constant', 'const': 1.e-3,
-                          'bounds': ((1.e-12, None),)}}
+    kernel_dict = [{'type': 'gaussian', 'width': 0.5, 'scaling': 2.},
+                   {'type': 'constant', 'const': 1.e-3,
+                    'bounds': ((1.e-12, None),)}]
     regularization = 1.e-3
     train_matrix, train_targets, test_matrix, test_targets = get_data()
     train_features, targets, test_features = scale_test(train_matrix,
