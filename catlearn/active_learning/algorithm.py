@@ -95,10 +95,12 @@ class ActiveLearning(object):
                                                  test_fp, test_target)
 
             to_acquire = test_index[sample[:batch_size]]
-            assert len(to_acquire) == batch_size
 
             # Append best candidates to be acquired.
+            if len(to_acquire) == 0:
+                break
             train_index += list(to_acquire)
+
             # Return meta data.
             output.append(score)
         return output
