@@ -1,27 +1,19 @@
-import ase
-import catkit
-import json
 import numpy as np
-import os
-import sklearn
-import sys
-
-from ase.build import bulk
-from ase.constraints import *
-from ase.visualize import view
-from catkit.build import molecule
-from catkit.gen.adsorption import Builder
-from catkit.gen.surface import SlabGenerator
 from sklearn.cluster import KMeans
 
-# global variables
+
+# Global variables.
 transition_metals = ['Ti', 'V', 'Cr', 'Mn', 'Fe', 'Co', 'Ni', 'Cu', 'Zn',
                      'Zr', 'Nb', 'Mo', 'Tc', 'Ru', 'Rh', 'Pd', 'Ag', 'Cd',
                      'Hf', 'Ta', 'W', 'Re', 'Os', 'Ir', 'Pt', 'Au', 'Hg']
-metals = ['Li', 'Be', 'Na', 'Mg', 'K', 'Ca', 'Rb', 'Sr', 'Cs', 'Ba', 'Fr', 'Ra', 'La', 'Ce', 'Pr', 'Nd', 'Pm', 'Sm',
-          'Eu', 'Gd', 'Tb', 'Dy', 'Ho', 'Er', 'Tm', 'Yb', 'Lu', 'Ac', 'Th', 'Pa', 'U', 'Np', 'Pu', 'Am', 'Cm', 'Bk',
-          'Cf', 'Es', 'Fm', 'Md', 'No', 'Lw', 'B', 'Al', 'Si', 'Ga', 'Ge', 'In', 'Sn', 'Tl', 'Pb']
+metals = ['Li', 'Be', 'Na', 'Mg', 'K', 'Ca', 'Rb', 'Sr', 'Cs', 'Ba', 'Fr',
+          'Ra', 'La', 'Ce', 'Pr', 'Nd', 'Pm', 'Sm',
+          'Eu', 'Gd', 'Tb', 'Dy', 'Ho', 'Er', 'Tm', 'Yb', 'Lu', 'Ac', 'Th',
+          'Pa', 'U', 'Np', 'Pu', 'Am', 'Cm', 'Bk',
+          'Cf', 'Es', 'Fm', 'Md', 'No', 'Lw', 'B', 'Al', 'Si', 'Ga', 'Ge',
+          'In', 'Sn', 'Tl', 'Pb']
 metals.extend(transition_metals)
+
 
 def stoichiometry(atoms):
     """Return a number of layers given a slab.
@@ -46,6 +38,7 @@ def stoichiometry(atoms):
         num_dict[element] = count
     return(num_dict)
 
+
 def is_metal(chemical_symbol):
     """Checks whether string is a metal elementary symbol.
 
@@ -63,6 +56,7 @@ def is_metal(chemical_symbol):
     if chemical_symbol in metals:
         metal = True
     return(metal)
+
 
 def is_oxide(atoms):
     """Checks whether atms object is an oxide.
@@ -86,7 +80,7 @@ def is_oxide(atoms):
             if num_dict[element]/all_count*1.0 > 0.25:
                 try:
                     if num_dict['O']/num_dict[element] >= 1:
-                        # print("Materials class likely a transition metal oxide.")
+                        # print("Materials class likely a metal oxide.")
                         oxide = True
                 except KeyError as e:
                     pass
@@ -99,6 +93,7 @@ def is_oxide(atoms):
                 except KeyError as e:
                     pass
     return(oxide)
+
 
 def slab_layers(atoms, max_layers=20, tolerance=0.5):
     """Return a number of layers given a slab.
@@ -125,8 +120,10 @@ def slab_layers(atoms, max_layers=20, tolerance=0.5):
         elements = list(stoi.keys())[1:]
         for element in elements:
             if element in metals:
-                indices = [atom.index for atom in atoms if atom.symbol == element]
-                zpos = [atoms.positions[atom.index][2] for atom in atoms if atom.index in indices]
+                indices = [atom.index for atom in atoms if
+                           atom.symbol == element]
+                zpos = [atoms.positions[atom.index][2] for atom in atoms if
+                        atom.index in indices]
     else:
         indices = [atom.index for atom in atoms]
         zpos = [atoms.positions[atom.index][2] for atom in atoms]
@@ -147,7 +144,8 @@ def slab_layers(atoms, max_layers=20, tolerance=0.5):
             layer = [entry for entry in results if entry[2] == i]
             layer_atoms.append([entry[0] for entry in layer])
             layer_avg_z.append(np.mean([entry[1] for entry in layer]))
-            var_i_n_1.append(np.var([entry[1] for entry in layer]) * (len(layer) - 1))
+            var_i_n_1.append(np.var([entry[1] for entry in layer]) *
+                             (len(layer) - 1))
             n_i.append(len(layer))
         k = len(n_i)
         pooled_standart_deviation = np.sqrt(sum(var_i_n_1) / (sum(n_i) - k))
@@ -160,5 +158,3 @@ def slab_layers(atoms, max_layers=20, tolerance=0.5):
             layer_atoms = [tup[2] for tup in final_results]
             # print('Found ' + str(n) + ' layers.')
             return(layer_avg_z, layer_atoms)
-
-
