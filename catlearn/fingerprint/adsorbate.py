@@ -338,7 +338,8 @@ class AdsorbateFingerprintGenerator(BaseGenerator):
     def coordination_counts(self, atoms):
         """Count the number of neighbors of the site, which has a n number of
         neighbors. This is equivalent to a bag of coordination numbers over the
-        site neighbors.
+        site neighbors. These can be used in the "alpha parameters" linear
+        model for a pure metal.
 
         Parameters
         ----------
@@ -586,6 +587,7 @@ class AdsorbateFingerprintGenerator(BaseGenerator):
         # range of element types
         n_elements = len(self.atom_types)
         symbols = np.array([chemical_symbols[z] for z in self.atom_types])
+        # Make array of connection types.
         rows, cols = np.meshgrid(symbols, symbols)
         pairs = np.core.defchararray.add(rows, cols)
         labels = ['boc_' + c + '_chemi' for c in
