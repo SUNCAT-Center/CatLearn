@@ -345,20 +345,6 @@ class CatLearnNEB(object):
                     self.interesting_point = self.images[1:-1][
                                               int(self.argmax_unc)].get_positions(
                                               ).flatten()
-                # If stationary point is found behave like acquisition 2...
-                if stationary_point_found is True:
-                    # Select image with max. uncertainty.
-                    self.argmax_unc = np.argmax(self.uncertainty_path[1:-1])
-                    self.interesting_point = self.images[1:-1][
-                                      self.argmax_unc].get_positions().flatten()
-
-                    # Select image with max. predicted value.
-                    if np.max(self.uncertainty_path[1:-1]) < unc_convergence:
-
-                        self.argmax_unc = np.argmax(pred_plus_unc)
-                        self.interesting_point = self.images[1:-1][
-                                                  int(self.argmax_unc)].get_positions(
-                                                  ).flatten()
 
             # Acquisition function 2:
             if self.acq == 'acq_2':
@@ -395,6 +381,21 @@ class CatLearnNEB(object):
                         self.interesting_point = self.images[1:-1][
                                                   int(self.argmax_unc)].get_positions(
                                                   ).flatten()
+                    # If stationary point is found behave like acquisition 2...
+                    if stationary_point_found is True:
+                        # Select image with max. uncertainty.
+                        self.argmax_unc = np.argmax(self.uncertainty_path[1:-1])
+                        self.interesting_point = self.images[1:-1][
+                                          self.argmax_unc].get_positions().flatten()
+
+                    # Select image with max. predicted value.
+                    if np.max(self.uncertainty_path[1:-1]) < unc_convergence:
+
+                        self.argmax_unc = np.argmax(pred_plus_unc)
+                        self.interesting_point = self.images[1:-1][
+                                                  int(self.argmax_unc)].get_positions(
+                                                  ).flatten()
+
             # Acquisition function 4:
             if self.acq == 'acq_4':
                 # Select image with max. uncertainty.
@@ -409,6 +410,20 @@ class CatLearnNEB(object):
                     self.interesting_point = self.images[1:-1][
                                               int(self.argmax_unc)].get_positions(
                                               ).flatten()
+                # If stationary point is found behave like acquisition 2...
+                if stationary_point_found is True:
+                    # Select image with max. uncertainty.
+                    self.argmax_unc = np.argmax(self.uncertainty_path[1:-1])
+                    self.interesting_point = self.images[1:-1][
+                                      self.argmax_unc].get_positions().flatten()
+
+                    # Select image with max. predicted value.
+                    if np.max(self.uncertainty_path[1:-1]) < unc_convergence:
+
+                        self.argmax_unc = np.argmax(pred_plus_unc)
+                        self.interesting_point = self.images[1:-1][
+                                                  int(self.argmax_unc)].get_positions(
+                                                  ).flatten()
 
             # Plots results in each iteration.
             if plot_neb_paths is True:
