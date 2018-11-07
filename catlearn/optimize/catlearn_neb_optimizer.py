@@ -374,29 +374,14 @@ class CatLearnNEB(object):
                         self.argmax_unc = np.argmax(self.uncertainty_path[1:-1])
                         self.interesting_point = self.images[1:-1][
                                           self.argmax_unc].get_positions().flatten()
-
                     # Select image with max. predicted value.
                     if self.iter % 2 == 1:
                         self.argmax_unc = np.argmax(pred_plus_unc)
                         self.interesting_point = self.images[1:-1][
                                                   int(self.argmax_unc)].get_positions(
                                                   ).flatten()
-                    # If stationary point is found behave like acquisition 2...
-                    if stationary_point_found is True:
-                        # Select image with max. uncertainty.
-                        self.argmax_unc = np.argmax(self.uncertainty_path[1:-1])
-                        self.interesting_point = self.images[1:-1][
-                                          self.argmax_unc].get_positions().flatten()
 
-                    # Select image with max. predicted value.
-                    if np.max(self.uncertainty_path[1:-1]) < unc_convergence:
-
-                        self.argmax_unc = np.argmax(pred_plus_unc)
-                        self.interesting_point = self.images[1:-1][
-                                                  int(self.argmax_unc)].get_positions(
-                                                  ).flatten()
-
-            # Acquisition function 4:
+            # Acquisition function 4 (from acq 2):
             if self.acq == 'acq_4':
                 # Select image with max. uncertainty.
                 if self.iter % 2 == 0:
@@ -424,6 +409,42 @@ class CatLearnNEB(object):
                         self.interesting_point = self.images[1:-1][
                                                   int(self.argmax_unc)].get_positions(
                                                   ).flatten()
+            # Acquisition function 5 (From acq 3):
+            if self.acq == 'acq_5':
+                # Select image with max. uncertainty.
+                self.argmax_unc = np.argmax(self.uncertainty_path[1:-1])
+                self.interesting_point = self.images[1:-1][
+                                  self.argmax_unc].get_positions().flatten()
+
+                # When reached certain uncertainty apply acq. 1.
+                if np.max(self.uncertainty_path[1:-1]) < unc_convergence:
+                    # Select image with max. uncertainty.
+                    if self.iter % 2 == 0:
+                        self.argmax_unc = np.argmax(self.uncertainty_path[1:-1])
+                        self.interesting_point = self.images[1:-1][
+                                          self.argmax_unc].get_positions().flatten()
+
+                    # Select image with max. predicted value.
+                    if self.iter % 2 == 1:
+                        self.argmax_unc = np.argmax(pred_plus_unc)
+                        self.interesting_point = self.images[1:-1][
+                                                  int(self.argmax_unc)].get_positions(
+                                                  ).flatten()
+                    # If stationary point is found behave like acquisition 2...
+                    if stationary_point_found is True:
+                        # Select image with max. uncertainty.
+                        self.argmax_unc = np.argmax(self.uncertainty_path[1:-1])
+                        self.interesting_point = self.images[1:-1][
+                                          self.argmax_unc].get_positions().flatten()
+
+                    # Select image with max. predicted value.
+                    if np.max(self.uncertainty_path[1:-1]) < unc_convergence:
+
+                        self.argmax_unc = np.argmax(pred_plus_unc)
+                        self.interesting_point = self.images[1:-1][
+                                                  int(self.argmax_unc)].get_positions(
+                                                  ).flatten()
+
 
             # Plots results in each iteration.
             if plot_neb_paths is True:
