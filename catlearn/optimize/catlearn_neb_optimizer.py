@@ -216,7 +216,7 @@ class CatLearnNEB(object):
                                    self.num_atoms)
         self.max_abs_forces = np.max(np.abs(self.max_forces))
 
-    def run(self, fmax=0.05, unc_convergence=0.100, steps=200,
+    def run(self, fmax=0.05, unc_convergence=0.050, steps=200,
             trajectory='ML_NEB_catlearn.traj', acquisition='acq_2',
             plot_neb_paths=False, dt=0.025):
 
