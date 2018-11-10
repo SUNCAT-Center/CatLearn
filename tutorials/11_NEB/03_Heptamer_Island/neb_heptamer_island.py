@@ -24,7 +24,7 @@ ase_calculator = EMT()
 
 # 1.1. Structures:
 
-slab_initial = read('.initial.traj')
+slab_initial = read('./initial.traj')
 slab_initial.set_calculator(copy.deepcopy(ase_calculator))
 
 slab_final = read('./final.traj')
