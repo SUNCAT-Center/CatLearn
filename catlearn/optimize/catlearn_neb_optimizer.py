@@ -216,7 +216,7 @@ class CatLearnNEB(object):
                                    self.num_atoms)
         self.max_abs_forces = np.max(np.abs(self.max_forces))
 
-    def run(self, fmax=0.05, unc_convergence=0.100, steps=200,
+    def run(self, fmax=0.05, unc_convergence=0.050, steps=200,
             trajectory='ML_NEB_catlearn.traj', acquisition='acq_2',
             plot_neb_paths=False, dt=0.025):
 
@@ -248,15 +248,8 @@ class CatLearnNEB(object):
         """
         self.acq = acquisition
 
-        # Calculate a third point if only known initial & final structures.
-        if len(self.list_targets) == 2:
-            middle = int(self.n_images * (2./3.))
-            if self.energy_is >= self.energy_fs:
-                middle = int(self.n_images * (1./3.))
-            self.interesting_point = self.images[middle].get_positions().flatten()
-            eval_and_append(self, self.interesting_point)
-            self.iter += 1
         stationary_point_found = False
+        self.climb = False
 
         while True:
 
@@ -295,17 +288,17 @@ class CatLearnNEB(object):
                                             scaling_targets=self.max_target,
                                             iteration=self.iter)
 
-                ml_neb = NEB(self.images, climb=True,
+                ml_neb = NEB(self.images, climb=self.climb,
                              method=self.neb_method,
                              k=self.spring)
 
-                print('Optimizing ML CI-NEB using dt:', dt)
+                print('Optimizing ML NEB using dt:', dt)
                 neb_opt = MDMin(ml_neb, dt=dt)
                 neb_opt.run(fmax=(fmax * 0.9), steps=ml_steps)
                 n_steps_performed = neb_opt.__dict__['nsteps']
 
                 if n_steps_performed <= ml_steps-1:
-                    print('ML CI-NEB converged.')
+                    print('ML NEB converged.')
                     break
 
                 ml_cycles += 1
@@ -313,7 +306,7 @@ class CatLearnNEB(object):
 
                 if ml_cycles == 2:
                     self.images = read('./last_predicted_path.traj', ':')
-                    print('ML CI-NEB not converged...not safe...')
+                    print('ML NEB not converged...not safe...')
                     print('Try changing the number of images and restart.')
                     break
 
@@ -345,15 +338,20 @@ class CatLearnNEB(object):
                     self.interesting_point = self.images[1:-1][
                                               int(self.argmax_unc)].get_positions(
                                               ).flatten()
+                self.climb = False
+                if np.max(self.uncertainty_path[1:-1]) < unc_convergence:
+                    self.climb = True
 
             # Acquisition function 2:
             if self.acq == 'acq_2':
                 # Select image with max. uncertainty.
+                self.climb = False
                 self.argmax_unc = np.argmax(self.uncertainty_path[1:-1])
                 self.interesting_point = self.images[1:-1][
                                   self.argmax_unc].get_positions().flatten()
 
                 # Select image with max. predicted value.
+                self.climb = True
                 if np.max(self.uncertainty_path[1:-1]) < unc_convergence:
 
                     self.argmax_unc = np.argmax(pred_plus_unc)
@@ -362,12 +360,14 @@ class CatLearnNEB(object):
                                               ).flatten()
             # Acquisition function 3:
             if self.acq == 'acq_3':
+                self.climb = False
                 # Select image with max. uncertainty.
                 self.argmax_unc = np.argmax(self.uncertainty_path[1:-1])
                 self.interesting_point = self.images[1:-1][
                                   self.argmax_unc].get_positions().flatten()
 
                 # When reached certain uncertainty apply acq. 1.
+                self.climb = True
                 if np.max(self.uncertainty_path[1:-1]) < unc_convergence:
                     # Select image with max. uncertainty.
                     if self.iter % 2 == 0:
@@ -381,9 +381,10 @@ class CatLearnNEB(object):
                                                   int(self.argmax_unc)].get_positions(
                                                   ).flatten()
 
-            # Acquisition function 4 (from acq 2):
+            # Acquisition function 4 (from acq 1):
             if self.acq == 'acq_4':
                 # Select image with max. uncertainty.
+                self.climb = False
                 if self.iter % 2 == 0:
                     self.argmax_unc = np.argmax(self.uncertainty_path[1:-1])
                     self.interesting_point = self.images[1:-1][
@@ -395,6 +396,8 @@ class CatLearnNEB(object):
                     self.interesting_point = self.images[1:-1][
                                               int(self.argmax_unc)].get_positions(
                                               ).flatten()
+                if np.max(self.uncertainty_path[1:-1]) < unc_convergence:
+                    self.climb = True
                 # If stationary point is found behave like acquisition 2...
                 if stationary_point_found is True:
                     # Select image with max. uncertainty.
@@ -411,6 +414,7 @@ class CatLearnNEB(object):
                                                   ).flatten()
             # Acquisition function 5 (From acq 3):
             if self.acq == 'acq_5':
+                self.climb = False
                 # Select image with max. uncertainty.
                 self.argmax_unc = np.argmax(self.uncertainty_path[1:-1])
                 self.interesting_point = self.images[1:-1][
@@ -418,6 +422,7 @@ class CatLearnNEB(object):
 
                 # When reached certain uncertainty apply acq. 1.
                 if np.max(self.uncertainty_path[1:-1]) < unc_convergence:
+                    self.climb = True
                     # Select image with max. uncertainty.
                     if self.iter % 2 == 0:
                         self.argmax_unc = np.argmax(self.uncertainty_path[1:-1])
@@ -445,7 +450,6 @@ class CatLearnNEB(object):
                                                   int(self.argmax_unc)].get_positions(
                                                   ).flatten()
 
-
             # Plots results in each iteration.
             if plot_neb_paths is True:
                 get_plots_neb(images=self.images,
@@ -467,7 +471,6 @@ class CatLearnNEB(object):
                                     list_train=self.list_train)
 
             # 5. Add a new training point and evaluate it.
-
             eval_and_append(self, self.interesting_point)
             self.iter += 1
 
