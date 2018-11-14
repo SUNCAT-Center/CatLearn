@@ -5,10 +5,12 @@ from ase.constraints import FixAtoms
 from ase.optimize import BFGS
 from ase.neb import NEB
 from ase.io import read, write
-from catlearn.optimize.catlearn_neb_optimizer import CatLearnNEB
+from catlearn.optimize.mlneb import MLNEB
 import matplotlib.pyplot as plt
 from ase.neb import NEBTools
 import copy
+from catlearn.optimize.tools import plotneb
+
 
 """ 
     Toy model rearrangement of CO on Cu(111).
@@ -16,8 +18,7 @@ import copy
     1. Optimization of the initial and final end-points of the reaction path. 
     2.A. NEB optimization using CI-NEB as implemented in ASE. 
     2.B. NEB optimization using our machine-learning surrogate model.
-    3) Comparison between the ASE NEB and our Machine Learning assisted NEB 
-       algorithm.
+    3. Comparison between the ASE NEB and our ML-NEB algorithm.
 """
 
 # Calculator:
@@ -58,36 +59,71 @@ dyn.run(fmax=0.01)
 
 # 2.A. NEB using ASE #########################################################
 
-images = [slab]
+images_ase = [slab]
 for i in range(n_images-1):
     image = slab.copy()
     # Set constraints and calculator:
     image.set_constraint(constraint)
     image.calc = copy.deepcopy(ase_calculator)
-    images.append(image)
+    images_ase.append(image)
 
 # Displace last image:
 image[-2].position = image[-1].position
 image[-1].x = d
 image[-1].y = d / sqrt(3)
 
-dyn = BFGS(images[-1])
+dyn = BFGS(images_ase[-1])
 dyn.run(fmax=0.05)
-neb = NEB(images, climb=True)
+neb = NEB(images_ase, climb=True)
 
 # Interpolate positions between initial and final states:
 neb.interpolate(method='idpp')
 
-for image in images:
+for image in images_ase:
     print(image.positions[-1], image.get_potential_energy())
 
 dyn = BFGS(neb, maxstep=0.04, trajectory='neb_ase.traj')
 dyn.run(fmax=0.05)
 
-for image in images:
+for image in images_ase:
     print(image.positions[-1], image.get_potential_energy())
 
-nebtools_ase = NEBTools(images)
+# 2.B. NEB using CatLearn
+
+write('initial.traj', images_ase[0])
+write('final.traj', images_ase[-1])
+
+neb_catlearn = MLNEB(start='initial.traj',
+                     end='final.traj',
+                     ase_calc=copy.deepcopy(ase_calculator),
+                     n_images=n_images,
+                     interpolation='idpp', restart=False)
+
+neb_catlearn.run(fmax=0.05, trajectory='ML-NEB.traj')
+
+# 3. Summary of the results
+
+# NEB ASE:
+print('\nSummary of the results: \n')
+
+atoms_ase = read('neb_ase.traj', ':')
+n_eval_ase = len(atoms_ase) - 2 * (len(atoms_ase)/n_images)
+
+print('Number of function evaluations CI-NEB implemented in ASE:', n_eval_ase)
+
+# ML-NEB:
+atoms_catlearn = read('evaluated_structures.traj', ':')
+n_eval_catlearn = len(atoms_catlearn) - 2
+print('Number of function evaluations CatLearn:', n_eval_catlearn)
+
+# Comparison:
+print('\nThe ML-NEB algorithm required ',
+      (n_eval_ase/n_eval_catlearn),
+      'times less number of function evaluations than '
+      'the standard NEB algorithm.')
+
+# Plot ASE NEB:
+nebtools_ase = NEBTools(images_ase)
 
 Sf_ase = nebtools_ase.get_fit()[2]
 Ef_ase = nebtools_ase.get_fit()[3]
@@ -97,36 +133,5 @@ nebtools_ase.plot_band()
 
 plt.show()
 
-# 2.B. NEB using CatLearn ####################################################
-write('initial.traj', images[0])
-write('final.traj', images[-1])
-
-neb_catlearn = CatLearnNEB(start='initial.traj',
-                           end='final.traj',
-                           ase_calc=copy.deepcopy(ase_calculator),
-                           n_images=n_images,
-                           interpolation='idpp', restart=False)
-
-neb_catlearn.run(fmax=0.05, plot_neb_paths=True)
-
-
-# 3. Summary of the results #################################################
-
-# NEB ASE:
-print('\nSummary of the results: \n')
-
-atoms_ase = read('neb_ase.traj', ':')
-n_eval_ase = len(atoms_ase) - 2 * n_images
-
-print('Number of function evaluations CI-NEB implemented in ASE:', n_eval_ase)
-
-# Catlearn:
-atoms_catlearn = read('evaluated_structures.traj', ':')
-n_eval_catlearn = len(atoms_catlearn) - 2
-print('Number of function evaluations CatLearn:', n_eval_catlearn)
-
-# Comparison:
-print('\nThe CatLearn algorithm required ',
-      (n_eval_ase/n_eval_catlearn),
-      'times less number of function evaluations than '
-      'the standard NEB algorithm.')
+# Plot ML-NEB predicted path and show images along the path:
+plotneb(trajectory='ML-NEB.traj', view_path=False)

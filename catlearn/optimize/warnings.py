@@ -63,7 +63,7 @@ def warning_kernel():
 
 def warning_spin_neb():
     msg = "WARNING: Spin-polarized NEB. Spin-polarized calculations are " \
-    "not not supported."
+          "not not supported."
     print(msg)
 
 
@@ -162,7 +162,7 @@ def err_not_ase_calc_atoms():
 
 def error_not_ml_calc():
     msg = "COMPUTER SAYS NO: You must select one of the predefined setting " \
-    "for the machine learning calculator or build your own."
+          "for the machine learning calculator or build your own."
     return msg
 
 

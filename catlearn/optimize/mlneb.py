@@ -5,8 +5,6 @@ from catlearn.optimize.io import ase_traj_to_catlearn, store_results_neb, \
 from catlearn.optimize.convergence import get_fmax
 from catlearn.optimize.get_real_values import eval_and_append
 from catlearn.optimize.constraints import create_mask, apply_mask
-from catlearn.optimize.plots import get_plot_mullerbrown, get_plots_neb, \
-                                    get_plot_himmelblau
 from ase.neb import NEB
 from ase.neb import NEBTools
 from ase.io import read, write
@@ -19,7 +17,7 @@ from catlearn.regression import GaussianProcess
 from ase.calculators.calculator import Calculator, all_changes
 
 
-class CatLearnNEB(object):
+class MLNEB(object):
 
     def __init__(self, start, end, path=None, n_images=0.25, k=None,
                  interpolation=None, mic=False, neb_method='improvedtangent',
@@ -217,8 +215,7 @@ class CatLearnNEB(object):
         self.max_abs_forces = np.max(np.abs(self.max_forces))
 
     def run(self, fmax=0.05, unc_convergence=0.050, steps=200,
-            trajectory='ML_NEB_catlearn.traj', acquisition='acq_2',
-            plot_neb_paths=False, dt=0.025):
+            trajectory='ML_NEB_catlearn.traj', acquisition='acq_2', dt=0.025):
 
         """Executing run will start the optimization process.
 
@@ -230,10 +227,6 @@ class CatLearnNEB(object):
             Maximum uncertainty for convergence (in eV).
         steps : int
             Maximum number of iterations in the surrogate model.
-        plot_neb_paths: bool
-            If True it prints and stores (in csv format) the last predicted
-            NEB path obtained by the surrogate ML model. Note: Python package
-            pyplot.matplotlib is required.
         trajectory: string
             Filename to store the output.
         acquisition : string
@@ -444,27 +437,6 @@ class CatLearnNEB(object):
                         self.interesting_point = self.images[1:-1][
                                                   int(self.argmax_unc)].get_positions(
                                                   ).flatten()
-
-
-            # Plots results in each iteration.
-            if plot_neb_paths is True:
-                get_plots_neb(images=self.images,
-                              selected=int(self.argmax_unc), iter=self.iter)
-
-            if plot_neb_paths is True:
-                if self.ase_calc.__dict__['name'] == 'mullerbrown':
-                    get_plot_mullerbrown(
-                                    images=self.images,
-                                    interesting_point=self.interesting_point,
-                                    gp=self.gp,
-                                    list_train=self.list_train)
-
-                if self.ase_calc.__dict__['name'] == 'himmelblau':
-                    get_plot_himmelblau(
-                                    images=self.images,
-                                    interesting_point=self.interesting_point,
-                                    gp=self.gp,
-                                    list_train=self.list_train)
 
             # 5. Add a new training point and evaluate it.
 
