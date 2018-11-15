@@ -200,12 +200,10 @@ def clean_skewness(train, test=None, labels=None, mask=None, skewness=3.):
     clean = defaultdict(list)
 
     data_skewness = skew(train, axis=0)
-    print(data_skewness)
     assert np.isfinite(data_skewness).all()
 
     # Index of informative features.
     index = list(np.where(abs(data_skewness) < skewness)[0])
-    print(index)
     clean['index'] = index
 
     # Clean data.
