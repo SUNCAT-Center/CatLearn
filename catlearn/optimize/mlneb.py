@@ -22,7 +22,7 @@ class MLNEB(object):
     def __init__(self, start, end, path=None, n_images=0.25, k=None,
                  interpolation=None, mic=False, neb_method='improvedtangent',
                  ase_calc=None, include_previous_calcs=False,
-                 stabilize=False, restart=False):
+                 stabilize=False, restart=True):
         """ Nudged elastic band (NEB) setup.
 
         Parameters
@@ -110,10 +110,18 @@ class MLNEB(object):
             write('tmp.traj', merged_trajectory)
             trj = ase_traj_to_catlearn(traj_file='tmp.traj')
             os.remove('./tmp.traj')
-            write('./evaluated_structures.traj', is_endpoint + fs_endpoint)
 
         if restart is True:
-            trj = ase_traj_to_catlearn(traj_file='./evaluated_structures.traj')
+            eval_file = 'evaluated_structures.traj'
+            if os.path.exists(eval_file):
+                trj = ase_traj_to_catlearn(traj_file=eval_file)
+            if not os.path.exists(eval_file):
+                if os.path.exists('./tmp.traj'):
+                        os.remove('./tmp.traj')
+                merged_trajectory = is_endpoint + fs_endpoint
+                write('tmp.traj', merged_trajectory)
+                trj = ase_traj_to_catlearn(traj_file='tmp.traj')
+                os.remove('./tmp.traj')
 
         self.list_train, self.list_targets, self.list_gradients, trj_images,\
             self.constraints, self.num_atoms = [trj['list_train'],
@@ -246,7 +254,8 @@ class MLNEB(object):
             middle = int(self.n_images * (2./3.))
             if self.energy_is >= self.energy_fs:
                 middle = int(self.n_images * (1./3.))
-            self.interesting_point = self.images[middle].get_positions().flatten()
+            self.interesting_point = \
+                self.images[middle].get_positions().flatten()
             eval_and_append(self, self.interesting_point)
             self.iter += 1
         stationary_point_found = False
@@ -330,14 +339,13 @@ class MLNEB(object):
                 if self.iter % 2 == 0:
                     self.argmax_unc = np.argmax(self.uncertainty_path[1:-1])
                     self.interesting_point = self.images[1:-1][
-                                      self.argmax_unc].get_positions().flatten()
+                                    self.argmax_unc].get_positions().flatten()
 
                 # Select image with max. predicted value.
                 if self.iter % 2 == 1:
                     self.argmax_unc = np.argmax(pred_plus_unc)
                     self.interesting_point = self.images[1:-1][
-                                              int(self.argmax_unc)].get_positions(
-                                              ).flatten()
+                                int(self.argmax_unc)].get_positions().flatten()
 
             # Acquisition function 2:
             if self.acq == 'acq_2':
@@ -351,28 +359,27 @@ class MLNEB(object):
 
                     self.argmax_unc = np.argmax(pred_plus_unc)
                     self.interesting_point = self.images[1:-1][
-                                              int(self.argmax_unc)].get_positions(
-                                              ).flatten()
+                                int(self.argmax_unc)].get_positions().flatten()
             # Acquisition function 3:
             if self.acq == 'acq_3':
                 # Select image with max. uncertainty.
                 self.argmax_unc = np.argmax(self.uncertainty_path[1:-1])
                 self.interesting_point = self.images[1:-1][
-                                  self.argmax_unc].get_positions().flatten()
+                                    self.argmax_unc].get_positions().flatten()
 
                 # When reached certain uncertainty apply acq. 1.
                 if np.max(self.uncertainty_path[1:-1]) < unc_convergence:
                     # Select image with max. uncertainty.
                     if self.iter % 2 == 0:
-                        self.argmax_unc = np.argmax(self.uncertainty_path[1:-1])
+                        self.argmax_unc = \
+                                        np.argmax(self.uncertainty_path[1:-1])
                         self.interesting_point = self.images[1:-1][
-                                          self.argmax_unc].get_positions().flatten()
+                                    self.argmax_unc].get_positions().flatten()
                     # Select image with max. predicted value.
                     if self.iter % 2 == 1:
                         self.argmax_unc = np.argmax(pred_plus_unc)
                         self.interesting_point = self.images[1:-1][
-                                                  int(self.argmax_unc)].get_positions(
-                                                  ).flatten()
+                                int(self.argmax_unc)].get_positions().flatten()
 
             # Acquisition function 4 (from acq 2):
             if self.acq == 'acq_4':
@@ -380,28 +387,26 @@ class MLNEB(object):
                 if self.iter % 2 == 0:
                     self.argmax_unc = np.argmax(self.uncertainty_path[1:-1])
                     self.interesting_point = self.images[1:-1][
-                                      self.argmax_unc].get_positions().flatten()
+                                    self.argmax_unc].get_positions().flatten()
 
                 # Select image with max. predicted value.
                 if self.iter % 2 == 1:
                     self.argmax_unc = np.argmax(pred_plus_unc)
                     self.interesting_point = self.images[1:-1][
-                                              int(self.argmax_unc)].get_positions(
-                                              ).flatten()
+                                int(self.argmax_unc)].get_positions().flatten()
                 # If stationary point is found behave like acquisition 2...
                 if stationary_point_found is True:
                     # Select image with max. uncertainty.
                     self.argmax_unc = np.argmax(self.uncertainty_path[1:-1])
                     self.interesting_point = self.images[1:-1][
-                                      self.argmax_unc].get_positions().flatten()
+                    ml_cycles           .argmax_unc].get_positions().flatten()
 
                     # Select image with max. predicted value.
                     if np.max(self.uncertainty_path[1:-1]) < unc_convergence:
 
                         self.argmax_unc = np.argmax(pred_plus_unc)
                         self.interesting_point = self.images[1:-1][
-                                                  int(self.argmax_unc)].get_positions(
-                                                  ).flatten()
+                                int(self.argmax_unc)].get_positions().flatten()
             # Acquisition function 5 (From acq 3):
             if self.acq == 'acq_5':
                 # Select image with max. uncertainty.
@@ -413,22 +418,23 @@ class MLNEB(object):
                 if np.max(self.uncertainty_path[1:-1]) < unc_convergence:
                     # Select image with max. uncertainty.
                     if self.iter % 2 == 0:
-                        self.argmax_unc = np.argmax(self.uncertainty_path[1:-1])
+                        self.argmax_unc = \
+                                        np.argmax(self.uncertainty_path[1:-1])
                         self.interesting_point = self.images[1:-1][
-                                          self.argmax_unc].get_positions().flatten()
+                                    self.argmax_unc].get_positions().flatten()
 
                     # Select image with max. predicted value.
                     if self.iter % 2 == 1:
                         self.argmax_unc = np.argmax(pred_plus_unc)
                         self.interesting_point = self.images[1:-1][
-                                                  int(self.argmax_unc)].get_positions(
-                                                  ).flatten()
+                                int(self.argmax_unc)].get_positions().flatten()
                     # If stationary point is found behave like acquisition 2...
                     if stationary_point_found is True:
                         # Select image with max. uncertainty.
-                        self.argmax_unc = np.argmax(self.uncertainty_path[1:-1])
+                        self.argmax_unc = \
+                                         np.argmax(self.uncertainty_path[1:-1])
                         self.interesting_point = self.images[1:-1][
-                                          self.argmax_unc].get_positions().flatten()
+                                    self.argmax_unc].get_positions().flatten()
 
                     # Select image with max. predicted value.
                     if np.max(self.uncertainty_path[1:-1]) < unc_convergence:
@@ -551,7 +557,7 @@ def train_gp_model(self):
     dimension = 'single'
     bounds = ((0.01, self.path_distance),)
 
-    width = self.path_distance/2
+    width = self.path_distance / 2
 
     noise_energy = 0.005
     noise_forces = 0.0005
