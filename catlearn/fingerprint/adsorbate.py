@@ -30,7 +30,7 @@ default_adsorbate_fingerprinters = ['mean_chemisorbed_atoms',
                                     'en_difference_active',
                                     'count_chemisorbed_fragment',
                                     'generalized_cn',
-                                    'coordination_counts',
+                                    'bag_cn',
                                     'bag_atoms_ads',
                                     'bag_connections_ads',
                                     'bag_connections_chemi']
@@ -335,11 +335,18 @@ class AdsorbateFingerprintGenerator(BaseGenerator):
         return [av_cn_site, cn_site, gcn_site,
                 cn_chemi / len(chemi), gcn_chemi / len(chemi)]
 
-    def coordination_counts(self, atoms):
+    def bag_cn(self, atoms):
         """Count the number of neighbors of the site, which has a n number of
         neighbors. This is equivalent to a bag of coordination numbers over the
-        site neighbors. These can be used in the "alpha parameters" linear
-        model for a pure metal.
+        site neighbors.
+        These can be used in the "alpha parameters" linear
+        model.
+        
+        Please cite:
+        Roling LT, Abild‐Pedersen F. 
+        Structure‐Sensitive Scaling Relations: 
+        Adsorption Energies from Surface Site Stability.
+        ChemCatChem. 2018 Apr 9;10(7):1643-50.
 
         Parameters
         ----------
@@ -361,6 +368,19 @@ class AdsorbateFingerprintGenerator(BaseGenerator):
 
             fingerprint = list(fingerprint_nn)
             return fingerprint
+
+    def bag_cn_general(self, atoms):
+        """Count the number of neighbors of the site, which has a n number of
+        neighbors. This is equivalent to a bag of coordination numbers over the
+        site neighbors. These can be used in the "alpha parameters" linear
+        model for alloys.
+
+        Parameters
+        ----------
+        atoms : object
+        """
+        # range of element types.
+        raise NotImplementedError("In development.")
 
     def bag_atoms_ads(self, atoms=None):
         """Function that takes an atoms object and returns a fingerprint
