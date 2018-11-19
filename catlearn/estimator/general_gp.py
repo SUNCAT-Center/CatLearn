@@ -1,6 +1,6 @@
 """Function to setup a general GP."""
 from .general_preprocess import GeneralPrepreprocess
-from .general_kernel import general_kernel
+from .general_kernel import general_kernel, smooth_kernel
 from catlearn.regression import GaussianProcess
 
 
