@@ -75,7 +75,7 @@ def log_marginal_likelihood(theta, train_matrix, targets, kernel_dict,
         return -p, -np.array(jac.sum(-1))
 
 
-def dK_dtheta_j(theta, train_matrix, kernel_dict, Q):
+def dK_dtheta_j(theta, train_matrix, kernel_list, Q):
     """Return the jacobian of the log marginal likelyhood.
 
     This is calculated with respect to the hyperparameters, as in:
@@ -94,11 +94,10 @@ def dK_dtheta_j(theta, train_matrix, kernel_dict, Q):
     jac = []
     N, N_D = np.shape(train_matrix)
     ki = 0
-    for key in kernel_dict.keys():
-        kdict = key
+    for kdict in kernel_list:
         ktype = kdict['type']
-        if 'operation' in key and \
-           key['operation'] == 'multiplication':
+        if 'operation' in kdict and \
+           kdict['operation'] == 'multiplication':
             msg = "jacobian of product kernels wrt. hyperparameters."
             raise NotImplementedError(msg)
         if 'scaling' in kdict or kdict['type'] == 'gaussian':

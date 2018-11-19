@@ -77,8 +77,10 @@ class TestPrediction(unittest.TestCase):
 
         # Test prediction routine with quadratic kernel.
         kdict = [{'type': 'quadratic', 'slope': 1., 'degree': 1.,
-                  'scaling': 1., 'bounds': ((1e-5, None),) * (np.shape(
-                  train_features)[1] + 1), 'scaling_bounds': ((0., None),)}]
+                  'scaling': 1.,
+                  'bounds': ((1e-5, None),) *
+                  (np.shape(train_features)[1] + 1),
+                  'scaling_bounds': ((0., None),)}]
         gp = GaussianProcess(
             train_fp=train_features, train_target=train_targets,
             kernel_dict=kdict, regularization=np.sqrt(1e-3),
@@ -96,7 +98,7 @@ class TestPrediction(unittest.TestCase):
         train_features, train_targets, test_features, test_targets = get_data()
 
         # Test prediction routine with gaussian kernel.
-        kdict = {'k1': {'type': 'gaussian', 'width': 1., 'scaling': 1.}}
+        kdict = [{'type': 'gaussian', 'width': 1., 'scaling': 1.}]
         gp = GaussianProcess(
             train_fp=train_features, train_target=train_targets,
             kernel_dict=kdict, regularization=np.sqrt(1e-3),
@@ -141,10 +143,10 @@ class TestPrediction(unittest.TestCase):
         train_features, train_targets, test_features, test_targets = get_data()
 
         # Test prediction routine with laplacian kernel.
-        kdict = {'k1': {'type': 'laplacian', 'width': 1., 'scaling': 1.,
-                        'bounds': ((1e-5, None),) *
-                        np.shape(train_features)[1],
-                        'scaling_bounds': ((0., None),)}}
+        kdict = [{'type': 'laplacian', 'width': 1., 'scaling': 1.,
+                  'bounds': ((1e-5, None),) *
+                  np.shape(train_features)[1],
+                  'scaling_bounds': ((0., None),)}]
         gp = GaussianProcess(
             train_fp=train_features, train_target=train_targets,
             kernel_dict=kdict, regularization=np.sqrt(1e-3),
@@ -182,10 +184,10 @@ class TestPrediction(unittest.TestCase):
         train_features, train_targets, test_features, test_targets = get_data()
 
         # Test prediction with multiplication of linear & gaussian kernel.
-        kdict = {'k1': {'type': 'linear', 'features': [0, 1], 'scaling': 1.},
-                 'k2': {'type': 'gaussian', 'features': [2, 3], 'width': 1.,
-                        'scaling': 1., 'operation': 'multiplication'},
-                 'c1': {'type': 'constant', 'const': 1.}}
+        kdict = [{'type': 'linear', 'features': [0, 1], 'scaling': 1.},
+                 {'type': 'gaussian', 'features': [2, 3], 'width': 1.,
+                  'scaling': 1., 'operation': 'multiplication'},
+                 {'type': 'constant', 'const': 1.}]
         gp = GaussianProcess(
             train_fp=train_features, train_target=train_targets,
             kernel_dict=kdict, regularization=np.sqrt(1e-3),
@@ -245,9 +247,8 @@ class TestPrediction(unittest.TestCase):
         kdict = [{'type': 'gaussian', 'width': 30., 'scaling': 5.}]
         sen = SensitivityAnalysis(
             train_matrix=train_features[:, :5], train_targets=train_targets,
-            test_matrix=test_features[:,
-                                      :5], kernel_dict=kdict,
-                                      init_reg=np.sqrt(0.001),
+            test_matrix=test_features[:, :5], kernel_dict=kdict,
+            init_reg=np.sqrt(0.001),
             init_width=10.)
 
         sen.backward_selection(

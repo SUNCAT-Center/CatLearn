@@ -20,8 +20,8 @@ def minimize_error(train_features, train_targets, test_features, test_targets):
     test_targets : array
         The test targets.
     """
-    kernel = {'k1': {'type': 'gaussian', 'width': 1.,
-                     'scaling': 1., 'dimension': 'single'}}
+    kernel = [{'type': 'gaussian', 'width': 1., 'scaling': 1.,
+               'dimension': 'single'}]
 
     gp = GaussianProcess(train_fp=train_features,
                          train_target=train_targets,
@@ -58,8 +58,8 @@ def minimize_error_descriptors(train_features, train_targets, test_features,
     test_targets : array
         The test targets.
     """
-    kernel = {'k1': {'type': 'gaussian', 'width': 1.,
-                     'scaling': 1., 'dimension': 'single'}}
+    kernel = [{'type': 'gaussian', 'width': 1., 'scaling': 1.,
+               'dimension': 'single'}]
 
     gp = GaussianProcess(train_fp=train_features,
                          train_target=train_targets,
@@ -97,8 +97,8 @@ def minimize_error_time(train_features, train_targets, test_features,
     test_targets : array
         The test targets.
     """
-    kernel = {'k1': {'type': 'gaussian', 'width': 1.,
-                     'scaling': 1., 'dimension': 'single'}}
+    kernel = [{'type': 'gaussian', 'width': 1., 'scaling': 1.,
+               'dimension': 'single'}]
 
     stime = time.time()
     gp = GaussianProcess(train_fp=train_features,
