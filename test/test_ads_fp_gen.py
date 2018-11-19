@@ -13,9 +13,12 @@ from catlearn.api.ase_atoms_api import (database_to_list, images_connectivity,
                                         images_pair_distances)
 from catlearn.featurize.adsorbate_prep import (autogen_info,
                                                check_reconstructions,
-                                               connectivity2ads_index)
+                                               connectivity2ads_index,
+                                               termination_info,
+                                               z2ads_index, layers2ads_index)
 from catlearn.featurize.periodic_table_data import (get_radius,
                                                     default_catlearn_radius)
+from catlearn.featurize.slab_utilities import slab_layers
 from catlearn.featurize.setup import FeatureGenerator, default_fingerprinters
 
 wkdir = os.getcwd()
@@ -24,10 +27,13 @@ wkdir = os.getcwd()
 class TestAdsorbateFeatures(unittest.TestCase):
     """Test out the adsorbate feature generation."""
 
-    def setup_metals(self):
+    def setup_metals(self, n=None):
         """Get the atoms objects."""
         adsorbates = ['H', 'O', 'C', 'N', 'S', 'Cl', 'P', 'F']
         symbols = ['Ag', 'Au', 'Cu', 'Pt', 'Pd', 'Ir', 'Rh', 'Ni', 'Co']
+        if n is not None:
+            symbols = symbols[:n]
+            adsorbates = adsorbates[:n]
         images = []
         for i, s in enumerate(symbols):
             rs = get_radius(atomic_numbers[s])
@@ -84,6 +90,8 @@ class TestAdsorbateFeatures(unittest.TestCase):
         images = database_to_list('data/ads_example.db')
         [atoms.set_tags(np.zeros(len(atoms))) for atoms in images]
         images = autogen_info(images)
+        layers2ads_index(images[0],
+                         images[0].info['key_value_pairs']['species'])
         print(str(len(images)) + ' training examples.')
         gen = FeatureGenerator(nprocs=1)
         train_fpv = default_fingerprinters(gen, 'adsorbates')
@@ -118,8 +126,18 @@ class TestAdsorbateFeatures(unittest.TestCase):
             connectivity2ads_index(images[i], species)
         self.assertTrue(len(reconstructed) == 0)
 
+    def test_slab_utils(self):
+        images = self.setup_metals(n=2)
+        for atoms in images:
+            atoms.subsets = {}
+            atoms.subsets['ads_atoms'] = \
+                z2ads_index(atoms, atoms[-1].symbol)
+            slab = atoms[:-1]
+            lz, li = slab_layers(slab, 3)
+        termination_info(images)
+
     def test_connectivity(self):
-        images = self.setup_metals()
+        images = self.setup_metals(n=2)
         images = images_pair_distances(images)
         gen = FeatureGenerator(nprocs=1)
         gen.featurize_atomic_pairs(images)
