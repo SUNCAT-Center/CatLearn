@@ -24,7 +24,7 @@ def prepare_kernels(kernel_dict, regularization_bounds, eval_gradients, N_D):
 
     for key in kernel_dict:
         cN_D = N_D
-        kdict = kernel_dict[key]
+        kdict = key
         msg = 'A kernel type should be set, e.g. "linear", "gaussian", etc'
         assert 'type' in kdict, msg
 
@@ -44,6 +44,7 @@ def prepare_kernels(kernel_dict, regularization_bounds, eval_gradients, N_D):
             bounds = _scaling_setup(kdict, bounds, default_bounds)
 
         ktype = kdict['type']
+
         if ktype != 'user' and ktype != 'linear':
             cmd = '_{}_setup(kdict, bounds, cN_D, default_bounds)'.format(
                 ktype)
@@ -54,6 +55,7 @@ def prepare_kernels(kernel_dict, regularization_bounds, eval_gradients, N_D):
                 raise NotImplementedError(msg)
 
     # Bounds for the regularization
+
     bounds += (regularization_bounds,)
 
     return kernel_dict, bounds
@@ -73,7 +75,7 @@ def _scaling_setup(kdict_param, bounds, default_bounds):
 def _constant_setup(kdict_param, bounds, N_D, default_bounds):
     """Setup the constant kernel."""
     allowed_keys = ['type', 'operation', 'features', 'dimension', 'const',
-                    'bounds', 'scaling_bounds']
+                    'bounds']
     msg1 = "An undefined key, '"
     msg2 = "', has been provided in a 'constant' type kernel dict."
     for k in kdict_param:
@@ -86,6 +88,40 @@ def _constant_setup(kdict_param, bounds, N_D, default_bounds):
         bounds += kdict_param['bounds']
     else:
         bounds += default_bounds
+
+    return bounds
+
+
+def _constant_multi_setup(kdict_param, bounds, N_D, default_bounds):
+    """Setup the multi constant constant kernel."""
+    allowed_keys = ['type', 'operation', 'hyperparameters',
+                    'bounds']
+    msg1 = "An undefined key, '"
+    msg2 = "', has been provided in a 'multi constant' type kernel dict."
+    for k in kdict_param:
+        assert k in allowed_keys, msg1 + k + msg2
+    if 'bounds' in kdict_param:
+        bounds += kdict_param['bounds']
+    else:
+        bounds += default_bounds * 3
+
+    return bounds
+
+
+def _noise_multi_setup(kdict_param, bounds, N_D, default_bounds):
+    """Setup the noise kernel."""
+    allowed_keys = ['type', 'operation', 'hyperparameters',
+                    'bounds']
+    msg1 = "An undefined key, '"
+    msg2 = "', has been provided in a 'noise' type kernel dict."
+    for k in kdict_param:
+        assert k in allowed_keys, msg1 + k + msg2
+
+    if 'bounds' in kdict_param:
+        bounds += kdict_param['bounds']
+
+    else:
+        bounds += default_bounds * 2
 
     return bounds
 
@@ -286,7 +322,7 @@ def kdicts2list(kernel_dict, N_D=None):
     """
     hyperparameters = []
     for kernel_key in kernel_dict:
-        theta = kdict2list(kernel_dict[kernel_key], N_D=N_D)
+        theta = kdict2list(kernel_key, N_D=N_D)
         hyperparameters.append(theta[0] + theta[1])
     hyperparameters = np.concatenate(hyperparameters)
     return hyperparameters
@@ -311,36 +347,36 @@ def list2kdict(hyperparameters, kernel_dict):
     ki = 0
     for key in kernel_dict:
 
-        ktype = kernel_dict[key]['type']
+        ktype = key['type']
 
         # Retrieve the scaling factor if it is defined.
-        if 'scaling' in kernel_dict[key]:
-            kernel_dict[key]['scaling'] = float(hyperparameters[ki])
+        if 'scaling' in key:
+            key['scaling'] = float(hyperparameters[ki])
             ki += 1
 
         # Retreive hyperparameters from a single list theta
         if ktype == 'gaussian' or ktype == 'sqe' or ktype == 'laplacian':
-            N_D = len(kernel_dict[key]['width'])
+            N_D = len(key['width'])
             # scaling = hyperparameters[ki]
             # kernel_dict[key]['scaling'] = scaling
             # theta = hyperparameters[ki+1:ki+1+N_D]
             theta = hyperparameters[ki:ki + N_D]
-            kernel_dict[key]['width'] = list(theta)
+            key['width'] = list(theta)
             ki += N_D
 
         elif (ktype == 'scaled_sqe'):
-            N_D = len(kernel_dict[key]['width'])
-            kernel_dict[key]['d_scaling'] = list(hyperparameters[ki:ki + N_D])
-            kernel_dict[key]['width'] = list(
+            N_D = len(key['width'])
+            key['d_scaling'] = list(hyperparameters[ki:ki + N_D])
+            key['width'] = list(
                 hyperparameters[ki + N_D:ki + 2 * N_D])
             ki += 2 * N_D
 
         # Quadratic have pairs of hyperparamters slope, degree
         elif ktype == 'quadratic':
-            N_D = len(kernel_dict[key]['slope'])
+            N_D = len(key['slope'])
             theta = hyperparameters[ki:ki + N_D + 1]
-            kernel_dict[key]['slope'] = theta[:N_D]
-            kernel_dict[key]['degree'] = theta[N_D:]
+            key['slope'] = theta[:N_D]
+            key['degree'] = theta[N_D:]
             ki += N_D + 1
 
         # Linear kernels have no hyperparameters
@@ -349,13 +385,13 @@ def list2kdict(hyperparameters, kernel_dict):
 
         # If a constant is added.
         elif ktype == 'constant':
-            kernel_dict[key]['const'] = float(hyperparameters[ki])
+            key['const'] = float(hyperparameters[ki])
             ki += 1
 
         # Default hyperparameter keys for other kernels
         else:
-            N_D = len(kernel_dict[key]['hyperparameters'])
+            N_D = len(key['hyperparameters'])
             theta = hyperparameters[ki:ki + N_D]
-            kernel_dict[key]['hyperparameters'] = list(theta)
+            key['hyperparameters'] = list(theta)
 
     return kernel_dict

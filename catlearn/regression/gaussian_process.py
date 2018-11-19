@@ -30,8 +30,8 @@ class GaussianProcess(object):
             A list of training fingerprint vectors.
         train_target : list
             A list of training targets used to generate the predictions.
-        kernel_dict : dict
-            This dict can contain many other dictionarys, each one containing
+        kernel_dict : list
+            This list can contain many dictionaries, each one containing
             parameters for separate kernels.
             Each kernel dict contains information on a kernel such as:
             -   The 'type' key containing the name of kernel function.
@@ -53,8 +53,6 @@ class GaussianProcess(object):
             Default is False.
         """
         # Perform some sanity checks.
-        msg = 'GP must be trained on more than one data point.'
-        assert np.shape(train_fp)[0] > 1, msg
         msg = 'The number of data does not match the number of targets.'
         assert np.shape(train_fp)[0] == len(train_target), msg
 
@@ -259,8 +257,6 @@ class GaussianProcess(object):
         d, f = np.shape(train_fp)
 
         # Perform some sanity checks.
-        msg = 'GP must be trained on more than one data point.'
-        assert d > 1, msg
         if self.N_D != f:
             msg = str(f) + '!=' + str(self.N_D)
             msg += '\n The number of features has changed. Train a new '
@@ -352,7 +348,7 @@ class GaussianProcess(object):
         self.kernel_dict = list2kdict(self.theta_opt['x'][:-1],
                                       self.kernel_dict)
         self.regularization = self.theta_opt['x'][-1]
-        self.log_marginal_likelihood = -self.theta_opt['fun'][0]
+        self.log_marginal_likelihood = -self.theta_opt['fun']
         # Make a new covariance matrix with the optimized hyperparameters.
         cvm = get_covariance(kernel_dict=self.kernel_dict,
                              matrix1=self.train_fp,
@@ -391,8 +387,6 @@ class GaussianProcess(object):
             Optional to change the bounds for the regularization.
         """
         if train_fp is not None:
-            msg = 'GP must be trained on more than one data point.'
-            assert np.shape(train_fp)[0] > 1, msg
             _, self.N_D = np.shape(train_fp)
             self.train_fp = np.asarray(train_fp)
 

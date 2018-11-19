@@ -90,9 +90,9 @@ if True:
     sdt1 = 0.001
     # Too large width results in a biased model.
     w1 = 3.0
-    kdict = {'k1': {'type': 'gaussian', 'width': w1}}
+    kdict = [{'type': 'gaussian', 'width': w1}]
     # Set up the prediction routine.
-    gp = GaussianProcess(kernel_dict=kdict, regularization=sdt1**2,
+    gp = GaussianProcess(kernel_dict=kdict, regularization=sdt1,
                          train_fp=std['train'],
                          train_target=train_targets['target'],
                          optimize_hyperparameters=False)
@@ -110,7 +110,7 @@ if True:
     upper = under_prediction + under_uncertainty * tstd
     lower = under_prediction - under_uncertainty * tstd
 
-    # Plot example 1
+    # Plot example 1.
     ax = fig.add_subplot(grid+1)
     ax.plot(linex, liney, '-', lw=1, color='black')
     ax.plot(train, target, 'o', alpha=0.2, color='black')
@@ -131,9 +131,9 @@ if True:
     sdt2 = 0.001
     # Too small width lead to over-fitting.
     w2 = 0.03
-    kdict = {'k1': {'type': 'gaussian', 'width': w2}}
+    kdict = [{'type': 'gaussian', 'width': w2}]
     # Set up the prediction routine.
-    gp = GaussianProcess(kernel_dict=kdict, regularization=sdt2**2,
+    gp = GaussianProcess(kernel_dict=kdict, regularization=sdt2,
                          train_fp=std['train'],
                          train_target=train_targets['target'],
                          optimize_hyperparameters=False)
@@ -155,7 +155,7 @@ if True:
     ax224.plot(test, np.array(under_uncertainty * tstd), '-', lw=1,
                color='blue')
 
-    # Plot example 2
+    # Plot example 2.
     ax = fig.add_subplot(grid+2)
     ax.plot(linex, liney, '-', lw=1, color='black')
     ax.plot(train, target, 'o', alpha=0.2, color='black')
@@ -178,10 +178,9 @@ if True:
     # Set up the prediction routine and optimize hyperparameters.
     w3 = 0.1
     sdt3 = 0.001
-    kdict = {
-        'k1': {'type': 'gaussian', 'width': [w3]},
-    }
-    gp = GaussianProcess(kernel_dict=kdict, regularization=sdt3**2,
+    kdict = [{'type': 'gaussian', 'width': [w3]}]
+
+    gp = GaussianProcess(kernel_dict=kdict, regularization=sdt3,
                          train_fp=std['train'],
                          train_target=train_targets['target'],
                          optimize_hyperparameters=True)
@@ -192,7 +191,7 @@ if True:
     # Scale predictions back to the original scale.
     opt_prediction = np.vstack(optimized['prediction']) * \
         train_targets['std'] + train_targets['mean']
-    opt_uncertainty = np.vstack(optimized['uncertainty']) * \
+    opt_uncertainty = np.vstack(optimized['uncertainty_with_reg']) * \
         train_targets['std']
     # Get average errors.
     error = get_error(opt_prediction.reshape(-1), afunc(test).reshape(-1))
@@ -201,7 +200,7 @@ if True:
     opt_upper = opt_prediction + opt_uncertainty * tstd
     opt_lower = opt_prediction - opt_uncertainty * tstd
 
-    # Plot eample 3
+    # Plot example 3.
     ax = fig.add_subplot(grid+3)
     ax.plot(linex, liney, '-', lw=1, color='black')
     ax.plot(train, target, 'o', alpha=0.2, color='black')
@@ -210,7 +209,7 @@ if True:
                     np.hstack(opt_lower), interpolate=True,
                     color='green', alpha=0.2)
     plt.title('Optimized GP. \n w: {0:.3f}, r: {1:.3f}'.format(
-        gp.kernel_dict['k1']['width'][0] * stdx,
+        gp.kernel_dict[0]['width'][0] * stdx,
         np.sqrt(gp.regularization) * stdy))
     plt.xlabel('Descriptor')
     plt.ylabel('Response')
