@@ -43,7 +43,7 @@ final_opt.run(fmax=0.01)
 
 # # Define number of images for the NEB:
 
-n_images = 9
+n_images = 11
 
 # 2.A. NEB using ASE
 
@@ -56,10 +56,10 @@ for i in range(1, n_images-1):
     images_ase.append(image_ase)
 images_ase.append(final_ase)
 
-neb_ase = NEB(images_ase, climb=True, method='improvedtangent')
-neb_ase.interpolate()
+neb_ase = NEB(images_ase, climb=True)
+neb_ase.interpolate(method='idpp')
 qn_ase = MDMin(neb_ase, trajectory='neb_ase.traj')
-qn_ase.run(fmax=0.01)
+qn_ase.run(fmax=0.05)
 
 # 2.B. ML-NEB using CatLearn
 
@@ -69,7 +69,7 @@ final = read('final_optimized.traj')
 neb_catlearn = MLNEB(start='initial_optimized.traj',
                      end='final_optimized.traj',
                      ase_calc=copy.deepcopy(ase_calculator),
-                     n_images=11,
+                     n_images=n_images,
                      interpolation='linear', restart=False)
 
 neb_catlearn.run(fmax=0.05, trajectory='ML-NEB.traj')
