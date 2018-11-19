@@ -22,7 +22,7 @@ class MLNEB(object):
     def __init__(self, start, end, path=None, n_images=0.25, k=None,
                  interpolation=None, mic=False, neb_method='improvedtangent',
                  ase_calc=None, include_previous_calcs=False,
-                 stabilize=False, restart=True):
+                 stabilize=False, restart=False):
         """ Nudged elastic band (NEB) setup.
 
         Parameters
@@ -110,6 +110,7 @@ class MLNEB(object):
             write('tmp.traj', merged_trajectory)
             trj = ase_traj_to_catlearn(traj_file='tmp.traj')
             os.remove('./tmp.traj')
+            write('./evaluated_structures.traj', is_endpoint + fs_endpoint)
 
         if restart is True:
             eval_file = 'evaluated_structures.traj'
@@ -122,6 +123,7 @@ class MLNEB(object):
                 write('tmp.traj', merged_trajectory)
                 trj = ase_traj_to_catlearn(traj_file='tmp.traj')
                 os.remove('./tmp.traj')
+                write('./evaluated_structures.traj', is_endpoint + fs_endpoint)
 
         self.list_train, self.list_targets, self.list_gradients, trj_images,\
             self.constraints, self.num_atoms = [trj['list_train'],
