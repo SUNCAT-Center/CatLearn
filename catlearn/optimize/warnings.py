@@ -212,18 +212,17 @@ def err_not_enough_images():
 
 
 def congrats_stationary_neb():
-    msg = "Congratulations! Stationary point is found! Check the file " \
-          "'evaluated_geometries.traj' using ASE."
-    print(msg)
+    msg = "Congratulations! Stationary point is found! "
+    msg2 = "Check the file 'evaluated_geometries.traj' using ASE."
+    print(msg+msg2)
 
 
 def congrats_neb_converged():
-    msg = "Congratulations! Your ML NEB is converged. Check the file " \
-          " 'last_predicted_path.traj' using ASE. " \
-          "If you want to plot the ML NEB predicted path you should also " \
-          "check the files 'results_neb.csv' " \
-          "and 'results_neb_interpolation.csv'."
-    print(msg)
+    msg = "Congratulations! Your ML NEB is converged. "
+    msg2 = "If you want to plot the ML NEB predicted path you should "
+    msg3 = "check the files 'results_neb.csv' "
+    msg4 = "and 'results_neb_interpolation.csv'."
+    print(msg+msg2+msg3+msg4)
 
 
 def stationary_point_not_found():
