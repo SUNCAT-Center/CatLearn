@@ -102,7 +102,7 @@ class TestHyperparameterScaling(unittest.TestCase):
         kdict = [{'type': 'gaussian', 'width': 1., 'scaling': 1.}]
         gp = GaussianProcess(
             train_fp=train_features, train_target=train_targets,
-            kernel_dict=kdict, regularization=np.sqrt(1e-3),
+            kernel_list=kdict, regularization=np.sqrt(1e-3),
             optimize_hyperparameters=True, scale_data=True)
         pred = gp.predict(test_fp=test_features,
                           test_target=test_targets,
@@ -110,11 +110,11 @@ class TestHyperparameterScaling(unittest.TestCase):
                           get_training_error=True,
                           uncertainty=True)
 
-        opt = gp.kernel_dict[0]['width']
+        opt = gp.kernel_list[0]['width']
         orig = hs.rescale_hyperparameters(gp.scaling,
-                                          gp.kernel_dict)[0]['width']
+                                          gp.kernel_list)[0]['width']
         assert not np.allclose(opt, orig)
-        scaled = hs.hyperparameters(gp.scaling, gp.kernel_dict)[0]['width']
+        scaled = hs.hyperparameters(gp.scaling, gp.kernel_list)[0]['width']
         assert np.allclose(opt, scaled)
 
         print('gaussian prediction (rmse):',

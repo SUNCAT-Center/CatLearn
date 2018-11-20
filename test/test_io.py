@@ -17,11 +17,11 @@ class TestIO(unittest.TestCase):
         kdict = [{'type': 'gaussian', 'width': 0.5, 'scaling': 1.},
                  {'type': 'linear', 'scaling': 1.},
                  {'type': 'constant', 'const': 1.},
-                 {'type': 'quadratic', 'slope': 1., 'degree': 1.,'scaling': 1.}
-                 ]
+                 {'type': 'quadratic', 'slope': 1., 'degree': 1.,
+                  'scaling': 1.}]
         self.__class__.gp = GaussianProcess(
             train_fp=train_features, train_target=train_targets,
-            kernel_dict=kdict, regularization=np.sqrt(1e-3),
+            kernel_list=kdict, regularization=np.sqrt(1e-3),
             optimize_hyperparameters=True, scale_data=False)
 
         io.write(filename='test-model', model=self.gp, ext='pkl')
@@ -70,23 +70,23 @@ class TestIO(unittest.TestCase):
     def test_raw(self):
         """Function to test raw data save."""
         regularization = self.gp.regularization
-        kernel_dict = self.gp.kernel_dict
+        kernel_list = self.gp.kernel_list
 
         train_features, train_targets, test_features, test_targets = get_data()
         io.write_train_data('train_data', train_features, train_targets,
-                            regularization, kernel_dict)
-        tf, tt, r, kdict = io.read_train_data('train_data')
+                            regularization, kernel_list)
+        tf, tt, r, klist = io.read_train_data('train_data')
         self.assertTrue(np.allclose(train_features, tf) and
                         np.allclose(train_targets, tt))
         self.assertTrue(r == regularization)
-        for i in kernel_dict:
-            for j in kernel_dict[i]:
-                if type(kernel_dict[i][j]) != list and \
-                        type(kernel_dict[i][j]) != np.ndarray:
-                    self.assertTrue(kdict[i][j] == kernel_dict[i][j])
+        for i, kernel in enumerate(kernel_list):
+            for key in kernel:
+                if type(kernel[key]) != list and \
+                        type(kernel[key]) != np.ndarray:
+                    self.assertTrue(klist[i][key] == kernel[key])
                 else:
-                    self.assertTrue(np.allclose(kdict[i][j],
-                                                kernel_dict[i][j]))
+                    self.assertTrue(np.allclose(klist[i][key],
+                                                kernel[key]))
         os.remove('{}/train_data.hdf5'.format(wkdir))
 
 

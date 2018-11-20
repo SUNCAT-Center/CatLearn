@@ -89,10 +89,10 @@ target = np.random.random_sample((50,))
 test_features = np.arange(100).reshape(25, 4)
 
 # Setup the kernel.
-kernel = {'k1': {'type': 'gaussian', 'width': 0.5}}
+kernel = [{'type': 'gaussian', 'width': 0.5}]
 
 # Train the GP model.
-gp = GaussianProcess(kernel_dict=kernel, regularization=1e-3,
+gp = GaussianProcess(kernel_list=kernel, regularization=1e-3,
                      train_fp=train_features, train_target=target,
                      optimize_hyperparameters=True)
 

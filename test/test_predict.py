@@ -62,7 +62,7 @@ class TestPrediction(unittest.TestCase):
                  {'type': 'constant', 'const': 1.}]
         gp = GaussianProcess(
             train_fp=train_features, train_target=train_targets,
-            kernel_dict=kdict, regularization=np.sqrt(1e-3),
+            kernel_list=kdict, regularization=np.sqrt(1e-3),
             optimize_hyperparameters=True, scale_data=True)
         pred = gp.predict(test_fp=test_features,
                           test_target=test_targets,
@@ -83,7 +83,7 @@ class TestPrediction(unittest.TestCase):
                   'scaling_bounds': ((0., None),)}]
         gp = GaussianProcess(
             train_fp=train_features, train_target=train_targets,
-            kernel_dict=kdict, regularization=np.sqrt(1e-3),
+            kernel_list=kdict, regularization=np.sqrt(1e-3),
             optimize_hyperparameters=True, scale_data=True)
         pred = gp.predict(test_fp=test_features,
                           test_target=test_targets,
@@ -101,7 +101,7 @@ class TestPrediction(unittest.TestCase):
         kdict = [{'type': 'gaussian', 'width': 1., 'scaling': 1.}]
         gp = GaussianProcess(
             train_fp=train_features, train_target=train_targets,
-            kernel_dict=kdict, regularization=np.sqrt(1e-3),
+            kernel_list=kdict, regularization=np.sqrt(1e-3),
             optimize_hyperparameters=True, scale_data=True)
         pred = gp.predict(test_fp=test_features,
                           test_target=test_targets,
@@ -124,9 +124,9 @@ class TestPrediction(unittest.TestCase):
                   'scaling_bounds': ((0., None),)}]
         gp = GaussianProcess(
             train_fp=train_features, train_target=train_targets,
-            kernel_dict=kdict, regularization=np.sqrt(1e-3),
+            kernel_list=kdict, regularization=np.sqrt(1e-3),
             optimize_hyperparameters=True, scale_data=True)
-        self.assertEqual(len(gp.kernel_dict[0]['width']), 1)
+        self.assertEqual(len(gp.kernel_list[0]['width']), 1)
         pred = gp.predict(test_fp=test_features,
                           test_target=test_targets,
                           get_validation_error=True,
@@ -149,7 +149,7 @@ class TestPrediction(unittest.TestCase):
                   'scaling_bounds': ((0., None),)}]
         gp = GaussianProcess(
             train_fp=train_features, train_target=train_targets,
-            kernel_dict=kdict, regularization=np.sqrt(1e-3),
+            kernel_list=kdict, regularization=np.sqrt(1e-3),
             optimize_hyperparameters=True, scale_data=True)
         pred = gp.predict(test_fp=test_features,
                           test_target=test_targets,
@@ -170,7 +170,7 @@ class TestPrediction(unittest.TestCase):
                  {'type': 'constant', 'const': 1.}]
         gp = GaussianProcess(
             train_fp=train_features, train_target=train_targets,
-            kernel_dict=kdict, regularization=np.sqrt(1e-3),
+            kernel_list=kdict, regularization=np.sqrt(1e-3),
             optimize_hyperparameters=True, scale_data=True)
         pred = gp.predict(test_fp=test_features,
                           test_target=test_targets,
@@ -190,7 +190,7 @@ class TestPrediction(unittest.TestCase):
                  {'type': 'constant', 'const': 1.}]
         gp = GaussianProcess(
             train_fp=train_features, train_target=train_targets,
-            kernel_dict=kdict, regularization=np.sqrt(1e-3),
+            kernel_list=kdict, regularization=np.sqrt(1e-3),
             optimize_hyperparameters=True, scale_data=True)
         pred = gp.predict(test_fp=test_features,
                           test_target=test_targets,
@@ -210,7 +210,7 @@ class TestPrediction(unittest.TestCase):
                  {'type': 'constant', 'const': 1.}]
         gp = GaussianProcess(
             train_fp=train_features, train_target=train_targets,
-            kernel_dict=kdict, regularization=np.sqrt(1e-3),
+            kernel_list=kdict, regularization=np.sqrt(1e-3),
             optimize_hyperparameters=True, scale_data=True)
 
         # Test updating the last model.
@@ -228,7 +228,7 @@ class TestPrediction(unittest.TestCase):
                   'operation': 'multiplication'},
                  {'type': 'constant', 'const': 1.}]
         gp.update_gp(train_fp=train_features, train_target=train_targets,
-                     kernel_dict=kdict)
+                     kernel_list=kdict)
         pred = gp.predict(test_fp=test_features,
                           test_target=test_targets,
                           get_validation_error=True,
@@ -247,7 +247,7 @@ class TestPrediction(unittest.TestCase):
         kdict = [{'type': 'gaussian', 'width': 30., 'scaling': 5.}]
         sen = SensitivityAnalysis(
             train_matrix=train_features[:, :5], train_targets=train_targets,
-            test_matrix=test_features[:, :5], kernel_dict=kdict,
+            test_matrix=test_features[:, :5], kernel_list=kdict,
             init_reg=np.sqrt(0.001),
             init_width=10.)
 

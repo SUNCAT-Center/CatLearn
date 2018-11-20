@@ -9,7 +9,7 @@ from .kernel_setup import list2kdict, kdict2list
 from catlearn.regression.gpfunctions import kernels as ak
 
 
-def log_marginal_likelihood(theta, train_matrix, targets, kernel_dict,
+def log_marginal_likelihood(theta, train_matrix, targets, kernel_list,
                             scale_optimizer, eval_gradients, cinv=None,
                             eval_jac=False):
     """Return the negative of the log marginal likelyhood.
@@ -23,9 +23,9 @@ def log_marginal_likelihood(theta, train_matrix, targets, kernel_dict,
     train_matrix : list
         A list of the test fingerprint vectors.
     targets : list
-        A list of target values
-    kernel_dict: dict
-        A dictionary of kernel dictionaries
+        A list of target values.
+    kernel_list: dict
+        A list of kernel dictionaries.
     scale_optimizer : boolean
         Flag to define if the hyperparameters are log scale for optimization.
     eval_gradients : boolean
@@ -41,9 +41,9 @@ def log_marginal_likelihood(theta, train_matrix, targets, kernel_dict,
     y = targets.reshape([n, 1])
 
     # Get the covariance matrix.
-    kernel_dict = list2kdict(theta, kernel_dict)
+    kernel_list = list2kdict(theta, kernel_list)
     K = get_covariance(
-        kernel_dict=kernel_dict, matrix1=train_matrix,
+        kernel_list=kernel_list, matrix1=train_matrix,
         regularization=theta[-1], log_scale=scale_optimizer,
         eval_gradients=eval_gradients)
     L, lower = cho_factor(K, overwrite_a=False, lower=True, check_finite=True)
@@ -70,7 +70,7 @@ def log_marginal_likelihood(theta, train_matrix, targets, kernel_dict,
         aa = a * a.T  # np.einsum("ik,jk->ijk", a, a)
         Q = (aa - C)[:, :, np.newaxis]
         # Get the list of gradients.
-        dK_dtheta = dK_dtheta_j(theta, train_matrix, kernel_dict, Q)
+        dK_dtheta = dK_dtheta_j(theta, train_matrix, kernel_list, Q)
         jac = 0.5 * np.einsum("ijl,ijk->kl", Q, dK_dtheta)
         return -p, -np.array(jac.sum(-1))
 
@@ -87,8 +87,8 @@ def dK_dtheta_j(theta, train_matrix, kernel_list, Q):
         A list containing the hyperparameters.
     train_matrix : list
         A list of the test fingerprint vectors.
-    kernel_dict: dict
-        A dictionary of kernel dictionaries
+    kernel_list : list
+        A list of kernel dictionaries.
     Q : array.
     """
     jac = []

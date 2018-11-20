@@ -1,4 +1,4 @@
-ase>=3.16.0
+ase>=3.17.0
 click>=6.7
 cycler>=0.10.0
 decorator>=4.3.0
