@@ -2,6 +2,7 @@ from ase.io import read
 from ase.optimize import BFGS
 from ase.calculators.vasp import Vasp
 import shutil
+import copy
 from catlearn.optimize.mlneb import MLNEB
 
 """ Example to run ML-NEB using the VASP calculator.
