@@ -2,13 +2,13 @@
 import numpy as np
 
 
-def prepare_kernels(kernel_dict, regularization_bounds, eval_gradients, N_D):
-    """Format kernel_dictionary and stores bounds for optimization.
+def prepare_kernels(kernel_list, regularization_bounds, eval_gradients, N_D):
+    """Format kernel_listionary and stores bounds for optimization.
 
     Parameters
     ----------
-    kernel_dict : dict
-        Dictionary containing all information for the kernels.
+    kernel_list : dict
+        List containing all dictionaries for the kernels.
     regularization_bounds : tuple
         Optional to change the bounds for the regularization.
     eval_gradients : boolean
@@ -22,9 +22,8 @@ def prepare_kernels(kernel_dict, regularization_bounds, eval_gradients, N_D):
     if eval_gradients:
         default_bounds = ((1e-6, 1e6),)
 
-    for key in kernel_dict:
+    for kdict in kernel_list:
         cN_D = N_D
-        kdict = key
         msg = 'A kernel type should be set, e.g. "linear", "gaussian", etc'
         assert 'type' in kdict, msg
 
@@ -58,7 +57,7 @@ def prepare_kernels(kernel_dict, regularization_bounds, eval_gradients, N_D):
 
     bounds += (regularization_bounds,)
 
-    return kernel_dict, bounds
+    return kernel_list, bounds
 
 
 def _scaling_setup(kdict_param, bounds, default_bounds):
@@ -306,7 +305,7 @@ def _get_theta(kdict, ktype, N_D):
     return theta
 
 
-def kdicts2list(kernel_dict, N_D=None):
+def kdicts2list(kernel_list, N_D=None):
     """Return ordered list of hyperparameters given the kernel dictionary.
 
     The kernel dictionary must contain one or more dictionaries, each
@@ -314,21 +313,21 @@ def kdicts2list(kernel_dict, N_D=None):
 
     Parameters
     ----------
-    kernel_dict : dict
+    kernel_list : dict
         A dictionary containing kernel dictionaries.
     N_D : int
         The number of descriptors if not specified in the kernel dict, by the
         length of the lists of hyperparameters.
     """
     hyperparameters = []
-    for kernel_key in kernel_dict:
+    for kernel_key in kernel_list:
         theta = kdict2list(kernel_key, N_D=N_D)
         hyperparameters.append(theta[0] + theta[1])
     hyperparameters = np.concatenate(hyperparameters)
     return hyperparameters
 
 
-def list2kdict(hyperparameters, kernel_dict):
+def list2kdict(hyperparameters, kernel_list):
     """Return updated kernel dictionary with updated hyperparameters from list.
 
     Assumed an ordered list of hyperparametersthe and the previous kernel
@@ -341,11 +340,11 @@ def list2kdict(hyperparameters, kernel_dict):
     hyperparameters : list
         All hyperparameters listed in the order they are specified in the
         kernel dictionary.
-    kernel_dict : dict
+    kernel_list : dict
         A dictionary containing kernel dictionaries.
     """
     ki = 0
-    for key in kernel_dict:
+    for key in kernel_list:
 
         ktype = key['type']
 
@@ -358,7 +357,7 @@ def list2kdict(hyperparameters, kernel_dict):
         if ktype == 'gaussian' or ktype == 'sqe' or ktype == 'laplacian':
             N_D = len(key['width'])
             # scaling = hyperparameters[ki]
-            # kernel_dict[key]['scaling'] = scaling
+            # kernel_list[key]['scaling'] = scaling
             # theta = hyperparameters[ki+1:ki+1+N_D]
             theta = hyperparameters[ki:ki + N_D]
             key['width'] = list(theta)
@@ -394,4 +393,4 @@ def list2kdict(hyperparameters, kernel_dict):
             theta = hyperparameters[ki:ki + N_D]
             key['hyperparameters'] = list(theta)
 
-    return kernel_dict
+    return kernel_list

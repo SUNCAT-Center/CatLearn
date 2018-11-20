@@ -4,11 +4,11 @@ from __future__ import absolute_import
 from catlearn.regression.gpfunctions.kernel_scaling import kernel_scaling
 
 
-def hyperparameters(scaling, kernel_dict):
+def hyperparameters(scaling, kernel_list):
     """Scale the hyperparameters."""
-    return kernel_scaling(scaling, kernel_dict, rescale=False)
+    return kernel_scaling(scaling, kernel_list, rescale=False)
 
 
-def rescale_hyperparameters(scaling, kernel_dict):
+def rescale_hyperparameters(scaling, kernel_list):
     """Rescale hyperparameters."""
-    return kernel_scaling(scaling, kernel_dict, rescale=True)
+    return kernel_scaling(scaling, kernel_list, rescale=True)

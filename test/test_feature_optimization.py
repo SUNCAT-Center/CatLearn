@@ -44,11 +44,10 @@ def prediction(train_features, train_targets, test_features, test_targets):
 def train_predict(train_features, train_targets):
     """Define the model."""
     kdict = [{'type': 'gaussian', 'width': 1., 'scaling': 1.,
-              'dimension': 'single'
-             }]
+              'dimension': 'single'}]
     gp = GaussianProcess(train_fp=train_features,
                          train_target=train_targets,
-                         kernel_dict=kdict,
+                         kernel_list=kdict,
                          regularization=np.sqrt(1e-2),
                          optimize_hyperparameters=True,
                          scale_data=True)

@@ -75,7 +75,7 @@ class TestAcquisition(unittest.TestCase):
         kdict = [{'type': 'gaussian', 'width': 1., 'scaling': 1.}]
         gp = GaussianProcess(
             train_fp=train_features, train_target=train_targets,
-            kernel_dict=kdict, regularization=1e-3,
+            kernel_list=kdict, regularization=1e-3,
             optimize_hyperparameters=True, scale_data=True)
         pred = gp.predict(
             test_fp=test_features, test_target=test_targets,
@@ -141,7 +141,7 @@ def _surrogate_model(train_features, train_targets,
     kdict = [{'type': 'gaussian', 'width': 0.5}]
     gp = GaussianProcess(
         train_fp=train_features, train_target=train_targets,
-        kernel_dict=kdict, regularization=1e-3,
+        kernel_list=kdict, regularization=1e-3,
         optimize_hyperparameters=False, scale_data=True)
     if test_targets is None:
         get_validation_error = False

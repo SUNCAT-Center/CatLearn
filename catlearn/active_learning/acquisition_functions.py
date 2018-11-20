@@ -44,8 +44,6 @@ def UCB(predictions, uncertainty, objective='max', kappa=1.5):
 
     Parameters
     ----------
-    y_best : float
-        Condition
     predictions : list
         Predicted means.
     uncertainty : list
@@ -232,7 +230,7 @@ def rank(targets, predictions, uncertainty, train_features=None,
     if 'optimistic' in metrics:
         res['optimistic'] = optimistic(y_best, predictions, uncertainty)
     if 'UCB' in metrics:
-        res['UCB'] = UCB(y_best, predictions, uncertainty, objective, kappa)
+        res['UCB'] = UCB(predictions, uncertainty, objective, kappa)
     if 'EI' in metrics:
         res['EI'] = EI(y_best, predictions, uncertainty, objective)
     if 'PI' in metrics:
@@ -334,8 +332,7 @@ def classify(classifier, train_atoms, test_atoms, targets,
             tmp_res[i]['optimistic'] = optimistic(y_best, predictions,
                                                   uncertainty)
         if 'UCB' in metrics:
-            tmp_res[i]['UCB'] = UCB(y_best, predictions, uncertainty,
-                                    objective, kappa)
+            tmp_res[i]['UCB'] = UCB(predictions, uncertainty, objective, kappa)
         if 'EI' in metrics:
             tmp_res[i]['EI'] = EI(y_best, predictions, uncertainty, objective)
         if 'PI' in metrics:

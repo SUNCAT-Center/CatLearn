@@ -3,15 +3,15 @@ from __future__ import absolute_import
 from __future__ import division
 
 
-def kernel_scaling(scale_data, kernel_dict, rescale):
+def kernel_scaling(scale_data, kernel_list, rescale):
     """Base hyperparameter scaling function.
 
     Parameters
     ----------
     scale_data : object
         Output from the default scaling function.
-    kernel_dict : dict
-        Dictionary containing all information for the kernels.
+    kernel_list : list
+        Dictionary containing all dictionaries for the kernels.
     rescale : boolean
        Flag for whether to scale or rescale the data.
     """
@@ -19,7 +19,7 @@ def kernel_scaling(scale_data, kernel_dict, rescale):
     store_mean = scale_data.feature_data['mean']
     store_std = scale_data.feature_data['std']
 
-    for k in kernel_dict.keys():
+    for k in kernel_list:
         mean, std = store_mean, store_std
         # Check hyperparameter dimensions.
         if 'dimension' in k and k['dimension'] == 'single':
@@ -37,7 +37,7 @@ def kernel_scaling(scale_data, kernel_dict, rescale):
                 ktype))
         k = kernel
 
-    return k
+    return kernel_list
 
 
 def _constant_kernel_scale(kernel, mean, std, rescale):

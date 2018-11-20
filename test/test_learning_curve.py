@@ -157,7 +157,7 @@ class TestCurve(unittest.TestCase):
         regularization = np.sqrt(0.001)
         gp = GaussianProcess(train_fp=train_features,
                              train_target=train_targets,
-                             kernel_dict=kdict,
+                             kernel_list=kdict,
                              regularization=regularization,
                              optimize_hyperparameters=False,
                              scale_data=True)

@@ -7,13 +7,13 @@ import numpy as np
 from .covariance import get_covariance
 
 
-def get_uncertainty(kernel_dict, test_fp, ktb, cinv, log_scale):
+def get_uncertainty(kernel_list, test_fp, ktb, cinv, log_scale):
     """Function to calculate uncertainty.
 
     Parameters
     ----------
-    kernel_dict : dict
-        Dictionary containing all information for the kernels.
+    kernel_list : list
+        List containing all dictionaries for the kernels.
     test_fp : array
         Test feature set.
     ktb : array
@@ -31,7 +31,7 @@ def get_uncertainty(kernel_dict, test_fp, ktb, cinv, log_scale):
     """
     # Generate the test covariance matrix.
     kxx = get_covariance(
-        kernel_dict=kernel_dict, matrix1=test_fp, log_scale=log_scale,
+        kernel_list=kernel_list, matrix1=test_fp, log_scale=log_scale,
         eval_gradients=False
     )
 

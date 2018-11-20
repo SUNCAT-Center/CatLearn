@@ -18,7 +18,7 @@ from .cost_function import get_error, _cost_function
 class GaussianProcess(object):
     """Gaussian processes functions for the machine learning."""
 
-    def __init__(self, train_fp, train_target, kernel_dict, gradients=None,
+    def __init__(self, train_fp, train_target, kernel_list, gradients=None,
                  regularization=None, regularization_bounds=None,
                  optimize_hyperparameters=False, scale_optimizer=False,
                  scale_data=False):
@@ -30,7 +30,7 @@ class GaussianProcess(object):
             A list of training fingerprint vectors.
         train_target : list
             A list of training targets used to generate the predictions.
-        kernel_dict : list
+        kernel_list : list
             This list can contain many dictionaries, each one containing
             parameters for separate kernels.
             Each kernel dict contains information on a kernel such as:
@@ -73,8 +73,8 @@ class GaussianProcess(object):
             if self.eval_gradients:
                 regularization_bounds = (1e-3, 1e3)
 
-        self.kernel_dict, self.bounds = prepare_kernels(
-            kernel_dict, regularization_bounds=regularization_bounds,
+        self.kernel_list, self.bounds = prepare_kernels(
+            kernel_list, regularization_bounds=regularization_bounds,
             eval_gradients=self.eval_gradients, N_D=self.N_D
         )
 
@@ -141,7 +141,7 @@ class GaussianProcess(object):
         data = defaultdict(list)
 
         # Calculate the covariance between the test and training datasets.
-        ktb = get_covariance(kernel_dict=self.kernel_dict, matrix1=test_fp,
+        ktb = get_covariance(kernel_list=self.kernel_list, matrix1=test_fp,
                              matrix2=self.train_fp, regularization=None,
                              log_scale=self.scale_optimizer,
                              eval_gradients=self.eval_gradients)
@@ -160,7 +160,7 @@ class GaussianProcess(object):
         if get_training_error:
             # Calculate the covariance between the training dataset.
             kt_train = get_covariance(
-                kernel_dict=self.kernel_dict, matrix1=self.train_fp,
+                kernel_list=self.kernel_list, matrix1=self.train_fp,
                 regularization=None, log_scale=self.scale_optimizer,
                 eval_gradients=self.eval_gradients)
 
@@ -182,7 +182,7 @@ class GaussianProcess(object):
         # Calculate uncertainty associated with prediction on test data.
         if uncertainty:
             data['uncertainty'] = get_uncertainty(
-                kernel_dict=self.kernel_dict, test_fp=test_fp,
+                kernel_list=self.kernel_list, test_fp=test_fp,
                 ktb=ktb, cinv=self.cinv,
                 log_scale=self.scale_optimizer
             )
@@ -213,7 +213,7 @@ class GaussianProcess(object):
             A list of testing fingerprint vectors.
         """
         # Calculate the covariance between the test and training datasets.
-        ktb = get_covariance(kernel_dict=self.kernel_dict, matrix1=test_fp,
+        ktb = get_covariance(kernel_list=self.kernel_list, matrix1=test_fp,
                              matrix2=self.train_fp, regularization=None,
                              log_scale=self.scale_optimizer,
                              eval_gradients=self.eval_gradients)
@@ -221,7 +221,7 @@ class GaussianProcess(object):
         data = defaultdict(list)
 
         data['uncertainty'] = get_uncertainty(
-            kernel_dict=self.kernel_dict, test_fp=test_fp,
+            kernel_list=self.kernel_list, test_fp=test_fp,
             ktb=ktb, cinv=self.cinv,
             log_scale=self.scale_optimizer)
 
@@ -284,7 +284,7 @@ class GaussianProcess(object):
 
         # Get the Gram matrix on-the-fly if none is suppiled.
         cvm = get_covariance(
-            kernel_dict=self.kernel_dict, matrix1=self.train_fp,
+            kernel_list=self.kernel_list, matrix1=self.train_fp,
             regularization=self.regularization, log_scale=scale_optimizer,
             eval_gradients=self.eval_gradients)
 
@@ -314,19 +314,19 @@ class GaussianProcess(object):
             Define scipy minimizer method to call. Default is L-BFGS-B.
         """
         # Create a list of all hyperparameters.
-        theta = kdicts2list(self.kernel_dict, N_D=self.N_D)
+        theta = kdicts2list(self.kernel_list, N_D=self.N_D)
         theta = np.append(theta, self.regularization)
 
         if loss_function == 'lml':
             # Define fixed arguments for log_marginal_likelihood
             args = (np.array(self.train_fp), np.array(self.train_target),
-                    self.kernel_dict, self.scale_optimizer,
+                    self.kernel_list, self.scale_optimizer,
                     self.eval_gradients, None, eval_jac)
             lf = log_marginal_likelihood
         elif loss_function == 'rmse' or loss_function == 'absolute':
             # Define fixed arguments for rmse loss function
             args = (np.array(self.train_fp), np.array(self.train_target),
-                    self.kernel_dict, self.scale_optimizer, loss_function)
+                    self.kernel_list, self.scale_optimizer, loss_function)
             lf = _cost_function
         else:
             raise NotImplementedError(str(loss_function))
@@ -344,13 +344,13 @@ class GaussianProcess(object):
                                           T=10., interval=30, niter=30,
                                           minimizer_kwargs=minimizer_kwargs)
 
-        # Update kernel_dict and regularization with optimized values.
-        self.kernel_dict = list2kdict(self.theta_opt['x'][:-1],
-                                      self.kernel_dict)
+        # Update kernel_list and regularization with optimized values.
+        self.kernel_list = list2kdict(self.theta_opt['x'][:-1],
+                                      self.kernel_list)
         self.regularization = self.theta_opt['x'][-1]
         self.log_marginal_likelihood = -self.theta_opt['fun']
         # Make a new covariance matrix with the optimized hyperparameters.
-        cvm = get_covariance(kernel_dict=self.kernel_dict,
+        cvm = get_covariance(kernel_list=self.kernel_list,
                              matrix1=self.train_fp,
                              regularization=self.regularization,
                              log_scale=self.scale_optimizer,
@@ -358,7 +358,7 @@ class GaussianProcess(object):
         # Invert the covariance matrix.
         self.cinv = np.linalg.inv(cvm)
 
-    def update_gp(self, train_fp=None, train_target=None, kernel_dict=None,
+    def update_gp(self, train_fp=None, train_target=None, kernel_list=None,
                   scale_optimizer=False, gradients=None,
                   regularization_bounds=(1e-6, None),
                   optimize_hyperparameters=False):
@@ -374,7 +374,7 @@ class GaussianProcess(object):
             A list of training fingerprint vectors.
         train_target : list
             A list of training targets used to generate the predictions.
-        kernel_dict : dict
+        kernel_list : dict
             This dict can contain many other dictionarys, each one containing
             parameters for separate kernels.
             Each kernel dict contains information on a kernel such as:
@@ -395,9 +395,9 @@ class GaussianProcess(object):
         if gradients is not None:
             eval_gradients = True
 
-        if kernel_dict is not None:
-            self.kernel_dict, self.bounds = prepare_kernels(
-                kernel_dict, regularization_bounds=regularization_bounds,
+        if kernel_list is not None:
+            self.kernel_list, self.bounds = prepare_kernels(
+                kernel_list, regularization_bounds=regularization_bounds,
                 eval_gradients=eval_gradients, N_D=self.N_D
             )
         if train_target is not None:
@@ -450,7 +450,7 @@ class GaussianProcess(object):
         data = defaultdict(list)
         # Calculate the K(X*,X*) covariance matrix.
         ktest = get_covariance(
-            kernel_dict=self.kernel_dict, matrix1=test, regularization=None,
+            kernel_list=self.kernel_list, matrix1=test, regularization=None,
             log_scale=self.scale_optimizer, eval_gradients=self.eval_gradients)
 
         # Form H and H* matrix, multiplying X by basis.
@@ -484,14 +484,14 @@ class GaussianProcess(object):
 
     def _update_lml(self):
         # Create a list of all hyperparameters.
-        theta = kdicts2list(self.kernel_dict, N_D=self.N_D)
+        theta = kdicts2list(self.kernel_list, N_D=self.N_D)
         theta = np.append(theta, self.regularization)
         # Update log marginal likelihood.
         self.log_marginal_likelihood = -log_marginal_likelihood(
                 theta=theta,
                 train_matrix=np.array(self.train_fp),
                 targets=np.array(self.train_target),
-                kernel_dict=self.kernel_dict,
+                kernel_list=self.kernel_list,
                 scale_optimizer=self.scale_optimizer,
                 eval_gradients=self.eval_gradients,
                 cinv=self.cinv,

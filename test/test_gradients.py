@@ -21,11 +21,11 @@ class TestGaussianKernel(unittest.TestCase):
     def test_cinv_is_good(self):
         kdict = [{'type': 'gaussian', 'width': width, 'scaling': scaling}]
         gp = GaussianProcess(
-                kernel_dict=kdict, train_fp=train, train_target=target,
+                kernel_list=kdict, train_fp=train, train_target=target,
                 gradients=None, scale_data=True,
                 optimize_hyperparameters=False)
         gp_grad = GaussianProcess(
-            kernel_dict=kdict, train_fp=train, train_target=target,
+            kernel_list=kdict, train_fp=train, train_target=target,
             gradients=gradients, scale_data=True,
             optimize_hyperparameters=False)
 
@@ -113,7 +113,7 @@ class TestGaussianKernel(unittest.TestCase):
     def test_hyperparameter_opt(self):
         kdict = [{'type': 'gaussian', 'width': width, 'scaling': scaling}]
         gp_hyp = GaussianProcess(
-            kernel_dict=kdict, train_fp=train, train_target=target,
+            kernel_list=kdict, train_fp=train, train_target=target,
             gradients=gradients, scale_data=True,
             optimize_hyperparameters=False, regularization=np.sqrt(1e-3))
         gp_hyp.optimize_hyperparameters(global_opt=False)

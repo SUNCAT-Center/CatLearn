@@ -586,7 +586,7 @@ def train_gp_model(self):
     print('Training a GP process...')
     print('Number of training points:', len(scaled_targets))
 
-    self.gp = GaussianProcess(kernel_dict=kdict,
+    self.gp = GaussianProcess(kernel_list=kdict,
                               regularization=0.0,
                               regularization_bounds=(0.0, 0.0),
                               train_fp=train,
