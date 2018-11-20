@@ -120,6 +120,8 @@ There is much functionality in CatLearn to assist in handling atom data and buil
     -   Bulk systems
     -   Support/slab systems
     -   Discrete systems
+-   Machine learning surrogate models:
+    -   Machine Learning Nudged Elastic Band (ML-NEB) algorithm.     
 -   Preprocessing routines:
     -   Data cleaning
     -   Feature elimination
