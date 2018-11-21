@@ -15,6 +15,7 @@ import copy
 import os
 from catlearn.regression import GaussianProcess
 from ase.calculators.calculator import Calculator, all_changes
+from ase.atoms import Atoms
 
 
 class MLNEB(object):
@@ -27,13 +28,13 @@ class MLNEB(object):
 
         Parameters
         ----------
-        start: Trajectory file (in ASE format).
-            Initial end-point of the NEB path.
+        start: Trajectory file (in ASE format) or Atoms object.
+            Initial end-point of the NEB path or Atoms object.
         end: Trajectory file (in ASE format).
             Final end-point of the NEB path.
-        path: Trajectory file (in ASE format) (optional).
-            Atoms trajectory with the intermediate images of the path
-            between the two end-points.
+        path: (optional) Trajectory file (in ASE format) or list of Atoms.
+            Atoms trajectory or list of Atoms containing the images along the
+            path.
         n_images: int or float
             Number of images of the path (if not included a path before).
              The number of images include the 2 end-points of the NEB path.
@@ -52,6 +53,17 @@ class MLNEB(object):
             See https://wiki.fysik.dtu.dk/ase/ase/calculators/calculators.html
         """
 
+        # Convert Atoms and list of Atoms to trajectory files.
+        if isinstance(start, Atoms):
+            write('initial.traj', start)
+            start = 'initial.traj'
+        if isinstance(end, Atoms):
+            write('final.traj', end)
+            end = 'final.traj'
+        if isinstance(path, list):
+            write('initial_path.traj', path)
+            path = 'initial_path.traj'
+
         # Start end-point, final end-point and path (optional).
         self.start = start
         self.end = end
@@ -63,7 +75,7 @@ class MLNEB(object):
         self.ase_calc = ase_calc
         self.ase = True
         self.mic = mic
-        self.version = 'NEB v.1.0.0'
+        self.version = 'ML-NEB v.1.0.0'
         print_version(self.version)
 
         # Reset.
