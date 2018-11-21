@@ -22,6 +22,7 @@ from test_learning_curve import TestCurve
 from test_io import TestIO
 from test_ga import TestGeneticAlgorithm
 from test_autocorrelation import TestAutoCorrelation
+from test_mlneb import TestMLNEB
 
 from test_functions import ConfigTestCase
 
@@ -71,7 +72,8 @@ if __name__ == '__main__':
         TestIO,
         TestGeneticAlgorithm,
         ConfigTestCase,
-        TestAutoCorrelation
+        TestAutoCorrelation,
+        TestMLNEB
     ])
 
     # Clean everything up.
