@@ -57,12 +57,12 @@ class TestPrediction(unittest.TestCase):
         train_features, train_targets, test_features, test_targets = get_data()
 
         # Test prediction routine with linear kernel.
-        kdict = {'k1': {'type': 'linear', 'scaling': 1.,
-                        'scaling_bounds': ((0., None),)},
-                 'c1': {'type': 'constant', 'const': 1.}}
+        kdict = [{'type': 'linear', 'scaling': 1.,
+                  'scaling_bounds': ((0., None),)},
+                 {'type': 'constant', 'const': 1.}]
         gp = GaussianProcess(
             train_fp=train_features, train_target=train_targets,
-            kernel_dict=kdict, regularization=1e-3,
+            kernel_list=kdict, regularization=np.sqrt(1e-3),
             optimize_hyperparameters=True, scale_data=True)
         pred = gp.predict(test_fp=test_features,
                           test_target=test_targets,
@@ -76,14 +76,14 @@ class TestPrediction(unittest.TestCase):
         train_features, train_targets, test_features, test_targets = get_data()
 
         # Test prediction routine with quadratic kernel.
-        kdict = {'k1': {'type': 'quadratic', 'slope': 1., 'degree': 1.,
-                        'scaling': 1.,
-                        'bounds': ((1e-5, None),) *
-                        (np.shape(train_features)[1] + 1),
-                        'scaling_bounds': ((0., None),)}}
+        kdict = [{'type': 'quadratic', 'slope': 1., 'degree': 1.,
+                  'scaling': 1.,
+                  'bounds': ((1e-5, None),) *
+                  (np.shape(train_features)[1] + 1),
+                  'scaling_bounds': ((0., None),)}]
         gp = GaussianProcess(
             train_fp=train_features, train_target=train_targets,
-            kernel_dict=kdict, regularization=1e-3,
+            kernel_list=kdict, regularization=np.sqrt(1e-3),
             optimize_hyperparameters=True, scale_data=True)
         pred = gp.predict(test_fp=test_features,
                           test_target=test_targets,
@@ -98,10 +98,10 @@ class TestPrediction(unittest.TestCase):
         train_features, train_targets, test_features, test_targets = get_data()
 
         # Test prediction routine with gaussian kernel.
-        kdict = {'k1': {'type': 'gaussian', 'width': 1., 'scaling': 1.}}
+        kdict = [{'type': 'gaussian', 'width': 1., 'scaling': 1.}]
         gp = GaussianProcess(
             train_fp=train_features, train_target=train_targets,
-            kernel_dict=kdict, regularization=1e-3,
+            kernel_list=kdict, regularization=np.sqrt(1e-3),
             optimize_hyperparameters=True, scale_data=True)
         pred = gp.predict(test_fp=test_features,
                           test_target=test_targets,
@@ -119,15 +119,14 @@ class TestPrediction(unittest.TestCase):
               pred['validation_error']['absolute_average'])
 
         # Test prediction routine with single width parameter.
-        kdict = {'k1': {'type': 'gaussian', 'width': 1., 'scaling': 1.,
-                        'dimension': 'single',
-                        'bounds': ((1e-5, None),),
-                        'scaling_bounds': ((0., None),)}}
+        kdict = [{'type': 'gaussian', 'width': 1., 'scaling': 1.,
+                  'dimension': 'single', 'bounds': ((1e-5, None),),
+                  'scaling_bounds': ((0., None),)}]
         gp = GaussianProcess(
             train_fp=train_features, train_target=train_targets,
-            kernel_dict=kdict, regularization=1e-3,
+            kernel_list=kdict, regularization=np.sqrt(1e-3),
             optimize_hyperparameters=True, scale_data=True)
-        self.assertEqual(len(gp.kernel_dict['k1']['width']), 1)
+        self.assertEqual(len(gp.kernel_list[0]['width']), 1)
         pred = gp.predict(test_fp=test_features,
                           test_target=test_targets,
                           get_validation_error=True,
@@ -144,13 +143,13 @@ class TestPrediction(unittest.TestCase):
         train_features, train_targets, test_features, test_targets = get_data()
 
         # Test prediction routine with laplacian kernel.
-        kdict = {'k1': {'type': 'laplacian', 'width': 1., 'scaling': 1.,
-                        'bounds': ((1e-5, None),) *
-                        np.shape(train_features)[1],
-                        'scaling_bounds': ((0., None),)}}
+        kdict = [{'type': 'laplacian', 'width': 1., 'scaling': 1.,
+                  'bounds': ((1e-5, None),) *
+                  np.shape(train_features)[1],
+                  'scaling_bounds': ((0., None),)}]
         gp = GaussianProcess(
             train_fp=train_features, train_target=train_targets,
-            kernel_dict=kdict, regularization=1e-3,
+            kernel_list=kdict, regularization=np.sqrt(1e-3),
             optimize_hyperparameters=True, scale_data=True)
         pred = gp.predict(test_fp=test_features,
                           test_target=test_targets,
@@ -165,13 +164,13 @@ class TestPrediction(unittest.TestCase):
         train_features, train_targets, test_features, test_targets = get_data()
 
         # Test prediction with addative linear and gaussian kernel.
-        kdict = {'k1': {'type': 'linear', 'features': [0, 1], 'scaling': 1.},
-                 'k2': {'type': 'gaussian', 'features': [2, 3], 'width': 1.,
-                        'scaling': 1.},
-                 'c1': {'type': 'constant', 'const': 1.}}
+        kdict = [{'type': 'linear', 'features': [0, 1], 'scaling': 1.},
+                 {'type': 'gaussian', 'features': [2, 3], 'width': 1.,
+                  'scaling': 1.},
+                 {'type': 'constant', 'const': 1.}]
         gp = GaussianProcess(
             train_fp=train_features, train_target=train_targets,
-            kernel_dict=kdict, regularization=1e-3,
+            kernel_list=kdict, regularization=np.sqrt(1e-3),
             optimize_hyperparameters=True, scale_data=True)
         pred = gp.predict(test_fp=test_features,
                           test_target=test_targets,
@@ -185,13 +184,13 @@ class TestPrediction(unittest.TestCase):
         train_features, train_targets, test_features, test_targets = get_data()
 
         # Test prediction with multiplication of linear & gaussian kernel.
-        kdict = {'k1': {'type': 'linear', 'features': [0, 1], 'scaling': 1.},
-                 'k2': {'type': 'gaussian', 'features': [2, 3], 'width': 1.,
-                        'scaling': 1., 'operation': 'multiplication'},
-                 'c1': {'type': 'constant', 'const': 1.}}
+        kdict = [{'type': 'linear', 'features': [0, 1], 'scaling': 1.},
+                 {'type': 'gaussian', 'features': [2, 3], 'width': 1.,
+                  'scaling': 1., 'operation': 'multiplication'},
+                 {'type': 'constant', 'const': 1.}]
         gp = GaussianProcess(
             train_fp=train_features, train_target=train_targets,
-            kernel_dict=kdict, regularization=1e-3,
+            kernel_list=kdict, regularization=np.sqrt(1e-3),
             optimize_hyperparameters=True, scale_data=True)
         pred = gp.predict(test_fp=test_features,
                           test_target=test_targets,
@@ -205,13 +204,13 @@ class TestPrediction(unittest.TestCase):
         """Test Gaussian process predictions with the multiplication kernel."""
         train_features, train_targets, test_features, test_targets = get_data()
 
-        kdict = {'k1': {'type': 'linear', 'scaling': 1.},
-                 'k2': {'type': 'gaussian', 'width': 1., 'scaling': 1.,
-                        'operation': 'multiplication'},
-                 'c1': {'type': 'constant', 'const': 1.}}
+        kdict = [{'type': 'linear', 'scaling': 1.},
+                 {'type': 'gaussian', 'width': 1., 'scaling': 1.,
+                  'operation': 'multiplication'},
+                 {'type': 'constant', 'const': 1.}]
         gp = GaussianProcess(
             train_fp=train_features, train_target=train_targets,
-            kernel_dict=kdict, regularization=1e-3,
+            kernel_list=kdict, regularization=np.sqrt(1e-3),
             optimize_hyperparameters=True, scale_data=True)
 
         # Test updating the last model.
@@ -224,12 +223,12 @@ class TestPrediction(unittest.TestCase):
         train_targets = np.concatenate((train_targets, test_targets))
         new_features = np.random.random_sample((len(test_features), 5))
         test_features = np.concatenate((test_features, new_features), axis=1)
-        kdict = {'k1': {'type': 'linear', 'scaling': 1.},
-                 'k2': {'type': 'gaussian', 'width': 1., 'scaling': 1.,
-                        'operation': 'multiplication'},
-                 'c1': {'type': 'constant', 'const': 1.}}
+        kdict = [{'type': 'linear', 'scaling': 1.},
+                 {'type': 'gaussian', 'width': 1., 'scaling': 1.,
+                  'operation': 'multiplication'},
+                 {'type': 'constant', 'const': 1.}]
         gp.update_gp(train_fp=train_features, train_target=train_targets,
-                     kernel_dict=kdict)
+                     kernel_list=kdict)
         pred = gp.predict(test_fp=test_features,
                           test_target=test_targets,
                           get_validation_error=True,
@@ -245,11 +244,11 @@ class TestPrediction(unittest.TestCase):
         train_features, train_targets, test_features, test_targets = get_data()
 
         # Start the sensitivity analysis.
-        kdict = {'k1': {'type': 'gaussian', 'width': 30., 'scaling': 5.}}
+        kdict = [{'type': 'gaussian', 'width': 30., 'scaling': 5.}]
         sen = SensitivityAnalysis(
             train_matrix=train_features[:, :5], train_targets=train_targets,
-            test_matrix=test_features[:,
-                                      :5], kernel_dict=kdict, init_reg=0.001,
+            test_matrix=test_features[:, :5], kernel_list=kdict,
+            init_reg=np.sqrt(0.001),
             init_width=10.)
 
         sen.backward_selection(

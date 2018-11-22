@@ -1,9 +1,9 @@
-"""This tutorial is intended to help you get familiar with using AtoML to set
+"""This tutorial is intended to help you get familiar with using CatLearn to set
 up a model and do predictions.
 
 First we set up a known underlying function in one dimension.
 Then, we pick some values to train.
-Finally we will use AtoML to make predictions on some unseen fingerprint and
+Finally we will use CatLearn to make predictions on some unseen fingerprint and
 benchmark those predictions against the known underlying function.
 In this toy model we show that one can use different acquisition functions
 to guide us in selecting the next training point in a wise manner.
@@ -12,8 +12,8 @@ to guide us in selecting the next training point in a wise manner.
 import numpy as np
 import matplotlib.pyplot as plt
 
-from atoml.regression import GaussianProcess
-from atoml.regression.acquisition_functions import AcquisitionFunctions
+from catlearn.regression import GaussianProcess
+from catlearn.active_learning.acquisition_functions import UCB
 
 
 # A known underlying function in one dimension [y] and first derivative [dy].
@@ -29,16 +29,17 @@ def afunc(x):
 
 
 # Pick some random points to train:
-train = np.array([[0.1], [1.0]])
+train = np.array([[0.1], [3.0], [6.0]])
 
 # Define initial prediction parameters.
-reg = 0.01
+reg = np.sqrt(0.01)
 w1 = 1.0  # Too large widths results in a biased model.
+width_bounds = ((0.1, 1.0),)
+scaling_bounds = ((1.0, 1.0),)
 scaling_exp = 1.0
-constant = 1.0
 
 # Create figure.
-fig = plt.figure(figsize=(18.0, 8.0))
+fig = plt.figure(figsize=(17.0, 8.0))
 
 # Times that we train the model, in each iteration we add a new training point.
 number_of_iterations = 10
@@ -70,11 +71,12 @@ for iteration in range(1, number_of_iterations+1):
     # Gaussian Process.
 
     # Set up the prediction routine and optimize hyperparameters.
-    kdict = {'k1': {'type': 'gaussian', 'width': w1, 'scaling': scaling_exp}
-             }
+    kdict = [{'type': 'gaussian',
+              'width': w1, 'bounds': width_bounds,
+              'scaling': scaling_exp, 'scaling_bounds':scaling_bounds}]
 
     gp = GaussianProcess(
-        kernel_dict=kdict, regularization=reg**2, train_fp=train,
+        kernel_dict=kdict, regularization=reg, train_fp=train,
         train_target=target, optimize_hyperparameters=True,
         gradients=gradients, scale_data=True)
     print('Optimized kernel:', gp.kernel_dict)
@@ -84,17 +86,16 @@ for iteration in range(1, number_of_iterations+1):
     prediction = np.array(pred['prediction'][:, 0])
 
     # Calculate the uncertainty of the predictions.
-    uncertainty = np.array(pred['uncertainty'])
+    uncertainty = np.array(pred['uncertainty_with_reg'])
 
     # Get confidence interval on predictions.
     upper = prediction + uncertainty
     lower = prediction - uncertainty
 
-    """A new training point is added using the UCB, EI or PI acquisition
-    functions:"""
+    # A new training point is added using the UCB acquisition function.
 
-    acq = (AcquisitionFunctions(objective='min', kappa=1.5).rank(
-    predictions=prediction, uncertainty=uncertainty, targets=target))['UCB']
+    acq = UCB(predictions=prediction, uncertainty=uncertainty,
+              objective='min', kappa=1.5)
 
     """ Note: The acquisition function provides positive scores. Therefore,
     one must pass the negative of it (-acq) to optimize the acq.
@@ -135,7 +136,7 @@ for iteration in range(1, number_of_iterations+1):
     if iteration == 1:
         plt.legend(['Real function', 'Training example', 'Posterior mean',
         'Acquisition function', 'Confidence interv. ($\sigma$)'],loc=9,
-        bbox_to_anchor=(0.9, 1.3), ncol=3)
+        bbox_to_anchor=(2.0, 1.3), ncol=9)
 
     # Gradients
 

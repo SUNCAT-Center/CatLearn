@@ -1,17 +1,17 @@
-"""Fifth AtoML tutorial.
+"""Fifth CatLearn tutorial.
 
-This tutorial is intended to help you get familiar with using AtoML to set up a
-model and do predictions.
+This tutorial is intended to help you get familiar with using CatLearn to set
+up a model and do predictions.
 
 First we set up a known underlying function in one dimension (including
 first derivative). Then, we pick some values to train.
-Finally we will use AtoML to make predictions on some unseen fingerprint and
+Finally we will use CatLearn to make predictions on some unseen fingerprint and
 benchmark those predictions against the known underlying function.
 """
 import numpy as np
 import matplotlib.pyplot as plt
 
-from atoml.regression import GaussianProcess
+from catlearn.regression import GaussianProcess
 
 
 # Set whether first derivative observations are included or not.
@@ -78,17 +78,23 @@ gradients = org_gradients
 sdt1 = 0.01
 w1 = 1.0  # Too large widths results in a biased model.
 scaling = 1.0
+width_bounds = ((0.01, 1.0),) * 2
+scaling_bounds = ((1.0, 1.0),)
+reg_bounds = (1e-1, 1e-4)
 
-kdict = {'k1': {'type': 'gaussian', 'width': w1, 'scaling': scaling}}
+kdict = [{'type': 'gaussian',
+          'width': w1, 'bounds': width_bounds,
+          'scaling': scaling, 'scaling_bounds': scaling_bounds
+          }]
 
 gp = GaussianProcess(
-    kernel_dict=kdict, regularization=sdt1**2, train_fp=train,
-    train_target=target, optimize_hyperparameters=False, gradients=gradients,
-    scale_optimizer=False, scale_data=True
+    kernel_dict=kdict, regularization=sdt1, regularization_bounds=reg_bounds,
+    train_fp=train, train_target=target, optimize_hyperparameters=False,
+    gradients=gradients, scale_optimizer=False, scale_data=True
 )
 
 # Hyperaparam optimization algorithms change from default.
-gp.optimize_hyperparameters(algomin='TNC', global_opt=False)
+gp.optimize_hyperparameters(algomin='L-BFGS-B', global_opt=False)
 print('Optimized kernel:', gp.kernel_dict)
 
 # Do the optimized predictions.
@@ -96,7 +102,7 @@ pred = gp.predict(test_fp=test, uncertainty=True)
 prediction = np.array(pred['prediction'][:, 0])
 
 # Calculate the uncertainty of the predictions.
-uncertainty = np.array(pred['uncertainty'])
+uncertainty = np.array(pred['uncertainty_with_reg'])
 
 # Get confidence interval on predictions.
 upper = prediction + uncertainty
