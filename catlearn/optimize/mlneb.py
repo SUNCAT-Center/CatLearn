@@ -508,7 +508,6 @@ class MLNEB(object):
                     train_gp_model(self)
                     get_results_predicted_path(self)
                     store_results_neb(self)
-                    store_trajectory_neb(self)
                     congrats_neb_converged()
                     # Last path.
                     os.remove('./last_predicted_path.traj')

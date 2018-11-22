@@ -83,3 +83,15 @@ if __name__ == '__main__':
     os.remove('cvsave.pickle')
     os.remove('cvsave.json')
     os.remove('gaWrite.json')
+
+    os.remove('all_predicted_paths.traj')
+    os.remove('evaluated_structures.traj')
+    os.remove('final.traj')
+    os.remove('final_optimized.traj')
+    os.remove('initial.traj')
+    os.remove('initial_optimized.traj')
+    os.remove('results_neb.csv')
+    os.remove('results_neb_interpolation.csv')
+    os.remove('ML-NEB.traj')
+    os.remove('warnings_and_errors.txt')
+
