@@ -53,10 +53,10 @@ In the most basic form, it is possible to set up a GP model and make some predic
     test_features = np.arange(100).reshape(25, 4)
 
     # Setup the kernel.
-    kernel = {'k1': {'type': 'gaussian', 'width': 0.5}}
+    kernel = [{'type': 'gaussian', 'width': 0.5}]
 
     # Train the GP model.
-    gp = GaussianProcess(kernel_dict=kernel, regularization=1e-3,
+    gp = GaussianProcess(kernel_list=kernel, regularization=1e-3,
                          train_fp=train_features, train_target=target,
                          optimize_hyperparameters=True)
 
@@ -95,6 +95,10 @@ There is much functionality in CatLearn to assist in handling atom data and buil
     *   K-fold cv
     *   Ensemble k-fold cv
 
+*   Optimize:
+
+    *   Machine Learning Accelerated Nudged Elastic Band ML-NEB
+
 *   General utilities:
 
     *   K-means clustering
@@ -125,6 +129,7 @@ There is much functionality in CatLearn to assist in handling atom data and buil
   catlearn.regression
   catlearn.active_learning
   catlearn.estimator
+  catlearn.optimize
   catlearn.utilities
 
 
