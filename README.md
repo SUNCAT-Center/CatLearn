@@ -132,6 +132,8 @@ There is much functionality in CatLearn to assist in handling atom data and buil
 -   Cross-validation:
     -   K-fold cv
     -   Ensemble k-fold cv
+-   Machine Learning Algorithms
+    -   Machine Learning Nudged Elastic Band (ML-NEB) algorithm.
 -   General utilities:
     -   K-means clustering
     -   Neighborlist generators
