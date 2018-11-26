@@ -3,7 +3,7 @@
 -   Added ML-NEB algorithm for transition state search.
 -   Changed input format for kernels in the GP.
 
-# Version 0.5.0 (August 2018)
+# Version 0.5.0 (October 2018)
 
 -   Restructure of fingerprint module
 -   Pandas DataFrame getter in FeatureGenerator

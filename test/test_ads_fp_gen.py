@@ -120,11 +120,12 @@ class TestAdsorbateFeatures(unittest.TestCase):
         images = autogen_info(images)
         slabs = images_connectivity(slabs)
         image_pairs = zip(images, slabs)
-        reconstructed = check_reconstructions(image_pairs)
+        r_index, r_atoms = check_reconstructions(image_pairs)
         for i in range(len(images)):
             species = images[i].info['key_value_pairs']['species']
             connectivity2ads_index(images[i], species)
-        self.assertTrue(len(reconstructed) == 0)
+        self.assertTrue(len(r_index) == 0)
+        self.assertTrue(len(r_atoms) == 0)
 
     def test_slab_utils(self):
         images = self.setup_metals(n=2)
