@@ -25,10 +25,10 @@ def write(filename, model, ext='pkl'):
         train_features = model.train_fp
         train_targets = model.train_target
         regularization = model.regularization
-        kernel_dict = model.kernel_dict
+        kernel_list = model.kernel_list
         write_train_data(
             filename, train_features, train_targets, regularization,
-            kernel_dict)
+            kernel_list)
     else:
         raise NotImplementedError('{} file extension not implemented.'.format(
             ext))
@@ -53,11 +53,11 @@ def read(filename, ext='pkl'):
         with open('{}.pkl'.format(filename), 'rb') as infile:
             return pickle.load(infile)
     elif ext is 'hdf5':
-        train_features, train_targets, regularization, kernel_dict = \
+        train_features, train_targets, regularization, kernel_list = \
          read_train_data(filename)
         gp = GaussianProcess(
             train_fp=train_features, train_target=train_targets,
-            kernel_dict=kernel_dict, regularization=regularization,
+            kernel_list=kernel_list, regularization=regularization,
             optimize_hyperparameters=False)
         return gp
     else:
@@ -66,7 +66,7 @@ def read(filename, ext='pkl'):
 
 
 def write_train_data(filename, train_features, train_targets, regularization,
-                     kernel_dict):
+                     kernel_list):
     """Function to write raw training data.
 
     Parameters
@@ -79,8 +79,8 @@ def write_train_data(filename, train_features, train_targets, regularization,
         A list of the training targets.
     regularization : float
         The regularization parameter.
-    kernel_dict : dict
-        The dictionary containing parameters for the kernels.
+    kernel_list : dict
+        The list containing dictionaries for the kernels.
     """
     f = h5py.File('{}.hdf5'.format(filename), 'w')
     f.create_dataset('train_features', data=train_features, compression='gzip',
@@ -88,7 +88,7 @@ def write_train_data(filename, train_features, train_targets, regularization,
     f.create_dataset('train_targets', data=train_targets, compression='gzip',
                      compression_opts=9)
     f.create_dataset('regularization', data=regularization)
-    _dict_to_group(f, '/', kernel_dict)
+    _kernel_list_to_group(f, '/', kernel_list)
 
 
 def read_train_data(filename):
@@ -107,17 +107,59 @@ def read_train_data(filename):
         A list of the training targets.
     regularization : float
         The regularization parameter.
-    kernel_dict : dict
+    kernel_list : list
         The dictionary containing parameters for the kernels.
     """
     f = h5py.File('{}.hdf5'.format(filename), 'r')
     train_features = np.asarray(f['train_features'])
     train_targets = np.asarray(f['train_targets'])
     regularization = float(np.asarray(f['regularization']))
-    kernel_dict = _load_dict_from_group(f, '/')
+    kernel_list = _load_kernel_list_from_group(f)
 
-    return train_features, train_targets, regularization, kernel_dict
+    return train_features, train_targets, regularization, kernel_list
 
+
+def _kernel_list_to_group(h5file, path, klist):
+    """Convert a list of dictionaries to group format.
+
+    Parameters
+    ----------
+    h5file : hdf5
+        An open hdf5 file object.
+    path : str
+        The path to write data in the hdf5 file object.
+    klist : list
+        List of dictionaries to save in hdf5 format.
+    """
+    for i, kdict in enumerate(klist):
+        _dict_to_group(h5file, '/kernel_list/' + str(i) + '/', kdict)
+
+
+def _load_kernel_list_from_group(h5file):
+    """Convert a list of dictionaries to group format.
+
+    Parameters
+    ----------
+    h5file : hdf5
+        An open hdf5 file object.
+    path : str
+        The path to write data in the hdf5 file object.
+    klist : list
+        List of dictionaries to save in hdf5 format.
+    
+    Returns
+    -----------
+    kernel_list : list
+        List of dictionaries for all the kernels.
+    """
+    h5file.keys()
+    
+    kernel_list = []
+    for key, item in h5file['/kernel_list/'].items():
+        kernel_list.append(_load_dict_from_group(h5file,
+                                                 '/kernel_list/' + key + '/'))
+
+    return kernel_list
 
 def _dict_to_group(h5file, path, sdict):
     """Convert dictionary format to group format.

@@ -47,7 +47,7 @@ class GeneralGaussianProcess(object):
 
         self.gp = GaussianProcess(
             train_fp=train_features, train_target=train_targets,
-            kernel_dict=kdict, regularization=1e-1,
+            kernel_list=kdict, regularization=1e-1,
             optimize_hyperparameters=True, scale_data=False
             )
 

@@ -7,14 +7,14 @@ from catlearn.regression.gpfunctions.kernel_setup import kdict2list
 from catlearn.regression.gpfunctions import kernels as ak
 
 
-def get_covariance(kernel_dict, log_scale, matrix1, matrix2=None,
+def get_covariance(kernel_list, log_scale, matrix1, matrix2=None,
                    regularization=None, eval_gradients=False):
     """Return the covariance matrix of training dataset.
 
     Parameters
     ----------
-    kernel_dict : dict of dicts
-        A dict containing all data for the kernel functions.
+    kernel_list : dict of dicts
+        A dict containing all dictionaries for the kernels.
     log_scale:
         Flag to define if the hyperparameters are log scale.
     train_matrix : list
@@ -27,25 +27,24 @@ def get_covariance(kernel_dict, log_scale, matrix1, matrix2=None,
     n1, n1_D = np.shape(matrix1)
     # Make a copy of the feature matrix.
     store1, store2 = matrix1.copy(), None
-
     if matrix2 is not None:
         assert n1_D == np.shape(matrix2)[1]
         store2 = matrix2.copy()
     cov = None
 
-    # Loop over kernels in kernel_dict
-    for key in kernel_dict:
+    # Loop over kernels in kernel_list
+    for kdict in kernel_list:
         matrix1 = store1.copy()
         if store2 is not None:
             matrix2 = store2.copy()
-        ktype = kernel_dict[key]['type']
+        ktype = kdict['type']
 
         # Select a subset of features for the kernel
-        if 'features' in kernel_dict[key]:
-            matrix1 = matrix1[:, kernel_dict[key]['features']]
+        if 'features' in kdict:
+            matrix1 = matrix1[:, kdict['features']]
             if matrix2 is not None:
-                matrix2 = matrix2[:, kernel_dict[key]['features']]
-        theta = kdict2list(kernel_dict[key], n1_D)
+                matrix2 = matrix2[:, kdict['features']]
+        theta = kdict2list(kdict, n1_D)
         hyperparameters = theta[1]
         if len(theta[0]) == 0:
             scaling = 1.0
@@ -64,8 +63,7 @@ def get_covariance(kernel_dict, log_scale, matrix1, matrix2=None,
             cov = np.zeros(np.shape(k))
 
         # Generate the covariance matrix
-        if 'operation' in kernel_dict[key] and \
-           kernel_dict[key]['operation'] == 'multiplication':
+        if 'operation' in kdict and kdict['operation'] == 'multiplication':
             cov *= scaling * k
         else:
             cov += scaling * k
@@ -74,6 +72,5 @@ def get_covariance(kernel_dict, log_scale, matrix1, matrix2=None,
     if regularization is not None:
         if log_scale:
             regularization = np.exp(regularization)
-        cov += regularization * np.identity(len(cov))
-
+        cov += (regularization * np.identity(len(cov)))**2
     return cov

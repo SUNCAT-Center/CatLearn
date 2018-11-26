@@ -12,7 +12,7 @@ class SensitivityAnalysis(object):
     """Perform sensitivity analysis to estimate important features."""
 
     def __init__(self, train_matrix, train_targets, test_matrix,
-                 kernel_dict, init_reg=0.001, init_width=10.):
+                 kernel_list, init_reg=0.001, init_width=10.):
         """Initialize the class.
 
         Parameters
@@ -23,7 +23,7 @@ class SensitivityAnalysis(object):
             A list of target values.
         test_matrix : array
             Testing feature space data.
-        kernel_dict : dict
+        kernel_list : dict
             Information for the kernel.
             sensitivities at each step.
         init_reg : float
@@ -34,7 +34,7 @@ class SensitivityAnalysis(object):
         self.train_matrix = train_matrix
         self.train_targets = train_targets
         self.test_matrix = test_matrix
-        self.kernel_dict = kernel_dict
+        self.kernel_list = kernel_list
         self.reg = init_reg
         self.width = init_width
 
@@ -78,8 +78,8 @@ class SensitivityAnalysis(object):
         for i in pi:
             self.train_matrix = np.delete(self.train_matrix, dlist[i:], 1)
             self.test_matrix = np.delete(self.test_matrix, dlist[i:], 1)
-            w = np.delete(self.kernel_dict['k1']['width'], dlist[i:])
-            self.kernel_dict['k1']['width'] = w
+            w = np.delete(self.kernel_list[0]['width'], dlist[i:])
+            self.kernel_list[0]['width'] = w
             original_index = np.delete(original_index, dlist[i:])
 
             r = self._opt_step()
@@ -98,7 +98,7 @@ class SensitivityAnalysis(object):
             res['prediction'] = p
 
         # Set optimal parameters.
-        self.width = model.kernel_dict['k1']['width']
+        self.width = model.kernel_list[0]['width']
         res['widths'], res['reg'] = self.width, self.reg
 
         # Calculate the sensitivity of features.
@@ -115,15 +115,15 @@ class SensitivityAnalysis(object):
     def _mean_sensitivity(self):
         """Feature sensitivity on the predicted mean."""
         d, f = np.shape(self.train_matrix)
-        w = self.kernel_dict['k1']['width']
+        w = self.kernel_list[0]['width']
 
         # Calculate covariance.
         cvm = get_covariance(
-            kernel_dict=self.kernel_dict, matrix1=self.train_matrix,
+            kernel_list=self.kernel_list, matrix1=self.train_matrix,
             regularization=self.reg, log_scale=False
         )
         ktb = get_covariance(
-            kernel_dict=self.kernel_dict, matrix1=self.train_matrix,
+            kernel_list=self.kernel_list, matrix1=self.train_matrix,
             regularization=self.reg, log_scale=False
         )
 
@@ -150,11 +150,11 @@ class SensitivityAnalysis(object):
         # Train the GP.
         gp = GaussianProcess(
             train_fp=self.train_matrix, train_target=self.train_targets,
-            kernel_dict=self.kernel_dict, regularization=self.reg,
+            kernel_list=self.kernel_list, regularization=self.reg,
             optimize_hyperparameters=True, scale_data=True
         )
 
-        self.kernel_dict = gp.kernel_dict
+        self.kernel_list = gp.kernel_list
         self.reg = gp.regularization
 
         return gp

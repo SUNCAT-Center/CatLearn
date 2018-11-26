@@ -2,7 +2,7 @@
 import numpy as np
 import collections
 
-from ase.atoms import string2symbols
+from ase.symbols import string2symbols
 from ase.data import ground_state_magnetic_moments as gs_magmom
 from ase.data import atomic_numbers, chemical_symbols
 
