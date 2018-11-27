@@ -75,7 +75,7 @@ class MLNEB(object):
         self.ase_calc = ase_calc
         self.ase = True
         self.mic = mic
-        self.version = 'ML-NEB v.1.0.1-test'
+        self.version = 'ML-NEB v.1.0.0'
         print_version(self.version)
 
         # Reset.
@@ -566,17 +566,25 @@ def train_gp_model(self):
     """
     self.max_target = np.max(self.list_targets)
     scaled_targets = self.list_targets.copy() - self.max_target
-    sigma_f = 1e-3 + np.std(scaled_targets)**2
 
-    kdict = [{'type': 'gaussian', 'width': 0.4,
-              'dimension': 'single',
-              'bounds': ((0.01, self.path_distance),),
-              'scaling': sigma_f,
-              'scaling_bounds': ((sigma_f, sigma_f),)},
+    dimension = 'single'
+    bounds = ((0.01, self.path_distance),)
+
+    width = self.path_distance / 2
+
+    noise_energy = 0.005
+    noise_forces = 0.0005
+
+    kdict = [{'type': 'gaussian', 'width': width,
+              'dimension': dimension,
+              'bounds': bounds,
+              'scaling': 1.,
+              'scaling_bounds': ((1., 1.),)},
              {'type': 'noise_multi',
-              'hyperparameters': [0.005, 0.005 * 0.4**2],
-              'bounds': ((0.001, 0.050),
-                         (0.001 * 0.4**2, 0.050),)}]
+              'hyperparameters': [noise_energy, noise_forces],
+              'bounds': ((0.001, 0.010),
+                         (0.0001, 0.0010),)}
+             ]
 
     train = self.list_train.copy()
     gradients = self.list_gradients.copy()
