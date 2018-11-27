@@ -75,7 +75,7 @@ class MLNEB(object):
         self.ase_calc = ase_calc
         self.ase = True
         self.mic = mic
-        self.version = 'ML-NEB v.1.0.0'
+        self.version = 'ML-NEB v.1.0.1-test'
         print_version(self.version)
 
         # Reset.
