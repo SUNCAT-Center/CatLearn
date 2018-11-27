@@ -75,7 +75,7 @@ class MLNEB(object):
         self.ase_calc = ase_calc
         self.ase = True
         self.mic = mic
-        self.version = 'ML-NEB v.1.0.0'
+        self.version = 'ML-NEB v.1.0.1'
         print_version(self.version)
 
         # Reset.
@@ -283,6 +283,7 @@ class MLNEB(object):
 
             ml_steps = self.n_images * len(self.index_mask)
             ml_steps = 250 if ml_steps <= 250 else ml_steps  # Min steps.
+            ml_steps = 750 if ml_steps >= 750 else ml_steps  # Min steps.
 
             print('Max number steps:', ml_steps)
             ml_cycles = 0
