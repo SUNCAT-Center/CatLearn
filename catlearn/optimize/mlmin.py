@@ -137,20 +137,21 @@ class MLMin(object):
         self.list_max_abs_forces.append(self.max_abs_forces)
         print_info(self)
 
+        success_hyper = False
+
         while not converged(self):
 
             # 1. Train Machine Learning model.
             train = np.copy(self.list_train)
             targets = np.copy(self.list_targets)
             gradients = np.copy(self.list_gradients)
-
             u_prior = np.max(targets[:, 0])
-
             scaled_targets = targets - u_prior
             sigma_f = 1e-3 + np.std(scaled_targets)**2
 
             if kernel == 'SQE_fixed':
-                kdict = [{'type': 'gaussian', 'width': 0.25,
+                opt_hyper = False
+                kdict = [{'type': 'gaussian', 'width': 0.40,
                           'dimension': 'single',
                           'bounds': ((0.4, 0.4),),
                           'scaling': 1.0,
@@ -162,30 +163,46 @@ class MLMin(object):
                          ]
 
             if kernel == 'SQE':
-                u_prior = 0.0
+                opt_hyper = True
                 kdict = [{'type': 'gaussian', 'width': 0.4,
                           'dimension': 'single',
-                          'bounds': ((0.01, 0.4),),
+                          'bounds': ((0.01, 1.0),),
                           'scaling': sigma_f,
-                          'scaling_bounds': ((sigma_f, sigma_f + 1e2),)},
+                          'scaling_bounds': ((sigma_f, sigma_f),)},
                          {'type': 'noise_multi',
-                          'hyperparameters': [0.001, 0.001 * 0.4**2],
-                          'bounds': ((0.003, 0.050),
-                                     (0.003 * 0.4**2, 0.050),)}
+                          'hyperparameters': [0.005, 0.005 * 0.4**2],
+                          'bounds': ((0.001, 0.050),
+                                     (0.001 * 0.4**2, 0.050),)}
                          ]
 
             if kernel == 'ARD_SQE':
-                u_prior = 0.0
+                opt_hyper = True
                 kdict = [{'type': 'gaussian', 'width': 0.4,
                           'dimension': 'features',
-                          'bounds': ((0.01, 0.4),) * len(self.index_mask),
+                          'bounds': ((0.01, 1.0),) * len(self.index_mask),
                           'scaling': sigma_f,
-                          'scaling_bounds': ((sigma_f, sigma_f + 1e2),)},
+                          'scaling_bounds': ((sigma_f, sigma_f),)},
                          {'type': 'noise_multi',
-                          'hyperparameters': [0.001, 0.001 * 0.4**2],
-                          'bounds': ((0.003, 0.050),
-                                     (0.003 * 0.4**2, 0.050),)}
+                          'hyperparameters': [0.005, 0.005 * 0.4**2],
+                          'bounds': ((0.001, 0.050),
+                                     (0.001 * 0.4**2, 0.050),)}
                          ]
+
+            if kernel == 'SQE_not_scaled':
+                opt_hyper = True
+                kdict = [{'type': 'gaussian', 'width': 0.4,
+                          'dimension': 'single',
+                          'bounds': ((0.01, 1.0),),
+                          'scaling': 1.0,
+                          'scaling_bounds': ((1.0, 1.0),)},
+                         {'type': 'noise_multi',
+                          'hyperparameters': [0.005, 0.005 * 0.4**2],
+                          'bounds': ((0.001, 0.050),
+                                     (0.001 * 0.4**2, 0.050),)}
+                         ]
+
+                if success_hyper is not False:
+                    kdict = success_hyper
 
             if self.index_mask is not None:
                 train = apply_mask(list_to_mask=train,
@@ -197,21 +214,35 @@ class MLMin(object):
             print('Number of training points:', len(scaled_targets))
 
             # Start when the training list has more than 5 points:
-            opt_hyper = False
-            if self.feval > 5:
-                    opt_hyper = True
 
-            self.gp = GaussianProcess(kernel_dict=kdict,
+            self.gp = GaussianProcess(kernel_list=kdict,
                                       regularization=0.0,
                                       regularization_bounds=(0.0, 0.0),
                                       train_fp=train,
                                       train_target=scaled_targets,
                                       gradients=gradients,
-                                      optimize_hyperparameters=opt_hyper)
-            if opt_hyper is True:
-                print('Hyperparameter optimization:', self.gp.theta_opt)
+                                      optimize_hyperparameters=False)
 
             print('GP process trained.')
+
+            if opt_hyper is True:
+                if self.feval > 5:
+                    self.gp.optimize_hyperparameters()
+                    print('Hyperparam. optimization:', self.gp.theta_opt)
+                    if self.gp.theta_opt.success is True:
+                        print('Hyperparam. optimization was successful.')
+                        print('Updating kernel list...')
+                        success_hyper = self.gp.kernel_list
+
+                    if self.gp.theta_opt.success is not True:
+                        print('Hyperparam. optimization unsuccessful.')
+                        if success_hyper is False:
+                            print('Not enough data...')
+                        if success_hyper is not False:
+                            print('Using the last optimized hyperparamters.')
+
+                    print('GP process optimized.')
+                    print('Kernel list:', self.gp.kernel_list)
 
             # 2. Optimize Machine Learning model.
 

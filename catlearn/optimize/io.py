@@ -136,7 +136,7 @@ def print_info(self):
                                             self.max_abs_forces,
                                             converged(self)])
     if self.iter > 0:
-        self.table_results.add_row(['CatLearn',
+        self.table_results.add_row(['MLMin',
                                     self.iter,
                                     print_time(),
                                     self.list_targets[-1][0],
