@@ -566,25 +566,17 @@ def train_gp_model(self):
     """
     self.max_target = np.max(self.list_targets)
     scaled_targets = self.list_targets.copy() - self.max_target
+    sigma_f = 1e-3 + np.std(scaled_targets)**2
 
-    dimension = 'single'
-    bounds = ((0.01, self.path_distance),)
-
-    width = self.path_distance / 2
-
-    noise_energy = 0.005
-    noise_forces = 0.0005
-
-    kdict = [{'type': 'gaussian', 'width': width,
-              'dimension': dimension,
-              'bounds': bounds,
-              'scaling': 1.,
-              'scaling_bounds': ((1., 1.),)},
+    kdict = [{'type': 'gaussian', 'width': 0.4,
+              'dimension': 'single',
+              'bounds': ((0.01, self.path_distance),),
+              'scaling': sigma_f,
+              'scaling_bounds': ((sigma_f, sigma_f),)},
              {'type': 'noise_multi',
-              'hyperparameters': [noise_energy, noise_forces],
-              'bounds': ((0.001, 0.010),
-                         (0.0001, 0.0010),)}
-             ]
+              'hyperparameters': [0.005, 0.005 * 0.4**2],
+              'bounds': ((0.001, 0.050),
+                         (0.001 * 0.4**2, 0.050),)}]
 
     train = self.list_train.copy()
     gradients = self.list_gradients.copy()
