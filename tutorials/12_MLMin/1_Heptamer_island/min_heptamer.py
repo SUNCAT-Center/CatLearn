@@ -12,12 +12,13 @@ from catlearn.optimize.mlmin import MLMin
     Benchmark using MLMin, GPMin, LBFGS and FIRE. 
 """
 
-# 1. Structural relaxation. ##################################################
+# 1. Build Atoms Object.
+###############################################################################
 
 # Setup calculator:
 calc = EMT()
 
-# 1.1. Structures:
+# 1.1. Set up structure:
 
 # Build a 3 layers 5x5-Pt(111) slab.
 atoms = fcc111('Pt', size=(5, 5, 3))
@@ -42,7 +43,7 @@ add_adsorbate(atoms, atoms2, 2.5, offset=0.5)
 initial_mlmin = atoms.copy()
 initial_mlmin.set_calculator(calc)
 mlmin_opt = MLMin(initial_mlmin, trajectory='results_catlearn.traj')
-mlmin_opt.run(fmax=0.01, kernel='ARD_SQE')
+mlmin_opt.run(fmax=0.01, kernel='SQE')
 
 final_atoms = read('results_catlearn.traj', ':')
 
@@ -65,8 +66,9 @@ initial_fire.set_calculator(calc)
 fire_opt = FIRE(initial_fire, trajectory='results_fire.traj')
 fire_opt.run(fmax=0.01)
 
-
 # 3. Summary of the results:
+###############################################################################
+
 print('\n Summary of the results:\n ------------------------------------')
 
 fire_results = read('results_fire.traj', ':')

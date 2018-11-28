@@ -1,4 +1,3 @@
-from catlearn.optimize.convergence import converged
 from prettytable import PrettyTable
 import numpy as np
 from ase.io import Trajectory, write
@@ -102,7 +101,7 @@ def array_to_atoms(input_array):
 
 def _start_table(self):
     self.table_results = PrettyTable(['Method', 'Step', 'Time', 'Energy',
-                                      'fmax', 'Converged?'])
+                                      'fmax'])
 
 
 def print_info(self):
@@ -116,31 +115,18 @@ def print_info(self):
         if self.start_mode is 'trajectory':
             _start_table(self)
             for i in range(0, len(self.list_targets)):
-                self.table_results.add_row(['Trajectory', 0, print_time(),
-                                           self.list_targets[i][0],
-                                           self.list_max_abs_forces[i],
-                                           converged(self)])
-    if self.iter == 0:
-        if self.feval == 1:
-            self.table_results.add_row(['Eval.', self.iter,
-                                        print_time(),
-                                        self.list_targets[-1][0],
-                                        self.max_abs_forces,
-                                        converged(self)])
-
-        if self.feval == 2:
-            if self.jac:
-                self.table_results.add_row(['LineSearch', self.iter,
+                self.table_results.add_row(['Prev. calc.',
+                                            len(self.list_targets),
                                             print_time(),
-                                            self.list_targets[-1][0],
-                                            self.max_abs_forces,
-                                            converged(self)])
-    if self.iter > 0:
+                                            self.list_targets[i][0],
+                                            self.list_max_abs_forces[i]
+                                            ])
+    if self.iter >= 0:
         self.table_results.add_row(['MLMin',
                                     self.iter,
                                     print_time(),
                                     self.list_targets[-1][0],
-                                    self.max_abs_forces, converged(self)])
+                                    self.max_abs_forces])
     print(self.table_results)
 
 

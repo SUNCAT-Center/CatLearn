@@ -1,12 +1,12 @@
-from ase.cluster import wulff_construction
-from ase.calculators.emt import EMT
-from ase.io import read
+from ase import Atoms
+from gpaw import GPAW
 from ase.optimize import *
 from catlearn.optimize.mlmin import MLMin
+from ase.io import read
 
 
 """ 
-    Structure relaxation of Pt heptamer island on Pt(111).
+    Structure relaxation H2O using GPAW.
     Benchmark using MLMin, GPMin, LBFGS and FIRE. 
 """
 
@@ -14,19 +14,20 @@ from catlearn.optimize.mlmin import MLMin
 ###############################################################################
 
 # Setup calculator:
-calc = EMT()
+
+calc = GPAW(mode='lcao',
+            basis='dzp',
+            kpts={'density': 4.0})
 
 # 1.1. Set up structure:
+a = 6
+b = a / 2
+atoms = Atoms('H2O',
+            [(b, 0.7633 + b, -0.4876 + b),
+             (b, -0.7633 + b, -0.4876 + b),
+             (b, b, 0.1219 + b)], cell=[a, a, a])
+atoms.rattle(stdev=0.1, seed=0)
 
-surfaces = [(1, 0, 0), (1, 1, 0), (1, 1, 1)]
-esurf = [1.0, 1.1, 0.9]
-lc = 4.0
-size = 11
-atoms = wulff_construction('Au', surfaces, esurf,
-                           size, 'fcc',
-                           rounding='above', latticeconstant=lc)
-atoms.center(vacuum=5.0)
-atoms.rattle(stdev=0.1, seed=0)  # Rattle
 
 # 2. Benchmark.
 ###############################################################################
@@ -55,7 +56,6 @@ initial_fire = atoms.copy()
 initial_fire.set_calculator(calc)
 fire_opt = FIRE(initial_fire, trajectory='results_fire.traj')
 fire_opt.run(fmax=0.01)
-
 
 # 3. Summary of the results:
 ###############################################################################

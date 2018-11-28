@@ -8,7 +8,6 @@ from catlearn.optimize.constraints import create_mask, apply_mask
 from ase.neb import NEB
 from ase.neb import NEBTools
 from ase.io import read, write
-from ase.io.trajectory import TrajectoryWriter
 from ase.optimize import MDMin
 from scipy.spatial import distance
 import copy
@@ -20,10 +19,10 @@ from ase.atoms import Atoms
 
 class MLNEB(object):
 
-    def __init__(self, start, end, path=None, n_images=0.25, k=None,
-                 interpolation=None, mic=False, neb_method='improvedtangent',
-                 ase_calc=None, include_previous_calcs=False,
-                 stabilize=False, restart=False):
+    def __init__(self, start, end, prev_calculations=None,
+                 n_images=0.25, k=None, interpolation='idpp', mic=False,
+                 neb_method='improvedtangent', ase_calc=None, restart=True):
+
         """ Nudged elastic band (NEB) setup.
 
         Parameters
@@ -32,18 +31,18 @@ class MLNEB(object):
             Initial end-point of the NEB path or Atoms object.
         end: Trajectory file (in ASE format).
             Final end-point of the NEB path.
-        path: (optional) Trajectory file (in ASE format) or list of Atoms.
-            Atoms trajectory or list of Atoms containing the images along the
-            path.
         n_images: int or float
             Number of images of the path (if not included a path before).
              The number of images include the 2 end-points of the NEB path.
         k: float or list
             Spring constant(s) in eV/Ang.
-        interpolation: string
+        interpolation: string or Atoms list or Trajectory
             Automatic interpolation can be done ('idpp' and 'linear' as
             implemented in ASE).
             See https://wiki.fysik.dtu.dk/ase/ase/neb.html.
+            Manual: Trajectory file (in ASE format) or list of Atoms.
+            Atoms trajectory or list of Atoms containing the images along the
+            path.
         neb_method: string
             NEB method as implemented in ASE. ('aseneb', 'improvedtangent'
             or 'eb').
@@ -51,7 +50,17 @@ class MLNEB(object):
         ase_calc: ASE calculator Object.
             ASE calculator as implemented in ASE.
             See https://wiki.fysik.dtu.dk/ase/ase/calculators/calculators.html
+        prev_calculations: Atoms list or Trajectory file (in ASE format).
+            (optional) The user can feed previously calculated data for the
+            same hypersurface. The previous calculations must be fed as an
+            Atoms list or Trajectory file.
+        restart: boolean
+            Only useful if you want to continue your ML-NEB in the same
+            directory. The file "evaluated_structures.traj" from the
+            previous run, must be located in the same run directory.
         """
+
+        path = None
 
         # Convert Atoms and list of Atoms to trajectory files.
         if isinstance(start, Atoms):
@@ -60,9 +69,18 @@ class MLNEB(object):
         if isinstance(end, Atoms):
             write('final.traj', end)
             end = 'final.traj'
+        if interpolation != 'idpp' and interpolation != 'linear':
+            path = interpolation
         if isinstance(path, list):
             write('initial_path.traj', path)
             path = 'initial_path.traj'
+        if isinstance(prev_calculations, list):
+            write('prev_calcs.traj', prev_calculations)
+            prev_calculations = 'prev_calcs.traj'
+
+        # Prevent duplicates:
+        if prev_calculations is not None:
+            restart = False
 
         # Start end-point, final end-point and path (optional).
         self.start = start
@@ -75,7 +93,7 @@ class MLNEB(object):
         self.ase_calc = ase_calc
         self.ase = True
         self.mic = mic
-        self.version = 'ML-NEB v.1.0.1'
+        self.version = 'ML-NEB v.1.0.2'
         print_version(self.version)
 
         # Reset.
@@ -92,11 +110,14 @@ class MLNEB(object):
         assert self.ase_calc, err_not_ase_calc_traj()
 
         # A) Include previous calculations for training the ML model.
-        is_endpoint = read(start, ':')
-        fs_endpoint = read(end, ':')
+        if prev_calculations is not None:
+            prev_calculations = read(prev_calculations, ':')
+            is_endpoint_prev_calcs = read(start, '-1:')
+            is_endpoint = prev_calculations + is_endpoint_prev_calcs
+            fs_endpoint = read(end, '-1:')
 
         # B) Only include initial and final (optimized) images.
-        if include_previous_calcs is False:
+        if prev_calculations is None:
             is_endpoint = read(start, '-1:')
             fs_endpoint = read(end, '-1:')
         is_pos = is_endpoint[-1].get_positions().flatten()
@@ -215,14 +236,6 @@ class MLNEB(object):
         # Save files with all the paths that have been predicted:
         write('all_predicted_paths.traj', self.images)
 
-        if stabilize is True:
-            for i in self.images[1:-1]:
-                self.interesting_point = i.get_positions().flatten()
-                eval_and_append(self, self.interesting_point)
-                self.iter += 1
-                TrajectoryWriter(atoms=self.ase_ini,
-                                 filename='./evaluated_structures.traj',
-                                 mode='a').write()
         self.uncertainty_path = np.zeros(len(self.images))
 
         # Guess spring constant if spring was not set by the user:
@@ -511,10 +524,12 @@ class MLNEB(object):
                     store_results_neb(self)
                     congrats_neb_converged()
                     # Last path.
-                    os.remove('./last_predicted_path.traj')
                     write(trajectory, self.images)
                     print('The optimized predicted path can be found in: ',
                           trajectory)
+                    # Clean up:
+                    os.remove('./last_predicted_path.traj')
+                    os.remove('./all_predicted_paths.traj')
                     break
 
             # Break if reaches the max number of iterations set by the user.

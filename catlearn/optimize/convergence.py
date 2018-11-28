@@ -21,6 +21,9 @@ def converged(self):
     self.max_abs_forces = np.max(np.abs(self.list_fmax))
 
     if self.max_abs_forces < self.fmax:
+        print('Congratulations. Optimization converged.')
+        print('All the evaluated structures can be found in:',
+              self.filename)
         return True
 
     return False

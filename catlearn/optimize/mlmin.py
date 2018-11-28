@@ -1,5 +1,6 @@
 from ase import Atoms
 from ase.io.trajectory import TrajectoryWriter
+from ase.io import write
 from catlearn.optimize.warnings import *
 from catlearn.optimize.io import ase_traj_to_catlearn, print_info, \
                                  print_version
@@ -9,9 +10,10 @@ from catlearn.optimize.get_real_values import eval_and_append, \
                                               get_energy_catlearn, \
                                               get_forces_catlearn
 from catlearn.optimize.convergence import converged, get_fmax
-from scipy.optimize import fmin_l_bfgs_b
 import numpy as np
 from catlearn.regression import GaussianProcess
+from scipy.optimize import fmin_l_bfgs_b
+
 
 
 class MLMin(object):
@@ -22,7 +24,7 @@ class MLMin(object):
 
         Parameters
         ----------
-        x0 : Atoms object or trajectory file in ASE format.
+        x0 : Atoms object or list of Atoms or trajectory file in ASE format.
             Initial guess.
         ase_calc: ASE calculator object.
             When using ASE the user must pass an ASE calculator.
@@ -43,6 +45,10 @@ class MLMin(object):
         self.ase_calc = ase_calc
 
         assert x0 is not None, err_not_x0()
+
+        if isinstance(x0, list):
+            write('initial_guess.traj', x0)
+            x0 = 'initial_guess.traj'
 
         if isinstance(x0, Atoms):
             self.start_mode = 'atoms'
@@ -80,6 +86,10 @@ class MLMin(object):
                     trj['list_train'], trj['list_targets'],
                     trj['list_gradients'], trj['images'],
                     trj['constraints'], trj['num_atoms']]
+            self.ase_ini = trj_images[0]
+            molec_writer = TrajectoryWriter('./' + str(self.filename),
+                                            mode='w')
+            molec_writer.write(self.ase_ini)
             for i in range(1, len(trj_images)):
                 self.ase_ini = trj_images[i]
                 molec_writer = TrajectoryWriter('./' + str(self.filename),
@@ -151,7 +161,7 @@ class MLMin(object):
 
             if kernel == 'SQE_fixed':
                 opt_hyper = False
-                kdict = [{'type': 'gaussian', 'width': 0.40,
+                kdict = [{'type': 'gaussian', 'width': 0.4,
                           'dimension': 'single',
                           'bounds': ((0.4, 0.4),),
                           'scaling': 1.0,
@@ -170,39 +180,13 @@ class MLMin(object):
                           'scaling': sigma_f,
                           'scaling_bounds': ((sigma_f, sigma_f),)},
                          {'type': 'noise_multi',
-                          'hyperparameters': [0.005, 0.005 * 0.4**2],
-                          'bounds': ((0.001, 0.050),
-                                     (0.001 * 0.4**2, 0.050),)}
+                          'hyperparameters': [0.005 * 0.4**2, 0.005],
+                          'bounds': ((0.005 * 0.4**2, 0.005 * 0.4**2),
+                                     (0.005, 0.005),)}
                          ]
 
-            if kernel == 'ARD_SQE':
-                opt_hyper = True
-                kdict = [{'type': 'gaussian', 'width': 0.4,
-                          'dimension': 'features',
-                          'bounds': ((0.01, 1.0),) * len(self.index_mask),
-                          'scaling': sigma_f,
-                          'scaling_bounds': ((sigma_f, sigma_f),)},
-                         {'type': 'noise_multi',
-                          'hyperparameters': [0.005, 0.005 * 0.4**2],
-                          'bounds': ((0.001, 0.050),
-                                     (0.001 * 0.4**2, 0.050),)}
-                         ]
-
-            if kernel == 'SQE_not_scaled':
-                opt_hyper = True
-                kdict = [{'type': 'gaussian', 'width': 0.4,
-                          'dimension': 'single',
-                          'bounds': ((0.01, 1.0),),
-                          'scaling': 1.0,
-                          'scaling_bounds': ((1.0, 1.0),)},
-                         {'type': 'noise_multi',
-                          'hyperparameters': [0.005, 0.005 * 0.4**2],
-                          'bounds': ((0.001, 0.050),
-                                     (0.001 * 0.4**2, 0.050),)}
-                         ]
-
-                if success_hyper is not False:
-                    kdict = success_hyper
+            if success_hyper is not False:
+                kdict = success_hyper
 
             if self.index_mask is not None:
                 train = apply_mask(list_to_mask=train,
@@ -222,16 +206,13 @@ class MLMin(object):
                                       train_target=scaled_targets,
                                       gradients=gradients,
                                       optimize_hyperparameters=False)
-
             print('GP process trained.')
 
             if opt_hyper is True:
-                if self.feval > 5:
+                if self.feval % 2 == 0:
                     self.gp.optimize_hyperparameters()
-                    print('Hyperparam. optimization:', self.gp.theta_opt)
                     if self.gp.theta_opt.success is True:
-                        print('Hyperparam. optimization was successful.')
-                        print('Updating kernel list...')
+                        print('Hyperparam. optimization successful.')
                         success_hyper = self.gp.kernel_list
 
                     if self.gp.theta_opt.success is not True:
@@ -239,10 +220,15 @@ class MLMin(object):
                         if success_hyper is False:
                             print('Not enough data...')
                         if success_hyper is not False:
-                            print('Using the last optimized hyperparamters.')
-
+                            self.gp = GaussianProcess(kernel_list=kdict,
+                                      regularization=0.0,
+                                      regularization_bounds=(0.0, 0.0),
+                                      train_fp=train,
+                                      train_target=scaled_targets,
+                                      gradients=gradients,
+                                      optimize_hyperparameters=False)
                     print('GP process optimized.')
-                    print('Kernel list:', self.gp.kernel_list)
+
 
             # 2. Optimize Machine Learning model.
 
@@ -253,11 +239,11 @@ class MLMin(object):
             guess = np.array(apply_mask(list_to_mask=[guess],
                              mask_index=self.index_mask)[1])
 
-            args = (self.gp, u_prior,)
+            args = (self.gp, u_prior, )
 
             result_min = fmin_l_bfgs_b(func=predicted_energy_test, x0=guess,
                                        approx_grad=True, args=args, disp=False,
-                                       )
+                                       pgtol=1e-12)
             pred_pos = result_min[0]
 
             interesting_point = unmask_geometry(
@@ -269,6 +255,7 @@ class MLMin(object):
             eval_and_append(self, interesting_point)
 
             # 4. Convergence and output.
+            self.function_calls = len(self.list_targets)
 
             # Save evaluated image.
             TrajectoryWriter(atoms=self.ase_ini,
@@ -281,11 +268,12 @@ class MLMin(object):
             self.max_abs_forces = np.max(np.abs(self.list_fmax))
             self.list_max_abs_forces.append(self.max_abs_forces)
 
-            #if self.list_targets[-1] < np.min(self.list_targets[:-1]):
-            self.iter += 1
-            print_info(self)
+            if self.list_targets[-1] < np.min(self.list_targets[:-1]):
+                self.iter += 1
+                print_info(self)
 
             # Maximum number of iterations reached.
             if self.iter >= steps:
                 print('Not converged. Maximum number of iterations reached.')
                 break
+
