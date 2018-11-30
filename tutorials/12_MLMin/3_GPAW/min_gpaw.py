@@ -3,7 +3,7 @@ from gpaw import GPAW
 from ase.optimize import *
 from catlearn.optimize.mlmin import MLMin
 from ase.io import read
-
+from ase.constraints import FixAtoms
 
 """ 
     Structure relaxation H2O using GPAW.
@@ -27,6 +27,9 @@ atoms = Atoms('H2O',
              (b, -0.7633 + b, -0.4876 + b),
              (b, b, 0.1219 + b)], cell=[a, a, a])
 atoms.rattle(stdev=0.1, seed=0)
+
+c = FixAtoms(indices=[0])
+atoms.set_constraint(c)
 
 
 # 2. Benchmark.
