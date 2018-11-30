@@ -1,5 +1,6 @@
 from ase import Atoms
 from gpaw import GPAW
+from gpaw import PW
 from ase.optimize import *
 from catlearn.optimize.mlmin import MLMin
 from ase.io import read
@@ -7,7 +8,7 @@ from ase.constraints import FixAtoms
 
 """ 
     Structure relaxation H2O using GPAW.
-    Benchmark using MLMin, GPMin, LBFGS and FIRE. 
+    DFT Benchmark using MLMin, GPMin, LBFGS and FIRE. 
 """
 
 # 1. Build Atoms Object.
@@ -15,9 +16,9 @@ from ase.constraints import FixAtoms
 
 # Setup calculator:
 
-calc = GPAW(mode='lcao',
-            basis='dzp',
-            kpts={'density': 4.0})
+calc = GPAW(xc='PBE',
+            mode=PW(400, dedecut='estimate'),
+            kpts=(1, 1, 1),)
 
 # 1.1. Set up structure:
 a = 6
@@ -25,8 +26,8 @@ b = a / 2
 atoms = Atoms('H2O',
             [(b, 0.7633 + b, -0.4876 + b),
              (b, -0.7633 + b, -0.4876 + b),
-             (b, b, 0.1219 + b)], cell=[a, a, a])
-atoms.rattle(stdev=0.1, seed=0)
+             (b, b, 0.1219 + b)], cell=[10, 10, 10])
+atoms.rattle(stdev=0.10, seed=0)
 
 c = FixAtoms(indices=[0])
 atoms.set_constraint(c)

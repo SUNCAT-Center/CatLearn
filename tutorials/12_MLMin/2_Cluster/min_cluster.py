@@ -1,6 +1,8 @@
 from ase.cluster import wulff_construction
+from ase.constraints import FixAtoms
+import os
 from ase.calculators.emt import EMT
-from ase.io import read
+from ase.io import read, write
 from ase.optimize import *
 from catlearn.optimize.mlmin import MLMin
 
@@ -26,7 +28,14 @@ atoms = wulff_construction('Au', surfaces, esurf,
                            size, 'fcc',
                            rounding='above', latticeconstant=lc)
 atoms.center(vacuum=5.0)
-atoms.rattle(stdev=0.1, seed=0)  # Rattle
+atoms.rattle(stdev=0.10, seed=0)
+
+write('initial.traj', atoms)
+
+atoms = read('initial.traj')
+os.remove('initial.traj')
+c = FixAtoms(indices=[0])
+atoms.set_constraint(c)
 
 # 2. Benchmark.
 ###############################################################################

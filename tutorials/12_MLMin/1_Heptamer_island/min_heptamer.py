@@ -31,7 +31,7 @@ atoms.center(axis=2, vacuum=15.0)
 atoms2 = fcc111('Au', size=(3, 3, 1))
 atoms2.pop(0)
 atoms2.pop(7)
-atoms2.rattle(stdev=0.1, seed=0)
+atoms2.rattle(stdev=0.10, seed=0)
 
 # Add island to slab:
 add_adsorbate(atoms, atoms2, 2.5, offset=0.5)

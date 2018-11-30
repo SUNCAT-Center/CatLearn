@@ -131,7 +131,7 @@ class MLMin(object):
 
         converged(self)
         self.list_fmax = get_fmax(-np.array([self.list_gradients[-1]]),
-                                          self.num_atoms)
+                                  self.num_atoms)
         self.max_abs_forces = np.max(np.abs(self.list_fmax))
         self.list_max_abs_forces.append(self.max_abs_forces)
         print_info(self)
@@ -150,7 +150,7 @@ class MLMin(object):
 
             if kernel == 'SQE_fixed':
                 opt_hyper = False
-                kdict = [{'type': 'gaussian', 'width': 0.40,
+                kdict = [{'type': 'gaussian', 'width': 0.4,
                           'dimension': 'single',
                           'bounds': ((0.4, 0.4),),
                           'scaling': 1.0,
@@ -187,19 +187,6 @@ class MLMin(object):
                                      (0.001 * 0.4**2, 0.050),)}
                          ]
 
-            if kernel == 'SQE_not_scaled':
-                opt_hyper = True
-                kdict = [{'type': 'gaussian', 'width': 0.4,
-                          'dimension': 'single',
-                          'bounds': ((0.01, 1.0),),
-                          'scaling': 1.0,
-                          'scaling_bounds': ((1.0, 1.0),)},
-                         {'type': 'noise_multi',
-                          'hyperparameters': [0.005, 0.005 * 0.4**2],
-                          'bounds': ((0.001, 0.050),
-                                     (0.001 * 0.4**2, 0.050),)}
-                         ]
-
                 if success_hyper is not False:
                     kdict = success_hyper
 
@@ -223,7 +210,7 @@ class MLMin(object):
             print('GP process trained.')
 
             if opt_hyper is True:
-                if self.feval > 2:
+                if self.feval > 5:
                     self.gp.optimize_hyperparameters()
                     print('Hyperparam. optimization:', self.gp.theta_opt)
                     if self.gp.theta_opt.success is True:
@@ -273,13 +260,13 @@ class MLMin(object):
 
             # Printing:
             self.list_fmax = get_fmax(-np.array([self.list_gradients[-1]]),
-                                          self.num_atoms)
+                                      self.num_atoms)
             self.max_abs_forces = np.max(np.abs(self.list_fmax))
             self.list_max_abs_forces.append(self.max_abs_forces)
 
-            #if self.list_targets[-1] < np.min(self.list_targets[:-1]):
-            self.iter += 1
-            print_info(self)
+            if self.list_targets[-1] < np.min(self.list_targets[:-1]):
+                self.iter += 1
+                print_info(self)
 
             # Maximum number of iterations reached.
             if self.iter >= steps:
