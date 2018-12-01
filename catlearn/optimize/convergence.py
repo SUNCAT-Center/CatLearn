@@ -27,3 +27,16 @@ def converged(self):
         return True
 
     return False
+
+def converged_dimer(self):
+    """Function that checks the convergence in each optimization step."""
+    if len(self.list_targets) > 1:
+        self.list_fmax = get_fmax(-np.array([self.list_gradients[-1]]),
+                              self.num_atoms)
+        self.max_abs_forces = np.max(np.abs(self.list_fmax))
+        if self.max_abs_forces < self.fmax:
+            print('Congratulations. Optimization converged.')
+            print('All the evaluated structures can be found in:',
+                  self.filename)
+            return True
+    return False
