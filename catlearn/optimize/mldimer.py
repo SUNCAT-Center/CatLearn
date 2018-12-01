@@ -23,8 +23,7 @@ from catlearn.optimize.functions_calc import Himmelblau
 
 class MLDimer(object):
 
-    def __init__(self, x0, ase_calc=None,
-                 trajectory='mldimer_opt.traj'):
+    def __init__(self, x0, ase_calc=None, trajectory='mldimer_opt.traj'):
 
         """ ML-Dimer Method
 
@@ -94,6 +93,10 @@ class MLDimer(object):
                     trj['list_train'], trj['list_targets'],
                     trj['list_gradients'], trj['images'],
                     trj['constraints'], trj['num_atoms']]
+            self.ase_ini = trj_images[0]
+            molec_writer = TrajectoryWriter('./' + str(self.filename),
+                                            mode='w')
+            molec_writer.write(self.ase_ini)
             for i in range(1, len(trj_images)):
                 self.ase_ini = trj_images[i]
                 molec_writer = TrajectoryWriter('./' + str(self.filename),
@@ -163,9 +166,22 @@ class MLDimer(object):
                 opt_hyper = True
                 kdict = [{'type': 'gaussian', 'width': 0.4,
                           'dimension': 'single',
-                          'bounds': ((0.01, 1.0),),
+                          'bounds': ((0.1, 3.),),
                           'scaling': sigma_f,
                           'scaling_bounds': ((sigma_f, sigma_f),)},
+                         {'type': 'noise_multi',
+                          'hyperparameters': [0.005, 0.005 * 0.4**2],
+                          'bounds': ((0.001, 0.050),
+                                     (0.001 * 0.4**2, 0.050),)}
+                         ]
+
+            if kernel == 'SQE_scale':
+                opt_hyper = True
+                kdict = [{'type': 'gaussian', 'width': 0.4,
+                          'dimension': 'single',
+                          'bounds': ((0.4, 0.6),),
+                          'scaling': sigma_f,
+                          'scaling_bounds': ((sigma_f, sigma_f + 1e2),)},
                          {'type': 'noise_multi',
                           'hyperparameters': [0.005, 0.005 * 0.4**2],
                           'bounds': ((0.001, 0.050),
@@ -242,8 +258,11 @@ class MLDimer(object):
             dim_rlx = MinModeTranslate(d_atoms,
                                        trajectory=traj,
                                        logfile='-')
-            dim_rlx.run(fmax=fmax*0.9, steps=200)
-            get_plot('gp_dimer_opt.traj')
+            dim_rlx.run(fmax=fmax*0.9, steps=1000)
+            try:
+                get_plot('gp_dimer_opt.traj', self.gp, scaling=u_prior)
+            except:
+                pass
             print('ML optimized.')
 
             interesting_point = guess.get_positions().flatten()
@@ -264,9 +283,8 @@ class MLDimer(object):
             self.max_abs_forces = np.max(np.abs(self.list_fmax))
             self.list_max_abs_forces.append(self.max_abs_forces)
 
-            if self.list_targets[-1] < np.min(self.list_targets[:-1]):
-                self.iter += 1
-                print_info(self)
+            self.iter += 1
+            print_info(self)
 
             # Maximum number of iterations reached.
             if self.iter >= steps:
@@ -334,13 +352,13 @@ class ASECalc(Calculator):
         self.results['forces'] = forces
 
 
-def get_plot(filename):
+def get_plot(filename, gp, scaling):
 
     """ Function for plotting each step of the toy model Muller-Brown .
     """
 
-    fig = plt.figure(figsize=(5, 8))
-    ax1 = plt.subplot2grid((7, 1), (0, 0), rowspan=5)
+    fig = plt.figure(figsize=(10, 16))
+    ax1 = plt.subplot()
 
     # Grid test points (x,y).
     x_lim = [-6., 6.]
@@ -381,9 +399,9 @@ def get_plot(filename):
 
     energy_ase = []
     for i in test:
-        test_structure = Atoms('C', positions=[(i[0], i[1], i[2])])
-        test_structure.set_calculator(Himmelblau())
-        energy_ase.append(test_structure.get_potential_energy())
+        positions = np.array([[i[0], i[1], i[2]]])
+        energy_structure = gp.predict(test_fp=positions)
+        energy_ase.append(energy_structure['prediction'][0][0] + scaling)
 
     crange = np.linspace(min_color, max_color, 1000)
 
@@ -412,8 +430,12 @@ def get_plot(filename):
         geometry_data.append(j.get_positions().flatten())
     geometry_data = np.reshape(geometry_data, ((len(geometry_data)), 3))
 
-    ax1.scatter(geometry_data[:, 0], geometry_data[:, 1], marker='x',
-                s=50.0, c='black', alpha=1.0)
+    trained_points = gp.train_fp
+
+    ax1.plot(geometry_data[:, 0], geometry_data[:, 1], c='black', lw=2.)
+    ax1.scatter(trained_points[:, 0], trained_points[:, 1], marker='o',
+                s=50.0, c='white', linewidths=1.0, edgecolors='black',
+                alpha=1.0)
 
     plt.tight_layout(h_pad=1)
     plt.show()

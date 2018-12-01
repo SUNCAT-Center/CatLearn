@@ -77,6 +77,10 @@ class MLMin(object):
                     trj['list_train'], trj['list_targets'],
                     trj['list_gradients'], trj['images'],
                     trj['constraints'], trj['num_atoms']]
+            self.ase_ini = trj_images[0]
+            molec_writer = TrajectoryWriter('./' + str(self.filename),
+                                            mode='w')
+            molec_writer.write(self.ase_ini)
             for i in range(1, len(trj_images)):
                 self.ase_ini = trj_images[i]
                 molec_writer = TrajectoryWriter('./' + str(self.filename),

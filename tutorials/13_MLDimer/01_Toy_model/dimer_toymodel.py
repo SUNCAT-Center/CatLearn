@@ -20,8 +20,8 @@ def get_plot(filename):
     """ Function for plotting each step of the toy model Muller-Brown .
     """
 
-    fig = plt.figure(figsize=(5, 8))
-    ax1 = plt.subplot2grid((7, 1), (0, 0), rowspan=5)
+    fig = plt.figure(figsize=(10, 16))
+    ax1 = plt.subplot()
 
     # Grid test points (x,y).
     x_lim = [-6., 6.]
@@ -105,7 +105,7 @@ def get_plot(filename):
 a = 4.0614
 b = a / sqrt(2)
 h = b / 2
-atoms = Atoms('C', positions=[(1., -3., 0)])
+atoms = Atoms('C', positions=[(-4., 4., 0)])
 
 N = len(atoms)  # number of atoms
 
@@ -113,7 +113,7 @@ N = len(atoms)  # number of atoms
 atoms.set_calculator(Himmelblau())
 
 # Relax the initial state:
-LBFGS(atoms).run(fmax=0.05)
+LBFGS(atoms, trajectory='relaxation.traj').run(fmax=0.05)
 
 
 # Settings Dimer:
@@ -124,22 +124,21 @@ d_mask = [True] * N
 # Manual vector:
 displacement_vector = np.zeros((N, 3))
 # Strength of displacement along y axis = along row:
-displacement_vector[-1, 1] = +0.3
-displacement_vector[-1, 0] = -0.1
+displacement_vector[-1, 0] = +1.0
+displacement_vector[-1, 1] = -1.0
 
 # Random vector:
-# step_displ = 1.
+# step_displ = 1.0
 # displacement_vector = np.random.uniform(low=-step_displ,
 #                                         high=step_displ,
 #                                         size=(N, 3))
 # displacement_vector[0][2] = 0.0
 
-
 # Dimer method using CatLearn.
 
-ml_dimer = MLDimer(x0=atoms, trajectory='mldimer_opt.traj')
+ml_dimer = MLDimer(x0=atoms, ase_calc=Himmelblau(),
+                   trajectory='mldimer_opt.traj')
 ml_dimer.run(fmax=0.01, dmask=d_mask, vector=displacement_vector)
-
 
 # Dimer method using ASE.
 
@@ -162,7 +161,7 @@ d_atoms.displace(displacement_vector=displacement_vector)
 dim_rlx = MinModeTranslate(d_atoms,
                            trajectory=traj,
                            logfile='-')
-dim_rlx.run(fmax=0.01, steps=100)
+dim_rlx.run(fmax=0.01, steps=1000)
 
 get_plot('dimer_optimization.traj')
 
