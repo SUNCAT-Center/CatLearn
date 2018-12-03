@@ -6,10 +6,8 @@ from math import sqrt
 
 from ase import Atoms
 from ase.io import Trajectory, read
-from ase.io.trajectory import TrajectoryWriter
 from ase.optimize import LBFGS
 from ase.dimer import DimerControl, MinModeAtoms, MinModeTranslate
-from ase.visualize import view
 from catlearn.optimize.functions_calc import Himmelblau
 import matplotlib.pyplot as plt
 from catlearn.optimize.mldimer import MLDimer
@@ -171,5 +169,5 @@ iter_ase = len(read('dimer_optimization.traj', ':'))
 
 
 print('Number of iterations performed by ASE Dimer:', iter_ase)
-print('Number of iterations performed by CatLearn ML-Dimer:', iter_catlearn)
+print('Number of iterations performed by CatLearn ML-Dimer:', ml_dimer.iter+1)
 

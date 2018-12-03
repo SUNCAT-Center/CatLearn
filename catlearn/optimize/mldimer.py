@@ -110,7 +110,8 @@ class MLDimer(object):
                 self.list_max_abs_forces.append(self.max_abs_forces)
         self.index_mask = create_mask(self.ase_ini, self.constraints)
 
-    def run(self, dmask, vector, fmax=0.05, steps=200, kernel='SQE'):
+    def run(self, dmask, vector, fmax=0.05, steps=200, kernel='SQE',
+            max_uncertainty=0.200):
         """Executing run will start the optimization process.
 
         Parameters
@@ -122,6 +123,9 @@ class MLDimer(object):
         kernel: string
             Type of covariance function to be used.
             Implemented are: SQE (fixed hyperparamters), SQE_opt and ARD_SQE.
+        max_uncertainty: float
+            Early stopping criteria. Maximum uncertainty before stopping the
+            optimization in the predicted landscape.
 
         Returns
         -------
@@ -240,14 +244,10 @@ class MLDimer(object):
                                  )
             guess.info['iteration'] = self.iter
 
-
-            ###########################################
-            # DIMER:
+            # Optimization using the dimer method:
 
             traj = Trajectory('gp_dimer_opt.traj', 'w', guess)
             traj.write()
-
-            # Making dimer mask list:
 
             d_control = DimerControl(initial_eigenmode_method='displacement',
                                      displacement_method='vector',
@@ -258,12 +258,26 @@ class MLDimer(object):
             dim_rlx = MinModeTranslate(d_atoms,
                                        trajectory=traj,
                                        logfile='-')
-            dim_rlx.run(fmax=fmax*0.9, steps=1000)
+            ml_converged = False
+
+            while ml_converged is False:
+                dim_rlx.run(fmax=fmax*0.9, steps=1)
+
+                pos_ml = np.array(guess.positions).flatten()
+                pos_ml = apply_mask([pos_ml], mask_index=self.index_mask)[1]
+                pred_ml = self.gp.predict(test_fp=pos_ml, uncertainty=True)
+                unc_ml = pred_ml['uncertainty_with_reg'][0]
+                if unc_ml >= max_uncertainty:
+                    print('Maximum uncertainty reach. Early stop.')
+                    ml_converged = True
+                if dim_rlx.converged():
+                    print('ML optimized.')
+                    ml_converged = True
+
             try:
                 get_plot('gp_dimer_opt.traj', self.gp, scaling=u_prior)
             except:
                 pass
-            print('ML optimized.')
 
             interesting_point = guess.get_positions().flatten()
 
@@ -320,8 +334,9 @@ class ASECalc(Calculator):
         def pred_energy_test(test, gp=self.gp, scaling=self.scaling):
 
             # Get predictions.
-            predictions = gp.predict(test_fp=test, uncertainty=False)
-            return predictions['prediction'][0][0] + scaling
+            predictions = gp.predict(test_fp=test)
+            energy = predictions['prediction'][0][0] + scaling
+            return energy
 
         Calculator.calculate(self, atoms, properties, system_changes)
 

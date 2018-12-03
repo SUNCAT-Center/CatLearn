@@ -56,7 +56,7 @@ d_atoms = MinModeAtoms(initial, d_control)
 # Displacement settings:
 displacement_vector = np.zeros((N, 3))
 # Strength of displacement along y axis = along row:
-displacement_vector[-1, 1] = 0.001
+displacement_vector[-1, 0] = 0.001
 # The direction of the displacement is set by the a in
 # displacement_vector[-1, a], where a can be 0 for x, 1 for y and 2 for z.
 d_atoms.displace(displacement_vector=displacement_vector)
@@ -64,7 +64,7 @@ d_atoms.displace(displacement_vector=displacement_vector)
 # Converge to a saddle point:
 dim_rlx = MinModeTranslate(d_atoms,
                            trajectory=traj,
-                           logfile=None)
+                           logfile='-')
 dim_rlx.run(fmax=0.001)
 
 diff = initial.get_potential_energy() - e0
@@ -72,7 +72,7 @@ print(('The energy barrier is %f eV.' % diff))
 
 # CatLearn MLDimer:
 atoms = read('initial.traj')
-ml_dimer = MLDimer(x0='initial.traj', ase_calc=EMT(),
+ml_dimer = MLDimer(x0=atoms, ase_calc=EMT(),
                    trajectory='mldimer_opt.traj')
 ml_dimer.run(fmax=0.001, dmask=d_mask, vector=displacement_vector)
 
