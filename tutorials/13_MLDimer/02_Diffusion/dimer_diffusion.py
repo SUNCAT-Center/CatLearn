@@ -56,7 +56,7 @@ d_atoms = MinModeAtoms(initial, d_control)
 # Displacement settings:
 displacement_vector = np.zeros((N, 3))
 # Strength of displacement along y axis = along row:
-displacement_vector[-1, 0] = 0.001
+displacement_vector[-1, 1] = 0.001
 # The direction of the displacement is set by the a in
 # displacement_vector[-1, a], where a can be 0 for x, 1 for y and 2 for z.
 d_atoms.displace(displacement_vector=displacement_vector)

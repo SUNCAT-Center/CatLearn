@@ -687,16 +687,26 @@ class ASECalc(Calculator):
         energy = pred_energy_test(test=test_point)
 
         # Get forces:
+        geom_test_pos = np.zeros((len(self.ind_constraints), len(test_point[0])))
+        geom_test_neg = np.zeros((len(self.ind_constraints), len(test_point[0])))
+
+        for i in range(len(self.ind_constraints)):
+            index_force = self.ind_constraints[i]
+            pos = test_point.copy()[0]
+            pos[i] = pos_flatten[index_force] + self.fs
+
+            geom_test_pos[i] = pos
+            pos[i] = pos_flatten[index_force] - self.fs
+            geom_test_neg[i] = pos
+
+        f_pos = self.gp.predict(test_fp=geom_test_pos)['prediction']
+        f_neg = self.gp.predict(test_fp=geom_test_neg)['prediction']
+
+        gradients_list = (-f_neg + f_pos) / (2.0 * self.fs)
         gradients = np.zeros(len(pos_flatten))
         for i in range(len(self.ind_constraints)):
             index_force = self.ind_constraints[i]
-            pos = copy.deepcopy(test_point)
-            pos[0][i] = pos_flatten[index_force] + self.fs
-            f_pos = pred_energy_test(test=pos)
-            pos = copy.deepcopy(test_point)
-            pos[0][i] = pos_flatten[index_force] - self.fs
-            f_neg = pred_energy_test(test=pos)
-            gradients[index_force] = (-f_neg + f_pos) / (2.0 * self.fs)
+            gradients[index_force] = gradients_list[i]
 
         forces = np.reshape(-gradients, (self.atoms.get_number_of_atoms(), 3))
 

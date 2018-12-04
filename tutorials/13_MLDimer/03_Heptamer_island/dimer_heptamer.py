@@ -62,10 +62,19 @@ d_control = DimerControl(initial_eigenmode_method='displacement',
 d_atoms = MinModeAtoms(atoms, d_control)
 
 # Displacement settings:
-displacement_vector = np.zeros((N, 3))
+# displacement_vector = np.zeros((N, 3))
 # Strength of displacement along y axis = along row:
-displacement_vector[-1, 1] = 0.1
-displacement_vector[-1, 0] = 0.5
+# displacement_vector[-1, 0] = -0.7
+# displacement_vector[-1, 1] = +0.3
+# displacement_vector[-2, 0] = 0.1
+# displacement_vector[-2, 1] = 0.8
+
+# Random vector:
+step_displ = 1.
+displacement_vector = np.random.uniform(low=-step_displ,
+                                        high=step_displ,
+                                        size=(N, 3))
+displacement_vector[:, 2] = 0.0
 
 # The direction of the displacement is set by the a in
 # displacement_vector[-1, a], where a can be 0 for x, 1 for y and 2 for z.
@@ -75,22 +84,23 @@ d_atoms.displace(displacement_vector=displacement_vector)
 dim_rlx = MinModeTranslate(d_atoms,
                            trajectory=traj,
                            logfile='-')
-# dim_rlx.run(fmax=0.01)
+dim_rlx.run(fmax=0.02)
 
-# diff = atoms.get_potential_energy() - e0
-# print(('The energy barrier is %f eV.' % diff))
+diff = atoms.get_potential_energy() - e0
+print(('The energy barrier is %f eV.' % diff))
+
+final_ase = read('dimer_along.traj', ':')
+iter_ase = len(final_ase)
 
 # CatLearn MLDimer:
 atoms = read('initial.traj')
 ml_dimer = MLDimer(x0=atoms, ase_calc=EMT(),
                    trajectory='mldimer_opt.traj')
-ml_dimer.run(fmax=0.01, dmask=d_mask, vector=displacement_vector)
+ml_dimer.run(fmax=0.02, dmask=d_mask, vector=displacement_vector)
 
 # Summary:
 final_catlearn = read('mldimer_opt.traj', ':')
 iter_catlearn = len(final_catlearn)
-final_ase = read('dimer_along.traj', ':')
-iter_ase = len(final_ase)
 
 print('Number of iterations performed by ASE Dimer:', iter_ase)
 print('Number of iterations performed by CatLearn ML-Dimer:', iter_catlearn)

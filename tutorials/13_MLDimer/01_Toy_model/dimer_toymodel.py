@@ -122,7 +122,7 @@ d_mask = [True] * N
 # Manual vector:
 displacement_vector = np.zeros((N, 3))
 # Strength of displacement along y axis = along row:
-displacement_vector[-1, 0] = +1.0
+displacement_vector[-1, 0] = -1.0
 displacement_vector[-1, 1] = -1.0
 
 # Random vector:

@@ -1,24 +1,18 @@
 from ase import Atoms
 from ase.io.trajectory import TrajectoryWriter
 from ase.io import Trajectory, read
-from ase.calculators.calculator import Calculator, all_changes
 from catlearn.optimize.warnings import *
 from catlearn.optimize.io import ase_traj_to_catlearn, print_info, \
                                  print_version
-from catlearn.optimize.constraints import create_mask, unmask_geometry, \
-                                          apply_mask
+from catlearn.optimize.constraints import create_mask, apply_mask
 from catlearn.optimize.get_real_values import eval_and_append, \
                                               get_energy_catlearn, \
                                               get_forces_catlearn
 from catlearn.optimize.convergence import converged_dimer, get_fmax
-from scipy.optimize import fmin_l_bfgs_b
-from ase.constraints import FixAtoms
+from catlearn.optimize.mlneb import ASECalc
 import numpy as np
 from catlearn.regression import GaussianProcess
-import copy
 from ase.dimer import DimerControl, MinModeAtoms, MinModeTranslate
-import matplotlib.pyplot as plt
-from catlearn.optimize.functions_calc import Himmelblau
 
 
 class MLDimer(object):
@@ -111,7 +105,7 @@ class MLDimer(object):
         self.index_mask = create_mask(self.ase_ini, self.constraints)
 
     def run(self, dmask, vector, fmax=0.05, steps=200, kernel='SQE',
-            max_uncertainty=0.200):
+            max_uncertainty=1.):
         """Executing run will start the optimization process.
 
         Parameters
@@ -170,20 +164,7 @@ class MLDimer(object):
                 opt_hyper = True
                 kdict = [{'type': 'gaussian', 'width': 0.4,
                           'dimension': 'single',
-                          'bounds': ((0.1, 3.),),
-                          'scaling': sigma_f,
-                          'scaling_bounds': ((sigma_f, sigma_f),)},
-                         {'type': 'noise_multi',
-                          'hyperparameters': [0.005, 0.005 * 0.4**2],
-                          'bounds': ((0.001, 0.050),
-                                     (0.001 * 0.4**2, 0.050),)}
-                         ]
-
-            if kernel == 'SQE_scale':
-                opt_hyper = True
-                kdict = [{'type': 'gaussian', 'width': 0.4,
-                          'dimension': 'single',
-                          'bounds': ((0.4, 0.6),),
+                          'bounds': ((0.4, 1e2),),
                           'scaling': sigma_f,
                           'scaling_bounds': ((sigma_f, sigma_f + 1e2),)},
                          {'type': 'noise_multi',
@@ -305,70 +286,8 @@ class MLDimer(object):
                 print('Not converged. Maximum number of iterations reached.')
                 break
 
-
-class ASECalc(Calculator):
-
-    """
-    CatLearn/ASE calculator.
-    """
-
-    implemented_properties = ['energy', 'forces']
-    nolabel = True
-
-    def __init__(self, gp, index_constraints, scaling_targets,
-                 finite_step=1e-4, **kwargs):
-
-        Calculator.__init__(self, **kwargs)
-
-        self.gp = gp
-        self.scaling = scaling_targets
-        self.fs = finite_step
-        self.ind_constraints = index_constraints
-
-    def calculate(self, atoms=None, properties=['energy', 'forces'],
-                  system_changes=all_changes):
-
-        # Atoms object.
-        self.atoms = atoms
-
-        def pred_energy_test(test, gp=self.gp, scaling=self.scaling):
-
-            # Get predictions.
-            predictions = gp.predict(test_fp=test)
-            energy = predictions['prediction'][0][0] + scaling
-            return energy
-
-        Calculator.calculate(self, atoms, properties, system_changes)
-
-        pos_flatten = self.atoms.get_positions().flatten()
-
-        test_point = apply_mask(list_to_mask=[pos_flatten],
-                                mask_index=self.ind_constraints)[1]
-
-        # Get energy.
-        energy = pred_energy_test(test=test_point)
-
-        # Get forces:
-        gradients = np.zeros(len(pos_flatten))
-        for i in range(len(self.ind_constraints)):
-            index_force = self.ind_constraints[i]
-            pos = copy.deepcopy(test_point)
-            pos[0][i] = pos_flatten[index_force] + self.fs
-            f_pos = pred_energy_test(test=pos)
-            pos = copy.deepcopy(test_point)
-            pos[0][i] = pos_flatten[index_force] - self.fs
-            f_neg = pred_energy_test(test=pos)
-            gradients[index_force] = (-f_neg + f_pos) / (2.0 * self.fs)
-
-        forces = np.reshape(-gradients, (self.atoms.get_number_of_atoms(), 3))
-
-        # Results:
-        self.results['energy'] = energy
-        self.results['forces'] = forces
-
-
 def get_plot(filename, gp, scaling):
-
+    import matplotlib.pyplot as plt
     """ Function for plotting each step of the toy model Muller-Brown .
     """
 
@@ -454,3 +373,4 @@ def get_plot(filename, gp, scaling):
 
     plt.tight_layout(h_pad=1)
     plt.show()
+    plt.close()
