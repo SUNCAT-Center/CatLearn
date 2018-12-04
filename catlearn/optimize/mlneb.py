@@ -1,14 +1,14 @@
 import numpy as np
 from catlearn.optimize.warnings import *
 from catlearn.optimize.io import ase_traj_to_catlearn, store_results_neb, \
-                                 print_version, store_trajectory_neb
+                                 print_version, store_trajectory_neb, \
+                                 print_info_neb
 from catlearn.optimize.convergence import get_fmax
 from catlearn.optimize.get_real_values import eval_and_append
 from catlearn.optimize.constraints import create_mask, apply_mask
 from ase.neb import NEB
 from ase.neb import NEBTools
 from ase.io import read, write
-from ase.io.trajectory import TrajectoryWriter
 from ase.optimize import MDMin
 from scipy.spatial import distance
 import copy
@@ -16,14 +16,14 @@ import os
 from catlearn.regression import GaussianProcess
 from ase.calculators.calculator import Calculator, all_changes
 from ase.atoms import Atoms
-
+from catlearn import __version__
 
 class MLNEB(object):
 
-    def __init__(self, start, end, path=None, n_images=0.25, k=None,
-                 interpolation=None, mic=False, neb_method='improvedtangent',
-                 ase_calc=None, include_previous_calcs=False,
-                 stabilize=False, restart=False):
+    def __init__(self, start, end, prev_calculations=None,
+                 n_images=0.25, k=None, interpolation='idpp', mic=False,
+                 neb_method='improvedtangent', ase_calc=None, restart=True):
+
         """ Nudged elastic band (NEB) setup.
 
         Parameters
@@ -32,18 +32,18 @@ class MLNEB(object):
             Initial end-point of the NEB path or Atoms object.
         end: Trajectory file (in ASE format).
             Final end-point of the NEB path.
-        path: (optional) Trajectory file (in ASE format) or list of Atoms.
-            Atoms trajectory or list of Atoms containing the images along the
-            path.
         n_images: int or float
             Number of images of the path (if not included a path before).
              The number of images include the 2 end-points of the NEB path.
         k: float or list
             Spring constant(s) in eV/Ang.
-        interpolation: string
+        interpolation: string or Atoms list or Trajectory
             Automatic interpolation can be done ('idpp' and 'linear' as
             implemented in ASE).
             See https://wiki.fysik.dtu.dk/ase/ase/neb.html.
+            Manual: Trajectory file (in ASE format) or list of Atoms.
+            Atoms trajectory or list of Atoms containing the images along the
+            path.
         neb_method: string
             NEB method as implemented in ASE. ('aseneb', 'improvedtangent'
             or 'eb').
@@ -51,7 +51,17 @@ class MLNEB(object):
         ase_calc: ASE calculator Object.
             ASE calculator as implemented in ASE.
             See https://wiki.fysik.dtu.dk/ase/ase/calculators/calculators.html
+        prev_calculations: Atoms list or Trajectory file (in ASE format).
+            (optional) The user can feed previously calculated data for the
+            same hypersurface. The previous calculations must be fed as an
+            Atoms list or Trajectory file.
+        restart: boolean
+            Only useful if you want to continue your ML-NEB in the same
+            directory. The file "evaluated_structures.traj" from the
+            previous run, must be located in the same run directory.
         """
+
+        path = None
 
         # Convert Atoms and list of Atoms to trajectory files.
         if isinstance(start, Atoms):
@@ -60,9 +70,18 @@ class MLNEB(object):
         if isinstance(end, Atoms):
             write('final.traj', end)
             end = 'final.traj'
+        if interpolation != 'idpp' and interpolation != 'linear':
+            path = interpolation
         if isinstance(path, list):
             write('initial_path.traj', path)
             path = 'initial_path.traj'
+        if isinstance(prev_calculations, list):
+            write('prev_calcs.traj', prev_calculations)
+            prev_calculations = 'prev_calcs.traj'
+
+        # Prevent duplicates:
+        if prev_calculations is not None:
+            restart = False
 
         # Start end-point, final end-point and path (optional).
         self.start = start
@@ -75,7 +94,7 @@ class MLNEB(object):
         self.ase_calc = ase_calc
         self.ase = True
         self.mic = mic
-        self.version = 'ML-NEB v.1.0.0'
+        self.version = 'ML-NEB ' + __version__
         print_version(self.version)
 
         # Reset.
@@ -92,11 +111,14 @@ class MLNEB(object):
         assert self.ase_calc, err_not_ase_calc_traj()
 
         # A) Include previous calculations for training the ML model.
-        is_endpoint = read(start, ':')
-        fs_endpoint = read(end, ':')
+        if prev_calculations is not None:
+            prev_calculations = read(prev_calculations, ':')
+            is_endpoint_prev_calcs = read(start, '-1:')
+            is_endpoint = prev_calculations + is_endpoint_prev_calcs
+            fs_endpoint = read(end, '-1:')
 
         # B) Only include initial and final (optimized) images.
-        if include_previous_calcs is False:
+        if prev_calculations is None:
             is_endpoint = read(start, '-1:')
             fs_endpoint = read(end, '-1:')
         is_pos = is_endpoint[-1].get_positions().flatten()
@@ -215,14 +237,6 @@ class MLNEB(object):
         # Save files with all the paths that have been predicted:
         write('all_predicted_paths.traj', self.images)
 
-        if stabilize is True:
-            for i in self.images[1:-1]:
-                self.interesting_point = i.get_positions().flatten()
-                eval_and_append(self, self.interesting_point)
-                self.iter += 1
-                TrajectoryWriter(atoms=self.ase_ini,
-                                 filename='./evaluated_structures.traj',
-                                 mode='a').write()
         self.uncertainty_path = np.zeros(len(self.images))
 
         # Guess spring constant if spring was not set by the user:
@@ -232,9 +246,14 @@ class MLNEB(object):
         # Get initial path distance:
         self.path_distance = copy.deepcopy(self.d_start_end)
 
-        self.max_forces = get_fmax(-np.array([self.list_gradients[-1]]),
-                                   self.num_atoms)
-        self.max_abs_forces = np.max(np.abs(self.max_forces))
+        # Get forces for the previous steps
+        self.list_max_abs_forces = []
+        for i in self.list_gradients:
+                self.list_fmax = get_fmax(-np.array([i]), self.num_atoms)
+                self.max_abs_forces = np.max(np.abs(self.list_fmax))
+                self.list_max_abs_forces.append(self.max_abs_forces)
+
+        print_info_neb(self)
 
     def run(self, fmax=0.05, unc_convergence=0.050, steps=200,
             trajectory='ML_NEB_catlearn.traj', acquisition='acq_2', dt=0.025):
@@ -272,6 +291,11 @@ class MLNEB(object):
                 self.images[middle].get_positions().flatten()
             eval_and_append(self, self.interesting_point)
             self.iter += 1
+            self.max_forces = get_fmax(-np.array([self.list_gradients[-1]]),
+                                   self.num_atoms)
+            self.max_abs_forces = np.max(np.abs(self.max_forces))
+            self.list_max_abs_forces.append(self.max_abs_forces)
+            print_info_neb(self)
         stationary_point_found = False
 
         while True:
@@ -283,6 +307,7 @@ class MLNEB(object):
 
             ml_steps = self.n_images * len(self.index_mask)
             ml_steps = 250 if ml_steps <= 250 else ml_steps  # Min steps.
+            ml_steps = 750 if ml_steps >= 750 else ml_steps  # Min steps.
 
             print('Max number steps:', ml_steps)
             ml_cycles = 0
@@ -321,7 +346,7 @@ class MLNEB(object):
                 n_steps_performed = neb_opt.__dict__['nsteps']
 
                 if n_steps_performed <= ml_steps-1:
-                    print('ML CI-NEB converged.')
+                    print('Converged optimization in the predicted landscape.')
                     break
 
                 ml_cycles += 1
@@ -329,8 +354,7 @@ class MLNEB(object):
 
                 if ml_cycles == 2:
                     self.images = read('./last_predicted_path.traj', ':')
-                    print('ML CI-NEB not converged...not safe...')
-                    print('Try changing the number of images and restart.')
+                    print('ML process not optimized...not safe...')
                     break
 
             # 3. Get results from ML NEB using ASE NEB Tools:
@@ -459,40 +483,23 @@ class MLNEB(object):
                                                   ).flatten()
 
             # 5. Add a new training point and evaluate it.
-
+            print('Performing evaluation on the real landscape...')
             eval_and_append(self, self.interesting_point)
             self.iter += 1
 
             # 6. Store results.
-            store_results_neb(self)
-            store_trajectory_neb(self)
+            print('Energy of the last image evaluated (eV):',
+                  self.list_targets[-1][0])
 
-            print('Number of images:', self.n_images)
-            print('Length of initial path (Angstrom):', self.d_start_end)
-            print('Length of the current path (Angstrom):', self.path_distance)
-            print('Spring constant (eV/Angstrom):', self.spring)
-            print('Acquisition function:', self.acq)
-            print('Uncertainty convergence set by user (eV):', unc_convergence)
-            print('Max. uncertainty (eV):',
-                  np.max(self.uncertainty_path[1:-1]))
-            print('Image #id with max. uncertainty:',
-                  np.argmax(self.uncertainty_path[1:-1]) + 2)
-            print('Number of iterations:', self.iter)
-
+            self.energy_forward = np.max(self.e_path) - self.e_path[0]
+            self.energy_backward = np.max(self.e_path) - self.e_path[-1]
             self.max_forces = get_fmax(-np.array([self.list_gradients[-1]]),
                                        self.num_atoms)
             self.max_abs_forces = np.max(np.abs(self.max_forces))
 
-            print('Max. force of the last image evaluated (eV/Angstrom):',
-                  self.max_abs_forces)
-            print('Energy of the last image evaluated (eV):',
-                  self.list_targets[-1][0])
-            print('Forward reaction barrier energy (eV):',
-                  self.list_targets[-1][0] - self.list_targets[0][0])
-            print('Backward reaction barrier energy (eV):',
-                  self.list_targets[-1][0] - self.list_targets[1][0])
-            print('Number #id of the last evaluated image:',
-                  self.argmax_unc + 2)
+            print_info_neb(self)
+            store_results_neb(self)
+            store_trajectory_neb(self)
 
             # 7. Check convergence:
 
@@ -510,10 +517,12 @@ class MLNEB(object):
                     store_results_neb(self)
                     congrats_neb_converged()
                     # Last path.
-                    os.remove('./last_predicted_path.traj')
                     write(trajectory, self.images)
                     print('The optimized predicted path can be found in: ',
                           trajectory)
+                    # Clean up:
+                    os.remove('./last_predicted_path.traj')
+                    os.remove('./all_predicted_paths.traj')
                     break
 
             # Break if reaches the max number of iterations set by the user.
@@ -671,16 +680,26 @@ class ASECalc(Calculator):
         energy = pred_energy_test(test=test_point)
 
         # Get forces:
+        geom_test_pos = np.zeros((len(self.ind_constraints), len(test_point[0])))
+        geom_test_neg = np.zeros((len(self.ind_constraints), len(test_point[0])))
+
+        for i in range(len(self.ind_constraints)):
+            index_force = self.ind_constraints[i]
+            pos = test_point.copy()[0]
+            pos[i] = pos_flatten[index_force] + self.fs
+
+            geom_test_pos[i] = pos
+            pos[i] = pos_flatten[index_force] - self.fs
+            geom_test_neg[i] = pos
+
+        f_pos = self.gp.predict(test_fp=geom_test_pos)['prediction']
+        f_neg = self.gp.predict(test_fp=geom_test_neg)['prediction']
+
+        gradients_list = (-f_neg + f_pos) / (2.0 * self.fs)
         gradients = np.zeros(len(pos_flatten))
         for i in range(len(self.ind_constraints)):
             index_force = self.ind_constraints[i]
-            pos = copy.deepcopy(test_point)
-            pos[0][i] = pos_flatten[index_force] + self.fs
-            f_pos = pred_energy_test(test=pos)
-            pos = copy.deepcopy(test_point)
-            pos[0][i] = pos_flatten[index_force] - self.fs
-            f_neg = pred_energy_test(test=pos)
-            gradients[index_force] = (-f_neg + f_pos) / (2.0 * self.fs)
+            gradients[index_force] = gradients_list[i]
 
         forces = np.reshape(-gradients, (self.atoms.get_number_of_atoms(), 3))
 
