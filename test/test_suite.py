@@ -22,6 +22,7 @@ from test_learning_curve import TestCurve
 from test_io import TestIO
 from test_ga import TestGeneticAlgorithm
 from test_autocorrelation import TestAutoCorrelation
+from test_mlneb import TestMLNEB
 
 from test_functions import ConfigTestCase
 
@@ -71,7 +72,8 @@ if __name__ == '__main__':
         TestIO,
         TestGeneticAlgorithm,
         ConfigTestCase,
-        TestAutoCorrelation
+        TestAutoCorrelation,
+        TestMLNEB
     ])
 
     # Clean everything up.
@@ -81,3 +83,15 @@ if __name__ == '__main__':
     os.remove('cvsave.pickle')
     os.remove('cvsave.json')
     os.remove('gaWrite.json')
+
+    os.remove('all_predicted_paths.traj')
+    os.remove('evaluated_structures.traj')
+    os.remove('final.traj')
+    os.remove('final_optimized.traj')
+    os.remove('initial.traj')
+    os.remove('initial_optimized.traj')
+    os.remove('results_neb.csv')
+    os.remove('results_neb_interpolation.csv')
+    os.remove('ML-NEB.traj')
+    os.remove('warnings_and_errors.txt')
+

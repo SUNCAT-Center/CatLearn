@@ -76,12 +76,12 @@ tstd = 2.
 if True:
     # Model example 1 - Gausian linear kernel regression.
     # Define prediction parameters
-    kdict = {'k1': {'type': 'linear', 'scaling': 1.},
-             'c1': {'type': 'constant', 'const': 0.}}
+    kdict = [{'type': 'linear', 'scaling': 1.},
+             {'type': 'constant', 'const': 0.}]
     # Starting guess for the noise parameter
     sdt1 = noise_magnitude
     # Set up the gaussian process.
-    gp1 = GaussianProcess(kernel_dict=kdict, regularization=sdt1,
+    gp1 = GaussianProcess(kernel_dict=kdict, regularization=np.sqrt(sdt1),
                           train_fp=std['train'],
                           train_target=train_targets['target'],
                           optimize_hyperparameters=True)
@@ -91,7 +91,8 @@ if True:
     prediction = np.vstack(linear['prediction']) * train_targets['std'] + \
         train_targets['mean']
     # Put uncertainties back on real scale.
-    uncertainty = np.vstack(linear['uncertainty']) * train_targets['std']
+    uncertainty = np.vstack(linear['uncertainty_with_reg']) * \
+                            train_targets['std']
     # Get confidence interval on predictions.
     over_upper = prediction + uncertainty * tstd
     over_lower = prediction - uncertainty * tstd
@@ -106,11 +107,11 @@ if True:
 if True:
     # Model example 2 - Gaussian Process with sqe kernel.
     # Set up the prediction routine and optimize hyperparameters.
-    kdict = {'k1': {'type': 'gaussian', 'width': [0.3, 3.]}}
+    kdict = [{'type': 'gaussian', 'width': [0.3, 3.]}]
     # Starting guess for the noise parameter
     sdt1 = noise_magnitude
     # Set up the gaussian process.
-    gp2 = GaussianProcess(kernel_dict=kdict, regularization=sdt1,
+    gp2 = GaussianProcess(kernel_dict=kdict, regularization=np.sqrt(sdt1),
                           train_fp=std['train'],
                           train_target=train_targets['target'],
                           optimize_hyperparameters=True)
@@ -120,7 +121,8 @@ if True:
     prediction = np.vstack(gaussian['prediction']) * train_targets['std'] + \
         train_targets['mean']
     # Put uncertainties back on real scale.
-    uncertainty = np.vstack(gaussian['uncertainty']) * train_targets['std']
+    uncertainty = np.vstack(gaussian['uncertainty_with_reg']) * \
+                            train_targets['std']
     # Get confidence interval on predictions.
     gp_upper = prediction + uncertainty * tstd
     gp_lower = prediction - uncertainty * tstd

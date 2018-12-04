@@ -64,10 +64,10 @@ scaling = 1.0  # Scaling parameter.
 # Note also that global optimisation using basinhopping can be activated when
 # setting the flag global_opt=True.
 
-kdict = {'k1': {'type': 'gaussian', 'width': w1, 'scaling': scaling}}
+kdict = [{'type': 'gaussian', 'width': w1, 'scaling': scaling}]
 
 gp = GaussianProcess(
-    kernel_dict=kdict, regularization=sdt1**2, train_fp=train,
+    kernel_dict=kdict, regularization=sdt1, train_fp=train,
     train_target=target, gradients=gradients, optimize_hyperparameters=True,
     scale_data=True)
 print('Optimized kernel:', gp.kernel_dict)
@@ -77,7 +77,7 @@ pred = gp.predict(test_fp=test, uncertainty=True)
 prediction = np.array(pred['prediction'][:, 0])
 
 # Calculate the uncertainty of the predictions.
-uncertainty = np.array(pred['uncertainty'])
+uncertainty = np.array(pred['uncertainty_with_reg'])
 
 # Get confidence interval on predictions.
 upper = prediction + uncertainty
@@ -107,7 +107,7 @@ ax.plot(org_test, prediction, 'g-', lw=1, alpha=0.4)
 ax.fill_between(org_test[:, 0], upper, lower, interpolate=True, color='red',
                 alpha=0.2)
 plt.title('GP. \n w: {0:.3f}, r: {1:.3f}'.format(
-    gp.kernel_dict['k1']['width'][0], np.sqrt(gp.regularization)))
+    gp.kernel_dict[0]['width'][0], np.sqrt(gp.regularization)))
 plt.xlabel('Descriptor')
 plt.ylabel('Response')
 plt.axis('tight')

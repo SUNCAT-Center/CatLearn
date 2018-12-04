@@ -1,5 +1,16 @@
 # Changelog
 
+-   Added ML-NEB algorithm for transition state search.
+-   Changed input format for kernels in the GP.
+
+# Version 0.5.0 (August 2018)
+
+-   Restructure of fingerprint module
+-   Pandas DataFrame getter in FeatureGenerator
+-   CatMAP API using ASE database.
+-   New active learning module.
+-   Small fixes in adsorbate fingerprinter.
+
 # Version 0.4.4 (August 2018)
 
 -   Major modifications to adsorbates fingerprinter

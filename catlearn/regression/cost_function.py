@@ -104,17 +104,29 @@ def _get_percentiles(residuals):
     return data
 
 
-def _cost_function(theta, train_matrix, targets, kernel_dict,
+def _cost_function(theta, train_matrix, targets, kernel_list,
                    scale_optimizer, lf):
     """Return cost function on the training data.
 
     Parameters
     ----------
-
+    theta : list
+        List of hyperparameters.
+    train_matrix : array
+        Training data matrix.
+    targets : list
+        List of target values.
+    kernel_list : list
+        List containing all dictionaries for the kernels.
+    scale_optimizer : bool
+        Flag to define if the hyperparameters are log scale for
+        optimization.
+    lf : str
+        Cost function name.
     """
     # Make a new covariance matrix with the given hyperparameters.
-    kernel_dict = list2kdict(theta, kernel_dict)
-    cvm = get_covariance(kernel_dict=kernel_dict,
+    kernel_list = list2kdict(theta, kernel_list)
+    cvm = get_covariance(kernel_list=kernel_list,
                          matrix1=train_matrix,
                          regularization=theta[-1],
                          log_scale=scale_optimizer,

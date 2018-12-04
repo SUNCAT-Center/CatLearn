@@ -45,10 +45,10 @@ def get_data():
 
 def lml_test(train_matrix, train_targets, test_matrix, test_targets):
     """Function to test log_marginal_likelihood."""
-    kernel_dict = {'k1': {'type': 'gaussian', 'width': 0.5, 'scaling': 2.},
-                   'c1': {'type': 'constant', 'const': 1.e-6,
-                          'bounds': ((1.e-12, None),)}
-                   }
+    kernel_list = [{'type': 'gaussian', 'width': 0.5, 'scaling': 2.},
+                   {'type': 'constant', 'const': 1.e-6,
+                    'bounds': ((1.e-12, None),)}]
+
     regularization = 1.e-4
     train_matrix, train_targets, test_matrix, test_targets = get_data()
     train_features, targets, test_features = scale_test(train_matrix,
@@ -56,22 +56,22 @@ def lml_test(train_matrix, train_targets, test_matrix, test_targets):
                                                         test_matrix)
     print('Optimizing with analytical jacobian.')
     lml_opt(train_features, targets, test_features,
-            kernel_dict, regularization, global_opt=False)
+            kernel_list, regularization, global_opt=False)
     print('Running global optimization.')
     popt_global = lml_opt(train_features, targets, test_features,
-                          kernel_dict, regularization, global_opt=True)
+                          kernel_list, regularization, global_opt=True)
     print(popt_global)
-    kernel_dict = list2kdict(popt_global['x'][:-1], kernel_dict)
+    kernel_list = list2kdict(popt_global['x'][:-1], kernel_list)
 
 
 def lml_opt(train_features, train_targets, test_features,
-            kernel_dict, regularization,
+            kernel_list, regularization,
             global_opt=False, algomin='L-BFGS-B', eval_jac=True):
     """Test Gaussian process predictions."""
     # Test prediction routine with linear kernel.
     N, N_D = np.shape(train_features)
     regularization_bounds = (1e-3, None)
-    kdict, bounds = prepare_kernels(kernel_dict, regularization_bounds,
+    kdict, bounds = prepare_kernels(kernel_list, regularization_bounds,
                                     eval_gradients, N_D)
     print(bounds)
     # Create a list of all hyperparameters.
@@ -103,12 +103,12 @@ def scale_test(train_matrix, train_targets, test_matrix):
     return sfp['train'], ts['target'], sfp['test']
 
 
-def lml_plotter(train_features, train_targets, test_features, kernel_dict,
+def lml_plotter(train_features, train_targets, test_features, kernel_list,
                 regularization, d_max=4):
     """Function to plot log_marginal_likelihood."""
     print('Plotting log marginal likelihood.')
     N, N_D = np.shape(train_features)
-    hyperparameters = np.array(kdicts2list(kernel_dict, N_D=N_D))
+    hyperparameters = np.array(kdicts2list(kernel_list, N_D=N_D))
     hyperparameters = np.append(hyperparameters, regularization)
     d_max = min(len(hyperparameters), d_max)
     for d in range(d_max):
@@ -121,7 +121,7 @@ def lml_plotter(train_features, train_targets, test_features, kernel_dict,
             theta[d] = x
             function = lml.log_marginal_likelihood(
                 theta, np.array(train_features), np.array(train_targets),
-                kernel_dict, scale_optimizer, eval_gradients, eval_jac=True)
+                kernel_list, scale_optimizer, eval_gradients, eval_jac=True)
             Y.append(-function[0])
             dY.append(-function[1])
         n_x = np.ceil(np.sqrt(d_max))
@@ -142,9 +142,9 @@ if __name__ == '__main__':
 
     profiler = Profiler()
     profiler.start()
-    kernel_dict = {'k1': {'type': 'gaussian', 'width': 0.5, 'scaling': 2.},
-                   'c1': {'type': 'constant', 'const': 1.e-3,
-                          'bounds': ((1.e-12, None),)}}
+    kernel_list = [{'type': 'gaussian', 'width': 0.5, 'scaling': 2.},
+                   {'type': 'constant', 'const': 1.e-3,
+                    'bounds': ((1.e-12, None),)}]
     regularization = 1.e-3
     train_matrix, train_targets, test_matrix, test_targets = get_data()
     train_features, targets, test_features = scale_test(train_matrix,
@@ -152,16 +152,16 @@ if __name__ == '__main__':
                                                         test_matrix)
     print('Optimizing without analytical jacobian.')
     popt_no_jac = lml_opt(train_features, targets, test_features,
-                          kernel_dict, regularization,
+                          kernel_list, regularization,
                           global_opt=False, eval_jac=False)
     print('Optimizing with analytical jacobian.')
     popt_local = lml_opt(train_features, targets, test_features,
-                         kernel_dict, regularization, global_opt=False)
+                         kernel_list, regularization, global_opt=False)
     print('Running global optimization.')
     popt_global = lml_opt(train_features, targets, test_features,
-                          kernel_dict, regularization, global_opt=True)
+                          kernel_list, regularization, global_opt=True)
     print(popt_global)
-    kernel_dict = list2kdict(popt_global['x'][:-1], kernel_dict)
+    kernel_list = list2kdict(popt_global['x'][:-1], kernel_list)
     regularization = popt_global['x'][-1]
     profiler.stop()
     print(profiler.output_text(unicode=True, color=True))
@@ -170,6 +170,6 @@ if __name__ == '__main__':
 if 'plot' in argv[-1]:
     import matplotlib.pyplot as plt
     lml_plotter(train_features, targets, test_features,
-                kernel_dict, regularization)
+                kernel_list, regularization)
     # plt.tight_layout()
     plt.show()
