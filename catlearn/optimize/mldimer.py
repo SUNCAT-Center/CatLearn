@@ -13,6 +13,7 @@ from catlearn.optimize.mlneb import ASECalc
 import numpy as np
 from catlearn.regression import GaussianProcess
 from ase.dimer import DimerControl, MinModeAtoms, MinModeTranslate
+from catlearn import __version__
 
 
 class MLDimer(object):
@@ -48,7 +49,7 @@ class MLDimer(object):
         self.fmax = 0.0
         self.min_iter = 0
         self.gp = None
-        self.version = 'Dimer v.0.1.0'
+        self.version = 'Dimer ' + __version__
         print_version(self.version)
 
         self.ase_calc = ase_calc

@@ -206,11 +206,6 @@ def err_not_neb_end():
     return msg
 
 
-def err_not_enough_images():
-    msg = """ COMPUTER SAYS NO: You must include at least 4 NEB images."""
-    return msg
-
-
 def congrats_stationary_neb():
     msg = "Congratulations! Stationary point is found! "
     msg2 = "Check the file 'evaluated_geometries.traj' using ASE."

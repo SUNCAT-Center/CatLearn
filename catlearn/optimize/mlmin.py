@@ -13,6 +13,7 @@ from scipy.optimize import fmin_l_bfgs_b
 from ase.constraints import FixAtoms
 import numpy as np
 from catlearn.regression import GaussianProcess
+from catlearn import __version__
 
 
 class MLMin(object):
@@ -38,7 +39,7 @@ class MLMin(object):
         self.fmax = 0.0
         self.min_iter = 0
         self.gp = None
-        self.version = 'Min. v.0.9.9'
+        self.version = 'Min. ' + __version__
         print_version(self.version)
 
         self.ase_calc = ase_calc
@@ -172,6 +173,19 @@ class MLMin(object):
                           'bounds': ((0.01, 1.0),),
                           'scaling': sigma_f,
                           'scaling_bounds': ((sigma_f, sigma_f),)},
+                         {'type': 'noise_multi',
+                          'hyperparameters': [0.005, 0.005 * 0.4**2],
+                          'bounds': ((0.001, 0.050),
+                                     (0.001 * 0.4**2, 0.050),)}
+                         ]
+
+            if kernel == 'SQE_scaled':
+                opt_hyper = True
+                kdict = [{'type': 'gaussian', 'width': 0.4,
+                          'dimension': 'single',
+                          'bounds': ((0.4, 1e2),),
+                          'scaling': sigma_f,
+                          'scaling_bounds': ((sigma_f, sigma_f + 1e2),)},
                          {'type': 'noise_multi',
                           'hyperparameters': [0.005, 0.005 * 0.4**2],
                           'bounds': ((0.001, 0.050),

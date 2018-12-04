@@ -1,7 +1,8 @@
 import numpy as np
 from catlearn.optimize.warnings import *
 from catlearn.optimize.io import ase_traj_to_catlearn, store_results_neb, \
-                                 print_version, store_trajectory_neb
+                                 print_version, store_trajectory_neb, \
+                                 print_info_neb
 from catlearn.optimize.convergence import get_fmax
 from catlearn.optimize.get_real_values import eval_and_append
 from catlearn.optimize.constraints import create_mask, apply_mask
@@ -15,7 +16,7 @@ import os
 from catlearn.regression import GaussianProcess
 from ase.calculators.calculator import Calculator, all_changes
 from ase.atoms import Atoms
-
+from catlearn import __version__
 
 class MLNEB(object):
 
@@ -93,7 +94,7 @@ class MLNEB(object):
         self.ase_calc = ase_calc
         self.ase = True
         self.mic = mic
-        self.version = 'ML-NEB v.1.0.2'
+        self.version = 'ML-NEB ' + __version__
         print_version(self.version)
 
         # Reset.
@@ -245,9 +246,14 @@ class MLNEB(object):
         # Get initial path distance:
         self.path_distance = copy.deepcopy(self.d_start_end)
 
-        self.max_forces = get_fmax(-np.array([self.list_gradients[-1]]),
-                                   self.num_atoms)
-        self.max_abs_forces = np.max(np.abs(self.max_forces))
+        # Get forces for the previous steps
+        self.list_max_abs_forces = []
+        for i in self.list_gradients:
+                self.list_fmax = get_fmax(-np.array([i]), self.num_atoms)
+                self.max_abs_forces = np.max(np.abs(self.list_fmax))
+                self.list_max_abs_forces.append(self.max_abs_forces)
+
+        print_info_neb(self)
 
     def run(self, fmax=0.05, unc_convergence=0.050, steps=200,
             trajectory='ML_NEB_catlearn.traj', acquisition='acq_2', dt=0.025):
@@ -285,6 +291,11 @@ class MLNEB(object):
                 self.images[middle].get_positions().flatten()
             eval_and_append(self, self.interesting_point)
             self.iter += 1
+            self.max_forces = get_fmax(-np.array([self.list_gradients[-1]]),
+                                   self.num_atoms)
+            self.max_abs_forces = np.max(np.abs(self.max_forces))
+            self.list_max_abs_forces.append(self.max_abs_forces)
+            print_info_neb(self)
         stationary_point_found = False
 
         while True:
@@ -335,7 +346,7 @@ class MLNEB(object):
                 n_steps_performed = neb_opt.__dict__['nsteps']
 
                 if n_steps_performed <= ml_steps-1:
-                    print('ML CI-NEB converged.')
+                    print('Converged optimization in the predicted landscape.')
                     break
 
                 ml_cycles += 1
@@ -343,8 +354,7 @@ class MLNEB(object):
 
                 if ml_cycles == 2:
                     self.images = read('./last_predicted_path.traj', ':')
-                    print('ML CI-NEB not converged...not safe...')
-                    print('Try changing the number of images and restart.')
+                    print('ML process not optimized...not safe...')
                     break
 
             # 3. Get results from ML NEB using ASE NEB Tools:
@@ -473,40 +483,23 @@ class MLNEB(object):
                                                   ).flatten()
 
             # 5. Add a new training point and evaluate it.
-
+            print('Performing evaluation on the real landscape...')
             eval_and_append(self, self.interesting_point)
             self.iter += 1
 
             # 6. Store results.
-            store_results_neb(self)
-            store_trajectory_neb(self)
+            print('Energy of the last image evaluated (eV):',
+                  self.list_targets[-1][0])
 
-            print('Number of images:', self.n_images)
-            print('Length of initial path (Angstrom):', self.d_start_end)
-            print('Length of the current path (Angstrom):', self.path_distance)
-            print('Spring constant (eV/Angstrom):', self.spring)
-            print('Acquisition function:', self.acq)
-            print('Uncertainty convergence set by user (eV):', unc_convergence)
-            print('Max. uncertainty (eV):',
-                  np.max(self.uncertainty_path[1:-1]))
-            print('Image #id with max. uncertainty:',
-                  np.argmax(self.uncertainty_path[1:-1]) + 2)
-            print('Number of iterations:', self.iter)
-
+            self.energy_forward = np.max(self.e_path) - self.e_path[0]
+            self.energy_backward = np.max(self.e_path) - self.e_path[-1]
             self.max_forces = get_fmax(-np.array([self.list_gradients[-1]]),
                                        self.num_atoms)
             self.max_abs_forces = np.max(np.abs(self.max_forces))
 
-            print('Max. force of the last image evaluated (eV/Angstrom):',
-                  self.max_abs_forces)
-            print('Energy of the last image evaluated (eV):',
-                  self.list_targets[-1][0])
-            print('Forward reaction barrier energy (eV):',
-                  self.list_targets[-1][0] - self.list_targets[0][0])
-            print('Backward reaction barrier energy (eV):',
-                  self.list_targets[-1][0] - self.list_targets[1][0])
-            print('Number #id of the last evaluated image:',
-                  self.argmax_unc + 2)
+            print_info_neb(self)
+            store_results_neb(self)
+            store_trajectory_neb(self)
 
             # 7. Check convergence:
 

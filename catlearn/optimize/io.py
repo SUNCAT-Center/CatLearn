@@ -130,6 +130,50 @@ def print_info(self):
     print(self.table_results)
 
 
+def _start_table_neb(self):
+    self.table_results = PrettyTable(['Method', 'Step', 'Time',
+                                      'Pred. barrier (-->)',
+                                      'Pred. barrier (<--)',
+                                      'Max. uncert.',
+                                      'Avg. uncert.',
+                                      'fmax'])
+
+
+def print_info_neb(self):
+    """ Prints the information of the surrogate model convergence at each step.
+    """
+
+    if self.iter == 0:
+        _start_table_neb(self)
+
+    if self.iter >= 1:
+        if len(self.list_targets) == 2:
+            self.table_results.add_row(['ML-NEB',
+                                        i,
+                                        print_time(),
+                                        'NA. Initial state.',
+                                        'NA. Final state',
+                                        '-',
+                                        '-',
+                                        '-'
+                                        ])
+        if len(self.list_targets) > 3:
+            unc_max_tab = np.round(np.max(self.uncertainty_path[1:-1]), 5)
+            unc_mean_tab = np.round(np.mean(self.uncertainty_path[1:-1]), 5)
+            ef_tab = np.round(self.energy_forward, 5)
+            eb_tab = np.round(self.energy_backward, 5)
+            self.table_results.add_row(['ML-NEB',
+                                        self.iter,
+                                        print_time(),
+                                        ef_tab,
+                                        eb_tab,
+                                        unc_max_tab,
+                                        unc_mean_tab,
+                                        np.round(self.max_abs_forces, 6)
+                                        ])
+    print(self.table_results)
+
+
 def store_results_neb(self):
     """ Function that print in csv files the predicted NEB curves after
         each iteration"""
