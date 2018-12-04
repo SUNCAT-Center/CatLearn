@@ -48,7 +48,7 @@ class TestMLNEB(unittest.TestCase):
 
         neb_catlearn = MLNEB(start=initial_structure,
                              end=final_structure,
-                             path=images,
+                             interpolation=images,
                              ase_calc=ase_calculator,
                              restart=False
                              )
@@ -70,12 +70,14 @@ class TestMLNEB(unittest.TestCase):
         """ Here we test the restart flag, the mic, and the internal
             interpolation."""
 
-        # Checking internal interpolation
+        # Checking internal interpolation.
 
         neb_catlearn = MLNEB(start='initial_optimized.traj',
                              end='final_optimized.traj',
                              n_images=9,
-                             ase_calc=ase_calculator
+                             ase_calc=ase_calculator,
+                             interpolation='linear',
+                             restart=False
                              )
         neb_catlearn.run(fmax=0.05, trajectory='ML-NEB.traj')
         print('Checking number of iterations using 9 images...')
@@ -182,20 +184,6 @@ class TestMLNEB(unittest.TestCase):
         max_unc = np.max(neb_catlearn.uncertainty_path)
         unc_test = 0.019377964708766612
         np.testing.assert_array_almost_equal(max_unc, unc_test, decimal=4)
-
-        # # Cleaning:
-        #
-        # os.remove('all_predicted_paths.traj')
-        # os.remove('evaluated_structures.traj')
-        # os.remove('final.traj')
-        # os.remove('final_optimized.traj')
-        # os.remove('initial.traj')
-        # os.remove('initial_optimized.traj')
-        # os.remove('results_neb.csv')
-        # os.remove('results_neb_interpolation.csv')
-        # os.remove('ML-NEB.traj')
-        # os.remove('warnings_and_errors.txt')
-
 
 if __name__ == '__main__':
     unittest.main()
