@@ -13,7 +13,7 @@ reqs = [str(req) for req in install_reqs]
 
 setuptools.setup(
     name="CatLearn",
-    version="0.6.0.dev1",
+    version="0.6.0.dev2",
     url="https://github.com/SUNCAT-Center/CatLearn",
 
     author="Paul C. Jennings",
