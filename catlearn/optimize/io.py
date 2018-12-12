@@ -1,4 +1,3 @@
-from catlearn.optimize.convergence import converged
 from prettytable import PrettyTable
 import numpy as np
 from ase.io import Trajectory, write
@@ -102,7 +101,7 @@ def array_to_atoms(input_array):
 
 def _start_table(self):
     self.table_results = PrettyTable(['Method', 'Step', 'Time', 'Energy',
-                                      'fmax', 'Converged?'])
+                                      'fmax'])
 
 
 def print_info(self):
@@ -116,31 +115,62 @@ def print_info(self):
         if self.start_mode is 'trajectory':
             _start_table(self)
             for i in range(0, len(self.list_targets)):
-                self.table_results.add_row(['Trajectory', 0, print_time(),
-                                           self.list_targets[i][0],
-                                           self.list_max_abs_forces[i],
-                                           converged(self)])
-    if self.iter == 0:
-        if self.feval == 1:
-            self.table_results.add_row(['Eval.', self.iter,
-                                        print_time(),
-                                        self.list_targets[-1][0],
-                                        self.max_abs_forces,
-                                        converged(self)])
-
-        if self.feval == 2:
-            if self.jac:
-                self.table_results.add_row(['LineSearch', self.iter,
+                self.table_results.add_row(['Prev. calc.',
+                                            len(self.list_targets),
                                             print_time(),
-                                            self.list_targets[-1][0],
-                                            self.max_abs_forces,
-                                            converged(self)])
-    if self.iter > 0:
-        self.table_results.add_row(['CatLearn',
+                                            self.list_targets[i][0],
+                                            self.list_max_abs_forces[i]
+                                            ])
+    if self.iter >= 0:
+        self.table_results.add_row(['MLMin',
                                     self.iter,
                                     print_time(),
                                     self.list_targets[-1][0],
-                                    self.max_abs_forces, converged(self)])
+                                    self.max_abs_forces])
+    print(self.table_results)
+
+
+def _start_table_neb(self):
+    self.table_results = PrettyTable(['Method', 'Step', 'Time',
+                                      'Pred. barrier (-->)',
+                                      'Pred. barrier (<--)',
+                                      'Max. uncert.',
+                                      'Avg. uncert.',
+                                      'fmax'])
+
+
+def print_info_neb(self):
+    """ Prints the information of the surrogate model convergence at each step.
+    """
+
+    if self.iter == 0:
+        _start_table_neb(self)
+
+    if self.iter >= 1:
+        if len(self.list_targets) == 2:
+            self.table_results.add_row(['ML-NEB',
+                                        i,
+                                        print_time(),
+                                        'NA. Initial state.',
+                                        'NA. Final state',
+                                        '-',
+                                        '-',
+                                        '-'
+                                        ])
+        if len(self.list_targets) > 3:
+            unc_max_tab = np.round(np.max(self.uncertainty_path[1:-1]), 5)
+            unc_mean_tab = np.round(np.mean(self.uncertainty_path[1:-1]), 5)
+            ef_tab = np.round(self.energy_forward, 5)
+            eb_tab = np.round(self.energy_backward, 5)
+            self.table_results.add_row(['ML-NEB',
+                                        self.iter,
+                                        print_time(),
+                                        ef_tab,
+                                        eb_tab,
+                                        unc_max_tab,
+                                        unc_mean_tab,
+                                        np.round(self.max_abs_forces, 6)
+                                        ])
     print(self.table_results)
 
 
