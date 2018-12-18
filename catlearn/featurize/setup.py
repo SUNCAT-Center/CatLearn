@@ -22,7 +22,7 @@ from catlearn.fingerprint.bulk import (BulkFingerprintGenerator,
                                        default_bulk_fingerprinters)
 from catlearn.fingerprint.chalcogenide import \
     ChalcogenideFingerprintGenerator, default_chalcogenide_fingerprinters
-
+from catlearn.fingerprint.catapp import CatappFingerprintGenerator
 
 default_sets = {'bulk': default_bulk_fingerprinters,
                 'fragment': (default_molecule_fingerprinters +
@@ -59,7 +59,7 @@ class FeatureGenerator(
         AdsorbateFingerprintGenerator, ParticleFingerprintGenerator,
         StandardFingerprintGenerator, GraphFingerprintGenerator,
         BulkFingerprintGenerator, ConvolutedFingerprintGenerator,
-        ChalcogenideFingerprintGenerator):
+        ChalcogenideFingerprintGenerator, CatappFingerprintGenerator):
     """Feature generator class.
 
     It is sometimes necessary to normalize the length of feature vectors when
