@@ -384,9 +384,9 @@ class AdsorbateFingerprintGenerator(BaseGenerator):
         neighbors. This is equivalent to a bag of coordination numbers over the
         site neighbors.
         These can be used in the "alpha parameters" linear model.
-        
+
         Please cite:
-        Roling LT, Abild‐Pedersen F. 
+        Roling LT, Abild-Pedersen F.
         Structure-Sensitive Scaling Relations:
         Adsorption Energies from Surface Site Stability.
         ChemCatChem. 2018 Apr 9;10(7):1643-50.
