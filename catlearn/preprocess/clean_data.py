@@ -74,10 +74,9 @@ def clean_variance(train, test=None, labels=None, mask=None):
     clean = defaultdict(list)
 
     standard_dev = np.nanstd(train, axis=0)
-    assert np.isfinite(standard_dev).all()
 
     # Index of informative features.
-    index = list(np.where(~np.isclose(0, standard_dev))[0])
+    index = ~np.isclose(0, standard_dev)
     clean['index'] = index
 
     # Clean data.
@@ -158,7 +157,7 @@ def clean_infinite(train, test=None, targets=None, labels=None, mask=None,
     # Find features that have only finite values.
     bool_test = np.isfinite(train).all(axis=0)
     # Save the indices of columns that contain only finite values.
-    clean['index'] = list(np.where(bool_test)[0])
+    clean['index'] = bool_test
 
     # Also accept features, that are masked.
     if mask is not None:
@@ -200,10 +199,9 @@ def clean_skewness(train, test=None, labels=None, mask=None, skewness=3.):
     clean = defaultdict(list)
 
     data_skewness = skew(train, axis=0)
-    assert np.isfinite(data_skewness).all()
 
     # Index of informative features.
-    index = list(np.where(abs(data_skewness) < skewness)[0])
+    index = np.abs(data_skewness) < skewness
     clean['index'] = index
 
     # Clean data.
