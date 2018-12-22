@@ -80,10 +80,10 @@ for iteration in range(1, number_of_iterations+1):
               'scaling': scaling_exp, 'scaling_bounds':scaling_bounds}]
 
     gp = GaussianProcess(
-        kernel_dict=kdict, regularization=reg, train_fp=train,
+        kernel_list=kdict, regularization=reg, train_fp=train,
         train_target=target, optimize_hyperparameters=True,
         gradients=gradients, scale_data=True)
-    print('Optimized kernel:', gp.kernel_dict)
+    print('Optimized kernel:', gp.kernel_list)
 
     # Do the optimized predictions.
     pred = gp.predict(test_fp=test, uncertainty=True)

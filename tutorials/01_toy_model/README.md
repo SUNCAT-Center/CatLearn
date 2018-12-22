@@ -11,16 +11,16 @@ First we set up a known underlying function in one dimension. Then we use it to 
 CatLearn's built-in Gaussian process can be set up like so:
 
 ```python
-    gp = GaussianProcess(kernel_dict=kdict,
+    gp = GaussianProcess(kernel_list=kdict,
                          regularization=sdt1**2,
                          train_fp=std['train'],
                          train_target=train_targets['target'])
 ```
 
-and stored in a variable `gp`. `train_fp` accepts a N by D matrix, where N is the number of training data points and D is the number of descriptors. `train_target` accepts a list of N target values. `regularization` (float) is the noise parameter. `kernel_dict` accepts a dictionary defining the kernel. This is defined as:
+and stored in a variable `gp`. `train_fp` accepts a N by D matrix, where N is the number of training data points and D is the number of descriptors. `train_target` accepts a list of N target values. `regularization` (float) is the noise parameter. `kernel_list` accepts a dictionary defining the kernel. This is defined as:
 
 ```python
-    kdict = {'k1': {'type': 'gaussian', 'width': w1}}
+    kdict = [{'type': 'gaussian', 'width': w1}]
 ```
 
 In this example, a squared exponential kernel aka. gaussian kernel has been chosen by setting the `type` key to `gaussian`. `width` contains the starting guess for the length scale of the gaussian kernel. `width` can be either a list of the same length as the number of descriptors, or it can be a single float. The gaussian process optimizes all the hyperparameters including the widths and `regularization` if you pass `optimize_hyperparameters=True` to `GaussianProcess`. In the first two examples in the script, however, the optimizer is turned off in order to show you what happens when the model overfits or is too biased.

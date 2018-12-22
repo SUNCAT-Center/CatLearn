@@ -101,7 +101,7 @@ if True:
     # Starting guess for the noise parameter
     sdt1 = noise_magnitude
     # Set up the gaussian process.
-    gp1 = GaussianProcess(kernel_dict=kdict, regularization=sdt1,
+    gp1 = GaussianProcess(kernel_list=kdict, regularization=sdt1,
                           train_fp=std['train'],
                           train_target=train_targets['target'],
                           optimize_hyperparameters=True,
@@ -126,7 +126,7 @@ if True:
     # Starting guess for the noise parameter
     sdt1 = noise_magnitude
     # Set up the gaussian process.
-    gp2 = GaussianProcess(kernel_dict=kdict, regularization=sdt1,
+    gp2 = GaussianProcess(kernel_list=kdict, regularization=sdt1,
                           train_fp=std['train'],
                           train_target=train_targets['target'],
                           optimize_hyperparameters=True,

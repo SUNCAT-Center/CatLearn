@@ -92,7 +92,7 @@ if True:
     w1 = 3.0
     kdict = [{'type': 'gaussian', 'width': w1}]
     # Set up the prediction routine.
-    gp = GaussianProcess(kernel_dict=kdict, regularization=sdt1,
+    gp = GaussianProcess(kernel_list=kdict, regularization=sdt1,
                          train_fp=std['train'],
                          train_target=train_targets['target'],
                          optimize_hyperparameters=False)
@@ -133,7 +133,7 @@ if True:
     w2 = 0.03
     kdict = [{'type': 'gaussian', 'width': w2}]
     # Set up the prediction routine.
-    gp = GaussianProcess(kernel_dict=kdict, regularization=sdt2,
+    gp = GaussianProcess(kernel_list=kdict, regularization=sdt2,
                          train_fp=std['train'],
                          train_target=train_targets['target'],
                          optimize_hyperparameters=False)
@@ -180,11 +180,11 @@ if True:
     sdt3 = 0.001
     kdict = [{'type': 'gaussian', 'width': [w3]}]
 
-    gp = GaussianProcess(kernel_dict=kdict, regularization=sdt3,
+    gp = GaussianProcess(kernel_list=kdict, regularization=sdt3,
                          train_fp=std['train'],
                          train_target=train_targets['target'],
                          optimize_hyperparameters=True)
-    print('Optimized kernel:', gp.kernel_dict)
+    print('Optimized kernel:', gp.kernel_list)
     print(-gp.theta_opt['fun'])
     # Do the optimized predictions.
     optimized = gp.predict(test_fp=std['test'], uncertainty=True)
@@ -209,7 +209,7 @@ if True:
                     np.hstack(opt_lower), interpolate=True,
                     color='green', alpha=0.2)
     plt.title('Optimized GP. \n w: {0:.3f}, r: {1:.3f}'.format(
-        gp.kernel_dict[0]['width'][0] * stdx,
+        gp.kernel_list[0]['width'][0] * stdx,
         np.sqrt(gp.regularization) * stdy))
     plt.xlabel('Descriptor')
     plt.ylabel('Response')
