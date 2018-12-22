@@ -96,8 +96,8 @@ if False:
 # Model example 2 - Gausian linear kernel regression.
 if True:
     # Define prediction parameters
-    kdict = {'k1': {'type': 'linear', 'scaling': 0.9},
-             'c1': {'type': 'constant', 'const': 0.0}}
+    kdict = [{'type': 'linear', 'scaling': 0.9},
+             {'type': 'constant', 'const': 0.0}]
     # Starting guess for the noise parameter
     sdt1 = noise_magnitude
     # Set up the gaussian process.
@@ -121,8 +121,8 @@ if True:
 # Model example 3 - Gaussian Process with sqe kernel.
 if True:
     # Set up the prediction routine and optimize hyperparameters.
-    kdict = {'k1': {'type': 'gaussian', 'width': [0.3, 3.], 'scaling': 0.9},
-             'c1': {'type': 'constant', 'const': 0.0}}
+    kdict = [{'type': 'gaussian', 'width': [0.3, 3.], 'scaling': 0.9},
+             {'type': 'constant', 'const': 0.0}]
     # Starting guess for the noise parameter
     sdt1 = noise_magnitude
     # Set up the gaussian process.
