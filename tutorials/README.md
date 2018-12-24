@@ -74,3 +74,14 @@ A feature space is generated for some bulk compounds.
 [(Back to top)](#atoml-tutorials)
 
 In these tutorials, feature elimination is investigated based on greedy algorithms as well as a genetic algorithm.
+
+
+# TODO:
+1. Create Jupyter notebooks for the following python scripts in
+`05_toy_model_gradients`:
+    * `2D_toy_model.py`
+    * 'toy_model_acquisition.py'
+
+2. Check the Gaussian process in the second figure of
+`05_toy_model_gradients/toy_model.ipynb`. The model is way off from the
+underlying function.
