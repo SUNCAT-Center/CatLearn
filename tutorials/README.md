@@ -85,3 +85,12 @@ In these tutorials, feature elimination is investigated based on greedy algorith
 2. Check the Gaussian process in the second figure of
 `05_toy_model_gradients/toy_model.ipynb`. The model is way off from the
 underlying function.
+
+3. No notebooks in `02_data_setup` were tested as per Martin Hansen's request
+
+# Developer's Notes:
+1. Python executable files are created from the corresponding Jupyter
+notebooks. That is, the Jupyter notebooks are the primary version of the
+tutorial code. Run `jupyter nbconvert --to script <notebook_file.ipynb>` to
+convert a notebook to python script. In some cases, IPython magic commands
+must be commented out for the script to run properly.
