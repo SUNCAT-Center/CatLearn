@@ -88,14 +88,14 @@ kdict = [{'type': 'gaussian',
           }]
 
 gp = GaussianProcess(
-    kernel_dict=kdict, regularization=sdt1, regularization_bounds=reg_bounds,
+    kernel_list=kdict, regularization=sdt1, regularization_bounds=reg_bounds,
     train_fp=train, train_target=target, optimize_hyperparameters=False,
     gradients=gradients, scale_optimizer=False, scale_data=True
 )
 
 # Hyperaparam optimization algorithms change from default.
 gp.optimize_hyperparameters(algomin='L-BFGS-B', global_opt=False)
-print('Optimized kernel:', gp.kernel_dict)
+print('Optimized kernel:', gp.kernel_list)
 
 # Do the optimized predictions.
 pred = gp.predict(test_fp=test, uncertainty=True)

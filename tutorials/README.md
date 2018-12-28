@@ -74,3 +74,23 @@ A feature space is generated for some bulk compounds.
 [(Back to top)](#atoml-tutorials)
 
 In these tutorials, feature elimination is investigated based on greedy algorithms as well as a genetic algorithm.
+
+
+# TODO:
+1. Create Jupyter notebooks for the following python scripts in
+`05_toy_model_gradients`:
+    * `2D_toy_model.py`
+    * 'toy_model_acquisition.py'
+
+2. Check the Gaussian process in the second figure of
+`05_toy_model_gradients/toy_model.ipynb`. The model is way off from the
+underlying function.
+
+3. No notebooks in `02_data_setup` were tested as per Martin Hansen's request
+
+# Developer's Notes:
+1. Python executable files are created from the corresponding Jupyter
+notebooks. That is, the Jupyter notebooks are the primary version of the
+tutorial code. Run `jupyter nbconvert --to script <notebook_file.ipynb>` to
+convert a notebook to python script. In some cases, IPython magic commands
+must be commented out for the script to run properly.

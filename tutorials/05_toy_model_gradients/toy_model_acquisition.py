@@ -13,11 +13,11 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from catlearn.regression import GaussianProcess
-<<<<<<< HEAD:tutorials/5_toy_model_gradients/toy_model_acquisition.py
-from catlearn.regression.acquisition_functions import AcquisitionFunctions
-=======
+# <<<<<<< HEAD:tutorials/5_toy_model_gradients/toy_model_acquisition.py
+# from catlearn.regression.acquisition_functions import AcquisitionFunctions
+# =======
 from catlearn.active_learning.acquisition_functions import UCB
->>>>>>> cfa466feb35ab80c74f10ccf0559c8d1cff82761:tutorials/05_toy_model_gradients/toy_model_acquisition.py
+# >>>>>>> cfa466feb35ab80c74f10ccf0559c8d1cff82761:tutorials/05_toy_model_gradients/toy_model_acquisition.py
 
 
 # A known underlying function in one dimension [y] and first derivative [dy].
@@ -80,10 +80,10 @@ for iteration in range(1, number_of_iterations+1):
               'scaling': scaling_exp, 'scaling_bounds':scaling_bounds}]
 
     gp = GaussianProcess(
-        kernel_dict=kdict, regularization=reg, train_fp=train,
+        kernel_list=kdict, regularization=reg, train_fp=train,
         train_target=target, optimize_hyperparameters=True,
         gradients=gradients, scale_data=True)
-    print('Optimized kernel:', gp.kernel_dict)
+    print('Optimized kernel:', gp.kernel_list)
 
     # Do the optimized predictions.
     pred = gp.predict(test_fp=test, uncertainty=True)

@@ -67,10 +67,10 @@ scaling = 1.0  # Scaling parameter.
 kdict = [{'type': 'gaussian', 'width': w1, 'scaling': scaling}]
 
 gp = GaussianProcess(
-    kernel_dict=kdict, regularization=sdt1, train_fp=train,
+    kernel_list=kdict, regularization=sdt1, train_fp=train,
     train_target=target, gradients=gradients, optimize_hyperparameters=True,
     scale_data=True)
-print('Optimized kernel:', gp.kernel_dict)
+print('Optimized kernel:', gp.kernel_list)
 
 # Do the optimized predictions.
 pred = gp.predict(test_fp=test, uncertainty=True)
@@ -107,7 +107,7 @@ ax.plot(org_test, prediction, 'g-', lw=1, alpha=0.4)
 ax.fill_between(org_test[:, 0], upper, lower, interpolate=True, color='red',
                 alpha=0.2)
 plt.title('GP. \n w: {0:.3f}, r: {1:.3f}'.format(
-    gp.kernel_dict[0]['width'][0], np.sqrt(gp.regularization)))
+    gp.kernel_list[0]['width'][0], np.sqrt(gp.regularization)))
 plt.xlabel('Descriptor')
 plt.ylabel('Response')
 plt.axis('tight')
