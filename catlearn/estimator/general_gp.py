@@ -11,19 +11,23 @@ class GeneralGaussianProcess(object):
     it should give a reasonable model.
     """
 
-    def __init__(self, clean_type='eliminate', dimension='single'):
+    def __init__(self, clean_type='eliminate', dimension='single',
+                 kernel='general'):
         """Initialize the class.
 
         Parameters
         ----------
         clean_type : str
-            Define method for handling missing data. Currntly only elimination
+            Define method for handling missing data. Currently only elimination
             implemented.
         dimension : str
             The number of parameters to return. Can be 'single', or 'all'.
+        kernel : str
+            Pass 'smooth' if a smooth but non-linear function is expected.
         """
         self.clean_type = clean_type
         self.dimension = dimension
+        self.kernel = kernel
 
     def train_gaussian_process(self, train_features, train_targets):
         """Generate a general gaussian process model.
@@ -43,11 +47,14 @@ class GeneralGaussianProcess(object):
         train_features, train_targets = self._process_train_data(
             train_features, train_targets)
 
-        kdict = general_kernel(train_features, self.dimension)
+        if 'smooth' in self.kernel:
+            kdict = smooth_kernel(train_features, self.dimension)
+        else:
+            kdict = general_kernel(train_features, self.dimension)
 
         self.gp = GaussianProcess(
             train_fp=train_features, train_target=train_targets,
-            kernel_list=kdict, regularization=1e-1,
+            kernel_list=kdict, regularization=1e-2,
             optimize_hyperparameters=True, scale_data=False
             )
 
