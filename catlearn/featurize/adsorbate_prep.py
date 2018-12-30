@@ -204,14 +204,11 @@ def check_reconstructions(image_pairs):
         structure and the second element must represent a slab.
     """
     reconstructed = []
-    dbids = []
     for i, row in enumerate(image_pairs):
         identical = compare_slab_connectivity(row[0], row[1])
         if not identical:
             reconstructed.append(i)
-            if 'id' in row[0].info:
-                dbids.append(row[0].info['id'])
-    return reconstructed, dbids
+    return reconstructed
 
 
 def compare_slab_connectivity(atoms, reference_atoms):
