@@ -159,8 +159,8 @@ class FeatureGenerator(
         ----------
         candidates : list or dict
             Atoms objects to construct fingerprints for.
-        vec_name : list of / single vec class(es)
-            List of fingerprinting classes.
+        vec_name : list
+            List of fingerprinting functions.
 
         Returns
         -------
@@ -204,13 +204,13 @@ class FeatureGenerator(
 
         Parameters
         ----------
-        vec_name : list of / single vec class(es)
-            List of fingerprinting classes.
+        vec_name : list
+            List of fingerprinting functions.
 
         Returns
         -------
         fingerprint_vector : ndarray
-          Name array.
+            Name array.
         """
         if not isinstance(vec_names, list):
             vec_names = [vec_names]
@@ -250,8 +250,8 @@ class FeatureGenerator(
         ----------
         atoms : object
             A single atoms object.
-        vec_name : list of / single vec class(es)
-            List of fingerprinting classes.
+        vec_name : list
+            List of fingerprinting functions.
         fps : list
             List of expected feature vector lengths.
 
@@ -336,8 +336,8 @@ class FeatureGenerator(
         ----------
         candidates : list or dict
             Atoms objects to construct fingerprints for.
-        vec_name : list of / single vec class(es)
-            List of fingerprinting classes.
+        vec_name : list
+            List of fingerprinting functions.
 
         Returns
         -------
