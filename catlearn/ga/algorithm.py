@@ -19,7 +19,7 @@ class GeneticAlgorithm(object):
 
     def __init__(self, fit_func, features, targets, population_size='auto',
                  population=None, operators=None, fitness_parameters=1,
-                 nsplit=2, accuracy=None, nprocs=1):
+                 nsplit=2, accuracy=None, nprocs=1, dmax=None):
         """Initialize the genetic algorithm.
 
         Parameters
@@ -46,6 +46,8 @@ class GeneticAlgorithm(object):
             Number of decimal places to include when finding unique candidates
             for duplication removal. If None, duplication removel is not
             performed.
+        dmax : int
+            Maximum number of active features in a candidate.
         """
         # Set parameters.
         if nprocs is None:
@@ -60,6 +62,7 @@ class GeneticAlgorithm(object):
         self.dimension = features.shape[1]
         self.nsplit = nsplit
         self.accuracy = accuracy
+        self.dmax = dmax
 
         if population_size == 'auto':
             self.population_size = 2 * self.nprocs * ((7 // self.nprocs) + 1)
@@ -73,7 +76,7 @@ class GeneticAlgorithm(object):
         self.population = population
         if self.population is None:
             self.population = initialize_population(
-                self.population_size, self.dimension)
+                self.population_size, self.dimension, self.dmax)
 
         # Define the operators to use.
         self.operators = operators
@@ -168,7 +171,7 @@ class GeneticAlgorithm(object):
         Returns
         -------
         offspring_list : list
-            A list of paramteres for the new generation.
+            A list of parameters for the new generation.
         """
         offspring_list = []
         for c in range(self.population_size):
@@ -187,9 +190,13 @@ class GeneticAlgorithm(object):
                     p2 = self._selection(self.population, self.fitness)
                 offspring_list.append(operator(p1, p2))
 
-            # Otherwise perfrom mutation.
+            # Otherwise perform mutation.
             else:
-                offspring_list.append(operator(p1))
+                mutant = operator(p1)
+                if self.dmax is not None and np.sum(mutant) > self.dmax:
+                    # If the maximum number of features is exceeded, remove.
+                    mutant = probability_remove(mutant)
+                offspring_list.append(copy.deepcopy(mutant))
 
         return offspring_list
 
