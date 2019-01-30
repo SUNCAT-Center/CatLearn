@@ -99,8 +99,7 @@ class GeneralPrepreprocess(object):
                                      test=test_features)
 
         # Join lists of features to keep.
-        self.clean_index = np.intersect1d(finite['index'],
-                                          informative['index'])
+        self.clean_index = finite['index'] * informative['index']
 
         if test_features is None:
             return train_features[:, self.clean_index], train_targets, \

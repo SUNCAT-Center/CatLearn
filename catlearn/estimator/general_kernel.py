@@ -42,3 +42,13 @@ def default_lengthscale(features, dimension='single'):
     std = np.std(features, axis=axis)
 
     return std
+
+
+def smooth_kernel(features, dimension='single'):
+    """Generate a default kernel."""
+    length = default_lengthscale(features, dimension)
+
+    default = [{'type': 'gaussian', 'width': length, 'scaling': 1.,
+                'dimension': dimension}]
+
+    return default

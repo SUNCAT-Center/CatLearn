@@ -83,10 +83,7 @@ In these tutorials, feature elimination is investigated based on greedy algorith
     * 'toy_model_acquisition.py'
 
 2. Check the Gaussian process in the second figure of
-`05_toy_model_gradients/toy_model.ipynb`. The model is way off from the
-underlying function.
-
-3. No notebooks in `02_data_setup` were tested as per Martin Hansen's request
+`05_toy_model_gradients/toy_model.ipynb`.
 
 # Developer's Notes:
 1. Python executable files are created from the corresponding Jupyter

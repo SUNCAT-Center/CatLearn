@@ -57,8 +57,8 @@ def get_order_2(A):
 def get_div_order_2(A):
     """Get all combinations x_ij = x_i / x_j, where x_i,j are features.
 
-    The sorting order in dimension 0 is preserved. If a value is 0, Inf is
-    returned.
+    The sorting order in dimension 0 is preserved. If a denominator is 0,
+    Inf is returned.
 
     Parameters
     ----------

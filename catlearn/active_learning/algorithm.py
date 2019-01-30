@@ -16,9 +16,9 @@ class ActiveLearning(object):
         Parameters
         ----------
         surrogate_model : object
-            function which returns a trained regression model. This function
-            should either setup and train or
-            load and update the regression model.
+            function which accepts training and test data and returns index of
+            test data to acquire. The surrogate model contains the predictive
+            regression model and the acquisition function.
 
             Parameters
             ----------
@@ -27,13 +27,17 @@ class ActiveLearning(object):
                 Training data matrix.
             target : list
                 Training target feature.
-            unlabeled_data : array
+            test_fp : array
                 Data matrix representing an unlabeled search space.
+            test_target : list
+                Optional list of test targets.
 
             Returns
             ----------
             sample : list
                 List indices of candidates to be acquired.
+            score : object
+                User defined output, usually a numeric or a list of numerics.
 
         train_data : array
             training data matrix.
@@ -95,10 +99,12 @@ class ActiveLearning(object):
                                                  test_fp, test_target)
 
             to_acquire = test_index[sample[:batch_size]]
-            assert len(to_acquire) == batch_size
 
             # Append best candidates to be acquired.
+            if len(to_acquire) == 0:
+                break
             train_index += list(to_acquire)
+
             # Return meta data.
             output.append(score)
         return output
