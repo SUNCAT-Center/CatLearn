@@ -87,7 +87,7 @@ class ImportanceElimination(object):
         output = []
         survivors = list(range(total_features))
 
-        if not self.verbose or self.nprocs > 1:
+        if not self.verbose or self.nprocs != 1:
             iterator1 = range((total_features - 1) // step)
         else:
             # The tqdm package is used for tracking progress.
@@ -99,7 +99,7 @@ class ImportanceElimination(object):
             self.result = np.zeros((nsplit, total_features))
             meta = []
 
-            if not self.verbose or self.nprocs > 1:
+            if not self.verbose or self.nprocs != 1:
                 iterator2 = range(nsplit)
             else:
                 iterator2 = trange(nsplit, desc='k-folds             ',

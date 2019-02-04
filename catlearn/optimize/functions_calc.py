@@ -1,6 +1,81 @@
 import numpy as np
 from ase.calculators.calculator import Calculator
 
+
+class MultiModal(Calculator):
+
+    """MultiModal potential."""
+
+    implemented_properties = ['energy', 'forces']
+    nolabel = True
+
+    def __init__(self, **kwargs):
+        Calculator.__init__(self, **kwargs)
+
+    def calculate(self, atoms=None, properties=['energy','forces'],
+                  system_changes=['positions', 'numbers', 'cell', 'pbc']):
+        Calculator.calculate(self, atoms, properties, system_changes)
+
+        self.energy = 0.0
+        self.forces = np.zeros((len(self.atoms), 3))
+        forces = self.forces
+
+        x = self.atoms.get_positions()[0][0:2]
+
+        def multim(x, y, A, B, xmin, ymin):
+
+            # Function Value:
+            e_1 = np.exp(-(x - xmin)**2 / B**2)
+            e_2 = np.exp(-(y - ymin)**2 / B**2)
+            f = -A * e_1 * e_2
+
+            # Gradient dx:
+            e_1_dx = -2 * (x - xmin) / B**2 * e_1
+            e_2_dx = 0.0
+
+            dx = -A * (e_1_dx * e_2 + e_1 * e_2_dx)
+
+            # Gradient dy:
+            e_1_dy = 0.0
+            e_2_dy = -2 * (y - ymin) / B**2 * e_2
+
+            dy = -A * (e_1_dy * e_2 + e_1 * e_2_dy)
+
+            return [f, dx, dy]
+
+        list_A = [14.3, 13., 14.5, 13.5, 12.5, 14.0, 13.5, 14.2, 13.0] #
+        # Shallow.
+        list_B = [0.9, 0.78, 0.81, 0.76, 0.8, 0.79, 0.76, 0.74, 0.79]  # Width.
+        list_xmin = [0.0, 0.0, 0.0, 2.0, 2.0, 2.0, -2.0, -2.0, -2.0]
+        list_ymin = [0.0, 2.0, -2.0, 0.0, 2.0, -2.0, 0.0, 2.0, -2.0,]
+
+        e = []
+        grad_x = []
+        grad_y = []
+        for i in range(0, len(list_A)):
+            f_value, dx, dy = multim(x[0], x[1],
+                                     list_A[i], list_B[i],
+                                     list_xmin[i], list_ymin[i])
+            e.append(f_value)
+            grad_x.append(dx)
+            grad_y.append(dy)
+
+        # Energy:
+        energy = np.sum(e)
+
+        # Forces:
+        fx = np.sum(grad_x)
+        fy = np.sum(grad_y)
+        fz = 0.0
+
+        forces[0][0] = -fx
+        forces[0][1] = -fy
+        forces[0][2] = -fz
+
+        self.results['energy'] = energy
+        self.results['forces'] = forces
+
+
 class MullerBrown(Calculator):
 
     """Muller-brown potential."""
