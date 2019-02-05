@@ -1,5 +1,5 @@
 import numpy as np
-from ase.io import read, write
+from ase.io import Trajectory, write
 import datetime
 from ase.io.trajectory import TrajectoryWriter
 
@@ -24,7 +24,7 @@ def ase_traj_to_catlearn(traj_file):
             Atoms structures of the initial and final endpoints of the NEB.
 
     """
-    traj_ase = read(traj_file, ':')
+    traj_ase = Trajectory(traj_file)
     first_image = traj_ase[0]
     images = []
     constraints = first_image.constraints
