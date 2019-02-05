@@ -1,5 +1,6 @@
 # dev
 
+-   Added ML-MIN algorithm for energy minimization.
 -   Added ML-NEB algorithm for transition state search.
 -   Changed input format for kernels in the GP.
 
