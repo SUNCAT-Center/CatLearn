@@ -1,7 +1,5 @@
-from prettytable import PrettyTable
 import numpy as np
 from ase.io import Trajectory, write
-import pandas as pd
 import datetime
 from ase.io.trajectory import TrajectoryWriter
 
@@ -29,7 +27,7 @@ def ase_traj_to_catlearn(traj_file):
     traj_ase = Trajectory(traj_file)
     first_image = traj_ase[0]
     images = []
-    constraints = first_image._get_constraints()
+    constraints = first_image.constraints
     number_images = len(traj_ase)
     num_atoms = first_image.get_number_of_atoms()
     list_train = []
@@ -99,100 +97,84 @@ def array_to_atoms(input_array):
     return atoms
 
 
-def _start_table(self):
-    self.table_results = PrettyTable(['Method', 'Step', 'Time', 'Energy',
-                                      'fmax'])
-
-
-def print_info(self):
-    """ Prints the information of the surrogate model convergence at each step.
-    """
-
-    if self.iter == 0 and self.feval == 1:
-        _start_table(self)
-
-    if self.iter == 0 and self.feval > 1:
-        if self.start_mode is 'trajectory':
-            _start_table(self)
-            for i in range(0, len(self.list_targets)):
-                self.table_results.add_row(['Prev. calc.',
-                                            len(self.list_targets),
-                                            print_time(),
-                                            self.list_targets[i][0],
-                                            self.list_max_abs_forces[i]
-                                            ])
-    if self.iter >= 0:
-        self.table_results.add_row(['MLMin',
-                                    self.iter,
-                                    print_time(),
-                                    self.list_targets[-1][0],
-                                    self.max_abs_forces])
-    print(self.table_results)
-
-
-def _start_table_neb(self):
-    self.table_results = PrettyTable(['Method', 'Step', 'Time',
-                                      'Pred. barrier (-->)',
-                                      'Pred. barrier (<--)',
-                                      'Max. uncert.',
-                                      'Avg. uncert.',
-                                      'fmax'])
-
-
 def print_info_neb(self):
     """ Prints the information of the surrogate model convergence at each step.
     """
 
-    if self.iter == 0:
-        _start_table_neb(self)
+    if self.iter <2:
+        self.energy_backward = 0.0
+        self.energy_forward = 0.0
 
-    if self.iter >= 1:
-        if len(self.list_targets) == 2:
-            self.table_results.add_row(['ML-NEB',
-                                        i,
-                                        print_time(),
-                                        'NA. Initial state.',
-                                        'NA. Final state',
-                                        '-',
-                                        '-',
-                                        '-'
-                                        ])
-        if len(self.list_targets) > 3:
-            unc_max_tab = np.round(np.max(self.uncertainty_path[1:-1]), 5)
-            unc_mean_tab = np.round(np.mean(self.uncertainty_path[1:-1]), 5)
-            ef_tab = np.round(self.energy_forward, 5)
-            eb_tab = np.round(self.energy_backward, 5)
-            self.table_results.add_row(['ML-NEB',
-                                        self.iter,
-                                        print_time(),
-                                        ef_tab,
-                                        eb_tab,
-                                        unc_max_tab,
-                                        unc_mean_tab,
-                                        np.round(self.max_abs_forces, 6)
-                                        ])
-    print(self.table_results)
+    iter_tab = self.iter
+    ef_tab = np.round(self.energy_forward, 5)
+    eb_tab = np.round(self.energy_backward, 5)
+    unc_max_tab = np.round(np.max(self.uncertainty_path[1:-1]), 5)
+    unc_mean_tab = np.round(np.mean(self.uncertainty_path[1:-1]), 5)
+    fmax_tab = np.round(self.max_abs_forces, 6)
+
+    pre_tab_neb = [iter_tab, ef_tab, eb_tab, unc_max_tab, unc_mean_tab,
+                   fmax_tab]
+    if self.iter == 0:
+        self.tab_neb = np.array([pre_tab_neb])
+    if self.iter > 0:
+        self.tab_neb = np.append(self.tab_neb, [pre_tab_neb], axis=0)
+
+    print('+--------+------+---------------------+---------------------+------'
+          '---------------+--------------+--------------+----------+')
+    print('| Method | Step |        Time         | Pred. barrier (-->) | '
+          'Pred. barrier (<--) | Max. uncert. | Avg. uncert. |   fmax   |')
+    print('+--------+------+---------------------+---------------------+------'
+          '---------------+--------------+--------------+----------+')
+    for i in range(0, self.iter+1):
+        print('| ML-NEB |'
+              + '{0:6d}|'.format(int(self.tab_neb[i, 0])),
+              print_time()
+              + ' |'
+              + '{0:21f}|'.format(self.tab_neb[i, 1])
+              + '{0:21f}|'.format(self.tab_neb[i, 2])
+              + '{0:14f}|'.format(self.tab_neb[i, 3])
+              + '{0:14f}|'.format(self.tab_neb[i, 4])
+              + '{0:10f}|'.format(self.tab_neb[i, 5]))
+    print('+--------+------+---------------------+---------------------+------'
+          '---------------+--------------+--------------+----------+')
+
+
+def print_info(self):
+    """ Output of the ML-Min surrogate machine learning algorithm.
+    """
+    energy_tab = np.round(self.list_targets, 7)
+    fmax_tab = np.round(self.list_max_abs_forces, 6)
+
+    print('+--------+------+---------------------+-------------------------+')
+    print('| Method | Step |        Time         |   Energy    |    fmax   |')
+    print('+--------+------+---------------------+-------------------------+')
+    for i in range(0, len(energy_tab)):
+        print('| ML-Min |'
+              + '{0:6d}|'.format(i),
+              print_time()
+              + ' |{0:12f} |'.format(energy_tab[i])
+              + '{0:10f} |'.format(fmax_tab[i]))
+    print('+--------+------+---------------------+-------------------------+')
 
 
 def store_results_neb(self):
-    """ Function that print in csv files the predicted NEB curves after
-        each iteration"""
+    """ Function that dumps the predicted discrete and interpolated M.E.P.
+        curves in csv files for plotting"""
 
     # Save discrete path:
-    data = {'Path distance (Angstrom)': self.s,
-            'Energy (eV)': self.e,
-            'Uncertainty (eV)': self.uncertainty_path}
-    df = pd.DataFrame(data,
-                      columns=['Path distance (Angstrom)', 'Energy (eV)',
-                               'Uncertainty (eV)'])
-    df.to_csv('results_neb.csv')
+    header_data = 'Path distance (Angstrom), Energy (eV), Uncertainty (eV)'
+    data = np.zeros((len(self.s), 3))
+    data[:, 0] = self.s
+    data[:, 1] = self.e
+    data[:, 2] = self.uncertainty_path
+    np.savetxt('results_neb.csv', X=data, header=header_data)
 
     # Save interpolated path:
-    data = {'Path distance (Angstrom)': self.sfit, 'Energy (eV)': self.efit}
-
-    df = pd.DataFrame(data,
-                      columns=['Path distance (Angstrom)', 'Energy (eV)'])
-    df.to_csv('results_neb_interpolation.csv')
+    header_data = 'Path distance (Angstrom), Energy (eV)'
+    data = np.zeros((len(self.sfit), 2))
+    data[:, 0] = self.sfit
+    data[:, 1] = self.efit
+    np.savetxt('results_neb_interpolation.csv', X=data, header=header_data)
 
 
 def store_trajectory_neb(self):
