@@ -4,6 +4,7 @@ from __future__ import division
 
 import numpy as np
 from itertools import combinations_with_replacement
+import psutil
 
 
 def single_transform(A):
@@ -45,6 +46,13 @@ def get_order_2(A):
     """
     shapeA = np.shape(A)
     nfi = 0
+
+    # Check if data will fit in memory.
+    if (A.nbytes / shapeA[1]) * (sum(range(shapeA[1] + 1))) > \
+       psutil.virtual_memory().available * 0.75:
+        raise MemoryError("Not enough available memory for operation.")
+
+    # Preallocate.
     new_features = np.zeros([shapeA[0], sum(range(shapeA[1] + 1))])
     for f1 in range(shapeA[1]):
         for f2 in range(f1, shapeA[1]):
@@ -73,7 +81,13 @@ def get_div_order_2(A):
     """
     shapeA = np.shape(A)
     nfi = 0
-    # Preallocate:
+
+    # Check if data will fit in memory.
+    if (A.nbytes / shapeA[1]) * (shapeA[1] ** 2) > \
+       psutil.virtual_memory().available * 0.75:
+        raise MemoryError("Not enough memory for operation.")
+
+    # Preallocate.
     new_features = np.zeros([shapeA[0], shapeA[1]**2])
     for f1 in range(shapeA[1]):
         for f2 in range(shapeA[1]):

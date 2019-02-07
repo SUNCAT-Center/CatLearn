@@ -82,7 +82,7 @@ class FeatureScreening(object):
         reduced_test = self._reduce_matrix(feature_matrix=test_features,
                                            index_order=order, size=size)
 
-        return reduced_train['matrix'], reduced_test['matrix']
+        return reduced_train['matrix'], reduced_test['matrix'], order, size
 
     def screen(self, target, feature_matrix):
         """Feature selection based on SIS.
