@@ -14,7 +14,7 @@ The folder contains functions for generating a feature space.
 There are several ways to generate the feature vectors. The easiest way is to use the `FeatureGenerator`. Initially one must initialize the class:
 
 ```python
-    from catlearn.fingerprint import FeatureGenerator
+    from catlearn.featurize.setup import FeatureGenerator
     generator = FeatureGenerator(nprocs=None)
 ```
 

@@ -1,4 +1,9 @@
-## Available Vector Generators
+## Fingerprint Generators
+
+A fingerprint generator is a class that contain a number of fingerprinters,
+ each of which return a fingerprint vector, representing an atomic struture.
+ 
+## Built-in Vector Generators
 
 [(Back to top)](#table-of-contents)
 

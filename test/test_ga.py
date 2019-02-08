@@ -23,7 +23,8 @@ class TestGeneticAlgorithm(unittest.TestCase):
                               fit_func=minimize_error,
                               features=train_features,
                               targets=train_targets,
-                              population=None)
+                              population=None,
+                              dmax=10)
         self.assertEqual(np.shape(ga.population), (10, 20))
 
         ga.search(3)
