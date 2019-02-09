@@ -9,6 +9,7 @@ from catlearn import __version__
 from catlearn.active_learning.acquisition_functions import UCB
 from scipy.spatial.distance import euclidean
 import os.path
+import copy
 
 
 class MLMin(object):
@@ -334,7 +335,7 @@ class MLMin(object):
             print_info(self)
 
             # Save evaluated image.
-            self.list_atoms += [eval_atom.copy()]
+            self.list_atoms += [copy.deepcopy(eval_atom)]
             write(self.filename, self.list_atoms)
 
             # Maximum number of iterations reached.
