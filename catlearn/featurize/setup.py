@@ -303,6 +303,32 @@ class FeatureGenerator(
 
         self.atom_types = atom_types
 
+    def _get_ads_atom_types(self, train_candidates, test_candidates=None):
+        """Function to get all potential atomic types in data.
+
+        Parameters
+        ----------
+        train_candidates : list
+            List of atoms objects.
+        test_candidates : list
+            List of atoms objects.
+
+        Returns
+        -------
+        atom_types : list
+            Full list of atomic numbers in adsorbate atoms subsets.
+        """
+        train_candidates = list(train_candidates)
+        if test_candidates is not None:
+            train_candidates += list(test_candidates)
+        ads_atom_types = set()
+        for a in train_candidates:
+            ads_atom_types.update(
+                    set(a.get_atomic_numbers()[a.subsets['ads_atoms']]))
+        ads_atom_types = sorted(list(ads_atom_types))
+
+        self.ads_atom_types = ads_atom_types
+
     def _get_atom_length(self, train_candidates, test_candidates=None):
         """Function to get all potential system sizes in data.
 

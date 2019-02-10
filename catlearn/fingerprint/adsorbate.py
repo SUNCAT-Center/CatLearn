@@ -742,6 +742,63 @@ class AdsorbateFingerprintGenerator(BaseGenerator):
 
         return list(boc[np.triu_indices_from(boc)])
 
+    def bag_edges_all(self, atoms):
+        """Returns bag of connections, counting all bonds within the
+        adsorbate and between adsorbate atoms and surface. If we assign an
+        energy to each type of bond, considering first neighbors only,
+        this fingerprint would work independently in a linear model. The length
+        of the vector is atom_types * ads_atom_types.
+
+        Parameters
+        ----------
+        atoms : object
+            ASE Atoms object.
+
+        Returns
+        ----------
+        features : list
+            If None was passed, the elements are strings, naming the feature.
+        """
+        # number of element types.
+        n_elements = len(self.atom_types)
+        n_elements_ads = len(self.ads_atom_types)
+
+        # range of element types.
+        symbols = np.array([chemical_symbols[z] for z in self.atom_types])
+        ads_symbols = np.array([chemical_symbols[z] for z
+                                in self.ads_atom_types])
+
+        # Array of pairs.
+        rows, cols = np.meshgrid(symbols, ads_symbols)
+
+        # Add pairs to make labels.
+        pairs = np.core.defchararray.add(rows, cols)
+        labels = ['bea_' + c + '_ads' for c in
+                  pairs[np.triu_indices_from(pairs)]]
+        if atoms is None:
+            return labels
+        else:
+            # empty bag of connection types.
+            boc = np.zeros([n_elements_ads, n_elements])
+
+            natoms = len(atoms)
+            ads_atoms = atoms.subsets['ads_atoms']
+            # n_ads_atoms = len(atoms.subsets['ads_atoms'])
+            cm = np.array(atoms.connectivity)[ads_atoms, :]
+            np.fill_diagonal(cm, 0)
+
+            bonds = np.where(np.ravel(np.triu(cm)) > 0)[0]
+            for b in bonds:
+                # Get bonded atomic numbers.
+                z_ads, z_all = np.unravel_index(b, [natoms, natoms])
+                bond_index = (atoms.numbers[ads_atoms][z_ads],
+                              atoms.numbers[z_all])
+                bond_type = tuple((self.ads_atom_types.index(bond_index[0]),
+                                   self.atom_types.index(bond_index[1])))
+                # Count bonds in upper triangle.
+                boc[bond_type] += 1
+            return list(boc[np.triu_indices_from(boc)])
+
     def en_difference_ads(self, atoms=None):
         """Returns a list of electronegativity metrics, squared and summed over
         bonds within the adsorbate atoms.
