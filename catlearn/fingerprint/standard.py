@@ -14,6 +14,7 @@ import numpy as np
 import warnings
 
 from ase.data import chemical_symbols
+from ase.utils.formula import formula_hill
 
 from catlearn import __path__ as catlearn_path
 from catlearn.featurize.base import BaseGenerator
@@ -60,6 +61,17 @@ class StandardFingerprintGenerator(BaseGenerator):
             with open('/'.join(catlearn_path[0].split('/')[:-1]) +
                       '/catlearn/data/proxy-mendeleev.json') as f:
                 self.element_data = json.load(f)
+
+        # Coordination number bounds.
+        if not hasattr(self, 'cn_max'):
+            self.cn_max = kwargs.get('cn_max')
+        if self.cn_max is None:
+            self.cn_max = 4
+
+        if not hasattr(self, 'cn_min'):
+            self.cn_min = kwargs.get('cn_min')
+        if self.cn_min is None:
+            self.cn_min = 0
 
         super(StandardFingerprintGenerator, self).__init__(**kwargs)
 
@@ -276,6 +288,31 @@ class StandardFingerprintGenerator(BaseGenerator):
             features.append(co)
         return features
 
+    def bag_elements(self, atoms):
+        """Returns the bag of elements, defined as counting occurence of
+        elements in a given structure.
+        This is mostly useful for subtracting atomization energies.
+
+        Parameters
+        ----------
+        atoms : object
+
+        Returns
+        ----------
+        features : list
+        """
+        # range of element types.
+        labels = ['bag_' + chemical_symbols[z] for z in self.atom_types]
+        if atoms is None:
+            return labels
+        else:
+            # empty bag atoms.
+            bag = np.zeros(len(labels))
+            for i, z in enumerate(self.atom_types):
+                bag[i] += list(atoms.numbers).count(z)
+
+            return list(bag)
+
     def bag_connections(self, atoms):
         """Returns the bag of connections, defined as counting connections
         between types of elements pairs. We define the bag as a vector, e.g.
@@ -316,3 +353,41 @@ class StandardFingerprintGenerator(BaseGenerator):
                 # Count bonds in upper triangle.
                 boc[bond_type] += 1
             return list(boc[np.triu_indices_from(boc)])
+
+    def bag_element_cn(self, atoms):
+        """Bag elements folded with coordination numbers,
+        e.g. number of C with CN = 4, number of C with CN = 3, ect.
+
+        Parameters
+        ----------
+        atoms : object
+            ASE Atoms object.
+
+        Returns
+        ----------
+        features : list
+            If None was passed, the elements are strings, naming the feature.
+        """
+        labels = []
+        atom_symbols = [chemical_symbols[z] for z in self.atom_types]
+        index_symbols = {}
+        for j, s in enumerate(atom_symbols):
+            index_symbols[s] = j
+            labels += ['bag_cn_' + s + '_' + str(n) for
+                       n in range(self.cn_min, self.cn_max+1)]
+        if atoms is None:
+            return labels
+        else:
+            s_cn_matrix = np.zeros([len(self.atom_types),
+                                    self.cn_max+1-self.cn_min])
+            cm = np.array(atoms.connectivity, dtype=int)
+            for i, atom in enumerate(atoms):
+                cn = cm[i, :].sum()
+                cn_i = cn - self.cn_min
+                if cn > self.cn_max or cn < self.cn_min:
+                    print(atoms.info['key_value_pairs'], cn)
+                    warnings.warn('Coordination number out of bounds')
+                    return [np.nan] * len(labels)
+                s_cn_matrix[index_symbols[atoms.symbols[i]], cn_i] += 1
+            fingerprint = list(np.ravel(s_cn_matrix))
+            return fingerprint
