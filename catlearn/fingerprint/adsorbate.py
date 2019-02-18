@@ -32,8 +32,8 @@ default_adsorbate_fingerprinters = ['mean_chemisorbed_atoms',
                                     'generalized_cn',
                                     'bag_cn',
                                     'bag_atoms_ads',
-                                    'bag_connections_ads',
-                                    'bag_connections_chemi']
+                                    'bag_edges_ads',
+                                    'bag_edges_chemi']
 
 extra_slab_params = ['atomic_radius',
                      'heat_of_formation',
@@ -645,7 +645,7 @@ class AdsorbateFingerprintGenerator(BaseGenerator):
             strain_term = (av_term - av_bulk) / av_bulk
             return [strain_site, strain_term]
 
-    def bag_connections_ads(self, atoms):
+    def bag_edges_ads(self, atoms):
         """Returns bag of connections, counting only the bonds within the
         adsorbate.
 
@@ -693,7 +693,7 @@ class AdsorbateFingerprintGenerator(BaseGenerator):
                 boc[bond_type] += 1
             return list(boc[np.triu_indices_from(boc)])
 
-    def bag_connections_chemi(self, atoms):
+    def bag_edges_chemi(self, atoms):
         """Returns bag of connections, counting only the bonds within the
         adsorbate and the connections between adsorbate and surface.
 
