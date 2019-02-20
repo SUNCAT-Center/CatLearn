@@ -14,7 +14,6 @@ import numpy as np
 import warnings
 
 from ase.data import chemical_symbols
-from ase.utils.formula import formula_hill
 
 from catlearn import __path__ as catlearn_path
 from catlearn.featurize.base import BaseGenerator
@@ -25,7 +24,9 @@ default_molecule_fingerprinters = [
                                    'eigenspectrum_vec',
                                    'composition_vec',
                                    'distance_vec',
-                                   'bag_connections'
+                                   'bag_elements'
+                                   'bag_edges',
+                                   'bag_element_cn'
                                    ]
 
 
@@ -313,7 +314,7 @@ class StandardFingerprintGenerator(BaseGenerator):
 
             return list(bag)
 
-    def bag_connections(self, atoms):
+    def bag_edges(self, atoms):
         """Returns the bag of connections, defined as counting connections
         between types of elements pairs. We define the bag as a vector, e.g.
         return [Number of C-H connections, # C-C, # C-O, ..., # M-X]
@@ -328,11 +329,11 @@ class StandardFingerprintGenerator(BaseGenerator):
         """
         # range of element types
         n_elements = len(self.atom_types)
-        symbols = np.array([chemical_symbols[z] for z in self.atom_types])
-        rows, cols = np.meshgrid(symbols, symbols)
-        pairs = np.core.defchararray.add(rows, cols)
-        labels = ['bag_' + c for c in pairs[np.triu_indices_from(pairs)]]
         if atoms is None:
+            symbols = np.array([chemical_symbols[z] for z in self.atom_types])
+            rows, cols = np.meshgrid(symbols, symbols)
+            pairs = np.core.defchararray.add(rows, cols)
+            labels = ['bag_' + c for c in pairs[np.triu_indices_from(pairs)]]
             return labels
         else:
             # empty bag of bond types.
@@ -352,7 +353,7 @@ class StandardFingerprintGenerator(BaseGenerator):
                                    self.atom_types.index(bond_index[1])))
                 # Count bonds in upper triangle.
                 boc[bond_type] += 1
-            return list(boc[np.triu_indices_from(boc)])
+            return boc[np.triu_indices_from(boc)].tolist()
 
     def bag_element_cn(self, atoms):
         """Bag elements folded with coordination numbers,
@@ -391,3 +392,56 @@ class StandardFingerprintGenerator(BaseGenerator):
                 s_cn_matrix[index_symbols[atoms.symbols[i]], cn_i] += 1
             fingerprint = list(np.ravel(s_cn_matrix))
             return fingerprint
+
+    def bag_edges_cn(self, atoms):
+        """Returns the bag of connections folded with coordination numbers of
+        the node atoms.
+
+        Parameters
+        ----------
+        atoms : object
+
+        Returns
+        ----------
+        features : list
+        """
+        # range of element types
+        atom_symbols = [chemical_symbols[z] for z in self.atom_types]
+        nodes = []
+        for j, s in enumerate(atom_symbols):
+            nodes += [s + str(n) for n in
+                      range(self.cn_min, self.cn_max+1)]
+        if atoms is None:
+            rows, cols = np.meshgrid(nodes, nodes)
+            pairs = np.core.defchararray.add(rows, cols)
+            labels = ['bag_' + c for c in pairs[np.triu_indices_from(pairs)]]
+            return labels
+        else:
+            # empty bag of bond types.
+            n_elements_cn = len(self.atom_types) * \
+                (self.cn_max - self.cn_min + 1)
+            boc = np.zeros([n_elements_cn, n_elements_cn], dtype=int)
+
+            natoms = len(atoms)
+            cm = np.array(atoms.connectivity, dtype=int)
+            np.fill_diagonal(cm, 0)
+            cn_list = cm.sum(axis=1)
+
+            bonds = np.where(np.ravel(np.triu(cm)) > 0)[0]
+            for b in bonds:
+                # Get bonded atomic indices.
+                i_row, i_col = np.unravel_index(b, [natoms, natoms])
+                z = (atoms.numbers[i_row], atoms.numbers[i_col])
+                cn = (cn_list[i_row], cn_list[i_col])
+                bond_index = np.lexsort((cn, z))
+                node_a = chemical_symbols[np.array(z)[bond_index[0]]] + \
+                    str(np.array(cn)[bond_index[0]])
+                node_b = chemical_symbols[np.array(z)[bond_index[1]]] + \
+                    str(np.array(cn)[bond_index[1]])
+
+                # Get bond types.
+                bond_type = tuple((nodes.index(node_a),
+                                   nodes.index(node_b)))
+                # Count bonds in upper triangle.
+                boc[bond_type] += 1
+            return boc[np.triu_indices_from(boc)].tolist()
