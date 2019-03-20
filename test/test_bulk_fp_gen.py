@@ -36,7 +36,7 @@ class TestBulkFeatures(unittest.TestCase):
         images = images_connectivity(images)
 
         gen = FeatureGenerator()
-        train_fpv = default_fingerprinters(gen, 'bulk') + [gen.bag_connections]
+        train_fpv = default_fingerprinters(gen, 'bulk') + [gen.bag_edges]
         matrix = gen.return_vec(images, train_fpv)
         labels = gen.return_names(train_fpv)
         print(np.shape(matrix), print(type(matrix)))

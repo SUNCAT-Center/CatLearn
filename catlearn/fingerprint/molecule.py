@@ -1,5 +1,4 @@
 """Functions to build a gas phase molecule fingerprint."""
-from catlearn.utilities.neighborlist import catlearn_neighborlist
 from catlearn.featurize.periodic_table_data import list_mendeleev_params
 import networkx as nx
 import numpy as np
@@ -36,19 +35,9 @@ class AutoCorrelationFingerprintGenerator():
         if parameters is None:
             self.parameters = default_parameters
 
-    def generate(self):
-        """Return an (n, m) array of fingerprints."""
-        fp_length = len(self.parameters) * (self.dstar + 1)
-        fingerprints = np.zeros((len(self.images), fp_length))
-
-        for i, atoms in enumerate(self.images):
-            fingerprints[i] = self.get_autocorrelation(atoms)
-
-        return fingerprints
-
     def get_autocorrelation(self, atoms):
         """Return the autocorrelation fingerprint for a molecule."""
-        connectivity = catlearn_neighborlist(atoms)
+        connectivity = atoms.connectivity
 
         G = nx.Graph(connectivity)
         distance_matrix = nx.floyd_warshall_numpy(G)

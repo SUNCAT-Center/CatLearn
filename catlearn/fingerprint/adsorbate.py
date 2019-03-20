@@ -1,17 +1,14 @@
 """Slab adsorbate fingerprint functions for machine learning."""
 import numpy as np
-import collections
 
 from ase.symbols import string2symbols
 from ase.data import ground_state_magnetic_moments as gs_magmom
 from ase.data import atomic_numbers, chemical_symbols
 
-from catlearn.featurize.periodic_table_data import (get_mendeleev_params,
-                                                    n_outer,
-                                                    list_mendeleev_params,
+from catlearn.featurize.periodic_table_data import (list_mendeleev_params,
                                                     default_params, get_radius,
                                                     electronegativities,
-                                                    block2number, make_labels)
+                                                    make_labels)
 from catlearn.featurize.base import BaseGenerator, check_labels
 
 

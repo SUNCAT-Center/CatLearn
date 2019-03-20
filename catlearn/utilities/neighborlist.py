@@ -164,22 +164,9 @@ def ase_connectivity(atoms, cutoffs=None, count_bonds=True):
     if hasattr(atoms, 'neighborlist'):
         nl = atoms.neighborlist
     else:
-        nl = ase_neighborlist(atoms, cutoffs=cutoffs)
-
-    conn_mat = []
-    index = range(len(atoms))
-    # Create binary matrix denoting connections.
-    for index1 in index:
-        conn_x = []
-        for index2 in index:
-            if index2 in nl[index1]:
-                if count_bonds:
-                    bonds = nl[index1].count(index2)
-                else:
-                    bonds = 1
-                conn_x.append(bonds)
-            else:
-                conn_x.append(0.)
-        conn_mat.append(conn_x)
+        nl = NeighborList(cutoffs=cutoffs, bothways=True)
+        nl.update(atoms)
+        conn_mat = nl.get_connectivity_matrix(sparse=False)
+        np.fill_diagonal(conn_mat, 0)
 
     return np.asarray(conn_mat, dtype=int)
