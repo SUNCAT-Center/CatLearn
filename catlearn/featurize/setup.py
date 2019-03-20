@@ -9,6 +9,7 @@ import pandas as pd
 from collections import defaultdict
 import multiprocessing
 from tqdm import tqdm
+from catlearn.fingerprint.molecule import AutoCorrelationFingerprintGenerator
 from catlearn.fingerprint.adsorbate import (AdsorbateFingerprintGenerator,
                                             default_adsorbate_fingerprinters)
 from catlearn.fingerprint.convoluted import (ConvolutedFingerprintGenerator,
@@ -59,7 +60,8 @@ class FeatureGenerator(
         AdsorbateFingerprintGenerator, ParticleFingerprintGenerator,
         StandardFingerprintGenerator, GraphFingerprintGenerator,
         BulkFingerprintGenerator, ConvolutedFingerprintGenerator,
-        ChalcogenideFingerprintGenerator, CatappFingerprintGenerator):
+        ChalcogenideFingerprintGenerator, CatappFingerprintGenerator,
+        AutoCorrelationFingerprintGenerator):
     """Feature generator class.
 
     It is sometimes necessary to normalize the length of feature vectors when

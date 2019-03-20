@@ -1,20 +1,20 @@
 """Functions to build a gas phase molecule fingerprint."""
+from catlearn.featurize.base import BaseGenerator
 from catlearn.featurize.periodic_table_data import list_mendeleev_params
 import networkx as nx
 import numpy as np
-from ase import Atoms
+
 
 default_parameters = [
     'atomic_number',
     'covalent_radius_cordero',
-    'en_pauling',
-]
+    'en_pauling']
 
 
-class AutoCorrelationFingerprintGenerator():
+class AutoCorrelationFingerprintGenerator(BaseGenerator):
     """Class for constructing an autocorrelation fingerprint."""
 
-    def __init__(self, images, dstar=0, parameters=None):
+    def __init__(self, **kwargs):
         """Initialize.
 
         Parameters
@@ -26,14 +26,20 @@ class AutoCorrelationFingerprintGenerator():
         parameters : list
             Parameters to use for the autocorrelation
         """
-        if isinstance(images, Atoms):
-            images = [images]
+        # Slab periodic table parameters.
+        if not hasattr(self, 'dstar'):
+            self.dstar = kwargs.get('dstar')
 
-        self.images = images
-        self.dstar = dstar
+        if self.dstar is None:
+            self.dstar = 2
 
-        if parameters is None:
+        if not hasattr(self, 'parameters'):
+            self.parameters = kwargs.get('parameters')
+
+        if self.parameters is None:
             self.parameters = default_parameters
+
+        super(AutoCorrelationFingerprintGenerator, self).__init__(**kwargs)
 
     def get_autocorrelation(self, atoms):
         """Return the autocorrelation fingerprint for a molecule."""
