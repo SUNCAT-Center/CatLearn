@@ -27,7 +27,7 @@ def database_to_list(fname, selection=None):
         atoms.info['id'] = dbid
         atoms.info['ctime'] = float(d.ctime)
         atoms.subsets = {}
-        if 'data' in d and 'connectivity' in d.data:
+        if hasattr(d, 'data') and 'connectivity' in dict(d.data):
             atoms.connectivity = np.array(d.data.connectivity)
         images.append(atoms)
 

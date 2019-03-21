@@ -1,11 +1,13 @@
-from catlearn.fingerprint.molecule import \
-    AutoCorrelationFingerprintGenerator as ACG
+from catlearn.featurize.setup import FeatureGenerator
+from catlearn.utilities.neighborlist import ase_connectivity
 from ase.build import molecule
+from ase.data import covalent_radii
 import numpy as np
 import unittest
 
-truth = np.array([[166.0, 15963.0, 39.849700000000006,
-                   232.0, 32416.0, 72.664, 178.0, 22910.0, 78.7552]])
+
+truth = np.array([[166, 15963, 39.8497, 220, 27890,
+                   61.444, 172, 21422, 65.1592]])
 
 
 class TestAutoCorrelation(unittest.TestCase):
@@ -14,8 +16,12 @@ class TestAutoCorrelation(unittest.TestCase):
     def test_generator(self):
         """Test the feature generation."""
         atoms = molecule('HCOOH')
-        gen = ACG(atoms, dstar=2)
-        features = gen.generate()
+        atoms.center(vacuum=5)
+        radii = [covalent_radii[z] for z in atoms.numbers]
+        atoms.connectivity = ase_connectivity(atoms, radii)
+        images = [atoms]
+        gen = FeatureGenerator()
+        features = gen.return_vec(images, [gen.get_autocorrelation])
 
         np.testing.assert_allclose(features, truth)
 

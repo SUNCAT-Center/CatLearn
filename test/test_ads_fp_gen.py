@@ -55,6 +55,7 @@ class TestAdsorbateFeatures(unittest.TestCase):
         gen = FeatureGenerator(nprocs=1)
         train_fpv = default_fingerprinters(gen, 'adsorbates')
         train_fpv += [gen.formal_charges,
+                      gen.bag_edges_ads,
                       gen.ads_av,
                       gen.ads_sum]
         matrix = gen.return_vec(images, train_fpv)
