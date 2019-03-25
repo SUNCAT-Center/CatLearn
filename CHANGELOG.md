@@ -1,5 +1,7 @@
 # dev
 
+# Version 0.6.0 (January 2019)
+
 -   Added ML-MIN algorithm for energy minimization.
 -   Added ML-NEB algorithm for transition state search.
 -   Changed input format for kernels in the GP.

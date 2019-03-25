@@ -9,6 +9,7 @@ import pandas as pd
 from collections import defaultdict
 import multiprocessing
 from tqdm import tqdm
+from catlearn.fingerprint.molecule import AutoCorrelationFingerprintGenerator
 from catlearn.fingerprint.adsorbate import (AdsorbateFingerprintGenerator,
                                             default_adsorbate_fingerprinters)
 from catlearn.fingerprint.convoluted import (ConvolutedFingerprintGenerator,
@@ -59,7 +60,8 @@ class FeatureGenerator(
         AdsorbateFingerprintGenerator, ParticleFingerprintGenerator,
         StandardFingerprintGenerator, GraphFingerprintGenerator,
         BulkFingerprintGenerator, ConvolutedFingerprintGenerator,
-        ChalcogenideFingerprintGenerator, CatappFingerprintGenerator):
+        ChalcogenideFingerprintGenerator, CatappFingerprintGenerator,
+        AutoCorrelationFingerprintGenerator):
     """Feature generator class.
 
     It is sometimes necessary to normalize the length of feature vectors when
@@ -302,6 +304,32 @@ class FeatureGenerator(
         atom_types = sorted(list(atom_types))
 
         self.atom_types = atom_types
+
+    def _get_ads_atom_types(self, train_candidates, test_candidates=None):
+        """Function to get all potential atomic types in data.
+
+        Parameters
+        ----------
+        train_candidates : list
+            List of atoms objects.
+        test_candidates : list
+            List of atoms objects.
+
+        Returns
+        -------
+        atom_types : list
+            Full list of atomic numbers in adsorbate atoms subsets.
+        """
+        train_candidates = list(train_candidates)
+        if test_candidates is not None:
+            train_candidates += list(test_candidates)
+        ads_atom_types = set()
+        for a in train_candidates:
+            ads_atom_types.update(
+                    set(a.get_atomic_numbers()[a.subsets['ads_atoms']]))
+        ads_atom_types = sorted(list(ads_atom_types))
+
+        self.ads_atom_types = ads_atom_types
 
     def _get_atom_length(self, train_candidates, test_candidates=None):
         """Function to get all potential system sizes in data.
