@@ -8,7 +8,6 @@ from ase.neb import NEBTools
 from ase.io import read, write
 from ase.optimize import MDMin
 from scipy.spatial import distance
-import copy
 import os
 from catlearn.regression import GaussianProcess
 from ase.calculators.calculator import Calculator, all_changes
@@ -20,7 +19,8 @@ class MLNEB(object):
 
     def __init__(self, start, end, prev_calculations=None,
                  n_images=0.25, k=None, interpolation='linear', mic=False,
-                 neb_method='improvedtangent', ase_calc=None, restart=True):
+                 neb_method='improvedtangent', ase_calc=None, restart=True,
+                 force_consistent=None):
 
         """ Nudged elastic band (NEB) setup.
 
@@ -57,6 +57,12 @@ class MLNEB(object):
             Only useful if you want to continue your ML-NEB in the same
             directory. The file "evaluated_structures.traj" from the
             previous run, must be located in the same run directory.
+        force_consistent: boolean or None
+            Use force-consistent energy calls (as opposed to the energy
+            extrapolated to 0 K). By default (force_consistent=None) uses
+            force-consistent energies if available in the calculator, but
+            falls back to force_consistent=False if not.
+
         """
 
         path = None
@@ -88,6 +94,7 @@ class MLNEB(object):
         self.feval = 0
 
         # General setup.
+        self.fc = force_consistent
         self.iter = 0
         self.ase_calc = ase_calc
         self.ase = True
@@ -167,8 +174,10 @@ class MLNEB(object):
             self.index_mask = create_mask(self.ase_ini, self.constraints)
 
         # Obtain the energy of the endpoints for scaling:
-        self.energy_is = is_endpoint[-1].get_potential_energy()
-        self.energy_fs = fs_endpoint[-1].get_potential_energy()
+        self.energy_is = is_endpoint[-1].get_potential_energy(
+                                                      force_consistent=self.fc)
+        self.energy_fs = fs_endpoint[-1].get_potential_energy(
+                                                      force_consistent=self.fc)
 
         # Set scaling of the targets:
         self.max_targets = np.max([self.energy_is, self.energy_fs])
@@ -202,7 +211,7 @@ class MLNEB(object):
 
             neb_interpolation.interpolate(method=interpolation, mic=self.mic)
 
-            self.initial_images = copy.deepcopy(self.images)
+            self.initial_images = self.images.copy()
 
         # B) If the user sets a path:
         if path is not None:
@@ -237,7 +246,7 @@ class MLNEB(object):
             self.spring = np.sqrt(self.n_images-1) / self.d_start_end
 
         # Get initial path distance:
-        self.path_distance = copy.deepcopy(self.d_start_end)
+        self.path_distance = self.d_start_end.copy()
 
         # Get forces for the previous steps
         self.list_max_abs_forces = []
@@ -848,7 +857,7 @@ def get_energy_catlearn(self, x=None):
     self.ase_ini.set_calculator(None)
     self.ase_ini = Atoms(self.ase_ini, positions=pos_ase,
                          calculator=self.ase_calc)
-    energy = self.ase_ini.get_potential_energy()
+    energy = self.ase_ini.get_potential_energy(force_consistent=self.fc)
     return energy
 
 

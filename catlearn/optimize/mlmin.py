@@ -9,13 +9,13 @@ from catlearn import __version__
 from catlearn.active_learning.acquisition_functions import UCB
 from scipy.spatial.distance import euclidean
 import os.path
-import copy
+from ase.io.trajectory import TrajectoryWriter
 
 
 class MLMin(object):
 
     def __init__(self, x0, prev_calculations=None, restart=False,
-                 trajectory='catlearn_opt.traj'):
+                 trajectory='catlearn_opt.traj', force_consistent=None):
 
         """Optimization setup.
 
@@ -34,6 +34,12 @@ class MLMin(object):
             calculator and parameters).
         trajectory: string
             Filename to store the output.
+        force_consistent: boolean or None
+            Use force-consistent energy calls (as opposed to the energy
+            extrapolated to 0 K). By default (force_consistent=None) uses
+            force-consistent energies if available in the calculator, but
+            falls back to force_consistent=False if not.
+
         """
 
         # General variables.
@@ -45,6 +51,7 @@ class MLMin(object):
         self.opt_type = 'MLMin'
         self.version = self.opt_type + ' ' + __version__
         print_version(self.version)
+        self.fc = force_consistent
 
         if restart is True and prev_calculations is None:
             if os.path.isfile(self.filename):
@@ -92,7 +99,8 @@ class MLMin(object):
         self.list_gradients = []
         for i in range(0, len(self.list_atoms)):
             pos_atoms = list(self.list_atoms[i].get_positions().reshape(-1))
-            energy_atoms = self.list_atoms[i].get_potential_energy()
+            energy_atoms = self.list_atoms[i].get_potential_energy(
+                                                      force_consistent=self.fc)
             grad_atoms = list(-self.list_atoms[i].get_forces().reshape(-1))
             self.list_train.append(pos_atoms)
             self.list_targets.append(energy_atoms)
@@ -109,8 +117,6 @@ class MLMin(object):
         # Dump all Atoms to file.
         write(self.filename, self.list_atoms)
         print_info(self)
-
-        print(self.list_targets)
 
     def run(self, fmax=0.05, steps=200, kernel='SQE', max_step=0.25,
             acq='min_energy', full_output=False):
@@ -280,8 +286,8 @@ class MLMin(object):
 
                 n_steps_performed += 1
                 if n_steps_performed > 1000:
-                        if full_output is True:
-                            print('Not converged yet...')
+                    if full_output is True:
+                        print('Not converged yet...')
                         ml_converged = True
                 if unc_ml >= max_step:
                     if full_output is True:
@@ -318,7 +324,8 @@ class MLMin(object):
             pos_atom = self.interesting_point
             eval_atom.positions = np.array(pos_atom).reshape((-1, 3))
             eval_atom.set_calculator(self.ase_calc)
-            energy_atom = eval_atom.get_potential_energy()
+            energy_atom = eval_atom.get_potential_energy(
+                                                      force_consistent=self.fc)
             forces_atom = -eval_atom.get_forces().reshape(-1)
 
             # 4. Convergence and output.
@@ -335,8 +342,10 @@ class MLMin(object):
             print_info(self)
 
             # Save evaluated image.
-            self.list_atoms += [copy.deepcopy(eval_atom)]
-            write(self.filename, self.list_atoms)
+            self.list_atoms += [eval_atom]
+            TrajectoryWriter(atoms=self.ase_ini,
+                             filename=self.filename,
+                             mode='a').write()
 
             # Maximum number of iterations reached.
             if self.iter >= steps:
