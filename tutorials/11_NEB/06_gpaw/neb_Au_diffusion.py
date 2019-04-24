@@ -7,7 +7,6 @@ from ase.optimize import BFGS
 from gpaw import GPAW, FermiDirac
 
 from catlearn.optimize.mlneb import MLNEB
-import copy
 
 
 """
@@ -22,10 +21,11 @@ import copy
 # 1. Structural relaxation.
 
 # Setup calculator:
-ase_calculator = GPAW(mode='pw',
-                      basis='dzp',
-                      xc='PBE',
-                      occupations=FermiDirac(0.0, fixmagmom=False))
+calc_args = {'mode': 'pw',
+        'basis': 'dzp',
+        'xc': 'PBE',
+        'occupations': FermiDirac(0.03, fixmagmom=False)}
+
 # 1.1. Structures:
 
 # 2x2-Al(001) surface with 3 layers and an
@@ -33,7 +33,7 @@ ase_calculator = GPAW(mode='pw',
 slab = fcc100('Al', size=(2, 2, 3))
 add_adsorbate(slab, 'Au', 1.7, 'hollow')
 slab.center(axis=2, vacuum=4.0)
-slab.set_calculator(copy.deepcopy(ase_calculator))
+slab.set_calculator(GPAW(**calc_args))
 
 # Fix second and third layers:
 mask = [atom.tag > 1 for atom in slab]
@@ -62,7 +62,7 @@ constraint = FixAtoms(mask=[atom.tag > 1 for atom in initial_ase])
 images_ase = [initial_ase]
 for i in range(1, n_images-1):
     image = initial_ase.copy()
-    image.set_calculator(copy.deepcopy(ase_calculator))
+    image.set_calculator(GPAW(**calc_args))
     image.set_constraint(constraint)
     images_ase.append(image)
 
@@ -78,7 +78,7 @@ qn_ase.run(fmax=0.05)
 
 neb_catlearn = MLNEB(start='initial.traj',
                      end='final.traj',
-                     ase_calc=copy.deepcopy(ase_calculator),
+                     ase_calc=GPAW(**calc_args),
                      n_images=n_images,
                      interpolation='idpp', restart=False)
 
