@@ -1,3 +1,4 @@
+import os
 from ase.build import fcc100, add_adsorbate
 from ase.io import read
 from ase.constraints import FixAtoms
@@ -29,7 +30,6 @@ calc_args = {'mode': 'lcao',
              'occupations': FermiDirac(0.03)}
 
 # 1.1. Structures:
-
 # 2x2-Al(001) surface with 3 layers and an
 # Au atom adsorbed in a hollow site:
 slab = fcc100('Al', size=(2, 2, 3))
@@ -42,15 +42,16 @@ mask = [atom.tag > 1 for atom in slab]
 slab.set_constraint(FixAtoms(mask=mask))
 
 # 1.2. Optimize initial and final end-points.
+if 'initial.traj' not in os.listdir():
+    # Initial end-point:
+    qn = BFGS(slab, trajectory='initial.traj')
+    qn.run(fmax=0.01)
 
-# Initial end-point:
-qn = BFGS(slab, trajectory='initial.traj')
-qn.run(fmax=0.01)
-
-# Final end-point:
-slab[-1].x += slab.get_cell()[0, 0] / 2
-qn = BFGS(slab, trajectory='final.traj')
-qn.run(fmax=0.01)
+if 'final.traj' not in os.listdir():
+    # Final end-point:
+    slab[-1].x += slab.get_cell()[0, 0] / 2
+    qn = BFGS(slab, trajectory='final.traj')
+    qn.run(fmax=0.01)
 
 # # Define number of images:
 n_images = 7
