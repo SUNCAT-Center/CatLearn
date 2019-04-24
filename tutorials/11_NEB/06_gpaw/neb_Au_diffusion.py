@@ -3,6 +3,7 @@ from ase.io import read
 from ase.constraints import FixAtoms
 from ase.neb import NEB
 from ase.optimize import BFGS
+from ase.parallel import rank
 
 from gpaw import GPAW, FermiDirac
 
@@ -26,6 +27,7 @@ calc_args = {'mode': 'lcao',
              'basis': 'dzp',
              'symmetry': 'off',
              'xc': 'PBE',
+             'txt': open('gpaw.txt', 'a'),
              'occupations': FermiDirac(0.03)}
 
 # 1.1. Structures:
@@ -77,32 +79,32 @@ qn_ase = BFGS(neb_ase, trajectory='neb_ase.traj')
 qn_ase.run(fmax=0.05)
 
 # 2.B. NEB using CatLearn
+if rank == 0:
+    neb_catlearn = MLNEB(start='initial.traj',
+                         end='final.traj',
+                         ase_calc=GPAW(**calc_args),
+                         n_images=n_images,
+                         interpolation='idpp', restart=False)
 
-neb_catlearn = MLNEB(start='initial.traj',
-                     end='final.traj',
-                     ase_calc=GPAW(**calc_args),
-                     n_images=n_images,
-                     interpolation='idpp', restart=False)
+    neb_catlearn.run(fmax=0.05, trajectory='ML-NEB.traj')
+    # 3. Summary of the results ###############################################
 
-neb_catlearn.run(fmax=0.05, trajectory='ML-NEB.traj')
+    # NEB ASE:
+    print('\nSummary of the results: \n')
 
-# 3. Summary of the results #################################################
+    atoms_ase = read('neb_ase.traj', ':')
+    n_eval_ase = int(len(atoms_ase) - 2 * (len(atoms_ase)/n_images))
 
-# NEB ASE:
-print('\nSummary of the results: \n')
+    print('Number of function evaluations CI-NEB implemented in ASE:',
+          n_eval_ase)
 
-atoms_ase = read('neb_ase.traj', ':')
-n_eval_ase = int(len(atoms_ase) - 2 * (len(atoms_ase)/n_images))
+    # ML-NEB:
+    atoms_catlearn = read('evaluated_structures.traj', ':')
+    n_eval_catlearn = len(atoms_catlearn) - 2
+    print('Number of function evaluations CatLearn:', n_eval_catlearn)
 
-print('Number of function evaluations CI-NEB implemented in ASE:', n_eval_ase)
-
-# ML-NEB:
-atoms_catlearn = read('evaluated_structures.traj', ':')
-n_eval_catlearn = len(atoms_catlearn) - 2
-print('Number of function evaluations CatLearn:', n_eval_catlearn)
-
-# Comparison:
-print('\nThe ML-NEB algorithm required ',
-      (n_eval_ase/n_eval_catlearn),
-      'times less number of function evaluations than '
-      'the standard NEB algorithm.')
+    # Comparison:
+    print('\nThe ML-NEB algorithm required ',
+          (n_eval_ase/n_eval_catlearn),
+          'times less number of function evaluations than '
+          'the standard NEB algorithm.')
