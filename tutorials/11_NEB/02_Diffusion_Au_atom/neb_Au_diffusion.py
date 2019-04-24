@@ -1,20 +1,20 @@
 from ase.build import fcc100, add_adsorbate
-from ase.calculators.emt import EMT
 from ase.io import read
 from ase.constraints import FixAtoms
 from ase.neb import NEB
 from ase.optimize import BFGS
-import matplotlib.pyplot as plt
-from catlearn.optimize.mlneb import MLNEB
-from ase.neb import NEBTools
-import copy
-from catlearn.optimize.tools import plotneb
 
-""" 
-    Toy model for the diffusion of a Au atom on an Al(111) surface.  
-    This example contains: 
-    1. Optimization of the initial and final end-points of the reaction path. 
-    2.A. NEB optimization using CI-NEB as implemented in ASE. 
+from gpaw import GPAW, FermiDirac
+
+from catlearn.optimize.mlneb import MLNEB
+import copy
+
+
+"""
+    Toy model for the diffusion of a Au atom on an Al(111) surface.
+    This example contains:
+    1. Optimization of the initial and final end-points of the reaction path.
+    2.A. NEB optimization using CI-NEB as implemented in ASE.
     2.B. NEB optimization using our machine-learning surrogate model.
     3. Comparison between the ASE NEB and our ML-NEB algorithm.
 """
@@ -22,7 +22,10 @@ from catlearn.optimize.tools import plotneb
 # 1. Structural relaxation.
 
 # Setup calculator:
-ase_calculator = EMT()
+ase_calculator = GPAW(mode='pw',
+                      basis='dzp',
+                      xc='PBE',
+                      occupations=FermiDirac(0.0, fixmagmom=False))
 
 # 1.1. Structures:
 
@@ -102,20 +105,3 @@ print('\nThe ML-NEB algorithm required ',
       (n_eval_ase/n_eval_catlearn),
       'times less number of function evaluations than '
       'the standard NEB algorithm.')
-
-# Plot ASE NEB:
-nebtools_ase = NEBTools(images_ase)
-
-Sf_ase = nebtools_ase.get_fit()[2]
-Ef_ase = nebtools_ase.get_fit()[3]
-
-Ef_neb_ase, dE_neb_ase = nebtools_ase.get_barrier(fit=False)
-nebtools_ase.plot_band()
-
-plt.show()
-
-# Plot ML-NEB predicted path and show images along the path:
-plotneb(trajectory='ML-NEB.traj', view_path=False)
-
-
-
