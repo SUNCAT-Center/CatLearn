@@ -21,10 +21,11 @@ from catlearn.optimize.mlneb import MLNEB
 # 1. Structural relaxation.
 
 # Setup calculator:
-calc_args = {'mode': 'pw',
-        'basis': 'dzp',
-        'xc': 'PBE',
-        'occupations': FermiDirac(0.03, fixmagmom=False)}
+calc_args = {'mode': 'lcao',
+             'h': 0.18,
+             'basis': 'dzp',
+             'xc': 'PBE',
+             'occupations': FermiDirac(0.03)}
 
 # 1.1. Structures:
 

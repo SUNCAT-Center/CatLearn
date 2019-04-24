@@ -7,7 +7,6 @@ from ase.optimize import BFGS
 import matplotlib.pyplot as plt
 from catlearn.optimize.mlneb import MLNEB
 from ase.neb import NEBTools
-import copy
 from catlearn.optimize.tools import plotneb
 
 """ 
@@ -21,9 +20,6 @@ from catlearn.optimize.tools import plotneb
 
 # 1. Structural relaxation.
 
-# Setup calculator:
-ase_calculator = EMT()
-
 # 1.1. Structures:
 
 # 2x2-Al(001) surface with 3 layers and an
@@ -31,7 +27,7 @@ ase_calculator = EMT()
 slab = fcc100('Al', size=(2, 2, 3))
 add_adsorbate(slab, 'Au', 1.7, 'hollow')
 slab.center(axis=2, vacuum=4.0)
-slab.set_calculator(copy.deepcopy(ase_calculator))
+slab.set_calculator(EMT())
 
 # Fix second and third layers:
 mask = [atom.tag > 1 for atom in slab]
@@ -60,7 +56,7 @@ constraint = FixAtoms(mask=[atom.tag > 1 for atom in initial_ase])
 images_ase = [initial_ase]
 for i in range(1, n_images-1):
     image = initial_ase.copy()
-    image.set_calculator(copy.deepcopy(ase_calculator))
+    image.set_calculator(EMT())
     image.set_constraint(constraint)
     images_ase.append(image)
 
@@ -76,7 +72,7 @@ qn_ase.run(fmax=0.05)
 
 neb_catlearn = MLNEB(start='initial.traj',
                      end='final.traj',
-                     ase_calc=copy.deepcopy(ase_calculator),
+                     ase_calc=EMT(),
                      n_images=n_images,
                      interpolation='idpp', restart=False)
 
