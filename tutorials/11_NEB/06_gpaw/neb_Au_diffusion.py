@@ -1,13 +1,8 @@
 from ase.build import fcc100, add_adsorbate
 from ase.io import read
 from ase.constraints import FixAtoms
-from ase.neb import NEB
 from ase.optimize import BFGS
-<<<<<<< HEAD
-from ase.parallel import rank
-=======
->>>>>>> master
-
+from ase.parallel import rank, parprint
 from gpaw import GPAW, FermiDirac
 
 from catlearn.optimize.mlneb import MLNEB
@@ -60,29 +55,7 @@ qn.run(fmax=0.01)
 # # Define number of images:
 n_images = 7
 
-# 2.A. NEB using ASE
-
-initial_ase = read('initial.traj')
-final_ase = read('final.traj')
-constraint = FixAtoms(mask=[atom.tag > 1 for atom in initial_ase])
-
-images_ase = [initial_ase]
-for i in range(1, n_images-1):
-    image = initial_ase.copy()
-    image.set_calculator(GPAW(**calc_args))
-    image.set_constraint(constraint)
-    images_ase.append(image)
-
-images_ase.append(final_ase)
-
-neb_ase = NEB(images_ase, climb=True)
-neb_ase.interpolate(method='idpp')
-
-qn_ase = BFGS(neb_ase, trajectory='neb_ase.traj')
-qn_ase.run(fmax=0.05)
-
 # 2.B. NEB using CatLearn
-<<<<<<< HEAD
 if rank == 0:
     neb_catlearn = MLNEB(start='initial.traj',
                          end='final.traj',
@@ -91,55 +64,9 @@ if rank == 0:
                          interpolation='idpp', restart=False)
 
     neb_catlearn.run(fmax=0.05, trajectory='ML-NEB.traj')
-    # 3. Summary of the results ###############################################
-
-    # NEB ASE:
-    print('\nSummary of the results: \n')
-
-    atoms_ase = read('neb_ase.traj', ':')
-    n_eval_ase = int(len(atoms_ase) - 2 * (len(atoms_ase)/n_images))
-
-    print('Number of function evaluations CI-NEB implemented in ASE:',
-          n_eval_ase)
-
-    # ML-NEB:
-    atoms_catlearn = read('evaluated_structures.traj', ':')
-    n_eval_catlearn = len(atoms_catlearn) - 2
-    print('Number of function evaluations CatLearn:', n_eval_catlearn)
-
-    # Comparison:
-    print('\nThe ML-NEB algorithm required ',
-          (n_eval_ase/n_eval_catlearn),
-          'times less number of function evaluations than '
-          'the standard NEB algorithm.')
-=======
-
-neb_catlearn = MLNEB(start='initial.traj',
-                     end='final.traj',
-                     ase_calc=GPAW(**calc_args),
-                     n_images=n_images,
-                     interpolation='idpp', restart=False)
-
-neb_catlearn.run(fmax=0.05, trajectory='ML-NEB.traj')
 
 # 3. Summary of the results #################################################
-
-# NEB ASE:
-print('\nSummary of the results: \n')
-
-atoms_ase = read('neb_ase.traj', ':')
-n_eval_ase = int(len(atoms_ase) - 2 * (len(atoms_ase)/n_images))
-
-print('Number of function evaluations CI-NEB implemented in ASE:', n_eval_ase)
-
 # ML-NEB:
 atoms_catlearn = read('evaluated_structures.traj', ':')
 n_eval_catlearn = len(atoms_catlearn) - 2
-print('Number of function evaluations CatLearn:', n_eval_catlearn)
-
-# Comparison:
-print('\nThe ML-NEB algorithm required ',
-      (n_eval_ase/n_eval_catlearn),
-      'times less number of function evaluations than '
-      'the standard NEB algorithm.')
->>>>>>> master
+parprint('Number of function evaluations CatLearn:', n_eval_catlearn)
