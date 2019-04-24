@@ -1,24 +1,32 @@
 from ase.build import fcc100, add_adsorbate
-from ase.calculators.emt import EMT
 from ase.io import read
 from ase.constraints import FixAtoms
 from ase.neb import NEB
 from ase.optimize import BFGS
-import matplotlib.pyplot as plt
-from catlearn.optimize.mlneb import MLNEB
-from ase.neb import NEBTools
-from catlearn.optimize.tools import plotneb
 
-""" 
-    Toy model for the diffusion of a Au atom on an Al(111) surface.  
-    This example contains: 
-    1. Optimization of the initial and final end-points of the reaction path. 
-    2.A. NEB optimization using CI-NEB as implemented in ASE. 
+from gpaw import GPAW, FermiDirac
+
+from catlearn.optimize.mlneb import MLNEB
+
+
+"""
+    Toy model for the diffusion of a Au atom on an Al(111) surface.
+    This example contains:
+    1. Optimization of the initial and final end-points of the reaction path.
+    2.A. NEB optimization using CI-NEB as implemented in ASE.
     2.B. NEB optimization using our machine-learning surrogate model.
     3. Comparison between the ASE NEB and our ML-NEB algorithm.
 """
 
 # 1. Structural relaxation.
+
+# Setup calculator:
+calc_args = {'mode': 'lcao',
+             'h': 0.18,
+             'basis': 'dzp',
+             'symmetry': 'off',
+             'xc': 'PBE',
+             'occupations': FermiDirac(0.03)}
 
 # 1.1. Structures:
 
@@ -27,7 +35,7 @@ from catlearn.optimize.tools import plotneb
 slab = fcc100('Al', size=(2, 2, 3))
 add_adsorbate(slab, 'Au', 1.7, 'hollow')
 slab.center(axis=2, vacuum=4.0)
-slab.set_calculator(EMT())
+slab.set_calculator(GPAW(**calc_args))
 
 # Fix second and third layers:
 mask = [atom.tag > 1 for atom in slab]
@@ -56,7 +64,7 @@ constraint = FixAtoms(mask=[atom.tag > 1 for atom in initial_ase])
 images_ase = [initial_ase]
 for i in range(1, n_images-1):
     image = initial_ase.copy()
-    image.set_calculator(EMT())
+    image.set_calculator(GPAW(**calc_args))
     image.set_constraint(constraint)
     images_ase.append(image)
 
@@ -72,7 +80,7 @@ qn_ase.run(fmax=0.05)
 
 neb_catlearn = MLNEB(start='initial.traj',
                      end='final.traj',
-                     ase_calc=EMT(),
+                     ase_calc=GPAW(**calc_args),
                      n_images=n_images,
                      interpolation='idpp', restart=False)
 
@@ -98,20 +106,3 @@ print('\nThe ML-NEB algorithm required ',
       (n_eval_ase/n_eval_catlearn),
       'times less number of function evaluations than '
       'the standard NEB algorithm.')
-
-# Plot ASE NEB:
-nebtools_ase = NEBTools(images_ase)
-
-Sf_ase = nebtools_ase.get_fit()[2]
-Ef_ase = nebtools_ase.get_fit()[3]
-
-Ef_neb_ase, dE_neb_ase = nebtools_ase.get_barrier(fit=False)
-nebtools_ase.plot_band()
-
-plt.show()
-
-# Plot ML-NEB predicted path and show images along the path:
-plotneb(trajectory='ML-NEB.traj', view_path=False)
-
-
-
