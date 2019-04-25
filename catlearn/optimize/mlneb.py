@@ -257,9 +257,9 @@ class MLNEB(object):
 
         print_info_neb(self)
 
-    def run(self, fmax=0.05, unc_convergence=0.050, steps=200,
+    def run(self, fmax=0.05, unc_convergence=0.050, steps=500,
             trajectory='ML_NEB_catlearn.traj', acquisition='acq_5',
-            dt=0.025, ml_steps=750, max_step=0.2, sequential=False,
+            dt=0.025, ml_steps=750, max_step=0.25, sequential=False,
             full_output=False):
 
         """Executing run will start the NEB optimization process.
@@ -385,6 +385,7 @@ class MLNEB(object):
                     neb_opt = MDMin(ml_neb, dt=dt)
 
                 ml_converged = False
+                n_steps_performed = 0
                 while ml_converged is False:
                     # Save prev. positions:
                     prev_save_positions = []
@@ -392,6 +393,7 @@ class MLNEB(object):
                         prev_save_positions.append(i.get_positions())
 
                     neb_opt.run(fmax=(fmax * 0.85), steps=1)
+                    n_steps_performed += 1
                     get_results_predicted_path(self)
                     unc_ml = np.max(self.uncertainty_path[1:-1])
                     e_ml = np.max(self.e_path[1:-1])
@@ -412,8 +414,6 @@ class MLNEB(object):
                         ml_converged = True
                     if neb_opt.converged():
                         ml_converged = True
-
-                    n_steps_performed = neb_opt.__dict__['nsteps']
 
                     if np.isnan(ml_neb.emax):
                         sp = str(-self.n_images) + ':'
