@@ -211,8 +211,6 @@ class MLNEB(object):
 
             neb_interpolation.interpolate(method=interpolation, mic=self.mic)
 
-            self.initial_images = self.images.copy()
-
         # B) If the user sets a path:
         if path is not None:
             images_path = read(path, ':')
