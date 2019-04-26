@@ -311,204 +311,158 @@ class MLNEB(object):
         while True:
 
             # 1. Train Machine Learning process.
-            train_gp_model(self)
+            if rank == 0:
+                train_gp_model(self)
 
-            # 2. Setup and run ML NEB:
-            if self.fullout is True:
-                parprint('Max number steps:', ml_steps)
-            ml_cycles = 0
-
-            while True:
-
-                if stationary_point_found is True:
-                    self.n_images = org_n_images
-
-                starting_path = self.images  # Start from last path.
-
-                if ml_cycles == 0:
-                    sp = '0:' + str(self.n_images)
-                    if self.fullout is True:
-                        parprint('Using initial path.')
-                    starting_path = read('./all_predicted_paths.traj', sp)
-
-                if ml_cycles == 1:
-                    if self.fullout is True:
-                        parprint('Using last predicted path.')
-                    sp = str(-self.n_images) + ':'
-                    starting_path = read('./all_predicted_paths.traj', sp)
-
-                self.images = create_ml_neb(is_endpoint=self.initial_endpoint,
-                                            fs_endpoint=self.final_endpoint,
-                                            images_interpolation=starting_path,
-                                            n_images=self.n_images,
-                                            constraints=self.constraints,
-                                            index_constraints=self.index_mask,
-                                            gp=self.gp,
-                                            scaling_targets=self.max_target,
-                                            iteration=self.iter)
-
-                # Test before optimization:
-
-                for i in self.images:
-                    i.get_potential_energy()
-                    get_results_predicted_path(self)
-                    unc_ml = np.max(self.uncertainty_path[1:-1])
-
-                if unc_ml >= max_step:
-                    if self.fullout is True:
-                        parprint('Maximum uncertainty reach in initial path.')
-                        parprint('Early stop.')
-                    break
-
-                # Perform NEB in the predicted landscape.
-                ml_neb = NEB(self.images, climb=True,
-                             method=self.neb_method,
-                             k=self.spring)
+                # 2. Setup and run ML NEB:
                 if self.fullout is True:
-                    parprint('Optimizing ML CI-NEB using dt:', dt)
-                neb_opt = MDMin(ml_neb, dt=dt, logfile=None)
-                if full_output is True:
-                    neb_opt = MDMin(ml_neb, dt=dt)
+                    parprint('Max number steps:', ml_steps)
+                ml_cycles = 0
 
-                ml_converged = False
-                n_steps_performed = 0
-                while ml_converged is False:
-                    # Save prev. positions:
-                    prev_save_positions = []
+                while True:
+
+                    if stationary_point_found is True:
+                        self.n_images = org_n_images
+
+                    starting_path = self.images  # Start from last path.
+
+                    if ml_cycles == 0:
+                        sp = '0:' + str(self.n_images)
+                        if self.fullout is True:
+                            parprint('Using initial path.')
+                        starting_path = read('./all_predicted_paths.traj', sp)
+
+                    if ml_cycles == 1:
+                        if self.fullout is True:
+                            parprint('Using last predicted path.')
+                        sp = str(-self.n_images) + ':'
+                        starting_path = read('./all_predicted_paths.traj', sp)
+
+                    self.images = create_ml_neb(is_endpoint=self.initial_endpoint,
+                                                fs_endpoint=self.final_endpoint,
+                                                images_interpolation=starting_path,
+                                                n_images=self.n_images,
+                                                constraints=self.constraints,
+                                                index_constraints=self.index_mask,
+                                                gp=self.gp,
+                                                scaling_targets=self.max_target,
+                                                iteration=self.iter)
+
+                    # Test before optimization:
 
                     for i in self.images:
-                        prev_save_positions.append(i.get_positions())
-
-                    neb_opt.run(fmax=(fmax * 0.85), steps=1)
-                    neb_opt.steps = 0
-
-                    n_steps_performed += 1
-                    get_results_predicted_path(self)
-                    unc_ml = np.max(self.uncertainty_path[1:-1])
-                    e_ml = np.max(self.e_path[1:-1])
-
-                    if e_ml >= self.max_target + 0.2:
-                        for i in range(0, self.n_images):
-                            self.images[i].positions = prev_save_positions[i]
-                        if self.fullout is True:
-                            parprint('Pred. energy above max. energy. '
-                                     'Early stop.')
-                        ml_converged = True
+                        i.get_potential_energy()
+                        get_results_predicted_path(self)
+                        unc_ml = np.max(self.uncertainty_path[1:-1])
 
                     if unc_ml >= max_step:
-                        for i in range(0, self.n_images):
-                            self.images[i].positions = prev_save_positions[i]
                         if self.fullout is True:
-                            parprint('Maximum uncertainty reach. Early stop.')
-                        ml_converged = True
-                    if neb_opt.converged():
-                        ml_converged = True
+                            parprint('Maximum uncertainty reach in initial path.')
+                            parprint('Early stop.')
+                        break
 
-                    if np.isnan(ml_neb.emax):
-                        sp = str(-self.n_images) + ':'
-                        self.images = read('./all_predicted_paths.traj', sp)
+                    # Perform NEB in the predicted landscape.
+                    ml_neb = NEB(self.images, climb=True,
+                                 method=self.neb_method,
+                                 k=self.spring)
+                    if self.fullout is True:
+                        parprint('Optimizing ML CI-NEB using dt:', dt)
+                    neb_opt = MDMin(ml_neb, dt=dt, logfile=None)
+                    if full_output is True:
+                        neb_opt = MDMin(ml_neb, dt=dt)
+
+                    ml_converged = False
+                    n_steps_performed = 0
+                    while ml_converged is False:
+                        # Save prev. positions:
+                        prev_save_positions = []
+
                         for i in self.images:
-                            i.get_potential_energy()
-                        n_steps_performed = 10000
+                            prev_save_positions.append(i.get_positions())
 
-                    if n_steps_performed > ml_steps-1:
+                        neb_opt.run(fmax=(fmax * 0.85), steps=1)
+                        neb_opt.steps = 0
+
+                        n_steps_performed += 1
+                        get_results_predicted_path(self)
+                        unc_ml = np.max(self.uncertainty_path[1:-1])
+                        e_ml = np.max(self.e_path[1:-1])
+
+                        if e_ml >= self.max_target + 0.2:
+                            for i in range(0, self.n_images):
+                                self.images[i].positions = prev_save_positions[i]
+                            if self.fullout is True:
+                                parprint('Pred. energy above max. energy. '
+                                         'Early stop.')
+                            ml_converged = True
+
+                        if unc_ml >= max_step:
+                            for i in range(0, self.n_images):
+                                self.images[i].positions = prev_save_positions[i]
+                            if self.fullout is True:
+                                parprint('Maximum uncertainty reach. Early stop.')
+                            ml_converged = True
+                        if neb_opt.converged():
+                            ml_converged = True
+
+                        if np.isnan(ml_neb.emax):
+                            sp = str(-self.n_images) + ':'
+                            self.images = read('./all_predicted_paths.traj', sp)
+                            for i in self.images:
+                                i.get_potential_energy()
+                            n_steps_performed = 10000
+
+                        if n_steps_performed > ml_steps-1:
+                            if self.fullout is True:
+                                parprint('Not converged yet...')
+                            ml_converged = True
+
+                    if n_steps_performed <= ml_steps-1:
                         if self.fullout is True:
-                            parprint('Not converged yet...')
-                        ml_converged = True
+                            parprint('Converged opt. in the predicted landscape.')
+                        break
 
-                if n_steps_performed <= ml_steps-1:
+                    ml_cycles += 1
                     if self.fullout is True:
-                        parprint('Converged opt. in the predicted landscape.')
-                    break
+                        parprint('ML cycles performed:', ml_cycles)
 
-                ml_cycles += 1
-                if self.fullout is True:
-                    parprint('ML cycles performed:', ml_cycles)
+                    if ml_cycles == 2:
+                        if self.fullout is True:
+                            parprint('ML process not optimized...not safe...')
+                            parprint('Change interpolation or numb. of images.')
+                        break
 
-                if ml_cycles == 2:
-                    if self.fullout is True:
-                        parprint('ML process not optimized...not safe...')
-                        parprint('Change interpolation or numb. of images.')
-                    break
+                # 3. Get results from ML NEB using ASE NEB Tools:
+                # See https://wiki.fysik.dtu.dk/ase/ase/neb.html
 
-            # 3. Get results from ML NEB using ASE NEB Tools:
-            # See https://wiki.fysik.dtu.dk/ase/ase/neb.html
+                self.interesting_point = []
 
-            self.interesting_point = []
+                # Get fit of the discrete path.
+                get_results_predicted_path(self)
 
-            # Get fit of the discrete path.
-            get_results_predicted_path(self)
+                pred_plus_unc = np.array(self.e_path[1:-1]) + np.array(
+                                                       self.uncertainty_path[1:-1])
 
-            pred_plus_unc = np.array(self.e_path[1:-1]) + np.array(
-                                                   self.uncertainty_path[1:-1])
+                # 4. Select next point to train (acquisition function):
 
-            # 4. Select next point to train (acquisition function):
-
-            # Acquisition function 1:
-            if self.acq == 'acq_1':
-                # Behave like acquisition 4...
-                # Select image with max. uncertainty.
-                if self.iter % 2 == 0:
-                    self.argmax_unc = np.argmax(self.uncertainty_path[1:-1])
-                    self.interesting_point = self.images[1:-1][
-                                    self.argmax_unc].get_positions().flatten()
-
-                # Select image with max. predicted value.
-                if self.iter % 2 == 1:
-                    self.argmax_unc = np.argmax(pred_plus_unc)
-                    self.interesting_point = self.images[1:-1][
-                                int(self.argmax_unc)].get_positions().flatten()
-
-            # Acquisition function 2:
-            if self.acq == 'acq_2':
-                # Select image with max. uncertainty.
-                self.argmax_unc = np.argmax(self.uncertainty_path[1:-1])
-                self.interesting_point = self.images[1:-1][
-                                  self.argmax_unc].get_positions().flatten()
-
-                # Select image with max. predicted value.
-                if np.max(self.uncertainty_path[1:-1]) < unc_convergence:
-
-                    self.argmax_unc = np.argmax(pred_plus_unc)
-                    self.interesting_point = self.images[1:-1][
-                                int(self.argmax_unc)].get_positions().flatten()
-
-            # Acquisition function 3:
-            if self.acq == 'acq_3':
-                # Select image with max. uncertainty.
-                self.argmax_unc = np.argmax(self.uncertainty_path[1:-1])
-                self.interesting_point = self.images[1:-1][
-                                    self.argmax_unc].get_positions().flatten()
-
-                # When reached certain uncertainty apply acq. 1.
-                if np.max(self.uncertainty_path[1:-1]) < unc_convergence:
+                # Acquisition function 1:
+                if self.acq == 'acq_1':
+                    # Behave like acquisition 4...
                     # Select image with max. uncertainty.
                     if self.iter % 2 == 0:
                         self.argmax_unc = \
                                         np.argmax(self.uncertainty_path[1:-1])
                         self.interesting_point = self.images[1:-1][
                                     self.argmax_unc].get_positions().flatten()
+
                     # Select image with max. predicted value.
                     if self.iter % 2 == 1:
                         self.argmax_unc = np.argmax(pred_plus_unc)
                         self.interesting_point = self.images[1:-1][
                                 int(self.argmax_unc)].get_positions().flatten()
 
-            # Acquisition function 4 (from acq 2):
-            if self.acq == 'acq_4':
-                # Select image with max. uncertainty.
-                if self.iter % 2 == 0:
-                    self.argmax_unc = np.argmax(self.uncertainty_path[1:-1])
-                    self.interesting_point = self.images[1:-1][
-                                    self.argmax_unc].get_positions().flatten()
-
-                # Select image with max. predicted value.
-                if self.iter % 2 == 1:
-                    self.argmax_unc = np.argmax(pred_plus_unc)
-                    self.interesting_point = self.images[1:-1][
-                                int(self.argmax_unc)].get_positions().flatten()
-                # If stationary point is found behave like acquisition 2...
-                if stationary_point_found is True:
+                # Acquisition function 2:
+                if self.acq == 'acq_2':
                     # Select image with max. uncertainty.
                     self.argmax_unc = np.argmax(self.uncertainty_path[1:-1])
                     self.interesting_point = self.images[1:-1][
@@ -520,42 +474,93 @@ class MLNEB(object):
                         self.argmax_unc = np.argmax(pred_plus_unc)
                         self.interesting_point = self.images[1:-1][
                                 int(self.argmax_unc)].get_positions().flatten()
-            # Acquisition function 5 (From acq 3):
-            if self.acq == 'acq_5':
-                # Select image with max. uncertainty.
-                self.argmax_unc = np.argmax(self.uncertainty_path[1:-1])
-                self.interesting_point = self.images[1:-1][
-                                  self.argmax_unc].get_positions().flatten()
 
-                # When reached certain uncertainty apply acq. 1.
-                if np.max(self.uncertainty_path[1:-1]) < unc_convergence:
+                # Acquisition function 3:
+                if self.acq == 'acq_3':
+                    # Select image with max. uncertainty.
+                    self.argmax_unc = np.argmax(self.uncertainty_path[1:-1])
+                    self.interesting_point = self.images[1:-1][
+                                     self.argmax_unc].get_positions().flatten()
+
+                    # When reached certain uncertainty apply acq. 1.
+                    if np.max(self.uncertainty_path[1:-1]) < unc_convergence:
+                        # Select image with max. uncertainty.
+                        if self.iter % 2 == 0:
+                            self.argmax_unc = \
+                                         np.argmax(self.uncertainty_path[1:-1])
+                            self.interesting_point = self.images[1:-1][
+                                     self.argmax_unc].get_positions().flatten()
+                        # Select image with max. predicted value.
+                        if self.iter % 2 == 1:
+                            self.argmax_unc = np.argmax(pred_plus_unc)
+                            self.interesting_point = self.images[1:-1][
+                                int(self.argmax_unc)].get_positions().flatten()
+
+                # Acquisition function 4 (from acq 2):
+                if self.acq == 'acq_4':
                     # Select image with max. uncertainty.
                     if self.iter % 2 == 0:
                         self.argmax_unc = \
-                                        np.argmax(self.uncertainty_path[1:-1])
+                                         np.argmax(self.uncertainty_path[1:-1])
                         self.interesting_point = self.images[1:-1][
-                                    self.argmax_unc].get_positions().flatten()
+                                     self.argmax_unc].get_positions().flatten()
 
                     # Select image with max. predicted value.
                     if self.iter % 2 == 1:
                         self.argmax_unc = np.argmax(pred_plus_unc)
                         self.interesting_point = self.images[1:-1][
                                 int(self.argmax_unc)].get_positions().flatten()
-                    # If stationary point is found behave like acquisition 2...
+                    # If stationary point is found behave like acquisition 2.
                     if stationary_point_found is True:
                         # Select image with max. uncertainty.
                         self.argmax_unc = \
                                          np.argmax(self.uncertainty_path[1:-1])
                         self.interesting_point = self.images[1:-1][
-                                    self.argmax_unc].get_positions().flatten()
+                                     self.argmax_unc].get_positions().flatten()
 
-                    # Select image with max. predicted value.
-                    if np.max(self.uncertainty_path[1:-1]) < unc_convergence:
+                        # Select image with max. predicted value.
+                        if np.max(self.uncertainty_path[1:-1]) < unc_convergence:
 
-                        self.argmax_unc = np.argmax(pred_plus_unc)
-                        self.interesting_point = \
-                            self.images[1:-1][
+                            self.argmax_unc = np.argmax(pred_plus_unc)
+                            self.interesting_point = self.images[1:-1][
                                 int(self.argmax_unc)].get_positions().flatten()
+                # Acquisition function 5 (From acq 3):
+                if self.acq == 'acq_5':
+                    # Select image with max. uncertainty.
+                    self.argmax_unc = np.argmax(self.uncertainty_path[1:-1])
+                    self.interesting_point = self.images[1:-1][
+                                     self.argmax_unc].get_positions().flatten()
+
+                    # When reached certain uncertainty apply acq. 1.
+                    if np.max(self.uncertainty_path[1:-1]) < unc_convergence:
+                        # Select image with max. uncertainty.
+                        if self.iter % 2 == 0:
+                            self.argmax_unc = \
+                                         np.argmax(self.uncertainty_path[1:-1])
+                            self.interesting_point = self.images[1:-1][
+                                     self.argmax_unc].get_positions().flatten()
+
+                        # Select image with max. predicted value.
+                        if self.iter % 2 == 1:
+                            self.argmax_unc = np.argmax(pred_plus_unc)
+                            self.interesting_point = self.images[1:-1][
+                                int(self.argmax_unc)].get_positions().flatten()
+                        # If stationary point is found behave like acq. 2.
+                        if stationary_point_found is True:
+                            # Select image with max. uncertainty.
+                            self.argmax_unc = \
+                                         np.argmax(self.uncertainty_path[1:-1])
+                            self.interesting_point = self.images[1:-1][
+                                     self.argmax_unc].get_positions().flatten()
+
+                        # Select image with max. predicted value.
+                        if np.max(self.uncertainty_path[1:-1]) < \
+                                                               unc_convergence:
+
+                            self.argmax_unc = np.argmax(pred_plus_unc)
+                            self.interesting_point = \
+                                self.images[1:-1][int(
+                                    self.argmax_unc)].get_positions().flatten()
             # 5. Add a new training point and evaluate it.
             if self.fullout is True:
                 parprint('Performing evaluation on the real landscape...')
