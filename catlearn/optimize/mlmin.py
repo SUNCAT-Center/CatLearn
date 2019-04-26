@@ -1,5 +1,5 @@
 import numpy as np
-from catlearn.optimize.io import print_info, print_version
+from catlearn.optimize.io import print_info, print_version, print_cite_mlmin
 from catlearn.optimize.constraints import create_mask, apply_mask
 from catlearn.optimize.mlneb import ASECalc
 from ase.optimize import *
@@ -52,21 +52,7 @@ class MLMin(object):
         self.version = self.opt_type + ' ' + __version__
         self.fc = force_consistent
         print_version(self.version)
-        msg = "-----------------------------------------------------------"
-        msg += "-----------------------------------------------------------\n"
-        msg += "You are using ML-Min and CatLearn. Please cite: \n"
-        msg += "[1] M. H. Hansen, J. A. Garrido Torres, P. C. Jennings, "
-        msg += "Z. Wang, J. R. Boes, O. G. Mamun and T. Bligaard. "
-        msg += "An Atomistic Machine Learning Package"
-        msg += "for Surface Science and Catalysis. "
-        msg += "https://arxiv.org/abs/1904.00904 \n"
-        msg += "[2] J. A. Garrido Torres, M. H. Hansen, P. C. Jennings, "
-        msg += "J. R. Boes and T. Bligaard. Phys. Rev. Lett. 122, 156001. "
-        msg += "https://journals.aps.org/prl/abstract/10.1103/PhysRevLett" \
-               ".122.156001 \n"
-        msg += "-----------------------------------------------------------"
-        msg += "-----------------------------------------------------------"
-        parprint(msg)
+        print_cite_mlmin()
 
         if restart is True and prev_calculations is None:
             if os.path.isfile(self.filename):
@@ -392,6 +378,7 @@ def converged(self):
         parprint('Congratulations. Structural optimization has converged.')
         parprint('All the evaluated structures can be found in:',
               self.filename)
+        print_cite_mlmin()
         return True
     return False
 

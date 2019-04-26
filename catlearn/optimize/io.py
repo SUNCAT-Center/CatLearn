@@ -209,3 +209,39 @@ def print_version(version):
       \____\__,_|\__|_____\___|\__,_|_|  |_| |_| """ + version + """
       
       """)
+
+
+def print_cite_mlmin():
+    msg = "-----------------------------------------------------------"
+    msg += "-----------------------------------------------------------\n"
+    msg += "You are using ML-Min and CatLearn. Please cite: \n"
+    msg += "[1] M. H. Hansen, J. A. Garrido Torres, P. C. Jennings, "
+    msg += "Z. Wang, J. R. Boes, O. G. Mamun and T. Bligaard. "
+    msg += "An Atomistic Machine Learning Package"
+    msg += "for Surface Science and Catalysis. "
+    msg += "https://arxiv.org/abs/1904.00904 \n"
+    msg += "[2] J. A. Garrido Torres, M. H. Hansen, P. C. Jennings, "
+    msg += "J. R. Boes and T. Bligaard. Phys. Rev. Lett. 122, 156001. "
+    msg += "https://journals.aps.org/prl/abstract/10.1103/PhysRevLett" \
+           ".122.156001 \n"
+    msg += "-----------------------------------------------------------"
+    msg += "-----------------------------------------------------------"
+    parprint(msg)
+
+
+def print_cite_mlneb():
+    msg = "-----------------------------------------------------------"
+    msg += "-----------------------------------------------------------\n"
+    msg += "You are using ML-NEB and CatLearn. Please cite: \n"
+    msg += "[1] J. A. Garrido Torres, M. H. Hansen, P. C. Jennings, "
+    msg += "J. R. Boes and T. Bligaard. Phys. Rev. Lett. 122, 156001. "
+    msg += "https://journals.aps.org/prl/abstract/10.1103/PhysRevLett" \
+           ".122.156001 \n"
+    msg += "[2] M. H. Hansen, J. A. Garrido Torres, P. C. Jennings, "
+    msg += "Z. Wang, J. R. Boes, O. G. Mamun and T. Bligaard. "
+    msg += "An Atomistic Machine Learning Package"
+    msg += "for Surface Science and Catalysis. "
+    msg += "https://arxiv.org/abs/1904.00904 \n"
+    msg += "-----------------------------------------------------------"
+    msg += "-----------------------------------------------------------"
+    parprint(msg)

@@ -1,7 +1,7 @@
 import numpy as np
 from catlearn.optimize.io import ase_to_catlearn, store_results_neb, \
                                  print_version, store_trajectory_neb, \
-                                 print_info_neb, array_to_ase
+                                 print_info_neb, array_to_ase, print_cite_mlneb
 from catlearn.optimize.constraints import create_mask, apply_mask
 from ase.neb import NEB
 from ase.neb import NEBTools
@@ -98,22 +98,8 @@ class MLNEB(object):
         self.mic = mic
         self.version = 'ML-NEB ' + __version__
         print_version(self.version)
+        print_cite_mlneb()
 
-        msg = "-----------------------------------------------------------"
-        msg += "-----------------------------------------------------------\n"
-        msg += "You are using ML-NEB and CatLearn. Please cite: \n"
-        msg += "[1] J. A. Garrido Torres, M. H. Hansen, P. C. Jennings, "
-        msg += "J. R. Boes and T. Bligaard. Phys. Rev. Lett. 122, 156001. "
-        msg += "https://journals.aps.org/prl/abstract/10.1103/PhysRevLett" \
-               ".122.156001 \n"
-        msg += "[2] M. H. Hansen, J. A. Garrido Torres, P. C. Jennings, "
-        msg += "Z. Wang, J. R. Boes, O. G. Mamun and T. Bligaard. "
-        msg += "An Atomistic Machine Learning Package"
-        msg += "for Surface Science and Catalysis. "
-        msg += "https://arxiv.org/abs/1904.00904 \n"
-        msg += "-----------------------------------------------------------"
-        msg += "-----------------------------------------------------------"
-        parprint(msg)
 
         # Reset.
         self.constraints = None
@@ -632,6 +618,7 @@ class MLNEB(object):
 
         parprint('Number of steps performed in total:',
                  len(self.list_targets)-2)
+        print_cite_mlneb()
 
 
 def create_ml_neb(is_endpoint, fs_endpoint, images_interpolation,
