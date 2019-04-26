@@ -4,15 +4,15 @@ import datetime
 from ase.io.trajectory import TrajectoryWriter
 
 
-def ase_traj_to_catlearn(traj_file):
+def ase_to_catlearn(list_atoms):
     """Converts a trajectory file from ASE to a list of train, targets and
     gradients. The first and last images of the trajectory file are also
     included in this dictionary.
 
         Parameters
         ----------
-        traj_file : string
-            Name of the trajectory file to open. The file must be in
+        list_atoms : string
+            List Atoms objects in ASE format. The file must be in
             the current working directory.
 
         Returns
@@ -24,17 +24,16 @@ def ase_traj_to_catlearn(traj_file):
             Atoms structures of the initial and final endpoints of the NEB.
 
     """
-    traj_ase = Trajectory(traj_file)
-    first_image = traj_ase[0]
+    first_image = list_atoms[0]
     images = []
     constraints = first_image.constraints
-    number_images = len(traj_ase)
+    number_images = len(list_atoms)
     num_atoms = first_image.get_number_of_atoms()
     list_train = []
     list_targets = []
     list_gradients = []
     for i in range(0, number_images):
-        image_i = traj_ase[i]
+        image_i = list_atoms[i]
         images.append(image_i)
         list_train = np.append(list_train,
                                image_i.get_positions().flatten(), axis=0)

@@ -119,7 +119,7 @@ class MLMin(object):
         print_info(self)
 
     def run(self, fmax=0.05, steps=200, kernel='SQE', max_step=0.25,
-            acq='min_energy', full_output=False):
+            acq='min_energy', full_output=False, noise=0.005):
 
         """Executing run will start the optimization process.
 
@@ -140,7 +140,8 @@ class MLMin(object):
             evaluate. Implemented are: 'lcb', 'ucb', 'min_energy'.
         full_output: boolean
             Whether to print on screen the full output (True) or not (False).
-
+        noise:
+            Regularization parameter of the GP.
         Returns
         -------
         Optimized atom structure.
@@ -170,9 +171,9 @@ class MLMin(object):
                           'scaling': 1.0,
                           'scaling_bounds': ((1.0, 1.0),)},
                          {'type': 'noise_multi',
-                          'hyperparameters': [0.005 * 0.4**2, 0.005],
-                          'bounds': ((0.005 * 0.4**2, 0.005 * 0.4**2),
-                                     (0.005, 0.005),)}
+                          'hyperparameters': [noise * 0.4**2, noise],
+                          'bounds': ((noise * 0.4**2, noise * 0.4**2),
+                                     (noise, noise),)}
                          ]
 
             if kernel == 'SQE':
@@ -183,9 +184,9 @@ class MLMin(object):
                           'scaling': sigma_f,
                           'scaling_bounds': ((sigma_f, sigma_f),)},
                          {'type': 'noise_multi',
-                          'hyperparameters': [0.005, 0.005 * 0.4**2],
-                          'bounds': ((0.001, 0.050),
-                                     (0.001 * 0.4**2, 0.050),)}
+                          'hyperparameters': [noise, noise * 0.4**2],
+                          'bounds': ((noise/5., noise*10.),
+                                     (noise/5. * 0.4**2, noise*10.),)}
                          ]
 
             if kernel == 'ARD_SQE':
@@ -196,13 +197,26 @@ class MLMin(object):
                           'scaling': sigma_f,
                           'scaling_bounds': ((sigma_f, sigma_f),)},
                          {'type': 'noise_multi',
-                          'hyperparameters': [0.005, 0.0005],
-                          'bounds': ((0.001, 0.005),
-                                     (0.0005, 0.002),)}
+                          'hyperparameters': [noise/2., noise/10.],
+                          'bounds': ((noise/5., noise),
+                                     (noise/10., noise/4.),)}
                          ]
 
-                if success_hyper is not False:
-                    kdict = success_hyper
+            if len(self.list_targets) == 1:
+                opt_hyper = False
+                kdict = [{'type': 'gaussian', 'width': 0.20,
+                          'dimension': 'single',
+                          'bounds': ((0.20, 0.20),),
+                          'scaling': sigma_f,
+                          'scaling_bounds': ((sigma_f, sigma_f),)},
+                         {'type': 'noise_multi',
+                          'hyperparameters': [noise * 0.4**2, noise],
+                          'bounds': ((noise * 0.4**2, noise * 0.4**2),
+                                     (noise, noise),)}
+                         ]
+
+            if success_hyper is not False:
+                kdict = success_hyper
 
             if self.index_mask is not None:
                 train = apply_mask(list_to_mask=train,

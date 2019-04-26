@@ -1,5 +1,5 @@
 import numpy as np
-from catlearn.optimize.io import ase_traj_to_catlearn, store_results_neb, \
+from catlearn.optimize.io import ase_to_catlearn, store_results_neb, \
                                  print_version, store_trajectory_neb, \
                                  print_info_neb, array_to_ase
 from catlearn.optimize.constraints import create_mask, apply_mask
@@ -83,9 +83,6 @@ class MLNEB(object):
             write('prev_calcs.traj', prev_calculations)
             prev_calculations = 'prev_calcs.traj'
 
-        # Prevent duplicates:
-        if prev_calculations is not None:
-            restart = False
 
         # Start end-point, final end-point and path (optional).
         self.start = start
@@ -115,17 +112,8 @@ class MLNEB(object):
         msg = 'ASE calculator not provided (see "ase_calc" flag).'
         assert self.ase_calc, msg
 
-        # A) Include previous calculations for training the ML model.
-        if prev_calculations is not None:
-            prev_calculations = read(prev_calculations, ':')
-            is_endpoint_prev_calcs = read(start, '-1:')
-            is_endpoint = prev_calculations + is_endpoint_prev_calcs
-            fs_endpoint = read(end, '-1:')
-
-        # B) Only include initial and final (optimized) images.
-        if prev_calculations is None:
-            is_endpoint = read(start, '-1:')
-            fs_endpoint = read(end, '-1:')
+        is_endpoint = read(start, '-1:')
+        fs_endpoint = read(end, '-1:')
         is_pos = is_endpoint[-1].get_positions().flatten()
         fs_pos = fs_endpoint[-1].get_positions().flatten()
 
@@ -135,28 +123,24 @@ class MLNEB(object):
 
         # Convert atoms information into data to feed the ML process.
 
-        # Include Restart mode.
+        # Include Restart mode and previous calculations.
 
         if restart is not True:
-            if os.path.exists('./tmp.traj'):
-                    os.remove('./tmp.traj')
             merged_trajectory = is_endpoint + fs_endpoint
-            write('tmp.traj', merged_trajectory)
-            trj = ase_traj_to_catlearn(traj_file='tmp.traj')
-            os.remove('./tmp.traj')
+            trj = ase_to_catlearn(merged_trajectory)
             write('./evaluated_structures.traj', is_endpoint + fs_endpoint)
 
-        if restart is True:
-            eval_file = 'evaluated_structures.traj'
+        if restart is True or prev_calculations is not None:
+            if prev_calculations is None:
+                eval_file = 'evaluated_structures.traj'
+            if prev_calculations is not None:
+                eval_file = prev_calculations
             if os.path.exists(eval_file):
-                trj = ase_traj_to_catlearn(traj_file=eval_file)
+                eval_atoms = read(eval_file, ':')
+                trj = ase_to_catlearn(eval_atoms)
             if not os.path.exists(eval_file):
-                if os.path.exists('./tmp.traj'):
-                        os.remove('./tmp.traj')
                 merged_trajectory = is_endpoint + fs_endpoint
-                write('tmp.traj', merged_trajectory)
-                trj = ase_traj_to_catlearn(traj_file='tmp.traj')
-                os.remove('./tmp.traj')
+                trj = ase_to_catlearn(merged_trajectory)
                 write('./evaluated_structures.traj', is_endpoint + fs_endpoint)
 
         self.list_train, self.list_targets, self.list_gradients, trj_images,\
@@ -166,7 +150,7 @@ class MLNEB(object):
                                                 trj['images'],
                                                 trj['constraints'],
                                                 trj['num_atoms']]
-        self.ase_ini = trj_images[0]
+        self.ase_ini = read(start)
         self.num_atoms = len(self.ase_ini)
         if len(self.constraints) < 0:
             self.constraints = None
@@ -187,6 +171,7 @@ class MLNEB(object):
         self.spring = k
         self.initial_endpoint = is_endpoint[-1]
         self.final_endpoint = fs_endpoint[-1]
+
 
         # A) Create images using interpolation if user do not feed a path:
         if path is None:
@@ -234,7 +219,9 @@ class MLNEB(object):
                                         )
             self.d_start_end = np.abs(distance.euclidean(is_pos, fs_pos))
 
+
         # Save files with all the paths that have been predicted:
+
         write('all_predicted_paths.traj', self.images)
 
         self.uncertainty_path = np.zeros(len(self.images))
@@ -254,6 +241,7 @@ class MLNEB(object):
                 self.list_max_abs_forces.append(self.max_abs_forces)
 
         print_info_neb(self)
+
 
     def run(self, fmax=0.05, unc_convergence=0.050, steps=500,
             trajectory='ML_NEB_catlearn.traj', acquisition='acq_5',
@@ -299,20 +287,21 @@ class MLNEB(object):
         self.fullout = full_output
 
         # Calculate a third point if only known initial & final structures.
-
-        # Calculate a third point if only known initial & final structures.
         if len(self.list_targets) == 2:
             middle = int(self.n_images * (2./3.))
             if self.energy_is >= self.energy_fs:
                 middle = int(self.n_images * (1./3.))
             self.interesting_point = \
                 self.images[middle].get_positions().flatten()
+
             eval_and_append(self, self.interesting_point)
+
             self.iter += 1
             self.max_forces = get_fmax(np.array([self.list_gradients[-1]]))
             self.max_abs_forces = np.max(np.abs(self.max_forces))
             self.list_max_abs_forces.append(self.max_abs_forces)
             print_info_neb(self)
+
             store_trajectory_neb(self)
 
         stationary_point_found = False
@@ -360,7 +349,9 @@ class MLNEB(object):
                                             gp=self.gp,
                                             scaling_targets=self.max_target,
                                             iteration=self.iter)
+
                 # Test before optimization:
+
                 for i in self.images:
                     i.get_potential_energy()
                     get_results_predicted_path(self)
@@ -387,6 +378,7 @@ class MLNEB(object):
                 while ml_converged is False:
                     # Save prev. positions:
                     prev_save_positions = []
+
                     for i in self.images:
                         prev_save_positions.append(i.get_positions())
 
@@ -567,7 +559,6 @@ class MLNEB(object):
                         self.interesting_point = self.images[1:-1][
                                                   int(self.argmax_unc)].get_positions(
                                                   ).flatten()
-
             # 5. Add a new training point and evaluate it.
             if self.fullout is True:
                 print('Performing evaluation on the real landscape...')
