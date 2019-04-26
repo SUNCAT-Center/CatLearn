@@ -7,6 +7,7 @@ from ase.neb import NEB
 from ase.neb import NEBTools
 from ase.io import read, write
 from ase.optimize import MDMin
+from ase.parallel import parprint, rank
 from scipy.spatial import distance
 import os
 from catlearn.regression import GaussianProcess
@@ -83,7 +84,6 @@ class MLNEB(object):
             write('prev_calcs.traj', prev_calculations)
             prev_calculations = 'prev_calcs.traj'
 
-
         # Start end-point, final end-point and path (optional).
         self.start = start
         self.end = end
@@ -143,7 +143,7 @@ class MLNEB(object):
                 trj = ase_to_catlearn(merged_trajectory)
                 write('./evaluated_structures.traj', is_endpoint + fs_endpoint)
 
-        self.list_train, self.list_targets, self.list_gradients, trj_images,\
+        self.list_train, self.list_targets, self.list_gradients, trj_images, \
             self.constraints, self.num_atoms = [trj['list_train'],
                                                 trj['list_targets'],
                                                 trj['list_gradients'],
@@ -171,7 +171,6 @@ class MLNEB(object):
         self.spring = k
         self.initial_endpoint = is_endpoint[-1]
         self.final_endpoint = fs_endpoint[-1]
-
 
         # A) Create images using interpolation if user do not feed a path:
         if path is None:
@@ -219,7 +218,6 @@ class MLNEB(object):
                                         )
             self.d_start_end = np.abs(distance.euclidean(is_pos, fs_pos))
 
-
         # Save files with all the paths that have been predicted:
 
         write('all_predicted_paths.traj', self.images)
@@ -241,7 +239,6 @@ class MLNEB(object):
                 self.list_max_abs_forces.append(self.max_abs_forces)
 
         print_info_neb(self)
-
 
     def run(self, fmax=0.05, unc_convergence=0.050, steps=500,
             trajectory='ML_NEB_catlearn.traj', acquisition='acq_5',
@@ -318,7 +315,7 @@ class MLNEB(object):
 
             # 2. Setup and run ML NEB:
             if self.fullout is True:
-                print('Max number steps:', ml_steps)
+                parprint('Max number steps:', ml_steps)
             ml_cycles = 0
 
             while True:
@@ -331,12 +328,12 @@ class MLNEB(object):
                 if ml_cycles == 0:
                     sp = '0:' + str(self.n_images)
                     if self.fullout is True:
-                        print('Using initial path.')
+                        parprint('Using initial path.')
                     starting_path = read('./all_predicted_paths.traj', sp)
 
                 if ml_cycles == 1:
                     if self.fullout is True:
-                        print('Using last predicted path.')
+                        parprint('Using last predicted path.')
                     sp = str(-self.n_images) + ':'
                     starting_path = read('./all_predicted_paths.traj', sp)
 
@@ -359,8 +356,8 @@ class MLNEB(object):
 
                 if unc_ml >= max_step:
                     if self.fullout is True:
-                        print('Maximum uncertainty reach in initial path.')
-                        print('Early stop.')
+                        parprint('Maximum uncertainty reach in initial path.')
+                        parprint('Early stop.')
                     break
 
                 # Perform NEB in the predicted landscape.
@@ -368,7 +365,7 @@ class MLNEB(object):
                              method=self.neb_method,
                              k=self.spring)
                 if self.fullout is True:
-                    print('Optimizing ML CI-NEB using dt:', dt)
+                    parprint('Optimizing ML CI-NEB using dt:', dt)
                 neb_opt = MDMin(ml_neb, dt=dt, logfile=None)
                 if full_output is True:
                     neb_opt = MDMin(ml_neb, dt=dt)
@@ -394,15 +391,15 @@ class MLNEB(object):
                         for i in range(0, self.n_images):
                             self.images[i].positions = prev_save_positions[i]
                         if self.fullout is True:
-                            print('Pred. energy above max. energy. '
-                                  'Early stop.')
+                            parprint('Pred. energy above max. energy. '
+                                     'Early stop.')
                         ml_converged = True
 
                     if unc_ml >= max_step:
                         for i in range(0, self.n_images):
                             self.images[i].positions = prev_save_positions[i]
                         if self.fullout is True:
-                            print('Maximum uncertainty reach. Early stop.')
+                            parprint('Maximum uncertainty reach. Early stop.')
                         ml_converged = True
                     if neb_opt.converged():
                         ml_converged = True
@@ -416,22 +413,22 @@ class MLNEB(object):
 
                     if n_steps_performed > ml_steps-1:
                         if self.fullout is True:
-                            print('Not converged yet...')
+                            parprint('Not converged yet...')
                         ml_converged = True
 
                 if n_steps_performed <= ml_steps-1:
                     if self.fullout is True:
-                        print('Converged optimiz. in the predicted landscape.')
+                        parprint('Converged opt. in the predicted landscape.')
                     break
 
                 ml_cycles += 1
                 if self.fullout is True:
-                    print('ML cycles performed:', ml_cycles)
+                    parprint('ML cycles performed:', ml_cycles)
 
                 if ml_cycles == 2:
                     if self.fullout is True:
-                        print('ML process not optimized...not safe...')
-                        print('Try changing interpolation or numb. of images.')
+                        parprint('ML process not optimized...not safe...')
+                        parprint('Change interpolation or numb. of images.')
                     break
 
             # 3. Get results from ML NEB using ASE NEB Tools:
@@ -556,19 +553,19 @@ class MLNEB(object):
                     if np.max(self.uncertainty_path[1:-1]) < unc_convergence:
 
                         self.argmax_unc = np.argmax(pred_plus_unc)
-                        self.interesting_point = self.images[1:-1][
-                                                  int(self.argmax_unc)].get_positions(
-                                                  ).flatten()
+                        self.interesting_point = \
+                            self.images[1:-1][
+                                int(self.argmax_unc)].get_positions().flatten()
             # 5. Add a new training point and evaluate it.
             if self.fullout is True:
-                print('Performing evaluation on the real landscape...')
+                parprint('Performing evaluation on the real landscape...')
             eval_and_append(self, self.interesting_point)
             self.iter += 1
             if self.fullout is True:
-                print('Single-point calculation finished.')
+                parprint('Single-point calculation finished.')
 
             # 6. Store results.
-            print('\n')
+            parprint('\n')
             self.energy_forward = np.max(self.e_path) - self.e_path[0]
             self.energy_backward = np.max(self.e_path) - self.e_path[-1]
             self.max_forces = get_fmax(np.array([self.list_gradients[-1]]))
@@ -587,7 +584,7 @@ class MLNEB(object):
             if self.max_abs_forces <= fmax and self.n_images == org_n_images:
                 msg = "Congratulations! Stationary point is found! "
                 msg2 = "Check the file 'evaluated_structures.traj' using ASE."
-                print(msg+msg2)
+                parprint(msg+msg2)
 
                 if np.max(self.uncertainty_path[1:-1]) < unc_convergence:
                     # Save results of the final step (converged):
@@ -598,22 +595,24 @@ class MLNEB(object):
                     msg2 = "If you want to plot the ML NEB predicted path you "
                     msg3 = "should check the files 'results_neb.csv' "
                     msg4 = "and 'results_neb_interpolation.csv'."
-                    print(msg+msg2+msg3+msg4)
+                    parprint(msg+msg2+msg3+msg4)
                     # Last path.
                     write(trajectory, self.images)
-                    print('The optimized predicted path can be found in: ',
-                          trajectory)
+                    parprint('The optimized predicted path can be found in: ',
+                             trajectory)
                     # Clean up:
-                    os.remove('./last_predicted_path.traj')
-                    os.remove('./all_predicted_paths.traj')
+                    if rank == 0:
+                        os.remove('./last_predicted_path.traj')
+                        os.remove('./all_predicted_paths.traj')
                     break
 
             # Break if reaches the max number of iterations set by the user.
             if steps <= self.iter:
-                print('Maximum number iterations reached. Not converged.')
+                parprint('Maximum number iterations reached. Not converged.')
                 break
 
-        print('Number of steps performed in total:', len(self.list_targets)-2)
+        parprint('Number of steps performed in total:',
+                 len(self.list_targets)-2)
 
 
 def create_ml_neb(is_endpoint, fs_endpoint, images_interpolation,
@@ -657,7 +656,7 @@ def create_ml_neb(is_endpoint, fs_endpoint, images_interpolation,
 
 def train_gp_model(self):
     """
-    Train GP Process
+    Train Gaussian process
     """
     self.max_target = np.max(self.list_targets)
     scaled_targets = self.list_targets.copy() - self.max_target
@@ -692,9 +691,9 @@ def train_gp_model(self):
                            mask_index=self.index_mask)[1]
         gradients = apply_mask(list_to_mask=self.list_gradients,
                                mask_index=self.index_mask)[1]
-    print('\n')
-    print('Training a GP process...')
-    print('Number of training points:', len(scaled_targets))
+    parprint('\n')
+    parprint('Training a Gaussian process...')
+    parprint('Number of training points:', len(scaled_targets))
 
     self.gp = GaussianProcess(kernel_list=kdict,
                               regularization=0.0,
@@ -706,8 +705,8 @@ def train_gp_model(self):
                               scale_data=False)
     self.gp.optimize_hyperparameters(global_opt=False)
     if self.fullout is True:
-        print('Optimized hyperparameters:', self.gp.kernel_list)
-    print('GP process trained.')
+        parprint('Optimized hyperparameters:', self.gp.kernel_list)
+    parprint('Gaussian process trained.')
 
 
 def get_results_predicted_path(self):
@@ -776,8 +775,10 @@ class ASECalc(Calculator):
         energy = pred_energy_test(test=test_point)
 
         # Get forces:
-        geom_test_pos = np.zeros((len(self.ind_constraints), len(test_point[0])))
-        geom_test_neg = np.zeros((len(self.ind_constraints), len(test_point[0])))
+        geom_test_pos = np.zeros((len(self.ind_constraints),
+                                  len(test_point[0])))
+        geom_test_neg = np.zeros((len(self.ind_constraints),
+                                  len(test_point[0])))
 
         for i in range(len(self.ind_constraints)):
             index_force = self.ind_constraints[i]

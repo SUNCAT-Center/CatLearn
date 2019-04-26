@@ -1,5 +1,6 @@
 import numpy as np
-from ase.io import Trajectory, write
+from ase.io import write
+from ase.parallel import parprint
 import datetime
 from ase.io.trajectory import TrajectoryWriter
 
@@ -99,8 +100,7 @@ def array_to_atoms(input_array):
 def print_info_neb(self):
     """ Prints the information of the surrogate model convergence at each step.
     """
-
-    if self.iter <2:
+    if self.iter < 2:
         self.energy_backward = 0.0
         self.energy_forward = 0.0
 
@@ -118,24 +118,24 @@ def print_info_neb(self):
     if self.iter > 0:
         self.tab_neb = np.append(self.tab_neb, [pre_tab_neb], axis=0)
 
-    print('+--------+------+---------------------+---------------------+------'
-          '---------------+--------------+--------------+----------+')
-    print('| Method | Step |        Time         | Pred. barrier (-->) | '
-          'Pred. barrier (<--) | Max. uncert. | Avg. uncert. |   fmax   |')
-    print('+--------+------+---------------------+---------------------+------'
-          '---------------+--------------+--------------+----------+')
+    parprint('+--------+------+---------------------+---------------------+---'
+             '------------------+--------------+--------------+----------+')
+    parprint('| Method | Step |        Time         | Pred. barrier (-->) | '
+             'Pred. barrier (<--) | Max. uncert. | Avg. uncert. |   fmax   |')
+    parprint('+--------+------+---------------------+---------------------+---'
+             '---------------+--------------+--------------+----------+')
     for i in range(0, self.iter+1):
-        print('| ML-NEB |'
-              + '{0:6d}|'.format(int(self.tab_neb[i, 0])),
-              print_time()
-              + ' |'
-              + '{0:21f}|'.format(self.tab_neb[i, 1])
-              + '{0:21f}|'.format(self.tab_neb[i, 2])
-              + '{0:14f}|'.format(self.tab_neb[i, 3])
-              + '{0:14f}|'.format(self.tab_neb[i, 4])
-              + '{0:10f}|'.format(self.tab_neb[i, 5]))
-    print('+--------+------+---------------------+---------------------+------'
-          '---------------+--------------+--------------+----------+')
+        parprint('| ML-NEB |'
+                 + '{0:6d}|'.format(int(self.tab_neb[i, 0])),
+                 print_time()
+                 + ' |'
+                 + '{0:21f}|'.format(self.tab_neb[i, 1])
+                 + '{0:21f}|'.format(self.tab_neb[i, 2])
+                 + '{0:14f}|'.format(self.tab_neb[i, 3])
+                 + '{0:14f}|'.format(self.tab_neb[i, 4])
+                 + '{0:10f}|'.format(self.tab_neb[i, 5]))
+    parprint('+--------+------+---------------------+---------------------+---'
+             '---------------+--------------+--------------+----------+')
 
 
 def print_info(self):
@@ -144,16 +144,20 @@ def print_info(self):
     energy_tab = np.round(self.list_targets, 7)
     fmax_tab = np.round(self.list_max_abs_forces, 6)
 
-    print('+--------+------+---------------------+-------------------------+')
-    print('| Method | Step |        Time         |   Energy    |    fmax   |')
-    print('+--------+------+---------------------+-------------------------+')
+    parprint('+--------+------+---------------------+'
+             '-------------------------+')
+    parprint('| Method | Step |        Time         |   Energy    |'
+             'fmax   |')
+    parprint('+--------+------+---------------------'
+             '+-------------------------+')
     for i in range(0, len(energy_tab)):
-        print('| ML-Min |'
-              + '{0:6d}|'.format(i),
-              print_time()
-              + ' |{0:12f} |'.format(energy_tab[i])
-              + '{0:10f} |'.format(fmax_tab[i]))
-    print('+--------+------+---------------------+-------------------------+')
+        parprint('| ML-Min |'
+                 + '{0:6d}|'.format(i),
+                 print_time()
+                 + ' |{0:12f} |'.format(energy_tab[i])
+                 + '{0:10f} |'.format(fmax_tab[i]))
+    parprint('+--------+------+---------------------'
+             '+-------------------------+')
 
 
 def store_results_neb(self):
@@ -197,7 +201,7 @@ def print_time():
 
 
 def print_version(version):
-    print(""" 
+    parprint(""" 
        ____      _   _                          
       / ___|__ _| |_| |    ___  __ _ _ __ _ __  
      | |   / _` | __| |   / _ \/ _` | '__| '_ \ 
