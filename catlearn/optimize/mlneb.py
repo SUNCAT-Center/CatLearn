@@ -267,7 +267,7 @@ class MLNEB(object):
         ml_steps: int
             Maximum number of steps for the NEB optimization on the
             predicted landscape.
-        max_step: int
+        max_step: float
             Early stopping criteria. Maximum uncertainty before stopping the
             optimization in the predicted landscape.
         sequential: boolean

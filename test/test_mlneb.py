@@ -53,7 +53,8 @@ class TestMLNEB(unittest.TestCase):
                              restart=False
                              )
 
-        neb_catlearn.run(fmax=0.05, trajectory='ML-NEB.traj', full_output=True)
+        neb_catlearn.run(fmax=0.05, trajectory='ML-NEB.traj', max_step=0.2,
+                         full_output=True)
 
         atoms_catlearn = read('evaluated_structures.traj', ':')
         n_eval_catlearn = len(atoms_catlearn) - 2
@@ -79,7 +80,7 @@ class TestMLNEB(unittest.TestCase):
                              interpolation='linear',
                              restart=False
                              )
-        neb_catlearn.run(fmax=0.05, trajectory='ML-NEB.traj')
+        neb_catlearn.run(fmax=0.05, trajectory='ML-NEB.traj', max_step=0.2)
         print('Checking number of iterations using 9 images...')
         self.assertEqual(neb_catlearn.iter, 12)
         max_unc = np.max(neb_catlearn.uncertainty_path)
@@ -97,7 +98,7 @@ class TestMLNEB(unittest.TestCase):
                              ase_calc=ase_calculator,
                              restart=True
                              )
-        neb_catlearn.run(fmax=0.01,
+        neb_catlearn.run(fmax=0.01, max_step=0.20,
                          unc_convergence=0.010,
                          trajectory='ML-NEB.traj')
         print('Checking number of iterations restarting with 11 images...')
@@ -118,7 +119,7 @@ class TestMLNEB(unittest.TestCase):
                              restart=False
                              )
 
-        neb_catlearn.run(fmax=0.05, trajectory='ML-NEB.traj',
+        neb_catlearn.run(fmax=0.05, trajectory='ML-NEB.traj', max_step=0.2,
                          acquisition='acq_1')
         self.assertEqual(neb_catlearn.iter, 16)
         max_unc = np.max(neb_catlearn.uncertainty_path)
@@ -132,7 +133,7 @@ class TestMLNEB(unittest.TestCase):
                              ase_calc=ase_calculator,
                              restart=False
                              )
-        neb_catlearn.run(fmax=0.05, trajectory='ML-NEB.traj',
+        neb_catlearn.run(fmax=0.05, trajectory='ML-NEB.traj', max_step=0.2,
                          acquisition='acq_2')
 
         self.assertEqual(neb_catlearn.iter, 13)
@@ -147,7 +148,7 @@ class TestMLNEB(unittest.TestCase):
                              ase_calc=ase_calculator,
                              restart=False
                              )
-        neb_catlearn.run(fmax=0.05, trajectory='ML-NEB.traj',
+        neb_catlearn.run(fmax=0.05, trajectory='ML-NEB.traj', max_step=0.2,
                          acquisition='acq_3')
 
         self.assertEqual(neb_catlearn.iter, 14)
@@ -162,7 +163,7 @@ class TestMLNEB(unittest.TestCase):
                              ase_calc=ase_calculator,
                              restart=False
                              )
-        neb_catlearn.run(fmax=0.05, trajectory='ML-NEB.traj',
+        neb_catlearn.run(fmax=0.05, trajectory='ML-NEB.traj', max_step=0.2,
                          acquisition='acq_4')
 
         self.assertEqual(neb_catlearn.iter, 16)
@@ -177,7 +178,7 @@ class TestMLNEB(unittest.TestCase):
                              ase_calc=ase_calculator,
                              restart=False
                              )
-        neb_catlearn.run(fmax=0.05, trajectory='ML-NEB.traj',
+        neb_catlearn.run(fmax=0.05, trajectory='ML-NEB.traj', max_step=0.2,
                          acquisition='acq_5')
 
         self.assertEqual(neb_catlearn.iter, 13)
