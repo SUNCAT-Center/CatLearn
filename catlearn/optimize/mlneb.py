@@ -99,6 +99,22 @@ class MLNEB(object):
         self.version = 'ML-NEB ' + __version__
         print_version(self.version)
 
+        msg = "-----------------------------------------------------------"
+        msg += "-----------------------------------------------------------\n"
+        msg += "You are using ML-NEB and CatLearn. Please cite: \n"
+        msg += "[1] J. A. Garrido Torres, M. H. Hansen, P. C. Jennings, "
+        msg += "J. R. Boes and T. Bligaard. Phys. Rev. Lett. 122, 156001. "
+        msg += "https://journals.aps.org/prl/abstract/10.1103/PhysRevLett" \
+               ".122.156001 \n"
+        msg += "[2] M. H. Hansen, J. A. Garrido Torres, P. C. Jennings, "
+        msg += "Z. Wang, J. R. Boes, O. G. Mamun and T. Bligaard. "
+        msg += "An Atomistic Machine Learning Package"
+        msg += "for Surface Science and Catalysis. "
+        msg += "https://arxiv.org/abs/1904.00904 \n"
+        msg += "-----------------------------------------------------------"
+        msg += "-----------------------------------------------------------"
+        parprint(msg)
+
         # Reset.
         self.constraints = None
         self.interesting_point = None
@@ -521,92 +537,44 @@ class MLNEB(object):
                         self.interesting_point = self.images[1:-1][
                                 int(self.argmax_unc)].get_positions().flatten()
 
-                # Acquisition function 3:
-                if self.acq == 'acq_3':
-                    # Select image with max. uncertainty.
-                    self.argmax_unc = np.argmax(self.uncertainty_path[1:-1])
-                    self.interesting_point = self.images[1:-1][
-                                     self.argmax_unc].get_positions().flatten()
+            # Acquisition function 5 (From acq 3):
+            if self.acq == 'acq_5':
+                # Select image with max. uncertainty.
+                self.argmax_unc = np.argmax(self.uncertainty_path[1:-1])
+                self.interesting_point = self.images[1:-1][
+                                 self.argmax_unc].get_positions().flatten()
 
-                    # When reached certain uncertainty apply acq. 1.
-                    if np.max(self.uncertainty_path[1:-1]) < unc_convergence:
-                        # Select image with max. uncertainty.
-                        if self.iter % 2 == 0:
-                            self.argmax_unc = \
-                                         np.argmax(self.uncertainty_path[1:-1])
-                            self.interesting_point = self.images[1:-1][
-                                     self.argmax_unc].get_positions().flatten()
-                        # Select image with max. predicted value.
-                        if self.iter % 2 == 1:
-                            self.argmax_unc = np.argmax(pred_plus_unc)
-                            self.interesting_point = self.images[1:-1][
-                                int(self.argmax_unc)].get_positions().flatten()
-
-                # Acquisition function 4 (from acq 2):
-                if self.acq == 'acq_4':
+                # When reached certain uncertainty apply acq. 1.
+                if np.max(self.uncertainty_path[1:-1]) < unc_convergence:
                     # Select image with max. uncertainty.
                     if self.iter % 2 == 0:
                         self.argmax_unc = \
-                                         np.argmax(self.uncertainty_path[1:-1])
+                                     np.argmax(self.uncertainty_path[1:-1])
                         self.interesting_point = self.images[1:-1][
-                                     self.argmax_unc].get_positions().flatten()
+                                 self.argmax_unc].get_positions().flatten()
 
                     # Select image with max. predicted value.
                     if self.iter % 2 == 1:
                         self.argmax_unc = np.argmax(pred_plus_unc)
                         self.interesting_point = self.images[1:-1][
-                                int(self.argmax_unc)].get_positions().flatten()
-                    # If stationary point is found behave like acquisition 2.
+                            int(self.argmax_unc)].get_positions().flatten()
+                    # If stationary point is found behave like acq. 2.
                     if stationary_point_found is True:
                         # Select image with max. uncertainty.
                         self.argmax_unc = \
-                                         np.argmax(self.uncertainty_path[1:-1])
+                                     np.argmax(self.uncertainty_path[1:-1])
                         self.interesting_point = self.images[1:-1][
-                                     self.argmax_unc].get_positions().flatten()
+                                 self.argmax_unc].get_positions().flatten()
 
-                        # Select image with max. predicted value.
-                        if np.max(self.uncertainty_path[1:-1]) < unc_convergence:
+                    # Select image with max. predicted value.
+                    if np.max(self.uncertainty_path[1:-1]) < \
+                                                           unc_convergence:
 
-                            self.argmax_unc = np.argmax(pred_plus_unc)
-                            self.interesting_point = self.images[1:-1][
-                                int(self.argmax_unc)].get_positions().flatten()
-                # Acquisition function 5 (From acq 3):
-                if self.acq == 'acq_5':
-                    # Select image with max. uncertainty.
-                    self.argmax_unc = np.argmax(self.uncertainty_path[1:-1])
-                    self.interesting_point = self.images[1:-1][
-                                     self.argmax_unc].get_positions().flatten()
+                        self.argmax_unc = np.argmax(pred_plus_unc)
+                        self.interesting_point = \
+                            self.images[1:-1][int(
+                                self.argmax_unc)].get_positions().flatten()
 
-                    # When reached certain uncertainty apply acq. 1.
-                    if np.max(self.uncertainty_path[1:-1]) < unc_convergence:
-                        # Select image with max. uncertainty.
-                        if self.iter % 2 == 0:
-                            self.argmax_unc = \
-                                         np.argmax(self.uncertainty_path[1:-1])
-                            self.interesting_point = self.images[1:-1][
-                                     self.argmax_unc].get_positions().flatten()
-
-                        # Select image with max. predicted value.
-                        if self.iter % 2 == 1:
-                            self.argmax_unc = np.argmax(pred_plus_unc)
-                            self.interesting_point = self.images[1:-1][
-                                int(self.argmax_unc)].get_positions().flatten()
-                        # If stationary point is found behave like acq. 2.
-                        if stationary_point_found is True:
-                            # Select image with max. uncertainty.
-                            self.argmax_unc = \
-                                         np.argmax(self.uncertainty_path[1:-1])
-                            self.interesting_point = self.images[1:-1][
-                                     self.argmax_unc].get_positions().flatten()
-
-                        # Select image with max. predicted value.
-                        if np.max(self.uncertainty_path[1:-1]) < \
-                                                               unc_convergence:
-
-                            self.argmax_unc = np.argmax(pred_plus_unc)
-                            self.interesting_point = \
-                                self.images[1:-1][int(
-                                    self.argmax_unc)].get_positions().flatten()
             # 5. Add a new training point and evaluate it.
             if self.fullout is True:
                 parprint('Performing evaluation on the real landscape...')
