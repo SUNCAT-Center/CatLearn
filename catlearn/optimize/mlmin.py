@@ -10,7 +10,7 @@ from catlearn.active_learning.acquisition_functions import UCB
 from scipy.spatial.distance import euclidean
 import os.path
 from ase.io.trajectory import TrajectoryWriter
-
+from ase.parallel import parprint
 
 class MLMin(object):
 
@@ -78,7 +78,7 @@ class MLMin(object):
 
         if self.prev_calculations is not None:
             if isinstance(self.prev_calculations, str):
-                print('Reading previous calculations from a traj. file.')
+                parprint('Reading previous calculations from a traj. file.')
                 self.prev_calculations = read(self.prev_calculations, ':')
 
             # Check for duplicates.
@@ -224,8 +224,8 @@ class MLMin(object):
                 gradients = apply_mask(list_to_mask=gradients,
                                        mask_index=self.index_mask)[1]
 
-            print('Training a GP process...')
-            print('Number of training points:', len(scaled_targets))
+            parprint('Training a GP process...')
+            parprint('Number of training points:', len(scaled_targets))
 
             train = train.tolist()
             gradients = gradients.tolist()
@@ -238,29 +238,29 @@ class MLMin(object):
                                       gradients=gradients,
                                       optimize_hyperparameters=False)
 
-            print('GP process trained.')
+            parprint('GP process trained.')
 
             if opt_hyper is True:
                 if len(self.list_targets) > 5:
                     self.gp.optimize_hyperparameters()
                     if self.gp.theta_opt.success is True:
                         if full_output is True:
-                            print('Hyperparam. optimization was successful.')
-                            print('Updating kernel list...')
+                            parprint('Hyperparam. optimization was successful.')
+                            parprint('Updating kernel list...')
                         success_hyper = self.gp.kernel_list
 
                     if self.gp.theta_opt.success is not True:
                         if full_output is True:
-                            print('Hyperparam. optimization unsuccessful.')
+                            parprint('Hyperparam. optimization unsuccessful.')
                         if success_hyper is False:
                             if full_output is True:
-                                print('Not enough data...')
+                                parprint('Not enough data...')
                         if success_hyper is not False:
                             if full_output is True:
-                                print('Using the last optimized '
+                                parprint('Using the last optimized '
                                       'hyperparamters.')
                     if full_output is True:
-                        print('Kernel list:', self.gp.kernel_list)
+                        parprint('Kernel list:', self.gp.kernel_list)
 
             # 2. Optimize Machine Learning model.
 
@@ -280,7 +280,7 @@ class MLMin(object):
             ml_opt = MDMin(guess, trajectory=None, logfile=None, dt=0.020)
 
             if full_output is True:
-                print('Starting optimization on the predicted landscape...')
+                parprint('Starting optimization on the predicted landscape...')
             ml_converged = False
 
             n_steps_performed = 0
@@ -301,15 +301,15 @@ class MLMin(object):
                 n_steps_performed += 1
                 if n_steps_performed > 1000:
                     if full_output is True:
-                        print('Not converged yet...')
+                        parprint('Not converged yet...')
                         ml_converged = True
                 if unc_ml >= max_step:
                     if full_output is True:
-                        print('Maximum uncertainty reach. Early stop.')
+                        parprint('Maximum uncertainty reach. Early stop.')
                     ml_converged = True
                 if ml_opt.converged():
                     if full_output is True:
-                        print('ML optimized.')
+                        parprint('ML optimized.')
                     ml_converged = True
 
             # Acquisition functions:
@@ -332,7 +332,7 @@ class MLMin(object):
 
             # 3. Evaluate and append interesting point.
             if full_output is True:
-                print('Performing evaluation in the real landscape...')
+                parprint('Performing evaluation in the real landscape...')
 
             eval_atom = self.ase_ini
             pos_atom = self.interesting_point
@@ -363,7 +363,7 @@ class MLMin(object):
 
             # Maximum number of iterations reached.
             if self.iter >= steps:
-                print('Not converged. Maximum number of iterations reached.')
+                parprint('Not converged. Maximum number of iterations reached.')
                 break
 
 
@@ -374,8 +374,8 @@ def converged(self):
     self.max_abs_forces = np.max(np.abs(self.list_fmax))
 
     if self.max_abs_forces < self.fmax:
-        print('Congratulations. Structural optimization has converged.')
-        print('All the evaluated structures can be found in:',
+        parprint('Congratulations. Structural optimization has converged.')
+        parprint('All the evaluated structures can be found in:',
               self.filename)
         return True
     return False
