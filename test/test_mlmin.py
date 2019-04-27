@@ -26,14 +26,14 @@ class TestMLMin(unittest.TestCase):
         atoms_catlearn = read('mlmin_structures.traj', ':')
         n_eval_catlearn = len(atoms_catlearn)
         print('Checking number of function calls...')
-        self.assertEqual(n_eval_catlearn, 6)
+        self.assertEqual(n_eval_catlearn, 7)
         print('Checking converged energy...')
         e_opt = initial_opt.list_targets[-1]
-        e_test = 3.310696
+        e_test = 3.31076
         np.testing.assert_array_almost_equal(e_opt, e_test, decimal=5)
         print('Checking converged fmax...')
         fmax_opt = initial_opt.list_fmax[-1][0]
-        fmax_test = 0.006456
+        fmax_test = 0.00816
         np.testing.assert_array_almost_equal(fmax_opt, fmax_test, decimal=5)
 
     def test_acquisition(self):
@@ -53,11 +53,11 @@ class TestMLMin(unittest.TestCase):
         self.assertEqual(n_eval_catlearn, 7)
         print('Checking converged energy...')
         e_opt = initial_opt.list_targets[-1]
-        e_test = 3.310696
+        e_test = 3.31076
         np.testing.assert_array_almost_equal(e_opt, e_test, decimal=5)
         print('Checking converged fmax...')
         fmax_opt = initial_opt.list_fmax[-1][0]
-        fmax_test = 0.00837
+        fmax_test = 0.00816
         np.testing.assert_array_almost_equal(fmax_opt, fmax_test, decimal=5)
 
         # Test acquisition ucb:
@@ -71,14 +71,14 @@ class TestMLMin(unittest.TestCase):
         atoms_catlearn = read('mlmin_structures.traj', ':')
         n_eval_catlearn = len(atoms_catlearn)
         print('Checking number of function calls...')
-        self.assertEqual(n_eval_catlearn, 6)
+        self.assertEqual(n_eval_catlearn, 7)
         print('Checking converged energy...')
         e_opt = initial_opt.list_targets[-1]
-        e_test = 3.310696
+        e_test = 3.31076
         np.testing.assert_array_almost_equal(e_opt, e_test, decimal=5)
         print('Checking converged fmax...')
         fmax_opt = initial_opt.list_fmax[-1][0]
-        fmax_test = 0.008297
+        fmax_test = 0.00782
         np.testing.assert_array_almost_equal(fmax_opt, fmax_test, decimal=5)
 
     def test_kernel(self):
@@ -96,14 +96,14 @@ class TestMLMin(unittest.TestCase):
         atoms_catlearn = read('mlmin_structures.traj', ':')
         n_eval_catlearn = len(atoms_catlearn)
         print('Checking number of function calls...')
-        self.assertEqual(n_eval_catlearn, 6)
+        self.assertEqual(n_eval_catlearn, 7)
         print('Checking converged energy...')
         e_opt = initial_opt.list_targets[-1]
-        e_test = 3.310719
+        e_test = 3.31076
         np.testing.assert_array_almost_equal(e_opt, e_test, decimal=5)
         print('Checking converged fmax...')
         fmax_opt = initial_opt.list_fmax[-1][0]
-        fmax_test = 0.008573
+        fmax_test = 0.00786
         np.testing.assert_array_almost_equal(fmax_opt, fmax_test, decimal=5)
 
         # Test ARD SQE kernel:
@@ -118,13 +118,13 @@ class TestMLMin(unittest.TestCase):
         atoms_catlearn = read('mlmin_structures.traj', ':')
         n_eval_catlearn = len(atoms_catlearn)
         print('Checking number of function calls...')
-        self.assertEqual(n_eval_catlearn, 6)
+        self.assertEqual(n_eval_catlearn, 7)
         print('Checking converged energy...')
         e_opt = initial_opt.list_targets[-1]
-        e_test = 3.310702
+        e_test = 3.31076
         np.testing.assert_array_almost_equal(e_opt, e_test, decimal=5)
         print('Checking converged fmax...')
         fmax_opt = initial_opt.list_fmax[-1][0]
-        fmax_test = 0.006957
+        fmax_test = 0.00766
         np.testing.assert_array_almost_equal(fmax_opt, fmax_test, decimal=5)
 

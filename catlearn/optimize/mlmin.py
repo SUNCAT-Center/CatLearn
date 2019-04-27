@@ -1,5 +1,5 @@
 import numpy as np
-from catlearn.optimize.io import print_info, print_version
+from catlearn.optimize.io import print_info, print_version, print_cite_mlmin
 from catlearn.optimize.constraints import create_mask, apply_mask
 from catlearn.optimize.mlneb import ASECalc
 from ase.optimize import *
@@ -9,13 +9,13 @@ from catlearn import __version__
 from catlearn.active_learning.acquisition_functions import UCB
 from scipy.spatial.distance import euclidean
 import os.path
-import copy
-
+from ase.io.trajectory import TrajectoryWriter
+from ase.parallel import parprint
 
 class MLMin(object):
 
     def __init__(self, x0, prev_calculations=None, restart=False,
-                 trajectory='catlearn_opt.traj'):
+                 trajectory='catlearn_opt.traj', force_consistent=None):
 
         """Optimization setup.
 
@@ -34,6 +34,12 @@ class MLMin(object):
             calculator and parameters).
         trajectory: string
             Filename to store the output.
+        force_consistent: boolean or None
+            Use force-consistent energy calls (as opposed to the energy
+            extrapolated to 0 K). By default (force_consistent=None) uses
+            force-consistent energies if available in the calculator, but
+            falls back to force_consistent=False if not.
+
         """
 
         # General variables.
@@ -44,7 +50,9 @@ class MLMin(object):
         self.gp = None
         self.opt_type = 'MLMin'
         self.version = self.opt_type + ' ' + __version__
+        self.fc = force_consistent
         print_version(self.version)
+        print_cite_mlmin()
 
         if restart is True and prev_calculations is None:
             if os.path.isfile(self.filename):
@@ -71,7 +79,7 @@ class MLMin(object):
 
         if self.prev_calculations is not None:
             if isinstance(self.prev_calculations, str):
-                print('Reading previous calculations from a traj. file.')
+                parprint('Reading previous calculations from a traj. file.')
                 self.prev_calculations = read(self.prev_calculations, ':')
 
             # Check for duplicates.
@@ -92,7 +100,8 @@ class MLMin(object):
         self.list_gradients = []
         for i in range(0, len(self.list_atoms)):
             pos_atoms = list(self.list_atoms[i].get_positions().reshape(-1))
-            energy_atoms = self.list_atoms[i].get_potential_energy()
+            energy_atoms = self.list_atoms[i].get_potential_energy(
+                                                      force_consistent=self.fc)
             grad_atoms = list(-self.list_atoms[i].get_forces().reshape(-1))
             self.list_train.append(pos_atoms)
             self.list_targets.append(energy_atoms)
@@ -110,10 +119,8 @@ class MLMin(object):
         write(self.filename, self.list_atoms)
         print_info(self)
 
-        print(self.list_targets)
-
     def run(self, fmax=0.05, steps=200, kernel='SQE', max_step=0.25,
-            acq='min_energy', full_output=False):
+            acq='min_energy', full_output=False, noise=0.005):
 
         """Executing run will start the optimization process.
 
@@ -134,7 +141,8 @@ class MLMin(object):
             evaluate. Implemented are: 'lcb', 'ucb', 'min_energy'.
         full_output: boolean
             Whether to print on screen the full output (True) or not (False).
-
+        noise:
+            Regularization parameter of the GP.
         Returns
         -------
         Optimized atom structure.
@@ -164,9 +172,9 @@ class MLMin(object):
                           'scaling': 1.0,
                           'scaling_bounds': ((1.0, 1.0),)},
                          {'type': 'noise_multi',
-                          'hyperparameters': [0.005 * 0.4**2, 0.005],
-                          'bounds': ((0.005 * 0.4**2, 0.005 * 0.4**2),
-                                     (0.005, 0.005),)}
+                          'hyperparameters': [noise * 0.4**2, noise],
+                          'bounds': ((noise * 0.4**2, noise * 0.4**2),
+                                     (noise, noise),)}
                          ]
 
             if kernel == 'SQE':
@@ -177,9 +185,9 @@ class MLMin(object):
                           'scaling': sigma_f,
                           'scaling_bounds': ((sigma_f, sigma_f),)},
                          {'type': 'noise_multi',
-                          'hyperparameters': [0.005, 0.005 * 0.4**2],
-                          'bounds': ((0.001, 0.050),
-                                     (0.001 * 0.4**2, 0.050),)}
+                          'hyperparameters': [noise, noise * 0.4**2],
+                          'bounds': ((noise/5., noise*10.),
+                                     (noise/5. * 0.4**2, noise*10.),)}
                          ]
 
             if kernel == 'ARD_SQE':
@@ -190,13 +198,26 @@ class MLMin(object):
                           'scaling': sigma_f,
                           'scaling_bounds': ((sigma_f, sigma_f),)},
                          {'type': 'noise_multi',
-                          'hyperparameters': [0.005, 0.0005],
-                          'bounds': ((0.001, 0.005),
-                                     (0.0005, 0.002),)}
+                          'hyperparameters': [noise/2., noise/10.],
+                          'bounds': ((noise/5., noise),
+                                     (noise/10., noise/4.),)}
                          ]
 
-                if success_hyper is not False:
-                    kdict = success_hyper
+            if len(self.list_targets) == 1:
+                opt_hyper = False
+                kdict = [{'type': 'gaussian', 'width': 0.20,
+                          'dimension': 'single',
+                          'bounds': ((0.20, 0.20),),
+                          'scaling': sigma_f,
+                          'scaling_bounds': ((sigma_f, sigma_f),)},
+                         {'type': 'noise_multi',
+                          'hyperparameters': [noise * 0.4**2, noise],
+                          'bounds': ((noise * 0.4**2, noise * 0.4**2),
+                                     (noise, noise),)}
+                         ]
+
+            if success_hyper is not False:
+                kdict = success_hyper
 
             if self.index_mask is not None:
                 train = apply_mask(list_to_mask=train,
@@ -204,8 +225,8 @@ class MLMin(object):
                 gradients = apply_mask(list_to_mask=gradients,
                                        mask_index=self.index_mask)[1]
 
-            print('Training a GP process...')
-            print('Number of training points:', len(scaled_targets))
+            parprint('Training a GP process...')
+            parprint('Number of training points:', len(scaled_targets))
 
             train = train.tolist()
             gradients = gradients.tolist()
@@ -218,29 +239,29 @@ class MLMin(object):
                                       gradients=gradients,
                                       optimize_hyperparameters=False)
 
-            print('GP process trained.')
+            parprint('GP process trained.')
 
             if opt_hyper is True:
                 if len(self.list_targets) > 5:
                     self.gp.optimize_hyperparameters()
                     if self.gp.theta_opt.success is True:
                         if full_output is True:
-                            print('Hyperparam. optimization was successful.')
-                            print('Updating kernel list...')
+                            parprint('Hyperparam. optimization was successful.')
+                            parprint('Updating kernel list...')
                         success_hyper = self.gp.kernel_list
 
                     if self.gp.theta_opt.success is not True:
                         if full_output is True:
-                            print('Hyperparam. optimization unsuccessful.')
+                            parprint('Hyperparam. optimization unsuccessful.')
                         if success_hyper is False:
                             if full_output is True:
-                                print('Not enough data...')
+                                parprint('Not enough data...')
                         if success_hyper is not False:
                             if full_output is True:
-                                print('Using the last optimized '
+                                parprint('Using the last optimized '
                                       'hyperparamters.')
                     if full_output is True:
-                        print('Kernel list:', self.gp.kernel_list)
+                        parprint('Kernel list:', self.gp.kernel_list)
 
             # 2. Optimize Machine Learning model.
 
@@ -260,7 +281,7 @@ class MLMin(object):
             ml_opt = MDMin(guess, trajectory=None, logfile=None, dt=0.020)
 
             if full_output is True:
-                print('Starting optimization on the predicted landscape...')
+                parprint('Starting optimization on the predicted landscape...')
             ml_converged = False
 
             n_steps_performed = 0
@@ -280,16 +301,16 @@ class MLMin(object):
 
                 n_steps_performed += 1
                 if n_steps_performed > 1000:
-                        if full_output is True:
-                            print('Not converged yet...')
+                    if full_output is True:
+                        parprint('Not converged yet...')
                         ml_converged = True
                 if unc_ml >= max_step:
                     if full_output is True:
-                        print('Maximum uncertainty reach. Early stop.')
+                        parprint('Maximum uncertainty reach. Early stop.')
                     ml_converged = True
                 if ml_opt.converged():
                     if full_output is True:
-                        print('ML optimized.')
+                        parprint('ML optimized.')
                     ml_converged = True
 
             # Acquisition functions:
@@ -312,13 +333,14 @@ class MLMin(object):
 
             # 3. Evaluate and append interesting point.
             if full_output is True:
-                print('Performing evaluation in the real landscape...')
+                parprint('Performing evaluation in the real landscape...')
 
             eval_atom = self.ase_ini
             pos_atom = self.interesting_point
             eval_atom.positions = np.array(pos_atom).reshape((-1, 3))
             eval_atom.set_calculator(self.ase_calc)
-            energy_atom = eval_atom.get_potential_energy()
+            energy_atom = eval_atom.get_potential_energy(
+                                                      force_consistent=self.fc)
             forces_atom = -eval_atom.get_forces().reshape(-1)
 
             # 4. Convergence and output.
@@ -335,12 +357,14 @@ class MLMin(object):
             print_info(self)
 
             # Save evaluated image.
-            self.list_atoms += [copy.deepcopy(eval_atom)]
-            write(self.filename, self.list_atoms)
+            self.list_atoms += [eval_atom]
+            TrajectoryWriter(atoms=self.ase_ini,
+                             filename=self.filename,
+                             mode='a').write()
 
             # Maximum number of iterations reached.
             if self.iter >= steps:
-                print('Not converged. Maximum number of iterations reached.')
+                parprint('Not converged. Maximum number of iterations reached.')
                 break
 
 
@@ -351,9 +375,10 @@ def converged(self):
     self.max_abs_forces = np.max(np.abs(self.list_fmax))
 
     if self.max_abs_forces < self.fmax:
-        print('Congratulations. Structural optimization has converged.')
-        print('All the evaluated structures can be found in:',
+        parprint('Congratulations. Structural optimization has converged.')
+        parprint('All the evaluated structures can be found in:',
               self.filename)
+        print_cite_mlmin()
         return True
     return False
 
