@@ -1,5 +1,10 @@
 # dev
 
+# Version 0.6.1 (April 2019)
+
+-   Fixed compatibility issue with [GPAW](https://wiki.fysik.dtu.dk/gpaw/index.html)
+-   Various bugfixes
+
 # Version 0.6.0 (January 2019)
 
 -   Added ML-MIN algorithm for energy minimization.

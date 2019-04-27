@@ -16,6 +16,7 @@ Please see the [tutorials](https://github.com/SUNCAT-Center/CatLearn/tree/master
 -   [Usage](#usage)
 -   [Tutorials](#tutorials)
 -   [Functionality](#functionality)
+-   [How to cite](#cite)
 -   [Contribution](#contribution)
 
 ## Installation
@@ -139,6 +140,23 @@ There is much functionality in CatLearn to assist in handling atom data and buil
     -   Neighborlist generators
     -   Penalty functions
     -   SQLite db storage
+
+## How to cite CatLearn
+
+[(Back to top)](#cite)
+
+If you find CatLearn useful in your research, please cite
+
+    1) M. H. Hansen, J. A. Garrido Torres, P. C. Jennings, 
+       Z. Wang, J. R. Boes, O. G. Mamun and T. Bligaard.
+       An Atomistic Machine Learning Package for Surface Science and Catalysis.
+       [https://arxiv.org/abs/1904.00904](https://arxiv.org/abs/1904.00904)
+
+If you use CatLearn's ML-NEB module, please cite:
+
+    2) J. A. Garrido Torres, M. H. Hansen, P. C. Jennings,
+       J. R. Boes and T. Bligaard. Phys. Rev. Lett. 122, 156001.
+       [https://journals.aps.org/prl/abstract/10.1103/PhysRevLett.122.156001](https://journals.aps.org/prl/abstract/10.1103/PhysRevLett.122.156001)
 
 ## Contribution
 
