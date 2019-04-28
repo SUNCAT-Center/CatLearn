@@ -1,14 +1,14 @@
 from ase import Atoms
 from gpaw import GPAW
 from gpaw import PW
-from ase.optimize import *
+from ase.optimize import GPMin, LBFGS, FIRE
 from catlearn.optimize.mlmin import MLMin
 from ase.io import read
 from ase.constraints import FixAtoms
-
-""" 
+from ase.parallel import parprint
+"""
     Structure relaxation of NH3 using GPAW.
-    DFT Benchmark using MLMin, GPMin, LBFGS and FIRE. 
+    DFT Benchmark using MLMin, GPMin, LBFGS and FIRE.
 """
 
 # 1. Build Atoms Object.
@@ -23,11 +23,11 @@ calc = GPAW(xc='PBE',
 # 1.1. Set up structure:
 
 atoms = Atoms('NH3',
-            [(.000000+5, .000000+5, .116489+5),
-             (.000000+5, .939731+5, -.271808+5),
-             (.813831+5, -.469865+5, -.271808+5),
-             (-.813831+5, -.469865+5, -.271808+5)
-             ], cell=[10, 10, 10])
+              [(.000000+5, .000000+5, .116489+5),
+               (.000000+5, .939731+5, -.271808+5),
+               (.813831+5, -.469865+5, -.271808+5),
+               (-.813831+5, -.469865+5, -.271808+5)
+               ], cell=[10, 10, 10])
 
 c = FixAtoms(indices=[0])
 atoms.set_constraint(c)
@@ -66,16 +66,17 @@ fire_opt.run(fmax=0.01)
 print('\n Summary of the results:\n ------------------------------------')
 
 fire_results = read('results_fire.traj', ':')
-print('Number of function evaluations using FIRE:',
-      len(fire_results))
+parprint('Number of function evaluations using FIRE:',
+         len(fire_results))
 
 lbfgs_results = read('results_lbfgs.traj', ':')
-print('Number of function evaluations using LBFGS:',
-      len(lbfgs_results))
+parprint('Number of function evaluations using LBFGS:',
+         len(lbfgs_results))
 
 gpmin_results = read('results_gpmin.traj', ':')
-print('Number of function evaluations using GPMin:', gpmin_opt.function_calls)
+parprint('Number of function evaluations using GPMin:',
+         gpmin_opt.function_calls)
 
 catlearn_results = read('results_catlearn.traj', ':')
-print('Number of function evaluations using MLMin (CatLearn):',
-      len(catlearn_results))
+parprint('Number of function evaluations using MLMin (CatLearn):',
+         len(catlearn_results))
