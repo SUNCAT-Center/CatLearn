@@ -2,7 +2,7 @@
 
 # Version 0.6.1 (April 2019)
 
--   Fixed compatibility issue with [GPAW](https://wiki.fysik.dtu.dk/gpaw/index.html)
+-   Fixed compatibility issue with MLNEB and [GPAW](https://wiki.fysik.dtu.dk/gpaw/index.html)
 -   Various bugfixes
 
 # Version 0.6.0 (January 2019)
