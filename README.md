@@ -8,14 +8,17 @@ Utilities for building and testing atomic machine learning models. Gaussian Proc
 
 In general, any data prepared in this fashion can be fed to the GP routines, a number of additional functions have been added that interface with [ASE](https://wiki.fysik.dtu.dk/ase/). This integration allows for the manipulation of atoms objects through GP predictions, as well as dynamic generation of descriptors through use of the many ASE functions.
 
+CatLearn also includes the [MLNEB](https://github.com/mhangaard/CatLearn/tree/v061/tutorials/11_NEB) algorithm for efficient transition state search, and the [MLMIN](https://github.com/mhangaard/CatLearn/tree/v061/tutorials/12_MLMin) algorithm for efficient atomic structure optimization.
+
 Please see the [tutorials](https://github.com/SUNCAT-Center/CatLearn/tree/master/tutorials) for a detailed overview of what the code can do and the conventions used in setting up the predictive models. For an overview of all the functionality available, please read the [documentation](http://catlearn.readthedocs.io/en/latest/).
 
 ## Table of contents
 
 -   [Installation](#installation)
--   [Usage](#usage)
 -   [Tutorials](#tutorials)
+-   [Usage](#usage)
 -   [Functionality](#functionality)
+-   [How to cite](#how-to-cite-catlearn)
 -   [Contribution](#contribution)
 
 ## Installation
@@ -73,11 +76,17 @@ The tutorial scripts will generally output some graphical representations of the
 $ pip install matplotlib seaborn
 ```
 
+## Tutorials
+
+[(Back to top)](#table-of-contents)
+
+Helpful examples and test scripts are present in [tutorials](https://github.com/SUNCAT-Center/CatLearn/tree/master/tutorials).
+
 ## Usage
 
 [(Back to top)](#table-of-contents)
 
-In the most basic form, it is possible to set up a GP model and make some predictions using the following lines of code:
+Set up CatLearn's Gaussian Process model and make some predictions using the following lines of code:
 
 ```python
 import numpy as np
@@ -99,12 +108,6 @@ gp = GaussianProcess(kernel_list=kernel, regularization=1e-3,
 # Get the predictions.
 prediction = gp.predict(test_fp=test_features)
 ```
-
-## Tutorials
-
-[(Back to top)](#table-of-contents)
-
-The above sample of code will train a GP with the squared exponential kernel, fitting some random function. Of course, this isn't so useful, more helpful examples and test scripts are present for most features; primarily, please see the [tutorials](https://github.com/SUNCAT-Center/CatLearn/tree/master/tutorials).
 
 ## Functionality
 
@@ -139,6 +142,23 @@ There is much functionality in CatLearn to assist in handling atom data and buil
     -   Neighborlist generators
     -   Penalty functions
     -   SQLite db storage
+
+## How to cite CatLearn
+
+[(Back to top)](#table-of-contents)
+
+If you find CatLearn useful in your research, please cite
+
+    1) M. H. Hansen, J. A. Garrido Torres, P. C. Jennings, 
+       Z. Wang, J. R. Boes, O. G. Mamun and T. Bligaard.
+       An Atomistic Machine Learning Package for Surface Science and Catalysis.
+       https://arxiv.org/abs/1904.00904
+
+If you use CatLearn's ML-NEB module, please cite:
+
+    2) J. A. Garrido Torres, M. H. Hansen, P. C. Jennings,
+       J. R. Boes and T. Bligaard. Phys. Rev. Lett. 122, 156001.
+       https://journals.aps.org/prl/abstract/10.1103/PhysRevLett.122.156001
 
 ## Contribution
 
