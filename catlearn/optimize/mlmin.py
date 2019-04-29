@@ -1,16 +1,19 @@
+import os.path
 import numpy as np
+from scipy.spatial.distance import euclidean
+
+from ase.optimize import MDMin
+from ase.io import read, write
+from ase.io.trajectory import TrajectoryWriter
+from ase.parallel import parprint, parallel_function
+
 from catlearn.optimize.io import print_info, print_version, print_cite_mlmin
 from catlearn.optimize.constraints import create_mask, apply_mask
 from catlearn.optimize.mlneb import ASECalc
-from ase.optimize import *
-from ase.io import read, write
 from catlearn.regression import GaussianProcess
 from catlearn import __version__
 from catlearn.active_learning.acquisition_functions import UCB
-from scipy.spatial.distance import euclidean
-import os.path
-from ase.io.trajectory import TrajectoryWriter
-from ase.parallel import parprint
+
 
 class MLMin(object):
 
@@ -52,7 +55,6 @@ class MLMin(object):
         self.version = self.opt_type + ' ' + __version__
         self.fc = force_consistent
         print_version(self.version)
-        print_cite_mlmin()
 
         if restart is True and prev_calculations is None:
             if os.path.isfile(self.filename):
@@ -162,7 +164,7 @@ class MLMin(object):
 
             self.u_prior = np.max(targets)
             scaled_targets = targets - self.u_prior
-            sigma_f = 1e-3 + np.std(scaled_targets)**2
+            sigma_f = 1e-3 + np.std(scaled_targets) ** 2
 
             if kernel == 'SQE_fixed':
                 opt_hyper = False
@@ -231,15 +233,7 @@ class MLMin(object):
             train = train.tolist()
             gradients = gradients.tolist()
 
-            self.gp = GaussianProcess(kernel_list=kdict,
-                                      regularization=0.0,
-                                      regularization_bounds=(0.0, 0.0),
-                                      train_fp=train,
-                                      train_target=scaled_targets,
-                                      gradients=gradients,
-                                      optimize_hyperparameters=False)
-
-            parprint('GP process trained.')
+            self.gp = fit(train, scaled_targets, gradients, kdict)
 
             if opt_hyper is True:
                 if len(self.list_targets) > 5:
@@ -366,6 +360,21 @@ class MLMin(object):
             if self.iter >= steps:
                 parprint('Not converged. Maximum number of iterations reached.')
                 break
+
+
+@parallel_function
+def fit(X, y, gradients, kdict):
+    """ Train the Gaussian process."""
+    gp = GaussianProcess(kernel_list=kdict,
+                         regularization=0.0,
+                         regularization_bounds=(0.0, 0.0),
+                         train_fp=X,
+                         train_target=y,
+                         gradients=gradients,
+                         optimize_hyperparameters=False)
+    print('Gaussiaon Process process trained.')
+    
+    return gp
 
 
 def converged(self):

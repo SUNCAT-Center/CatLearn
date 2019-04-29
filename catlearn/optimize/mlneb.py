@@ -7,7 +7,7 @@ from ase.neb import NEB
 from ase.neb import NEBTools
 from ase.io import read, write
 from ase.optimize import MDMin
-from ase.parallel import parprint, rank
+from ase.parallel import parprint, rank, parallel_function
 from scipy.spatial import distance
 import os
 from catlearn.regression import GaussianProcess
@@ -98,7 +98,6 @@ class MLNEB(object):
         self.mic = mic
         self.version = 'ML-NEB ' + __version__
         print_version(self.version)
-        print_cite_mlneb()
 
 
         # Reset.
@@ -313,7 +312,10 @@ class MLNEB(object):
         while True:
 
             # 1. Train Machine Learning process.
-            train_gp_model(self)
+            self.gp, self.max_target = \
+                train_gp_model(self.list_train, self.list_targets,
+                               self.list_gradients, self.index_mask,
+                               self.path_distance, self.fullout)
 
             # 2. Setup and run ML NEB:
             if self.fullout is True:
@@ -593,7 +595,10 @@ class MLNEB(object):
 
                 if np.max(self.uncertainty_path[1:-1]) < unc_convergence:
                     # Save results of the final step (converged):
-                    train_gp_model(self)
+                    self.gp, self.max_target = \
+                        train_gp_model(self.list_train, self.list_targets,
+                                       self.list_gradients, self.index_mask,
+                                       self.path_distance, self.fullout)
                     get_results_predicted_path(self)
                     store_results_neb(self)
                     msg = "Congratulations! Your ML NEB is converged. "
@@ -660,21 +665,23 @@ def create_ml_neb(is_endpoint, fs_endpoint, images_interpolation,
     return imgs
 
 
-def train_gp_model(self):
+@parallel_function
+def train_gp_model(list_train, list_targets, list_gradients, index_mask,
+                   path_distance, fullout=False):
     """
     Train Gaussian process
     """
-    self.max_target = np.max(self.list_targets)
-    scaled_targets = self.list_targets.copy() - self.max_target
+    max_target = np.max(list_targets)
+    scaled_targets = list_targets.copy() - max_target
     sigma_f = 1e-3 + np.std(scaled_targets)**2
 
     dimension = 'single'
-    bounds = ((0.1, self.path_distance),)
+    bounds = ((0.1, path_distance),)
 
-    width = self.path_distance / 2
+    width = path_distance / 2
 
     if np.isnan(width) or width <= 0.05:
-        width = self.path_distance / 2
+        width = path_distance / 2
 
     noise_energy = 0.005
     noise_forces = 0.0005
@@ -690,30 +697,31 @@ def train_gp_model(self):
                          (0.0005, 0.002),)}
              ]
 
-    train = self.list_train.copy()
-    gradients = self.list_gradients.copy()
-    if self.index_mask is not None:
-        train = apply_mask(list_to_mask=self.list_train,
-                           mask_index=self.index_mask)[1]
-        gradients = apply_mask(list_to_mask=self.list_gradients,
-                               mask_index=self.index_mask)[1]
+    train = list_train.copy()
+    gradients = list_gradients.copy()
+    if index_mask is not None:
+        train = apply_mask(list_to_mask=list_train,
+                           mask_index=index_mask)[1]
+        gradients = apply_mask(list_to_mask=list_gradients,
+                               mask_index=index_mask)[1]
     parprint('\n')
     parprint('Training a Gaussian process...')
     parprint('Number of training points:', len(scaled_targets))
 
-    self.gp = GaussianProcess(kernel_list=kdict,
-                              regularization=0.0,
-                              regularization_bounds=(0.0, 0.0),
-                              train_fp=train,
-                              train_target=scaled_targets,
-                              gradients=gradients,
-                              optimize_hyperparameters=False,
-                              scale_data=False)
-    self.gp.optimize_hyperparameters(global_opt=False)
-    if self.fullout is True:
-        parprint('Optimized hyperparameters:', self.gp.kernel_list)
+    gp = GaussianProcess(kernel_list=kdict,
+                         regularization=0.0,
+                         regularization_bounds=(0.0, 0.0),
+                         train_fp=train,
+                         train_target=scaled_targets,
+                         gradients=gradients,
+                         optimize_hyperparameters=False,
+                         scale_data=False)
+    gp.optimize_hyperparameters(global_opt=False)
+    if fullout:
+        parprint('Optimized hyperparameters:', gp.kernel_list)
     parprint('Gaussian process trained.')
 
+    return gp, max_target
 
 def get_results_predicted_path(self):
 
