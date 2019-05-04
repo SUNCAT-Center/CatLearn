@@ -31,7 +31,21 @@ The easiest way to install the code is with:
 $ pip install catlearn
 ```
 
-This will automatically install the code as well as the dependencies. Alternatively, you can clone the repository to a local directory with:
+This will automatically install the code as well as the dependencies. 
+
+### Installation without dependencies
+
+[(Back to top)](#table-of-contents)
+
+If you want to install catlearn without dependencies, you can do
+
+```shell
+$ pip install catlearn --no-deps
+```
+
+MLMIN and MLNEB will run without dependencies at all, but there are other parts of the code, which require you to install the dependencies listed in [requirements.txt](https://github.com/SUNCAT-Center/CatLearn/blob/master/requirements.txt)
+
+### Developer installation
 
 ```shell
 $ git clone https://github.com/SUNCAT-Center/CatLearn.git
