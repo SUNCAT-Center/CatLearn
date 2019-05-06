@@ -43,7 +43,7 @@ If you want to install catlearn without dependencies, you can do:
 $ pip install catlearn --no-deps
 ```
 
-MLMIN and MLNEB will only need on ASE 3.17.0 or newer to run, but there are other parts of the code, which need the dependencies listed in [requirements.txt](https://github.com/SUNCAT-Center/CatLearn/blob/master/requirements.txt)
+MLMIN and MLNEB will not need anything apart from ASE 3.17.0 or newer to run, but there are other parts of the code, which need the dependencies listed in [requirements.txt](https://github.com/SUNCAT-Center/CatLearn/blob/master/requirements.txt)
 
 ### Developer installation
 
@@ -53,7 +53,7 @@ $ git clone https://github.com/SUNCAT-Center/CatLearn.git
 
 And then put the `<install_dir>/` into your `$PYTHONPATH` environment variable.
 
-Be sure to install dependencies in with:
+You can install dependencies in with:
 
 ```shell
 $ pip install -r requirements.txt
