@@ -8,7 +8,7 @@ Utilities for building and testing atomic machine learning models. Gaussian Proc
 
 In general, any data prepared in this fashion can be fed to the GP routines, a number of additional functions have been added that interface with [ASE](https://wiki.fysik.dtu.dk/ase/). This integration allows for the manipulation of atoms objects through GP predictions, as well as dynamic generation of descriptors through use of the many ASE functions.
 
-CatLearn also includes the [MLNEB](https://github.com/mhangaard/CatLearn/tree/v061/tutorials/11_NEB) algorithm for efficient transition state search, and the [MLMIN](https://github.com/mhangaard/CatLearn/tree/v061/tutorials/12_MLMin) algorithm for efficient atomic structure optimization.
+CatLearn also includes the [MLNEB](https://github.com/SUNCAT-Center/CatLearn/tree/master/tutorials/11_NEB) algorithm for efficient transition state search, and the [MLMIN](https://github.com/SUNCAT-Center/CatLearn/tree/master/tutorials/12_MLMin) algorithm for efficient atomic structure optimization.
 
 Please see the [tutorials](https://github.com/SUNCAT-Center/CatLearn/tree/master/tutorials) for a detailed overview of what the code can do and the conventions used in setting up the predictive models. For an overview of all the functionality available, please read the [documentation](http://catlearn.readthedocs.io/en/latest/).
 
@@ -37,13 +37,13 @@ This will automatically install the code as well as the dependencies.
 
 [(Back to top)](#table-of-contents)
 
-If you want to install catlearn without dependencies, you can do
+If you want to install catlearn without dependencies, you can do:
 
 ```shell
 $ pip install catlearn --no-deps
 ```
 
-MLMIN and MLNEB will run without dependencies at all, but there are other parts of the code, which require you to install the dependencies listed in [requirements.txt](https://github.com/SUNCAT-Center/CatLearn/blob/master/requirements.txt)
+MLMIN and MLNEB will only need on ASE 3.17.0 or newer to run, but there are other parts of the code, which need the dependencies listed in [requirements.txt](https://github.com/SUNCAT-Center/CatLearn/blob/master/requirements.txt)
 
 ### Developer installation
 
