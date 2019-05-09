@@ -534,7 +534,9 @@ def info2primary_index(atoms):
                 site.append(a_s)
                 chemi.append(a_a)
     chemi = list(np.unique(chemi))
-    site = list(np.unique(site))
+   # site = list(np.unique(site))
+    termination_atoms = detect_termination(atoms)[1]
+    site = [sit for sit in list(np.unique(site)) if sit in termination_atoms]
     for j in site:
         for a_s in slab_atoms:
             if cm[a_s, j] > 0:
