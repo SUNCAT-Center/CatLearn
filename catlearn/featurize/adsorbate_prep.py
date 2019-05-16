@@ -539,6 +539,7 @@ def info2primary_index(atoms):
         for a_s in slab_atoms:
             if cm[a_s, j] > 0:
                 ligand.append(a_s)
+    ligand = [lig for lig in list(np.unique(ligand)) if lig not in site]
     if len(chemi) is 0 or len(site) is 0:
         print(chemi, site, ligand)
         msg = 'No adsorption site detected.'
