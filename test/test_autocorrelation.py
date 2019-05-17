@@ -17,7 +17,7 @@ class TestAutoCorrelation(unittest.TestCase):
         """Test the feature generation."""
         atoms = molecule('HCOOH')
         atoms.center(vacuum=5)
-        radii = [covalent_radii[z] for z in atoms.numbers]
+        radii = [covalent_radii[z] + 0.1 for z in atoms.numbers]
         atoms.connectivity = ase_connectivity(atoms, radii)
         images = [atoms]
         gen = FeatureGenerator()
