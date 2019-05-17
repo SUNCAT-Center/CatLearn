@@ -47,7 +47,7 @@ def images_connectivity(images, check_cn_max=False):
     for atoms in tqdm(images):
         if not hasattr(atoms, 'connectivity'):
             radii = [default_catlearn_radius(z) for z in atoms.numbers]
-            atoms.connectivity = ase_connectivity(atoms, radii)
+            atoms.connectivity = ase_connectivity(atoms, cutoffs=radii)
             if check_cn_max:
                 n_connections = np.sum(atoms.connectivity, axis=0)
                 if max(n_connections) > 12:

@@ -94,4 +94,3 @@ if __name__ == '__main__':
     os.remove('results_neb_interpolation.csv')
     os.remove('ML-NEB.traj')
     os.remove('warnings_and_errors.txt')
-
