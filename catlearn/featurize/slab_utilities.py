@@ -31,7 +31,6 @@ def stoichiometry(atoms):
     """
     symbols = atoms.get_chemical_symbols()
     num_dict = {}
-    num_dict['total'] = len(symbols)
     elements = list(set(symbols))
     for element in elements:
         count = symbols.count(element)
