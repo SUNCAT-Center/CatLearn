@@ -19,7 +19,6 @@ import seaborn as sns
 from ase.calculators.emt import EMT
 
 from catlearn.featurize import *
-from catlearn.featurize import neighbor_matrix
 from catlearn.featurize.slab_utilities import *
 
 from itertools import chain, combinations
@@ -31,7 +30,7 @@ from sklearn.model_selection import cross_val_score
 
 from tqdm import tqdm
 
-pd.set_option('display.max_columns', 10)
+# pd.set_option('display.max_columns', 10)
 
 # GLOBBALS AND HELPER FUNCTIONS
 font = {'size': 16}
@@ -144,6 +143,12 @@ def get_site_index(material, defect):
     if len(site_idx) == 0:
         site_idx = [np.NAN]
     return site_idx[0]
+
+
+def unique_set(iterable, feature_dim=2):
+    ''' Find unique sets of n descriptors '''
+    s = list(iterable)  # allows duplicate elements
+    return chain.from_iterable(combinations(s, r) for r in range(feature_dim, feature_dim + 1))
 
 
 class Material:
