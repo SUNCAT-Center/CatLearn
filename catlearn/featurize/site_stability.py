@@ -1,10 +1,5 @@
-import os
-import sys
-cwd = os.getcwd()+'/'
-sys.path.insert(0, cwd+'CatLearn/')
-
 import ase.io
-import CatLearn.catlearn as catlearn
+import catlearn
 import datetime
 import matplotlib
 import matplotlib.pyplot as plt
@@ -23,6 +18,7 @@ from catlearn.featurize import neighbor_matrix
 from catlearn.featurize.slab_utilities import *
 
 from itertools import chain, combinations
+from matplotlib.lines import Line2D
 from mendeleev import element
 
 from sklearn import preprocessing
@@ -33,11 +29,13 @@ from tqdm import tqdm
 
 pd.set_option('display.max_columns', 10)
 
-# GLOBBALS AND HELPER FUNCTIONS
-font = {'size': 16}
-matplotlib.rc('font', **font)
+# Plotting settings
+plt.rc('text', usetex=False)
+font = {'size': 18}
+plt.rc('font', **font)
+
 sns.set_style('white')
-sns.set_palette(sns.hls_palette(8, h=0.6, l=0.6, s=0.6))
+sns.set_palette(sns.hls_palette(8, h=0.5, l=0.4, s=0.5))
 
 infile = ''
 
@@ -47,6 +45,11 @@ atom_dict ={'Ni': -1380.8341027932559,
  'Pt': -998.5654412676529,
  'Ag': -1306.3829300840296,
  'Cu': -1611.535995452583}
+
+def unique_set(iterable, feature_dim=2):
+    ''' Find unique sets of n descriptors '''
+    s = list(iterable)  # allows duplicate elements
+    return chain.from_iterable(combinations(s, r) for r in range(feature_dim,feature_dim+1))
 
 def composition_name(atoms):
     """
@@ -154,12 +157,9 @@ class Material:
             atoms (obj) : Atoms object
 
         Attributes:
-            site_index : Atom index of the site to be featurized.
             atoms : The atoms object that the site belongs to.
-            cm : Coordination matrix.
             cn_list = list of coordination numbers sorted by atomic index.
-            cn : Coordination number of the site.
-            avg_neighbor_cn : average coordination number of neighbors.
+            mean_neighbor_cn : average coordination number of neighbors.
         """
         self.atoms = atoms
         self.reference_dict = reference_dict
@@ -169,7 +169,7 @@ class Material:
         self.cn_list = np.sum(self.cm, axis=1)
         self.composition = stoichiometry(self.atoms)
         self.composition_coefficients = list(self.composition.values())
-        self.natoms = float(len(self.atomic_number_list))
+        self.natoms = float(len(self.atoms.numbers))
         self.symbols = list(self.composition.keys())
         self.selected_sites = None
         self._total_energy = None
@@ -183,12 +183,15 @@ class Material:
 
         self.max_neighbor_cn = None
         self.min_neighbor_cn = None
-        self.avg_neighbor_cn = None
+        self.mean_neighbor_cn = None
+        self.std_neighbor_cn = None
 
         self.site_cm = None
         self.max_neighbor_atomic_number = None
         self.min_neighbor_atomic_number = None
-        self.avg_neighbor_atomic_number = None
+        self.mean_neighbor_atomic_number = None
+        self.std_neighbor_atomic_number = None
+
 
         self.site_features = None
 
@@ -201,6 +204,8 @@ class Material:
         self._site_distances = None
         self._site_distance_mean = None
         self._site_distance_std = None
+        self._site_distance_min = None
+        self._site_distance_max = None
 
         self._system_features = None
 
@@ -261,7 +266,8 @@ class Material:
         neighbor_cn = np.ma.masked_equal(neighbor_cn, 0)
         self.max_neighbor_cn = neighbor_cn.max()
         self.min_neighbor_cn = neighbor_cn.min()
-        self.avg_neighbor_cn = neighbor_cn.mean()
+        self.mean_neighbor_cn = neighbor_cn.mean()
+        self.std_neighbor_cn = neighbor_cn.std()
 
         # Neighbor atomic number
         self.site_cm = self.cm[site_index]
@@ -269,7 +275,8 @@ class Material:
         neighbor_atomic_numbers = np.ma.masked_equal(neighbor_atomic_numbers, 0)
         self.max_neighbor_atomic_number = neighbor_atomic_numbers.max()
         self.min_neighbor_atomic_number = neighbor_atomic_numbers.min()
-        self.avg_neighbor_atomic_number = neighbor_atomic_numbers.mean()
+        self.mean_neighbor_atomic_number = neighbor_atomic_numbers.mean()
+        self.std_neighbor_atomic_number = neighbor_atomic_numbers.std()
 
         # EMT site stability
         if use_EMT:
@@ -281,10 +288,10 @@ class Material:
 
         # Gather all into feature list
         column_names = ['site_index', 'site_atomic_number', 'site_e_val', 'site_cn',
-                        'max_neighbor_cn', 'min_neighbor_cn',
-                        'avg_neighbor_cn', 'max_neighbor_atomic_number',
-                        'min_neighbor_atomic_number', 'avg_neighbor_atomic_number',
-                        'site_distance_mean', 'site_distance_std',
+                        'min_neighbor_cn', 'max_neighbor_cn', 'mean_neighbor_cn', 'std_neighbor_cn',
+                        'min_neighbor_atomic_number', 'max_neighbor_atomic_number',
+                        'mean_neighbor_atomic_number', 'std_neighbor_atomic_number',
+                        'site_distance_min', 'site_distance_max', 'site_distance_mean', 'site_distance_std',
                         'site_angles_min', 'site_angles_max', 'site_angles_mean', 'site_angles_std']
         if atomic_symbol:
             column_names = ['symbol'] + column_names
@@ -292,9 +299,10 @@ class Material:
             column_names = ['EMT_site_stability'] + column_names
 
         site_features = [self.site_index, self.site_atomic_number, self.site_e_val, self.site_cn,
-                         self.max_neighbor_cn, self.min_neighbor_cn,
-                         self.avg_neighbor_cn, self.max_neighbor_atomic_number,
-                         self.min_neighbor_atomic_number, self.avg_neighbor_atomic_number,
+                         self.min_neighbor_cn, self.max_neighbor_cn, self.mean_neighbor_cn, self.std_neighbor_cn,
+                         self.min_neighbor_atomic_number, self.max_neighbor_atomic_number,
+                         self.mean_neighbor_atomic_number, self.std_neighbor_atomic_number,
+                         self._site_distance_min, self._site_distance_max,
                          self._site_distance_mean, self._site_distance_std,
                          self._site_angles_min, self._site_angles_max,
                          self._site_angles_mean, self._site_angles_std]
@@ -381,6 +389,8 @@ class Material:
         self._site_distances = np.array(distances)
         self._site_distance_mean = np.mean(self._site_distances)
         self._site_distance_std = np.std(self._site_distances)
+        self._site_distance_min = np.min(self._site_distances)
+        self._site_distance_max = np.max(self._site_distances)
         return self._site_distances
 
     @property
@@ -390,8 +400,8 @@ class Material:
         df = pd.DataFrame()
 
         # general
-        df['natoms'] = self.natoms
-        df['DFT_cohesive_energy'] = self.cohesive_energy
+        df['natoms'] = [self.natoms]
+        df['DFT_cohesive_energy'] = [self.cohesive_energy]
 
         # atom-wise
         ans = []
@@ -406,8 +416,8 @@ class Material:
             df['e_val' + str(i)] = [e_val]
 
         # mean
-        df['Z_mean'] = np.mean(ans)
-        df['e_val_mean'] = np.mean(evals)
+        df['Z_mean'] = [np.mean(ans)]
+        df['e_val_mean'] = [np.mean(evals)]
 
         self._system_features = df
         return self._system_features
@@ -473,7 +483,7 @@ class SiteFeaturizer():
         self.use_EMT = use_EMT
         self.reference_dict = reference_dict
 
-        self._features = None
+        self._all_possible_sites_features = None
         self._site_features = None
         self._normalized_site_features = None
 
@@ -504,7 +514,7 @@ class SiteFeaturizer():
 
     def refresh(self):
         """Resets feature values."""
-        self._features = None
+        self._all_possible_sites_features = None
         self._site_features = None
         self._normalized_site_features = None
         return None
@@ -524,12 +534,18 @@ class SiteFeaturizer():
                 dft['site_index'] = site['site_index']
                 dft['DFT_site_stability'] = self.get_DFT_site_stability(site=site)
                 if i == 0:
-                    df = dft.copy(deep=True)
+                    dfnew = dft.copy(deep=True)
                 else:
-                    df = pd.concat([df, dft], axis=0, sort=False)
-                    df = df.fillna(0)
-                    df = df.reset_index(drop=True)
-            self._site_features = df
+                    dfnew = pd.concat([dfnew, dft], axis=0, sort=False)
+                    dfnew = dfnew.fillna(0)
+                    dfnew = dfnew.reset_index(drop=True)
+
+            atom1_list = [x for x in list(dfnew.columns) if '1' in x]
+            for atom1 in atom1_list:
+                atom1_substitute = atom1.replace('1', '0')
+                dfnew[atom1] = df.apply(lambda row: row[atom1_substitute] if row[atom1] == 0 else row[atom1], axis=1)
+
+            self._site_features = dfnew
         return self._site_features
 
     @property
@@ -571,7 +587,7 @@ class SiteFeaturizer():
     def features_of_all_sites(self):
         """Computes all features of all sites of a material.
         May take a while."""
-        if self._features is None:
+        if self._all_possible_sites_features is None:
             for i, atoms in enumerate(self.images):
                 mat = Material(atoms, reference_dict=self.reference_dict)
                 for n in range(int(mat.natoms)):
@@ -589,8 +605,8 @@ class SiteFeaturizer():
             collist.insert(0, 'material_number')
             print(collist)
             df = df[collist]
-            self._features = df
-        return self._features
+            self._all_possible_sites_features = df
+        return self._all_possible_sites_features
 
     @property
     def unique_sites(self):
@@ -714,6 +730,9 @@ class SiteFeaturizer():
         whether to extend or not
         :return: List o
         """
+        if not os.path.isfile(material_filepath) or not os.path.isfile(defect_filepath):
+            return self.sites
+
         material = ase.io.read(material_filepath)
         defect = ase.io.read(defect_filepath)
 
@@ -752,7 +771,10 @@ class SiteFeaturizer():
         pickle.dump(self.sites, open(folderpath + filename, "wb"))
         return None
 
-    def save_dataset(self, folderpath=None, filename=None, normalized=False):
+    def save_dataset(self,
+                     folderpath=None,
+                     filename=None,
+                     normalized=False):
         """
         Save data set with features and site stabilities.
         :param folderpath: Full path to out folder.
@@ -777,9 +799,12 @@ class SiteFeaturizer():
     def remove_outlier(self, column='DFT_site_stability', value=0):
         # Remove outlier
         df = self.site_features
-        idx = df[df[column] == value].index[0]
-        self.sites.pop(idx)
-        self.refresh()
+        outlier_df = df[df[column] == value]
+        if outlier_df.shape[0] > 0:
+            index_list = outlier_df.index.values.tolist()
+            for idx in index_list:
+                self.sites.pop(idx)
+            self.refresh()
         return None
 
 class GAFeatureSelection:
@@ -825,6 +850,10 @@ class GAFeatureSelection:
     @property
     def mean_population_fitness(self):
         m = np.mean([tup[1] for tup in self.population])
+        return m
+
+    def population_percentile(self, percentile=50):
+        m = np.percentile([tup[1] for tup in self.population], percentile)
         return m
 
     @property
@@ -875,7 +904,7 @@ class GAFeatureSelection:
         parents_size = len(self.offspring_genes) + 1
         probability_adjustment = self.mean_population_fitness
         for i in range(parents_size):
-            self.population[i][1] = probability_adjustment
+            self.population[i][1] = self.population[i][1]*probability_adjustment
 
         # Update population
         self.population = self.population[:len(self.population) - len(self.offspring)]
@@ -902,7 +931,7 @@ class GAFeatureSelection:
         return 1-(len(gene_ensemble)/self.total_features)
 
     def mutate(self):
-        random_mutation_percentage = random.randint(5, 20)/100
+        random_mutation_percentage = random.randint(1, 20)/100
         n_mutations = int(len(self.genes)*random_mutation_percentage)
         genes_copy = self.genes.copy()
         for i in range(n_mutations):
@@ -925,9 +954,10 @@ class GAFeatureSelection:
             evolution[i][1] = self.max_population_fitness
             evolution[i][2] = self.mean_population_fitness
             evolution[i][3] = self.homogeneity
-            if self.homogeneity > 0.2:
-                self.mutate()
+            # if self.homogeneity > 0.2:
+            self.mutate()
             print('Max fitness: %5.2f ' % self.max_population_fitness)
+            print('Mean fitness: %5.2f ' % self.mean_population_fitness)
 
         df_ev = pd.DataFrame(evolution)
         df_ev.columns = ['generation', 'max_population_fitness', 'mean_population_fitness', 'homogeneity']
