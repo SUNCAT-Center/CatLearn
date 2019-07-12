@@ -543,7 +543,7 @@ class SiteFeaturizer():
             atom1_list = [x for x in list(dfnew.columns) if '1' in x]
             for atom1 in atom1_list:
                 atom1_substitute = atom1.replace('1', '0')
-                dfnew[atom1] = df.apply(lambda row: row[atom1_substitute] if row[atom1] == 0 else row[atom1], axis=1)
+                dfnew[atom1] = dfnew.apply(lambda row: row[atom1_substitute] if row[atom1] == 0 else row[atom1], axis=1)
 
             self._site_features = dfnew
         return self._site_features
