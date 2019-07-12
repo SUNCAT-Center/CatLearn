@@ -13,8 +13,8 @@ import seaborn as sns
 
 from ase.calculators.emt import EMT
 
-from catlearn.featurize import *
 from catlearn.featurize import neighbor_matrix
+from catlearn.featurize import *
 from catlearn.featurize.slab_utilities import *
 
 from itertools import chain, combinations
@@ -27,7 +27,7 @@ from sklearn.model_selection import cross_val_score
 
 from tqdm import tqdm
 
-pd.set_option('display.max_columns', 10)
+# pd.set_option('display.max_columns', 10)
 
 # Plotting settings
 plt.rc('text', usetex=False)
@@ -40,16 +40,12 @@ sns.set_palette(sns.hls_palette(8, h=0.5, l=0.4, s=0.5))
 infile = ''
 
 atom_dict ={'Ni': -1380.8341027932559,
- 'Au': -1174.461466369728,
- 'Pd': -1083.667223896331,
- 'Pt': -998.5654412676529,
- 'Ag': -1306.3829300840296,
- 'Cu': -1611.535995452583}
+            'Au': -1174.461466369728,
+            'Pd': -1083.667223896331,
+            'Pt': -998.5654412676529,
+            'Ag': -1306.3829300840296,
+            'Cu': -1611.535995452583}
 
-def unique_set(iterable, feature_dim=2):
-    ''' Find unique sets of n descriptors '''
-    s = list(iterable)  # allows duplicate elements
-    return chain.from_iterable(combinations(s, r) for r in range(feature_dim,feature_dim+1))
 
 def composition_name(atoms):
     """
@@ -60,6 +56,7 @@ def composition_name(atoms):
     itm = list(stoichiometry(atoms).items())
     itm = [str(e) for l in itm for e in l]
     return ''.join(itm)
+
 
 def traj_to_reference_dict(folderpath):
     """
@@ -149,6 +146,12 @@ def get_site_index(material, defect):
     return site_idx[0]
 
 
+def unique_set(iterable, feature_dim=2):
+    """Find unique sets of n descriptors"""
+    s = list(iterable)  # allows duplicate elements
+    return chain.from_iterable(combinations(s, r) for r in range(feature_dim, feature_dim + 1))
+
+
 class Material:
     """Material object. Stores and computes atomic system properties, site properties."""
     def __init__(self, atoms, reference_dict=atom_dict):
@@ -191,7 +194,6 @@ class Material:
         self.min_neighbor_atomic_number = None
         self.mean_neighbor_atomic_number = None
         self.std_neighbor_atomic_number = None
-
 
         self.site_features = None
 
