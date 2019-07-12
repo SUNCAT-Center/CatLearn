@@ -797,14 +797,20 @@ class SiteFeaturizer():
         return None
 
     def remove_outlier(self, column='DFT_site_stability', value=0):
-        # Remove outlier
-        df = self.site_features
-        outlier_df = df[df[column] == value]
+        """
+        Removes outliers in specified column.
+        :param column: Column in which to search for the value.
+        :param value: Value considered the outlier.
+        :return: None
+        """
+        df_tmp = self.site_features
+        outlier_df = df_tmp[df_tmp[column] == value]
         if outlier_df.shape[0] > 0:
             index_list = outlier_df.index.values.tolist()
+            df_tmp = df_tmp.drop(index_list, axis=0)
+            self._site_features = df_tmp.reset_index(drop=True)
             for idx in index_list:
                 self.sites.pop(idx)
-            self.refresh()
         return None
 
 class GAFeatureSelection:
