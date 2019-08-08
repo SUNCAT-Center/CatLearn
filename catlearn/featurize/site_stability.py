@@ -31,7 +31,7 @@ from tqdm import tqdm
 
 # Plotting settings
 plt.rc('text', usetex=False)
-font = {'size': 18}
+font = {'size': 28}
 plt.rc('font', **font)
 
 sns.set_style('white')
@@ -39,17 +39,17 @@ sns.set_palette(sns.hls_palette(8, h=0.5, l=0.4, s=0.5))
 
 infile = ''
 
-atom_dict ={'Ni': -1380.8341027932559,
-            'Au': -1174.461466369728,
-            'Pd': -1083.667223896331,
-            'Pt': -998.5654412676529,
-            'Ag': -1306.3829300840296,
-            'Cu': -1611.535995452583}
+atom_dict = {'Ni': -1380.8341027932559,
+             'Au': -1174.461466369728,
+             'Pd': -1083.667223896331,
+             'Pt': -998.5654412676529,
+             'Ag': -1306.3829300840296,
+             'Cu': -1611.535995452583}
 
 
 def composition_name(atoms):
     """
-    Takes atoms and returns stoichiometric composition names without duplicate elements.
+    Takes an atoms object and returns stoichiometric composition names without duplicate elements.
     :param atoms: Atoms object.
     :return: str composition name.
     """
@@ -60,10 +60,10 @@ def composition_name(atoms):
 
 def traj_to_reference_dict(folderpath):
     """
-    Takes absolute folder path with trajectories of reference atoms
+    Takes folder path with trajectories of reference atoms
     and molecules and transforms it to an energy dictionary.
-    :param folderpath: Path to trajectories in .traj or .json.
-    :return: dict: Reference dictionary.
+    :param folderpath: Path to trajectories, which should be supplied in .traj or .json.
+    :return: dict: refDict Reference dictionary.
     """
     refDict = {}
     for f in os.listdir(folderpath):
@@ -78,7 +78,7 @@ def traj_to_reference_dict(folderpath):
 
 def get_df(filename):
     """
-    Read in absolute file path to tsv, returns dataframe wihtout index column.
+    Read in file name including path to tsv, returns dataframe without index column.
     :param filename: Full path to file.
     :return: pd.DataFrame.
     """
@@ -132,7 +132,7 @@ def get_site_index(material, defect):
     determines the site index of the defect site.
     :param material:
     :param defect:
-    :return:
+    :return: site index integer
     """
     matlist = material.get_positions()
     deflist = defect.get_positions()
@@ -147,24 +147,30 @@ def get_site_index(material, defect):
 
 
 def unique_set(iterable, feature_dim=2):
-    """Find unique sets of n descriptors"""
+    """
+    Find unique sets of n features.
+    :param iterable: list of full possibilities.
+    :param feature_dim: Combination size.
+    :return: iterable chain with all unique (no duplicate) combinations.
+    """
     s = list(iterable)  # allows duplicate elements
-    return chain.from_iterable(combinations(s, r) for r in range(feature_dim, feature_dim + 1))
+    ch = chain.from_iterable(combinations(s, r) for r in range(feature_dim, feature_dim + 1))
+    sn = [x for x in ch]
+    return sn
+
 
 
 class Material:
-    """Material object. Stores and computes atomic system properties, site properties."""
-    def __init__(self, atoms, reference_dict=atom_dict):
-        """The Site class defines an atomic site in an Atoms object.
-        Args:
-            atoms (obj) : Atoms object
-
-        Attributes:
-            atoms : The atoms object that the site belongs to.
-            cn_list = list of coordination numbers sorted by atomic index.
-            mean_neighbor_cn : average coordination number of neighbors.
+    """Material object. Stores and computes atomic system and site properties."""
+    def __init__(self, atoms, reference_dict='default'):
+        """
+        Instantiates Material object from atoms object.
+        :param atoms: ASE atoms object
+        :param reference_dict: Dictionary with atom energies in vacuum..
         """
         self.atoms = atoms
+        if reference_dict == 'default':
+            reference_dict = atom_dict
         self.reference_dict = reference_dict
         self.atomic_number_list = self.atoms.numbers
         self.atomic_numbers = list(set(self.atomic_number_list))
@@ -177,6 +183,7 @@ class Material:
         self.selected_sites = None
         self._total_energy = None
         self._cohesive_energy = None
+        self.EMT_site_stability = None
 
         self.site_index = None
         self.site_symbol = None
@@ -213,8 +220,11 @@ class Material:
 
     @property
     def total_energy(self):
-        """Gets the total energy from atoms object.
-        Make sure the trajectory or atoms object has energy."""
+        """
+        Gets the total energy from atoms object.
+        Make sure the trajectory or atoms object has energy.
+        :return: float of energy in eV.
+        """
         if self._total_energy is None:
             try:
                 self._total_energy = float(self.atoms.get_potential_energy())  # eV
@@ -224,11 +234,12 @@ class Material:
 
     @property
     def cohesive_energy(self):
-        """Computes the cohesive energy of the whole atoms system."""
+        """Computes the cohesive energy of the full system."""
         if self._cohesive_energy is None:
             c = self.total_energy
             for key, value in self.composition.items():
-                c -= (self.reference_dict[key] * value)
+                atomic_energy = self.reference_dict[key]
+                c = c - (atomic_energy * value)
             c = c / self.natoms
             self._cohesive_energy = c
         return self._cohesive_energy
@@ -317,17 +328,6 @@ class Material:
         self.site_features = df
         return self.site_features
 
-    def _unique_set(self, iterable, feature_dim=2):
-        """Find unique sets of n features.
-        :param iterable: List or other iterable.
-        :param feature_dim: dimension of final combinations.
-        :return: List of lists of combinations.
-        """
-        s = list(iterable)  # allows duplicate elements
-        c = chain.from_iterable(combinations(s, r) for r in range(feature_dim, feature_dim + 1))
-        sn = [x for x in c]
-        return sn
-
     @property
     def site_angles(self):
         """Computes angles of unique triples of atoms with the site being the middle atom.
@@ -336,7 +336,7 @@ class Material:
         cm_site = self.cm[self.site_index]
         cm_site[self.site_index] = 0
         neighbors = [i for i, x in enumerate(cm_site) if x == 1]
-        pairs = self._unique_set(iterable=neighbors)
+        pairs = unique_set(iterable=neighbors)
 
         pos = self.atoms.get_positions()
         b = pos[self.site_index]
@@ -351,6 +351,9 @@ class Material:
             cosine_angle = np.dot(ba, bc) / (np.linalg.norm(ba) * np.linalg.norm(bc))
             angle = np.arccos(cosine_angle)
             angles.append(np.degrees(angle))
+
+        # Unfortunately some angles are faulty
+        angles = [x for x in angles if not np.isnan(x)]
 
         self._site_angles = np.array(angles)
         try:
@@ -437,7 +440,7 @@ class Material:
 
     def get_EMT_site_stability(self, site_index):
         """
-        Returns EMT site stability for selected metals.
+        Returns EMT site stability of site (only for selected metals).
         :param int site_index: Atomic number index of the site.
         :return: EMT site stability
         """
@@ -463,40 +466,43 @@ class Material:
         return self.EMT_site_stability
 
 
-class SiteFeaturizer():
+class SiteFeaturizer:
     """Class to handle data set of sites, including atoms,
     reference energies, features and site generation, outlier removal."""
-    def __init__(self, images=None,
+    def __init__(self,
+                 images=None,
                  sites=None,
                  use_atomic_symbols=False,
                  use_EMT=False,
-                 reference_dict=atom_dict):
+                 reference_dict='default'):
         """
         Instantiates the SiteFeaturizer class with:
         :param images: List of Atom objects, optional.
         :param sites: List of sites, such as those created by the class.
         :param use_atomic_symbols: Whether to use atomic symbols as features.
-        :param use_EMT: Whether to use EMT site stabilities as features (metals only).
+        :param use_EMT: Whether to use EMT site stabilities as features (some metals only).
         :param reference_dict: Dictionary of reference energies (atoms or molecule energies).
         """
         self.images = images
         self.sites = sites
         self.use_atomic_symbols = use_atomic_symbols
         self.use_EMT = use_EMT
+        if reference_dict == 'default':
+            reference_dict = atom_dict
         self.reference_dict = reference_dict
 
         self._all_possible_sites_features = None
         self._site_features = None
         self._normalized_site_features = None
 
-    def update_materials(self):
+    def _update_materials(self):
         """Re-instantiates sites from material and defect Atom objects
-        and their total energies."""
+        and their total energies.
+        Mainly for development purposes, e.g. when Material objects changed."""
         for i, site in enumerate(self.sites):
             # update material
             newmat = Material(atoms=site['material'].atoms,
                               reference_dict=self.reference_dict)
-
 
             # update defect
             newdef = Material(atoms=site['defect'].atoms,
@@ -523,7 +529,7 @@ class SiteFeaturizer():
 
     @property
     def site_features(self):
-        """Computes site-specific features."""
+        """Computes system and site-specific features for all sites."""
         if self._site_features is None:
             print('Featurizing sites: ')
             for i, site in tqdm(enumerate(self.sites),
@@ -552,8 +558,8 @@ class SiteFeaturizer():
 
     @property
     def normalized_site_features(self):
-        """Computes normalized site-specific features.
-        Numeric features are selected."""
+        """Computes normalized system- and site-specific features for all sites.
+        Only numeric features are selected."""
         if self._normalized_site_features is None:
             x = self.site_features.select_dtypes(['number'])
             colnames = list(x.columns)
@@ -569,7 +575,7 @@ class SiteFeaturizer():
         """
         Computes site stability based on material,
         defect and reference dict.
-        :param site: Materials, Featurizer site i.e. Materials object.
+        :param site: SiteFeaturizer site.
         :return: Site stability in eV.
         """
         e_mat = site['material'].total_energy
@@ -587,7 +593,7 @@ class SiteFeaturizer():
 
     @property
     def features_of_all_sites(self):
-        """Computes all features of all sites of a material.
+        """Computes all features of all atomic sites of a material.
         May take a while."""
         if self._all_possible_sites_features is None:
             for i, atoms in enumerate(self.images):
@@ -617,6 +623,7 @@ class SiteFeaturizer():
         us = []
         for i, atoms in enumerate(self.images):
             mat = Material(atoms)
+            # Fast enough for this case:
             for n in range(int(mat.natoms)):
                 us.append([i, n])
         a = np.array(us)
@@ -679,7 +686,7 @@ class SiteFeaturizer():
             self.sites.append(RS)
         return self.sites
 
-    def write_site_trajectories(self, folderpath=os.getcwd()):
+    def write_site_trajectories(self, folderpath='default'):
         """
         Creates folder with trajectories of site defect structure
         and corresponding defect-free material.
@@ -687,6 +694,8 @@ class SiteFeaturizer():
         :return: Writes out ase trajectory files.
         """
         fp = folderpath
+        if fp == 'default':
+            fp = os.getcwd()
         if not fp.endswith('/'):
             fp = fp + '/'
         for RS in self.sites:
@@ -736,12 +745,21 @@ class SiteFeaturizer():
             return self.sites
 
         material = ase.io.read(material_filepath)
+        try:
+            material.set_constraint()
+        except:
+            print('Constraint problems')
         defect = ase.io.read(defect_filepath)
+
+        try:
+            material.set_constraint()
+        except:
+            print('Constraint problems')
 
         if self.sites is None:
             self.sites = []
 
-        RS = {}
+        RS = dict()
         RS['material_image_index'] = len(self.sites)
         RS['site_index'] = get_site_index(material, defect)
         RS['material'] = Material(material, reference_dict=self.reference_dict)
@@ -815,102 +833,174 @@ class SiteFeaturizer():
                 self.sites.pop(idx)
         return None
 
+
 class GAFeatureSelection:
+    """Feature combination (model) selection using a genetic algorithm (GA)"""
     def __init__(self,
                  X,
                  y,
-                 n_features=2,
-                 population_size=50,
-                 offspring_size=10,
                  clf=None,
-                 starting_population=None):
+                 n_features=2,
+                 population_size=100,
+                 offspring_size=10,
+                 scoring='cv',
+                 n_cv=4,
+                 random_state=42,
+                 starting_population=None,
+                 verbose=0):
+        """
+        Instantiates GAFeatureSelection object.
+        :param X: feature data set of training data.
+        :param y: targets of training data set.
+        :param clf: classifier, or regressior (e.g. sklearn regression object)
+        :param n_features: Number of features that the resulting model should have.
+        :param population_size: How many feature combinations to start with (the more the better).
+        :param offspring_size: How many offsprings should be created by mating the best candidates.
+        :param scoring: How to determine the fitness of the model, cv uses cross validation R2.
+        :param n_cv: validation set split multiple.
+        :param random_state: random state integer for reproducibility.
+        :param starting_population: GAFeatureSelection object can start from
+        a pre-converged/pre-computed population.
+        :param verbose: Whether to allow printing output.
+        """
 
+        self.verbose = verbose
+        self.random_state = random_state
         self.X = X
         self.y = y
+        self.scoring = scoring
+        self.n_cv = n_cv
         self.feature_names = list(self.X.columns)
         self.total_features = len(self.X.columns)
         if clf is None:
             self.clf = RandomForestRegressor(max_depth=5,
-                                        random_state=42,
-                                        n_estimators=50)
+                                             random_state=42,
+                                             n_estimators=50)
+            print('Using RandomForestRegressor.')
         else:
             self.clf = clf
 
         self.n_features = n_features
+        self.all_feature_combinations = None
+
         self.population_size = population_size
         self.offspring_size = offspring_size
-        self.offspring_genes = None
+        self.offspring_chromosomes = None
 
         self.offspring = None
         self.selected_features = None
 
         if starting_population is None:
-                self.genes = self.random_genes()
-                self.population = self.get_fitness(genes=self.genes)
+            print('Creating random population.')
+            self.genes = self.random_genes(n=self.population_size)
+            print('Calculating population metrics.')
+            self.population = self.get_fitness(genes=self.genes)
         else:
             self.population = starting_population
 
         self.genes = [tup[0] for tup in self.population]
-        self.crossover()
+        self._feature_frequencies = self.feature_frequencies
+        self.feature_frequency_evolution = {}
 
         self.evolution = None
+        self.evolution_history = None
 
     @property
     def mean_population_fitness(self):
-        m = np.mean([tup[1] for tup in self.population])
+        """Computes average of population fitness metrics."""
+        m = np.mean([tup[2] for tup in self.population])
         return m
 
-    def population_percentile(self, percentile=50):
-        m = np.percentile([tup[1] for tup in self.population], percentile)
+    def population_percentile(self, percentile=75):
+        """Computes percentile of population fitness metrics."""
+        m = np.percentile([tup[2] for tup in self.population], percentile)
         return m
 
     @property
     def max_population_fitness(self):
-        m = np.max([tup[1] for tup in self.population])
+        """Computes max of population fitness metrics."""
+        m = np.max([tup[2] for tup in self.population])
         return m
 
-    def random_genes(self):
-        # Create random starting population
-        print('Initializing random population.')
-        init_chromosome = [1] * self.n_features + (self.total_features - self.n_features) * [0]
-        new_pop = []
-        for _ in range(self.population_size):
-            new_pop.append(random.sample(init_chromosome, len(init_chromosome)))
-        self.genes = [[i for i, _ in enumerate(x) if _ == 1] for x in new_pop]
-        return self.genes
+    def random_genes(self, n=1):
+        """
+        From the unique sets of n_features combinations, returns the first n.
+        :param n: Number of chromosomes to return.
+        :return: List of unique random chromosomes of length n.
+        """
+        random.seed(self.random_state)
+        if self.all_feature_combinations is None:
+            unique_combinations = []
+            for feature_combination in unique_set(list(range(self.total_features)), feature_dim=self.n_features):
+                unique_combinations.append(list(feature_combination))
+            random.shuffle(unique_combinations)
+            self.all_feature_combinations = unique_combinations
+        selection = self.all_feature_combinations.copy()
+        random.shuffle(selection)
+        return selection[:n]
 
-    def _get_cv_score(self, X_gene):
-        np.random.seed(42)
-        scores = cross_val_score(self.clf, X_gene, self.y, cv=3)
-        return np.mean(scores)
+    def get_chromosome_score(self, X_chromosome):
+        """
+        Computes fitness using the subset of data in X_chromosome.
+        :param X_chromosome: subset of full data set, containing only a selection of the features.
+        :return: mean R2 or keras history last column entry.
+        """
+        np.random.seed(self.random_state)
+        # Use either cross validation
+        if self.scoring == 'cv':
+            scores = cross_val_score(self.clf, X_chromosome, np.array(self.y), cv=self.n_cv)
+            return np.mean(scores)
+        # Or keras history in the case of neural networks (based on keras/tensorflow)
+        else:
+            try:
+                history = self.clf.fit(X_chromosome, np.array(self.y))
+                return history.history[self.scoring][-1]
+            except:
+                raise ValueError('Use either "cv" or keras history metrics.')
 
-    def get_fitness(self, genes):
+    def get_fitness(self, chromosomes):
+        """
+        Compute the fitness (derived from the performance metric, but not equal to it,
+        as it is updated in the cross over process.
+        :param chromosomes: List of chromosomes, which in turn are list of features.
+        :return: List of the chromosome, and the performance metric (twice),
+        which is necessary to keep track of performance during cross over.
+        """
         results = []
-        for gene in genes:
-            X_gene = self.X[self.X.columns[gene]]
-            gene_score = self._get_cv_score(X_gene=X_gene)
-            results.append([gene, gene_score])
+        for n_chromosome, chromosome in enumerate(chromosomes):
+            if self.verbose:
+                print('Evaluating chromosome '+str(n_chromosome+1)+'/'+str(len(chromosomes)))
+
+            X_chromosome = self.X[self.X.columns[chromosome]]
+            chromosome_score = self.get_chromosome_score(X_chromosome=X_chromosome)
+
+            if self.verbose:
+                print('Chromosome score: '+str(chromosome_score))
+
+            results.append([chromosome, chromosome_score, chromosome_score])
         return sorted(results, reverse=True, key=lambda tup: tup[1])
 
     def crossover(self):
+        """Parent gene mating. Out of the best m+1 parents, a pairwise crossover is generated as the offspring,
+        with m being the offspring size. """
         parent_genes = [tup[0] for tup in self.population]
         crossover_point = int(len(parent_genes[0]) / 2)
-        offspring_genes = []
+        offspring_chromosomes = []
         for i in range(self.offspring_size):
             parent1 = parent_genes[i]
             random.shuffle(parent1)
             parent2 = parent_genes[i+i]
             random.shuffle(parent2)
-            offspring_genes.append(parent1[:crossover_point] + parent2[crossover_point:])
+            offspring_chromosomes.append(parent1[:crossover_point] + parent2[crossover_point:])
 
-        self.offspring_genes = self.mutate_duplicate_chromosomes(genes=offspring_genes)
+        self.offspring_chromosomes = self.mutate_duplicate_chromosomes(chromosome_list=offspring_chromosomes)
 
         # Get offspring fitness
-        self.offspring = self.get_fitness(genes=self.offspring_genes)
+        self.offspring = self.get_fitness(chromosomes=self.offspring_chromosomes)
 
         # Lower parent fitness for gene diversity
-        parents_size = len(self.offspring_genes) + 1
-        probability_adjustment = self.mean_population_fitness
+        parents_size = len(self.offspring_chromosomes) + 1
+        probability_adjustment = self.population_percentile()
         for i in range(parents_size):
             self.population[i][1] = self.population[i][1]*probability_adjustment
 
@@ -921,29 +1011,36 @@ class GAFeatureSelection:
         self.genes = [tup[0] for tup in self.population]
         return self.population
 
-    def mutate_duplicate_chromosomes(self, genes):
-        for i, gene in enumerate(genes):
-            if len(gene) != len(set(gene)):
-                n_duplicates = len(gene) - len(list(set(gene)))
-                new_candidates = list(set(range(self.total_features)) - set(gene))
+    def mutate_duplicate_chromosomes(self, chromosome_list):
+        """
+        During cross-over duplicate genes can occur.
+        These will be replaced by random genes, while avoiding duplicate generation.
+        :param chromosome_list: list of chromosomes to check.
+        :return: duplicate-free chromosome list.
+        """
+        for i, chromosome in enumerate(chromosome_list):
+            if len(chromosome) != len(set(chromosome)):
+                n_duplicates = len(chromosome) - len(list(set(chromosome)))
+                new_candidates = list(set(range(self.total_features)) - set(chromosome))
 
-                base = list(set(gene))
-                for _ in range(n_duplicates):
-                    base.extend(random.sample(new_candidates, 1))
-                    genes[i] = base
-        return genes
+                chromosome = list(set(chromosome))
+                chromosome.extend(np.random.choice(new_candidates, size=n_duplicates, replace=False))
+                chromosome_list[i] = chromosome
+        return chromosome_list
 
     @property
     def homogeneity(self):
+        """Measure of whether all possible features are still in the population."""
         gene_ensemble = set(list(np.array(self.genes).flatten()))
         return 1-(len(gene_ensemble)/self.total_features)
 
     def mutate(self):
+        """Increase stochastic effects to enhance optimization."""
         random_mutation_percentage = random.randint(1, 20)/100
         n_mutations = int(len(self.genes)*random_mutation_percentage)
         genes_copy = self.genes.copy()
         for i in range(n_mutations):
-            random_gene_position = random.sample(range(self.population_size),1)[0]
+            random_gene_position = random.sample(range(self.population_size), 1)[0]
             random_gene = genes_copy[random_gene_position]
             random_chromosome_position = random.sample(range(self.n_features), 1)[0]
 
@@ -954,52 +1051,88 @@ class GAFeatureSelection:
         return self.genes
 
     def evolve(self, generations=20):
+        """
+        Run genetic algorithm for generations number of generations.
+        :param generations: number of generations
+        :return: evolution history with evolution of performance metrics.
+        """
         evolution = np.ndarray((generations, 4))
         for i in range(generations):
-            print('Generation: '+str(i+1))
-            self.crossover()
+            print('Generation: ' + str(i))
+            # start with stats from random population
+            self.feature_frequency_evolution[len(self.feature_frequency_evolution.keys())] = self.feature_frequencies
             evolution[i][0] = i
             evolution[i][1] = self.max_population_fitness
             evolution[i][2] = self.mean_population_fitness
             evolution[i][3] = self.homogeneity
-            # if self.homogeneity > 0.2:
+
+            self.crossover()
             self.mutate()
+
             print('Max fitness: %5.2f ' % self.max_population_fitness)
             print('Mean fitness: %5.2f ' % self.mean_population_fitness)
 
         df_ev = pd.DataFrame(evolution)
         df_ev.columns = ['generation', 'max_population_fitness', 'mean_population_fitness', 'homogeneity']
+
         self.evolution = df_ev
+        if self.evolution_history is None:
+            self.evolution_history = self.evolution
+        else:
+            self.evolution_history = pd.concat([self.evolution_history, self.evolution], axis=0).reset_index(drop=True)
+            self.evolution_history.generation = self.evolution_history.index
         return self.evolution
 
-    def plot_features(self, show=True):
+    @property
+    def feature_frequencies(self):
+        """Compute how often every feature occurs in the population."""
         all_genes = np.array(self.genes).flatten()
         gene_occurrences = np.bincount(all_genes)
         features = list(self.X.columns)
         feature_occurrences = sorted(list(zip(features, gene_occurrences)), key=lambda tup: tup[1], reverse=True)
         occ = np.array(list(zip(*feature_occurrences))[1])
-        occ = occ/occ.sum()*100
-        feature_names = list(list(zip(*feature_occurrences))[0])
+        self._feature_frequencies = dict(zip(list(list(zip(*feature_occurrences))[0]), occ/occ.sum()*100))
+        return self._feature_frequencies
 
-        fig, ax = plt.subplots(figsize=(8, 8))
-        ax = sns.barplot(x=occ, y=feature_names)
-        ax.set_xlabel('Occurence probability (%)')
+    def plot_features(self,
+                      labels=None,
+                      frequencies=None,
+                      show=True):
+        """Plots feature frequencies"""
+        print('Plotting feature frequencies.')
+        if labels is None:
+            labels = list(self.feature_frequencies.keys())
+        if frequencies is None:
+            frequencies = list(self.feature_frequencies.values())
+        fig, ax = plt.subplots(figsize=(12, int(len(labels)*0.6)))
+        ax = sns.barplot(x=frequencies, y=labels)
+        ax.set_xlabel(r'Occurrence probability (\%)')
         plt.tight_layout()
 
         if show:
             plt.show()
-        return fig
 
-    def plot_evolution_stats(self, show=True):
-        fig, ax = plt.subplots(figsize=(8, 4))
-        ax.plot(self.evolution.generation, self.evolution.max_population_fitness, label='5fold cv - R2 max')
-        ax.plot(self.evolution.generation, self.evolution.mean_population_fitness, label='5fold cv - R2 mean')
-        ax.plot(self.evolution.generation, self.evolution.homogeneity, label='homogeneity')
-        ax.legend(loc=2, bbox_to_anchor=(1.0, 1.0))
+        return fig, ax
+
+    def plot_evolution_stats(self,
+                             full_history=True,
+                             show=True):
+        """Plots evolution history."""
+        print('Plotting evolution statistics.')
+        if full_history:
+            df_stats = self.evolution_history
+        else:
+            df_stats = self.evolution
+        fig, ax = plt.subplots(figsize=(8, 8))
+        ax.plot(df_stats.generation, df_stats.max_population_fitness, lw=3, ls='-', label=r'$\mathrm{R^{2}}$-cv max')
+        ax.plot(df_stats.generation, df_stats.mean_population_fitness, lw=3, ls='--', label=r'$\mathrm{R^{2}}$-cv mean')
+        ax.plot(df_stats.generation, df_stats.homogeneity, lw=3, ls='-.', label='Homogeneity')
+        # ax.legend(loc=2, bbox_to_anchor=(1.0, 1.0))
+        ax.legend()
+        ax.set_title('Evolution statistics')
         ax.set_xlabel('Generation')
         plt.tight_layout()
 
         if show:
             plt.show()
-        return fig
-
+        return fig, ax
