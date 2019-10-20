@@ -894,7 +894,7 @@ class GAFeatureSelection:
             print('Creating random population.')
             self.genes = self.random_genes(n=self.population_size)
             print('Calculating population metrics.')
-            self.population = self.get_fitness(genes=self.genes)
+            self.population = self.get_fitness(chromosomes=self.genes)
         else:
             self.population = starting_population
 
