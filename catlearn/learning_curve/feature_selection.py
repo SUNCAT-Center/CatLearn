@@ -73,8 +73,8 @@ class feature_selection(object):
         if alpha_list is None:
             alpha_list = np.linspace(float(upper), float(lower), int(interval))
         for alpha in alpha_list:
-            model = LassoCV(alphas=[alpha]).fit(X=self.train_features,
-                                                y=self.train_targets)
+            model = LassoCV(alphas=[alpha], cv=3).fit(X=self.train_features,
+                                                      y=self.train_targets)
             feat_vec.append(np.shape(np.nonzero(model.coef_))[1])
             alpha_vec.append(alpha)
         return feat_vec, alpha_vec, np.nonzero(model.coef_)

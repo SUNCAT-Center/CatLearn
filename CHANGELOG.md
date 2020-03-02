@@ -1,5 +1,11 @@
 # dev
 
+-   Dropped support for python 2.
+-   Added testing for python 3.7 and 3.8
+-   Updated compatibility for ASE 3.19.0
+-   Updated compatibility for Pandas 0.24.0
+-   Updated compatibility for Scikit-learn 0.22.0
+
 # Version 0.6.1 (April 2019)
 
 -   Fixed compatibility issue with MLNEB and [GPAW](https://wiki.fysik.dtu.dk/gpaw/index.html)
