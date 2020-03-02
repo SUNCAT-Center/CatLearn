@@ -136,7 +136,7 @@ class FeatureGenerator(
         for atoms in tqdm(candidates):
             # One hot encode elements.
             dummies = pd.get_dummies(atoms.numbers)
-            d = dummies.T.reindex(self.atom_types).fillna(0).T.values
+            d = dummies.T.reindex(self.atom_types).fillna(0).T.to_numpy()
 
             # Number of pairs by 1 + number of element types data matrix.
             n_pairs = len(atoms) ** 2
