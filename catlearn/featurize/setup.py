@@ -136,7 +136,7 @@ class FeatureGenerator(
         for atoms in tqdm(candidates):
             # One hot encode elements.
             dummies = pd.get_dummies(atoms.numbers)
-            d = dummies.T.reindex(self.atom_types).fillna(0).T.as_matrix()
+            d = dummies.T.reindex(self.atom_types).fillna(0).T.values
 
             # Number of pairs by 1 + number of element types data matrix.
             n_pairs = len(atoms) ** 2
@@ -272,9 +272,9 @@ class FeatureGenerator(
                      fingerprint_vector.dtype.type is not np.str_) or
                     (arr.dtype.type is not np.str_ and
                      fingerprint_vector.dtype.type is np.str_)):
-                        raise AssertionError("Fingerprints should be float" +
-                                             " type, and returned separately" +
-                                             " from str types.")
+                    raise AssertionError("Fingerprints should be float" +
+                                         " type, and returned separately" +
+                                         " from str types.")
             fingerprint_vector = np.concatenate((fingerprint_vector,
                                                  arr))
 
