@@ -83,7 +83,7 @@ data_frame = voro.generate()
 # In[5]:
 
 
-matrix = data_frame.as_matrix()
+matrix = data_frame.to_numpy()
 finite_numeric_data = clean_infinite(matrix)
 print(np.shape(finite_numeric_data['train']))
 
