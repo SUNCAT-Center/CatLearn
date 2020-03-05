@@ -14,6 +14,7 @@ from catlearn.regression import GaussianProcess
 from ase.calculators.calculator import Calculator, all_changes
 from ase.atoms import Atoms
 from catlearn import __version__
+import copy
 
 
 class MLNEB(object):
@@ -862,7 +863,7 @@ def get_energy_catlearn(self, x=None):
 
     self.ase_ini.set_calculator(None)
     self.ase_ini = Atoms(self.ase_ini, positions=pos_ase,
-                         calculator=self.ase_calc)
+                         calculator=copy.deepcopy(self.ase_calc))
     energy = self.ase_ini.get_potential_energy(force_consistent=self.fc)
     return energy
 
