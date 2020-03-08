@@ -1,7 +1,7 @@
 """Functions to clean data."""
 import numpy as np
 from collections import defaultdict
-from sklearn.preprocessing import Imputer
+from sklearn.impute import SimpleImputer
 from scipy.stats import skew
 
 
@@ -147,7 +147,7 @@ def clean_infinite(train, test=None, targets=None, labels=None, mask=None,
 
     # Get the fraction of finite values in each column.
     if max_impute_fraction > 0:
-        impute = Imputer(missing_values="NaN", strategy=strategy)
+        impute = SimpleImputer(strategy=strategy)
         impute_fraction = 1 - np.isfinite(train).mean(axis=0)
         to_impute = impute_fraction <= max_impute_fraction
         train[:, to_impute] = impute.fit_transform(train[:, to_impute])

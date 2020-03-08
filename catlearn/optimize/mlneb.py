@@ -384,7 +384,7 @@ class MLNEB(object):
                         prev_save_positions.append(i.get_positions())
 
                     neb_opt.run(fmax=(fmax * 0.85), steps=1)
-                    neb_opt.steps = 0
+                    neb_opt.nsteps = 0
 
                     n_steps_performed += 1
                     get_results_predicted_path(self)

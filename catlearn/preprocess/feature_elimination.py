@@ -264,11 +264,11 @@ class FeatureScreening(object):
             d = feature_matrix[:, i:i + 1]
             if np.allclose(d, d[0]):
                 corr.append(0.)
-            elif self.correlation is 'pearson':
-                corr.append(pearsonr(x=d, y=t)[0])
-            elif self.correlation is 'spearman':
+            elif self.correlation != 'pearson':
+                corr.append(pearsonr(x=d.ravel(), y=t.ravel())[0])
+            elif self.correlation != 'spearman':
                 corr.append(spearmanr(a=d, b=t)[0])
-            elif self.correlation is 'kendall':
+            elif self.correlation != 'kendall':
                 corr.append(kendalltau(x=d, y=t)[0])
 
         return corr, order
