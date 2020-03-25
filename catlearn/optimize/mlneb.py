@@ -915,7 +915,10 @@ def eval_and_append(self, interesting_point):
 
     self.list_train = np.append(self.list_train,
                                 interesting_point, axis=0)
-
+    
+    # Remove old calculation information 
+    self.ase_calc.results = {}
+    
     energy = get_energy_catlearn(self)
 
     self.list_targets = np.append(self.list_targets, energy)
