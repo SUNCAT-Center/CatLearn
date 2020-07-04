@@ -77,20 +77,21 @@ if __name__ == '__main__':
     ])
 
     # Clean everything up.
-    os.remove('vec_store.sqlite')
-    os.remove('hierarchy.pickle')
-    os.remove('test.sqlite')
-    os.remove('cvsave.pickle')
-    os.remove('cvsave.json')
-    os.remove('gaWrite.json')
-
-    os.remove('all_predicted_paths.traj')
-    os.remove('evaluated_structures.traj')
-    os.remove('final.traj')
-    os.remove('final_optimized.traj')
-    os.remove('initial.traj')
-    os.remove('initial_optimized.traj')
-    os.remove('results_neb.csv')
-    os.remove('results_neb_interpolation.csv')
-    os.remove('ML-NEB.traj')
-    os.remove('warnings_and_errors.txt')
+    for fname in ['vec_store.sqlite',
+                  'hierarchy.pickle',
+                  'test.sqlite',
+                  'cvsave.pickle',
+                  'cvsave.json',
+                  'gaWrite.json',
+                  'all_predicted_paths.traj',
+                  'evaluated_structures.traj',
+                  'final.traj',
+                  'final_optimized.traj',
+                  'initial.traj',
+                  'initial_optimized.traj',
+                  'results_neb.csv',
+                  'results_neb_interpolation.csv',
+                  'ML-NEB.traj',
+                  'warnings_and_errors.txt']:
+        if fname in os.listdir():
+            os.remove(fname)

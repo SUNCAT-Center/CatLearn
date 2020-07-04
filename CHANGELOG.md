@@ -1,5 +1,16 @@
 # dev
 
+# Version 0.6.2 (March 2020)
+
+-   Added module for site featurization and GA feature selection.
+-   Fixed ML-NEB compatibility issue with FHI-AIMS ase calculator.
+-   Compatibility updated for ASE 3.19.0
+-   Compatibility updated for Pandas 0.24.0
+-   Compatibility updated for Scikit-learn 0.22.0
+-   Dropped support for python 2.
+-   Dropped support for python 3.5
+-   Added testing for python 3.7 and 3.8
+
 # Version 0.6.1 (April 2019)
 
 -   Fixed compatibility issue with MLNEB and [GPAW](https://wiki.fysik.dtu.dk/gpaw/index.html)
