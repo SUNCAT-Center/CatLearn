@@ -297,7 +297,7 @@ class MLMin(object):
                 if n_steps_performed > 1000:
                     if full_output is True:
                         parprint('Not converged yet...')
-                        ml_converged = True
+                    ml_converged = True
                 if unc_ml >= max_step:
                     if full_output is True:
                         parprint('Maximum uncertainty reach. Early stop.')
