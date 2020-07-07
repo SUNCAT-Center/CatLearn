@@ -282,6 +282,7 @@ class MLMin(object):
 
             while ml_converged is False:
                 ml_opt.run(fmax=fmax*0.90, steps=1)
+                ml_opt.nsteps = 0
                 pos_ml = np.array(guess.positions).flatten()
                 self.list_interesting_points.append(pos_ml)
                 pos_ml = apply_mask([pos_ml],
