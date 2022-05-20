@@ -29,7 +29,7 @@ def ase_to_catlearn(list_atoms):
     images = []
     constraints = first_image.constraints
     number_images = len(list_atoms)
-    num_atoms = first_image.get_number_of_atoms()
+    num_atoms = first_image.get_global_number_of_atoms()
     list_train = []
     list_targets = []
     list_gradients = []
