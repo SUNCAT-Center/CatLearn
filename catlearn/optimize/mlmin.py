@@ -73,7 +73,7 @@ class MLMin(object):
         assert self.ase_calc, msg
         self.constraints = self.ase_ini.constraints
         self.x0 = self.ase_ini.get_positions().flatten()
-        self.num_atoms = self.ase_ini.get_number_of_atoms()
+        self.num_atoms = self.ase_ini.get_global_number_of_atoms()
 
         # Information from the initial structure.
         new_atoms = self.ase_ini
