@@ -63,7 +63,7 @@ fire_opt.run(fmax=0.01)
 # 3. Summary of the results:
 ###############################################################################
 
-print('\n Summary of the results:\n ------------------------------------')
+parprint('\n Summary of the results:\n ------------------------------------')
 
 fire_results = read('results_fire.traj', ':')
 parprint('Number of function evaluations using FIRE:',
