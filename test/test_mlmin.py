@@ -128,3 +128,9 @@ class TestMLMin(unittest.TestCase):
         fmax_test = 0.00766
         np.testing.assert_array_almost_equal(fmax_opt, fmax_test, decimal=5)
 
+
+if __name__ == '__main__':
+    test_class = TestMLMin()
+    test_class.test_minimize()
+    test_class.test_acquisition()
+    test_class.test_kernel()
