@@ -7,7 +7,7 @@ from ase.neb import NEB
 from ase.neb import NEBTools
 from ase.io import read, write
 from ase.optimize import MDMin
-from ase.parallel import parprint, rank, parallel_function
+from ase.parallel import parprint, world, parallel_function
 from scipy.spatial import distance
 import os
 from catlearn.regression import GaussianProcess
@@ -611,7 +611,7 @@ class MLNEB(object):
                     parprint('The optimized predicted path can be found in: ',
                              trajectory)
                     # Clean up:
-                    if rank == 0:
+                    if world.rank == 0:
                         os.remove('./last_predicted_path.traj')
                         os.remove('./all_predicted_paths.traj')
                     break
