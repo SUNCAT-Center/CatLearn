@@ -17,7 +17,7 @@ class TestMLMin(unittest.TestCase):
     """ General test of the ML-Min algorithm."""
     def test_minimize(self):
         initial_structure = read('initial_mlmin.traj')
-        initial_structure.set_calculator(EMT())
+        initial_structure.calc = EMT()
 
         initial_opt = MLMin(initial_structure,
                             trajectory='mlmin_structures.traj')
@@ -41,7 +41,7 @@ class TestMLMin(unittest.TestCase):
 
         # Test acquisition lcb:
         initial_structure = read('initial_mlmin.traj')
-        initial_structure.set_calculator(EMT())
+        initial_structure.calc = EMT()
 
         initial_opt = MLMin(initial_structure,
                             trajectory='mlmin_structures.traj')
@@ -62,7 +62,7 @@ class TestMLMin(unittest.TestCase):
 
         # Test acquisition ucb:
         initial_structure = read('initial_mlmin.traj')
-        initial_structure.set_calculator(EMT())
+        initial_structure.calc = EMT()
 
         initial_opt = MLMin(initial_structure,
                             trajectory='mlmin_structures.traj')
@@ -86,7 +86,7 @@ class TestMLMin(unittest.TestCase):
 
         # Test kernel ARD fixed:
         initial_structure = read('initial_mlmin.traj')
-        initial_structure.set_calculator(EMT())
+        initial_structure.calc = EMT()
 
         initial_opt = MLMin(initial_structure,
                             trajectory='mlmin_structures.traj')
@@ -108,7 +108,7 @@ class TestMLMin(unittest.TestCase):
 
         # Test ARD SQE kernel:
         initial_structure = read('initial_mlmin.traj')
-        initial_structure.set_calculator(EMT())
+        initial_structure.calc = EMT()
 
         initial_opt = MLMin(initial_structure,
                             trajectory='mlmin_structures.traj')
