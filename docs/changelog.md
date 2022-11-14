@@ -1,5 +1,10 @@
 # Changelog
 
+# Version 0.7.0 (November 2022)
+
+- Compatibility updated for ASE 3.19.1 to 3.21.0
+- Bugfixes
+
 # Version 0.6.2 (March 2020)
 
 -   Added module for site featurization and GA feature selection.
