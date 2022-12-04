@@ -47,7 +47,7 @@ def plotneb(trajectory='ML_NEB_catlearn.traj', view_path=True):
                 xycoords='data', xytext=(x_pred[np.argmax(e_pred)], 0.0),
                 textcoords='data', arrowprops=prop_plots)
 
-    ax.annotate(s=str(np.round(e_barrier, 3))+' eV',
+    ax.annotate(str(np.round(e_barrier, 3))+' eV',
                 xy=(x_pred[np.argmax(e_pred)], np.max(e_pred)/1.65),
                 xycoords='data',
                 fontsize=15.0,
