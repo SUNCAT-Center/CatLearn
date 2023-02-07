@@ -266,10 +266,11 @@ class MLMin(object):
             guess = self.ase_ini
             guess_pos = np.array(self.list_train[-1])
             guess.positions = guess_pos.reshape(-1, 3)
-            guess.set_calculator(ASECalc(gp=self.gp,
-                                         index_constraints=self.index_mask,
-                                         scaling_targets=self.u_prior)
-                                 )
+            guess.calc = ASECalc(
+                gp=self.gp,
+                index_constraints=self.index_mask,
+                scaling_targets=self.u_prior
+            )
 
             # Optimization in the predicted landscape:
             ml_opt = MDMin(guess, trajectory=None, logfile=None, dt=0.020)
@@ -333,7 +334,7 @@ class MLMin(object):
             eval_atom = self.ase_ini
             pos_atom = self.interesting_point
             eval_atom.positions = np.array(pos_atom).reshape((-1, 3))
-            eval_atom.set_calculator(self.ase_calc)
+            eval_atom.calc = self.ase_calc
             energy_atom = eval_atom.get_potential_energy(
                                                       force_consistent=self.fc)
             forces_atom = -eval_atom.get_forces().reshape(-1)
