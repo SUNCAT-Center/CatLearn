@@ -228,7 +228,8 @@ def get_labels_ablog(l, a, b):
     for f1 in range(L):
         for f2 in range(f1, L):
             # TODO Better string formatting with numbers.
-            new_features.append('log' + str(a) + '_' + l[f1] + 'log' + str(b) +
+            new_features.append(f'log{a}_{l[f1]}log{b}_{l[f2]}')
+            #new_features.append('log' + str(a) + '_' + l[f1] + 'log' + str(b) +
                                 '_' + l[f2])
     return new_features
 
